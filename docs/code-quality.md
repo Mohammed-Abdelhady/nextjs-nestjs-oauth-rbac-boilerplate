@@ -13,6 +13,35 @@ This project uses a comprehensive code quality automation system to ensure consi
 - **Commit message linting** (commitlint) - Enforce Conventional Commits format
 - **Test automation** - Run relevant tests before committing
 
+## GitHub Actions CI
+
+The [CI workflow](../.github/workflows/ci.yml) runs on pull requests and pushes to
+`master`. It uses Node.js 20 and the committed `package-lock.json` to expose three
+stable checks:
+
+- **Backend** — locked install, backend lint, forbidden-disable scan, build, and Jest tests.
+- **Frontend** — locked install, ESLint, and the production Next.js build.
+- **Dependency smoke** — locked-install verification, top-level dependency graph output,
+  and a production dependency audit uploaded as an artifact.
+
+The audit step is intentionally non-blocking while the existing advisory baseline is
+handled by the dependency-maintenance workstream. Advisories are still printed as a
+warning and retained in the workflow artifact; they are not hidden or auto-fixed by CI.
+
+Run the same checks locally:
+
+```bash
+npm ci --ignore-scripts --no-audit --no-fund
+npm run lint --workspace backend -- --no-fix
+npm run lint:check-disables --workspace backend
+npm run build --workspace backend
+npm test --workspace backend -- --runInBand
+npm run lint --workspace frontend
+npm run build --workspace frontend
+npm ls --all --depth=0
+npm audit --omit=dev --audit-level=high
+```
+
 ## Pre-commit Hooks
 
 ### What They Do

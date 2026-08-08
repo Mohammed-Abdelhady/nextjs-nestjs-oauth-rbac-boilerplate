@@ -6,7 +6,8 @@ describe('FacebookOAuthStrategy', () => {
   let strategy: FacebookOAuthStrategy;
   let configService: jest.Mocked<ConfigService>;
 
-  const mockConfig: Record<string, string> = {
+  const mockConfig: Record<string, string | boolean> = {
+    'oauth.facebook.enabled': true,
     'oauth.facebook.clientId': 'test-app-id',
     'oauth.facebook.clientSecret': 'test-app-secret',
     'oauth.facebook.callbackUrl':

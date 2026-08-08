@@ -1,5 +1,7 @@
 # Full-Stack Authentication Boilerplate
 
+[![CI](https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/workflows/ci.yml/badge.svg)](https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/workflows/ci.yml)
+
 Production-ready authentication system with **NestJS** backend and **Next.js** frontend.
 
 ## Features

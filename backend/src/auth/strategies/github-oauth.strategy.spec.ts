@@ -6,7 +6,8 @@ describe('GitHubOAuthStrategy', () => {
   let strategy: GitHubOAuthStrategy;
   let configService: jest.Mocked<ConfigService>;
 
-  const mockConfig: Record<string, string> = {
+  const mockConfig: Record<string, string | boolean> = {
+    'oauth.github.enabled': true,
     'oauth.github.clientId': 'test-client-id',
     'oauth.github.clientSecret': 'test-client-secret',
     'oauth.github.callbackUrl':

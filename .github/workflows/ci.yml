@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Lint backend
+        run: npm run lint --workspace backend -- --no-fix
+
+      - name: Reject disabled lint/type checks
+        run: npm run lint:check-disables --workspace backend
+
+      - name: Build backend
+        run: npm run build --workspace backend
+
+      - name: Test backend
+        run: npm test --workspace backend -- --runInBand
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Lint frontend
+        run: npm run lint --workspace frontend
+
+      - name: Build frontend
+        run: npm run build --workspace frontend
+
+  dependency-smoke:
+    name: Dependency smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Verify locked install
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Verify top-level dependency graph
+        run: npm ls --all --depth=0
+
+      - name: Audit production dependency graph
+        shell: bash
+        run: |
+          set +e
+          npm audit --omit=dev --audit-level=high 2>&1 | tee audit.txt
+          audit_status=${PIPESTATUS[0]}
+          set -e
+          if [ "$audit_status" -ne 0 ]; then
+            echo "::warning::npm audit reported advisories; see the audit artifact and the dependency-maintenance ticket."
+          fi
+
+      - name: Upload dependency evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit
+          path: audit.txt
+          if-no-files-found: error

@@ -6,7 +6,8 @@ describe('GoogleOAuthStrategy', () => {
   let strategy: GoogleOAuthStrategy;
   let configService: jest.Mocked<ConfigService>;
 
-  const mockConfig: Record<string, string> = {
+  const mockConfig: Record<string, string | boolean> = {
+    'oauth.google.enabled': true,
     'oauth.google.clientId': 'test-client-id',
     'oauth.google.clientSecret': 'test-client-secret',
     'oauth.google.callbackUrl':
