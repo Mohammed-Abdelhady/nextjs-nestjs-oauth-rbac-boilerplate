@@ -89,17 +89,46 @@ jobs:
         shell: bash
         run: |
           set +e
-          npm audit --omit=dev --audit-level=high 2>&1 | tee audit.txt
-          audit_status=${PIPESTATUS[0]}
+          npm audit --omit=dev --audit-level=high --json > audit.json 2> audit.stderr
+          audit_status=$?
           set -e
-          if [ "$audit_status" -ne 0 ]; then
-            echo "::warning::npm audit reported advisories; see the audit artifact and the dependency-maintenance ticket."
+          if [ "$audit_status" -eq 0 ]; then
+            echo "npm audit completed without high-severity advisories."
+            exit 0
           fi
+
+          node --input-type=commonjs <<'NODE'
+          const fs = require('node:fs');
+
+          let report;
+          try {
+            report = JSON.parse(fs.readFileSync('audit.json', 'utf8'));
+          } catch (error) {
+            console.error(`::error::npm audit did not produce valid JSON: ${error.message}`);
+            process.exit(1);
+          }
+
+          if (report?.metadata?.vulnerabilities) {
+            const { info = 0, low = 0, moderate = 0, high = 0, critical = 0, total = 0 } =
+              report.metadata.vulnerabilities;
+            console.warn(
+              `::warning::npm audit reported ${total} advisories (info=${info}, low=${low}, moderate=${moderate}, high=${high}, critical=${critical}); see the audit artifact and dependency-maintenance ticket.`,
+            );
+            process.exit(0);
+          }
+
+          console.error(
+            '::error::npm audit failed operationally; the dependency smoke gate must not pass without an audit report.',
+          );
+          process.exit(1);
+          NODE
 
       - name: Upload dependency evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dependency-audit
-          path: audit.txt
+          path: |
+            audit.json
+            audit.stderr
           if-no-files-found: error

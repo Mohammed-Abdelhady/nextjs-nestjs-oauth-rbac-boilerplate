@@ -22,7 +22,8 @@ stable checks:
 - **Backend** — locked install, backend lint, forbidden-disable scan, build, and Jest tests.
 - **Frontend** — locked install, ESLint, and the production Next.js build.
 - **Dependency smoke** — locked-install verification, top-level dependency graph output,
-  and a production dependency audit uploaded as an artifact.
+  and a production dependency audit uploaded as an artifact. Known vulnerability
+  advisories remain non-blocking, but registry/network/CLI failures fail the check.
 
 The audit step is intentionally non-blocking while the existing advisory baseline is
 handled by the dependency-maintenance workstream. Advisories are still printed as a
@@ -39,7 +40,9 @@ npm test --workspace backend -- --runInBand
 npm run lint --workspace frontend
 npm run build --workspace frontend
 npm ls --all --depth=0
-npm audit --omit=dev --audit-level=high
+npm audit --omit=dev --audit-level=high --json > audit.json 2> audit.stderr
+# A non-zero exit is acceptable only when audit.json contains metadata.vulnerabilities.
+# Missing/invalid audit metadata indicates an operational failure and must fail CI.
 ```
 
 ## Pre-commit Hooks
