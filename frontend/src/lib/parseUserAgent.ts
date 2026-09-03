@@ -15,14 +15,17 @@ export interface ParsedUserAgent {
 function detectDevice(ua: string): string {
   const lowerUA = ua.toLowerCase();
 
+  // Tablets (check tablets before mobile since iPad includes 'Mobile' and Android tablets lack 'Mobile')
+  if (
+    /ipad|tablet|kindle|silk|playbook/i.test(lowerUA) ||
+    (/android/i.test(lowerUA) && !/mobile/i.test(lowerUA))
+  ) {
+    return 'Tablet';
+  }
+
   // Mobile devices
   if (/mobile|android|iphone|ipod|blackberry|iemobile|opera mini/i.test(lowerUA)) {
     return 'Mobile';
-  }
-
-  // Tablets
-  if (/ipad|tablet|kindle|silk|playbook/i.test(lowerUA)) {
-    return 'Tablet';
   }
 
   // Desktop
@@ -41,14 +44,26 @@ function detectBrowser(ua: string): string {
     return match ? `Edge ${match[1]}` : 'Edge';
   }
 
+  // Opera (must check before Chrome)
+  if (/opera|opr/i.test(lowerUA)) {
+    const match = ua.match(/(?:opera|opr)\/(\d+)/i);
+    return match ? `Opera ${match[1]}` : 'Opera';
+  }
+
+  // Samsung Browser (must check before Chrome)
+  if (/samsungbrowser/i.test(lowerUA)) {
+    const match = ua.match(/samsungbrowser\/(\d+)/i);
+    return match ? `Samsung ${match[1]}` : 'Samsung Browser';
+  }
+
   // Chrome
-  if (/chrome/i.test(lowerUA) && !/edg/i.test(lowerUA)) {
+  if (/chrome/i.test(lowerUA)) {
     const match = ua.match(/chrome\/(\d+)/i);
     return match ? `Chrome ${match[1]}` : 'Chrome';
   }
 
   // Safari (must check before Chrome as Safari UA contains both)
-  if (/safari/i.test(lowerUA) && !/chrome/i.test(lowerUA)) {
+  if (/safari/i.test(lowerUA)) {
     const match = ua.match(/version\/(\d+)/i);
     return match ? `Safari ${match[1]}` : 'Safari';
   }
@@ -59,22 +74,10 @@ function detectBrowser(ua: string): string {
     return match ? `Firefox ${match[1]}` : 'Firefox';
   }
 
-  // Opera
-  if (/opera|opr/i.test(lowerUA)) {
-    const match = ua.match(/(?:opera|opr)\/(\d+)/i);
-    return match ? `Opera ${match[1]}` : 'Opera';
-  }
-
   // Internet Explorer
   if (/msie|trident/i.test(lowerUA)) {
     const match = ua.match(/(?:msie |rv:)(\d+)/i);
     return match ? `IE ${match[1]}` : 'IE';
-  }
-
-  // Samsung Browser
-  if (/samsungbrowser/i.test(lowerUA)) {
-    const match = ua.match(/samsungbrowser\/(\d+)/i);
-    return match ? `Samsung ${match[1]}` : 'Samsung Browser';
   }
 
   return 'Unknown Browser';
@@ -93,6 +96,18 @@ function detectOS(ua: string): string {
   if (/windows nt 6.1/i.test(lowerUA)) return 'Windows 7';
   if (/windows/i.test(lowerUA)) return 'Windows';
 
+  // iOS / iPadOS (must check before macOS as iOS UAs include 'like Mac OS X')
+  if (/ipad.*os (\d+)/i.test(lowerUA)) {
+    const match = ua.match(/os (\d+)/i);
+    return match ? `iPadOS ${match[1]}` : 'iPadOS';
+  }
+  if (/ipad/i.test(lowerUA)) return 'iPadOS';
+  if (/iphone os (\d+)/i.test(lowerUA)) {
+    const match = ua.match(/iphone os (\d+)/i);
+    return match ? `iOS ${match[1]}` : 'iOS';
+  }
+  if (/iphone|ipod/i.test(lowerUA)) return 'iOS';
+
   // macOS
   if (/mac os x 10[._](\d+)/i.test(lowerUA)) {
     const match = ua.match(/mac os x 10[._](\d+)/i);
@@ -100,17 +115,6 @@ function detectOS(ua: string): string {
   }
   if (/mac os x/i.test(lowerUA)) return 'macOS';
   if (/macintosh/i.test(lowerUA)) return 'Mac OS';
-
-  // iOS
-  if (/iphone os (\d+)/i.test(lowerUA)) {
-    const match = ua.match(/iphone os (\d+)/i);
-    return match ? `iOS ${match[1]}` : 'iOS';
-  }
-  if (/ipad.*os (\d+)/i.test(lowerUA)) {
-    const match = ua.match(/os (\d+)/i);
-    return match ? `iPadOS ${match[1]}` : 'iPadOS';
-  }
-  if (/iphone|ipad|ipod/i.test(lowerUA)) return 'iOS';
 
   // Android
   if (/android (\d+)/i.test(lowerUA)) {
