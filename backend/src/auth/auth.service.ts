@@ -3,17 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Response } from 'express';
-import * as crypto from 'crypto';
 import { User, UserDocument } from '../user/schemas/user.schema';
 import { Role, RoleDocument } from '../role/schemas/role.schema';
-import {
-  PendingRegistration,
-  PendingRegistrationDocument,
-} from './schemas/pending-registration.schema';
-import {
-  PendingPasswordReset,
-  PendingPasswordResetDocument,
-} from './schemas/pending-password-reset.schema';
 import { RegisterDto } from './dto/register.dto';
 import { ActivateDto } from './dto/activate.dto';
 import { LoginDto } from './dto/login.dto';
@@ -32,43 +23,28 @@ import { AppException } from '../common/exceptions/app.exception';
 import { ErrorCode } from '../common/enums/error-code.enum';
 import { MailService } from '../mail/mail.service';
 import { SessionService } from './services/session.service';
+import { VerificationCodeService } from './services/verification-code.service';
+import { getEffectivePermissions } from './utils/permissions.util';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private readonly codeExpiresIn: number;
-  private readonly maxAttempts: number;
 
   constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
-    @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
-    @InjectModel(PendingRegistration.name)
-    private pendingRegistrationModel: Model<PendingRegistrationDocument>,
-    @InjectModel(PendingPasswordReset.name)
-    private pendingPasswordResetModel: Model<PendingPasswordResetDocument>,
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    @InjectModel(Role.name) private readonly roleModel: Model<RoleDocument>,
     private readonly hashService: HashService,
     private readonly mailService: MailService,
     private readonly sessionService: SessionService,
+    private readonly verificationCodeService: VerificationCodeService,
     private readonly configService: ConfigService,
-  ) {
-    this.codeExpiresIn = this.configService.get<number>(
-      'activation.codeExpiresIn',
-      900000,
-    );
-    this.maxAttempts = this.configService.get<number>(
-      'activation.maxAttempts',
-      5,
-    );
-  }
+  ) {}
 
-  /**
-   * Register a new user and send activation code
-   * @param dto - Registration data
-   * @throws ConflictException if email already exists
-   */
   async register(dto: RegisterDto): Promise<ApiResponse<RegisterResponseDto>> {
-    // Check if user already exists
-    const existingUser = await this.userModel.findOne({ email: dto.email });
+    const existingUser = await this.userModel.findOne({
+      email: dto.email,
+      isDeleted: { $ne: true },
+    });
     if (existingUser) {
       throw new AppException(
         ErrorCode.EMAIL_ALREADY_EXISTS,
@@ -77,127 +53,32 @@ export class AuthService {
       );
     }
 
-    // Check if pending registration exists (select hidden fields for update)
-    const existingPending = await this.pendingRegistrationModel
-      .findOne({ email: dto.email })
-      .select('+hashedPassword +hashedCode');
-
-    // Hash password
     const hashedPassword = await this.hashService.hash(dto.password);
-
-    // Generate cryptographically secure 6-digit activation code
-    const code = crypto.randomInt(100000, 1000000).toString();
-    const hashedCode = await this.hashService.hash(code);
-
-    // Calculate expiry
-    const expiresAt = new Date(Date.now() + this.codeExpiresIn);
-
-    if (existingPending) {
-      // Update existing pending registration
-      existingPending.hashedPassword = hashedPassword;
-      existingPending.name = dto.name;
-      existingPending.hashedCode = hashedCode;
-      existingPending.attempts = 0;
-      existingPending.expiresAt = expiresAt;
-      await existingPending.save();
-
-      this.logger.log(`Updated pending registration for ${dto.email}`);
-    } else {
-      // Create new pending registration
-      await this.pendingRegistrationModel.create({
-        email: dto.email,
+    const code =
+      await this.verificationCodeService.createOrUpdatePendingRegistration(
+        dto.email,
+        dto.name,
         hashedPassword,
-        name: dto.name,
-        hashedCode,
-        attempts: 0,
-        expiresAt,
-      });
-
-      this.logger.log(`Created pending registration for ${dto.email}`);
-    }
-
-    // Send activation email
-    try {
-      await this.mailService.sendActivationCode(dto.email, code, dto.name);
-    } catch (error) {
-      this.logger.error(
-        `Failed to send activation email: ${error instanceof Error ? error.message : String(error)}`,
       );
-      throw new AppException(
-        ErrorCode.EMAIL_SEND_FAILED,
-        'Failed to send activation email',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+
+    await this.sendMailSafely(
+      () => this.mailService.sendActivationCode(dto.email, code, dto.name),
+      'Failed to send activation email',
+    );
 
     return RegisterResponseDto.success(dto.email);
   }
 
-  /**
-   * Activate account using email and code
-   * @param dto - Activation data
-   * @param response - Express response object for setting cookie
-   * @throws BadRequestException for invalid/expired code
-   * @throws UnauthorizedException for max attempts exceeded
-   */
   async activate(
     dto: ActivateDto,
     response: Response,
   ): Promise<ApiResponse<ActivateResponseDto>> {
-    // Find pending registration (select hidden fields for verification)
-    const pending = await this.pendingRegistrationModel
-      .findOne({ email: dto.email })
-      .select('+hashedPassword +hashedCode');
-
-    if (!pending) {
-      throw new AppException(
-        ErrorCode.NO_PENDING_REGISTRATION,
-        'No pending registration found',
-        HttpStatus.BAD_REQUEST,
+    const pending =
+      await this.verificationCodeService.verifyAndConsumeRegistration(
+        dto.email,
+        dto.code,
       );
-    }
 
-    // Check if expired
-    if (new Date() > pending.expiresAt) {
-      await this.pendingRegistrationModel.deleteOne({ email: dto.email });
-      throw new AppException(
-        ErrorCode.ACTIVATION_CODE_EXPIRED,
-        'Activation code has expired',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    // Check attempts
-    if (pending.attempts >= this.maxAttempts) {
-      await this.pendingRegistrationModel.deleteOne({ email: dto.email });
-      throw new AppException(
-        ErrorCode.MAX_ATTEMPTS_EXCEEDED,
-        'Maximum attempts exceeded. Please register again.',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
-
-    // Verify code
-    const isCodeValid = await this.hashService.compare(
-      dto.code,
-      pending.hashedCode,
-    );
-
-    if (!isCodeValid) {
-      // Increment attempts
-      pending.attempts += 1;
-      await pending.save();
-
-      const remainingAttempts = this.maxAttempts - pending.attempts;
-      throw new AppException(
-        ErrorCode.ACTIVATION_CODE_INVALID,
-        `Invalid code. ${remainingAttempts} attempts remaining.`,
-        HttpStatus.BAD_REQUEST,
-        { remainingAttempts },
-      );
-    }
-
-    // Create user
     const user = await this.userModel.create({
       email: pending.email,
       password: pending.hashedPassword,
@@ -207,7 +88,6 @@ export class AuthService {
 
     this.logger.log(`User created: ${user.email}`);
 
-    // Create session
     const userAgent = response.req.headers['user-agent'] || 'Unknown';
     const ip = response.req.ip || '127.0.0.1';
     const sessionToken = await this.sessionService.createSession(
@@ -216,45 +96,18 @@ export class AuthService {
       ip,
     );
 
-    // Delete pending registration
-    await this.pendingRegistrationModel.deleteOne({ email: dto.email });
-
-    // Set HTTP-only cookie
-    const cookieName = this.configService.get<string>(
-      'session.cookieName',
-      'sid',
-    );
-    const cookieMaxAge = this.configService.get<number>(
-      'session.cookieMaxAge',
-      604800000,
-    );
-
-    response.cookie(cookieName, sessionToken, {
-      httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production',
-      sameSite: 'strict',
-      maxAge: cookieMaxAge,
-      path: '/',
-    });
-
+    this.setSessionCookie(response, sessionToken);
     return ActivateResponseDto.success(user);
   }
 
-  /**
-   * Resend activation code for pending registration
-   * @param dto - Resend activation data
-   * @throws NotFoundException if no pending registration exists
-   * @throws BadRequestException if email sending fails
-   */
   async resendActivation(
     dto: ResendActivationDto,
   ): Promise<ApiResponse<ResendActivationResponseDto>> {
-    // Find pending registration (select hidden fields for update)
-    const pending = await this.pendingRegistrationModel
-      .findOne({ email: dto.email })
-      .select('+hashedPassword +hashedCode');
-
-    if (!pending) {
+    const existingUser = await this.userModel.findOne({
+      email: dto.email,
+      isDeleted: { $ne: true },
+    });
+    if (existingUser) {
       throw new AppException(
         ErrorCode.NO_PENDING_REGISTRATION_FOR_RESEND,
         'No pending registration found. Please register again.',
@@ -262,54 +115,26 @@ export class AuthService {
       );
     }
 
-    // Generate cryptographically secure 6-digit activation code
-    const code = crypto.randomInt(100000, 1000000).toString();
-    const hashedCode = await this.hashService.hash(code);
+    const { code, name } =
+      await this.verificationCodeService.resendActivationCode(dto.email);
 
-    // Calculate new expiry
-    const expiresAt = new Date(Date.now() + this.codeExpiresIn);
-
-    // Update pending registration
-    pending.hashedCode = hashedCode;
-    pending.attempts = 0;
-    pending.expiresAt = expiresAt;
-    await pending.save();
-
-    this.logger.log(`Resent activation code for ${dto.email}`);
-
-    // Send activation email
-    try {
-      await this.mailService.sendActivationCode(dto.email, code, pending.name);
-    } catch (error) {
-      this.logger.error(
-        `Failed to send resend activation email: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      throw new AppException(
-        ErrorCode.EMAIL_SEND_FAILED,
-        'Failed to send activation email',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    await this.sendMailSafely(
+      () => this.mailService.sendActivationCode(dto.email, code, name),
+      'Failed to send activation email',
+    );
 
     return ResendActivationResponseDto.success(dto.email);
   }
 
-  /**
-   * Login user with email and password
-   * @param dto - Login data
-   * @param response - Express response object for setting cookie
-   * @throws UnauthorizedException for invalid credentials
-   */
   async login(
     dto: LoginDto,
     response: Response,
   ): Promise<ApiResponse<LoginResponseDto>> {
-    // Find user with password field selected
     const user = await this.userModel
-      .findOne({ email: dto.email })
+      .findOne({ email: dto.email, isDeleted: { $ne: true } })
       .select('+password');
 
-    if (!user) {
+    if (!user || !user.password) {
       throw new AppException(
         ErrorCode.INVALID_CREDENTIALS,
         'Invalid email or password',
@@ -317,10 +142,9 @@ export class AuthService {
       );
     }
 
-    // Compare password
     const isPasswordValid = await this.hashService.compare(
       dto.password,
-      user.password!,
+      user.password,
     );
 
     if (!isPasswordValid) {
@@ -331,7 +155,6 @@ export class AuthService {
       );
     }
 
-    // Create session
     const userAgent = response.req.headers['user-agent'] || 'Unknown';
     const ip = response.req.ip || '127.0.0.1';
     const sessionToken = await this.sessionService.createSession(
@@ -341,27 +164,9 @@ export class AuthService {
     );
 
     this.logger.log(`User logged in: ${user.email}`);
+    this.setSessionCookie(response, sessionToken);
 
-    // Set HTTP-only cookie
-    const cookieName = this.configService.get<string>(
-      'session.cookieName',
-      'sid',
-    );
-    const cookieMaxAge = this.configService.get<number>(
-      'session.cookieMaxAge',
-      604800000,
-    );
-
-    response.cookie(cookieName, sessionToken, {
-      httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production',
-      sameSite: 'strict',
-      maxAge: cookieMaxAge,
-      path: '/',
-    });
-
-    // Compute effective permissions (role + direct)
-    const effectivePermissions = await this.getEffectivePermissions(user);
+    const permissions = await getEffectivePermissions(user, this.roleModel);
 
     return LoginResponseDto.success({
       id: user._id.toString(),
@@ -370,39 +175,10 @@ export class AuthService {
       role: user.role,
       authProvider: user.authProvider,
       isVerified: user.isVerified,
-      permissions: effectivePermissions,
+      permissions,
     });
   }
 
-  /**
-   * Get effective permissions for a user (role permissions + direct permissions).
-   * @param user - User document
-   * @returns Array of effective permissions (deduplicated)
-   */
-  private async getEffectivePermissions(user: UserDocument): Promise<string[]> {
-    const rolePermissions: string[] = [];
-
-    // Fetch role permissions
-    if (user.role) {
-      const role = await this.roleModel.findOne({ slug: user.role }).exec();
-      if (role && role.permissions) {
-        rolePermissions.push(...role.permissions);
-      }
-    }
-
-    // Combine role permissions with direct user permissions
-    const directPermissions = user.permissions || [];
-    const allPermissions = [...rolePermissions, ...directPermissions];
-
-    // Deduplicate permissions
-    return [...new Set(allPermissions)];
-  }
-
-  /**
-   * Logout user by invalidating session
-   * @param sessionToken - Session token to invalidate
-   * @returns Success message
-   */
   async logout(
     sessionToken: string,
   ): Promise<ApiResponse<{ message: string }>> {
@@ -418,21 +194,16 @@ export class AuthService {
     }
 
     this.logger.log(`User logged out with token: ${sessionToken}`);
-
     return ApiResponse.success({ message: 'Logout successful' });
   }
 
-  /**
-   * Request password reset by sending 6-digit code to email
-   * @param dto - Forgot password data
-   * @throws NotFoundException if user doesn't exist
-   * @throws BadRequestException if email sending fails
-   */
   async forgotPassword(
     dto: ForgotPasswordDto,
   ): Promise<ApiResponse<ForgotPasswordResponseDto>> {
-    // Check if user exists
-    const user = await this.userModel.findOne({ email: dto.email });
+    const user = await this.userModel.findOne({
+      email: dto.email,
+      isDeleted: { $ne: true },
+    });
     if (!user) {
       throw new AppException(
         ErrorCode.USER_NOT_FOUND_FOR_RESET,
@@ -441,119 +212,27 @@ export class AuthService {
       );
     }
 
-    // Check if pending reset exists (select hidden field for update)
-    const existingReset = await this.pendingPasswordResetModel
-      .findOne({ email: dto.email })
-      .select('+hashedCode');
+    const code = await this.verificationCodeService.createOrUpdatePasswordReset(
+      dto.email,
+    );
 
-    // Generate cryptographically secure 6-digit reset code
-    const code = crypto.randomInt(100000, 1000000).toString();
-    const hashedCode = await this.hashService.hash(code);
-
-    // Calculate expiry
-    const expiresAt = new Date(Date.now() + this.codeExpiresIn);
-
-    if (existingReset) {
-      // Update existing pending reset
-      existingReset.hashedCode = hashedCode;
-      existingReset.attempts = 0;
-      existingReset.expiresAt = expiresAt;
-      await existingReset.save();
-
-      this.logger.log(`Updated pending password reset for ${dto.email}`);
-    } else {
-      // Create new pending reset
-      await this.pendingPasswordResetModel.create({
-        email: dto.email,
-        hashedCode,
-        attempts: 0,
-        expiresAt,
-      });
-
-      this.logger.log(`Created pending password reset for ${dto.email}`);
-    }
-
-    // Send password reset email
-    try {
-      await this.mailService.sendPasswordResetCode(dto.email, code, user.name);
-    } catch (error) {
-      this.logger.error(
-        `Failed to send password reset email: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      throw new AppException(
-        ErrorCode.EMAIL_SEND_FAILED,
-        'Failed to send password reset email',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    await this.sendMailSafely(
+      () => this.mailService.sendPasswordResetCode(dto.email, code, user.name),
+      'Failed to send password reset email',
+    );
 
     return ForgotPasswordResponseDto.success(dto.email);
   }
 
-  /**
-   * Reset password using email and 6-digit code
-   * @param dto - Reset password data
-   * @throws BadRequestException for invalid/expired code
-   * @throws UnauthorizedException for max attempts exceeded
-   */
   async resetPassword(
     dto: ResetPasswordDto,
   ): Promise<ApiResponse<ResetPasswordResponseDto>> {
-    // Find pending reset (select hidden field for verification)
-    const pending = await this.pendingPasswordResetModel
-      .findOne({ email: dto.email })
-      .select('+hashedCode');
+    await this.verificationCodeService.verifyPasswordReset(dto.email, dto.code);
 
-    if (!pending) {
-      throw new AppException(
-        ErrorCode.NO_PENDING_PASSWORD_RESET,
-        'No password reset request found',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    // Check if expired
-    if (new Date() > pending.expiresAt) {
-      await this.pendingPasswordResetModel.deleteOne({ email: dto.email });
-      throw new AppException(
-        ErrorCode.PASSWORD_RESET_CODE_EXPIRED,
-        'Password reset code has expired',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    // Check attempts
-    if (pending.attempts >= this.maxAttempts) {
-      await this.pendingPasswordResetModel.deleteOne({ email: dto.email });
-      throw new AppException(
-        ErrorCode.MAX_ATTEMPTS_EXCEEDED,
-        'Maximum attempts exceeded. Please request a new code.',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
-
-    // Verify code
-    const isCodeValid = await this.hashService.compare(
-      dto.code,
-      pending.hashedCode,
-    );
-
-    if (!isCodeValid) {
-      // Increment attempts
-      pending.attempts += 1;
-      await pending.save();
-
-      const remainingAttempts = this.maxAttempts - pending.attempts;
-      throw new AppException(
-        ErrorCode.PASSWORD_RESET_CODE_INVALID,
-        `Invalid code. ${remainingAttempts} attempts remaining.`,
-        HttpStatus.BAD_REQUEST,
-        { remainingAttempts },
-      );
-    }
-
-    // Find user and update password
-    const user = await this.userModel.findOne({ email: dto.email });
+    const user = await this.userModel.findOne({
+      email: dto.email,
+      isDeleted: { $ne: true },
+    });
     if (!user) {
       throw new AppException(
         ErrorCode.USER_NOT_FOUND_FOR_RESET,
@@ -562,16 +241,51 @@ export class AuthService {
       );
     }
 
-    // Hash new password
     const hashedPassword = await this.hashService.hash(dto.newPassword);
     user.password = hashedPassword;
     await user.save();
 
+    await this.sessionService.invalidateAllSessions(user._id);
     this.logger.log(`Password reset successful for: ${user.email}`);
 
-    // Delete pending reset
-    await this.pendingPasswordResetModel.deleteOne({ email: dto.email });
-
+    await this.verificationCodeService.clearPasswordReset(dto.email);
     return ResetPasswordResponseDto.success();
+  }
+
+  private setSessionCookie(response: Response, sessionToken: string): void {
+    const cookieName = this.configService.get<string>(
+      'session.cookieName',
+      'sid',
+    );
+    const cookieMaxAge = this.configService.get<number>(
+      'session.cookieMaxAge',
+      604800000,
+    );
+
+    response.cookie(cookieName, sessionToken, {
+      httpOnly: true,
+      secure: this.configService.get('NODE_ENV') === 'production',
+      sameSite: 'strict',
+      maxAge: cookieMaxAge,
+      path: '/',
+    });
+  }
+
+  private async sendMailSafely(
+    action: () => Promise<void>,
+    failureMessage: string,
+  ): Promise<void> {
+    try {
+      await action();
+    } catch (error) {
+      this.logger.error(
+        `${failureMessage}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw new AppException(
+        ErrorCode.EMAIL_SEND_FAILED,
+        failureMessage,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 }

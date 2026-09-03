@@ -17,6 +17,7 @@ import { Session, SessionSchema } from '../session/schemas/session.schema';
 import { Role, RoleSchema } from '../role/schemas/role.schema';
 import { SessionService } from './services/session.service';
 import { OAuthService } from './services/oauth.service';
+import { VerificationCodeService } from './services/verification-code.service';
 import { GoogleOAuthStrategy } from './strategies/google-oauth.strategy';
 import { GitHubOAuthStrategy } from './strategies/github-oauth.strategy';
 import { FacebookOAuthStrategy } from './strategies/facebook-oauth.strategy';
@@ -37,7 +38,6 @@ import { VerifiedGuard } from './guards/verified.guard';
       { name: Session.name, schema: SessionSchema },
       { name: Role.name, schema: RoleSchema },
     ]),
-    // ThrottlerModule is already configured globally in AppModule
     CommonModule,
     MailModule,
     forwardRef(() => UserModule),
@@ -48,6 +48,7 @@ import { VerifiedGuard } from './guards/verified.guard';
     AuthService,
     SessionService,
     OAuthService,
+    VerificationCodeService,
     GoogleOAuthStrategy,
     GitHubOAuthStrategy,
     FacebookOAuthStrategy,
@@ -58,6 +59,7 @@ import { VerifiedGuard } from './guards/verified.guard';
     AuthService,
     SessionService,
     OAuthService,
+    VerificationCodeService,
     AuthGuard,
     VerifiedGuard,
   ],

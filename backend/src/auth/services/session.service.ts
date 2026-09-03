@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as crypto from 'crypto';
 import { Session, SessionDocument } from '../../session/schemas/session.schema';
+import { UserDocument } from '../../user/schemas/user.schema';
 import { Types } from 'mongoose';
 
 @Injectable()
@@ -63,6 +64,11 @@ export class SessionService {
       .populate('user');
 
     if (!session) {
+      return null;
+    }
+
+    const user = session.user as unknown as UserDocument | null;
+    if (!user || user.isDeleted) {
       return null;
     }
 

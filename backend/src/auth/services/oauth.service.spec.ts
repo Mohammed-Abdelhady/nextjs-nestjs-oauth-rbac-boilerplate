@@ -499,5 +499,27 @@ describe('OAuthService', () => {
         service.handleCallback('google', 'code', 'state', mockResponse),
       ).rejects.toThrow('OAuth failed');
     });
+
+    it('should reject callback when user found by provider ID is deleted', async () => {
+      const deletedUser = { ...mockUser, isDeleted: true };
+      userModel.findOne.mockResolvedValue(deletedUser);
+      googleStrategy.getUserProfile.mockResolvedValue(mockOAuthProfile);
+
+      await expect(
+        service.handleCallback('google', 'code', 'state', mockResponse),
+      ).rejects.toThrow(AppException);
+    });
+
+    it('should reject callback when user found by email is deleted', async () => {
+      const deletedUser = { ...mockUser, isDeleted: true };
+      userModel.findOne
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(deletedUser);
+      googleStrategy.getUserProfile.mockResolvedValue(mockOAuthProfile);
+
+      await expect(
+        service.handleCallback('google', 'code', 'state', mockResponse),
+      ).rejects.toThrow(AppException);
+    });
   });
 });

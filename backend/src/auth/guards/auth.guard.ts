@@ -57,7 +57,15 @@ export class AuthGuard implements CanActivate {
     }
 
     // Attach user and session to request for use in controllers
-    const user = session.user as unknown as UserDocument;
+    const user = session.user as unknown as UserDocument | null;
+
+    if (!user || user.isDeleted) {
+      throw new AppException(
+        ErrorCode.SESSION_INVALID,
+        'Invalid or expired session',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
 
     // Compute effective permissions (role + direct)
     const effectivePermissions = await this.getEffectivePermissions(user);

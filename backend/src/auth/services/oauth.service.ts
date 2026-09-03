@@ -16,23 +16,25 @@ import { ApiResponse } from '../../common/dto/api-response.dto';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { SessionService } from './session.service';
+import { OAuthProvider, AUTH_PROVIDER_MAP } from '../constants/oauth.constants';
+import {
+  OAuthLoginResponseData,
+  OAuthLoginResponseDto,
+} from '../dto/oauth-login-response.dto';
 
-/**
- * OAuth Provider Type
- */
-export type OAuthProvider = 'google' | 'facebook' | 'github';
+export { OAuthProvider } from '../constants/oauth.constants';
+export {
+  OAuthLoginResponseData,
+  OAuthLoginResponseDto,
+} from '../dto/oauth-login-response.dto';
 
-/**
- * OAuth Service
- * Manages OAuth providers and handles OAuth authentication flow
- */
 @Injectable()
 export class OAuthService {
   private readonly logger = new Logger(OAuthService.name);
   private readonly strategies: Map<OAuthProvider, IOAuthStrategy> = new Map();
 
   constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly sessionService: SessionService,
     private readonly configService: ConfigService,
     private readonly googleStrategy: GoogleOAuthStrategy,
@@ -43,9 +45,6 @@ export class OAuthService {
     this.logEnabledProviders();
   }
 
-  /**
-   * Register only enabled OAuth strategies
-   */
   private registerStrategies(): void {
     const allStrategies: [OAuthProvider, IOAuthStrategy][] = [
       ['google', this.googleStrategy],
@@ -60,9 +59,6 @@ export class OAuthService {
     }
   }
 
-  /**
-   * Log which OAuth providers are enabled
-   */
   private logEnabledProviders(): void {
     const enabled = this.getSupportedProviders();
     if (enabled.length > 0) {
@@ -72,26 +68,14 @@ export class OAuthService {
     }
   }
 
-  /**
-   * Check if a specific provider is enabled
-   * @param provider - OAuth provider name
-   * @returns true if provider is enabled
-   */
   isProviderEnabled(provider: OAuthProvider): boolean {
     return this.strategies.has(provider);
   }
 
-  /**
-   * Get strategy for a specific provider
-   * @param provider - OAuth provider name
-   * @returns OAuth strategy
-   * @throws AppException if provider is not supported or not enabled
-   */
   private getStrategy(provider: OAuthProvider): IOAuthStrategy {
     const strategy = this.strategies.get(provider);
 
     if (!strategy) {
-      // Check if it's a known provider that's just disabled
       const knownProviders: OAuthProvider[] = ['google', 'facebook', 'github'];
       if (knownProviders.includes(provider)) {
         const errorCodeMap: Record<OAuthProvider, ErrorCode> = {
@@ -116,25 +100,12 @@ export class OAuthService {
     return strategy;
   }
 
-  /**
-   * Get authorization URL for OAuth provider
-   * @param provider - OAuth provider name
-   * @returns Authorization URL
-   */
   getAuthorizationUrl(provider: OAuthProvider): string {
     const strategy = this.getStrategy(provider);
     const state = this.generateState();
     return strategy.getAuthorizationUrl(state);
   }
 
-  /**
-   * Handle OAuth callback and authenticate user
-   * @param provider - OAuth provider name
-   * @param code - Authorization code from OAuth callback
-   * @param state - State parameter for CSRF protection
-   * @param response - Express response object for setting cookie
-   * @returns User data
-   */
   async handleCallback(
     provider: OAuthProvider,
     code: string,
@@ -143,18 +114,14 @@ export class OAuthService {
   ): Promise<ApiResponse<OAuthLoginResponseData>> {
     try {
       const strategy = this.getStrategy(provider);
-
-      // Get user profile from OAuth provider
       const oauthProfile = await strategy.getUserProfile(code, state);
 
       this.logger.log(
         `Received OAuth profile from ${provider}: ${oauthProfile.email}`,
       );
 
-      // Find or create user
       const user = await this.findOrCreateUser(provider, oauthProfile);
 
-      // Create session
       const userAgent = response.req.headers['user-agent'] || 'Unknown';
       const ip = response.req.ip || '127.0.0.1';
       const sessionToken = await this.sessionService.createSession(
@@ -163,7 +130,6 @@ export class OAuthService {
         ip,
       );
 
-      // Set HTTP-only cookie
       const cookieName = this.configService.get<string>(
         'session.cookieName',
         'sid',
@@ -200,24 +166,27 @@ export class OAuthService {
     }
   }
 
-  /**
-   * Find existing user or create new user from OAuth profile
-   * @param provider - OAuth provider name
-   * @param oauthProfile - User profile from OAuth provider
-   * @returns User document
-   */
   private async findOrCreateUser(
     provider: OAuthProvider,
     oauthProfile: OAuthUserProfile,
   ): Promise<UserDocument> {
-    // First, try to find user by provider ID
     const providerIdField = `${provider}Id` as keyof User;
     const existingUserByProvider = await this.userModel.findOne({
       [providerIdField]: oauthProfile.providerId,
     });
 
     if (existingUserByProvider) {
-      // Update user info if needed (profile sync)
+      if (existingUserByProvider.isDeleted) {
+        this.logger.warn(
+          `OAuth login rejected: account for provider ${provider} (${oauthProfile.email}) is deleted`,
+        );
+        throw new AppException(
+          ErrorCode.OAUTH_AUTHENTICATION_FAILED,
+          'OAuth authentication failed',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
       let updated = false;
       if (
         existingUserByProvider.name !== oauthProfile.name ||
@@ -228,14 +197,7 @@ export class OAuthService {
         updated = true;
       }
 
-      // Update profile sync timestamp if this is the primary provider
-      const authProviderMap: Record<OAuthProvider, AuthProvider> = {
-        google: AuthProvider.GOOGLE,
-        facebook: AuthProvider.FACEBOOK,
-        github: AuthProvider.GITHUB,
-      };
-      const mappedProvider = authProviderMap[provider];
-
+      const mappedProvider = AUTH_PROVIDER_MAP[provider];
       if (existingUserByProvider.primaryProvider === mappedProvider) {
         existingUserByProvider.profileSyncedAt = new Date();
         existingUserByProvider.lastSyncedProvider = provider;
@@ -248,31 +210,32 @@ export class OAuthService {
       return existingUserByProvider;
     }
 
-    // Try to find user by email
     const existingUserByEmail = await this.userModel.findOne({
       email: oauthProfile.email,
     });
 
-    // Map provider to AuthProvider enum
-    const authProviderMap: Record<OAuthProvider, AuthProvider> = {
-      google: AuthProvider.GOOGLE,
-      facebook: AuthProvider.FACEBOOK,
-      github: AuthProvider.GITHUB,
-    };
-    const mappedProvider = authProviderMap[provider];
+    const mappedProvider = AUTH_PROVIDER_MAP[provider];
 
     if (existingUserByEmail) {
-      // Link OAuth account to existing user (auto-linking)
+      if (existingUserByEmail.isDeleted) {
+        this.logger.warn(
+          `OAuth login rejected: account with email ${oauthProfile.email} is deleted`,
+        );
+        throw new AppException(
+          ErrorCode.OAUTH_AUTHENTICATION_FAILED,
+          'OAuth authentication failed',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
       (existingUserByEmail[providerIdField] as string) =
         oauthProfile.providerId;
       existingUserByEmail.isVerified = true;
 
-      // Add provider to linkedProviders if not already present
       if (!existingUserByEmail.linkedProviders.includes(mappedProvider)) {
         existingUserByEmail.linkedProviders.push(mappedProvider);
       }
 
-      // If no primary provider set and this is an OAuth provider, set it as primary
       if (
         !existingUserByEmail.primaryProvider &&
         mappedProvider !== AuthProvider.EMAIL
@@ -281,14 +244,12 @@ export class OAuthService {
       }
 
       await existingUserByEmail.save();
-
       this.logger.log(
         `Auto-linked ${provider} account to existing user: ${oauthProfile.email}`,
       );
       return existingUserByEmail;
     }
 
-    // Create new user
     const newUser = await this.userModel.create({
       email: oauthProfile.email,
       name: oauthProfile.name,
@@ -304,9 +265,6 @@ export class OAuthService {
     return newUser;
   }
 
-  /**
-   * Generate a random state string for CSRF protection
-   */
   private generateState(): string {
     return (
       Math.random().toString(36).substring(2, 15) +
@@ -314,14 +272,6 @@ export class OAuthService {
     );
   }
 
-  /**
-   * Get user profile from OAuth provider without creating session
-   * Used for account linking flow
-   * @param provider - OAuth provider name
-   * @param code - Authorization code from OAuth callback
-   * @param state - State parameter for CSRF protection
-   * @returns OAuth user profile
-   */
   async getUserProfile(
     provider: OAuthProvider,
     code: string,
@@ -331,35 +281,7 @@ export class OAuthService {
     return strategy.getUserProfile(code, state);
   }
 
-  /**
-   * Get list of supported OAuth providers
-   * @returns Array of provider names
-   */
   getSupportedProviders(): OAuthProvider[] {
     return Array.from(this.strategies.keys());
-  }
-}
-
-/**
- * OAuth Login Response DTO
- */
-export interface OAuthLoginResponseData {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  authProvider: AuthProvider;
-  isVerified: boolean;
-  provider: string;
-}
-
-/**
- * OAuth Login Response DTO static methods
- */
-export class OAuthLoginResponseDto {
-  static success(
-    data: OAuthLoginResponseData,
-  ): ApiResponse<OAuthLoginResponseData> {
-    return ApiResponse.success(data);
   }
 }
