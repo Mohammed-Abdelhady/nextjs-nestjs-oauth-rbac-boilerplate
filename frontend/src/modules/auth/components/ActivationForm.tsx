@@ -1,41 +1,20 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { z } from 'zod';
 import { FormProvider } from 'react-hook-form';
 import { useFormWithValidation } from '@/hooks/useFormWithValidation';
 import { FormInput } from '@/components/forms';
 import { useActivateMutation, useResendActivationMutation } from '../store/authApi';
-import { zodEmail } from '@/lib/validations';
 import { ShieldCheck, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCallback, useMemo, useEffect, useState } from 'react';
 import { toast } from '@/lib/toast';
 import { useAppDispatch } from '@/store/hooks';
 import { setUser } from '@/modules/auth/store/authSlice';
+import { useRouter } from '@/i18n/navigation';
 import { WelcomeModal } from './WelcomeModal';
-
-/**
- * Activation form validation schema
- */
-const createActivationSchema = (t: (key: string) => string) =>
-  z.object({
-    email: zodEmail({
-      required: true,
-      messages: {
-        required: t('errors.emailRequired'),
-        invalid: t('errors.emailInvalid'),
-      },
-    }),
-    code: z
-      .string({ required_error: t('errors.codeRequired') })
-      .trim()
-      .length(6, t('errors.codeLength'))
-      .regex(/^\d{6}$/, t('errors.codeInvalid')),
-  });
-
-type ActivationFormData = z.infer<ReturnType<typeof createActivationSchema>>;
+import { createActivationSchema, type ActivationFormData } from '../utils/activationSchema';
 
 /**
  * ActivationForm component for email verification

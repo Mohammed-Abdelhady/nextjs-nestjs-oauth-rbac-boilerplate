@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { z } from 'zod';
 import { FormProvider } from 'react-hook-form';
@@ -12,7 +12,7 @@ import { KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCallback, useMemo, useEffect } from 'react';
 import { toast } from '@/lib/toast';
-import Link from 'next/link';
+import { Link, useRouter } from '@/i18n/navigation';
 
 /**
  * Reset password form validation schema

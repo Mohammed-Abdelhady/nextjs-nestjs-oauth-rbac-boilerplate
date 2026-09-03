@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { useAppSelector } from '@/store/hooks';
 import { selectUser, selectIsAuthenticated } from '@/modules/auth/store/authSlice';
 import { usePermission } from '../hooks/usePermission';

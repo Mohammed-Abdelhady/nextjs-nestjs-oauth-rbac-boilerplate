@@ -1,5 +1,5 @@
 import * as React from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -51,7 +51,7 @@ export function IconLinkButton({
         variantStyles[variant],
         className,
       )}
-      data-testid={testId}
+      data-testid={testId ?? 'icon-link-button'}
     >
       <Icon className={cn('w-6 h-6 -ms-2', iconStyles[variant])} />
       <span className="ms-4">{children}</span>

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Rocket, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -38,13 +38,18 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              <Button asChild className="w-full sm:w-auto">
+              <Button asChild className="w-full sm:w-auto" data-testid="cta-primary-button">
                 <Link href="/auth/login">
                   <ChevronRight className="w-5 h-5 mr-2" />
                   {t('ctaPrimary')}
                 </Link>
               </Button>
-              <Button variant="outline" asChild className="w-full sm:w-auto">
+              <Button
+                variant="outline"
+                asChild
+                className="w-full sm:w-auto"
+                data-testid="cta-secondary-button"
+              >
                 <Link
                   href="https://github.com/anthropics/claude-code"
                   target="_blank"

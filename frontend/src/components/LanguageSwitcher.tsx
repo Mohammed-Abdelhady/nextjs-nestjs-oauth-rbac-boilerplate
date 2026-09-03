@@ -1,28 +1,23 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
-import { routing } from '@/i18n/routing';
+import { useLocale } from 'next-intl';
+import { usePathname, useRouter } from '@/i18n/navigation';
 
 export function LanguageSwitcher() {
   const pathname = usePathname();
   const router = useRouter();
+  const currentLocale = useLocale();
 
-  const handleLanguageChange = (newLocale: string) => {
-    // Extract the current path without the locale prefix
-    const segments = pathname.split('/');
-    segments[1] = newLocale; // Replace locale segment
-    const newPath = segments.join('/');
-
-    router.push(newPath);
-    router.refresh();
+  const handleLanguageChange = (newLocale: 'en' | 'ar') => {
+    router.replace(pathname, { locale: newLocale });
   };
-
-  const currentLocale = pathname.split('/')[1] || routing.defaultLocale;
 
   return (
     <div className="flex gap-2 items-center">
       <button
+        type="button"
         onClick={() => handleLanguageChange('en')}
+        data-testid="language-switcher-en"
         className={`px-3 py-1 rounded ${
           currentLocale === 'en'
             ? 'bg-primary text-primary-foreground'
@@ -33,7 +28,9 @@ export function LanguageSwitcher() {
         English
       </button>
       <button
+        type="button"
         onClick={() => handleLanguageChange('ar')}
+        data-testid="language-switcher-ar"
         className={`px-3 py-1 rounded ${
           currentLocale === 'ar'
             ? 'bg-primary text-primary-foreground'

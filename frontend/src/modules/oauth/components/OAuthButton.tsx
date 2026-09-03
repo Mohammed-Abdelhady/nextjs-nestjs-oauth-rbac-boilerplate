@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useGetAuthorizationUrlQuery, useHandleCallbackMutation } from '../api';

@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { z } from 'zod';
 import { FormProvider } from 'react-hook-form';
@@ -12,7 +11,7 @@ import { Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCallback, useMemo } from 'react';
 import { toast } from '@/lib/toast';
-import Link from 'next/link';
+import { Link, useRouter } from '@/i18n/navigation';
 
 /**
  * Forgot password form validation schema

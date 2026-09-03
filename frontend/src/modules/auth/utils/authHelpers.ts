@@ -49,29 +49,60 @@ export function isTokenExpired(token: string): boolean | null {
   }
 }
 
+const DEFAULT_REDIRECT_PATH = '/dashboard';
+
+const AUTH_PAGES = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+  '/auth/activate',
+];
+
 /**
- * Determines the redirect path after login
- * Prioritizes query parameter, then defaults to home
+ * Determines the redirect path after authentication
+ * Accepts only same-origin relative paths
  *
- * @param pathname - Current pathname or redirect query param
- * @returns Path to redirect to after login
+ * @param pathname - Current pathname or redirect query parameter
+ * @param defaultPath - Fallback path when candidate is rejected (defaults to /dashboard)
+ * @returns Safe relative path to redirect to
  *
  * @example
  * getRedirectPath('/dashboard') // '/dashboard'
- * getRedirectPath('/auth/login') // '/'
- * getRedirectPath('') // '/'
+ * getRedirectPath('https://evil.com') // '/dashboard'
+ * getRedirectPath('/auth/login') // '/dashboard'
  */
-export function getRedirectPath(pathname: string): string {
-  // Don't redirect back to auth pages
-  const authPages = [
-    '/auth/login',
-    '/auth/register',
-    '/auth/forgot-password',
-    '/auth/reset-password',
-  ];
+export function getRedirectPath(
+  pathname?: string | null,
+  defaultPath: string = DEFAULT_REDIRECT_PATH,
+): string {
+  if (!pathname || typeof pathname !== 'string') {
+    return defaultPath;
+  }
 
-  if (!pathname || authPages.some((page) => pathname.startsWith(page))) {
-    return '/';
+  // Must start with a single '/' and not '//' or '/\'
+  if (!pathname.startsWith('/') || pathname.startsWith('//') || pathname.startsWith('/\\')) {
+    return defaultPath;
+  }
+
+  // Must not contain a scheme
+  const hasScheme =
+    /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(pathname) ||
+    pathname.includes('://') ||
+    pathname.toLowerCase().includes('javascript:') ||
+    pathname.toLowerCase().includes('data:');
+  if (hasScheme) {
+    return defaultPath;
+  }
+
+  // Must not be an auth page
+  const cleanPath = pathname.split('?')[0].split('#')[0];
+  const isAuthPage =
+    cleanPath === '/auth' ||
+    cleanPath.startsWith('/auth/') ||
+    AUTH_PAGES.some((page) => cleanPath === page || cleanPath.startsWith(`${page}/`));
+  if (isAuthPage) {
+    return defaultPath;
   }
 
   return pathname;

@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { Link, usePathname } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import {
@@ -154,13 +153,15 @@ export function DashboardNav({ onNavigate }: DashboardNavProps = {}) {
 
   const renderNavItem = (item: NavItem) => {
     const Icon = item.icon;
-    const isActive = pathname?.startsWith(item.href);
+    const isActive =
+      pathname === item.href || (Boolean(pathname) && pathname.startsWith(`${item.href}/`));
     const label = t(item.labelKey);
 
     const navLink = (
       <Link
         href={item.href}
         onClick={onNavigate}
+        aria-current={isActive ? 'page' : undefined}
         className={cn(
           'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
           isActive
@@ -211,7 +212,9 @@ export function DashboardNav({ onNavigate }: DashboardNavProps = {}) {
               <div className="space-y-1">
                 {/* Section Header */}
                 <button
+                  type="button"
                   onClick={() => toggleSection(item.titleKey)}
+                  aria-expanded={!isCollapsed}
                   className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                   data-testid={`nav-section-${item.titleKey}`}
                 >

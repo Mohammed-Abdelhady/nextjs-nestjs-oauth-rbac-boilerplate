@@ -1,10 +1,9 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
-import Link from 'next/link';
 
 /**
  * OAuth Error Page
@@ -82,6 +81,7 @@ export default function OAuthErrorPage() {
           If the problem persists, please{' '}
           <Link
             href="/contact"
+            data-testid="contact-support-link"
             className="text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
           >
             contact support

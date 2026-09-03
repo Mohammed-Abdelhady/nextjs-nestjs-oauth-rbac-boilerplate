@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname } from '@/i18n/navigation';
 import { useAppSelector } from '@/store/hooks';
 import { selectIsAuthenticated, selectAuthLoading } from '@/modules/auth/store/authSlice';
 

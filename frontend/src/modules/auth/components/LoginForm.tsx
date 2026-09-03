@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { z } from 'zod';
 import { FormProvider } from 'react-hook-form';
@@ -9,7 +9,7 @@ import { FormInput, FormPassword } from '@/components/forms';
 import { useLoginMutation } from '../store/authApi';
 import { translateAuthError, getRedirectPath } from '../utils/authHelpers';
 import { zodEmail } from '@/lib/validations';
-import Link from 'next/link';
+import { Link, useRouter } from '@/i18n/navigation';
 import { UserPlus, LogIn } from 'lucide-react';
 import { IconLinkButton } from '@/components/ui/icon-link-button';
 import { Button } from '@/components/ui/button';
@@ -96,7 +96,7 @@ export function LoginForm() {
           }
         }
 
-        const redirectPath = getRedirectPath(explicitRedirect ?? defaultPath);
+        const redirectPath = getRedirectPath(explicitRedirect, defaultPath);
         router.push(redirectPath);
       } catch (err) {
         // Handle API errors with translation

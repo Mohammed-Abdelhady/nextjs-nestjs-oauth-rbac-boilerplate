@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { RefreshCw, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -146,6 +146,7 @@ export function ProfileSyncStatus() {
           onClick={handleManualSync}
           disabled={!canSync || isSyncInitiating || isSyncing}
           className="w-full whitespace-normal"
+          data-testid="manual-sync-button"
         >
           {isSyncInitiating || isSyncing ? (
             <>

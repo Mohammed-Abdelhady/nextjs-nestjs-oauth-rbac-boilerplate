@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { CheckCircle2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useAppSelector } from '@/store/hooks';
@@ -60,6 +60,7 @@ export function WelcomeModal({ isOpen, userName, onClose }: WelcomeModalProps) {
           <button
             type="button"
             onClick={handleGetStarted}
+            data-testid="welcome-get-started-button"
             className="w-full max-w-xs bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-lg px-5 py-3 transition-all duration-150 focus:outline-none focus:ring-4 focus:ring-primary/50"
             aria-label={t('cta')}
           >
