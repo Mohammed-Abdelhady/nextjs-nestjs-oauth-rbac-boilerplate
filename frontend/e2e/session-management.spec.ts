@@ -196,7 +196,7 @@ test.describe('Session Management', () => {
 
   test('should auto-refresh session list every 30 seconds', async ({ page }) => {
     // Get initial timestamp from a session
-    const initialTime = await page
+    await page
       .locator('[data-testid^="session-card-"]')
       .first()
       .getByText(/last active/i)
@@ -217,7 +217,7 @@ test.describe('Session Management', () => {
     expect(newTime).toBeDefined();
   });
 
-  test('should show empty state when no sessions exist', async ({ page }) => {
+  test('should show empty state when no sessions exist', async () => {
     // This test would require manually deleting all sessions via API
     // Skipping for now as it's an edge case
     test.skip(true, 'Requires API setup to clear all sessions');

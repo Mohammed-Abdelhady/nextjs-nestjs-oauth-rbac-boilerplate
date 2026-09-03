@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { parseUserAgent, getDeviceLabel, getDeviceIconName } from '../parseUserAgent';
 
 describe('parseUserAgent', () => {
