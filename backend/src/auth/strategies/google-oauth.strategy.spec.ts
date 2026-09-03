@@ -6,7 +6,8 @@ describe('GoogleOAuthStrategy', () => {
   let strategy: GoogleOAuthStrategy;
   let configService: jest.Mocked<ConfigService>;
 
-  const mockConfig: Record<string, string> = {
+  const mockConfig: Record<string, string | boolean> = {
+    'oauth.google.enabled': true,
     'oauth.google.clientId': 'test-client-id',
     'oauth.google.clientSecret': 'test-client-secret',
     'oauth.google.callbackUrl':
@@ -15,7 +16,10 @@ describe('GoogleOAuthStrategy', () => {
 
   beforeEach(async () => {
     configService = {
-      get: jest.fn((key: string) => mockConfig[key]),
+      get: jest.fn(
+        <T = unknown>(key: string, defaultValue?: T): T =>
+          (mockConfig[key] as T) ?? (defaultValue as T),
+      ),
     } as unknown as jest.Mocked<ConfigService>;
 
     const module: TestingModule = await Test.createTestingModule({

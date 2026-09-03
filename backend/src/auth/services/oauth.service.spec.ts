@@ -31,6 +31,8 @@ describe('OAuthService', () => {
     name: 'Test User',
     role: 'user',
     authProvider: AuthProvider.GOOGLE,
+    primaryProvider: 'google',
+    linkedProviders: ['google'],
     isVerified: true,
     googleId: 'google-123',
     save: jest.fn().mockResolvedValue(undefined),
@@ -58,6 +60,7 @@ describe('OAuthService', () => {
     // Mock GoogleOAuthStrategy
     googleStrategy = {
       provider: 'google',
+      isEnabled: true,
       getAuthorizationUrl: jest.fn(),
       getUserProfile: jest.fn(),
     } as unknown as jest.Mocked<GoogleOAuthStrategy>;
@@ -65,6 +68,7 @@ describe('OAuthService', () => {
     // Mock GitHubOAuthStrategy
     githubStrategy = {
       provider: 'github',
+      isEnabled: true,
       getAuthorizationUrl: jest.fn(),
       getUserProfile: jest.fn(),
     } as unknown as jest.Mocked<GitHubOAuthStrategy>;
@@ -72,6 +76,7 @@ describe('OAuthService', () => {
     // Mock FacebookOAuthStrategy
     facebookStrategy = {
       provider: 'facebook',
+      isEnabled: true,
       getAuthorizationUrl: jest.fn(),
       getUserProfile: jest.fn(),
     } as unknown as jest.Mocked<FacebookOAuthStrategy>;
@@ -209,6 +214,8 @@ describe('OAuthService', () => {
         ...mockUser,
         googleId: undefined,
         authProvider: AuthProvider.EMAIL,
+        primaryProvider: 'email',
+        linkedProviders: ['email'],
         save: jest.fn().mockResolvedValue(undefined),
       };
       userModel.findOne
@@ -248,6 +255,8 @@ describe('OAuthService', () => {
         googleId: 'google-123',
         isVerified: true,
         authProvider: AuthProvider.GOOGLE,
+        primaryProvider: 'google',
+        linkedProviders: ['google'],
         role: 'user',
       });
     });
@@ -288,6 +297,8 @@ describe('OAuthService', () => {
       name: 'GitHub User',
       role: 'user',
       authProvider: AuthProvider.GITHUB,
+      primaryProvider: 'github',
+      linkedProviders: ['github'],
       isVerified: true,
       githubId: 'github-456',
       save: jest.fn().mockResolvedValue(undefined),
@@ -336,6 +347,8 @@ describe('OAuthService', () => {
         githubId: 'github-456',
         isVerified: true,
         authProvider: AuthProvider.GITHUB,
+        primaryProvider: 'github',
+        linkedProviders: ['github'],
         role: 'user',
       });
     });
@@ -345,6 +358,8 @@ describe('OAuthService', () => {
         ...mockGitHubUser,
         githubId: undefined,
         authProvider: AuthProvider.EMAIL,
+        primaryProvider: 'email',
+        linkedProviders: ['email'],
         save: jest.fn().mockResolvedValue(undefined),
       };
       userModel.findOne
@@ -373,6 +388,8 @@ describe('OAuthService', () => {
       name: 'Facebook User',
       role: 'user',
       authProvider: AuthProvider.FACEBOOK,
+      primaryProvider: 'facebook',
+      linkedProviders: ['facebook'],
       isVerified: true,
       facebookId: 'facebook-789',
       save: jest.fn().mockResolvedValue(undefined),
@@ -425,6 +442,8 @@ describe('OAuthService', () => {
         facebookId: 'facebook-789',
         isVerified: true,
         authProvider: AuthProvider.FACEBOOK,
+        primaryProvider: 'facebook',
+        linkedProviders: ['facebook'],
         role: 'user',
       });
     });
@@ -434,6 +453,8 @@ describe('OAuthService', () => {
         ...mockFacebookUser,
         facebookId: undefined,
         authProvider: AuthProvider.EMAIL,
+        primaryProvider: 'email',
+        linkedProviders: ['email'],
         save: jest.fn().mockResolvedValue(undefined),
       };
       userModel.findOne

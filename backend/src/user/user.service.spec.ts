@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { UserService } from './user.service';
 import { User } from './schemas/user.schema';
 import { UserRole } from './enums/user-role.enum';
+import { Role } from '../role/schemas/role.schema';
 import { SessionService } from '../auth/services/session.service';
 import { AppException } from '../common/exceptions/app.exception';
 import { ErrorCode } from '../common/enums/error-code.enum';
@@ -47,6 +48,12 @@ describe('UserService', () => {
     findById: jest.fn(),
   };
 
+  const mockRoleModel = {
+    findOne: jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue({ permissions: [] }),
+    }),
+  };
+
   const mockSessionService = {
     getUserSessions: jest.fn().mockResolvedValue([mockSession]),
     getSessionByToken: jest.fn().mockResolvedValue(mockSession),
@@ -63,6 +70,10 @@ describe('UserService', () => {
         {
           provide: getModelToken(User.name),
           useValue: mockUserModel,
+        },
+        {
+          provide: getModelToken(Role.name),
+          useValue: mockRoleModel,
         },
         {
           provide: SessionService,

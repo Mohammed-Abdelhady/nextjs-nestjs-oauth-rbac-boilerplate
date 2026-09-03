@@ -6,7 +6,8 @@ describe('FacebookOAuthStrategy', () => {
   let strategy: FacebookOAuthStrategy;
   let configService: jest.Mocked<ConfigService>;
 
-  const mockConfig: Record<string, string> = {
+  const mockConfig: Record<string, string | boolean> = {
+    'oauth.facebook.enabled': true,
     'oauth.facebook.clientId': 'test-app-id',
     'oauth.facebook.clientSecret': 'test-app-secret',
     'oauth.facebook.callbackUrl':
@@ -15,7 +16,10 @@ describe('FacebookOAuthStrategy', () => {
 
   beforeEach(async () => {
     configService = {
-      get: jest.fn((key: string) => mockConfig[key]),
+      get: jest.fn(
+        <T = unknown>(key: string, defaultValue?: T): T =>
+          (mockConfig[key] as T) ?? (defaultValue as T),
+      ),
     } as unknown as jest.Mocked<ConfigService>;
 
     const module: TestingModule = await Test.createTestingModule({

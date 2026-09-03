@@ -49,19 +49,19 @@ export class ErrorDetails {
     example: 'INVALID_CREDENTIALS',
     enum: Object.values(ErrorCode),
   })
-  code: ErrorCode;
+  code!: ErrorCode;
 
   @ApiProperty({
     description: 'Human-readable error message',
     example: 'Invalid email or password',
   })
-  message: string;
+  message!: string;
 
   @ApiProperty({
     description: 'Optional additional context (e.g., field errors, retry info)',
     example: { remainingAttempts: 3 },
     required: false,
-    type: 'object',
+    type: Object,
     additionalProperties: true,
   })
   details?: Record<string, unknown>;
