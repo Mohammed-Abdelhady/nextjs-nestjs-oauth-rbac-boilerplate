@@ -25,6 +25,7 @@ import { SessionCookieService } from './services/session-cookie.service';
 import { SessionService } from './services/session.service';
 import { VerificationCodeService } from './services/verification-code.service';
 import { getEffectivePermissions } from './utils/permissions.util';
+import { resolveActivatedUser } from './utils/activation.util';
 
 @Injectable()
 export class AuthService {
@@ -79,14 +80,8 @@ export class AuthService {
         dto.code,
       );
 
-    const user = await this.userModel.create({
-      email: pending.email,
-      password: pending.hashedPassword,
-      name: pending.name,
-      isVerified: true,
-    });
-
-    this.logger.log(`User created: ${user.email}`);
+    const user = await resolveActivatedUser(pending, this.userModel);
+    this.logger.log(`Account activated: ${user.email}`);
 
     const userAgent = response.req.headers['user-agent'] || 'Unknown';
     const ip = response.req.ip || '127.0.0.1';

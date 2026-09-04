@@ -3,7 +3,9 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UserProfileController } from './user-profile.controller';
 import { UserSessionsController } from './user-sessions.controller';
 import { UserProvidersController } from './user-providers.controller';
-import { UserService } from './user.service';
+import { UserProfileService } from './services/user-profile.service';
+import { UserSessionsService } from './services/user-sessions.service';
+import { UserPermissionsService } from './services/user-permissions.service';
 import { User, UserSchema } from './schemas/user.schema';
 import { Session, SessionSchema } from '../session/schemas/session.schema';
 import { Role, RoleSchema } from '../role/schemas/role.schema';
@@ -27,11 +29,18 @@ import { AuthModule } from '../auth/auth.module';
     UserProvidersController,
   ],
   providers: [
-    UserService,
+    UserProfileService,
+    UserSessionsService,
+    UserPermissionsService,
     SessionService,
     AccountLinkingService,
     ProfileSyncService,
   ],
-  exports: [MongooseModule, UserService],
+  exports: [
+    MongooseModule,
+    UserProfileService,
+    UserSessionsService,
+    UserPermissionsService,
+  ],
 })
 export class UserModule {}

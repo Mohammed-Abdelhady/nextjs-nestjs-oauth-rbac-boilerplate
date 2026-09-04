@@ -23,7 +23,11 @@ import { RoleService } from './role.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { ListRolesQueryDto } from './dto/list-roles-query.dto';
-import { RoleResponseDto, RoleListData } from './dto/role-response.dto';
+import {
+  RoleResponseDto,
+  RoleListData,
+  RoleUpdateResponseDto,
+} from './dto/role-response.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { PermissionGuard } from '../common/guards/permission.guard';
 import { RequirePermissions } from '../common/decorators/permissions.decorator';
@@ -145,7 +149,8 @@ export class RoleController {
   @ApiOperation({
     summary: 'Update a role',
     description:
-      'Update role name, description, or permissions. Protected roles cannot be modified.',
+      'Update role name, description, or permissions. System roles keep their slug. ' +
+      'Renaming a custom role moves every user assigned to it.',
   })
   @ApiParam({
     name: 'idOrSlug',
@@ -155,11 +160,11 @@ export class RoleController {
   @ApiResponse({
     status: 200,
     description: 'Role updated successfully',
-    type: RoleResponseDto,
+    type: RoleUpdateResponseDto,
   })
   @ApiResponse({
     status: 403,
-    description: 'Cannot modify protected role',
+    description: 'Cannot rename a system role or strip the admin wildcard',
   })
   @ApiResponse({
     status: 404,
@@ -168,7 +173,7 @@ export class RoleController {
   async update(
     @Param('idOrSlug') idOrSlug: string,
     @Body() dto: UpdateRoleDto,
-  ): Promise<ApiResponseDto<RoleResponseDto>> {
+  ): Promise<ApiResponseDto<RoleUpdateResponseDto>> {
     const data = await this.roleService.update(idOrSlug, dto);
     return {
       success: true,
@@ -186,7 +191,7 @@ export class RoleController {
   @ApiOperation({
     summary: 'Delete a role',
     description:
-      'Delete a role if no users are assigned to it. Protected roles cannot be deleted.',
+      'Delete a role if no users are assigned to it. System and protected roles cannot be deleted.',
   })
   @ApiParam({
     name: 'idOrSlug',
@@ -203,7 +208,7 @@ export class RoleController {
   })
   @ApiResponse({
     status: 403,
-    description: 'Cannot delete protected role',
+    description: 'Cannot delete a system or protected role',
   })
   @ApiResponse({
     status: 404,

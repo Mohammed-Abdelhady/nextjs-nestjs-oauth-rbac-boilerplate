@@ -15,7 +15,7 @@ import {
   ApiParam,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { UserService } from './user.service';
+import { UserSessionsService } from './services/user-sessions.service';
 import { AuthGuard, RequestWithUser } from '../auth/guards/auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { SessionListData } from './dto/user-profile.dto';
@@ -32,7 +32,7 @@ import { SessionCookieService } from '../auth/services/session-cookie.service';
 @UseGuards(AuthGuard)
 export class UserSessionsController {
   constructor(
-    private readonly userService: UserService,
+    private readonly userSessionsService: UserSessionsService,
     private readonly sessionCookieService: SessionCookieService,
   ) {}
 
@@ -53,7 +53,7 @@ export class UserSessionsController {
     @Req() request: RequestWithUser,
   ): Promise<ApiResponse<SessionListData>> {
     const currentSessionToken = this.sessionCookieService.read(request) || '';
-    return this.userService.getSessions(userId, currentSessionToken);
+    return this.userSessionsService.getSessions(userId, currentSessionToken);
   }
 
   /**
@@ -79,7 +79,7 @@ export class UserSessionsController {
     @Req() request: RequestWithUser,
   ): Promise<ApiResponse<{ message: string }>> {
     const currentSessionToken = this.sessionCookieService.read(request) || '';
-    return this.userService.revokeSession(
+    return this.userSessionsService.revokeSession(
       userId,
       sessionId,
       currentSessionToken,
@@ -103,6 +103,9 @@ export class UserSessionsController {
     @Req() request: RequestWithUser,
   ): Promise<ApiResponse<{ revokedCount: number }>> {
     const currentSessionToken = this.sessionCookieService.read(request) || '';
-    return this.userService.revokeAllOtherSessions(userId, currentSessionToken);
+    return this.userSessionsService.revokeAllOtherSessions(
+      userId,
+      currentSessionToken,
+    );
   }
 }

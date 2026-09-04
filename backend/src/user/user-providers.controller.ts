@@ -16,7 +16,7 @@ import {
   ApiParam,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { UserService } from './user.service';
+import { UserProfileService } from './services/user-profile.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UserProfileDto } from './dto/user-profile.dto';
@@ -41,7 +41,7 @@ import { AuthProvider } from './enums/auth-provider.enum';
 @UseGuards(AuthGuard)
 export class UserProvidersController {
   constructor(
-    private readonly userService: UserService,
+    private readonly userProfileService: UserProfileService,
     private readonly accountLinkingService: AccountLinkingService,
     private readonly oauthService: OAuthService,
     private readonly profileSyncService: ProfileSyncService,
@@ -64,15 +64,12 @@ export class UserProvidersController {
     const providers =
       await this.accountLinkingService.getLinkedProviders(userId);
 
-    // Get user to find primary provider
-    const user = await this.userService['userModel']
-      .findById(userId)
-      .select('primaryProvider')
-      .exec();
+    const primaryProvider =
+      await this.userProfileService.getPrimaryProvider(userId);
 
     return ApiResponse.success({
       providers: providers as string[],
-      primaryProvider: user?.primaryProvider,
+      primaryProvider,
     });
   }
 
@@ -110,7 +107,7 @@ export class UserProvidersController {
     );
 
     // Return updated user profile
-    return this.userService.getProfile(userId);
+    return this.userProfileService.getProfile(userId);
   }
 
   /**
@@ -143,7 +140,7 @@ export class UserProvidersController {
     await this.accountLinkingService.unlinkProvider(userId, authProvider);
 
     // Return updated user profile
-    return this.userService.getProfile(userId);
+    return this.userProfileService.getProfile(userId);
   }
 
   /**
@@ -168,7 +165,7 @@ export class UserProvidersController {
     await this.accountLinkingService.setPrimaryProvider(userId, dto.provider);
 
     // Return updated user profile
-    return this.userService.getProfile(userId);
+    return this.userProfileService.getProfile(userId);
   }
 
   /**

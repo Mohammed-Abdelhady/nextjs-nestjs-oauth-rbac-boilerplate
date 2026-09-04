@@ -2,22 +2,22 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
-import { UserService } from './user.service';
-import { User } from './schemas/user.schema';
-import { UserRole } from './enums/user-role.enum';
-import { Role } from '../role/schemas/role.schema';
-import { SessionService } from '../auth/services/session.service';
-import { AppException } from '../common/exceptions/app.exception';
-import { ErrorCode } from '../common/enums/error-code.enum';
+import { UserProfileService } from './user-profile.service';
+import { User } from '../schemas/user.schema';
+import { UserRole } from '../enums/user-role.enum';
+import { AuthProvider } from '../enums/auth-provider.enum';
+import { Role } from '../../role/schemas/role.schema';
+import { SessionService } from '../../auth/services/session.service';
+import { AppException } from '../../common/exceptions/app.exception';
+import { ErrorCode } from '../../common/enums/error-code.enum';
 
 jest.mock('bcrypt');
 
-describe('UserService', () => {
-  let service: UserService;
+describe('UserProfileService', () => {
+  let service: UserProfileService;
 
   const mockUserId = new Types.ObjectId().toString();
   const mockSessionToken = 'mock-session-token';
-  const mockSessionId = new Types.ObjectId().toString();
 
   const mockUser = {
     _id: new Types.ObjectId(mockUserId),
@@ -32,18 +32,6 @@ describe('UserService', () => {
     save: jest.fn().mockResolvedValue(true),
   };
 
-  const mockSession = {
-    _id: new Types.ObjectId(mockSessionId),
-    user: new Types.ObjectId(mockUserId),
-    tokenHash: mockSessionToken,
-    userAgent: 'Mozilla/5.0',
-    ip: '127.0.0.1',
-    deviceName: 'Chrome',
-    isValid: true,
-    lastUsedAt: new Date(),
-    createdAt: new Date(),
-  };
-
   const mockUserModel = {
     findById: jest.fn(),
   };
@@ -55,36 +43,26 @@ describe('UserService', () => {
   };
 
   const mockSessionService = {
-    getUserSessions: jest.fn().mockResolvedValue([mockSession]),
-    getSessionByToken: jest.fn().mockResolvedValue(mockSession),
-    getSessionById: jest.fn().mockResolvedValue(mockSession),
     invalidateAllSessions: jest.fn().mockResolvedValue(1),
     invalidateAllSessionsExcept: jest.fn().mockResolvedValue(1),
-    invalidateSessionById: jest.fn().mockResolvedValue(true),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        UserService,
-        {
-          provide: getModelToken(User.name),
-          useValue: mockUserModel,
-        },
-        {
-          provide: getModelToken(Role.name),
-          useValue: mockRoleModel,
-        },
-        {
-          provide: SessionService,
-          useValue: mockSessionService,
-        },
+        UserProfileService,
+        { provide: getModelToken(User.name), useValue: mockUserModel },
+        { provide: getModelToken(Role.name), useValue: mockRoleModel },
+        { provide: SessionService, useValue: mockSessionService },
       ],
     }).compile();
 
-    service = module.get<UserService>(UserService);
+    service = module.get<UserProfileService>(UserProfileService);
 
     jest.clearAllMocks();
+    mockRoleModel.findOne.mockReturnValue({
+      exec: jest.fn().mockResolvedValue({ permissions: [] }),
+    });
   });
 
   it('should be defined', () => {
@@ -116,6 +94,12 @@ describe('UserService', () => {
       await expect(service.getProfile(mockUserId)).rejects.toThrow(
         AppException,
       );
+    });
+
+    it('should reject a malformed user id', async () => {
+      await expect(service.getProfile('not-an-id')).rejects.toMatchObject({
+        code: ErrorCode.INVALID_INPUT,
+      });
     });
   });
 
@@ -194,19 +178,13 @@ describe('UserService', () => {
     it('should throw error if current password is incorrect', async () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      try {
-        await service.changePassword(
+      await expect(
+        service.changePassword(
           mockUserId,
           { currentPassword: 'wrongPassword', newPassword: 'NewPassword123' },
           mockSessionToken,
-        );
-        fail('Expected AppException to be thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(AppException);
-        expect((error as AppException).code).toBe(
-          ErrorCode.INVALID_CURRENT_PASSWORD,
-        );
-      }
+        ),
+      ).rejects.toMatchObject({ code: ErrorCode.INVALID_CURRENT_PASSWORD });
     });
 
     it('should throw error if new password is same as current', async () => {
@@ -214,100 +192,28 @@ describe('UserService', () => {
         .mockResolvedValueOnce(true) // current password valid
         .mockResolvedValueOnce(true); // new password is same
 
-      try {
-        await service.changePassword(
+      await expect(
+        service.changePassword(
           mockUserId,
           { currentPassword: 'oldPassword', newPassword: 'oldPassword' },
           mockSessionToken,
-        );
-        fail('Expected AppException to be thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(AppException);
-        expect((error as AppException).code).toBe(ErrorCode.SAME_PASSWORD);
-      }
+        ),
+      ).rejects.toMatchObject({ code: ErrorCode.SAME_PASSWORD });
     });
-  });
 
-  describe('getSessions', () => {
-    it('should return all active sessions', async () => {
-      const result = await service.getSessions(mockUserId, mockSessionToken);
-
-      expect(result.success).toBe(true);
-      expect(result.data?.sessions).toHaveLength(1);
-      expect(result.data?.sessions[0].isCurrent).toBe(true);
-    });
-  });
-
-  describe('revokeSession', () => {
-    it('should revoke a session', async () => {
-      const differentSessionId = new Types.ObjectId().toString();
-      mockSessionService.getSessionByToken.mockResolvedValue({
-        ...mockSession,
-        _id: new Types.ObjectId(),
+    it('should refuse an account without a password', async () => {
+      mockUserModel.findById.mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue({ ...mockUser, password: undefined }),
       });
 
-      const result = await service.revokeSession(
-        mockUserId,
-        differentSessionId,
-        mockSessionToken,
-      );
-
-      expect(result.success).toBe(true);
-      expect(mockSessionService.invalidateSessionById).toHaveBeenCalled();
-    });
-
-    it('should throw error when revoking current session', async () => {
-      // Ensure getSessionByToken returns a session with the same ID we're trying to revoke
-      mockSessionService.getSessionByToken.mockResolvedValue(mockSession);
-
-      try {
-        await service.revokeSession(
+      await expect(
+        service.changePassword(
           mockUserId,
-          mockSessionId,
+          { currentPassword: 'oldPassword', newPassword: 'NewPassword123' },
           mockSessionToken,
-        );
-        fail('Expected AppException to be thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(AppException);
-        expect((error as AppException).code).toBe(
-          ErrorCode.CANNOT_REVOKE_CURRENT_SESSION,
-        );
-      }
-    });
-
-    it('should throw error when session not found', async () => {
-      const differentSessionId = new Types.ObjectId().toString();
-      mockSessionService.getSessionByToken.mockResolvedValue({
-        ...mockSession,
-        _id: new Types.ObjectId(),
-      });
-      mockSessionService.invalidateSessionById.mockResolvedValue(false);
-
-      try {
-        await service.revokeSession(
-          mockUserId,
-          differentSessionId,
-          mockSessionToken,
-        );
-        fail('Expected AppException to be thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(AppException);
-        expect((error as AppException).code).toBe(ErrorCode.SESSION_NOT_FOUND);
-      }
-    });
-  });
-
-  describe('revokeAllOtherSessions', () => {
-    it('should revoke all other sessions', async () => {
-      mockSessionService.invalidateAllSessionsExcept.mockResolvedValue(3);
-
-      const result = await service.revokeAllOtherSessions(
-        mockUserId,
-        mockSessionToken,
-      );
-
-      expect(result.success).toBe(true);
-      expect(result.data?.revokedCount).toBe(3);
+        ),
+      ).rejects.toMatchObject({ code: ErrorCode.INVALID_CURRENT_PASSWORD });
     });
   });
 
@@ -336,6 +242,30 @@ describe('UserService', () => {
       await expect(service.deactivateAccount(mockUserId)).rejects.toThrow(
         AppException,
       );
+    });
+  });
+
+  describe('getPrimaryProvider', () => {
+    it('should return the stored provider', async () => {
+      mockUserModel.findById.mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        exec: jest
+          .fn()
+          .mockResolvedValue({ primaryProvider: AuthProvider.GOOGLE }),
+      });
+
+      expect(await service.getPrimaryProvider(mockUserId)).toBe(
+        AuthProvider.GOOGLE,
+      );
+    });
+
+    it('should return undefined when the user is gone', async () => {
+      mockUserModel.findById.mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(null),
+      });
+
+      expect(await service.getPrimaryProvider(mockUserId)).toBeUndefined();
     });
   });
 });

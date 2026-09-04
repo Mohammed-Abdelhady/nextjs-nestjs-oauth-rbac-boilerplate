@@ -154,4 +154,10 @@ export enum ErrorCode {
   PERMISSION_NOT_FOUND = 'PERMISSION_NOT_FOUND',
   /** Invalid permission format */
   INVALID_PERMISSION_FORMAT = 'INVALID_PERMISSION_FORMAT',
+
+  // Role errors
+  /** Role slug does not exist in the roles collection */
+  ROLE_NOT_FOUND = 'ROLE_NOT_FOUND',
+  /** Only admins may change another user's email address */
+  EMAIL_CHANGE_NOT_ALLOWED = 'EMAIL_CHANGE_NOT_ALLOWED',
 }

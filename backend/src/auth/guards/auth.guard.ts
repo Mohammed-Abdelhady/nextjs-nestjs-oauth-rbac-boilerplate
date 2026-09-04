@@ -17,6 +17,7 @@ import { UserDocument } from '../../user/schemas/user.schema';
 import { Role, RoleDocument } from '../../role/schemas/role.schema';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import { getEffectivePermissions } from '../utils/permissions.util';
 
 export interface RequestWithUser extends Request {
   user?: {
@@ -72,7 +73,10 @@ export class AuthGuard implements CanActivate {
     }
 
     // Compute effective permissions (role + direct)
-    const effectivePermissions = await this.getEffectivePermissions(user);
+    const effectivePermissions = await getEffectivePermissions(
+      user,
+      this.roleModel,
+    );
 
     request.user = {
       id: user._id.toString(),
@@ -85,29 +89,5 @@ export class AuthGuard implements CanActivate {
     request.session = session;
 
     return true;
-  }
-
-  /**
-   * Get effective permissions for a user (role permissions + direct permissions).
-   * @param user - User document
-   * @returns Array of effective permissions (deduplicated)
-   */
-  private async getEffectivePermissions(user: UserDocument): Promise<string[]> {
-    const rolePermissions: string[] = [];
-
-    // Fetch role permissions
-    if (user.role) {
-      const role = await this.roleModel.findOne({ slug: user.role }).exec();
-      if (role && role.permissions) {
-        rolePermissions.push(...role.permissions);
-      }
-    }
-
-    // Combine role permissions with direct user permissions
-    const directPermissions = user.permissions || [];
-    const allPermissions = [...rolePermissions, ...directPermissions];
-
-    // Deduplicate permissions
-    return [...new Set(allPermissions)];
   }
 }

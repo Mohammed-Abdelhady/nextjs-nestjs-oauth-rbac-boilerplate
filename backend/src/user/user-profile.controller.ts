@@ -11,7 +11,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
-import { UserService } from './user.service';
+import { UserProfileService } from './services/user-profile.service';
 import { AuthGuard, RequestWithUser } from '../auth/guards/auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -30,7 +30,7 @@ import { SessionCookieService } from '../auth/services/session-cookie.service';
 @UseGuards(AuthGuard)
 export class UserProfileController {
   constructor(
-    private readonly userService: UserService,
+    private readonly userProfileService: UserProfileService,
     private readonly sessionCookieService: SessionCookieService,
   ) {}
 
@@ -47,7 +47,7 @@ export class UserProfileController {
   async getProfile(
     @CurrentUser('id') userId: string,
   ): Promise<ApiResponse<UserProfileDto>> {
-    return this.userService.getProfile(userId);
+    return this.userProfileService.getProfile(userId);
   }
 
   /**
@@ -65,7 +65,7 @@ export class UserProfileController {
     @CurrentUser('id') userId: string,
     @Body() dto: UpdateProfileDto,
   ): Promise<ApiResponse<UserProfileDto>> {
-    return this.userService.updateProfile(userId, dto);
+    return this.userProfileService.updateProfile(userId, dto);
   }
 
   /**
@@ -90,7 +90,11 @@ export class UserProfileController {
     @Req() request: RequestWithUser,
   ): Promise<ApiResponse<{ message: string }>> {
     const currentSessionToken = this.sessionCookieService.read(request) || '';
-    return this.userService.changePassword(userId, dto, currentSessionToken);
+    return this.userProfileService.changePassword(
+      userId,
+      dto,
+      currentSessionToken,
+    );
   }
 
   /**
@@ -108,6 +112,6 @@ export class UserProfileController {
   async deactivateAccount(
     @CurrentUser('id') userId: string,
   ): Promise<ApiResponse<{ message: string }>> {
-    return this.userService.deactivateAccount(userId);
+    return this.userProfileService.deactivateAccount(userId);
   }
 }

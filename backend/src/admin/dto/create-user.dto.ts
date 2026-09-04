@@ -1,18 +1,21 @@
 import {
   IsEmail,
   IsString,
-  IsEnum,
-  IsIn,
   MinLength,
   MaxLength,
   Matches,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole } from '../../user/enums/user-role.enum';
+import {
+  ROLE_SLUG_MAX_LENGTH,
+  ROLE_SLUG_MESSAGE,
+  ROLE_SLUG_REGEX,
+} from '../../common/constants/roles';
 
 /**
  * DTO for creating a new user via admin panel.
- * ADMIN role cannot be assigned via API.
+ * Any existing role slug is accepted, including custom ones. The service
+ * checks that the role exists and that the actor outranks it.
  */
 export class CreateUserDto {
   @ApiProperty({
@@ -47,11 +50,13 @@ export class CreateUserDto {
   password!: string;
 
   @ApiProperty({
-    description: 'User role (ADMIN cannot be assigned via API)',
-    enum: ['user', 'support', 'manager'],
+    description:
+      'Role slug to assign. Must exist and sit below the actor role level. ' +
+      'ADMIN cannot be assigned through the API.',
     example: 'user',
   })
-  @IsEnum(UserRole)
-  @IsIn([UserRole.USER, UserRole.SUPPORT, UserRole.MANAGER])
-  role!: UserRole;
+  @IsString()
+  @MaxLength(ROLE_SLUG_MAX_LENGTH)
+  @Matches(ROLE_SLUG_REGEX, { message: ROLE_SLUG_MESSAGE })
+  role!: string;
 }

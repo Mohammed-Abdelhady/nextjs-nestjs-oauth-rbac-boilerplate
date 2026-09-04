@@ -59,11 +59,13 @@ export class VerificationCodeService {
 
   /**
    * Store pending registration code and details.
+   * The password hash is omitted when the code only proves ownership of a new
+   * address for an account that already exists.
    */
   async createOrUpdatePendingRegistration(
     email: string,
     name: string,
-    hashedPassword: string,
+    hashedPassword?: string,
   ): Promise<string> {
     const code = this.generateCode();
     const hashedCode = await this.hashService.hash(code);

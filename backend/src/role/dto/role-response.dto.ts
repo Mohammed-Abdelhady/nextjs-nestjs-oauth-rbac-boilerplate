@@ -38,6 +38,13 @@ export class RoleResponseDto {
   isProtected!: boolean;
 
   @ApiProperty({
+    description:
+      'Hierarchy level. An actor can only manage roles below its own level.',
+    example: 1,
+  })
+  level!: number;
+
+  @ApiProperty({
     description: 'Default permissions for this role',
     example: ['posts:create', 'posts:update', 'posts:read:all'],
     type: [String],
@@ -55,6 +62,15 @@ export class RoleResponseDto {
     example: '2024-01-20T14:20:00Z',
   })
   updatedAt!: Date;
+}
+
+export class RoleUpdateResponseDto extends RoleResponseDto {
+  @ApiProperty({
+    description:
+      'Users moved to the new slug by this rename. Zero when the slug is unchanged.',
+    example: 0,
+  })
+  usersMoved!: number;
 }
 
 export class RoleListData {

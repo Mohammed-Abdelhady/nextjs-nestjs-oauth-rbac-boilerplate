@@ -4,12 +4,18 @@ import {
   IsString,
   IsIn,
   IsBoolean,
+  Matches,
+  MaxLength,
   Min,
   Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { UserRole } from '../../user/enums/user-role.enum';
+import {
+  ROLE_SLUG_MAX_LENGTH,
+  ROLE_SLUG_MESSAGE,
+  ROLE_SLUG_REGEX,
+} from '../../common/constants/roles';
 
 /**
  * Query parameters for listing users with pagination and filtering.
@@ -51,14 +57,15 @@ export class ListUsersQueryDto {
   search?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter by role',
-    enum: ['USER', 'SUPPORT', 'MANAGER', 'ADMIN'],
-    example: 'USER',
+    description: 'Filter by role slug, custom roles included',
+    example: 'support',
     type: String,
   })
   @IsOptional()
-  @IsIn([UserRole.USER, UserRole.SUPPORT, UserRole.MANAGER, UserRole.ADMIN])
-  role?: UserRole;
+  @IsString()
+  @MaxLength(ROLE_SLUG_MAX_LENGTH)
+  @Matches(ROLE_SLUG_REGEX, { message: ROLE_SLUG_MESSAGE })
+  role?: string;
 
   @ApiPropertyOptional({
     description: 'Filter by status (active, inactive, deleted)',

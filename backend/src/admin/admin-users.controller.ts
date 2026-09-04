@@ -1,0 +1,270 @@
+import {
+  Controller,
+  Get,
+  Patch,
+  Delete,
+  Post,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiQuery,
+  ApiBody,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
+import { AdminUsersService } from './services/admin-users.service';
+import { AdminUserQueriesService } from './services/admin-user-queries.service';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { PermissionGuard } from '../common/guards/permission.guard';
+import { RequirePermissions } from '../common/decorators/permissions.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { ListUsersQueryDto } from './dto/list-users-query.dto';
+import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { ApiResponse } from '../common/dto/api-response.dto';
+import { AdminUserDto, UserListData } from './dto/admin-user-response.dto';
+import { USER_PERMISSIONS } from '../common/constants/permissions';
+
+/**
+ * Admin endpoints for user records.
+ * Listing and reads cover the actor's own level and below; every mutation
+ * needs the actor's level to exceed the target's level.
+ */
+@ApiTags('admin')
+@ApiBearerAuth('JWT-auth')
+@Controller('admin/users')
+@UseGuards(AuthGuard, PermissionGuard)
+export class AdminUsersController {
+  constructor(
+    private readonly adminUsersService: AdminUsersService,
+    private readonly adminUserQueriesService: AdminUserQueriesService,
+  ) {}
+
+  /**
+   * Create a new user.
+   *
+   * @example POST /admin/users
+   */
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @RequirePermissions(USER_PERMISSIONS.CREATE_ALL)
+  @ApiOperation({
+    summary: 'Create a new user',
+    description:
+      'Creates a new user account. The role must exist and sit below the ' +
+      "actor's own role level. ADMIN cannot be assigned through the API.",
+  })
+  @ApiBody({ type: CreateUserDto })
+  async createUser(
+    @Body() dto: CreateUserDto,
+    @CurrentUser('role') actorRole: string,
+  ): Promise<ApiResponse<AdminUserDto>> {
+    return this.adminUsersService.createUser(dto, actorRole);
+  }
+
+  /**
+   * List users with pagination and filtering.
+   *
+   * @example GET /admin/users?page=1&limit=10&search=john&role=content-editor
+   */
+  @Get()
+  @RequirePermissions(USER_PERMISSIONS.LIST_ALL)
+  @ApiOperation({
+    summary: 'List all users',
+    description:
+      'Returns a paginated list of users with optional filtering by search, ' +
+      "role and status. Covers every role at or below the actor's level, " +
+      'custom roles included.',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number (default: 1)',
+    example: 1,
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Items per page (default: 10, max: 100)',
+    example: 10,
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Search by email or name',
+    example: 'john',
+    type: String,
+  })
+  @ApiQuery({
+    name: 'role',
+    required: false,
+    description: 'Filter by role slug',
+    example: 'support',
+    type: String,
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    description: 'Filter by status (active, inactive, deleted)',
+    enum: ['active', 'inactive', 'deleted'],
+    example: 'active',
+    type: String,
+  })
+  async listUsers(
+    @Query() query: ListUsersQueryDto,
+    @CurrentUser('role') actorRole: string,
+  ): Promise<ApiResponse<UserListData>> {
+    return this.adminUserQueriesService.listUsers(query, actorRole);
+  }
+
+  /**
+   * Get a single user by ID.
+   *
+   * @example GET /admin/users/:id
+   */
+  @Get(':id')
+  @RequirePermissions(USER_PERMISSIONS.READ_ALL)
+  @ApiOperation({
+    summary: 'Get user by ID',
+    description:
+      'Returns detailed information about a specific user. ' +
+      "Only users at or below the actor's role level can be read.",
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'User ID',
+    example: '507f1f77bcf86cd799439011',
+  })
+  async getUserById(
+    @Param('id') id: string,
+    @CurrentUser('role') actorRole: string,
+  ): Promise<ApiResponse<AdminUserDto>> {
+    return this.adminUserQueriesService.getUserById(id, actorRole);
+  }
+
+  /**
+   * Update user name and email.
+   *
+   * @example PATCH /admin/users/:id
+   */
+  @Patch(':id')
+  @RequirePermissions(USER_PERMISSIONS.UPDATE_ALL)
+  @ApiOperation({
+    summary: 'Update user information',
+    description:
+      'Updates user name and/or email. Cannot modify users at or above the ' +
+      "actor's role level, and cannot modify the actor's own account. " +
+      'Changing the email requires an admin actor and marks the account ' +
+      'unverified until the new address confirms a fresh code.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'User ID',
+    example: '507f1f77bcf86cd799439011',
+  })
+  @ApiBody({ type: UpdateUserDto })
+  async updateUser(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserDto,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('role') actorRole: string,
+  ): Promise<ApiResponse<AdminUserDto>> {
+    return this.adminUsersService.updateUser(id, dto, actorId, actorRole);
+  }
+
+  /**
+   * Activate or deactivate a user.
+   *
+   * @example PATCH /admin/users/:id/status
+   */
+  @Patch(':id/status')
+  @RequirePermissions(USER_PERMISSIONS.UPDATE_ALL)
+  @ApiOperation({
+    summary: 'Update user status',
+    description:
+      'Activates or deactivates a user. Cannot modify users at or above the ' +
+      "actor's role level, and cannot modify the actor's own account.",
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'User ID',
+    example: '507f1f77bcf86cd799439011',
+  })
+  @ApiBody({ type: UpdateUserStatusDto })
+  async updateUserStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserStatusDto,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('role') actorRole: string,
+  ): Promise<
+    ApiResponse<{ id: string; isDeleted: boolean; deletedAt?: Date }>
+  > {
+    return this.adminUsersService.updateUserStatus(id, dto, actorId, actorRole);
+  }
+
+  /**
+   * Change a user's role.
+   *
+   * @example PATCH /admin/users/:id/role
+   */
+  @Patch(':id/role')
+  @RequirePermissions(USER_PERMISSIONS.UPDATE_ALL)
+  @ApiOperation({
+    summary: 'Update user role',
+    description:
+      'Assigns a system or custom role. The role must exist and sit below ' +
+      "the actor's own level. ADMIN cannot be assigned through the API.",
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'User ID',
+    example: '507f1f77bcf86cd799439011',
+  })
+  @ApiBody({ type: UpdateUserRoleDto })
+  async updateUserRole(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserRoleDto,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('role') actorRole: string,
+  ): Promise<ApiResponse<{ id: string; role: string }>> {
+    return this.adminUsersService.updateUserRole(id, dto, actorId, actorRole);
+  }
+
+  /**
+   * Soft delete a user.
+   *
+   * @example DELETE /admin/users/:id
+   */
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RequirePermissions(USER_PERMISSIONS.DELETE_ALL)
+  @ApiOperation({
+    summary: 'Delete user',
+    description:
+      'Soft deletes a user account. Cannot delete users at or above the ' +
+      "actor's role level, and cannot delete the actor's own account.",
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'User ID',
+    example: '507f1f77bcf86cd799439011',
+  })
+  async deleteUser(
+    @Param('id') id: string,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('role') actorRole: string,
+  ): Promise<void> {
+    return this.adminUsersService.deleteUser(id, actorId, actorRole);
+  }
+}
