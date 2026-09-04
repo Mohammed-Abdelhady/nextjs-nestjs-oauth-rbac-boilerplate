@@ -2,119 +2,65 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useRouter } from '@/i18n/navigation';
 import { Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { useGetAuthorizationUrlQuery, useHandleCallbackMutation } from '../api';
-import type { OAuthProvider } from '../types';
-import {
-  formatProviderName,
-  getOAuthProviderIconPath,
-  getProviderStyles,
-  openOAuthPopup,
-  waitForOAuthCallback,
-} from '../utils';
+import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
+import { cn } from '@/lib/utils';
+import { getProviderMeta } from '../constants';
+import { currentRedirectPath, startOAuthFlow } from '../utils';
+import type { OAuthProviderSummary } from '../types';
+import { OAuthProviderIcon } from './OAuthProviderIcon';
 
 interface OAuthButtonProps {
-  provider: OAuthProvider;
-  mode?: 'signin' | 'link';
-  onSuccess?: () => void;
-  onError?: (error: string) => void;
+  provider: OAuthProviderSummary;
+  /** Path to return to after sign-in. Defaults to the page's redirect parameter. */
+  redirect?: string;
   disabled?: boolean;
 }
 
 /**
- * OAuthButton Component
- * Displays an icon-only button for OAuth authentication with a specific provider
+ * Icon-only button that hands sign-in over to the backend start route.
+ * The click leaves the page: the backend needs to set a state cookie before
+ * it redirects to the provider.
  */
-export function OAuthButton({ provider, onSuccess, onError, disabled = false }: OAuthButtonProps) {
+export function OAuthButton({ provider, redirect, disabled = false }: OAuthButtonProps) {
   const t = useTranslations('auth.oauth');
-  const tCallback = useTranslations('auth.oauth.callback');
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const { buttonClassName, hoverClassName } = getProviderMeta(provider.id);
 
-  const { data: authUrlData, isLoading: isFetchingUrl } = useGetAuthorizationUrlQuery(provider, {
-    skip: isLoading || disabled,
-  });
-
-  const [handleOAuthCallback] = useHandleCallbackMutation();
-
-  const handleOAuthClick = async () => {
-    if (!authUrlData?.url) {
-      toast.error(t('error', { provider: formatProviderName(provider) }));
-      onError?.(t('error', { provider: formatProviderName(provider) }));
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-
-      const popup = openOAuthPopup(authUrlData.url);
-
-      if (!popup) {
-        throw new Error('Failed to open OAuth popup');
-      }
-
-      const callbackData = await waitForOAuthCallback(popup);
-
-      if (!callbackData || !callbackData.code) {
-        throw new Error('Invalid OAuth callback data');
-      }
-
-      await handleOAuthCallback({
-        provider: callbackData.provider,
-        code: callbackData.code,
-        state: callbackData.state,
-      }).unwrap();
-
-      toast.success(tCallback('success'));
-
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 500);
-
-      onSuccess?.();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'OAuth authentication failed';
-      toast.error(t('error', { provider: formatProviderName(provider) }));
-      onError?.(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleClick = () => {
+    setIsRedirecting(true);
+    startOAuthFlow(provider.id, redirect ?? currentRedirectPath());
   };
 
-  const { bgColor, hoverColor, textColor, borderColor } = getProviderStyles(provider);
-  const providerName = formatProviderName(provider);
+  const isBusy = disabled || isRedirecting;
+  const label = t('signInWith', { provider: provider.displayName });
 
   return (
     <button
       type="button"
-      onClick={handleOAuthClick}
-      disabled={disabled || isLoading || isFetchingUrl}
-      className={`
-        group relative inline-flex h-14 w-14 items-center justify-center rounded-full
-        transition-all duration-200 ease-in-out
-        ${bgColor} ${textColor} ${borderColor}
-        ${!disabled && !isLoading && !isFetchingUrl ? hoverColor : ''}
-        ${disabled || isLoading || isFetchingUrl ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
-        focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
-        disabled:pointer-events-none
-      `}
-      aria-label={t('signInWith', { provider: providerName })}
-      title={t('signInWith', { provider: providerName })}
-      data-testid={`oauth-${provider}-button`}
+      onClick={handleClick}
+      disabled={isBusy}
+      aria-busy={isRedirecting}
+      className={cn(
+        'group relative inline-flex h-14 w-14 items-center justify-center rounded-full',
+        'transition-all duration-200 ease-in-out',
+        FOCUS_RING_CLASSES,
+        'disabled:pointer-events-none',
+        buttonClassName,
+        isBusy ? 'cursor-not-allowed opacity-50' : `cursor-pointer ${hoverClassName}`,
+      )}
+      aria-label={label}
+      title={label}
+      data-testid={`oauth-${provider.id}-button`}
     >
-      {isLoading || isFetchingUrl ? (
-        <Loader2 className="h-6 w-6 animate-spin" aria-hidden="true" />
+      {isRedirecting ? (
+        <Loader2 className="h-6 w-6 motion-safe:animate-spin" aria-hidden="true" />
       ) : (
-        <svg
+        <OAuthProviderIcon
+          providerId={provider.id}
+          displayName={provider.displayName}
           className="h-6 w-6 transition-transform duration-200 group-hover:scale-110"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path d={getOAuthProviderIconPath(provider)} />
-        </svg>
+        />
       )}
 
       <span
@@ -122,12 +68,12 @@ export function OAuthButton({ provider, onSuccess, onError, disabled = false }: 
         absolute -top-10 start-1/2 ltr:-translate-x-1/2 rtl:translate-x-1/2 whitespace-nowrap
         rounded-md bg-gray-900 px-3 py-1.5 text-xs font-medium text-white
         opacity-0 transition-opacity duration-200
-        group-hover:opacity-100
+        group-hover:opacity-100 group-focus-within:opacity-100
         pointer-events-none z-50
         shadow-lg
       "
       >
-        {providerName}
+        {provider.displayName}
         <span
           className="
           absolute -bottom-1 start-1/2 ltr:-translate-x-1/2 rtl:translate-x-1/2

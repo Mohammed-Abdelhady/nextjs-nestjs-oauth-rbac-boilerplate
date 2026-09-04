@@ -17,26 +17,28 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useUnlinkProviderMutation, useSetPrimaryProviderMutation } from '../api';
-import { getOAuthProviderIconPath, formatProviderName, type OAuthProvider } from '@/modules/oauth';
+import { OAuthProviderIcon } from '@/modules/oauth';
 import { parseApiError } from '@/lib/apiError';
+import { useUnlinkProviderMutation, useSetPrimaryProviderMutation } from '../api';
 
 interface LinkedAccountCardProps {
-  provider: string;
+  providerId: string;
+  displayName: string;
   isPrimary: boolean;
   canUnlink: boolean;
-  onLinkSuccess?: () => void;
+  onChange?: () => void;
 }
 
 /**
  * LinkedAccountCard Component
- * Displays a linked OAuth provider with options to set as primary or unlink
+ * One sign-in method with the actions to make it primary or unlink it
  */
 export function LinkedAccountCard({
-  provider,
+  providerId,
+  displayName,
   isPrimary,
   canUnlink,
-  onLinkSuccess,
+  onChange,
 }: LinkedAccountCardProps) {
   const t = useTranslations('settings.accounts');
   const [showUnlinkDialog, setShowUnlinkDialog] = useState(false);
@@ -46,46 +48,44 @@ export function LinkedAccountCard({
 
   const handleUnlink = async () => {
     try {
-      await unlinkProvider(provider.toLowerCase() as OAuthProvider).unwrap();
-      toast.success(t('unlinkSuccess', { provider: formatProviderName(provider) }));
-      onLinkSuccess?.();
+      await unlinkProvider(providerId).unwrap();
+      toast.success(t('unlinkSuccess', { provider: displayName }));
+      onChange?.();
       setShowUnlinkDialog(false);
     } catch (error: unknown) {
       const parsed = parseApiError(error);
-      toast.error(parsed.message || t('unlinkError', { provider: formatProviderName(provider) }));
+      toast.error(parsed.message || t('unlinkError', { provider: displayName }));
     }
   };
 
   const handleSetPrimary = async () => {
     try {
-      await setPrimaryProvider({
-        provider: provider.toLowerCase() as OAuthProvider,
-      }).unwrap();
-      toast.success(t('setPrimarySuccess', { provider: formatProviderName(provider) }));
-      onLinkSuccess?.();
+      await setPrimaryProvider({ provider: providerId }).unwrap();
+      toast.success(t('setPrimarySuccess', { provider: displayName }));
+      onChange?.();
     } catch (error: unknown) {
       const parsed = parseApiError(error);
-      toast.error(
-        parsed.message || t('setPrimaryError', { provider: formatProviderName(provider) }),
-      );
+      toast.error(parsed.message || t('setPrimaryError', { provider: displayName }));
     }
   };
 
   return (
     <>
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden" data-testid={`linked-account-${providerId}`}>
         <CardContent className="p-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between flex-wrap">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d={getOAuthProviderIconPath(provider.toLowerCase())} />
-                </svg>
+                <OAuthProviderIcon
+                  providerId={providerId}
+                  displayName={displayName}
+                  className="h-5 w-5"
+                />
               </div>
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-medium">{formatProviderName(provider)}</h3>
+                  <h3 className="font-medium">{displayName}</h3>
                   {isPrimary && (
                     <Badge variant="default" className="text-xs">
                       <CheckCircle2 className="me-1 h-3 w-3" />
@@ -107,9 +107,13 @@ export function LinkedAccountCard({
                   onClick={handleSetPrimary}
                   disabled={isSettingPrimary || isUnlinking}
                   className="w-full whitespace-nowrap lg:w-auto"
+                  data-testid={`set-primary-${providerId}`}
                 >
                   {isSettingPrimary ? (
-                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                    <Loader2
+                      className="h-4 w-4 shrink-0 motion-safe:animate-spin"
+                      aria-hidden="true"
+                    />
                   ) : (
                     <>
                       <LinkIcon className="h-4 w-4 shrink-0" />
@@ -126,9 +130,13 @@ export function LinkedAccountCard({
                   onClick={() => setShowUnlinkDialog(true)}
                   disabled={isUnlinking || isSettingPrimary}
                   className="w-full whitespace-nowrap lg:w-auto"
+                  data-testid={`unlink-${providerId}`}
                 >
                   {isUnlinking ? (
-                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                    <Loader2
+                      className="h-4 w-4 shrink-0 motion-safe:animate-spin"
+                      aria-hidden="true"
+                    />
                   ) : (
                     <>
                       <Unlink className="h-4 w-4 shrink-0" />
@@ -147,16 +155,17 @@ export function LinkedAccountCard({
           <AlertDialogHeader>
             <AlertDialogTitle>{t('unlinkConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('unlinkConfirmDescription', {
-                provider: formatProviderName(provider),
-              })}
+              {t('unlinkConfirmDescription', { provider: displayName })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogCancel data-testid={`unlink-cancel-${providerId}`}>
+              {t('cancel')}
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleUnlink}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid={`unlink-confirm-${providerId}`}
             >
               {t('confirmUnlink')}
             </AlertDialogAction>

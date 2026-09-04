@@ -146,7 +146,7 @@ export function RegisterForm() {
 
         {/* OAuth Buttons */}
         <div className="my-6">
-          <OAuthButtons mode="signin" />
+          <OAuthButtons />
         </div>
 
         {/* Divider */}

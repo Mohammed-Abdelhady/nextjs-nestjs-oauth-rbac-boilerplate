@@ -137,7 +137,7 @@ export function LoginForm() {
 
         {/* OAuth Buttons */}
         <div className="my-6">
-          <OAuthButtons mode="signin" />
+          <OAuthButtons />
         </div>
 
         {/* Divider */}

@@ -11,7 +11,6 @@ export {
 // API hooks
 export {
   useGetLinkedProvidersQuery,
-  useLinkProviderMutation,
   useUnlinkProviderMutation,
   useSetPrimaryProviderMutation,
   useGetSyncStatusQuery,
@@ -21,7 +20,6 @@ export {
 // Types
 export type {
   LinkedProvidersResponse,
-  LinkProviderRequest,
   SetPrimaryProviderRequest,
   ProfileSyncStatus as ProfileSyncStatusType,
   ManualSyncResponse,

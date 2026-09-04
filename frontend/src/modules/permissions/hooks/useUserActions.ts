@@ -3,7 +3,7 @@ import {
   useUpdateUserStatusMutation,
   useUpdateUserRoleMutation,
   useDeleteUserMutation,
-} from '@/store/api/userApi';
+} from '@/modules/users/api/usersApi';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/modules/auth/utils/authHelpers';
 

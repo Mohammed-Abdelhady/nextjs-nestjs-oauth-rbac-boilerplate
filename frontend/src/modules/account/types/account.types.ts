@@ -1,20 +1,12 @@
 import type { OAuthProvider } from '@/modules/oauth';
 
 /**
- * Response type for linked providers endpoint
+ * Response type for linked providers endpoint.
+ * Providers are 'email' plus the linked OAuth provider ids.
  */
 export interface LinkedProvidersResponse {
   providers: string[];
   primaryProvider?: string;
-}
-
-/**
- * Request type for linking a provider
- */
-export interface LinkProviderRequest {
-  provider: OAuthProvider;
-  code: string;
-  state?: string;
 }
 
 /**

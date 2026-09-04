@@ -157,12 +157,13 @@
     "oauth": {
       "signInWith": "Sign in with {provider}",
       "continue": "Or continue with",
-      "connecting": "Connecting to {provider}...",
+      "groupLabel": "Other sign-in options",
       "error": "Failed to sign in with {provider}",
       "callback": {
-        "title": "Completing authentication...",
-        "error": "Authentication failed",
-        "success": "Authentication successful"
+        "title": "Completing sign-in...",
+        "pending": "Setting up your session.",
+        "errorTitle": "Sign-in failed",
+        "backToSignIn": "Back to sign in"
       }
     }
   },
@@ -246,10 +247,6 @@
       "unlink": "Unlink",
       "linkWith": "Link {provider}",
       "connecting": "Connecting to {provider}...",
-      "linkSuccess": "{provider} account linked successfully",
-      "linkError": "Failed to link {provider} account",
-      "linkTimeout": "OAuth authorization timed out",
-      "linkCancelled": "OAuth authorization was cancelled",
       "unlinkSuccess": "{provider} account unlinked successfully",
       "unlinkError": "Failed to unlink {provider} account",
       "setPrimarySuccess": "{provider} set as primary account",
@@ -347,23 +344,13 @@
       "CANNOT_MODIFY_HIGHER_ROLE": "You cannot modify users with higher privileges",
       "INVALID_ROLE_ASSIGNMENT": "Invalid role assignment",
       "USER_ALREADY_DELETED": "This user has already been deleted",
-      "INVALID_OAUTH_PROVIDER": "Invalid authentication provider",
-      "OAUTH_AUTHENTICATION_FAILED": "Authentication failed. Please try again",
-      "OAUTH_INVALID_CODE": "Authentication code is invalid or expired",
-      "GOOGLE_TOKEN_INVALID": "Google authentication failed. Please try again",
-      "GOOGLE_TOKEN_EXPIRED": "Google session expired. Please sign in again",
-      "GOOGLE_NOT_CONFIGURED": "Google sign-in is not available",
-      "GOOGLE_EMAIL_NOT_VERIFIED": "Please verify your Google email first",
-      "GITHUB_CODE_INVALID": "GitHub authentication failed. Please try again",
-      "GITHUB_CODE_EXPIRED": "GitHub authorization expired. Please try again",
-      "GITHUB_NOT_CONFIGURED": "GitHub sign-in is not available",
-      "GITHUB_EMAIL_NOT_VERIFIED": "Please verify your GitHub email first",
-      "GITHUB_API_ERROR": "Unable to connect to GitHub. Please try again",
-      "FACEBOOK_CODE_INVALID": "Facebook authentication failed. Please try again",
-      "FACEBOOK_CODE_EXPIRED": "Facebook authorization expired. Please try again",
-      "FACEBOOK_NOT_CONFIGURED": "Facebook sign-in is not available",
-      "FACEBOOK_EMAIL_NOT_VERIFIED": "Please verify your Facebook email first",
-      "FACEBOOK_API_ERROR": "Unable to connect to Facebook. Please try again",
+      "OAUTH_PROVIDER_UNKNOWN": "That sign-in provider is not available here",
+      "OAUTH_NOT_CONFIGURED": "Sign-in with {provider} is not set up",
+      "OAUTH_STATE_INVALID": "The sign-in attempt expired. Start again from the sign-in page",
+      "OAUTH_CODE_INVALID": "{provider} did not confirm the sign-in. Try again",
+      "OAUTH_EMAIL_UNVERIFIED": "Verify your email address with {provider}, then sign in again",
+      "OAUTH_ACCOUNT_LINKED_ELSEWHERE": "This {provider} account is already linked to another user",
+      "OAUTH_AUTHENTICATION_FAILED": "Sign-in with {provider} failed. Try again",
       "INVALID_CURRENT_PASSWORD": "Current password is incorrect",
       "SAME_PASSWORD": "New password must be different from current password",
       "CANNOT_REVOKE_CURRENT_SESSION": "You cannot revoke your current session",
@@ -394,10 +381,21 @@
       "permissionsDemo": "Permissions Demo",
       "activity": "Activity",
       "sessions": "Sessions"
+    },
+    "shell": {
+      "brand": "Auth App",
+      "brandHome": "Auth App, go to dashboard",
+      "openMenu": "Open navigation menu",
+      "closeMenu": "Close navigation menu",
+      "navigationTitle": "Navigation",
+      "navigationDescription": "Links to the dashboard sections",
+      "mainNavigation": "Main navigation",
+      "accountControls": "Account controls"
     }
   },
   "sessions": {
     "title": "Active Sessions",
+    "listHeading": "Session list",
     "description": "Manage devices where you're currently logged in",
     "refresh": "Refresh",
     "securityWarning": "If you see any unfamiliar devices, logout them immediately and change your password.",
@@ -547,7 +545,13 @@
     "search": "Search",
     "clearSearch": "Clear search",
     "required": "*",
-    "or": "or"
+    "or": "or",
+    "close": "Close",
+    "skipToContent": "Skip to main content",
+    "switchToDarkMode": "Switch to dark mode",
+    "switchToLightMode": "Switch to light mode",
+    "switchToEnglish": "Switch to English",
+    "switchToArabic": "Switch to Arabic"
   },
   "validation": {
     "emailRequired": "Email is required",

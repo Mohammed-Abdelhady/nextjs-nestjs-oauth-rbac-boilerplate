@@ -157,12 +157,13 @@
     "oauth": {
       "signInWith": "تسجيل الدخول بـ {provider}",
       "continue": "أو المتابعة بـ",
-      "connecting": "جارٍ الاتصال بـ {provider}...",
+      "groupLabel": "خيارات أخرى لتسجيل الدخول",
       "error": "فشل تسجيل الدخول بـ {provider}",
       "callback": {
-        "title": "جارٍ إكمال المصادقة...",
-        "error": "فشلت المصادقة",
-        "success": "تمت المصادقة بنجاح"
+        "title": "جارٍ إكمال تسجيل الدخول...",
+        "pending": "جارٍ تجهيز جلستك.",
+        "errorTitle": "فشل تسجيل الدخول",
+        "backToSignIn": "العودة إلى تسجيل الدخول"
       }
     }
   },
@@ -246,10 +247,6 @@
       "unlink": "إلغاء الربط",
       "linkWith": "ربط {provider}",
       "connecting": "جارٍ الاتصال بـ {provider}...",
-      "linkSuccess": "تم ربط حساب {provider} بنجاح",
-      "linkError": "فشل ربط حساب {provider}",
-      "linkTimeout": "انتهت مهلة تفويض OAuth",
-      "linkCancelled": "تم إلغاء تفويض OAuth",
       "unlinkSuccess": "تم إلغاء ربط حساب {provider} بنجاح",
       "unlinkError": "فشل إلغاء ربط حساب {provider}",
       "setPrimarySuccess": "تم تعيين {provider} كحساب أساسي",
@@ -347,23 +344,13 @@
       "CANNOT_MODIFY_HIGHER_ROLE": "لا يمكنك تعديل مستخدمين لديهم صلاحيات أعلى",
       "INVALID_ROLE_ASSIGNMENT": "تعيين الدور غير صالح",
       "USER_ALREADY_DELETED": "تم حذف هذا المستخدم بالفعل",
-      "INVALID_OAUTH_PROVIDER": "مزود المصادقة غير صالح",
-      "OAUTH_AUTHENTICATION_FAILED": "فشلت المصادقة. يرجى المحاولة مرة أخرى",
-      "OAUTH_INVALID_CODE": "رمز المصادقة غير صالح أو منتهي الصلاحية",
-      "GOOGLE_TOKEN_INVALID": "فشلت مصادقة Google. يرجى المحاولة مرة أخرى",
-      "GOOGLE_TOKEN_EXPIRED": "انتهت صلاحية جلسة Google. يرجى تسجيل الدخول مرة أخرى",
-      "GOOGLE_NOT_CONFIGURED": "تسجيل الدخول بـ Google غير متاح",
-      "GOOGLE_EMAIL_NOT_VERIFIED": "يرجى التحقق من بريد Google الإلكتروني أولاً",
-      "GITHUB_CODE_INVALID": "فشلت مصادقة GitHub. يرجى المحاولة مرة أخرى",
-      "GITHUB_CODE_EXPIRED": "انتهت صلاحية تفويض GitHub. يرجى المحاولة مرة أخرى",
-      "GITHUB_NOT_CONFIGURED": "تسجيل الدخول بـ GitHub غير متاح",
-      "GITHUB_EMAIL_NOT_VERIFIED": "يرجى التحقق من بريد GitHub الإلكتروني أولاً",
-      "GITHUB_API_ERROR": "تعذر الاتصال بـ GitHub. يرجى المحاولة مرة أخرى",
-      "FACEBOOK_CODE_INVALID": "فشلت مصادقة Facebook. يرجى المحاولة مرة أخرى",
-      "FACEBOOK_CODE_EXPIRED": "انتهت صلاحية تفويض Facebook. يرجى المحاولة مرة أخرى",
-      "FACEBOOK_NOT_CONFIGURED": "تسجيل الدخول بـ Facebook غير متاح",
-      "FACEBOOK_EMAIL_NOT_VERIFIED": "يرجى التحقق من بريد Facebook الإلكتروني أولاً",
-      "FACEBOOK_API_ERROR": "تعذر الاتصال بـ Facebook. يرجى المحاولة مرة أخرى",
+      "OAUTH_PROVIDER_UNKNOWN": "مزود تسجيل الدخول هذا غير متاح هنا",
+      "OAUTH_NOT_CONFIGURED": "تسجيل الدخول عبر {provider} غير مهيأ",
+      "OAUTH_STATE_INVALID": "انتهت صلاحية محاولة تسجيل الدخول. ابدأ من جديد من صفحة تسجيل الدخول",
+      "OAUTH_CODE_INVALID": "لم يؤكد {provider} تسجيل الدخول. حاول مرة أخرى",
+      "OAUTH_EMAIL_UNVERIFIED": "وثّق بريدك الإلكتروني لدى {provider} ثم سجّل الدخول مرة أخرى",
+      "OAUTH_ACCOUNT_LINKED_ELSEWHERE": "حساب {provider} هذا مرتبط بمستخدم آخر",
+      "OAUTH_AUTHENTICATION_FAILED": "فشل تسجيل الدخول عبر {provider}. حاول مرة أخرى",
       "INVALID_CURRENT_PASSWORD": "كلمة المرور الحالية غير صحيحة",
       "SAME_PASSWORD": "يجب أن تكون كلمة المرور الجديدة مختلفة عن الحالية",
       "CANNOT_REVOKE_CURRENT_SESSION": "لا يمكنك إلغاء جلستك الحالية",
@@ -394,10 +381,21 @@
       "permissionsDemo": "عرض الصلاحيات",
       "activity": "النشاط",
       "sessions": "الجلسات"
+    },
+    "shell": {
+      "brand": "Auth App",
+      "brandHome": "Auth App، الانتقال إلى لوحة التحكم",
+      "openMenu": "فتح قائمة التنقل",
+      "closeMenu": "إغلاق قائمة التنقل",
+      "navigationTitle": "التنقل",
+      "navigationDescription": "روابط أقسام لوحة التحكم",
+      "mainNavigation": "التنقل الرئيسي",
+      "accountControls": "عناصر التحكم في الحساب"
     }
   },
   "sessions": {
     "title": "الجلسات النشطة",
+    "listHeading": "قائمة الجلسات",
     "description": "إدارة الأجهزة التي سجلت الدخول منها حالياً",
     "refresh": "تحديث",
     "securityWarning": "إذا رأيت أجهزة غير مألوفة، قم بتسجيل خروجها فوراً وغيّر كلمة المرور.",
@@ -547,7 +545,13 @@
     "search": "بحث",
     "clearSearch": "مسح البحث",
     "required": "*",
-    "or": "أو"
+    "or": "أو",
+    "close": "إغلاق",
+    "skipToContent": "تخطي إلى المحتوى الرئيسي",
+    "switchToDarkMode": "التبديل إلى الوضع الداكن",
+    "switchToLightMode": "التبديل إلى الوضع الفاتح",
+    "switchToEnglish": "التبديل إلى الإنجليزية",
+    "switchToArabic": "التبديل إلى العربية"
   },
   "validation": {
     "emailRequired": "البريد الإلكتروني مطلوب",

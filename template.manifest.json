@@ -1,6 +1,43 @@
 {
-  "$comment": "Feature map read by packages/create-nest-next-auth. Entries with \"status\": \"planned\" are not offered by the CLI. Files and env vars listed here are deleted from a generated project when the feature is not selected, so every path must belong to that feature alone.",
+  "$comment": "Feature map read by packages/create-nest-next-auth. Entries with \"status\": \"planned\" are not offered by the CLI. Entries with \"hidden\": true come in through another feature's \"requires\" instead of being picked directly. Files and env vars listed here are deleted from a generated project when the feature is not selected, so every path must belong to that feature alone.",
   "features": {
+    "oauth-core": {
+      "hidden": true,
+      "label": "OAuth core",
+      "description": "Provider registry, start and callback routes, account linking, profile sync. Shared by every OAuth provider.",
+      "kind": "oauth",
+      "default": true,
+      "files": [
+        "backend/src/auth/oauth/base-oauth.strategy.ts",
+        "backend/src/auth/oauth/oauth-provider.interface.ts",
+        "backend/src/auth/oauth/oauth-redirect.service.ts",
+        "backend/src/auth/oauth/oauth-registry.service.ts",
+        "backend/src/auth/oauth/oauth-registry.service.spec.ts",
+        "backend/src/auth/oauth/oauth-state.service.ts",
+        "backend/src/auth/oauth/oauth-state.service.spec.ts",
+        "backend/src/auth/oauth/oauth.constants.ts",
+        "backend/src/auth/oauth/oauth.controller.ts",
+        "backend/src/auth/oauth/oauth.module.ts",
+        "backend/src/auth/oauth/oauth.service.ts",
+        "backend/src/auth/oauth/utils/id-token.util.ts",
+        "backend/src/auth/oauth/utils/redirect.util.ts",
+        "backend/src/auth/oauth/validators/is-registered-provider.validator.ts",
+        "backend/src/user/services/account-linking.service.ts",
+        "backend/src/user/services/profile-sync.service.ts",
+        "backend/src/user/dto/account-linking.dto.ts",
+        "frontend/src/modules/oauth/**",
+        "frontend/src/modules/account/api/accountLinkingApi.ts",
+        "frontend/src/modules/account/api/profileSyncApi.ts",
+        "frontend/src/modules/account/components/LinkedAccounts.tsx",
+        "frontend/src/modules/account/components/LinkedAccountCard.tsx",
+        "frontend/src/modules/account/components/LinkProviderButton.tsx",
+        "frontend/src/modules/account/components/ProfileSyncStatus.tsx",
+        "frontend/src/app/[locale]/(auth)/auth/oauth/**"
+      ],
+      "envVars": [],
+      "requires": [],
+      "docs": ["backend/docs/oauth-authentication.md"]
+    },
     "email-password": {
       "label": "Email and password",
       "description": "Registration with a 6-digit code, login, password reset.",
@@ -17,8 +54,8 @@
       "kind": "oauth",
       "default": true,
       "files": [
-        "backend/src/auth/strategies/google-oauth.strategy.ts",
-        "backend/src/auth/strategies/google-oauth.strategy.spec.ts"
+        "backend/src/auth/oauth/strategies/google-oauth.strategy.ts",
+        "backend/src/auth/oauth/strategies/google-oauth.strategy.spec.ts"
       ],
       "envVars": [
         "OAUTH_GOOGLE_CLIENT_ID",
@@ -26,7 +63,7 @@
         "OAUTH_GOOGLE_CALLBACK_URL",
         "NEXT_PUBLIC_GOOGLE_CLIENT_ID"
       ],
-      "requires": [],
+      "requires": ["oauth-core"],
       "docs": ["docs/setup-google-oauth.md"]
     },
     "github": {
@@ -35,8 +72,8 @@
       "kind": "oauth",
       "default": true,
       "files": [
-        "backend/src/auth/strategies/github-oauth.strategy.ts",
-        "backend/src/auth/strategies/github-oauth.strategy.spec.ts"
+        "backend/src/auth/oauth/strategies/github-oauth.strategy.ts",
+        "backend/src/auth/oauth/strategies/github-oauth.strategy.spec.ts"
       ],
       "envVars": [
         "OAUTH_GITHUB_CLIENT_ID",
@@ -44,7 +81,7 @@
         "OAUTH_GITHUB_CALLBACK_URL",
         "NEXT_PUBLIC_GITHUB_CLIENT_ID"
       ],
-      "requires": [],
+      "requires": ["oauth-core"],
       "docs": ["docs/setup-github-oauth.md"]
     },
     "facebook": {
@@ -53,8 +90,8 @@
       "kind": "oauth",
       "default": true,
       "files": [
-        "backend/src/auth/strategies/facebook-oauth.strategy.ts",
-        "backend/src/auth/strategies/facebook-oauth.strategy.spec.ts"
+        "backend/src/auth/oauth/strategies/facebook-oauth.strategy.ts",
+        "backend/src/auth/oauth/strategies/facebook-oauth.strategy.spec.ts"
       ],
       "envVars": [
         "OAUTH_FACEBOOK_CLIENT_ID",
@@ -62,7 +99,7 @@
         "OAUTH_FACEBOOK_CALLBACK_URL",
         "NEXT_PUBLIC_FACEBOOK_APP_ID"
       ],
-      "requires": [],
+      "requires": ["oauth-core"],
       "docs": ["docs/setup-facebook-oauth.md", "docs/facebook-oauth-permissions.md"]
     },
     "magic-link": {

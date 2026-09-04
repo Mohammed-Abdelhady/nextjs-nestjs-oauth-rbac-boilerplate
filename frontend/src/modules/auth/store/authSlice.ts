@@ -2,7 +2,6 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '@/store/store';
 import type { AuthState, User } from '../types/auth.types';
 import { authApi } from './authApi';
-import { oauthApi } from '@/modules/oauth/api/oauthApi';
 
 /**
  * Initial authentication state
@@ -103,22 +102,6 @@ export const authSlice = createSlice({
     builder.addMatcher(authApi.endpoints.getCurrentUser.matchRejected, (state) => {
       state.user = null;
       state.isAuthenticated = false;
-    });
-
-    // Handle OAuth callback mutation lifecycle
-    builder.addMatcher(oauthApi.endpoints.handleCallback.matchPending, (state) => {
-      state.isLoading = true;
-      state.error = null;
-    });
-    builder.addMatcher(oauthApi.endpoints.handleCallback.matchFulfilled, (state, action) => {
-      state.user = action.payload.user;
-      state.isAuthenticated = true;
-      state.isLoading = false;
-      state.error = null;
-    });
-    builder.addMatcher(oauthApi.endpoints.handleCallback.matchRejected, (state, action) => {
-      state.isLoading = false;
-      state.error = action.error.message || 'OAuth authentication failed';
     });
   },
 });

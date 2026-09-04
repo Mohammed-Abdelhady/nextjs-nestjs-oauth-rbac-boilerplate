@@ -1,48 +1,36 @@
-import type { User } from '@/modules/auth/types/auth.types';
-
 /**
- * OAuth provider type
+ * One enabled provider as listed by GET /api/auth/oauth/providers.
+ * The backend registry decides the set, so ids are plain slugs.
  */
-export type OAuthProvider = 'google' | 'facebook' | 'github';
-
-/**
- * OAuth authorization URL response
- */
-export interface OAuthAuthUrlResponse {
-  url: string;
-  provider: string;
+export interface OAuthProviderSummary {
+  id: string;
+  displayName: string;
 }
 
 /**
- * OAuth callback request payload
+ * A provider id. Values come from the discovery endpoint, never from a
+ * hardcoded list, so a new backend provider needs no frontend change.
  */
-export interface OAuthCallbackRequest {
-  provider: OAuthProvider;
-  code: string;
-  state?: string;
-}
+export type OAuthProvider = OAuthProviderSummary['id'];
 
 /**
- * OAuth callback response from API
- * Uses httpOnly cookies for session management (no token in response)
- */
-export interface OAuthCallbackResponse {
-  user: User;
-  message?: string;
-}
-
-/**
- * OAuth providers response
+ * Payload of the providers endpoint.
  */
 export interface OAuthProvidersResponse {
-  providers: string[];
+  providers: OAuthProviderSummary[];
 }
 
 /**
- * OAuth callback data received from popup window
+ * Outcome the backend reports on the client callback URL.
  */
-export interface OAuthCallbackData {
-  code: string;
-  state: string;
-  provider: OAuthProvider;
+export type OAuthCallbackStatus = 'ok' | 'error';
+
+/**
+ * Icon and brand styling for one provider button.
+ * Providers without an entry fall back to a neutral button.
+ */
+export interface OAuthProviderMeta {
+  iconPath: string;
+  buttonClassName: string;
+  hoverClassName: string;
 }

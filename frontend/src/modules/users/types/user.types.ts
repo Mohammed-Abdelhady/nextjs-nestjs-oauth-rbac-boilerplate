@@ -8,7 +8,8 @@ export interface AdminUser {
   role: string;
   isVerified: boolean;
   isDeleted: boolean;
-  authProvider: 'email' | 'google' | 'facebook' | 'github';
+  /** 'email' or an OAuth provider id from the backend registry. */
+  authProvider: string;
   linkedProviders: string[];
   createdAt: string;
   updatedAt: string;

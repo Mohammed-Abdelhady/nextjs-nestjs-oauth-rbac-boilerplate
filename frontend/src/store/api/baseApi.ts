@@ -1,65 +1,18 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import { API_BASE_URL } from '@/constants/api';
 
 /**
- * Base query configuration for RTK Query
- * Uses httpOnly cookies for authentication (credentials: 'include')
+ * Base query for RTK Query.
+ * The session lives in an httpOnly cookie, so every request carries credentials.
  */
 const baseQuery = fetchBaseQuery({
-  baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
-  credentials: 'include', // Send httpOnly cookies automatically
+  baseUrl: API_BASE_URL,
+  credentials: 'include',
   prepareHeaders: (headers) => {
     headers.set('Content-Type', 'application/json');
-    // Session managed via httpOnly cookies sent automatically
     return headers;
   },
 });
-
-/**
- * Base query with automatic session refresh on 401 errors
- * Uses cookie-based session refresh
- * Skips refresh for validation endpoints to prevent unnecessary calls
- */
-const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
-  args,
-  api,
-  extraOptions,
-) => {
-  let result = await baseQuery(args, api, extraOptions);
-
-  // If request fails with 401, attempt session refresh
-  if (result.error?.status === 401) {
-    // Skip auto-refresh for validation endpoints (getCurrentUser)
-    // These endpoints expect 401 when user is not authenticated
-    const url = typeof args === 'string' ? args : args.url;
-    const skipRefresh = url.includes('/api/user/profile');
-
-    if (skipRefresh) {
-      // Don't attempt refresh for validation endpoints
-      return result;
-    }
-
-    // Try to refresh the session (cookie-based)
-    const refreshResult = await baseQuery('/api/auth/refresh', api, extraOptions);
-
-    // Check if refresh endpoint exists and was successful
-    if (refreshResult.data) {
-      // Refresh successful, retry the original request
-      // New session cookie automatically set by backend
-      result = await baseQuery(args, api, extraOptions);
-    } else if (refreshResult.error?.status === 404) {
-      // Refresh endpoint not implemented yet, return original 401 error
-      // This prevents infinite loading when refresh endpoint doesn't exist
-      return result;
-    } else {
-      // Refresh failed, user needs to login again
-      // Trigger logout to clear client state
-      api.dispatch({ type: 'auth/logout' });
-    }
-  }
-
-  return result;
-};
 
 /**
  * Base API configuration for RTK Query
@@ -67,7 +20,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
  */
 export const baseApi = createApi({
   reducerPath: 'api',
-  baseQuery: baseQueryWithReauth,
+  baseQuery,
   tagTypes: ['User', 'Auth', 'LinkedProviders', 'ProfileSync', 'Roles', 'Permissions', 'Sessions'],
   endpoints: () => ({}),
 });

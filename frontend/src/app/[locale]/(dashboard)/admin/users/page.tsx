@@ -12,8 +12,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { LoadingRegion } from '@/components/layout/LoadingRegion';
 import { SearchBar } from '@/components/design-system';
-import { useGetUsersQuery } from '@/store/api/userApi';
+import { useGetUsersQuery } from '@/modules/users/api/usersApi';
 import { UserCard } from '@/modules/permissions/components/UserCard';
 import { UserListSection } from '@/modules/permissions/components/UserListSection';
 import { CreateUserButton } from '@/modules/permissions/components/CreateUserButton';
@@ -126,9 +127,13 @@ export default function AdminUsersPage() {
                 size="sm"
                 onClick={handleRefresh}
                 disabled={isLoading}
+                aria-busy={isLoading}
                 data-testid="refresh-users-button"
               >
-                <RefreshCw className={`h-4 w-4 me-2 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  aria-hidden="true"
+                  className={`h-4 w-4 me-2 ${isLoading ? 'motion-safe:animate-spin' : ''}`}
+                />
                 {t('refresh')}
               </Button>
               <PermissionGuard permission={USER_PERMISSIONS.CREATE_ALL}>
@@ -167,9 +172,17 @@ export default function AdminUsersPage() {
 
         {/* Loading State */}
         <Activity mode={isLoading ? 'visible' : 'hidden'}>
-          <div className="flex items-center justify-center py-12" data-testid="loading-skeleton">
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center justify-center py-12"
+            data-testid="loading-skeleton"
+          >
             <div className="text-center space-y-4">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+              <Loader2
+                className="h-8 w-8 motion-safe:animate-spin mx-auto text-muted-foreground"
+                aria-hidden="true"
+              />
               <p className="text-sm text-muted-foreground">{t('loading')}</p>
             </div>
           </div>
@@ -182,7 +195,12 @@ export default function AdminUsersPage() {
               <span>
                 {t('loadError')} {error ? parseApiError(error).message : t('tryAgain')}
               </span>
-              <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetch()}
+                data-testid="retry-users-button"
+              >
                 {tCommon('retry')}
               </Button>
             </AlertDescription>
@@ -198,9 +216,9 @@ export default function AdminUsersPage() {
             data-testid="empty-state"
           >
             <div className="space-y-3">
-              <p className="text-lg font-semibold">
+              <h2 className="text-lg font-semibold">
                 {searchQuery || roleFilter !== RoleFilter.ALL ? t('noUsers') : t('noUsersYet')}
-              </p>
+              </h2>
               <p className="text-sm text-muted-foreground max-w-sm">
                 {searchQuery || roleFilter !== RoleFilter.ALL
                   ? t('noUsersHint')
@@ -262,16 +280,20 @@ export default function AdminUsersPage() {
           </div>
         </Activity>
 
-        {/* User Permissions Dialog - stays mounted for instant re-open */}
-        <Suspense fallback={<div />}>
-          <Activity mode={selectedUserId ? 'visible' : 'hidden'}>
+        {/* User Permissions Dialog - stays mounted for instant re-open. The
+            Suspense boundary sits inside Activity so its fallback stays hidden
+            with the dialog while the chunk loads in the background. */}
+        <Activity mode={selectedUserId ? 'visible' : 'hidden'}>
+          <Suspense
+            fallback={<LoadingRegion label={tCommon('loading')} rows={2} testId="dialog-loading" />}
+          >
             <UserPermissionsDialog
               userId={selectedUserId || ''}
               open={!!selectedUserId}
               onOpenChange={handleClosePermissionsDialog}
             />
-          </Activity>
-        </Suspense>
+          </Suspense>
+        </Activity>
       </div>
     </RoutePermissionGuard>
   );

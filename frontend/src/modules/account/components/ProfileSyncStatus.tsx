@@ -2,21 +2,16 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useRouter } from '@/i18n/navigation';
+import { usePathname } from '@/i18n/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { RefreshCw, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/lib/toast';
-import { useAppDispatch } from '@/store/hooks';
+import { parseApiError } from '@/lib/apiError';
+import { getRedirectPath } from '@/modules/auth/utils';
+import { startOAuthFlow } from '@/modules/oauth';
 import { useGetSyncStatusQuery, useInitiateProfileSyncMutation } from '../api';
-import {
-  useHandleCallbackMutation,
-  oauthApi,
-  openOAuthPopup,
-  waitForOAuthCallback,
-  type OAuthProvider,
-} from '@/modules/oauth';
 
 /**
  * Profile Sync Status Component
@@ -24,60 +19,32 @@ import {
  */
 export function ProfileSyncStatus() {
   const t = useTranslations('settings.profileSync');
-  const router = useRouter();
-  const dispatch = useAppDispatch();
+  const pathname = usePathname();
   const { data: syncStatus, isLoading } = useGetSyncStatusQuery();
   const [initiateSync, { isLoading: isSyncInitiating }] = useInitiateProfileSyncMutation();
-  const [handleOAuthCallback] = useHandleCallbackMutation();
   const [isSyncing, setIsSyncing] = useState(false);
 
+  /**
+   * Sync reads a fresh profile from the provider, so it runs the OAuth flow
+   * again. The backend updates the profile while handling the callback and
+   * sends the browser back to this page.
+   */
   const handleManualSync = async () => {
     setIsSyncing(true);
     try {
       const response = await initiateSync().unwrap();
 
       if (!response.requiresOAuth) {
-        toast.error(t('syncError'), {
-          description: response.message,
-        });
+        toast.error(t('syncError'), { description: response.message });
         setIsSyncing(false);
         return;
       }
 
-      const provider = response.provider.toLowerCase() as OAuthProvider;
-
-      const authUrlResult = await dispatch(
-        oauthApi.endpoints.getAuthorizationUrl.initiate(provider),
-      ).unwrap();
-
-      if (!authUrlResult?.url) {
-        throw new Error('Failed to get authorization URL');
-      }
-
-      const popup = openOAuthPopup(authUrlResult.url);
-      if (!popup) {
-        throw new Error('Failed to open OAuth popup');
-      }
-
-      const { code, state } = await waitForOAuthCallback(popup);
-
-      await handleOAuthCallback({
-        provider,
-        code,
-        state: state || '',
-      }).unwrap();
-
-      toast.success(t('syncSuccess'), {
-        description: t('syncSuccessDescription'),
-      });
-
-      router.refresh();
+      startOAuthFlow(response.provider, getRedirectPath(pathname));
     } catch (error) {
-      console.error('Manual sync failed:', error);
       toast.error(t('syncError'), {
-        description: error instanceof Error ? error.message : t('syncErrorDescription'),
+        description: parseApiError(error).message || t('syncErrorDescription'),
       });
-    } finally {
       setIsSyncing(false);
     }
   };
@@ -91,7 +58,7 @@ export function ProfileSyncStatus() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <RefreshCw className="h-4 w-4 animate-spin" />
+            <RefreshCw className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
             <span>{t('loading')}</span>
           </div>
         </CardContent>
@@ -150,7 +117,7 @@ export function ProfileSyncStatus() {
         >
           {isSyncInitiating || isSyncing ? (
             <>
-              <RefreshCw className="h-4 w-4 shrink-0 animate-spin" />
+              <RefreshCw className="h-4 w-4 shrink-0 motion-safe:animate-spin" aria-hidden="true" />
               <span>{t('syncing')}</span>
             </>
           ) : (
