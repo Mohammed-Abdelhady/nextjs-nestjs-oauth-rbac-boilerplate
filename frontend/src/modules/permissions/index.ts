@@ -15,8 +15,6 @@ export * from './components/CreateRoleDialog';
 export * from './components/EditRoleDialog';
 export * from './components/DeleteRoleDialog';
 export * from './components/UserPermissionsDialog';
-export * from './components/UserPermissionsBadge';
-export * from './components/PermissionsList';
 
 // API
 export * from './api/rolesApi';

@@ -21,7 +21,7 @@ import { PermissionTreeView } from './PermissionTreeView';
 import { PermissionSearchDialog } from './PermissionSearchDialog';
 import { UserPermissionsSummary } from './UserPermissionsSummary';
 import { Loader2, Plus, Trash2, Shield, User } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { parseApiError } from '@/lib/apiError';
 
 export interface UserPermissionsDialogProps {

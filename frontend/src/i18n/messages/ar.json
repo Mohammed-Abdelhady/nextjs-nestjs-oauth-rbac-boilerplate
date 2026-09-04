@@ -22,6 +22,12 @@
     "switchToEnglish": "التبديل إلى الإنجليزية",
     "switchToArabic": "التبديل إلى العربية"
   },
+  "pagination": {
+    "previous": "السابق",
+    "next": "التالي",
+    "page": "الصفحة",
+    "pageInfo": "الصفحة {page} من {totalPages}"
+  },
   "home": {
     "title": "نظام مصادقة متكامل للتطبيقات",
     "subtitle": "حل مصادقة جاهز للإنتاج مع Next.js و NestJS",
@@ -693,16 +699,6 @@
       "empty": "لا توجد صلاحيات معينة",
       "wildcardLabel": "صلاحية شاملة (*)",
       "wildcardNotice": "هذا الدور يملك جميع الصلاحيات"
-    },
-    "badge": {
-      "empty": "لا توجد صلاحيات"
-    },
-    "list": {
-      "empty": "لا توجد صلاحيات معينة",
-      "wildcardTitle": "صلاحية شاملة (*)",
-      "wildcardDescription": "تمنح جميع الصلاحيات",
-      "moreBadge": "+{count} أخرى",
-      "showMore": "{count, plural, zero {لا توجد صلاحيات أخرى} one {عرض صلاحية واحدة أخرى} two {عرض صلاحيتين أخريين} few {عرض {count} صلاحيات أخرى} many {عرض {count} صلاحية أخرى} other {عرض {count} صلاحية أخرى}}"
     },
     "dialog": {
       "title": "إدارة صلاحيات المستخدم",

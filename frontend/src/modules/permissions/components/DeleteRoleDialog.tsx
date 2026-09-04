@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useDeleteRoleMutation, type Role } from '../api/rolesApi';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { parseApiError } from '@/lib/apiError';
 
 export interface DeleteRoleDialogProps {

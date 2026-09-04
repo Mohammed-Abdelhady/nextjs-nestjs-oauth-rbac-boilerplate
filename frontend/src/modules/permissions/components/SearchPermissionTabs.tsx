@@ -61,16 +61,23 @@ export function SearchPermissionTabs({
       onValueChange={onTabChange}
       className="flex-1 flex flex-col overflow-hidden"
     >
-      <TabsList className="grid w-full grid-cols-7">
-        <TabsTrigger value="all" data-testid="permission-tab-all">
-          {t('allTab')}
-        </TabsTrigger>
-        {PERMISSION_GROUPS.map((group) => (
-          <TabsTrigger key={group.id} value={group.id} data-testid={`permission-tab-${group.id}`}>
-            {t(`groups.${group.id}`)}
+      <div className="w-full overflow-x-auto pb-1">
+        <TabsList className="inline-flex w-max min-w-full justify-start flex-nowrap">
+          <TabsTrigger value="all" className="shrink-0" data-testid="permission-tab-all">
+            {t('allTab')}
           </TabsTrigger>
-        ))}
-      </TabsList>
+          {PERMISSION_GROUPS.map((group) => (
+            <TabsTrigger
+              key={group.id}
+              value={group.id}
+              className="shrink-0"
+              data-testid={`permission-tab-${group.id}`}
+            >
+              {t(`groups.${group.id}`)}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </div>
 
       {/* All Permissions Tab */}
       <TabsContent value="all" className="flex-1 overflow-y-auto mt-4 space-y-6">

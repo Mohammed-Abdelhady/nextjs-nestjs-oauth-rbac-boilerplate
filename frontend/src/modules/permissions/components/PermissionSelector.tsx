@@ -156,31 +156,37 @@ export const PermissionSelector = memo(function PermissionSelector({
       {/* Tabbed Permission Groups */}
       {!hasWildcard && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="all" className="text-xs" data-testid="permission-group-tab-all">
-              {t('allTab')}
-              {selectedPermissions.length > 0 && (
-                <span className="ms-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px]">
-                  {selectedPermissions.length}
-                </span>
-              )}
-            </TabsTrigger>
-            {PERMISSION_GROUPS.map((group) => (
+          <div className="w-full overflow-x-auto pb-1">
+            <TabsList className="inline-flex w-max min-w-full justify-start flex-nowrap">
               <TabsTrigger
-                key={group.id}
-                value={group.id}
-                className="text-xs"
-                data-testid={`permission-group-tab-${group.id}`}
+                value="all"
+                className="text-xs shrink-0"
+                data-testid="permission-group-tab-all"
               >
-                {t(`groups.${group.id}`)}
-                {groupStats[group.id] > 0 && (
+                {t('allTab')}
+                {selectedPermissions.length > 0 && (
                   <span className="ms-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px]">
-                    {groupStats[group.id]}
+                    {selectedPermissions.length}
                   </span>
                 )}
               </TabsTrigger>
-            ))}
-          </TabsList>
+              {PERMISSION_GROUPS.map((group) => (
+                <TabsTrigger
+                  key={group.id}
+                  value={group.id}
+                  className="text-xs shrink-0"
+                  data-testid={`permission-group-tab-${group.id}`}
+                >
+                  {t(`groups.${group.id}`)}
+                  {groupStats[group.id] > 0 && (
+                    <span className="ms-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px]">
+                      {groupStats[group.id]}
+                    </span>
+                  )}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
           {/* All Permissions Tab */}
           <TabsContent value="all" className="mt-4 space-y-6">

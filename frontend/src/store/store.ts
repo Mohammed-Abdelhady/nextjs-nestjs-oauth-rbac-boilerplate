@@ -1,5 +1,6 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import {
+  createTransform,
   persistReducer,
   persistStore,
   FLUSH,
@@ -12,7 +13,7 @@ import {
 import createWebStorage from 'redux-persist/lib/storage/createWebStorage';
 import { baseApi } from './api/baseApi';
 import authReducer from '@/modules/auth/store/authSlice';
-import toastReducer from './slices/toastSlice';
+import type { AuthState } from '@/modules/auth/types/auth.types';
 import { errorInterceptor } from './middleware/errorInterceptor';
 
 /**
@@ -40,44 +41,49 @@ const createNoopStorage = () => {
 const storage = typeof window !== 'undefined' ? createWebStorage('local') : createNoopStorage();
 
 /**
- * Redux persist configuration
- * Persists only the auth slice to localStorage
- * Toast slice is explicitly excluded (ephemeral notifications only)
+ * Auth state transform for persistence.
+ * Persists only the authentication status hint to client storage.
+ * Sensitive user data (user object, email, role, permissions) is never saved to localStorage.
  */
-const persistConfig = {
-  key: 'root',
+const authFilterTransform = createTransform<AuthState, { isAuthenticated: boolean }>(
+  (inboundState: AuthState) => ({
+    isAuthenticated: Boolean(inboundState?.isAuthenticated),
+  }),
+  (outboundState: { isAuthenticated: boolean }): AuthState => ({
+    user: null,
+    isAuthenticated: Boolean(outboundState?.isAuthenticated),
+    isLoading: false,
+    error: null,
+  }),
+);
+
+/**
+ * Auth persist configuration
+ * Persists only minimal auth hint to localStorage via authFilterTransform
+ */
+const authPersistConfig = {
+  key: 'auth',
   version: 1,
   storage,
-  whitelist: ['auth'], // Only persist auth slice, NOT toast
+  transforms: [authFilterTransform],
 };
 
 /**
- * Root reducer combining all slices
+ * Root reducer combining slices
  */
 const rootReducer = combineReducers({
   // RTK Query API reducer
   [baseApi.reducerPath]: baseApi.reducer,
-  // Auth slice reducer
-  auth: authReducer,
-  // Toast slice reducer (not persisted)
-  toast: toastReducer,
+  // Persisted auth slice reducer
+  auth: persistReducer(authPersistConfig, authReducer),
 });
 
-/**
- * Persisted reducer with redux-persist
- */
-const persistedReducer = persistReducer(persistConfig, rootReducer);
-
-/**
- * Redux store configuration with RTK Query integration and redux-persist
- * Includes Redux DevTools support and middleware configuration
- */
 /**
  * Redux store configuration with RTK Query integration and redux-persist
  * Middleware order: errorInterceptor → RTK Query → defaults
  */
 export const store = configureStore({
-  reducer: persistedReducer,
+  reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {

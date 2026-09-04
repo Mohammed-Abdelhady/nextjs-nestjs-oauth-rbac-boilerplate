@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useRevokeAllOtherSessionsMutation } from '../api/sessionsApi';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/lib/toast';
 
 export interface RevokeAllSessionsButtonProps {
   /** Number of other sessions that will be revoked */
@@ -51,7 +51,6 @@ export function RevokeAllSessionsButton({
 }: RevokeAllSessionsButtonProps) {
   const [open, setOpen] = useState(false);
   const [revokeAllOtherSessions, { isLoading }] = useRevokeAllOtherSessionsMutation();
-  const { toast } = useToast();
   const t = useTranslations('sessions');
   const tCommon = useTranslations('common');
 

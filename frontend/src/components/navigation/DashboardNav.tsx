@@ -1,126 +1,76 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId, useSyncExternalStore } from 'react';
 import { Link, usePathname } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
 import { cn } from '@/lib/utils';
-import {
-  PermissionGuard,
-  USER_PERMISSIONS,
-  ROLE_PERMISSIONS,
-  PERMISSION_PERMISSIONS,
-  SESSION_PERMISSIONS,
-} from '@/modules/permissions';
-import {
-  LayoutDashboard,
-  Users,
-  Shield,
-  Settings,
-  Activity,
-  Code,
-  ChevronDown,
-  ChevronRight,
-} from 'lucide-react';
+import { PermissionGuard } from '@/modules/permissions';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import { type NavItem, NAV_SECTIONS, isNavSection } from './navConfig';
 
-interface NavItem {
-  labelKey: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  permission?: string;
-  permissions?: string[];
-  anyPermissions?: string[];
+const STORAGE_KEY = 'sidebar-collapsed-sections';
+const EMPTY_SECTIONS: Record<string, boolean> = {};
+let cachedRaw: string | null = null;
+let cachedParsed: Record<string, boolean> = EMPTY_SECTIONS;
+const listeners = new Set<() => void>();
+
+function getSectionsSnapshot(): Record<string, boolean> {
+  if (typeof window === 'undefined') {
+    return EMPTY_SECTIONS;
+  }
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (raw !== cachedRaw) {
+      cachedRaw = raw;
+      cachedParsed = raw ? (JSON.parse(raw) as Record<string, boolean>) : EMPTY_SECTIONS;
+    }
+  } catch {
+    cachedParsed = EMPTY_SECTIONS;
+  }
+  return cachedParsed;
 }
 
-interface NavSection {
-  titleKey: string;
-  items: NavItem[];
-  icon: React.ComponentType<{ className?: string }>;
-  permission?: string;
-  permissions?: string[];
-  anyPermissions?: string[];
+function getServerSectionsSnapshot(): Record<string, boolean> {
+  return EMPTY_SECTIONS;
 }
 
-const NAV_SECTIONS: (NavItem | NavSection)[] = [
-  // Top-level items (always visible)
-  {
-    labelKey: 'dashboard',
-    href: '/dashboard',
-    icon: LayoutDashboard,
-  },
-  {
-    labelKey: 'settings',
-    href: '/settings',
-    icon: Settings,
-  },
+function subscribeSections(callback: () => void): () => void {
+  listeners.add(callback);
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === STORAGE_KEY) {
+      callback();
+    }
+  };
+  window.addEventListener('storage', onStorage);
+  return () => {
+    listeners.delete(callback);
+    window.removeEventListener('storage', onStorage);
+  };
+}
 
-  // Admin Section
-  {
-    titleKey: 'admin',
-    icon: Shield,
-    anyPermissions: [
-      USER_PERMISSIONS.LIST_ALL,
-      ROLE_PERMISSIONS.LIST_ALL,
-      PERMISSION_PERMISSIONS.MANAGE_ALL,
-    ],
-    items: [
-      {
-        labelKey: 'users',
-        href: '/admin/users',
-        icon: Users,
-        permission: USER_PERMISSIONS.LIST_ALL,
-      },
-      {
-        labelKey: 'roles',
-        href: '/admin/roles',
-        icon: Shield,
-        permission: ROLE_PERMISSIONS.LIST_ALL,
-      },
-      {
-        labelKey: 'permissionsDemo',
-        href: '/admin/permissions-demo',
-        icon: Code,
-        permission: PERMISSION_PERMISSIONS.MANAGE_ALL,
-      },
-    ],
-  },
+function setCollapsedSectionsStorage(
+  updater: (prev: Record<string, boolean>) => Record<string, boolean>,
+) {
+  if (typeof window === 'undefined') return;
+  const current = getSectionsSnapshot();
+  const next = updater(current);
+  try {
+    const serialized = JSON.stringify(next);
+    window.localStorage.setItem(STORAGE_KEY, serialized);
+    cachedRaw = serialized;
+    cachedParsed = next;
+  } catch {
+    // Ignore storage write errors
+  }
+  listeners.forEach((listener) => listener());
+}
 
-  // Activity Section
-  {
-    titleKey: 'activity',
-    icon: Activity,
-    anyPermissions: [SESSION_PERMISSIONS.READ_ALL, SESSION_PERMISSIONS.READ_OWN],
-    items: [
-      {
-        labelKey: 'sessions',
-        href: '/sessions',
-        icon: Activity,
-        anyPermissions: [SESSION_PERMISSIONS.READ_ALL, SESSION_PERMISSIONS.READ_OWN],
-      },
-    ],
-  },
-];
-
-interface DashboardNavProps {
+export interface DashboardNavProps {
   /**
    * Optional callback when a navigation item is clicked (for mobile auto-close)
    */
   onNavigate?: () => void;
-}
-
-/**
- * Dashboard navigation component with permission-based rendering.
- * Only shows navigation items the user has permission to access.
- *
- * @example
- * ```tsx
- * <DashboardNav />
- * // With mobile auto-close
- * <DashboardNav onNavigate={() => setMobileMenuOpen(false)} />
- * ```
- */
-function isNavSection(item: NavItem | NavSection): item is NavSection {
-  return 'titleKey' in item && 'items' in item;
 }
 
 export function DashboardNav({ onNavigate }: DashboardNavProps = {}) {
@@ -129,29 +79,17 @@ export function DashboardNav({ onNavigate }: DashboardNavProps = {}) {
   const tShell = useTranslations('dashboard.shell');
   const navId = useId();
 
-  // Manage collapsed state for sections in localStorage
-  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => {
-    // Initialize from localStorage
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sidebar-collapsed-sections');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          // Ignore parse errors
-          return {};
-        }
-      }
-    }
-    return {};
-  });
+  const collapsedSections = useSyncExternalStore(
+    subscribeSections,
+    getSectionsSnapshot,
+    getServerSectionsSnapshot,
+  );
 
   const toggleSection = (sectionKey: string) => {
-    setCollapsedSections((prev) => {
-      const newState = { ...prev, [sectionKey]: !prev[sectionKey] };
-      localStorage.setItem('sidebar-collapsed-sections', JSON.stringify(newState));
-      return newState;
-    });
+    setCollapsedSectionsStorage((prev) => ({
+      ...prev,
+      [sectionKey]: !prev[sectionKey],
+    }));
   };
 
   const renderNavItem = (item: NavItem) => {

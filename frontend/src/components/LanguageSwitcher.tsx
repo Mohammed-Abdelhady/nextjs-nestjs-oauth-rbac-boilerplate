@@ -30,7 +30,7 @@ export function LanguageSwitcher() {
   };
 
   return (
-    <div className="flex gap-2 items-center">
+    <div className="flex gap-2 items-center" data-testid="language-switcher">
       {LOCALE_OPTIONS.map(({ locale, label, labelKey }) => {
         const isCurrent = currentLocale === locale;
 

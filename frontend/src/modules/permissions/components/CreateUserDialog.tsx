@@ -24,7 +24,7 @@ import { Loader2 } from 'lucide-react';
 import { FieldError, PasswordVisibilityToggle, SubmitButton } from '@/components/forms';
 import { useCreateUserMutation } from '@/store/api/userApi';
 import { useListRolesQuery } from '../api/rolesApi';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/lib/toast';
 import { parseApiError } from '@/lib/apiError';
 import { validateCreateUserForm } from '../utils/createUserValidation';
 
@@ -67,7 +67,6 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
 
   const [createUser, { isLoading }] = useCreateUserMutation();
   const { data: rolesData, isLoading: isLoadingRoles } = useListRolesQuery(undefined);
-  const { toast } = useToast();
 
   const roles = rolesData?.roles || [];
   const availableRoles = roles.filter((r) => !r.isProtected);

@@ -5,7 +5,7 @@ import {
   useUpdateUserRoleMutation,
   useDeleteUserMutation,
 } from '@/modules/users/api/usersApi';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/lib/toast';
 import { getErrorMessage } from '@/modules/auth/utils/authHelpers';
 
 /**
@@ -60,7 +60,6 @@ export function useUserActions(): UseUserActionsReturn {
   const [updateStatus, { isLoading: isUpdatingStatus }] = useUpdateUserStatusMutation();
   const [updateRole, { isLoading: isUpdatingRole }] = useUpdateUserRoleMutation();
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
-  const { toast } = useToast();
   const t = useTranslations('users.actions');
 
   /**
@@ -75,7 +74,7 @@ export function useUserActions(): UseUserActionsReturn {
         toast.error(getErrorMessage(error));
       }
     },
-    [updateRole, toast, t],
+    [updateRole, t],
   );
 
   /**
@@ -97,7 +96,7 @@ export function useUserActions(): UseUserActionsReturn {
         return false;
       }
     },
-    [updateStatus, toast, t],
+    [updateStatus, t],
   );
 
   /**
@@ -115,7 +114,7 @@ export function useUserActions(): UseUserActionsReturn {
         return false;
       }
     },
-    [deleteUser, toast, t],
+    [deleteUser, t],
   );
 
   const isLoading = isUpdatingStatus || isUpdatingRole || isDeleting;

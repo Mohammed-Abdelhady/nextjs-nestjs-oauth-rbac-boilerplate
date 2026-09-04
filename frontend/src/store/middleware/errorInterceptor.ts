@@ -9,7 +9,6 @@
 
 import { isRejectedWithValue, type Middleware } from '@reduxjs/toolkit';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
-import { addToast } from '../slices/toastSlice';
 import { toast } from '@/lib/toast';
 import type { ToastType } from '@/types/toast.types';
 import { STATUS_CODE_MESSAGES, ERROR_MESSAGES, TOAST_DURATION } from '@/constants/toastMessages';
@@ -142,7 +141,7 @@ const getHttpMethod = (action: unknown): string | undefined => {
  * Catches all RTK Query rejected actions and triggers toasts automatically.
  * Uses deduplication in toast slice to prevent spam.
  */
-export const errorInterceptor: Middleware = (store) => (next) => (action) => {
+export const errorInterceptor: Middleware = () => (next) => (action) => {
   // Check if action is a rejected RTK Query action
   if (isRejectedWithValue(action)) {
     const error = action.payload as FetchBaseQueryError;
@@ -168,19 +167,6 @@ export const errorInterceptor: Middleware = (store) => (next) => (action) => {
       duration: classification.duration,
       description: endpoint ? `Failed to ${method} ${endpoint}` : undefined,
     });
-
-    // Also dispatch to Redux for tracking (optional, for debugging/analytics)
-    store.dispatch(
-      addToast({
-        type: classification.type,
-        message,
-        options: {
-          duration: classification.duration,
-          dismissible: classification.duration !== TOAST_DURATION.CRITICAL_ERROR,
-          description: endpoint ? `Failed to ${method} ${endpoint}` : undefined,
-        },
-      }),
-    );
   }
 
   // Continue processing action

@@ -19,7 +19,7 @@ import { DeviceIcon } from './DeviceIcon';
 import { CurrentSessionBadge } from './CurrentSessionBadge';
 import { parseUserAgent, getDeviceLabel } from '@/lib/parseUserAgent';
 import type { Session } from '../types/session.types';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import { formatTimeAgo } from '@/lib/formatters';
 
@@ -50,7 +50,6 @@ export const SessionCardTimeline = memo(
     const locale = useLocale();
     const [showConfirm, setShowConfirm] = useState(false);
     const [deleteSession, { isLoading }] = useDeleteSessionMutation();
-    const { toast } = useToast();
 
     const { device, browser, os } = parseUserAgent(session.userAgent);
     const deviceLabel = getDeviceLabel(session.userAgent);
@@ -63,7 +62,7 @@ export const SessionCardTimeline = memo(
       } catch {
         toast.error(t('logoutError'));
       }
-    }, [deleteSession, session.id, toast, t]);
+    }, [deleteSession, session.id, t]);
 
     const handleShowConfirm = useCallback(() => setShowConfirm(true), []);
     const handleHideConfirm = useCallback(() => setShowConfirm(false), []);

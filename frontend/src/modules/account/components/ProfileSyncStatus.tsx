@@ -73,7 +73,7 @@ export function ProfileSyncStatus() {
   const { lastSyncedAt, lastSyncedProvider, primaryProvider, canSync } = syncStatus;
 
   return (
-    <Card>
+    <Card data-testid="profile-sync-status">
       <CardHeader>
         <CardTitle>{t('title')}</CardTitle>
         <CardDescription>{t('description')}</CardDescription>

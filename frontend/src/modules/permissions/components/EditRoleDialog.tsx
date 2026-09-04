@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useUpdateRoleMutation, type Role } from '../api/rolesApi';
 import { EditRoleForm, type EditRoleFormValues } from './EditRoleForm';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { parseApiError } from '@/lib/apiError';
 
 export interface EditRoleDialogProps {

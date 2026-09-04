@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { useUpdateUserMutation } from '@/store/api/userApi';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/lib/toast';
 import { parseApiError } from '@/lib/apiError';
 
 interface EditUserDialogProps {
@@ -200,7 +200,6 @@ export function EditUserDialog({
 }: EditUserDialogProps) {
   const t = useTranslations('users.editUser');
   const [updateUser, { isLoading }] = useUpdateUserMutation();
-  const { toast } = useToast();
 
   const handleSubmit = async (data: { name: string; email: string }): Promise<boolean> => {
     if (!userId) return false;

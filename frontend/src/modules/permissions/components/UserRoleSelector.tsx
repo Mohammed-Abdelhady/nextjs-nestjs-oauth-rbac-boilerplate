@@ -22,7 +22,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Shield, ShieldAlert } from 'lucide-react';
 import { useListRolesQuery } from '../api/rolesApi';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/lib/toast';
 import { parseApiError } from '@/lib/apiError';
 
 interface UserRoleSelectorProps {
@@ -47,7 +47,6 @@ export function UserRoleSelector({
   const [pendingRole, setPendingRole] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const { data: rolesData, isLoading: isLoadingRoles } = useListRolesQuery(undefined);
-  const { toast } = useToast();
 
   const roles = rolesData?.roles || [];
 

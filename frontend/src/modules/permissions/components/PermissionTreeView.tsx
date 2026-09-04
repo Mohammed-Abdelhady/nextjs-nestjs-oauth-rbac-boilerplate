@@ -1,6 +1,3 @@
-'use client';
-
-import { memo, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { PermissionNode } from './PermissionNode';
 import { Shield } from 'lucide-react';
@@ -27,6 +24,25 @@ export interface PermissionTreeViewProps {
   className?: string;
 }
 
+function groupPermissions(permissions: string[]): Record<string, string[]> {
+  const groups: Record<string, string[]> = {};
+
+  permissions.forEach((perm) => {
+    if (perm === '*') {
+      groups['wildcard'] = ['*'];
+      return;
+    }
+
+    const resource = perm.split(':')[0];
+    if (!groups[resource]) {
+      groups[resource] = [];
+    }
+    groups[resource].push(perm);
+  });
+
+  return groups;
+}
+
 /**
  * PermissionTreeView - Hierarchical permission display
  *
@@ -45,33 +61,14 @@ export interface PermissionTreeViewProps {
  * />
  * ```
  */
-export const PermissionTreeView = memo(function PermissionTreeView({
+export function PermissionTreeView({
   permissions,
   variant = 'default',
   showHeaders = true,
   className,
 }: PermissionTreeViewProps) {
   const t = useTranslations('permissions.tree');
-
-  // Group permissions by resource
-  const groupedPermissions = useMemo(() => {
-    const groups: Record<string, string[]> = {};
-
-    permissions.forEach((perm) => {
-      if (perm === '*') {
-        groups['wildcard'] = ['*'];
-        return;
-      }
-
-      const resource = perm.split(':')[0];
-      if (!groups[resource]) {
-        groups[resource] = [];
-      }
-      groups[resource].push(perm);
-    });
-
-    return groups;
-  }, [permissions]);
+  const groupedPermissions = groupPermissions(permissions);
 
   // Check for wildcard
   const hasWildcard = permissions.includes('*');
@@ -117,4 +114,4 @@ export const PermissionTreeView = memo(function PermissionTreeView({
       </div>
     </div>
   );
-});
+}

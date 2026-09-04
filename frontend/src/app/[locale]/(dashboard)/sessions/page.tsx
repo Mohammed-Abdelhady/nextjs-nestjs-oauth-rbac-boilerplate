@@ -2,12 +2,15 @@
 
 import { useState, useEffect, Activity } from 'react';
 import { useTranslations } from 'next-intl';
-import { Loader2, RefreshCw, Shield } from 'lucide-react';
+import { RefreshCw, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TimelineList } from '@/components/design-system';
-import { SessionCardTimeline } from '@/modules/sessions/components/SessionCardTimeline';
-import { RevokeAllSessionsButton } from '@/modules/sessions/components/RevokeAllSessionsButton';
+import {
+  SessionCardTimeline,
+  RevokeAllSessionsButton,
+  SessionTimelineSkeleton,
+} from '@/modules/sessions';
 import { useGetSessionsQuery } from '@/modules/sessions';
 import { parseApiError } from '@/lib/apiError';
 
@@ -77,20 +80,7 @@ export default function SessionsPage() {
 
       {/* Loading State */}
       <Activity mode={isLoading ? 'visible' : 'hidden'}>
-        <div
-          role="status"
-          aria-live="polite"
-          className="flex items-center justify-center py-12"
-          data-testid="loading-skeleton"
-        >
-          <div className="text-center space-y-4">
-            <Loader2
-              className="h-8 w-8 motion-safe:animate-spin mx-auto text-muted-foreground"
-              aria-hidden="true"
-            />
-            <p className="text-sm text-muted-foreground">{t('loading')}</p>
-          </div>
-        </div>
+        <SessionTimelineSkeleton />
       </Activity>
 
       {/* Error State */}
@@ -115,14 +105,23 @@ export default function SessionsPage() {
       {/* Empty State */}
       <Activity mode={!isLoading && !isError && sessions?.length === 0 ? 'visible' : 'hidden'}>
         <div
-          className="flex items-center justify-center py-12 text-center"
+          className="flex flex-col items-center justify-center py-12 text-center"
           data-testid="empty-state"
         >
-          <div className="space-y-3">
-            <Shield className="h-12 w-12 mx-auto text-muted-foreground" aria-hidden="true" />
-            <h2 className="text-lg font-semibold">{t('noSessions')}</h2>
-            <p className="text-sm text-muted-foreground max-w-sm">{t('noSessionsDescription')}</p>
-          </div>
+          <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-3" aria-hidden="true" />
+          <h2 className="text-lg font-semibold">{t('noSessions')}</h2>
+          <p className="text-sm text-muted-foreground max-w-sm mt-1 mb-4">
+            {t('noSessionsDescription')}
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            data-testid="refresh-empty-sessions-button"
+          >
+            <RefreshCw className="me-2 h-4 w-4" aria-hidden="true" />
+            {t('refresh')}
+          </Button>
         </div>
       </Activity>
 

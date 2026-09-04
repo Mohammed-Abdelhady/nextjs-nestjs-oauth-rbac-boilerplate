@@ -45,6 +45,9 @@ export const usersApi = baseApi.injectEndpoints({
       },
       transformResponse: (response: { success: boolean; data: ApiUsersResponse }) => {
         const { data, pagination } = response.data;
+        const totalPages =
+          pagination.totalPages ??
+          Math.max(1, Math.ceil(pagination.total / (pagination.limit || 20)));
         return {
           users: data.map((user) => ({
             ...user,
@@ -53,6 +56,7 @@ export const usersApi = baseApi.injectEndpoints({
           total: pagination.total,
           page: pagination.page,
           limit: pagination.limit,
+          totalPages,
         };
       },
       providesTags: (result) =>

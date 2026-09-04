@@ -15,7 +15,7 @@ export function OAuthDivider({ text }: OAuthDividerProps) {
   const dividerText = text || t('continue');
 
   return (
-    <div className="relative my-6" aria-hidden="true">
+    <div className="relative my-6" aria-hidden="true" data-testid="oauth-divider">
       <div className="absolute inset-0 flex items-center">
         <span className="w-full border-t border-border" />
       </div>

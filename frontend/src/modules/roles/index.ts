@@ -1,6 +1,5 @@
 // Components
 export {
-  CreateRoleButton,
   CreateRoleDialog,
   DeleteRoleDialog,
   EditRoleDialog,

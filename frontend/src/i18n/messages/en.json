@@ -22,6 +22,12 @@
     "switchToEnglish": "Switch to English",
     "switchToArabic": "Switch to Arabic"
   },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page",
+    "pageInfo": "Page {page} of {totalPages}"
+  },
   "home": {
     "title": "Full-Stack Authentication Boilerplate",
     "subtitle": "Production-ready authentication with Next.js and NestJS",
@@ -693,16 +699,6 @@
       "empty": "No permissions assigned",
       "wildcardLabel": "Wildcard (*)",
       "wildcardNotice": "This role has all permissions"
-    },
-    "badge": {
-      "empty": "No permissions"
-    },
-    "list": {
-      "empty": "No permissions assigned",
-      "wildcardTitle": "Wildcard Permission (*)",
-      "wildcardDescription": "This grants all permissions",
-      "moreBadge": "+{count} more",
-      "showMore": "{count, plural, =1 {Show 1 more permission} other {Show {count} more permissions}}"
     },
     "dialog": {
       "title": "Manage User Permissions",

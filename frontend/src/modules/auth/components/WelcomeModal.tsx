@@ -41,6 +41,7 @@ export function WelcomeModal({ isOpen, userName, onClose }: WelcomeModalProps) {
         className="sm:max-w-md"
         onKeyDown={handleKeyDown}
         aria-describedby="welcome-description"
+        data-testid="welcome-modal"
       >
         <div className="flex flex-col items-center text-center py-6 space-y-6">
           <div className="relative">

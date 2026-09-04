@@ -20,7 +20,29 @@ export const rolesApi = baseApi.injectEndpoints({
         url: '/api/roles',
         params,
       }),
-      transformResponse: (response: { success: boolean; data: ListRolesResponse }) => response.data,
+      transformResponse: (response: {
+        success: boolean;
+        data: {
+          roles: Role[];
+          total: number;
+          page: number;
+          pages?: number;
+          totalPages?: number;
+          limit?: number;
+        };
+      }): ListRolesResponse => {
+        const raw = response.data;
+        const limit = raw.limit ?? 20;
+        const totalPages =
+          raw.totalPages ?? raw.pages ?? Math.max(1, Math.ceil((raw.total || 0) / limit));
+        return {
+          roles: raw.roles,
+          total: raw.total,
+          page: raw.page,
+          limit,
+          totalPages,
+        };
+      },
       providesTags: ['Roles'],
     }),
 

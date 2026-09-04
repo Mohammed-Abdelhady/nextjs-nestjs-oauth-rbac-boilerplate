@@ -17,7 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { FieldError, SubmitButton } from '@/components/forms';
 import { useCreateRoleMutation } from '../api/rolesApi';
 import { PermissionSelector } from './PermissionSelector';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { parseApiError } from '@/lib/apiError';
 
 export interface CreateRoleDialogProps {
