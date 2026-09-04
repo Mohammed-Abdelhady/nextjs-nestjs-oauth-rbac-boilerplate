@@ -14,6 +14,11 @@ build/
 .next/
 out/
 
+# Scaffolding CLI build inputs, produced by
+# npm run build -w packages/create-nest-next-auth
+packages/create-nest-next-auth/template/
+packages/create-nest-next-auth/template.manifest.json
+
 # Environment files
 .env
 .env.local

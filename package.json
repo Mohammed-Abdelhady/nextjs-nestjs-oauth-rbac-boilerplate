@@ -6,7 +6,8 @@
   "type": "module",
   "workspaces": [
     "backend",
-    "frontend"
+    "frontend",
+    "packages/*"
   ],
   "scripts": {
     "init": "node scripts/init.js",
@@ -17,7 +18,8 @@
     "lint:fix": "npm run lint:fix --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "check:contrast": "node scripts/check-contrast.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^18.6.1",

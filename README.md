@@ -70,6 +70,18 @@ Production-ready authentication system with **NestJS** backend and **Next.js** f
 | i18n     | next-intl                                |
 | Testing  | Jest, Playwright                         |
 
+## Scaffold a new project
+
+Copy this boilerplate with only the sign-in methods you want:
+
+```bash
+npx create-nest-next-auth my-app
+```
+
+The CLI asks which methods to keep, then removes the files, env vars and docs of
+the ones you skip. Flags, the feature manifest and maintainer instructions are in
+[packages/create-nest-next-auth/README.md](./packages/create-nest-next-auth/README.md).
+
 ## Quick Start
 
 ```bash

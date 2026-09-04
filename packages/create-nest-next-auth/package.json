@@ -1,0 +1,62 @@
+{
+  "name": "create-nest-next-auth",
+  "version": "0.1.0",
+  "description": "Scaffold a NestJS + Next.js authentication boilerplate with only the sign-in methods you pick",
+  "keywords": [
+    "create",
+    "scaffold",
+    "nestjs",
+    "nextjs",
+    "authentication",
+    "oauth",
+    "rbac"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "create-nest-next-auth": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "template",
+    "template.manifest.json",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate.git",
+    "directory": "packages/create-nest-next-auth"
+  },
+  "homepage": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/tree/master/packages/create-nest-next-auth#readme",
+  "bugs": {
+    "url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=10.9.0"
+  },
+  "scripts": {
+    "sync-template": "node scripts/sync-template.mjs",
+    "prebuild": "node scripts/sync-template.mjs",
+    "build": "tsdown",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@clack/prompts": "^1.7.0",
+    "@eslint/js": "^9.18.0",
+    "@types/node": "^22.10.7",
+    "commander": "^15.0.0",
+    "eslint": "^9.18.0",
+    "globals": "^16.0.0",
+    "tsdown": "^0.22.14",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0",
+    "vitest": "^3.2.7"
+  }
+}

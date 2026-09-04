@@ -1,0 +1,209 @@
+{
+  "$comment": "Feature map read by packages/create-nest-next-auth. Entries with \"status\": \"planned\" are not offered by the CLI. Files and env vars listed here are deleted from a generated project when the feature is not selected, so every path must belong to that feature alone.",
+  "features": {
+    "email-password": {
+      "label": "Email and password",
+      "description": "Registration with a 6-digit code, login, password reset.",
+      "kind": "credential",
+      "default": true,
+      "files": [],
+      "envVars": ["SMTP_HOST", "SMTP_PORT", "SMTP_SECURE", "SMTP_USER", "SMTP_PASS", "EMAIL_FROM"],
+      "requires": [],
+      "docs": ["docs/setup-smtp.md"]
+    },
+    "google": {
+      "label": "Google",
+      "description": "Sign in with a Google account.",
+      "kind": "oauth",
+      "default": true,
+      "files": [
+        "backend/src/auth/strategies/google-oauth.strategy.ts",
+        "backend/src/auth/strategies/google-oauth.strategy.spec.ts"
+      ],
+      "envVars": [
+        "OAUTH_GOOGLE_CLIENT_ID",
+        "OAUTH_GOOGLE_CLIENT_SECRET",
+        "OAUTH_GOOGLE_CALLBACK_URL",
+        "NEXT_PUBLIC_GOOGLE_CLIENT_ID"
+      ],
+      "requires": [],
+      "docs": ["docs/setup-google-oauth.md"]
+    },
+    "github": {
+      "label": "GitHub",
+      "description": "Sign in with a GitHub account.",
+      "kind": "oauth",
+      "default": true,
+      "files": [
+        "backend/src/auth/strategies/github-oauth.strategy.ts",
+        "backend/src/auth/strategies/github-oauth.strategy.spec.ts"
+      ],
+      "envVars": [
+        "OAUTH_GITHUB_CLIENT_ID",
+        "OAUTH_GITHUB_CLIENT_SECRET",
+        "OAUTH_GITHUB_CALLBACK_URL",
+        "NEXT_PUBLIC_GITHUB_CLIENT_ID"
+      ],
+      "requires": [],
+      "docs": ["docs/setup-github-oauth.md"]
+    },
+    "facebook": {
+      "label": "Facebook",
+      "description": "Sign in with a Facebook account.",
+      "kind": "oauth",
+      "default": true,
+      "files": [
+        "backend/src/auth/strategies/facebook-oauth.strategy.ts",
+        "backend/src/auth/strategies/facebook-oauth.strategy.spec.ts"
+      ],
+      "envVars": [
+        "OAUTH_FACEBOOK_CLIENT_ID",
+        "OAUTH_FACEBOOK_CLIENT_SECRET",
+        "OAUTH_FACEBOOK_CALLBACK_URL",
+        "NEXT_PUBLIC_FACEBOOK_APP_ID"
+      ],
+      "requires": [],
+      "docs": ["docs/setup-facebook-oauth.md", "docs/facebook-oauth-permissions.md"]
+    },
+    "magic-link": {
+      "status": "planned",
+      "label": "Magic link",
+      "description": "Sign in with a one-time link sent by email.",
+      "kind": "passwordless",
+      "default": false,
+      "files": [],
+      "envVars": [],
+      "requires": ["email-password"],
+      "docs": []
+    },
+    "totp": {
+      "status": "planned",
+      "label": "TOTP two-factor",
+      "description": "Second factor from an authenticator app.",
+      "kind": "second-factor",
+      "default": false,
+      "files": [],
+      "envVars": [],
+      "requires": ["email-password"],
+      "docs": []
+    },
+    "passkeys": {
+      "status": "planned",
+      "label": "Passkeys",
+      "description": "WebAuthn sign-in with platform authenticators.",
+      "kind": "passwordless",
+      "default": false,
+      "files": [],
+      "envVars": [],
+      "requires": [],
+      "docs": []
+    },
+    "microsoft": {
+      "status": "planned",
+      "label": "Microsoft",
+      "description": "Sign in with a Microsoft account or Entra ID tenant.",
+      "kind": "oauth",
+      "default": false,
+      "files": [],
+      "envVars": [],
+      "requires": [],
+      "docs": []
+    },
+    "apple": {
+      "status": "planned",
+      "label": "Apple",
+      "description": "Sign in with Apple.",
+      "kind": "oauth",
+      "default": false,
+      "files": [],
+      "envVars": [],
+      "requires": [],
+      "docs": []
+    },
+    "discord": {
+      "status": "planned",
+      "label": "Discord",
+      "description": "Sign in with a Discord account.",
+      "kind": "oauth",
+      "default": false,
+      "files": [],
+      "envVars": [],
+      "requires": [],
+      "docs": []
+    },
+    "linkedin": {
+      "status": "planned",
+      "label": "LinkedIn",
+      "description": "Sign in with LinkedIn OIDC.",
+      "kind": "oauth",
+      "default": false,
+      "files": [],
+      "envVars": [],
+      "requires": [],
+      "docs": []
+    },
+    "gitlab": {
+      "status": "planned",
+      "label": "GitLab",
+      "description": "Sign in with GitLab, hosted or self-managed.",
+      "kind": "oauth",
+      "default": false,
+      "files": [],
+      "envVars": [],
+      "requires": [],
+      "docs": []
+    },
+    "x": {
+      "status": "planned",
+      "label": "X",
+      "description": "Sign in with X.",
+      "kind": "oauth",
+      "default": false,
+      "files": [],
+      "envVars": [],
+      "requires": [],
+      "docs": []
+    },
+    "slack": {
+      "status": "planned",
+      "label": "Slack",
+      "description": "Sign in with Slack OIDC.",
+      "kind": "oauth",
+      "default": false,
+      "files": [],
+      "envVars": [],
+      "requires": [],
+      "docs": []
+    },
+    "twitch": {
+      "status": "planned",
+      "label": "Twitch",
+      "description": "Sign in with Twitch OIDC.",
+      "kind": "oauth",
+      "default": false,
+      "files": [],
+      "envVars": [],
+      "requires": [],
+      "docs": []
+    },
+    "oidc": {
+      "status": "planned",
+      "label": "Generic OIDC",
+      "description": "Any OpenID Connect provider configured by discovery URL.",
+      "kind": "oauth",
+      "default": false,
+      "files": [],
+      "envVars": [],
+      "requires": [],
+      "docs": []
+    }
+  },
+  "core": {
+    "alwaysRemoveFiles": [
+      ".github/workflows/publish-cli.yml",
+      "template.manifest.json",
+      ".hyperflow/**",
+      "openspec/**"
+    ]
+  }
+}
