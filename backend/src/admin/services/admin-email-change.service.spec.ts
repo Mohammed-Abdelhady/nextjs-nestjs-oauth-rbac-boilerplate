@@ -14,7 +14,9 @@ describe('AdminEmailChangeService', () => {
   const mockUserModel = { findOne: jest.fn() };
 
   const mockVerificationCodeService = {
-    createOrUpdatePendingRegistration: jest.fn().mockResolvedValue('123456'),
+    createOrUpdatePendingRegistration: jest
+      .fn()
+      .mockResolvedValue({ code: '123456', name: 'Target User' }),
   };
 
   const mockMailService = {
@@ -50,7 +52,7 @@ describe('AdminEmailChangeService', () => {
       exec: jest.fn().mockResolvedValue(null),
     });
     mockVerificationCodeService.createOrUpdatePendingRegistration.mockResolvedValue(
-      '123456',
+      { code: '123456', name: 'Target User' },
     );
   });
 

@@ -1,265 +1,181 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getModelToken } from '@nestjs/mongoose';
-import { Response } from 'express';
-import { Types } from 'mongoose';
-import { AuthService } from './auth.service';
-import { HashService } from '../common/services/hash.service';
-import { MailService } from '../mail/mail.service';
-import { SessionService } from './services/session.service';
-import { SessionCookieService } from './services/session-cookie.service';
-import { VerificationCodeService } from './services/verification-code.service';
-import { User } from '../user/schemas/user.schema';
-import { Role } from '../role/schemas/role.schema';
-import { ErrorCode } from '../common/enums/error-code.enum';
-import { AuthProvider } from '../user/enums/auth-provider.enum';
+import {
+  AuthServiceHarness,
+  createAuthServiceHarness,
+  MOCK_USER,
+  REGISTER_DTO,
+} from './auth.service.harness-spec';
+import { GENERIC_CODE_SENT_MESSAGE } from './constants/auth-messages';
 
-describe('AuthService', () => {
-  let service: AuthService;
-  let userModel: {
-    findOne: jest.Mock;
-    create: jest.Mock;
-  };
-  let roleModel: {
-    findOne: jest.Mock;
-  };
-  let hashService: {
-    hash: jest.Mock;
-    compare: jest.Mock;
-  };
-  let mailService: {
-    sendActivationCode: jest.Mock;
-    sendPasswordResetCode: jest.Mock;
-  };
-  let sessionService: {
-    createSession: jest.Mock;
-    invalidateSession: jest.Mock;
-    invalidateAllSessions: jest.Mock;
-  };
-  let verificationCodeService: {
-    createOrUpdatePendingRegistration: jest.Mock;
-    verifyAndConsumeRegistration: jest.Mock;
-    resendActivationCode: jest.Mock;
-    createOrUpdatePasswordReset: jest.Mock;
-    verifyPasswordReset: jest.Mock;
-    clearPasswordReset: jest.Mock;
-  };
-  let sessionCookieService: {
-    set: jest.Mock;
-    clear: jest.Mock;
-    read: jest.Mock;
-  };
-
-  const mockUserId = new Types.ObjectId('507f1f77bcf86cd799439011');
-  const mockUser = {
-    _id: mockUserId,
-    email: 'user@example.com',
-    name: 'Test User',
-    password: 'hashed-password',
-    role: 'user',
-    permissions: [],
-    authProvider: AuthProvider.EMAIL,
-    isVerified: true,
-    isDeleted: false,
-    save: jest.fn().mockResolvedValue(undefined),
-  };
-
-  const mockResponse = {
-    req: {
-      headers: { 'user-agent': 'test-agent' },
-      ip: '127.0.0.1',
-    },
-    cookie: jest.fn(),
-  } as unknown as Response;
+describe('AuthService registration and code requests', () => {
+  let harness: AuthServiceHarness;
 
   beforeEach(async () => {
-    userModel = {
-      findOne: jest.fn(),
-      create: jest.fn(),
-    };
-
-    roleModel = {
-      findOne: jest.fn().mockReturnValue({
-        exec: jest
-          .fn()
-          .mockResolvedValue({ slug: 'user', permissions: ['read'] }),
-      }),
-    };
-
-    hashService = {
-      hash: jest.fn().mockResolvedValue('hashed-val'),
-      compare: jest.fn().mockResolvedValue(true),
-    };
-
-    mailService = {
-      sendActivationCode: jest.fn().mockResolvedValue(undefined),
-      sendPasswordResetCode: jest.fn().mockResolvedValue(undefined),
-    };
-
-    sessionService = {
-      createSession: jest.fn().mockResolvedValue('session-token-123'),
-      invalidateSession: jest.fn().mockResolvedValue(true),
-      invalidateAllSessions: jest.fn().mockResolvedValue(2),
-    };
-
-    verificationCodeService = {
-      createOrUpdatePendingRegistration: jest.fn().mockResolvedValue('123456'),
-      verifyAndConsumeRegistration: jest.fn().mockResolvedValue({
-        email: 'user@example.com',
-        name: 'Test User',
-        hashedPassword: 'hashed-password',
-      }),
-      resendActivationCode: jest.fn().mockResolvedValue({
-        code: '654321',
-        name: 'Test User',
-      }),
-      createOrUpdatePasswordReset: jest.fn().mockResolvedValue('123456'),
-      verifyPasswordReset: jest.fn().mockResolvedValue(undefined),
-      clearPasswordReset: jest.fn().mockResolvedValue(undefined),
-    };
-
-    sessionCookieService = {
-      set: jest.fn(),
-      clear: jest.fn(),
-      read: jest.fn(),
-    };
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AuthService,
-        { provide: getModelToken(User.name), useValue: userModel },
-        { provide: getModelToken(Role.name), useValue: roleModel },
-        { provide: HashService, useValue: hashService },
-        { provide: MailService, useValue: mailService },
-        { provide: SessionService, useValue: sessionService },
-        { provide: VerificationCodeService, useValue: verificationCodeService },
-        { provide: SessionCookieService, useValue: sessionCookieService },
-      ],
-    }).compile();
-
-    service = module.get<AuthService>(AuthService);
+    harness = await createAuthServiceHarness();
   });
 
-  describe('login (S-01 and D-04)', () => {
-    it('should reject login with 401 when user is deleted', async () => {
-      userModel.findOne.mockReturnValue({
-        select: jest.fn().mockResolvedValue(null),
-      });
+  describe('register (S-09 and S-13)', () => {
+    it('should answer a free address with the generic reply and mail a code', async () => {
+      harness.userModel.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.login(
-          { email: 'deleted@example.com', password: 'Password123!' },
-          mockResponse,
-        ),
-      ).rejects.toMatchObject({
-        code: ErrorCode.INVALID_CREDENTIALS,
-        status: 401,
-      });
-
-      expect(userModel.findOne).toHaveBeenCalledWith({
-        email: 'deleted@example.com',
-        isDeleted: { $ne: true },
-      });
-      expect(hashService.compare).not.toHaveBeenCalled();
-    });
-
-    it('should reject login with 401 when account has no password (OAuth-only)', async () => {
-      const oauthUser = {
-        ...mockUser,
-        password: undefined,
-      };
-      userModel.findOne.mockReturnValue({
-        select: jest.fn().mockResolvedValue(oauthUser),
-      });
-
-      await expect(
-        service.login(
-          { email: 'oauth@example.com', password: 'Password123!' },
-          mockResponse,
-        ),
-      ).rejects.toMatchObject({
-        code: ErrorCode.INVALID_CREDENTIALS,
-        status: 401,
-      });
-
-      expect(hashService.compare).not.toHaveBeenCalled();
-    });
-
-    it('should authenticate user and create session on valid credentials', async () => {
-      userModel.findOne.mockReturnValue({
-        select: jest.fn().mockResolvedValue(mockUser),
-      });
-      hashService.compare.mockResolvedValue(true);
-
-      const result = await service.login(
-        { email: 'user@example.com', password: 'Password123!' },
-        mockResponse,
-      );
+      const result = await harness.service.register(REGISTER_DTO);
 
       expect(result.success).toBe(true);
-      expect(sessionService.createSession).toHaveBeenCalledWith(
-        mockUserId,
-        'test-agent',
-        '127.0.0.1',
-      );
-      expect(sessionCookieService.set).toHaveBeenCalledWith(
-        mockResponse,
-        'session-token-123',
-      );
-    });
-  });
-
-  describe('password reset (S-01 and S-07)', () => {
-    it('should reject forgotPassword with 404 when user is deleted', async () => {
-      userModel.findOne.mockResolvedValue(null);
-
-      await expect(
-        service.forgotPassword({ email: 'deleted@example.com' }),
-      ).rejects.toMatchObject({
-        code: ErrorCode.USER_NOT_FOUND_FOR_RESET,
-        status: 404,
-      });
-
-      expect(userModel.findOne).toHaveBeenCalledWith({
-        email: 'deleted@example.com',
-        isDeleted: { $ne: true },
-      });
-    });
-
-    it('should invalidate all sessions on successful resetPassword', async () => {
-      userModel.findOne.mockResolvedValue(mockUser);
-      hashService.hash.mockResolvedValue('new-hashed-password');
-
-      const result = await service.resetPassword({
-        email: 'user@example.com',
-        code: '123456',
-        newPassword: 'NewPassword123!',
-      });
-
-      expect(result.success).toBe(true);
-      expect(sessionService.invalidateAllSessions).toHaveBeenCalledWith(
-        mockUserId,
-      );
-      expect(verificationCodeService.clearPasswordReset).toHaveBeenCalledWith(
+      expect(result.message).toBe(GENERIC_CODE_SENT_MESSAGE);
+      expect(harness.authMailService.sendActivationCode).toHaveBeenCalledWith(
         'user@example.com',
+        '123456',
+        'Test User',
+      );
+    });
+
+    it('should answer a taken address with the same reply and notify its owner', async () => {
+      harness.userModel.findOne.mockResolvedValue(MOCK_USER);
+
+      const result = await harness.service.register({
+        ...REGISTER_DTO,
+        name: 'Impostor',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.message).toBe(GENERIC_CODE_SENT_MESSAGE);
+      expect(
+        harness.authMailService.sendRegistrationAttemptNotice,
+      ).toHaveBeenCalledWith('user@example.com', 'Test User');
+      expect(harness.authMailService.sendActivationCode).not.toHaveBeenCalled();
+      expect(
+        harness.verificationCodeService.createOrUpdatePendingRegistration,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('should hash a password for a taken address so both paths cost the same', async () => {
+      harness.userModel.findOne.mockResolvedValue(MOCK_USER);
+
+      await harness.service.register(REGISTER_DTO);
+
+      expect(harness.hashService.hash).toHaveBeenCalledTimes(2);
+    });
+
+    it('should mail the name held by a live pending registration, not the new one', async () => {
+      harness.userModel.findOne.mockResolvedValue(null);
+      harness.verificationCodeService.createOrUpdatePendingRegistration.mockResolvedValue(
+        { code: '111111', name: 'First Registrant' },
+      );
+
+      await harness.service.register({
+        ...REGISTER_DTO,
+        name: 'Second Registrant',
+      });
+
+      expect(harness.authMailService.sendActivationCode).toHaveBeenCalledWith(
+        'user@example.com',
+        '111111',
+        'First Registrant',
+      );
+    });
+
+    it('should still register an address whose account is not verified yet', async () => {
+      harness.userModel.findOne.mockResolvedValue({
+        ...MOCK_USER,
+        isVerified: false,
+      });
+
+      await harness.service.register(REGISTER_DTO);
+
+      expect(
+        harness.verificationCodeService.createOrUpdatePendingRegistration,
+      ).toHaveBeenCalledWith(
+        'user@example.com',
+        'Test User',
+        expect.any(String),
+      );
+      expect(
+        harness.authMailService.sendRegistrationAttemptNotice,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resendActivation (S-01 and S-13)', () => {
+    it('should answer a verified account with the generic reply and no mail', async () => {
+      harness.userModel.findOne.mockResolvedValue(MOCK_USER);
+
+      const result = await harness.service.resendActivation({
+        email: 'user@example.com',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.message).toBe(GENERIC_CODE_SENT_MESSAGE);
+      expect(harness.hashService.hash).toHaveBeenCalledTimes(1);
+      expect(harness.authMailService.sendActivationCode).not.toHaveBeenCalled();
+      expect(
+        harness.verificationCodeService.resendActivationCode,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('should answer an address with nothing pending the same way', async () => {
+      harness.userModel.findOne.mockResolvedValue(null);
+      harness.verificationCodeService.resendActivationCode.mockResolvedValue(
+        null,
+      );
+
+      const result = await harness.service.resendActivation({
+        email: 'nobody@example.com',
+      });
+
+      expect(result.message).toBe(GENERIC_CODE_SENT_MESSAGE);
+      expect(harness.hashService.hash).toHaveBeenCalledTimes(1);
+      expect(harness.authMailService.sendActivationCode).not.toHaveBeenCalled();
+    });
+
+    it('should mail a fresh code to an account still waiting to be verified', async () => {
+      harness.userModel.findOne.mockResolvedValue({
+        ...MOCK_USER,
+        isVerified: false,
+      });
+
+      const result = await harness.service.resendActivation({
+        email: 'user@example.com',
+      });
+
+      expect(result.message).toBe(GENERIC_CODE_SENT_MESSAGE);
+      expect(harness.authMailService.sendActivationCode).toHaveBeenCalledWith(
+        'user@example.com',
+        '654321',
+        'Test User',
       );
     });
   });
 
-  describe('resendActivation (S-01)', () => {
-    it('should reject resendActivation when user already exists', async () => {
-      userModel.findOne.mockResolvedValue(mockUser);
+  describe('forgotPassword (S-01 and S-13)', () => {
+    it('should answer an unknown address with the generic reply and no mail', async () => {
+      harness.userModel.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.resendActivation({ email: 'user@example.com' }),
-      ).rejects.toMatchObject({
-        code: ErrorCode.NO_PENDING_REGISTRATION_FOR_RESEND,
-        status: 404,
+      const result = await harness.service.forgotPassword({
+        email: 'nobody@example.com',
       });
 
-      expect(userModel.findOne).toHaveBeenCalledWith({
-        email: 'user@example.com',
+      expect(result.success).toBe(true);
+      expect(result.message).toBe(GENERIC_CODE_SENT_MESSAGE);
+      expect(harness.hashService.hash).toHaveBeenCalledTimes(1);
+      expect(
+        harness.authMailService.sendPasswordResetCode,
+      ).not.toHaveBeenCalled();
+      expect(harness.userModel.findOne).toHaveBeenCalledWith({
+        email: 'nobody@example.com',
         isDeleted: { $ne: true },
       });
+    });
+
+    it('should answer a known address the same way and mail a code', async () => {
+      harness.userModel.findOne.mockResolvedValue(MOCK_USER);
+
+      const result = await harness.service.forgotPassword({
+        email: 'user@example.com',
+      });
+
+      expect(result.message).toBe(GENERIC_CODE_SENT_MESSAGE);
+      expect(
+        harness.authMailService.sendPasswordResetCode,
+      ).toHaveBeenCalledWith('user@example.com', '123456', 'Test User');
     });
   });
 });

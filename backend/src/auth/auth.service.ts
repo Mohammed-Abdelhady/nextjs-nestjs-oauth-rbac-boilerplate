@@ -20,12 +20,14 @@ import { ApiResponse } from '../common/dto/api-response.dto';
 import { HashService } from '../common/services/hash.service';
 import { AppException } from '../common/exceptions/app.exception';
 import { ErrorCode } from '../common/enums/error-code.enum';
-import { MailService } from '../mail/mail.service';
+import { AuthMailService } from './services/auth-mail.service';
 import { SessionCookieService } from './services/session-cookie.service';
 import { SessionService } from './services/session.service';
 import { VerificationCodeService } from './services/verification-code.service';
+import { PasswordResetCodeService } from './services/password-reset-code.service';
 import { getEffectivePermissions } from './utils/permissions.util';
 import { resolveActivatedUser } from './utils/activation.util';
+import { generateVerificationCode } from './utils/verification-code.util';
 
 @Injectable()
 export class AuthService {
@@ -35,36 +37,45 @@ export class AuthService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @InjectModel(Role.name) private readonly roleModel: Model<RoleDocument>,
     private readonly hashService: HashService,
-    private readonly mailService: MailService,
+    private readonly authMailService: AuthMailService,
     private readonly sessionService: SessionService,
     private readonly verificationCodeService: VerificationCodeService,
+    private readonly passwordResetCodeService: PasswordResetCodeService,
     private readonly sessionCookieService: SessionCookieService,
   ) {}
 
+  /**
+   * Start a registration. An address that already has a verified account gets
+   * a notice instead of a code, and every caller gets the same reply.
+   */
   async register(dto: RegisterDto): Promise<ApiResponse<RegisterResponseDto>> {
+    const hashedPassword = await this.hashService.hash(dto.password);
     const existingUser = await this.userModel.findOne({
       email: dto.email,
       isDeleted: { $ne: true },
     });
-    if (existingUser) {
-      throw new AppException(
-        ErrorCode.EMAIL_ALREADY_EXISTS,
-        'Email already registered',
-        HttpStatus.CONFLICT,
+
+    if (existingUser?.isVerified) {
+      await this.spendCodeHashingTime();
+      await this.authMailService.sendRegistrationAttemptNotice(
+        dto.email,
+        existingUser.name,
       );
+
+      return RegisterResponseDto.success(dto.email);
     }
 
-    const hashedPassword = await this.hashService.hash(dto.password);
-    const code =
+    const pending =
       await this.verificationCodeService.createOrUpdatePendingRegistration(
         dto.email,
         dto.name,
         hashedPassword,
       );
 
-    await this.sendMailSafely(
-      () => this.mailService.sendActivationCode(dto.email, code, dto.name),
-      'Failed to send activation email',
+    await this.authMailService.sendActivationCode(
+      dto.email,
+      pending.code,
+      pending.name,
     );
 
     return RegisterResponseDto.success(dto.email);
@@ -95,6 +106,12 @@ export class AuthService {
     return ActivateResponseDto.success(user);
   }
 
+  /**
+   * Mail a fresh activation code for a pending registration. Accounts waiting
+   * on a verification code, including one moved to a new address by an admin,
+   * get their code here. Verified accounts and unknown addresses get the same
+   * reply and no mail.
+   */
   async resendActivation(
     dto: ResendActivationDto,
   ): Promise<ApiResponse<ResendActivationResponseDto>> {
@@ -102,20 +119,25 @@ export class AuthService {
       email: dto.email,
       isDeleted: { $ne: true },
     });
-    if (existingUser) {
-      throw new AppException(
-        ErrorCode.NO_PENDING_REGISTRATION_FOR_RESEND,
-        'No pending registration found. Please register again.',
-        HttpStatus.NOT_FOUND,
-      );
+
+    if (existingUser?.isVerified) {
+      await this.spendCodeHashingTime();
+      return ResendActivationResponseDto.success(dto.email);
     }
 
-    const { code, name } =
-      await this.verificationCodeService.resendActivationCode(dto.email);
+    const pending = await this.verificationCodeService.resendActivationCode(
+      dto.email,
+    );
 
-    await this.sendMailSafely(
-      () => this.mailService.sendActivationCode(dto.email, code, name),
-      'Failed to send activation email',
+    if (!pending) {
+      await this.spendCodeHashingTime();
+      return ResendActivationResponseDto.success(dto.email);
+    }
+
+    await this.authMailService.sendActivationCode(
+      dto.email,
+      pending.code,
+      pending.name,
     );
 
     return ResendActivationResponseDto.success(dto.email);
@@ -192,6 +214,10 @@ export class AuthService {
     return ApiResponse.success({ message: 'Logout successful' });
   }
 
+  /**
+   * Mail a password reset code. An address without an account gets the same
+   * reply as one with an account, and no mail.
+   */
   async forgotPassword(
     dto: ForgotPasswordDto,
   ): Promise<ApiResponse<ForgotPasswordResponseDto>> {
@@ -199,21 +225,21 @@ export class AuthService {
       email: dto.email,
       isDeleted: { $ne: true },
     });
+
     if (!user) {
-      throw new AppException(
-        ErrorCode.USER_NOT_FOUND_FOR_RESET,
-        'No account found with this email address',
-        HttpStatus.NOT_FOUND,
-      );
+      await this.spendCodeHashingTime();
+      return ForgotPasswordResponseDto.success(dto.email);
     }
 
-    const code = await this.verificationCodeService.createOrUpdatePasswordReset(
-      dto.email,
-    );
+    const code =
+      await this.passwordResetCodeService.createOrUpdatePasswordReset(
+        dto.email,
+      );
 
-    await this.sendMailSafely(
-      () => this.mailService.sendPasswordResetCode(dto.email, code, user.name),
-      'Failed to send password reset email',
+    await this.authMailService.sendPasswordResetCode(
+      dto.email,
+      code,
+      user.name,
     );
 
     return ForgotPasswordResponseDto.success(dto.email);
@@ -222,7 +248,10 @@ export class AuthService {
   async resetPassword(
     dto: ResetPasswordDto,
   ): Promise<ApiResponse<ResetPasswordResponseDto>> {
-    await this.verificationCodeService.verifyPasswordReset(dto.email, dto.code);
+    await this.passwordResetCodeService.verifyPasswordReset(
+      dto.email,
+      dto.code,
+    );
 
     const user = await this.userModel.findOne({
       email: dto.email,
@@ -243,25 +272,16 @@ export class AuthService {
     await this.sessionService.invalidateAllSessions(user._id);
     this.logger.log(`Password reset successful for: ${user.email}`);
 
-    await this.verificationCodeService.clearPasswordReset(dto.email);
+    await this.passwordResetCodeService.clearPasswordReset(dto.email);
     return ResetPasswordResponseDto.success();
   }
 
-  private async sendMailSafely(
-    action: () => Promise<void>,
-    failureMessage: string,
-  ): Promise<void> {
-    try {
-      await action();
-    } catch (error) {
-      this.logger.error(
-        `${failureMessage}: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      throw new AppException(
-        ErrorCode.EMAIL_SEND_FAILED,
-        failureMessage,
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+  /**
+   * Spend the bcrypt time a real code would have cost.
+   * Requests for addresses without an account take as long as requests for
+   * addresses with one.
+   */
+  private async spendCodeHashingTime(): Promise<void> {
+    await this.hashService.hash(generateVerificationCode());
   }
 }

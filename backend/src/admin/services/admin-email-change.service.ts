@@ -55,7 +55,7 @@ export class AdminEmailChangeService {
       );
     }
 
-    const code =
+    const { code } =
       await this.verificationCodeService.createOrUpdatePendingRegistration(
         email,
         user.name,

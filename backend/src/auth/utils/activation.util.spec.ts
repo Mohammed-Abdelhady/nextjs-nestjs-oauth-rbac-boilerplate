@@ -1,6 +1,7 @@
 import { Model } from 'mongoose';
 import { UserDocument } from '../../user/schemas/user.schema';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import { AuthProvider } from '../../user/enums/auth-provider.enum';
 import { resolveActivatedUser } from './activation.util';
 
 interface MockUserModel {
@@ -38,6 +39,8 @@ describe('resolveActivatedUser', () => {
       password: 'hashed',
       name: 'New User',
       isVerified: true,
+      authProvider: AuthProvider.EMAIL,
+      primaryProvider: AuthProvider.EMAIL,
     });
   });
 

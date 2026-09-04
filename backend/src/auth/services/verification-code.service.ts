@@ -2,18 +2,14 @@ import { Injectable, Logger, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import * as crypto from 'crypto';
 import {
   PendingRegistration,
   PendingRegistrationDocument,
 } from '../schemas/pending-registration.schema';
-import {
-  PendingPasswordReset,
-  PendingPasswordResetDocument,
-} from '../schemas/pending-password-reset.schema';
 import { HashService } from '../../common/services/hash.service';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import { generateVerificationCode } from '../utils/verification-code.util';
 
 export interface ConsumedRegistration {
   email: string;
@@ -21,11 +17,14 @@ export interface ConsumedRegistration {
   hashedPassword?: string;
 }
 
-export interface ResentCodeData {
+export interface PendingCodeData {
   code: string;
   name: string;
 }
 
+/**
+ * Activation codes for pending registrations.
+ */
 @Injectable()
 export class VerificationCodeService {
   private readonly logger = new Logger(VerificationCodeService.name);
@@ -35,8 +34,6 @@ export class VerificationCodeService {
   constructor(
     @InjectModel(PendingRegistration.name)
     private readonly pendingRegistrationModel: Model<PendingRegistrationDocument>,
-    @InjectModel(PendingPasswordReset.name)
-    private readonly pendingPasswordResetModel: Model<PendingPasswordResetDocument>,
     private readonly hashService: HashService,
     private readonly configService: ConfigService,
   ) {
@@ -51,29 +48,36 @@ export class VerificationCodeService {
   }
 
   /**
-   * Generate a random 6-digit verification code.
-   */
-  generateCode(): string {
-    return crypto.randomInt(100000, 1000000).toString();
-  }
-
-  /**
-   * Store pending registration code and details.
+   * Open or refresh the pending registration for an address.
+   * An unexpired pending record keeps the name and password it was created
+   * with, so a later attempt on the same address only gets a fresh code mailed
+   * to that address. Once the record expires the new details replace it.
    * The password hash is omitted when the code only proves ownership of a new
    * address for an account that already exists.
+   *
+   * @param email - Address the code is mailed to
+   * @param name - Name to store when the record is created or replaced
+   * @param hashedPassword - Password hash to store, absent for email changes
+   * @returns The plain code to mail and the name the record holds
    */
   async createOrUpdatePendingRegistration(
     email: string,
     name: string,
     hashedPassword?: string,
-  ): Promise<string> {
-    const code = this.generateCode();
-    const hashedCode = await this.hashService.hash(code);
-    const expiresAt = new Date(Date.now() + this.codeExpiresIn);
-
+  ): Promise<PendingCodeData> {
     const existingPending = await this.pendingRegistrationModel
       .findOne({ email })
       .select('+hashedPassword +hashedCode');
+
+    if (existingPending && existingPending.expiresAt > new Date()) {
+      const code = await this.refreshCode(existingPending);
+      this.logger.log(`Reissued code for pending registration of ${email}`);
+      return { code, name: existingPending.name };
+    }
+
+    const code = generateVerificationCode();
+    const hashedCode = await this.hashService.hash(code);
+    const expiresAt = new Date(Date.now() + this.codeExpiresIn);
 
     if (existingPending) {
       existingPending.hashedPassword = hashedPassword;
@@ -82,8 +86,8 @@ export class VerificationCodeService {
       existingPending.attempts = 0;
       existingPending.expiresAt = expiresAt;
       await existingPending.save();
-      this.logger.log(`Updated pending registration for ${email}`);
-      return code;
+      this.logger.log(`Replaced expired pending registration for ${email}`);
+      return { code, name };
     }
 
     await this.pendingRegistrationModel.create({
@@ -96,11 +100,17 @@ export class VerificationCodeService {
     });
 
     this.logger.log(`Created pending registration for ${email}`);
-    return code;
+    return { code, name };
   }
 
   /**
    * Verify activation code and remove pending registration record.
+   *
+   * @param email - Address the code was sent to
+   * @param code - Code the caller submitted
+   * @returns The details the registration was created with
+   * @throws AppException NO_PENDING_REGISTRATION, ACTIVATION_CODE_EXPIRED,
+   * MAX_ATTEMPTS_EXCEEDED or ACTIVATION_CODE_INVALID
    */
   async verifyAndConsumeRegistration(
     email: string,
@@ -169,128 +179,45 @@ export class VerificationCodeService {
   }
 
   /**
-   * Regenerate activation code for an existing pending registration.
+   * Regenerate the activation code of an existing pending registration.
+   * An expired record is dropped instead of revived, so the next registration
+   * starts from the details it was given.
+   *
+   * @param email - Address the code is mailed to
+   * @returns The plain code and the stored name, or null when nothing is pending
    */
-  async resendActivationCode(email: string): Promise<ResentCodeData> {
+  async resendActivationCode(email: string): Promise<PendingCodeData | null> {
     const pending = await this.pendingRegistrationModel
       .findOne({ email })
-      .select('+hashedPassword +hashedCode');
+      .select('+hashedCode');
 
     if (!pending) {
-      throw new AppException(
-        ErrorCode.NO_PENDING_REGISTRATION_FOR_RESEND,
-        'No pending registration found. Please register again.',
-        HttpStatus.NOT_FOUND,
-      );
+      return null;
     }
 
-    const code = this.generateCode();
-    const hashedCode = await this.hashService.hash(code);
-    const expiresAt = new Date(Date.now() + this.codeExpiresIn);
+    if (new Date() > pending.expiresAt) {
+      await this.pendingRegistrationModel.deleteOne({ email });
+      return null;
+    }
 
-    pending.hashedCode = hashedCode;
-    pending.attempts = 0;
-    pending.expiresAt = expiresAt;
-    await pending.save();
-
+    const code = await this.refreshCode(pending);
     this.logger.log(`Resent activation code for ${email}`);
     return { code, name: pending.name };
   }
 
   /**
-   * Store pending password reset code.
+   * Put a new code on a pending record, leaving its name and password alone.
    */
-  async createOrUpdatePasswordReset(email: string): Promise<string> {
-    const code = this.generateCode();
-    const hashedCode = await this.hashService.hash(code);
-    const expiresAt = new Date(Date.now() + this.codeExpiresIn);
+  private async refreshCode(
+    pending: PendingRegistrationDocument,
+  ): Promise<string> {
+    const code = generateVerificationCode();
 
-    const existingReset = await this.pendingPasswordResetModel
-      .findOne({ email })
-      .select('+hashedCode');
+    pending.hashedCode = await this.hashService.hash(code);
+    pending.attempts = 0;
+    pending.expiresAt = new Date(Date.now() + this.codeExpiresIn);
+    await pending.save();
 
-    if (existingReset) {
-      existingReset.hashedCode = hashedCode;
-      existingReset.attempts = 0;
-      existingReset.expiresAt = expiresAt;
-      await existingReset.save();
-      this.logger.log(`Updated pending password reset for ${email}`);
-      return code;
-    }
-
-    await this.pendingPasswordResetModel.create({
-      email,
-      hashedCode,
-      attempts: 0,
-      expiresAt,
-    });
-
-    this.logger.log(`Created pending password reset for ${email}`);
     return code;
-  }
-
-  /**
-   * Verify password reset code and atomically increment attempts on failure.
-   */
-  async verifyPasswordReset(email: string, code: string): Promise<void> {
-    const pending = await this.pendingPasswordResetModel
-      .findOne({ email })
-      .select('+hashedCode');
-
-    if (!pending) {
-      throw new AppException(
-        ErrorCode.NO_PENDING_PASSWORD_RESET,
-        'No password reset request found',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (new Date() > pending.expiresAt) {
-      await this.pendingPasswordResetModel.deleteOne({ email });
-      throw new AppException(
-        ErrorCode.PASSWORD_RESET_CODE_EXPIRED,
-        'Password reset code has expired',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (pending.attempts >= this.maxAttempts) {
-      await this.pendingPasswordResetModel.deleteOne({ email });
-      throw new AppException(
-        ErrorCode.MAX_ATTEMPTS_EXCEEDED,
-        'Maximum attempts exceeded. Please request a new code.',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
-
-    const isCodeValid = await this.hashService.compare(
-      code,
-      pending.hashedCode,
-    );
-
-    if (!isCodeValid) {
-      const updated = await this.pendingPasswordResetModel.findOneAndUpdate(
-        { email },
-        { $inc: { attempts: 1 } },
-        { new: true },
-      );
-
-      const attempts = updated ? updated.attempts : pending.attempts + 1;
-      const remainingAttempts = Math.max(0, this.maxAttempts - attempts);
-
-      throw new AppException(
-        ErrorCode.PASSWORD_RESET_CODE_INVALID,
-        `Invalid code. ${remainingAttempts} attempts remaining.`,
-        HttpStatus.BAD_REQUEST,
-        { remainingAttempts },
-      );
-    }
-  }
-
-  /**
-   * Remove pending password reset after successful password update.
-   */
-  async clearPasswordReset(email: string): Promise<void> {
-    await this.pendingPasswordResetModel.deleteOne({ email });
   }
 }

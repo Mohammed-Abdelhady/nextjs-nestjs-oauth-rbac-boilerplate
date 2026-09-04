@@ -1,6 +1,7 @@
 import { HttpStatus } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { UserDocument } from '../../user/schemas/user.schema';
+import { AuthProvider } from '../../user/enums/auth-provider.enum';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { ConsumedRegistration } from '../services/verification-code.service';
@@ -51,5 +52,7 @@ export async function resolveActivatedUser(
     password: pending.hashedPassword,
     name: pending.name,
     isVerified: true,
+    authProvider: AuthProvider.EMAIL,
+    primaryProvider: AuthProvider.EMAIL,
   });
 }
