@@ -8,8 +8,7 @@ FROM base AS deps
 
 COPY package.json package-lock.json ./
 COPY backend/package.json ./backend/
-
-RUN npm ci --workspace backend --legacy-peer-deps
+RUN npm ci --workspace backend
 
 FROM deps AS builder
 

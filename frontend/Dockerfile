@@ -9,7 +9,7 @@ FROM base AS deps
 COPY package.json package-lock.json ./
 COPY frontend/package.json ./frontend/
 
-RUN npm ci --workspace frontend --legacy-peer-deps
+RUN npm ci --workspace frontend
 
 FROM deps AS builder
 
