@@ -31,7 +31,7 @@ export class Session {
   user!: Types.ObjectId;
 
   @Prop({ required: true, unique: true })
-  refreshToken!: string;
+  tokenHash!: string;
 
   @Prop({ required: true })
   userAgent!: string;
@@ -60,6 +60,11 @@ export class Session {
 }
 
 export type SessionDocument = HydratedDocument<Session>;
+
+export interface LeanSession extends Omit<Session, 'user'> {
+  _id: Types.ObjectId;
+  user: Types.ObjectId | Record<string, unknown>;
+}
 
 export const SessionSchema: MongooseSchema<Session> =
   SchemaFactory.createForClass(Session);

@@ -3,7 +3,7 @@ import { Session } from '../schemas/session.schema';
 
 export interface ISession {
   user: Types.ObjectId;
-  refreshToken: string;
+  tokenHash: string;
   userAgent: string;
   ip: string;
   deviceName?: string;

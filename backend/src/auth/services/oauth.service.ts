@@ -1,12 +1,9 @@
 import { Injectable, Logger, HttpStatus } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Response } from 'express';
-import {
-  IOAuthStrategy,
-  OAuthUserProfile,
-} from '../strategies/oauth.strategy.interface';
+import { SessionCookieService } from './session-cookie.service';
+import { SessionService } from './session.service';
 import { GoogleOAuthStrategy } from '../strategies/google-oauth.strategy';
 import { GitHubOAuthStrategy } from '../strategies/github-oauth.strategy';
 import { FacebookOAuthStrategy } from '../strategies/facebook-oauth.strategy';
@@ -15,12 +12,15 @@ import { AuthProvider } from '../../user/enums/auth-provider.enum';
 import { ApiResponse } from '../../common/dto/api-response.dto';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
-import { SessionService } from './session.service';
 import { OAuthProvider, AUTH_PROVIDER_MAP } from '../constants/oauth.constants';
 import {
   OAuthLoginResponseData,
   OAuthLoginResponseDto,
 } from '../dto/oauth-login-response.dto';
+import {
+  IOAuthStrategy,
+  OAuthUserProfile,
+} from '../strategies/oauth.strategy.interface';
 
 export { OAuthProvider } from '../constants/oauth.constants';
 export {
@@ -36,7 +36,7 @@ export class OAuthService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly sessionService: SessionService,
-    private readonly configService: ConfigService,
+    private readonly sessionCookieService: SessionCookieService,
     private readonly googleStrategy: GoogleOAuthStrategy,
     private readonly githubStrategy: GitHubOAuthStrategy,
     private readonly facebookStrategy: FacebookOAuthStrategy,
@@ -130,22 +130,7 @@ export class OAuthService {
         ip,
       );
 
-      const cookieName = this.configService.get<string>(
-        'session.cookieName',
-        'sid',
-      );
-      const cookieMaxAge = this.configService.get<number>(
-        'session.cookieMaxAge',
-        604800000,
-      );
-
-      response.cookie(cookieName, sessionToken, {
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        sameSite: 'strict',
-        maxAge: cookieMaxAge,
-        path: '/',
-      });
+      this.sessionCookieService.set(response, sessionToken);
 
       this.logger.log(`User authenticated via ${provider}: ${user.email}`);
 

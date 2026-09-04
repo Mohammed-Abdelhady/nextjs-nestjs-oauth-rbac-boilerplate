@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import { Express } from 'express';
 import { AppModule } from './app.module';
 import { ErrorResponse, ErrorDetails } from './common/dto/api-response.dto';
 
@@ -13,10 +14,11 @@ import { ErrorResponse, ErrorDetails } from './common/dto/api-response.dto';
  */
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const configService = app.get(ConfigService);
+  (app.getHttpAdapter().getInstance() as Express).set('trust proxy', 1);
+  const configService = app.get<ConfigService>(ConfigService);
 
-  // Set global prefix for all routes
-  app.setGlobalPrefix('api');
+  // Set global prefix for all routes except health check
+  app.setGlobalPrefix('api', { exclude: ['health'] });
 
   // 1. Security Headers - Apply first for all requests
   app.use(
@@ -115,7 +117,7 @@ async function bootstrap() {
   console.log('='.repeat(50));
   console.log(`📝 Environment: ${environment}`);
   console.log(`🌐 Server URL: http://localhost:${port}`);
-  console.log(`🏥 Health Check: http://localhost:${port}/health`);
+  console.log(`Health check: http://localhost:${port}/health`);
   console.log(`🔒 CORS Origin: ${clientUrl}`);
   console.log('='.repeat(50));
 

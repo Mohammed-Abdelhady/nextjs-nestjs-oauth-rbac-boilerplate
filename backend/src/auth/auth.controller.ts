@@ -21,17 +21,29 @@ import { ResendActivationDto } from './dto/resend-activation.dto';
 import { Public } from './decorators/public.decorator';
 import { AuthGuard } from './guards/auth.guard';
 import { Throttle } from '@nestjs/throttler';
+import { SessionCookieService } from './services/session-cookie.service';
+import {
+  THROTTLE_LOGIN,
+  THROTTLE_FORGOT_PASSWORD,
+  THROTTLE_RESET_PASSWORD,
+  THROTTLE_ACTIVATE,
+  THROTTLE_REGISTER,
+} from '../common/constants/throttle';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly sessionCookieService: SessionCookieService,
+  ) {}
 
   /**
    * Register a new user
    * POST /api/auth/register
    */
   @Public()
+  @Throttle(THROTTLE_REGISTER)
   @Post('register')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -50,6 +62,7 @@ export class AuthController {
    * POST /api/auth/activate
    */
   @Public()
+  @Throttle(THROTTLE_ACTIVATE)
   @Post('activate')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -88,6 +101,7 @@ export class AuthController {
    * POST /api/auth/login
    */
   @Public()
+  @Throttle(THROTTLE_LOGIN)
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -118,17 +132,11 @@ export class AuthController {
       'Requires JWT authentication.',
   })
   async logout(@Req() request: Request, @Res() response: Response) {
-    const cookieName = process.env.SESSION_COOKIE_NAME || 'sid';
-    const sessionToken = request.cookies?.[cookieName];
+    const sessionToken = this.sessionCookieService.read(request) ?? '';
 
-    const result = await this.authService.logout(
-      (sessionToken as string | undefined) ?? '',
-    );
+    const result = await this.authService.logout(sessionToken);
 
-    // Clear session cookie
-    response.clearCookie(cookieName, {
-      path: '/',
-    });
+    this.sessionCookieService.clear(response);
 
     return response.status(HttpStatus.OK).json(result);
   }
@@ -138,6 +146,7 @@ export class AuthController {
    * POST /api/auth/forgot-password
    */
   @Public()
+  @Throttle(THROTTLE_FORGOT_PASSWORD)
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -156,6 +165,7 @@ export class AuthController {
    * POST /api/auth/reset-password
    */
   @Public()
+  @Throttle(THROTTLE_RESET_PASSWORD)
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

@@ -4,13 +4,17 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 import { AuthGuard } from './auth.guard';
 import { SessionService } from '../services/session.service';
+import { SessionCookieService } from '../services/session-cookie.service';
 import { Role } from '../../role/schemas/role.schema';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 
-describe('AuthGuard (S-01)', () => {
+describe('AuthGuard (X-13, D-29, S-01)', () => {
   let guard: AuthGuard;
   let sessionService: {
     validateSession: jest.Mock;
+  };
+  let sessionCookieService: {
+    read: jest.Mock;
   };
   let roleModel: {
     findOne: jest.Mock;
@@ -18,22 +22,30 @@ describe('AuthGuard (S-01)', () => {
 
   const createMockContext = (
     cookies: Record<string, string> = {},
-  ): ExecutionContext => {
+  ): { context: ExecutionContext; request: Record<string, unknown> } => {
     const request = {
       cookies,
       user: undefined,
       session: undefined,
     };
-    return {
+    const context = {
       switchToHttp: () => ({
         getRequest: () => request,
       }),
     } as unknown as ExecutionContext;
+
+    return { context, request };
   };
 
   beforeEach(async () => {
     sessionService = {
       validateSession: jest.fn(),
+    };
+
+    sessionCookieService = {
+      read: jest.fn(
+        (req: { cookies?: Record<string, string> }) => req.cookies?.sid,
+      ),
     };
 
     roleModel = {
@@ -48,6 +60,7 @@ describe('AuthGuard (S-01)', () => {
       providers: [
         AuthGuard,
         { provide: SessionService, useValue: sessionService },
+        { provide: SessionCookieService, useValue: sessionCookieService },
         { provide: getModelToken(Role.name), useValue: roleModel },
       ],
     }).compile();
@@ -55,27 +68,34 @@ describe('AuthGuard (S-01)', () => {
     guard = module.get<AuthGuard>(AuthGuard);
   });
 
-  it('should throw SESSION_REQUIRED when cookie is missing', async () => {
-    const context = createMockContext({});
+  it('should read cookie via sessionCookieService and throw SESSION_REQUIRED when missing', async () => {
+    const { context, request } = createMockContext({});
 
     await expect(guard.canActivate(context)).rejects.toMatchObject({
       code: ErrorCode.SESSION_REQUIRED,
       status: 401,
     });
+
+    expect(sessionCookieService.read).toHaveBeenCalledWith(request);
   });
 
   it('should throw SESSION_INVALID when validateSession returns null', async () => {
-    const context = createMockContext({ sid: 'invalid-token' });
+    const { context, request } = createMockContext({ sid: 'invalid-token' });
     sessionService.validateSession.mockResolvedValue(null);
 
     await expect(guard.canActivate(context)).rejects.toMatchObject({
       code: ErrorCode.SESSION_INVALID,
       status: 401,
     });
+
+    expect(sessionCookieService.read).toHaveBeenCalledWith(request);
+    expect(sessionService.validateSession).toHaveBeenCalledWith(
+      'invalid-token',
+    );
   });
 
   it('should throw SESSION_INVALID when populated user is missing', async () => {
-    const context = createMockContext({ sid: 'valid-token' });
+    const { context } = createMockContext({ sid: 'valid-token' });
     sessionService.validateSession.mockResolvedValue({
       user: null,
     });
@@ -87,7 +107,7 @@ describe('AuthGuard (S-01)', () => {
   });
 
   it('should throw SESSION_INVALID when user isDeleted', async () => {
-    const context = createMockContext({ sid: 'valid-token' });
+    const { context } = createMockContext({ sid: 'valid-token' });
     sessionService.validateSession.mockResolvedValue({
       user: {
         _id: new Types.ObjectId(),
@@ -103,7 +123,7 @@ describe('AuthGuard (S-01)', () => {
   });
 
   it('should allow access when user is active', async () => {
-    const context = createMockContext({ sid: 'valid-token' });
+    const { context } = createMockContext({ sid: 'valid-token' });
     const userDoc = {
       _id: new Types.ObjectId('507f1f77bcf86cd799439011'),
       email: 'active@example.com',

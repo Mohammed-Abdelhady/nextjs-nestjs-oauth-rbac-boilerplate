@@ -35,7 +35,7 @@ describe('UserService', () => {
   const mockSession = {
     _id: new Types.ObjectId(mockSessionId),
     user: new Types.ObjectId(mockUserId),
-    refreshToken: mockSessionToken,
+    tokenHash: mockSessionToken,
     userAgent: 'Mozilla/5.0',
     ip: '127.0.0.1',
     deviceName: 'Chrome',

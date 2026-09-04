@@ -16,6 +16,7 @@ import { User, UserSchema } from '../user/schemas/user.schema';
 import { Session, SessionSchema } from '../session/schemas/session.schema';
 import { Role, RoleSchema } from '../role/schemas/role.schema';
 import { SessionService } from './services/session.service';
+import { SessionCookieService } from './services/session-cookie.service';
 import { OAuthService } from './services/oauth.service';
 import { VerificationCodeService } from './services/verification-code.service';
 import { GoogleOAuthStrategy } from './strategies/google-oauth.strategy';
@@ -47,6 +48,7 @@ import { VerifiedGuard } from './guards/verified.guard';
   providers: [
     AuthService,
     SessionService,
+    SessionCookieService,
     OAuthService,
     VerificationCodeService,
     GoogleOAuthStrategy,
@@ -58,6 +60,7 @@ import { VerifiedGuard } from './guards/verified.guard';
   exports: [
     AuthService,
     SessionService,
+    SessionCookieService,
     OAuthService,
     VerificationCodeService,
     AuthGuard,

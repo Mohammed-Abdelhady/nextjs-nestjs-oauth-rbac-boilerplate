@@ -1,11 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import * as crypto from 'crypto';
-import { Session, SessionDocument } from '../../session/schemas/session.schema';
+import {
+  Session,
+  SessionDocument,
+  LeanSession,
+} from '../../session/schemas/session.schema';
 import { UserDocument } from '../../user/schemas/user.schema';
-import { Types } from 'mongoose';
+import { SESSION_LAST_USED_UPDATE_INTERVAL_MS } from '../../common/constants/session';
+
+export function hashToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
 
 @Injectable()
 export class SessionService {
@@ -17,11 +25,8 @@ export class SessionService {
   ) {}
 
   /**
-   * Create a new session for a user
-   * @param userId - The user's ObjectId
-   * @param userAgent - The user's browser/user agent
-   * @param ip - The user's IP address
-   * @returns The generated session token
+   * Create a new session for a user.
+   * Stores sha256 token hash in database and returns raw token once.
    */
   async createSession(
     userId: Types.ObjectId,
@@ -29,6 +34,7 @@ export class SessionService {
     ip: string,
   ): Promise<string> {
     const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = hashToken(token);
     const cookieMaxAge = this.configService.get<number>(
       'session.cookieMaxAge',
       604800000,
@@ -38,7 +44,7 @@ export class SessionService {
 
     await this.sessionModel.create({
       user: userId,
-      refreshToken: token,
+      tokenHash,
       userAgent,
       ip,
       expiresAt,
@@ -50,18 +56,21 @@ export class SessionService {
   }
 
   /**
-   * Validate a session token
-   * @param token - The session token to validate
-   * @returns The session document if valid, null otherwise
+   * Validate a session token.
+   * Hashes the incoming token before lookup.
+   * Updates lastUsedAt with updateOne only when older than 5 minutes.
    */
-  async validateSession(token: string): Promise<SessionDocument | null> {
+  async validateSession(token: string): Promise<LeanSession | null> {
+    const tokenHash = hashToken(token);
     const session = await this.sessionModel
       .findOne({
-        refreshToken: token,
+        tokenHash,
         isValid: true,
         expiresAt: { $gt: new Date() },
       })
-      .populate('user');
+      .populate('user')
+      .lean<LeanSession | null>()
+      .exec();
 
     if (!session) {
       return null;
@@ -72,21 +81,29 @@ export class SessionService {
       return null;
     }
 
-    // Update last used timestamp
-    session.lastUsedAt = new Date();
-    await session.save();
+    const now = new Date();
+    const lastUsedTime = session.lastUsedAt
+      ? new Date(session.lastUsedAt).getTime()
+      : 0;
+
+    if (now.getTime() - lastUsedTime > SESSION_LAST_USED_UPDATE_INTERVAL_MS) {
+      await this.sessionModel.updateOne(
+        { _id: session._id },
+        { $set: { lastUsedAt: now } },
+      );
+      session.lastUsedAt = now;
+    }
 
     return session;
   }
 
   /**
-   * Invalidate a session (logout)
-   * @param token - The session token to invalidate
-   * @returns true if session was invalidated, false otherwise
+   * Invalidate a session by token.
    */
   async invalidateSession(token: string): Promise<boolean> {
+    const tokenHash = hashToken(token);
     const result = await this.sessionModel.updateOne(
-      { refreshToken: token },
+      { tokenHash },
       { isValid: false },
     );
 
@@ -96,9 +113,7 @@ export class SessionService {
   }
 
   /**
-   * Invalidate all sessions for a user
-   * @param userId - The user's ObjectId
-   * @returns The number of sessions invalidated
+   * Invalidate all sessions for a user.
    */
   async invalidateAllSessions(userId: Types.ObjectId): Promise<number> {
     const result = await this.sessionModel.updateMany(
@@ -114,11 +129,9 @@ export class SessionService {
   }
 
   /**
-   * Get all active sessions for a user
-   * @param userId - The user's ObjectId
-   * @returns Array of session documents
+   * Get all active sessions for a user.
    */
-  async getUserSessions(userId: Types.ObjectId): Promise<SessionDocument[]> {
+  async getUserSessions(userId: Types.ObjectId): Promise<LeanSession[]> {
     return this.sessionModel
       .find({
         user: userId,
@@ -126,23 +139,22 @@ export class SessionService {
         expiresAt: { $gt: new Date() },
       })
       .sort({ lastUsedAt: -1 })
+      .lean<LeanSession[]>()
       .exec();
   }
 
   /**
-   * Get a session by ID
-   * @param sessionId - The session's ObjectId
-   * @returns The session document or null
+   * Get a session by ID.
    */
-  async getSessionById(sessionId: string): Promise<SessionDocument | null> {
-    return this.sessionModel.findById(sessionId).exec();
+  async getSessionById(sessionId: string): Promise<LeanSession | null> {
+    return this.sessionModel
+      .findById(sessionId)
+      .lean<LeanSession | null>()
+      .exec();
   }
 
   /**
-   * Invalidate a specific session by ID
-   * @param sessionId - The session's ObjectId
-   * @param userId - The user's ObjectId (for ownership verification)
-   * @returns true if session was invalidated, false otherwise
+   * Invalidate a specific session by ID.
    */
   async invalidateSessionById(
     sessionId: string,
@@ -164,17 +176,15 @@ export class SessionService {
   }
 
   /**
-   * Invalidate all sessions for a user except one
-   * @param userId - The user's ObjectId
-   * @param exceptToken - The token to keep valid (current session)
-   * @returns The number of sessions invalidated
+   * Invalidate all sessions for a user except one.
    */
   async invalidateAllSessionsExcept(
     userId: Types.ObjectId,
     exceptToken: string,
   ): Promise<number> {
+    const exceptTokenHash = hashToken(exceptToken);
     const result = await this.sessionModel.updateMany(
-      { user: userId, refreshToken: { $ne: exceptToken }, isValid: true },
+      { user: userId, tokenHash: { $ne: exceptTokenHash }, isValid: true },
       { isValid: false },
     );
 
@@ -186,11 +196,13 @@ export class SessionService {
   }
 
   /**
-   * Get session ID from token
-   * @param token - The session token
-   * @returns The session document or null
+   * Get session by raw token.
    */
-  async getSessionByToken(token: string): Promise<SessionDocument | null> {
-    return this.sessionModel.findOne({ refreshToken: token }).exec();
+  async getSessionByToken(token: string): Promise<LeanSession | null> {
+    const tokenHash = hashToken(token);
+    return this.sessionModel
+      .findOne({ tokenHash })
+      .lean<LeanSession | null>()
+      .exec();
   }
 }

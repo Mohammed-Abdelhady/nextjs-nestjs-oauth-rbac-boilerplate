@@ -8,6 +8,7 @@ import { GoogleOAuthStrategy } from '../strategies/google-oauth.strategy';
 import { GitHubOAuthStrategy } from '../strategies/github-oauth.strategy';
 import { FacebookOAuthStrategy } from '../strategies/facebook-oauth.strategy';
 import { SessionService } from './session.service';
+import { SessionCookieService } from './session-cookie.service';
 import { User } from '../../user/schemas/user.schema';
 import { AuthProvider } from '../../user/enums/auth-provider.enum';
 import { OAuthUserProfile } from '../strategies/oauth.strategy.interface';
@@ -107,6 +108,7 @@ describe('OAuthService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OAuthService,
+        SessionCookieService,
         {
           provide: getModelToken(User.name),
           useValue: userModel,

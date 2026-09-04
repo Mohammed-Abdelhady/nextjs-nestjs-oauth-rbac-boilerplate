@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { Types } from 'mongoose';
 import { AuthService } from './auth.service';
 import { HashService } from '../common/services/hash.service';
 import { MailService } from '../mail/mail.service';
 import { SessionService } from './services/session.service';
+import { SessionCookieService } from './services/session-cookie.service';
 import { VerificationCodeService } from './services/verification-code.service';
 import { User } from '../user/schemas/user.schema';
 import { Role } from '../role/schemas/role.schema';
@@ -42,6 +42,11 @@ describe('AuthService', () => {
     createOrUpdatePasswordReset: jest.Mock;
     verifyPasswordReset: jest.Mock;
     clearPasswordReset: jest.Mock;
+  };
+  let sessionCookieService: {
+    set: jest.Mock;
+    clear: jest.Mock;
+    read: jest.Mock;
   };
 
   const mockUserId = new Types.ObjectId('507f1f77bcf86cd799439011');
@@ -112,15 +117,10 @@ describe('AuthService', () => {
       clearPasswordReset: jest.fn().mockResolvedValue(undefined),
     };
 
-    const configService = {
-      get: jest.fn((key: string, defaultValue?: string | number) => {
-        const defaults: Record<string, string | number> = {
-          'session.cookieName': 'sid',
-          'session.cookieMaxAge': 604800000,
-          NODE_ENV: 'test',
-        };
-        return defaults[key] ?? defaultValue;
-      }),
+    sessionCookieService = {
+      set: jest.fn(),
+      clear: jest.fn(),
+      read: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -132,7 +132,7 @@ describe('AuthService', () => {
         { provide: MailService, useValue: mailService },
         { provide: SessionService, useValue: sessionService },
         { provide: VerificationCodeService, useValue: verificationCodeService },
-        { provide: ConfigService, useValue: configService },
+        { provide: SessionCookieService, useValue: sessionCookieService },
       ],
     }).compile();
 
@@ -200,6 +200,10 @@ describe('AuthService', () => {
         mockUserId,
         'test-agent',
         '127.0.0.1',
+      );
+      expect(sessionCookieService.set).toHaveBeenCalledWith(
+        mockResponse,
+        'session-token-123',
       );
     });
   });

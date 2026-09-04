@@ -1,6 +1,8 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { UserController } from './user.controller';
+import { UserProfileController } from './user-profile.controller';
+import { UserSessionsController } from './user-sessions.controller';
+import { UserProvidersController } from './user-providers.controller';
 import { UserService } from './user.service';
 import { User, UserSchema } from './schemas/user.schema';
 import { Session, SessionSchema } from '../session/schemas/session.schema';
@@ -19,7 +21,11 @@ import { AuthModule } from '../auth/auth.module';
     ]),
     forwardRef(() => AuthModule),
   ],
-  controllers: [UserController],
+  controllers: [
+    UserProfileController,
+    UserSessionsController,
+    UserProvidersController,
+  ],
   providers: [
     UserService,
     SessionService,

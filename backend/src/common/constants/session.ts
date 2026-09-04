@@ -1,0 +1,1 @@
+export const SESSION_LAST_USED_UPDATE_INTERVAL_MS = 5 * 60 * 1000;

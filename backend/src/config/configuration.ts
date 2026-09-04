@@ -297,7 +297,9 @@ const configuration = (): Configuration => ({
     rounds: Number.parseInt(process.env.BCRYPT_ROUNDS || '10', 10),
   },
   session: {
-    cookieName: process.env.SESSION_COOKIE_NAME || 'sid',
+    cookieName:
+      process.env.SESSION_COOKIE_NAME ||
+      (process.env.NODE_ENV === 'production' ? '__Host-sid' : 'sid'),
     cookieMaxAge: Number.parseInt(
       process.env.SESSION_COOKIE_MAX_AGE || '604800000',
       10,

@@ -8,7 +8,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Request } from 'express';
 import { SessionService } from '../services/session.service';
-import { SessionDocument } from '../../session/schemas/session.schema';
+import { SessionCookieService } from '../services/session-cookie.service';
+import {
+  SessionDocument,
+  LeanSession,
+} from '../../session/schemas/session.schema';
 import { UserDocument } from '../../user/schemas/user.schema';
 import { Role, RoleDocument } from '../../role/schemas/role.schema';
 import { AppException } from '../../common/exceptions/app.exception';
@@ -23,20 +27,20 @@ export interface RequestWithUser extends Request {
     permissions: string[];
     isVerified: boolean;
   };
-  session?: SessionDocument;
+  session?: LeanSession | SessionDocument;
 }
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private readonly sessionService: SessionService,
+    private readonly sessionCookieService: SessionCookieService,
     @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<RequestWithUser>();
-    const cookieName = process.env.SESSION_COOKIE_NAME || 'sid';
-    const sessionToken = request.cookies?.[cookieName] as string | undefined;
+    const sessionToken = this.sessionCookieService.read(request);
 
     if (!sessionToken) {
       throw new AppException(

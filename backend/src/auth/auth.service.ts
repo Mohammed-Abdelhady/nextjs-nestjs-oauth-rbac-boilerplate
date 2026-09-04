@@ -1,5 +1,4 @@
 import { Injectable, Logger, HttpStatus } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Response } from 'express';
@@ -22,6 +21,7 @@ import { HashService } from '../common/services/hash.service';
 import { AppException } from '../common/exceptions/app.exception';
 import { ErrorCode } from '../common/enums/error-code.enum';
 import { MailService } from '../mail/mail.service';
+import { SessionCookieService } from './services/session-cookie.service';
 import { SessionService } from './services/session.service';
 import { VerificationCodeService } from './services/verification-code.service';
 import { getEffectivePermissions } from './utils/permissions.util';
@@ -37,7 +37,7 @@ export class AuthService {
     private readonly mailService: MailService,
     private readonly sessionService: SessionService,
     private readonly verificationCodeService: VerificationCodeService,
-    private readonly configService: ConfigService,
+    private readonly sessionCookieService: SessionCookieService,
   ) {}
 
   async register(dto: RegisterDto): Promise<ApiResponse<RegisterResponseDto>> {
@@ -96,7 +96,7 @@ export class AuthService {
       ip,
     );
 
-    this.setSessionCookie(response, sessionToken);
+    this.sessionCookieService.set(response, sessionToken);
     return ActivateResponseDto.success(user);
   }
 
@@ -164,7 +164,7 @@ export class AuthService {
     );
 
     this.logger.log(`User logged in: ${user.email}`);
-    this.setSessionCookie(response, sessionToken);
+    this.sessionCookieService.set(response, sessionToken);
 
     const permissions = await getEffectivePermissions(user, this.roleModel);
 
@@ -193,7 +193,7 @@ export class AuthService {
       );
     }
 
-    this.logger.log(`User logged out with token: ${sessionToken}`);
+    this.logger.log('User logged out successfully');
     return ApiResponse.success({ message: 'Logout successful' });
   }
 
@@ -250,25 +250,6 @@ export class AuthService {
 
     await this.verificationCodeService.clearPasswordReset(dto.email);
     return ResetPasswordResponseDto.success();
-  }
-
-  private setSessionCookie(response: Response, sessionToken: string): void {
-    const cookieName = this.configService.get<string>(
-      'session.cookieName',
-      'sid',
-    );
-    const cookieMaxAge = this.configService.get<number>(
-      'session.cookieMaxAge',
-      604800000,
-    );
-
-    response.cookie(cookieName, sessionToken, {
-      httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production',
-      sameSite: 'strict',
-      maxAge: cookieMaxAge,
-      path: '/',
-    });
   }
 
   private async sendMailSafely(
