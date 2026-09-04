@@ -80,7 +80,7 @@ export const SectionHeader = forwardRef<HTMLDivElement, SectionHeaderProps>(
       <div
         ref={ref}
         data-testid="section-header"
-        className={cn('pb-3 border-b border-border-subtle/50 mb-4', className)}
+        className={cn('pb-3 border-b border-border mb-4', className)}
         {...props}
       >
         <div className="flex items-center justify-between">
@@ -90,8 +90,8 @@ export const SectionHeader = forwardRef<HTMLDivElement, SectionHeaderProps>(
             onClick={handleToggle}
             disabled={!collapsible}
             className={cn(
-              'flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground/40 font-medium',
-              collapsible && 'hover:text-muted-foreground/60 transition-colors cursor-pointer',
+              'flex items-center gap-2 text-xs uppercase tracking-widest text-tertiary font-medium',
+              collapsible && 'hover:text-foreground transition-colors cursor-pointer',
               !collapsible && 'cursor-default',
             )}
             data-testid="section-header-title"
@@ -107,9 +107,7 @@ export const SectionHeader = forwardRef<HTMLDivElement, SectionHeaderProps>(
             )}
             <span>
               {title}
-              {typeof count === 'number' && (
-                <span className="ml-2 text-muted-foreground/30">({count})</span>
-              )}
+              {typeof count === 'number' && <span className="ml-2 text-tertiary">({count})</span>}
             </span>
           </button>
 

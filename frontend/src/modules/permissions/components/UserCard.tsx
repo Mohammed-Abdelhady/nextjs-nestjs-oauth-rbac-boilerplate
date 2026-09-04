@@ -74,24 +74,24 @@ export const UserCard = memo(
         data-testid={`user-card-${user._id}`}
         className={cn(
           'group relative p-4 rounded-lg',
-          'bg-surface-primary border border-border-subtle',
+          'bg-card border border-border',
           'transition-all duration-200 ease-out',
-          'hover:border-border-hover hover:shadow-sm',
+          'hover:border-input hover:shadow-sm',
           user.isDeleted && 'opacity-60',
           className,
         )}
       >
         {/* Header: Avatar + Name/Email + Status Badge */}
         <header className="flex items-start gap-3 mb-3">
-          <Avatar className="h-10 w-10 ring-2 ring-offset-2 ring-transparent group-hover:ring-accent-primary/20 transition-all">
-            <AvatarFallback className="bg-accent-primary/10 text-accent-primary text-sm font-medium">
+          <Avatar className="h-10 w-10 ring-2 ring-offset-2 ring-transparent group-hover:ring-primary/20 transition-all">
+            <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
               {initials}
             </AvatarFallback>
           </Avatar>
 
           <div className="flex-1 min-w-0">
             <h4 className="text-sm font-medium tracking-tight truncate">{user.name}</h4>
-            <p className="text-xs text-muted-foreground/60 tracking-wide truncate">{user.email}</p>
+            <p className="text-xs text-tertiary tracking-wide truncate">{user.email}</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -118,13 +118,13 @@ export const UserCard = memo(
             <PermissionGuard
               permission={USER_PERMISSIONS.UPDATE_ALL}
               fallback={
-                <div className="text-xs text-muted-foreground/50 capitalize">
+                <div className="text-xs text-tertiary capitalize">
                   Role: <span className="font-medium">{user.role}</span>
                 </div>
               }
             >
               {isProtectedRole || user.isDeleted ? (
-                <div className="text-xs text-muted-foreground/50 capitalize">
+                <div className="text-xs text-tertiary capitalize">
                   Role: <span className="font-medium">{user.role}</span>
                 </div>
               ) : (
@@ -155,7 +155,7 @@ export const UserCard = memo(
         </div>
 
         {/* Metadata Row */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground/50">
+        <div className="flex items-center justify-between text-xs text-tertiary">
           <span>Joined {joinedDate}</span>
         </div>
       </article>

@@ -73,10 +73,10 @@ export const SessionCardTimeline = memo(
           data-testid={`session-card-timeline-${session.id}`}
           className={cn(
             'relative p-4 rounded-lg transition-all duration-200',
-            'bg-surface-primary',
+            'bg-card',
             session.isCurrent
-              ? 'border-2 border-status-success/30 bg-status-success/5 shadow-md'
-              : 'border border-border-subtle hover:border-border-hover hover:shadow-sm',
+              ? 'border-2 border-status-success/30 bg-success/5 shadow-md'
+              : 'border border-border hover:border-input hover:shadow-sm',
           )}
         >
           {/* Device Header */}
@@ -93,10 +93,7 @@ export const SessionCardTimeline = memo(
                   </span>
                   {session.isCurrent && <CurrentSessionBadge pulse />}
                 </h4>
-                <p
-                  className="text-xs text-muted-foreground/60 mt-0.5"
-                  data-testid="session-browser-os"
-                >
+                <p className="text-xs text-tertiary mt-0.5" data-testid="session-browser-os">
                   {browser} · {os}
                 </p>
               </div>
@@ -108,7 +105,7 @@ export const SessionCardTimeline = memo(
                 size="sm"
                 onClick={handleShowConfirm}
                 disabled={isLoading}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10 ml-2"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10 ms-2"
                 data-testid="logout-session-button"
               >
                 {isLoading ? (
@@ -121,7 +118,7 @@ export const SessionCardTimeline = memo(
           </header>
 
           {/* Session Metadata */}
-          <div className="space-y-1 text-xs text-muted-foreground/50">
+          <div className="space-y-1 text-xs text-tertiary">
             <div className="flex items-center gap-2" data-testid="session-ip-row">
               <MapPin className="h-3 w-3 flex-shrink-0" />
               <span data-testid="session-ip">{session.ip}</span>

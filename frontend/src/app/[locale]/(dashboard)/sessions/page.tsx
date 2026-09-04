@@ -1,6 +1,6 @@
 'use client';
 
-import { Activity } from 'react';
+import { useState, useEffect, Activity } from 'react';
 import { useTranslations } from 'next-intl';
 import { Loader2, RefreshCw, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,15 @@ import { parseApiError } from '@/lib/apiError';
 export default function SessionsPage() {
   const t = useTranslations('sessions');
   const tCommon = useTranslations('common');
+  const [shouldAnimate, setShouldAnimate] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShouldAnimate(false);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, []);
+
   const {
     data: sessions,
     isLoading,
@@ -38,10 +47,8 @@ export default function SessionsPage() {
       <div className="my-8 ">
         <div className="flex items-center justify-between flex-wrap gap-4 mb-2">
           <div>
-            <h1 className="text-4xl font-light tracking-tight">{t('title')}</h1>
-            <p className="text-sm text-muted-foreground/60 mt-1 leading-relaxed">
-              {t('description')}
-            </p>
+            <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{t('description')}</p>
           </div>
           <div className="flex gap-2">
             <Button
@@ -58,11 +65,9 @@ export default function SessionsPage() {
           </div>
         </div>
 
-        <Alert className="mt-4 border-status-warning/20 bg-status-warning/5">
-          <Shield className="h-4 w-4 text-status-warning" />
-          <AlertDescription className="text-status-warning">
-            {t('securityWarning')}
-          </AlertDescription>
+        <Alert variant="warning" className="mt-4">
+          <Shield className="h-4 w-4" />
+          <AlertDescription>{t('securityWarning')}</AlertDescription>
         </Alert>
       </div>
 
@@ -112,7 +117,7 @@ export default function SessionsPage() {
           items={sessions || []}
           renderItem={(session) => <SessionCardTimeline session={session} />}
           highlightIndex={currentSessionIndex}
-          stagger
+          stagger={shouldAnimate}
         />
       </Activity>
     </div>

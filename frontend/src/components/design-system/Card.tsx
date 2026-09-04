@@ -50,18 +50,18 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
 
           // Variant styles
           variant === 'flat' && [
-            'bg-surface-primary border border-border-subtle',
-            hover && 'hover:border-border-hover hover:shadow-sm',
+            'bg-card border border-border',
+            hover && 'hover:border-input hover:shadow-sm',
           ],
 
           variant === 'elevated' && [
-            'bg-surface-primary border border-border-subtle shadow-sm',
+            'bg-card border border-border shadow-sm',
             hover && 'hover:scale-[1.02] hover:shadow-md',
           ],
 
           variant === 'bordered' && [
-            'bg-surface-primary border-2 border-border-subtle',
-            hover && 'hover:border-accent-primary/40',
+            'bg-card border-2 border-border',
+            hover && 'hover:border-primary',
           ],
 
           // Clickable styles
@@ -115,7 +115,7 @@ export const CardDescription = forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn('text-sm text-muted-foreground/60 leading-relaxed', className)}
+    className={cn('text-sm text-muted-foreground leading-relaxed', className)}
     {...props}
   />
 ));
@@ -138,7 +138,7 @@ export const CardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivEleme
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('flex items-center pt-3 border-t border-border-subtle/50', className)}
+      className={cn('flex items-center pt-3 border-t border-border', className)}
       {...props}
     />
   ),

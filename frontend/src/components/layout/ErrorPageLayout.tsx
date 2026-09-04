@@ -31,8 +31,9 @@ export function ErrorPageLayout({
 }: ErrorPageLayoutProps) {
   const colorClass = variant === 'primary' ? 'text-primary' : 'text-destructive';
   const bgClass = variant === 'primary' ? 'bg-primary/10' : 'bg-destructive/10';
-  const iconColorClass = variant === 'primary' ? 'text-primary/30' : 'text-destructive/30';
-  const subtitleColorClass = variant === 'primary' ? 'text-primary/60' : 'text-destructive/60';
+  const iconColorClass =
+    variant === 'primary' ? 'text-primary opacity-30' : 'text-destructive opacity-30';
+  const subtitleColorClass = variant === 'primary' ? 'text-primary' : 'text-destructive';
 
   return (
     <div className="min-h-screen bg-background text-foreground flex justify-center">

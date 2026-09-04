@@ -22,6 +22,7 @@ import { useUserFilters } from '@/modules/permissions/hooks/useUserFilters';
 import { useAppDispatch } from '@/store/hooks';
 import { baseApi } from '@/store/api/baseApi';
 import { parseApiError } from '@/lib/apiError';
+import { cn } from '@/lib/utils';
 
 /** Section identifiers for user groups */
 enum UserSection {
@@ -53,6 +54,14 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>(RoleFilter.ALL);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [collapsedSections, setCollapsedSections] = useState<Set<UserSection>>(new Set());
+  const [shouldAnimate, setShouldAnimate] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShouldAnimate(false);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, []);
 
   const { data: usersData, isLoading, isError, error, refetch } = useGetUsersQuery({});
   const users = useMemo(() => usersData?.users || [], [usersData?.users]);
@@ -106,8 +115,8 @@ export default function AdminUsersPage() {
         <div className="my-8">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-4xl font-light tracking-tight">{t('title')}</h1>
-              <p className="text-sm text-muted-foreground/60 mt-1 leading-relaxed">
+              <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
                 {t('count', { count: users.length })}
               </p>
             </div>
@@ -192,7 +201,7 @@ export default function AdminUsersPage() {
               <p className="text-lg font-semibold">
                 {searchQuery || roleFilter !== RoleFilter.ALL ? t('noUsers') : t('noUsersYet')}
               </p>
-              <p className="text-sm text-muted-foreground/60 max-w-sm">
+              <p className="text-sm text-muted-foreground max-w-sm">
                 {searchQuery || roleFilter !== RoleFilter.ALL
                   ? t('noUsersHint')
                   : t('noUsersYetHint')}
@@ -214,7 +223,9 @@ export default function AdminUsersPage() {
               {verifiedUsers.map((user, index) => (
                 <div
                   key={user._id}
-                  className="animate-slide-up stagger-animation"
+                  className={cn(
+                    shouldAnimate && 'motion-safe:animate-slide-up motion-safe:stagger-animation',
+                  )}
                   style={{ '--index': index } as React.CSSProperties}
                 >
                   <UserCard user={user} onManagePermissions={handleManagePermissions} />
@@ -233,7 +244,9 @@ export default function AdminUsersPage() {
                 {pendingUsers.map((user, index) => (
                   <div
                     key={user._id}
-                    className="animate-slide-up stagger-animation"
+                    className={cn(
+                      shouldAnimate && 'motion-safe:animate-slide-up motion-safe:stagger-animation',
+                    )}
                     style={{ '--index': index } as React.CSSProperties}
                   >
                     <UserCard user={user} onManagePermissions={handleManagePermissions} />
@@ -244,7 +257,7 @@ export default function AdminUsersPage() {
           </div>
 
           {/* Results Summary */}
-          <div className="mt-6 text-xs text-muted-foreground/50">
+          <div className="mt-6 text-xs text-tertiary">
             {t('showingCount', { filtered: filteredUsers.length, total: users.length })}
           </div>
         </Activity>

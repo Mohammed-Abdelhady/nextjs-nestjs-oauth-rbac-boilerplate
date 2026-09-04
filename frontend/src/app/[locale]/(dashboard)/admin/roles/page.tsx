@@ -94,8 +94,8 @@ export default function RolesPage() {
         <div className="my-8">
           <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
             <div>
-              <h1 className="text-4xl font-light tracking-tight">{t('title')}</h1>
-              <p className="text-sm text-muted-foreground/60 mt-1 leading-relaxed">
+              <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
                 {t('count', { count: roles.length })}
               </p>
             </div>
@@ -151,7 +151,7 @@ export default function RolesPage() {
               <h3 className="text-lg font-semibold">
                 {searchTerm ? t('noRoles') : t('noRolesYet')}
               </h3>
-              <p className="text-sm text-muted-foreground/60">
+              <p className="text-sm text-muted-foreground">
                 {searchTerm ? t('noRolesHint') : t('noRolesYetHint')}
               </p>
               {!searchTerm && (

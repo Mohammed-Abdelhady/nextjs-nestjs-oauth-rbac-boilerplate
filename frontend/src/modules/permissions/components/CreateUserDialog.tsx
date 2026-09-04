@@ -113,8 +113,8 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]" data-testid="create-user-dialog">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-light tracking-tight">{t('title')}</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground/60">
+          <DialogTitle className="text-xl font-semibold tracking-tight">{t('title')}</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
             {t('description')}
           </DialogDescription>
         </DialogHeader>
@@ -124,7 +124,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
           <div className="space-y-2">
             <Label
               htmlFor="email"
-              className="text-xs uppercase tracking-widest text-muted-foreground/60"
+              className="text-xs uppercase tracking-widest text-muted-foreground"
             >
               {t('email')}
             </Label>
@@ -152,7 +152,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
           <div className="space-y-2">
             <Label
               htmlFor="name"
-              className="text-xs uppercase tracking-widest text-muted-foreground/60"
+              className="text-xs uppercase tracking-widest text-muted-foreground"
             >
               {t('name')}
             </Label>
@@ -180,7 +180,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
           <div className="space-y-2">
             <Label
               htmlFor="password"
-              className="text-xs uppercase tracking-widest text-muted-foreground/60"
+              className="text-xs uppercase tracking-widest text-muted-foreground"
             >
               {t('password')}
             </Label>
@@ -215,7 +215,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
           <div className="space-y-2">
             <Label
               htmlFor="role"
-              className="text-xs uppercase tracking-widest text-muted-foreground/60"
+              className="text-xs uppercase tracking-widest text-muted-foreground"
             >
               {t('role')}
             </Label>
@@ -244,7 +244,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
                     <div className="flex items-center gap-2">
                       <span>{r.name}</span>
                       {r.isSystemRole && (
-                        <span className="text-xs text-muted-foreground/50">{t('systemRole')}</span>
+                        <span className="text-xs text-tertiary">{t('systemRole')}</span>
                       )}
                     </div>
                   </SelectItem>

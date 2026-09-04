@@ -74,9 +74,9 @@ export const RoleDetailPanel = memo(function RoleDetailPanel({
     return (
       <div className={cn('flex items-center justify-center py-16 text-center', className)}>
         <div className="space-y-3">
-          <Shield className="h-12 w-12 mx-auto text-muted-foreground/40" />
+          <Shield className="h-12 w-12 mx-auto text-muted-foreground" />
           <h3 className="text-lg font-medium">No role selected</h3>
-          <p className="text-sm text-muted-foreground/60 max-w-sm">
+          <p className="text-sm text-muted-foreground max-w-sm">
             Select a role from the sidebar to view its details
           </p>
         </div>
@@ -90,22 +90,22 @@ export const RoleDetailPanel = memo(function RoleDetailPanel({
   return (
     <article className={cn('space-y-6', className)} data-testid="role-detail-panel">
       {/* Header */}
-      <header className="pb-4 border-b border-border-subtle">
+      <header className="pb-4 border-b border-border">
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1">
-            <h2 className="text-2xl font-light tracking-tight">{role.name}</h2>
-            <p className="text-sm text-muted-foreground/60 mt-1">{role.slug}</p>
+            <h2 className="text-lg font-medium tracking-tight">{role.name}</h2>
+            <p className="text-sm text-muted-foreground mt-1">{role.slug}</p>
           </div>
           <div className="flex gap-2">
             {role.isSystemRole && (
               <Badge variant="outline" className="text-xs">
-                <Shield className="h-3 w-3 mr-1" />
+                <Shield className="h-3 w-3 me-1" />
                 System
               </Badge>
             )}
             {role.isProtected && (
               <Badge variant="secondary" className="text-xs">
-                <Lock className="h-3 w-3 mr-1" />
+                <Lock className="h-3 w-3 me-1" />
                 Protected
               </Badge>
             )}
@@ -123,11 +123,14 @@ export const RoleDetailPanel = memo(function RoleDetailPanel({
       {/* Permissions Section */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs uppercase tracking-widest text-muted-foreground/40">
+          <h3 className="text-xs uppercase tracking-widest text-tertiary">
             Permissions ({role.permissions.length})
           </h3>
           {role.permissions.includes('*') && (
-            <Badge variant="outline" className="text-xs text-amber-600 border-amber-200">
+            <Badge
+              variant="outline"
+              className="text-xs text-status-warning border-status-warning/30"
+            >
               Wildcard
             </Badge>
           )}
@@ -136,7 +139,7 @@ export const RoleDetailPanel = memo(function RoleDetailPanel({
       </section>
 
       {/* Actions */}
-      <footer className="flex gap-2 pt-4 border-t border-border-subtle">
+      <footer className="flex gap-2 pt-4 border-t border-border">
         <Button
           variant="outline"
           size="sm"

@@ -40,7 +40,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
     return (
       <div className={cn('relative group', className)}>
         {/* Search Icon */}
-        <Search className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 transition-colors group-focus-within:text-accent-primary" />
+        <Search className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
 
         {/* Input */}
         <input
@@ -49,9 +49,9 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
           value={value}
           className={cn(
             'w-full bg-transparent pl-7 pr-8 py-2',
-            'text-sm text-foreground placeholder:text-muted-foreground/40',
-            'border-0 border-b border-border-subtle',
-            'focus:outline-none focus:border-accent-primary',
+            'text-sm text-foreground placeholder:text-muted-foreground',
+            'border-0 border-b border-border',
+            'focus:outline-none focus:border-primary',
             'transition-all duration-200 ease-out',
           )}
           data-testid="search-bar"
@@ -67,8 +67,8 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
               'absolute right-0 top-1/2 -translate-y-1/2',
               'h-5 w-5 rounded-full',
               'flex items-center justify-center',
-              'text-muted-foreground/40 hover:text-muted-foreground',
-              'hover:bg-muted/20',
+              'text-muted-foreground hover:text-foreground',
+              'hover:bg-muted',
               'transition-colors duration-150',
             )}
             data-testid="clear-search-button"

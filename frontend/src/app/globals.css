@@ -1,178 +1,5 @@
 @import 'tailwindcss';
-
-/*
- * shadcn/ui Theme Configuration
- * Colors inspired by legacy design (indigo-based with gray backgrounds)
- *
- * Color Reference:
- * - Primary: Indigo-500 (#6366f1) -> Indigo-700 (#4338ca) hover
- * - Background: Gray-100 (#f3f4f6) page, white cards
- * - Text: Gray-900 (#111827) headings, Gray-600 (#4b5563) body
- */
-
-:root {
-  /* Page and content backgrounds */
-  --background: 220 14% 96%;
-  --foreground: 224 71% 4%;
-
-  /* Card surfaces */
-  --card: 0 0% 100%;
-  --card-foreground: 224 71% 4%;
-
-  /* Popover surfaces */
-  --popover: 0 0% 100%;
-  --popover-foreground: 224 71% 4%;
-
-  /* Primary action color - Indigo-500 */
-  --primary: 239 84% 67%;
-  --primary-foreground: 0 0% 100%;
-
-  /* Secondary - Gray-100 for OAuth buttons */
-  --secondary: 220 14% 96%;
-  --secondary-foreground: 224 71% 4%;
-
-  /* Muted backgrounds */
-  --muted: 220 14% 96%;
-  --muted-foreground: 220 9% 46%;
-
-  /* Accent highlights */
-  --accent: 220 14% 96%;
-  --accent-foreground: 224 71% 4%;
-
-  /* Destructive actions */
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
-
-  /* Success states */
-  --success: 142 76% 36%;
-  --success-foreground: 0 0% 100%;
-
-  /* Warning states */
-  --warning: 38 92% 50%;
-  --warning-foreground: 0 0% 100%;
-
-  /* Info states */
-  --info: 199 89% 48%;
-  --info-foreground: 0 0% 100%;
-
-  /* Borders and inputs */
-  --border: 220 13% 91%;
-  --input: 220 13% 91%;
-  --ring: 239 84% 67%;
-
-  /* Chart colors for data visualization */
-  --chart-1: 239 84% 67%;
-  --chart-2: 160 60% 45%;
-  --chart-3: 30 80% 55%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
-
-  /* Border radius - matches rounded-lg */
-  --radius: 0.5rem;
-
-  /* Sidebar colors (for future dashboard) */
-  --sidebar: 0 0% 100%;
-  --sidebar-foreground: 224 71% 4%;
-  --sidebar-primary: 239 84% 67%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 220 14% 96%;
-  --sidebar-accent-foreground: 224 71% 4%;
-  --sidebar-border: 220 13% 91%;
-  --sidebar-ring: 239 84% 67%;
-
-  /* Refined Minimal Design System - Light Mode */
-  --surface-primary: 0 0% 99%;
-  --surface-secondary: 0 0% 97%;
-  --surface-tertiary: 0 0% 95%;
-  --border-subtle: 0 0% 92%;
-  --border-hover: 0 0% 88%;
-  --text-primary: 0 0% 9%;
-  --text-secondary: 0 0% 38%;
-  --text-tertiary: 0 0% 58%;
-  --accent-primary: 239 45% 55%;
-  --accent-hover: 239 50% 50%;
-  --accent-surface: 239 45% 98%;
-  --status-success: 142 35% 45%;
-  --status-warning: 38 45% 55%;
-  --status-danger: 0 40% 50%;
-}
-
-.dark {
-  /* Dark mode - slate-based with indigo accent */
-  --background: 224 71% 4%;
-  --foreground: 210 20% 98%;
-
-  --card: 224 71% 4%;
-  --card-foreground: 210 20% 98%;
-
-  --popover: 224 71% 4%;
-  --popover-foreground: 210 20% 98%;
-
-  /* Keep indigo primary in dark mode */
-  --primary: 239 84% 67%;
-  --primary-foreground: 224 71% 4%;
-
-  --secondary: 215 28% 17%;
-  --secondary-foreground: 210 20% 98%;
-
-  --muted: 215 28% 17%;
-  --muted-foreground: 217 11% 65%;
-
-  --accent: 215 28% 17%;
-  --accent-foreground: 210 20% 98%;
-
-  --destructive: 0 63% 31%;
-  --destructive-foreground: 210 20% 98%;
-
-  /* Success states - dark mode */
-  --success: 142 71% 45%;
-  --success-foreground: 210 20% 98%;
-
-  /* Warning states - dark mode */
-  --warning: 38 92% 50%;
-  --warning-foreground: 224 71% 4%;
-
-  /* Info states - dark mode */
-  --info: 199 89% 48%;
-  --info-foreground: 224 71% 4%;
-
-  --border: 215 28% 17%;
-  --input: 215 28% 17%;
-  --ring: 239 84% 67%;
-
-  /* Chart colors for dark mode */
-  --chart-1: 239 84% 67%;
-  --chart-2: 160 60% 45%;
-  --chart-3: 30 80% 55%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
-
-  /* Sidebar dark mode */
-  --sidebar: 224 71% 4%;
-  --sidebar-foreground: 210 20% 98%;
-  --sidebar-primary: 239 84% 67%;
-  --sidebar-primary-foreground: 224 71% 4%;
-  --sidebar-accent: 215 28% 17%;
-  --sidebar-accent-foreground: 210 20% 98%;
-  --sidebar-border: 215 28% 17%;
-  --sidebar-ring: 239 84% 67%;
-
-  /* Refined Minimal Design System - Dark Mode */
-  --surface-primary: 0 0% 6%;
-  --surface-secondary: 0 0% 9%;
-  --surface-tertiary: 0 0% 12%;
-  --border-subtle: 0 0% 15%;
-  --border-hover: 0 0% 20%;
-  --text-primary: 0 0% 98%;
-  --text-secondary: 0 0% 70%;
-  --text-tertiary: 0 0% 50%;
-  --accent-primary: 239 45% 60%;
-  --accent-hover: 239 50% 65%;
-  --accent-surface: 239 45% 8%;
-  --status-success: 142 40% 50%;
-  --status-warning: 38 50% 60%;
-  --status-danger: 0 45% 55%;
-}
+@import './tokens.css';
 
 /*
  * Tailwind CSS 4 Theme Configuration
@@ -202,6 +29,9 @@
   --color-warning-foreground: hsl(var(--warning-foreground));
   --color-info: hsl(var(--info));
   --color-info-foreground: hsl(var(--info-foreground));
+  --color-status-success: hsl(var(--status-success));
+  --color-status-warning: hsl(var(--status-warning));
+  --color-status-danger: hsl(var(--status-danger));
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
@@ -219,21 +49,9 @@
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
-  /* Refined Minimal Colors */
-  --color-surface-primary: hsl(var(--surface-primary));
-  --color-surface-secondary: hsl(var(--surface-secondary));
-  --color-surface-tertiary: hsl(var(--surface-tertiary));
-  --color-border-subtle: hsl(var(--border-subtle));
-  --color-border-hover: hsl(var(--border-hover));
-  --color-text-primary: hsl(var(--text-primary));
-  --color-text-secondary: hsl(var(--text-secondary));
+  /* Tertiary text color token */
   --color-text-tertiary: hsl(var(--text-tertiary));
-  --color-accent-primary: hsl(var(--accent-primary));
-  --color-accent-hover: hsl(var(--accent-hover));
-  --color-accent-surface: hsl(var(--accent-surface));
-  --color-status-success: hsl(var(--status-success));
-  --color-status-warning: hsl(var(--status-warning));
-  --color-status-danger: hsl(var(--status-danger));
+  --color-tertiary: hsl(var(--text-tertiary));
 
   /* Border radius */
   --radius-sm: calc(var(--radius) - 4px);
@@ -246,8 +64,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
+@utility text-tertiary {
+  color: hsl(var(--text-tertiary));
+}
+
 /*
- * Custom Animations for Minimal Design System
+ * Animations for UI motion
  */
 @keyframes slideUp {
   from {
@@ -280,16 +102,6 @@
   }
 }
 
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
 @keyframes scaleIn {
   from {
     opacity: 0;
@@ -301,42 +113,30 @@
   }
 }
 
-/* Animation utility classes */
-.animate-slide-up {
-  animation: slideUp 300ms ease-out;
-}
+/* Animation utilities respect reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-slide-up {
+    animation: slideUp 300ms ease-out;
+  }
 
-.animate-slide-in {
-  animation: slideIn 300ms ease-out;
-}
+  .animate-slide-in {
+    animation: slideIn 300ms ease-out;
+  }
 
-.animate-fade-in {
-  animation: fadeIn 200ms ease-out;
-}
+  .animate-fade-in {
+    animation: fadeIn 200ms ease-out;
+  }
 
-.animate-scale-in {
-  animation: scaleIn 200ms ease-out;
-}
+  .animate-scale-in {
+    animation: scaleIn 200ms ease-out;
+  }
 
-/* Stagger animation support */
-.stagger-animation {
-  animation-delay: calc(var(--index, 0) * 50ms);
-}
-
-/* Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  .stagger-animation {
+    animation-delay: calc(var(--index, 0) * 50ms);
   }
 }
 
-/*
- * Base layer styles
- */
+/* Base layer styles */
 @layer base {
   * {
     @apply border-border;

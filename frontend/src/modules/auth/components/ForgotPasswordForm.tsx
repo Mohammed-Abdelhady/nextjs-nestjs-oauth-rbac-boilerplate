@@ -144,7 +144,7 @@ export function ForgotPasswordForm() {
             <div className="mt-6 text-center">
               <Link
                 href="/auth/login"
-                className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+                className="text-sm font-semibold text-primary hover:underline transition-colors"
                 data-testid="back-to-login-link"
               >
                 {t('backToLogin')}

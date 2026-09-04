@@ -152,10 +152,8 @@ export function UserPermissionsDialog({
                   </div>
 
                   {inheritedPermissions.length === 0 ? (
-                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-center dark:border-gray-700 dark:bg-gray-800">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {t('noInheritedPermissions')}
-                      </p>
+                    <div className="rounded-lg border border-border bg-muted p-4 text-center">
+                      <p className="text-sm text-muted-foreground">{t('noInheritedPermissions')}</p>
                     </div>
                   ) : (
                     <PermissionTreeView
@@ -170,8 +168,8 @@ export function UserPermissionsDialog({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-green-600 dark:text-green-400" />
-                      <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                      <User className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                      <h3 className="font-semibold text-foreground">
                         {t('directPermissions', { count: directPermissions.length })}
                       </h3>
                     </div>
@@ -186,10 +184,8 @@ export function UserPermissionsDialog({
                   </div>
 
                   {directPermissions.length === 0 ? (
-                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-center dark:border-gray-700 dark:bg-gray-800">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {t('noDirectPermissions')}
-                      </p>
+                    <div className="rounded-lg border border-border bg-muted p-4 text-center">
+                      <p className="text-sm text-muted-foreground">{t('noDirectPermissions')}</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -200,15 +196,15 @@ export function UserPermissionsDialog({
                       />
 
                       {/* Remove Actions Section */}
-                      <div className="space-y-2 pt-2 border-t border-border-subtle">
-                        <p className="text-xs uppercase tracking-widest text-muted-foreground/40">
+                      <div className="space-y-2 pt-2 border-t border-border">
+                        <p className="text-xs uppercase tracking-widest text-muted-foreground">
                           {t('removePermissions')}
                         </p>
                         <div className="grid gap-2">
                           {directPermissions.map((permission) => (
                             <div
                               key={permission}
-                              className="flex items-center justify-between rounded-md border border-border-subtle p-2 bg-surface-secondary"
+                              className="flex items-center justify-between rounded-md border border-border p-2 bg-muted"
                               data-testid={`direct-permission-${permission}`}
                             >
                               <code className="text-xs font-mono text-foreground">
@@ -219,7 +215,7 @@ export function UserPermissionsDialog({
                                 variant="ghost"
                                 onClick={() => handleRemovePermission(permission)}
                                 disabled={isRemoving}
-                                className="h-7 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950"
+                                className="h-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
                                 data-testid={`remove-permission-${permission}`}
                               >
                                 <Trash2 className="h-3 w-3 mr-1" />

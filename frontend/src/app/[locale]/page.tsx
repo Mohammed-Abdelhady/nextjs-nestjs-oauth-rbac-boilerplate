@@ -65,10 +65,12 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         {/* Right Side - Illustration */}
         <div className="flex-1 bg-primary/10 text-center hidden lg:flex items-center justify-center">
           <div className="flex flex-col items-center justify-center p-12">
-            <Rocket className="w-64 h-64 text-primary/30" strokeWidth={1} aria-hidden="true" />
-            <p className="mt-8 text-xl font-semibold text-primary/60">
-              {t('illustrationSubtitle')}
-            </p>
+            <Rocket
+              className="w-64 h-64 text-primary opacity-30"
+              strokeWidth={1}
+              aria-hidden="true"
+            />
+            <p className="mt-8 text-xl font-semibold text-primary">{t('illustrationSubtitle')}</p>
           </div>
         </div>
       </div>

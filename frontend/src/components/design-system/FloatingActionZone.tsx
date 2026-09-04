@@ -90,7 +90,7 @@ export const FloatingActionZone = forwardRef<HTMLDivElement, FloatingActionZoneP
         className={cn(
           'fixed z-40',
           'flex items-center gap-2 p-3',
-          'bg-surface-primary border border-border-subtle rounded-lg shadow-lg',
+          'bg-card border border-border rounded-lg shadow-lg',
           'transition-all duration-300 ease-out',
           positionClasses[position],
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none',

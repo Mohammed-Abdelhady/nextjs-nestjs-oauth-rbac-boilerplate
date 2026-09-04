@@ -86,7 +86,7 @@ function EditUserForm({
       <div className="space-y-2">
         <Label
           htmlFor="edit-name"
-          className="text-xs uppercase tracking-widest text-muted-foreground/60"
+          className="text-xs uppercase tracking-widest text-muted-foreground"
         >
           Full Name
         </Label>
@@ -114,7 +114,7 @@ function EditUserForm({
       <div className="space-y-2">
         <Label
           htmlFor="edit-email"
-          className="text-xs uppercase tracking-widest text-muted-foreground/60"
+          className="text-xs uppercase tracking-widest text-muted-foreground"
         >
           Email Address
         </Label>
@@ -229,8 +229,8 @@ export function EditUserDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]" data-testid="edit-user-dialog">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-light tracking-tight">Edit User</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground/60">
+          <DialogTitle className="text-xl font-semibold tracking-tight">Edit User</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
             Update user information. Changes will be saved immediately.
           </DialogDescription>
         </DialogHeader>

@@ -158,7 +158,7 @@ export const GroupedGrid = forwardRef(
                       key={index}
                       className={cn(
                         'transition-all duration-300 ease-out',
-                        stagger && 'animate-slide-up stagger-animation',
+                        stagger && 'motion-safe:animate-slide-up motion-safe:stagger-animation',
                       )}
                       style={stagger ? ({ '--index': index } as React.CSSProperties) : undefined}
                     >
@@ -170,7 +170,7 @@ export const GroupedGrid = forwardRef(
 
               {/* Empty Group State */}
               {!isCollapsed && group.items.length === 0 && (
-                <div className="py-8 text-center text-sm text-muted-foreground/60">
+                <div className="py-8 text-center text-sm text-muted-foreground">
                   No items in this group
                 </div>
               )}

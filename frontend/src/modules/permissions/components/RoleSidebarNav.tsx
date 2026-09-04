@@ -57,7 +57,7 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
     return (
       <nav className="space-y-1" data-testid="role-sidebar-nav-loading">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-10 rounded-md bg-muted/20 animate-pulse" />
+          <div key={i} className="h-10 rounded-md bg-muted animate-pulse" />
         ))}
       </nav>
     );
@@ -68,7 +68,7 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
       {/* System Roles Section */}
       {systemRoles.length > 0 && (
         <section>
-          <h3 className="text-xs uppercase tracking-widest text-muted-foreground/40 mb-2 px-3">
+          <h3 className="text-xs uppercase tracking-widest text-tertiary mb-2 px-3">
             System Roles
           </h3>
           <div className="space-y-1">
@@ -80,8 +80,8 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
                   'w-full text-left px-3 py-2 rounded-md text-sm transition-all duration-150',
                   'flex items-center gap-2',
                   selectedRoleId === role.id
-                    ? 'bg-accent-surface text-accent-primary font-medium'
-                    : 'text-muted-foreground hover:bg-surface-tertiary hover:text-foreground',
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                 )}
                 data-testid={`role-nav-item-${role.slug}`}
               >
@@ -97,7 +97,7 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
       {/* Custom Roles Section */}
       {customRoles.length > 0 && (
         <section>
-          <h3 className="text-xs uppercase tracking-widest text-muted-foreground/40 mb-2 px-3">
+          <h3 className="text-xs uppercase tracking-widest text-tertiary mb-2 px-3">
             Custom Roles ({customRoles.length})
           </h3>
           <div className="space-y-1">
@@ -109,8 +109,8 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
                   'w-full text-left px-3 py-2 rounded-md text-sm transition-all duration-150',
                   'flex items-center gap-2',
                   selectedRoleId === role.id
-                    ? 'bg-accent-surface text-accent-primary font-medium'
-                    : 'text-muted-foreground hover:bg-surface-tertiary hover:text-foreground',
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                 )}
                 data-testid={`role-nav-item-${role.slug}`}
               >
@@ -125,8 +125,8 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
       {/* Empty State */}
       {roles.length === 0 && (
         <div className="text-center py-8 px-3">
-          <Shield className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
-          <p className="text-sm text-muted-foreground/60">No roles available</p>
+          <Shield className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+          <p className="text-sm text-muted-foreground">No roles available</p>
         </div>
       )}
     </nav>

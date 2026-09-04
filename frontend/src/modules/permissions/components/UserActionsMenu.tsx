@@ -147,7 +147,7 @@ export const UserActionsMenu = memo(function UserActionsMenu({
             size="sm"
             className={cn(
               'h-8 px-3 gap-1.5 text-xs font-medium',
-              'border border-transparent hover:border-border-subtle',
+              'border border-transparent hover:border-border',
               'transition-all duration-200',
               className,
             )}
