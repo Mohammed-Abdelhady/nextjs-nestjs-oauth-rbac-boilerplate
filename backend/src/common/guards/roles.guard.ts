@@ -12,11 +12,11 @@ import { ErrorCode } from '../enums/error-code.enum';
 
 /**
  * Guard to restrict route access based on user roles.
- * Must be used in conjunction with AuthGuard to ensure user is authenticated.
+ * Reads the user that the global AuthGuard put on the request.
  *
  * @example
  * ```typescript
- * @UseGuards(AuthGuard, RolesGuard)
+ * @UseGuards(RolesGuard)
  * @Roles(UserRole.ADMIN)
  * @Get('admin-only')
  * adminOnlyEndpoint() { ... }

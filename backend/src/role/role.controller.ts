@@ -28,7 +28,6 @@ import {
   RoleListData,
   RoleUpdateResponseDto,
 } from './dto/role-response.dto';
-import { AuthGuard } from '../auth/guards/auth.guard';
 import { PermissionGuard } from '../common/guards/permission.guard';
 import { RequirePermissions } from '../common/decorators/permissions.decorator';
 import { ROLE_PERMISSIONS } from '../common/constants/permissions';
@@ -41,7 +40,7 @@ import { ApiResponse as ApiResponseDto } from '../common/dto/api-response.dto';
 @ApiTags('roles')
 @ApiBearerAuth('JWT-auth')
 @Controller('roles')
-@UseGuards(AuthGuard, PermissionGuard)
+@UseGuards(PermissionGuard)
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 

@@ -17,7 +17,6 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AdminPermissionsService } from './services/admin-permissions.service';
-import { AuthGuard } from '../auth/guards/auth.guard';
 import { PermissionGuard } from '../common/guards/permission.guard';
 import { RequirePermissions } from '../common/decorators/permissions.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -33,7 +32,7 @@ import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 @ApiTags('admin')
 @ApiBearerAuth('JWT-auth')
 @Controller('admin/users')
-@UseGuards(AuthGuard, PermissionGuard)
+@UseGuards(PermissionGuard)
 export class AdminPermissionsController {
   constructor(
     private readonly adminPermissionsService: AdminPermissionsService,

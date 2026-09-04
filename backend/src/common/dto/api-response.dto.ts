@@ -87,6 +87,14 @@ export class ErrorResponse {
   })
   error: ErrorDetails;
 
+  @ApiProperty({
+    description:
+      'Correlation id of the request, matching the X-Request-Id response header',
+    example: '3f1c1f0a-0f2c-4a3e-9b1e-2f5a6c7d8e90',
+    required: false,
+  })
+  requestId?: string;
+
   constructor(
     code: ErrorCode,
     message: string,

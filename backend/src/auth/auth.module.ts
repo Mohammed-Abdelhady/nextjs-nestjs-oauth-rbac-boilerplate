@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
@@ -24,7 +25,6 @@ import { MailModule } from '../mail/mail.module';
 import { UserModule } from '../user/user.module';
 import { SessionModule } from '../session/session.module';
 import { AuthGuard } from './guards/auth.guard';
-import { VerifiedGuard } from './guards/verified.guard';
 
 @Module({
   imports: [
@@ -50,7 +50,12 @@ import { VerifiedGuard } from './guards/verified.guard';
     PasswordResetCodeService,
     AuthMailService,
     AuthGuard,
-    VerifiedGuard,
+    // Registered here, not in AppModule: AuthGuard injects the Role model,
+    // which only resolves inside this module's context.
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
   ],
   exports: [
     AuthService,
@@ -58,7 +63,6 @@ import { VerifiedGuard } from './guards/verified.guard';
     SessionCookieService,
     VerificationCodeService,
     AuthGuard,
-    VerifiedGuard,
   ],
 })
 export class AuthModule {}
@@ -67,5 +71,4 @@ export class AuthModule {}
  * Decorators are exported directly from their source files:
  * - @Public() from './decorators/public.decorator'
  * - @CurrentUser() from './decorators/current-user.decorator'
- * - @Verified() from './decorators/verified.decorator'
  */

@@ -1,12 +1,14 @@
-import { Module } from '@nestjs/common';
+import { Logger, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
-import { APP_GUARD, APP_FILTER } from '@nestjs/core';
+import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { RequestLoggingInterceptor } from './common/interceptors/request-logging.interceptor';
 import { HealthModule } from './health/health.module';
 import { UserModule } from './user/user.module';
 import { SessionModule } from './session/session.module';
@@ -41,14 +43,15 @@ import { Connection } from 'mongoose';
       useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('MONGO_URI'),
         connectionFactory: (connection: Connection) => {
+          const logger = new Logger('Mongoose');
           connection.on('connected', () => {
-            console.log('✅ MongoDB connected successfully');
+            logger.log('Connected to MongoDB');
           });
           connection.on('error', (err: Error) => {
-            console.error('❌ MongoDB connection error:', err);
+            logger.error(`MongoDB connection error: ${err.message}`, err.stack);
           });
           connection.on('disconnected', () => {
-            console.warn('⚠️  MongoDB disconnected');
+            logger.warn('Disconnected from MongoDB');
           });
           return connection;
         },
@@ -92,6 +95,18 @@ import { Connection } from 'mongoose';
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RequestLoggingInterceptor,
+    },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  /**
+   * Applied here rather than in main.ts so that tests booting AppModule get the
+   * correlation id too.
+   */
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(RequestIdMiddleware).forRoutes('*');
+  }
+}

@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
@@ -13,6 +13,8 @@ import { ErrorResponse, ErrorDetails } from './common/dto/api-response.dto';
  * Bootstrap the NestJS application
  * Configures security middleware, CORS, validation, and starts the server
  */
+const logger = new Logger('Bootstrap');
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   (app.getHttpAdapter().getInstance() as Express).set('trust proxy', 1);
@@ -108,22 +110,15 @@ async function bootstrap() {
     });
     SwaggerModule.setup('api/docs', app, document);
 
-    console.log('='.repeat(50));
-    console.log('📚 Swagger Documentation Enabled');
-    console.log(`📖 Swagger UI: http://localhost:${port}/api/docs`);
-    console.log(`📄 OpenAPI Spec: http://localhost:${port}/api/docs-json`);
-    console.log('='.repeat(50));
+    logger.log(`Swagger UI at http://localhost:${port}/api/docs`);
+    logger.log(`OpenAPI spec at http://localhost:${port}/api/docs-json`);
   }
 
   // 8. Startup Logging
-  console.log('='.repeat(50));
-  console.log('🚀 Backend Server Starting...');
-  console.log('='.repeat(50));
-  console.log(`📝 Environment: ${environment}`);
-  console.log(`🌐 Server URL: http://localhost:${port}`);
-  console.log(`Health check: http://localhost:${port}/health`);
-  console.log(`🔒 CORS Origin: ${clientUrl}`);
-  console.log('='.repeat(50));
+  logger.log(`Environment: ${environment}`);
+  logger.log(`Server URL: http://localhost:${port}`);
+  logger.log(`Health check: http://localhost:${port}/health`);
+  logger.log(`CORS origin: ${clientUrl}`);
 
   // 9. Graceful Shutdown
   app.enableShutdownHooks();
@@ -131,11 +126,13 @@ async function bootstrap() {
   // 10. Start Server
   await app.listen(port);
 
-  console.log('✅ Server started successfully');
-  console.log('='.repeat(50));
+  logger.log(`Server listening on port ${port}`);
 }
 
-bootstrap().catch((error) => {
-  console.error('❌ Failed to start server:', error);
+bootstrap().catch((error: unknown) => {
+  logger.error(
+    `Failed to start server: ${error instanceof Error ? error.message : String(error)}`,
+    error instanceof Error ? error.stack : undefined,
+  );
   process.exit(1);
 });

@@ -30,7 +30,7 @@ src/
 ├── auth/               # Authentication module
 │   ├── controllers/    # Auth endpoints
 │   ├── services/       # Auth logic
-│   ├── guards/         # AuthGuard, VerifiedGuard
+│   ├── guards/         # AuthGuard, registered globally
 │   ├── dto/            # Request/Response DTOs
 │   └── decorators/     # @Public, @CurrentUser
 ├── user/               # User module
@@ -181,13 +181,12 @@ USER (1)      Default role
 @Public()
 @Post('register')
 
-// Requires valid session
-@UseGuards(AuthGuard)
+// Every route needs a valid session: AuthGuard runs as APP_GUARD
 @Get('profile')
 
-// Requires session + verified email
-@UseGuards(AuthGuard, VerifiedGuard)
-@Post('orders')
+// Opt out for routes that anyone may call
+@Public()
+@Post('login')
 ```
 
 ## API Documentation

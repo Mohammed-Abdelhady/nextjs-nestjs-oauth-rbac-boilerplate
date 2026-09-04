@@ -11,6 +11,7 @@ import { ThrottlerException } from '@nestjs/throttler';
 import { AppException } from '../exceptions/app.exception';
 import { ErrorCode } from '../enums/error-code.enum';
 import { ErrorResponse } from '../dto/api-response.dto';
+import { RequestWithId } from '../interfaces/request-with-id.interface';
 import {
   isCastError,
   isMongoDuplicateKeyError,
@@ -28,6 +29,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
+    const requestId = ctx.getRequest<RequestWithId>().requestId;
+
+    const tag = requestId ? ` [${requestId}]` : '';
 
     let errorResponse: ErrorResponse;
     let statusCode: number;
@@ -40,7 +44,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         exception.getDetails(),
       );
       this.logger.warn(
-        `AppException: ${exception.getCode()} - ${exception.message}`,
+        `AppException: ${exception.getCode()} - ${exception.message}${tag}`,
       );
     } else if (exception instanceof ThrottlerException) {
       statusCode = HttpStatus.TOO_MANY_REQUESTS;
@@ -54,7 +58,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         'Too many requests',
         { retryAfter },
       );
-      this.logger.warn(`ThrottlerException: ${exception.message}`);
+      this.logger.warn(`ThrottlerException: ${exception.message}${tag}`);
     } else if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
 
@@ -66,13 +70,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           validationResult,
         );
         this.logger.warn(
-          `ValidationException: ${JSON.stringify(validationResult.fields)}`,
+          `ValidationException: ${JSON.stringify(validationResult.fields)}${tag}`,
         );
       } else {
         const code = this.mapHttpStatusToErrorCode(statusCode);
         errorResponse = ErrorResponse.error(code, exception.message);
         this.logger.warn(
-          `HttpException (${statusCode}): ${code} - ${exception.message}`,
+          `HttpException (${statusCode}): ${code} - ${exception.message}${tag}`,
         );
       }
     } else if (isCastError(exception)) {
@@ -81,7 +85,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         ErrorCode.INVALID_INPUT,
         exception.message || 'Invalid input',
       );
-      this.logger.warn(`CastError: ${exception.message}`);
+      this.logger.warn(`CastError: ${exception.message}${tag}`);
     } else if (isMongoDuplicateKeyError(exception)) {
       statusCode = HttpStatus.CONFLICT;
       const isEmail = isDuplicateEmailError(exception);
@@ -93,7 +97,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         : 'Resource conflict occurred';
       errorResponse = ErrorResponse.error(code, message);
       this.logger.warn(
-        `MongoDuplicateKeyError (11000): ${code} - ${exception.message}`,
+        `MongoDuplicateKeyError (11000): ${code} - ${exception.message}${tag}`,
       );
     } else {
       statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -102,9 +106,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         'An unexpected error occurred',
       );
       this.logger.error(
-        `Unknown exception: ${exception instanceof Error ? exception.message : String(exception)}`,
+        `Unknown exception: ${exception instanceof Error ? exception.message : String(exception)}${tag}`,
         exception instanceof Error ? exception.stack : undefined,
       );
+    }
+
+    if (requestId) {
+      errorResponse.requestId = requestId;
     }
 
     response.status(statusCode).json(errorResponse);

@@ -5,14 +5,13 @@ import {
   Post,
   Delete,
   Body,
-  UseGuards,
   HttpCode,
   HttpStatus,
   Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { UserProfileService } from './services/user-profile.service';
-import { AuthGuard, RequestWithUser } from '../auth/guards/auth.guard';
+import { RequestWithUser } from '../auth/guards/auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -27,7 +26,6 @@ import { SessionCookieService } from '../auth/services/session-cookie.service';
 @ApiTags('user')
 @ApiBearerAuth('JWT-auth')
 @Controller('user')
-@UseGuards(AuthGuard)
 export class UserProfileController {
   constructor(
     private readonly userProfileService: UserProfileService,

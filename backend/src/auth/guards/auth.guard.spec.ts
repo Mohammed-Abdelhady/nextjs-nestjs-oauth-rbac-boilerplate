@@ -1,14 +1,23 @@
 import { ExecutionContext } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Reflector } from '@nestjs/core';
 import { getModelToken } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 import { AuthGuard } from './auth.guard';
 import { SessionService } from '../services/session.service';
 import { SessionCookieService } from '../services/session-cookie.service';
+import { Public } from '../decorators/public.decorator';
 import { Role } from '../../role/schemas/role.schema';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 
-describe('AuthGuard (X-13, D-29, S-01)', () => {
+class GuardedRoutes {
+  @Public()
+  openRoute(this: void): void {}
+
+  closedRoute(this: void): void {}
+}
+
+describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
   let guard: AuthGuard;
   let sessionService: {
     validateSession: jest.Mock;
@@ -22,6 +31,7 @@ describe('AuthGuard (X-13, D-29, S-01)', () => {
 
   const createMockContext = (
     cookies: Record<string, string> = {},
+    handler: () => void = GuardedRoutes.prototype.closedRoute,
   ): { context: ExecutionContext; request: Record<string, unknown> } => {
     const request = {
       cookies,
@@ -32,6 +42,8 @@ describe('AuthGuard (X-13, D-29, S-01)', () => {
       switchToHttp: () => ({
         getRequest: () => request,
       }),
+      getHandler: () => handler,
+      getClass: () => GuardedRoutes,
     } as unknown as ExecutionContext;
 
     return { context, request };
@@ -62,10 +74,23 @@ describe('AuthGuard (X-13, D-29, S-01)', () => {
         { provide: SessionService, useValue: sessionService },
         { provide: SessionCookieService, useValue: sessionCookieService },
         { provide: getModelToken(Role.name), useValue: roleModel },
+        Reflector,
       ],
     }).compile();
 
     guard = module.get<AuthGuard>(AuthGuard);
+  });
+
+  it('should let a @Public route through without reading the cookie', async () => {
+    const { context } = createMockContext(
+      {},
+      GuardedRoutes.prototype.openRoute,
+    );
+
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+
+    expect(sessionCookieService.read).not.toHaveBeenCalled();
+    expect(sessionService.validateSession).not.toHaveBeenCalled();
   });
 
   it('should read cookie via sessionCookieService and throw SESSION_REQUIRED when missing', async () => {

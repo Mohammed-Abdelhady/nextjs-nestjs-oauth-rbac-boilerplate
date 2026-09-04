@@ -15,13 +15,16 @@ import { hasAllPermissions, hasAnyPermission } from '../utils/permission.utils';
  * Guard that enforces permission-based authorization.
  * Works with @RequirePermissions and @RequireAnyPermission decorators.
  *
+ * Authentication comes from the global AuthGuard, so only this guard has to be
+ * listed on the route.
+ *
  * Usage:
- * 1. Apply @UseGuards(AuthGuard, PermissionGuard) to controller or method
+ * 1. Apply @UseGuards(PermissionGuard) to controller or method
  * 2. Use @RequirePermissions('permission:action:scope') decorator
  *
  * @example
  * ```typescript
- * @UseGuards(AuthGuard, PermissionGuard)
+ * @UseGuards(PermissionGuard)
  * @RequirePermissions('users:read:all')
  * @Get()
  * async listUsers() {

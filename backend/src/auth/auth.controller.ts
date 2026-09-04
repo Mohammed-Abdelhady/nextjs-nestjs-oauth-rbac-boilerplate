@@ -6,7 +6,6 @@ import {
   HttpCode,
   HttpStatus,
   Req,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { Request } from 'express';
@@ -19,7 +18,6 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ResendActivationDto } from './dto/resend-activation.dto';
 import { Public } from './decorators/public.decorator';
-import { AuthGuard } from './guards/auth.guard';
 import { Throttle } from '@nestjs/throttler';
 import { SessionCookieService } from './services/session-cookie.service';
 import {
@@ -121,7 +119,6 @@ export class AuthController {
    * POST /api/auth/logout
    * Requires authentication
    */
-  @UseGuards(AuthGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')

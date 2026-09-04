@@ -5,7 +5,6 @@ import {
   Delete,
   Param,
   Body,
-  UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -17,7 +16,6 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { UserProfileService } from './services/user-profile.service';
-import { AuthGuard } from '../auth/guards/auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UserProfileDto } from './dto/user-profile.dto';
 import {
@@ -37,7 +35,6 @@ import { ErrorCode } from '../common/enums/error-code.enum';
 @ApiTags('user')
 @ApiBearerAuth('JWT-auth')
 @Controller('user')
-@UseGuards(AuthGuard)
 export class UserProvidersController {
   constructor(
     private readonly userProfileService: UserProfileService,

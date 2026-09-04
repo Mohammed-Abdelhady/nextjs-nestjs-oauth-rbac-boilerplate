@@ -4,7 +4,6 @@ import {
   Post,
   Delete,
   Param,
-  UseGuards,
   HttpCode,
   HttpStatus,
   Req,
@@ -16,7 +15,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { UserSessionsService } from './services/user-sessions.service';
-import { AuthGuard, RequestWithUser } from '../auth/guards/auth.guard';
+import { RequestWithUser } from '../auth/guards/auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { SessionListData } from './dto/user-profile.dto';
 import { ApiResponse } from '../common/dto/api-response.dto';
@@ -30,7 +29,6 @@ import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 @ApiTags('user')
 @ApiBearerAuth('JWT-auth')
 @Controller('user')
-@UseGuards(AuthGuard)
 export class UserSessionsController {
   constructor(
     private readonly userSessionsService: UserSessionsService,

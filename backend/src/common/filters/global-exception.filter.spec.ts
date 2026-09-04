@@ -6,10 +6,12 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { ThrottlerException } from '@nestjs/throttler';
 import { Response } from 'express';
 import { ArgumentsHost } from '@nestjs/common';
+import { RequestWithId } from '../interfaces/request-with-id.interface';
 
 describe('GlobalExceptionFilter', () => {
   let filter: GlobalExceptionFilter;
   let mockResponse: Partial<Response>;
+  let mockRequest: RequestWithId;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -22,6 +24,8 @@ describe('GlobalExceptionFilter', () => {
       status: jest.fn().mockReturnThis(),
       json: jest.fn().mockReturnThis(),
     };
+
+    mockRequest = {} as RequestWithId;
   });
 
   afterEach(() => {
@@ -32,6 +36,7 @@ describe('GlobalExceptionFilter', () => {
     return {
       switchToHttp: jest.fn().mockReturnValue({
         getResponse: () => mockResponse,
+        getRequest: () => mockRequest,
       }),
     } as unknown as ArgumentsHost;
   }

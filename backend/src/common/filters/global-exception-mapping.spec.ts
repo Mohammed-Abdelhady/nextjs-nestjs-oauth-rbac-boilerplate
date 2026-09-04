@@ -4,12 +4,14 @@ import { ErrorCode } from '../enums/error-code.enum';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
 import { ArgumentsHost } from '@nestjs/common';
+import { RequestWithId } from '../interfaces/request-with-id.interface';
 import { Error as MongooseError } from 'mongoose';
 import { MongoServerError } from 'mongodb';
 
 describe('GlobalExceptionFilter Mapping', () => {
   let filter: GlobalExceptionFilter;
   let mockResponse: Partial<Response>;
+  let mockRequest: RequestWithId;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -22,6 +24,8 @@ describe('GlobalExceptionFilter Mapping', () => {
       status: jest.fn().mockReturnThis(),
       json: jest.fn().mockReturnThis(),
     };
+
+    mockRequest = {} as RequestWithId;
   });
 
   afterEach(() => {
@@ -32,6 +36,7 @@ describe('GlobalExceptionFilter Mapping', () => {
     return {
       switchToHttp: jest.fn().mockReturnValue({
         getResponse: () => mockResponse,
+        getRequest: () => mockRequest,
       }),
     } as unknown as ArgumentsHost;
   }

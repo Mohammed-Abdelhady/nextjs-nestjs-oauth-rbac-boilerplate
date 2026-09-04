@@ -14,7 +14,7 @@ import { CommonModule } from '../common/common.module';
       { name: Role.name, schema: RoleSchema },
       { name: User.name, schema: UserSchema },
     ]),
-    AuthModule, // Required for AuthGuard
+    AuthModule, // Session services used by the global AuthGuard
     CommonModule, // Required for RolesGuard
   ],
   controllers: [RoleController],
