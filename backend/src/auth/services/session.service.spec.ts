@@ -62,6 +62,13 @@ describe('SessionService (S-06, D-15, S-01)', () => {
           tokenHash: hashToken(token),
           userAgent: 'test-agent',
           ip: '127.0.0.1',
+          device: expect.objectContaining({
+            type: expect.any(String),
+            browser: expect.any(String),
+            os: expect.any(String),
+            name: expect.any(String),
+          }),
+          deviceName: expect.any(String),
         }),
       );
     });

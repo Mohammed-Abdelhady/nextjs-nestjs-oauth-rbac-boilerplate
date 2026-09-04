@@ -10,6 +10,7 @@ import {
 } from '../../session/schemas/session.schema';
 import { UserDocument } from '../../user/schemas/user.schema';
 import { SESSION_LAST_USED_UPDATE_INTERVAL_MS } from '../../common/constants/session';
+import { parseUserAgent } from '../../common/utils/parse-user-agent';
 
 export function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');
@@ -41,11 +42,14 @@ export class SessionService {
     );
 
     const expiresAt = new Date(Date.now() + cookieMaxAge);
+    const device = parseUserAgent(userAgent);
 
     await this.sessionModel.create({
       user: userId,
       tokenHash,
       userAgent,
+      device,
+      deviceName: device.name,
       ip,
       expiresAt,
     });

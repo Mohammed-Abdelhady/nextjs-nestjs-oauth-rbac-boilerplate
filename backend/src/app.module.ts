@@ -10,14 +10,12 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { HealthModule } from './health/health.module';
 import { UserModule } from './user/user.module';
 import { SessionModule } from './session/session.module';
-import { PermissionModule } from './permission/permission.module';
 import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
 import { CommonModule } from './common/common.module';
 import { MailModule } from './mail/mail.module';
 import { DatabaseModule } from './database/database.module';
 import { RoleModule } from './role/role.module';
-import { MigrationModule } from './database/migrations/migration.module';
 import configuration from './config/configuration';
 import { validateEnvironment } from './config/env.validation';
 import { Connection } from 'mongoose';
@@ -68,10 +66,8 @@ import { Connection } from 'mongoose';
     CommonModule,
     MailModule,
     DatabaseModule,
-    MigrationModule,
     UserModule,
     SessionModule,
-    PermissionModule,
     RoleModule,
     AuthModule,
     AdminModule,

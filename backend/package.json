@@ -62,7 +62,6 @@
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
-    "@types/mongoose": "^5.11.96",
     "@types/node": "^22.10.7",
     "@types/nodemailer": "^7.0.5",
     "@types/supertest": "^6.0.2",

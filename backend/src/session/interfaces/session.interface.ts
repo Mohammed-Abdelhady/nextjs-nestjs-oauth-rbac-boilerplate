@@ -1,10 +1,11 @@
 import { HydratedDocument, Types } from 'mongoose';
-import { Session } from '../schemas/session.schema';
+import { Session, DeviceInfo } from '../schemas/session.schema';
 
 export interface ISession {
   user: Types.ObjectId;
   tokenHash: string;
   userAgent: string;
+  device?: DeviceInfo;
   ip: string;
   deviceName?: string;
   isValid: boolean;

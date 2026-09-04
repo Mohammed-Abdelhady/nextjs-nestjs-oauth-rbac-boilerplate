@@ -23,7 +23,18 @@ module.exports = {
     await sessionCollection.deleteMany({ tokenHash: { $exists: false } });
 
     // Drop legacy index on refreshToken if present
-    const indexes = await sessionCollection.indexes();
+    let indexes = [];
+    try {
+      indexes = await sessionCollection.indexes();
+    } catch (error) {
+      if (
+        error &&
+        error.code !== 26 &&
+        error.codeName !== 'NamespaceNotFound'
+      ) {
+        throw error;
+      }
+    }
     const oldRefreshTokenIndex = indexes.find(
       (idx) => idx.name === 'refreshToken_1' || idx.key.refreshToken,
     );

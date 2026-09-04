@@ -72,4 +72,4 @@ export const SessionSchema: MongooseSchema<Session> =
 // Indexes
 SessionSchema.index({ user: 1 });
 SessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-SessionSchema.index({ user: 1, userAgent: 1 });
+SessionSchema.index({ user: 1, lastUsedAt: -1 });

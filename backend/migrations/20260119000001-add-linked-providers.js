@@ -58,15 +58,16 @@ module.exports = {
           { linkedProviders: 1 },
           {
             name: 'linkedProviders_index',
-            background: true,
           },
         );
-        console.log('✓ Created index on linkedProviders field');
+        console.log('Created index on linkedProviders field');
       } else {
-        console.log('✓ Index on linkedProviders field already exists');
+        console.log('Index on linkedProviders field already exists');
       }
     } catch (error) {
-      console.log('⚠ linkedProviders index already exists with different name');
+      console.warn(
+        'Index on linkedProviders already exists with different name',
+      );
     }
 
     // Verify migration
@@ -76,15 +77,14 @@ module.exports = {
 
     if (usersWithoutLinkedProviders > 0) {
       console.warn(
-        `⚠ Warning: ${usersWithoutLinkedProviders} users still missing linkedProviders field`,
+        `Warning: ${usersWithoutLinkedProviders} users missing linkedProviders field`,
       );
     } else {
-      console.log('✓ All users have linkedProviders field populated');
+      console.log('All users have linkedProviders field populated');
     }
   },
 
   async down(db, client) {
-    // Remove the new fields from all user documents
     const result = await db.collection('users').updateMany(
       {},
       {
@@ -98,18 +98,17 @@ module.exports = {
     );
 
     console.log(
-      `✓ Removed linked providers fields from ${result.modifiedCount} users`,
+      `Removed linked providers fields from ${result.modifiedCount} users`,
     );
 
-    // Drop the index
     try {
       await db.collection('users').dropIndex('linkedProviders_index');
-      console.log('✓ Dropped linkedProviders index');
+      console.log('Dropped linkedProviders index');
     } catch (error) {
-      if (error.code !== 27) {
-        // Index not found error is acceptable
-        console.warn(`⚠ Warning: Could not drop index - ${error.message}`);
+      if (error.code === 27 || error.codeName === 'IndexNotFound') {
+        return;
       }
+      throw error;
     }
   },
 };

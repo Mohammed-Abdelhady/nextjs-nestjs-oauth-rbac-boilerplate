@@ -34,18 +34,6 @@ export class User {
   @Prop({ default: false })
   isVerified!: boolean;
 
-  @Prop()
-  verificationToken?: string;
-
-  @Prop()
-  verificationExpires?: Date;
-
-  @Prop()
-  resetPasswordToken?: string;
-
-  @Prop()
-  resetPasswordExpires?: Date;
-
   @Prop({ default: false })
   isDeleted!: boolean;
 
@@ -55,7 +43,7 @@ export class User {
   @Prop({ type: [String], default: [] })
   linkedProviders!: string[];
 
-  @Prop({ enum: AuthProvider, nullable: true })
+  @Prop({ enum: AuthProvider })
   primaryProvider?: AuthProvider;
 
   @Prop()
