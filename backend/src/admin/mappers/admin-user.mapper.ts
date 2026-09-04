@@ -16,8 +16,8 @@ export function mapToAdminUserDto(user: UserDocument): AdminUserDto {
     authProvider: user.authProvider,
     isVerified: user.isVerified,
     isDeleted: user.isDeleted,
-    googleId: user.googleId,
-    facebookId: user.facebookId,
+    avatarUrl: user.avatarUrl,
+    linkedProviders: user.linkedProviders,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };

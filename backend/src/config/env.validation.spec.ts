@@ -1,10 +1,13 @@
 import { validateEnvironment } from './env.validation';
 
 describe('validateEnvironment', () => {
+  const STATE_SECRET = 'a'.repeat(32);
+
   const baseEnv: Record<string, unknown> = {
     NODE_ENV: 'test',
     MONGO_URI: 'mongodb://localhost:27017/authboiler',
     CLIENT_URL: 'http://localhost:3000',
+    OAUTH_STATE_SECRET: STATE_SECRET,
   };
 
   it('valid env passes', () => {
@@ -20,6 +23,7 @@ describe('validateEnvironment', () => {
     const envWithoutMongo: Record<string, unknown> = {
       NODE_ENV: 'test',
       CLIENT_URL: 'http://localhost:3000',
+      OAUTH_STATE_SECRET: STATE_SECRET,
     };
 
     expect(() => validateEnvironment(envWithoutMongo)).toThrow(/MONGO_URI/);
@@ -83,6 +87,40 @@ describe('validateEnvironment', () => {
     expect(result.PORT).toBe(5050);
     expect(result.THROTTLE_TTL).toBe(120);
     expect(result.THROTTLE_LIMIT).toBe(200);
+  });
+
+  it('missing OAUTH_STATE_SECRET fails with its name in the message', () => {
+    const { OAUTH_STATE_SECRET: _omitted, ...envWithoutSecret } = baseEnv;
+
+    expect(() => validateEnvironment(envWithoutSecret)).toThrow(
+      /OAUTH_STATE_SECRET/,
+    );
+  });
+
+  it('rejects a short OAUTH_STATE_SECRET', () => {
+    const envWithShortSecret: Record<string, unknown> = {
+      ...baseEnv,
+      OAUTH_STATE_SECRET: 'too-short',
+    };
+
+    expect(() => validateEnvironment(envWithShortSecret)).toThrow(
+      /at least 32 characters/,
+    );
+  });
+
+  it('accepts API_URL and OAUTH_CALLBACK_BASE_URL', () => {
+    const envWithUrls: Record<string, unknown> = {
+      ...baseEnv,
+      API_URL: 'http://localhost:5000',
+      OAUTH_CALLBACK_BASE_URL: 'http://localhost:5000/api/auth/oauth',
+    };
+
+    const result = validateEnvironment(envWithUrls);
+
+    expect(result.API_URL).toBe('http://localhost:5000');
+    expect(result.OAUTH_CALLBACK_BASE_URL).toBe(
+      'http://localhost:5000/api/auth/oauth',
+    );
   });
 
   it("PROFILE_SYNC_ENABLED='false' yields false", () => {

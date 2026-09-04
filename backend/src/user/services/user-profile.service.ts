@@ -4,7 +4,6 @@ import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from '../schemas/user.schema';
 import { Role, RoleDocument } from '../../role/schemas/role.schema';
-import { AuthProvider } from '../enums/auth-provider.enum';
 import { SessionService } from '../../auth/services/session.service';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
@@ -167,7 +166,7 @@ export class UserProfileService {
   /**
    * Provider a user syncs its profile from, if any.
    */
-  async getPrimaryProvider(userId: string): Promise<AuthProvider | undefined> {
+  async getPrimaryProvider(userId: string): Promise<string | undefined> {
     const user = await this.userModel
       .findById(userId)
       .select('primaryProvider')
@@ -194,9 +193,7 @@ export class UserProfileService {
       permissions: effectivePermissions,
       authProvider: user.authProvider,
       isVerified: user.isVerified,
-      googleId: user.googleId,
-      facebookId: user.facebookId,
-      githubId: user.githubId,
+      avatarUrl: user.avatarUrl,
       linkedProviders: user.linkedProviders,
       primaryProvider: user.primaryProvider,
       profileSyncedAt: user.profileSyncedAt,

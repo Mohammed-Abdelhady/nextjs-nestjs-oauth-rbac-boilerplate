@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from '../../user/schemas/user.schema';
+import { AuthProvider } from '../../user/enums/auth-provider.enum';
 import { SessionService } from '../../auth/services/session.service';
 import { AdminUserDto } from '../dto/admin-user-response.dto';
 import { UpdateUserStatusDto } from '../dto/update-user-status.dto';
@@ -59,7 +60,8 @@ export class AdminUsersService {
       role,
       isVerified: true, // Admin-created users are auto-verified
       permissions: [],
-      authProvider: 'email',
+      authProvider: AuthProvider.EMAIL,
+      primaryProvider: AuthProvider.EMAIL,
     });
 
     await newUser.save();

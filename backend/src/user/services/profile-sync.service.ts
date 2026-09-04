@@ -4,10 +4,10 @@ import { Model } from 'mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { User, UserDocument } from '../schemas/user.schema';
-import { AuthProvider } from '../enums/auth-provider.enum';
+import { EMAIL_PROVIDER } from '../../common/constants/oauth-providers';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
-import { OAuthUserProfile } from '../../auth/strategies/oauth.strategy.interface';
+import { OAuthProfile } from '../../auth/oauth/oauth-provider.interface';
 
 /**
  * Profile Sync Service
@@ -33,8 +33,8 @@ export class ProfileSyncService {
    */
   async syncProfileFromProvider(
     userId: string,
-    provider: AuthProvider,
-    profile: OAuthUserProfile,
+    provider: string,
+    profile: OAuthProfile,
   ): Promise<UserDocument> {
     const user = await this.userModel.findById(userId);
 
@@ -81,15 +81,16 @@ export class ProfileSyncService {
       );
     }
 
-    // Note: Email sync is intentionally excluded for security
-    // Email changes require verification flow
+    // Email is never synced: the account email only changes through a verified flow
 
-    // Sync avatar/picture if configured
-    // TODO: Implement avatar storage when user schema supports it
-    // if (syncFields.includes('picture') && profile.picture) {
-    //   user.avatar = profile.picture;
-    //   updated = true;
-    // }
+    if (
+      syncFields.includes('picture') &&
+      profile.avatarUrl &&
+      profile.avatarUrl !== user.avatarUrl
+    ) {
+      user.avatarUrl = profile.avatarUrl;
+      updated = true;
+    }
 
     if (updated) {
       user.profileSyncedAt = new Date();
@@ -110,12 +111,12 @@ export class ProfileSyncService {
    */
   async initiateManualSync(userId: string): Promise<{
     requiresOAuth: boolean;
-    provider: AuthProvider;
+    provider: string;
     message: string;
   }> {
     const user = await this.userModel
       .findById(userId)
-      .select('primaryProvider linkedProviders');
+      .select('primaryProvider linkedAccounts authProvider');
 
     if (!user) {
       throw new AppException(
@@ -126,10 +127,10 @@ export class ProfileSyncService {
     }
 
     // Determine which provider to sync from
-    const syncProvider = user.primaryProvider || AuthProvider.EMAIL;
+    const syncProvider = user.primaryProvider || EMAIL_PROVIDER;
 
     // If provider is EMAIL (email/password), no sync possible
-    if (syncProvider === AuthProvider.EMAIL) {
+    if (syncProvider === EMAIL_PROVIDER) {
       throw new AppException(
         ErrorCode.PROVIDER_NOT_LINKED,
         ErrorCode.PROVIDER_NOT_LINKED,
@@ -154,7 +155,7 @@ export class ProfileSyncService {
   async getSyncStatus(userId: string): Promise<{
     lastSyncedAt?: Date;
     lastSyncedProvider?: string;
-    primaryProvider?: AuthProvider;
+    primaryProvider?: string;
     canSync: boolean;
   }> {
     const user = await this.userModel
@@ -170,7 +171,7 @@ export class ProfileSyncService {
     }
 
     const canSync =
-      user.primaryProvider && user.primaryProvider !== AuthProvider.EMAIL;
+      user.primaryProvider && user.primaryProvider !== EMAIL_PROVIDER;
 
     return {
       lastSyncedAt: user.profileSyncedAt,
@@ -209,7 +210,7 @@ export class ProfileSyncService {
 
       const usersToSync = await this.userModel
         .find({
-          primaryProvider: { $ne: AuthProvider.EMAIL },
+          primaryProvider: { $ne: EMAIL_PROVIDER },
           $or: [
             { profileSyncedAt: { $lt: oneDayAgo } },
             { profileSyncedAt: { $exists: false } },
@@ -246,8 +247,8 @@ export class ProfileSyncService {
    */
   async resolveConflicts(
     userId: string,
-    profiles: Map<AuthProvider, Partial<OAuthUserProfile>>,
-  ): Promise<Partial<OAuthUserProfile>> {
+    profiles: Map<string, Partial<OAuthProfile>>,
+  ): Promise<Partial<OAuthProfile>> {
     const user = await this.userModel
       .findById(userId)
       .select('primaryProvider');
@@ -261,7 +262,7 @@ export class ProfileSyncService {
     }
 
     // Use primary provider as source of truth
-    const primaryProvider = user.primaryProvider || AuthProvider.EMAIL;
+    const primaryProvider = user.primaryProvider || EMAIL_PROVIDER;
     const primaryProfile = profiles.get(primaryProvider);
 
     if (primaryProfile) {

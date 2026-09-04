@@ -21,15 +21,14 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UserProfileDto } from './dto/user-profile.dto';
 import {
-  LinkProviderDto,
   SetPrimaryProviderDto,
   LinkedProvidersResponseDto,
 } from './dto/account-linking.dto';
 import { ApiResponse } from '../common/dto/api-response.dto';
 import { AccountLinkingService } from './services/account-linking.service';
 import { ProfileSyncService } from './services/profile-sync.service';
-import { OAuthService, OAuthProvider } from '../auth/services/oauth.service';
-import { AuthProvider } from './enums/auth-provider.enum';
+import { AppException } from '../common/exceptions/app.exception';
+import { ErrorCode } from '../common/enums/error-code.enum';
 
 /**
  * Controller for OAuth provider linking and profile synchronization.
@@ -43,7 +42,6 @@ export class UserProvidersController {
   constructor(
     private readonly userProfileService: UserProfileService,
     private readonly accountLinkingService: AccountLinkingService,
-    private readonly oauthService: OAuthService,
     private readonly profileSyncService: ProfileSyncService,
   ) {}
 
@@ -67,47 +65,27 @@ export class UserProvidersController {
     const primaryProvider =
       await this.userProfileService.getPrimaryProvider(userId);
 
-    return ApiResponse.success({
-      providers: providers as string[],
-      primaryProvider,
-    });
+    return ApiResponse.success({ providers, primaryProvider });
   }
 
   /**
-   * Link a new OAuth provider to current user's account.
+   * Removed: linking now runs through the backend OAuth callback.
    *
-   * @example POST /user/link-provider
+   * @deprecated Use GET /api/auth/oauth/{provider}/start
    */
   @Post('link-provider')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Link OAuth provider',
+    deprecated: true,
+    summary: 'Removed client side provider linking',
     description:
-      'Links a new OAuth provider (Google, Facebook, GitHub) to the authenticated user account. ' +
-      'The email from the OAuth provider must match the user account email.',
+      'Always returns 410 Gone. The client side code exchange cannot validate OAuth state.',
   })
-  @ApiBody({ type: LinkProviderDto })
-  async linkProvider(
-    @CurrentUser('id') userId: string,
-    @Body() dto: LinkProviderDto,
-  ): Promise<ApiResponse<UserProfileDto>> {
-    // Get OAuth user profile using the provider code
-    // AuthProvider and OAuthProvider use same lowercase values for OAuth providers
-    const profile = await this.oauthService.getUserProfile(
-      dto.provider.toLowerCase() as OAuthProvider,
-      dto.code,
-      dto.state,
+  linkProvider(): never {
+    throw new AppException(
+      ErrorCode.OAUTH_STATE_INVALID,
+      'Client side provider linking was removed because it cannot validate state.',
+      HttpStatus.GONE,
     );
-
-    // Link the provider to user account
-    await this.accountLinkingService.linkProvider(
-      userId,
-      dto.provider,
-      profile,
-    );
-
-    // Return updated user profile
-    return this.userProfileService.getProfile(userId);
   }
 
   /**
@@ -125,21 +103,15 @@ export class UserProvidersController {
   })
   @ApiParam({
     name: 'provider',
-    description: 'OAuth provider to unlink',
-    enum: ['GOOGLE', 'FACEBOOK', 'GITHUB'],
-    example: 'GITHUB',
+    description: 'Registered OAuth provider id to unlink',
+    example: 'github',
   })
   async unlinkProvider(
     @CurrentUser('id') userId: string,
     @Param('provider') provider: string,
   ): Promise<ApiResponse<UserProfileDto>> {
-    // Convert string to AuthProvider enum (provider comes as uppercase from route)
-    const authProvider = provider.toLowerCase() as AuthProvider;
+    await this.accountLinkingService.unlinkProvider(userId, provider);
 
-    // Unlink the provider
-    await this.accountLinkingService.unlinkProvider(userId, authProvider);
-
-    // Return updated user profile
     return this.userProfileService.getProfile(userId);
   }
 
@@ -183,7 +155,7 @@ export class UserProvidersController {
     ApiResponse<{
       lastSyncedAt?: Date;
       lastSyncedProvider?: string;
-      primaryProvider?: AuthProvider;
+      primaryProvider?: string;
       canSync: boolean;
     }>
   > {
@@ -208,7 +180,7 @@ export class UserProvidersController {
   async initiateProfileSync(@CurrentUser('id') userId: string): Promise<
     ApiResponse<{
       requiresOAuth: boolean;
-      provider: AuthProvider;
+      provider: string;
       message: string;
     }>
   > {

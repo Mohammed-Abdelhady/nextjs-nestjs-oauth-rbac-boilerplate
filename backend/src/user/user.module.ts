@@ -41,6 +41,8 @@ import { AuthModule } from '../auth/auth.module';
     UserProfileService,
     UserSessionsService,
     UserPermissionsService,
+    AccountLinkingService,
+    ProfileSyncService,
   ],
 })
 export class UserModule {}

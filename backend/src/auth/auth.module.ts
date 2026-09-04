@@ -3,7 +3,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { OAuthController } from './oauth.controller';
 import {
   PendingRegistration,
   PendingRegistrationSchema,
@@ -17,11 +16,9 @@ import { Session, SessionSchema } from '../session/schemas/session.schema';
 import { Role, RoleSchema } from '../role/schemas/role.schema';
 import { SessionService } from './services/session.service';
 import { SessionCookieService } from './services/session-cookie.service';
-import { OAuthService } from './services/oauth.service';
 import { VerificationCodeService } from './services/verification-code.service';
-import { GoogleOAuthStrategy } from './strategies/google-oauth.strategy';
-import { GitHubOAuthStrategy } from './strategies/github-oauth.strategy';
-import { FacebookOAuthStrategy } from './strategies/facebook-oauth.strategy';
+import { PasswordResetCodeService } from './services/password-reset-code.service';
+import { AuthMailService } from './services/auth-mail.service';
 import { CommonModule } from '../common/common.module';
 import { MailModule } from '../mail/mail.module';
 import { UserModule } from '../user/user.module';
@@ -44,16 +41,14 @@ import { VerifiedGuard } from './guards/verified.guard';
     forwardRef(() => UserModule),
     SessionModule,
   ],
-  controllers: [AuthController, OAuthController],
+  controllers: [AuthController],
   providers: [
     AuthService,
     SessionService,
     SessionCookieService,
-    OAuthService,
     VerificationCodeService,
-    GoogleOAuthStrategy,
-    GitHubOAuthStrategy,
-    FacebookOAuthStrategy,
+    PasswordResetCodeService,
+    AuthMailService,
     AuthGuard,
     VerifiedGuard,
   ],
@@ -61,7 +56,6 @@ import { VerifiedGuard } from './guards/verified.guard';
     AuthService,
     SessionService,
     SessionCookieService,
-    OAuthService,
     VerificationCodeService,
     AuthGuard,
     VerifiedGuard,

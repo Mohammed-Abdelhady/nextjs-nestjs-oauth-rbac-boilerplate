@@ -1,5 +1,4 @@
 import { ApiResponse } from '../../common/dto/api-response.dto';
-import { AuthProvider } from '../../user/enums/auth-provider.enum';
 
 export class LoginResponseDto {
   user!: {
@@ -7,7 +6,7 @@ export class LoginResponseDto {
     email: string;
     name: string;
     role: string;
-    authProvider: AuthProvider;
+    authProvider: string;
     isVerified: boolean;
     permissions: string[];
   };
@@ -17,7 +16,7 @@ export class LoginResponseDto {
     email: string;
     name: string;
     role: string;
-    authProvider: AuthProvider;
+    authProvider: string;
     isVerified: boolean;
     permissions: string[];
   }): ApiResponse<LoginResponseDto> {

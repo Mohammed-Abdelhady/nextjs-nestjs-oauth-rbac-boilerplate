@@ -5,6 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { Express } from 'express';
+import { useContainer } from 'class-validator';
 import { AppModule } from './app.module';
 import { ErrorResponse, ErrorDetails } from './common/dto/api-response.dto';
 
@@ -16,6 +17,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   (app.getHttpAdapter().getInstance() as Express).set('trust proxy', 1);
   const configService = app.get<ConfigService>(ConfigService);
+
+  // Let custom class-validator constraints resolve providers, such as the OAuth registry
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   // Set global prefix for all routes except health check
   app.setGlobalPrefix('api', { exclude: ['health'] });
@@ -72,7 +76,7 @@ async function bootstrap() {
       )
       .setVersion('1.0')
       .addTag('auth', 'Authentication endpoints (register, login, logout)')
-      .addTag('oauth', 'OAuth authentication endpoints (Google, Facebook)')
+      .addTag('oauth', 'OAuth login through the configured providers')
       .addTag('user', 'User profile and session management')
       .addTag('admin', 'Admin user management endpoints')
       .addTag('health', 'Health check endpoint')

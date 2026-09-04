@@ -11,16 +11,21 @@ import {
   Matches,
   Max,
   Min,
+  MinLength,
 } from 'class-validator';
+import { OAUTH_STATE_SECRET_MIN_LENGTH } from '../auth/oauth/oauth.constants';
 
 export interface EnvironmentConfig {
   NODE_ENV: 'development' | 'production' | 'test';
   PORT: number;
   MONGO_URI: string;
   CLIENT_URL: string;
+  API_URL?: string;
   THROTTLE_TTL: number;
   THROTTLE_LIMIT: number;
 
+  OAUTH_STATE_SECRET: string;
+  OAUTH_CALLBACK_BASE_URL?: string;
   OAUTH_GOOGLE_CLIENT_ID?: string;
   OAUTH_GOOGLE_CLIENT_SECRET?: string;
   OAUTH_GOOGLE_CALLBACK_URL?: string;
@@ -94,6 +99,12 @@ export class EnvironmentVariables {
   @IsOptional()
   CLIENT_URL: string = 'http://localhost:3000';
 
+  @IsString()
+  @IsNotEmpty()
+  @IsUrl({ require_protocol: true, require_tld: false })
+  @IsOptional()
+  API_URL?: string;
+
   @Type(() => Number)
   @IsInt()
   @Min(1)
@@ -107,6 +118,18 @@ export class EnvironmentVariables {
   @Max(1000)
   @IsOptional()
   THROTTLE_LIMIT: number = 60;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(OAUTH_STATE_SECRET_MIN_LENGTH, {
+    message: `OAUTH_STATE_SECRET must be at least ${OAUTH_STATE_SECRET_MIN_LENGTH} characters`,
+  })
+  OAUTH_STATE_SECRET!: string;
+
+  @IsString()
+  @IsUrl({ require_protocol: true, require_tld: false })
+  @IsOptional()
+  OAUTH_CALLBACK_BASE_URL?: string;
 
   @IsString()
   @IsOptional()

@@ -11,6 +11,12 @@ import {
   ROLE_SLUG_MESSAGE,
   ROLE_SLUG_REGEX,
 } from '../../common/constants/roles';
+import {
+  NAME_MAX_LENGTH,
+  NAME_MESSAGE,
+  NAME_MIN_LENGTH,
+  NAME_REGEX,
+} from '../../common/constants/name';
 
 /**
  * DTO for creating a new user via admin panel.
@@ -28,12 +34,17 @@ export class CreateUserDto {
   @ApiProperty({
     description: 'User full name',
     example: 'John Doe',
-    minLength: 2,
-    maxLength: 100,
+    minLength: NAME_MIN_LENGTH,
+    maxLength: NAME_MAX_LENGTH,
   })
   @IsString()
-  @MinLength(2, { message: 'Name must be at least 2 characters long' })
-  @MaxLength(100, { message: 'Name must not exceed 100 characters' })
+  @MinLength(NAME_MIN_LENGTH, {
+    message: `Name must be at least ${NAME_MIN_LENGTH} characters long`,
+  })
+  @MaxLength(NAME_MAX_LENGTH, {
+    message: `Name must not exceed ${NAME_MAX_LENGTH} characters`,
+  })
+  @Matches(NAME_REGEX, { message: NAME_MESSAGE })
   name!: string;
 
   @ApiProperty({
