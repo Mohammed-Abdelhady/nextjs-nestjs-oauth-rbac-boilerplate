@@ -4,6 +4,8 @@ import {
   CUSTOM_ROLE_LEVEL,
   ROLE_HIERARCHY,
 } from '../../common/utils/role-hierarchy';
+import { RoleResponseDto } from '../dto/role-response.dto';
+import { Role, RoleDocument } from '../schemas/role.schema';
 
 /**
  * Role fields needed to work out a hierarchy level.
@@ -53,4 +55,27 @@ export function assertValidPermissions(permissions: string[]): void {
  */
 export function resolveRoleLevel(role: RoleLevelSource): number {
   return role.level ?? ROLE_HIERARCHY[role.slug] ?? CUSTOM_ROLE_LEVEL;
+}
+
+/**
+ * Map Role document to response DTO.
+ *
+ * @param role - Stored role document
+ * @returns Serialized role response DTO
+ */
+export function mapRoleToResponseDto(
+  role: RoleDocument | (Role & { _id: { toString(): string } }),
+): RoleResponseDto {
+  return {
+    id: role._id.toString(),
+    name: role.name,
+    slug: role.slug,
+    description: role.description,
+    isSystemRole: role.isSystemRole,
+    isProtected: role.isProtected,
+    level: resolveRoleLevel(role),
+    permissions: role.permissions,
+    createdAt: role.createdAt,
+    updatedAt: role.updatedAt,
+  };
 }

@@ -56,6 +56,8 @@ export enum ErrorCode {
   NOT_FOUND = 'NOT_FOUND',
   /** Access forbidden */
   FORBIDDEN = 'FORBIDDEN',
+  /** Resource conflict */
+  CONFLICT = 'CONFLICT',
 
   // Admin errors
   /** User does not exist */

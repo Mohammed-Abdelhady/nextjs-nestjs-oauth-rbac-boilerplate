@@ -1,8 +1,7 @@
 /**
  * Fields stripped from a user document before it leaves the user endpoints.
  */
-export const USER_HIDDEN_FIELDS =
-  '-password -verificationToken -verificationExpires -resetPasswordToken -resetPasswordExpires';
+export const USER_HIDDEN_FIELDS = '-password';
 
 /**
  * Password hashing cost for self-service password changes.

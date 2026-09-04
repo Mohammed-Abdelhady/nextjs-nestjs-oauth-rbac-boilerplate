@@ -10,10 +10,6 @@ export interface IUser {
   googleId?: string;
   facebookId?: string;
   isVerified: boolean;
-  verificationToken?: string;
-  verificationExpires?: Date;
-  resetPasswordToken?: string;
-  resetPasswordExpires?: Date;
   isDeleted: boolean;
   deletedAt?: Date;
 }

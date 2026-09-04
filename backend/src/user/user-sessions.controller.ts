@@ -21,6 +21,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { SessionListData } from './dto/user-profile.dto';
 import { ApiResponse } from '../common/dto/api-response.dto';
 import { SessionCookieService } from '../auth/services/session-cookie.service';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 
 /**
  * Controller for user session management.
@@ -75,7 +76,7 @@ export class UserSessionsController {
   })
   async revokeSession(
     @CurrentUser('id') userId: string,
-    @Param('sessionId') sessionId: string,
+    @Param('sessionId', ParseObjectIdPipe) sessionId: string,
     @Req() request: RequestWithUser,
   ): Promise<ApiResponse<{ message: string }>> {
     const currentSessionToken = this.sessionCookieService.read(request) || '';

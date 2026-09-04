@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { User, UserDocument } from '../../user/schemas/user.schema';
 import { RoleHierarchyService } from '../../role/services/role-hierarchy.service';
 import { AppException } from '../../common/exceptions/app.exception';
@@ -29,14 +29,6 @@ export class AdminUserAccessService {
    * @throws AppException USER_NOT_FOUND
    */
   async loadActiveUser(id: string): Promise<UserDocument> {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new AppException(
-        ErrorCode.INVALID_INPUT,
-        'Invalid user ID format',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
     const user = await this.userModel.findById(id).exec();
 
     if (!user || user.isDeleted) {

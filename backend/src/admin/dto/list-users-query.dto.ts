@@ -9,13 +9,14 @@ import {
   Min,
   Max,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   ROLE_SLUG_MAX_LENGTH,
   ROLE_SLUG_MESSAGE,
   ROLE_SLUG_REGEX,
 } from '../../common/constants/roles';
+import { toBoolean } from '../../common/utils/transform';
 
 /**
  * Query parameters for listing users with pagination and filtering.
@@ -51,9 +52,11 @@ export class ListUsersQueryDto {
     description: 'Search by email or name',
     example: 'john',
     type: String,
+    maxLength: 100,
   })
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   search?: string;
 
   @ApiPropertyOptional({
@@ -84,7 +87,7 @@ export class ListUsersQueryDto {
   })
   @IsOptional()
   @IsBoolean()
-  @Type(() => Boolean)
+  @Transform(toBoolean)
   isVerified?: boolean;
 
   @ApiPropertyOptional({

@@ -33,6 +33,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { ApiResponse } from '../common/dto/api-response.dto';
 import { AdminUserDto, UserListData } from './dto/admin-user-response.dto';
 import { USER_PERMISSIONS } from '../common/constants/permissions';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 
 /**
  * Admin endpoints for user records.
@@ -147,7 +148,7 @@ export class AdminUsersController {
     example: '507f1f77bcf86cd799439011',
   })
   async getUserById(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @CurrentUser('role') actorRole: string,
   ): Promise<ApiResponse<AdminUserDto>> {
     return this.adminUserQueriesService.getUserById(id, actorRole);
@@ -175,7 +176,7 @@ export class AdminUsersController {
   })
   @ApiBody({ type: UpdateUserDto })
   async updateUser(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Body() dto: UpdateUserDto,
     @CurrentUser('id') actorId: string,
     @CurrentUser('role') actorRole: string,
@@ -203,7 +204,7 @@ export class AdminUsersController {
   })
   @ApiBody({ type: UpdateUserStatusDto })
   async updateUserStatus(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Body() dto: UpdateUserStatusDto,
     @CurrentUser('id') actorId: string,
     @CurrentUser('role') actorRole: string,
@@ -233,7 +234,7 @@ export class AdminUsersController {
   })
   @ApiBody({ type: UpdateUserRoleDto })
   async updateUserRole(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Body() dto: UpdateUserRoleDto,
     @CurrentUser('id') actorId: string,
     @CurrentUser('role') actorRole: string,
@@ -261,7 +262,7 @@ export class AdminUsersController {
     example: '507f1f77bcf86cd799439011',
   })
   async deleteUser(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @CurrentUser('id') actorId: string,
     @CurrentUser('role') actorRole: string,
   ): Promise<void> {

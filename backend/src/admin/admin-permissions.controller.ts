@@ -24,6 +24,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ApiResponse } from '../common/dto/api-response.dto';
 import { AddPermissionDto } from '../user/dto/add-permission.dto';
 import { PERMISSION_PERMISSIONS } from '../common/constants/permissions';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 
 /**
  * Admin endpoints for direct permission grants.
@@ -57,7 +58,7 @@ export class AdminPermissionsController {
     example: '507f1f77bcf86cd799439011',
   })
   async getUserPermissions(
-    @Param('id') userId: string,
+    @Param('id', ParseObjectIdPipe) userId: string,
     @CurrentUser('role') actorRole: string,
   ): Promise<
     ApiResponse<{ userId: string; permissions: string[]; role: string }>
@@ -87,7 +88,7 @@ export class AdminPermissionsController {
   })
   @ApiBody({ type: AddPermissionDto })
   async addPermission(
-    @Param('id') userId: string,
+    @Param('id', ParseObjectIdPipe) userId: string,
     @Body() dto: AddPermissionDto,
     @CurrentUser('id') actorId: string,
     @CurrentUser('role') actorRole: string,
@@ -125,7 +126,7 @@ export class AdminPermissionsController {
     example: 'users:read:all',
   })
   async removePermission(
-    @Param('id') userId: string,
+    @Param('id', ParseObjectIdPipe) userId: string,
     @Param('permission') permission: string,
     @CurrentUser('id') actorId: string,
     @CurrentUser('role') actorRole: string,

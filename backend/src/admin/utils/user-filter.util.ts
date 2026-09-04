@@ -1,4 +1,5 @@
 import { ListUsersQueryDto } from '../dto/list-users-query.dto';
+import { escapeRegex } from '../../common/utils/escape-regex';
 
 /**
  * Build the Mongo filter for a user listing.
@@ -15,9 +16,10 @@ export function buildUserFilter(
   const filter: Record<string, unknown> = { role: { $in: viewableRoles } };
 
   if (search) {
+    const escaped = escapeRegex(search);
     filter.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } },
+      { name: { $regex: escaped, $options: 'i' } },
+      { email: { $regex: escaped, $options: 'i' } },
     ];
   }
 

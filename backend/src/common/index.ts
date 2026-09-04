@@ -22,6 +22,9 @@ export {
   ANY_PERMISSIONS_KEY,
 } from './decorators/permissions.decorator';
 
+// Pipes
+export { ParseObjectIdPipe } from './pipes/parse-object-id.pipe';
+
 // Services
 export { HashService } from './services/hash.service';
 
@@ -30,3 +33,10 @@ export * from './constants/permissions';
 
 // Utils
 export * from './utils/permission.utils';
+export { escapeRegex } from './utils/escape-regex';
+export { toBoolean } from './utils/transform';
+export {
+  isCastError,
+  isMongoDuplicateKeyError,
+  isDuplicateEmailError,
+} from './utils/mongo-error.util';

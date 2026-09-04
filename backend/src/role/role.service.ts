@@ -24,8 +24,9 @@ import { CUSTOM_ROLE_LEVEL } from '../common/utils/role-hierarchy';
 import {
   assertValidPermissions,
   generateSlug,
-  resolveRoleLevel,
+  mapRoleToResponseDto,
 } from './utils/role.util';
+import { escapeRegex } from '../common/utils/escape-regex';
 
 @Injectable()
 export class RoleService {
@@ -76,9 +77,10 @@ export class RoleService {
     // Build filter
     const filter: FilterQuery<RoleDocument> = {};
     if (search) {
+      const escaped = escapeRegex(search);
       filter.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { slug: { $regex: search, $options: 'i' } },
+        { name: { $regex: escaped, $options: 'i' } },
+        { slug: { $regex: escaped, $options: 'i' } },
       ];
     }
 
@@ -282,17 +284,6 @@ export class RoleService {
   private mapToResponseDto(
     role: RoleDocument | (Role & { _id: { toString(): string } }),
   ): RoleResponseDto {
-    return {
-      id: role._id.toString(),
-      name: role.name,
-      slug: role.slug,
-      description: role.description,
-      isSystemRole: role.isSystemRole,
-      isProtected: role.isProtected,
-      level: resolveRoleLevel(role),
-      permissions: role.permissions,
-      createdAt: role.createdAt,
-      updatedAt: role.updatedAt,
-    };
+    return mapRoleToResponseDto(role);
   }
 }

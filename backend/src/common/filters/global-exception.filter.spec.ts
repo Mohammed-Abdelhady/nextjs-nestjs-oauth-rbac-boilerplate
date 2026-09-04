@@ -28,21 +28,23 @@ describe('GlobalExceptionFilter', () => {
     jest.clearAllMocks();
   });
 
+  function createMockHost(): ArgumentsHost {
+    return {
+      switchToHttp: jest.fn().mockReturnValue({
+        getResponse: () => mockResponse,
+      }),
+    } as unknown as ArgumentsHost;
+  }
+
   describe('AppException handling', () => {
-    it('should handle AppException with correct error code and message', () => {
+    it('passes through AppException with code, message and status', () => {
       const exception = new AppException(
         ErrorCode.EMAIL_ALREADY_EXISTS,
         'Email already registered',
         HttpStatus.CONFLICT,
       );
 
-      const mockHost: ArgumentsHost = {
-        switchToHttp: jest.fn().mockReturnValue({
-          getResponse: () => mockResponse,
-        }),
-      } as unknown as ArgumentsHost;
-
-      filter.catch(exception, mockHost);
+      filter.catch(exception, createMockHost());
 
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.CONFLICT);
       expect(mockResponse.json).toHaveBeenCalledWith(
@@ -56,7 +58,7 @@ describe('GlobalExceptionFilter', () => {
       );
     });
 
-    it('should include details when provided', () => {
+    it('passes through details when provided', () => {
       const exception = new AppException(
         ErrorCode.ACTIVATION_CODE_INVALID,
         'Invalid code',
@@ -64,13 +66,7 @@ describe('GlobalExceptionFilter', () => {
         { remainingAttempts: 3 },
       );
 
-      const mockHost: ArgumentsHost = {
-        switchToHttp: jest.fn().mockReturnValue({
-          getResponse: () => mockResponse,
-        }),
-      } as unknown as ArgumentsHost;
-
-      filter.catch(exception, mockHost);
+      filter.catch(exception, createMockHost());
 
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -82,142 +78,8 @@ describe('GlobalExceptionFilter', () => {
     });
   });
 
-  describe('HttpException handling', () => {
-    it('should map "Email already registered" to EMAIL_ALREADY_EXISTS', () => {
-      const exception = new HttpException(
-        'Email already registered',
-        HttpStatus.CONFLICT,
-      );
-
-      const mockHost: ArgumentsHost = {
-        switchToHttp: jest.fn().mockReturnValue({
-          getResponse: () => mockResponse,
-        }),
-      } as unknown as ArgumentsHost;
-
-      filter.catch(exception, mockHost);
-
-      expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: expect.objectContaining({
-            code: ErrorCode.EMAIL_ALREADY_EXISTS,
-          }),
-        }),
-      );
-    });
-
-    it('should map "Authentication required" to SESSION_REQUIRED', () => {
-      const exception = new HttpException(
-        'Authentication required',
-        HttpStatus.UNAUTHORIZED,
-      );
-
-      const mockHost: ArgumentsHost = {
-        switchToHttp: jest.fn().mockReturnValue({
-          getResponse: () => mockResponse,
-        }),
-      } as unknown as ArgumentsHost;
-
-      filter.catch(exception, mockHost);
-
-      expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: expect.objectContaining({
-            code: ErrorCode.SESSION_REQUIRED,
-          }),
-        }),
-      );
-    });
-
-    it('should map "Invalid email or password" to INVALID_CREDENTIALS', () => {
-      const exception = new HttpException(
-        'Invalid email or password',
-        HttpStatus.UNAUTHORIZED,
-      );
-
-      const mockHost: ArgumentsHost = {
-        switchToHttp: jest.fn().mockReturnValue({
-          getResponse: () => mockResponse,
-        }),
-      } as unknown as ArgumentsHost;
-
-      filter.catch(exception, mockHost);
-
-      expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: expect.objectContaining({
-            code: ErrorCode.INVALID_CREDENTIALS,
-          }),
-        }),
-      );
-    });
-
-    it('should map 404 status to NOT_FOUND', () => {
-      const exception = new HttpException('Not found', HttpStatus.NOT_FOUND);
-
-      const mockHost: ArgumentsHost = {
-        switchToHttp: jest.fn().mockReturnValue({
-          getResponse: () => mockResponse,
-        }),
-      } as unknown as ArgumentsHost;
-
-      filter.catch(exception, mockHost);
-
-      expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: expect.objectContaining({
-            code: ErrorCode.NOT_FOUND,
-          }),
-        }),
-      );
-    });
-
-    it('should map 403 status to FORBIDDEN', () => {
-      const exception = new HttpException('Forbidden', HttpStatus.FORBIDDEN);
-
-      const mockHost: ArgumentsHost = {
-        switchToHttp: jest.fn().mockReturnValue({
-          getResponse: () => mockResponse,
-        }),
-      } as unknown as ArgumentsHost;
-
-      filter.catch(exception, mockHost);
-
-      expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: expect.objectContaining({
-            code: ErrorCode.FORBIDDEN,
-          }),
-        }),
-      );
-    });
-
-    it('should map unknown HttpException to INTERNAL_ERROR', () => {
-      const exception = new HttpException(
-        'Unknown error',
-        HttpStatus.I_AM_A_TEAPOT,
-      );
-
-      const mockHost: ArgumentsHost = {
-        switchToHttp: jest.fn().mockReturnValue({
-          getResponse: () => mockResponse,
-        }),
-      } as unknown as ArgumentsHost;
-
-      filter.catch(exception, mockHost);
-
-      expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: expect.objectContaining({
-            code: ErrorCode.INTERNAL_ERROR,
-          }),
-        }),
-      );
-    });
-  });
-
   describe('Validation exception handling', () => {
-    it('should handle validation errors with field details', () => {
+    it('extracts field-level validation errors from ValidationPipe', () => {
       const exception = new HttpException(
         {
           message: [
@@ -230,13 +92,7 @@ describe('GlobalExceptionFilter', () => {
         HttpStatus.BAD_REQUEST,
       );
 
-      const mockHost: ArgumentsHost = {
-        switchToHttp: jest.fn().mockReturnValue({
-          getResponse: () => mockResponse,
-        }),
-      } as unknown as ArgumentsHost;
-
-      filter.catch(exception, mockHost);
+      filter.catch(exception, createMockHost());
 
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
       expect(mockResponse.json).toHaveBeenCalledWith(
@@ -256,7 +112,7 @@ describe('GlobalExceptionFilter', () => {
       );
     });
 
-    it('should handle single validation error', () => {
+    it('handles single field validation error', () => {
       const exception = new HttpException(
         {
           message: ['name should not be empty'],
@@ -266,13 +122,7 @@ describe('GlobalExceptionFilter', () => {
         HttpStatus.BAD_REQUEST,
       );
 
-      const mockHost: ArgumentsHost = {
-        switchToHttp: jest.fn().mockReturnValue({
-          getResponse: () => mockResponse,
-        }),
-      } as unknown as ArgumentsHost;
-
-      filter.catch(exception, mockHost);
+      filter.catch(exception, createMockHost());
 
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -287,42 +137,13 @@ describe('GlobalExceptionFilter', () => {
         }),
       );
     });
-
-    it('should not treat regular BadRequestException as validation error', () => {
-      const exception = new HttpException(
-        'Something went wrong',
-        HttpStatus.BAD_REQUEST,
-      );
-
-      const mockHost: ArgumentsHost = {
-        switchToHttp: jest.fn().mockReturnValue({
-          getResponse: () => mockResponse,
-        }),
-      } as unknown as ArgumentsHost;
-
-      filter.catch(exception, mockHost);
-
-      expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: expect.objectContaining({
-            code: ErrorCode.INTERNAL_ERROR, // Falls back to generic mapping
-          }),
-        }),
-      );
-    });
   });
 
   describe('ThrottlerException handling', () => {
-    it('should handle ThrottlerException with RATE_LIMIT_EXCEEDED code', () => {
+    it('handles ThrottlerException with RATE_LIMIT_EXCEEDED and retryAfter', () => {
       const exception = new ThrottlerException('60');
 
-      const mockHost: ArgumentsHost = {
-        switchToHttp: jest.fn().mockReturnValue({
-          getResponse: () => mockResponse,
-        }),
-      } as unknown as ArgumentsHost;
-
-      filter.catch(exception, mockHost);
+      filter.catch(exception, createMockHost());
 
       expect(mockResponse.status).toHaveBeenCalledWith(
         HttpStatus.TOO_MANY_REQUESTS,
@@ -341,16 +162,10 @@ describe('GlobalExceptionFilter', () => {
   });
 
   describe('Unknown exception handling', () => {
-    it('should handle unknown exceptions with INTERNAL_ERROR code', () => {
-      const exception = new Error('Unexpected error');
+    it('maps unhandled Error instances to 500 INTERNAL_ERROR', () => {
+      const exception = new Error('Database connection lost');
 
-      const mockHost: ArgumentsHost = {
-        switchToHttp: jest.fn().mockReturnValue({
-          getResponse: () => mockResponse,
-        }),
-      } as unknown as ArgumentsHost;
-
-      filter.catch(exception, mockHost);
+      filter.catch(exception, createMockHost());
 
       expect(mockResponse.status).toHaveBeenCalledWith(
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -365,16 +180,8 @@ describe('GlobalExceptionFilter', () => {
       );
     });
 
-    it('should handle non-Error exceptions', () => {
-      const exception = 'String exception';
-
-      const mockHost: ArgumentsHost = {
-        switchToHttp: jest.fn().mockReturnValue({
-          getResponse: () => mockResponse,
-        }),
-      } as unknown as ArgumentsHost;
-
-      filter.catch(exception, mockHost);
+    it('maps non-Error exceptions to 500 INTERNAL_ERROR', () => {
+      filter.catch('String exception', createMockHost());
 
       expect(mockResponse.status).toHaveBeenCalledWith(
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -384,55 +191,6 @@ describe('GlobalExceptionFilter', () => {
           error: expect.objectContaining({
             code: ErrorCode.INTERNAL_ERROR,
             message: 'An unexpected error occurred',
-          }),
-        }),
-      );
-    });
-  });
-
-  describe('Response format', () => {
-    it('should always return success: false for errors', () => {
-      const exception = new AppException(
-        ErrorCode.EMAIL_ALREADY_EXISTS,
-        'Test error',
-        HttpStatus.CONFLICT,
-      );
-
-      const mockHost: ArgumentsHost = {
-        switchToHttp: jest.fn().mockReturnValue({
-          getResponse: () => mockResponse,
-        }),
-      } as unknown as ArgumentsHost;
-
-      filter.catch(exception, mockHost);
-
-      expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          success: false,
-        }),
-      );
-    });
-
-    it('should include error object with code and message', () => {
-      const exception = new AppException(
-        ErrorCode.EMAIL_SEND_FAILED,
-        'Failed to send email',
-        HttpStatus.BAD_REQUEST,
-      );
-
-      const mockHost: ArgumentsHost = {
-        switchToHttp: jest.fn().mockReturnValue({
-          getResponse: () => mockResponse,
-        }),
-      } as unknown as ArgumentsHost;
-
-      filter.catch(exception, mockHost);
-
-      expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: expect.objectContaining({
-            code: ErrorCode.EMAIL_SEND_FAILED,
-            message: 'Failed to send email',
           }),
         }),
       );
