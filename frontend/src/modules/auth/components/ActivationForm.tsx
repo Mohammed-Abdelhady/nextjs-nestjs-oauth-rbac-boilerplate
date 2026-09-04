@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { FormProvider } from 'react-hook-form';
 import { useFormWithValidation } from '@/hooks/useFormWithValidation';
-import { FormInput } from '@/components/forms';
+import { FormInput, FormRootError, SubmitButton } from '@/components/forms';
 import { useActivateMutation, useResendActivationMutation } from '../store/authApi';
 import { ShieldCheck, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,8 @@ import { toast } from '@/lib/toast';
 import { useAppDispatch } from '@/store/hooks';
 import { setUser } from '@/modules/auth/store/authSlice';
 import { useRouter } from '@/i18n/navigation';
+import { parseApiError } from '@/lib/apiError';
+import { filterDigits } from '../utils/digitFilter';
 import { WelcomeModal } from './WelcomeModal';
 import { createActivationSchema, type ActivationFormData } from '../utils/activationSchema';
 
@@ -95,21 +97,19 @@ export function ActivationForm() {
         setUserName(result.user.name);
         setShowWelcome(true);
       } catch (err: unknown) {
-        // Handle API errors
-        const error = err as { data?: { error?: { code?: string; message?: string } } };
+        const parsed = parseApiError(err);
         let errorMessage = t('errors.serverError');
 
-        const errorCode = error.data?.error?.code;
-        const errorMsg = error.data?.error?.message;
-
-        if (errorCode === 'ACTIVATION_CODE_INVALID' || errorMsg?.includes('Invalid')) {
+        if (parsed.code === 'ACTIVATION_CODE_INVALID' || parsed.message?.includes('Invalid')) {
           errorMessage = t('errors.codeInvalid');
-        } else if (errorCode === 'ACTIVATION_CODE_EXPIRED' || errorMsg?.includes('expired')) {
+        } else if (
+          parsed.code === 'ACTIVATION_CODE_EXPIRED' ||
+          parsed.message?.includes('expired')
+        ) {
           errorMessage = t('errors.codeExpired');
-          // Redirect to register after short delay
           setTimeout(() => router.push('/auth/register'), 2000);
-        } else if (errorMsg) {
-          errorMessage = errorMsg;
+        } else if (parsed.message) {
+          errorMessage = parsed.message;
         }
 
         setError('root', {
@@ -118,7 +118,6 @@ export function ActivationForm() {
         });
         toast.error(errorMessage);
 
-        // Clear code field for retry
         setValue('code', '');
       }
     },
@@ -130,39 +129,29 @@ export function ActivationForm() {
     try {
       await resendActivation({ email: emailFromUrl }).unwrap();
       toast.success(tToast('success.resendSuccess'));
-      // Start 60-second cooldown
       setCooldownSeconds(60);
     } catch (err: unknown) {
-      const error = err as { data?: { error?: { code?: string; message?: string } } };
+      const parsed = parseApiError(err);
       let errorMessage = tToast('error.resendError');
 
-      const errorCode = error.data?.error?.code;
-      const errorMsg = error.data?.error?.message;
-
-      if (errorCode === 'NO_PENDING_REGISTRATION_FOR_RESEND') {
+      if (parsed.code === 'NO_PENDING_REGISTRATION_FOR_RESEND') {
         errorMessage = tToast('error.resendNoPending');
-        // Redirect to register after short delay
         setTimeout(() => router.push('/auth/register'), 3000);
-      } else if (errorCode === 'RATE_LIMIT_EXCEEDED') {
+      } else if (parsed.code === 'RATE_LIMIT_EXCEEDED') {
         errorMessage = tToast('error.resendRateLimit');
-      } else if (errorMsg) {
-        errorMessage = errorMsg;
+      } else if (parsed.message) {
+        errorMessage = parsed.message;
       }
 
       toast.error(errorMessage);
     }
   }, [resendActivation, emailFromUrl, router, tToast]);
 
-  // Handle code input to only allow numeric characters
-  const handleCodeChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-      setValue('code', value);
-    },
-    [setValue],
-  );
+  const handleCodeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    e.target.value = filterDigits(e.target.value, 6);
+  }, []);
 
-  const isDisabled = isLoading || isResending || cooldownSeconds > 0;
+  const isResendDisabled = isResending || cooldownSeconds > 0;
 
   return (
     <section className="mt-12 flex flex-col items-center" aria-labelledby="activate-heading">
@@ -191,32 +180,22 @@ export function ActivationForm() {
             aria-labelledby="activate-heading"
             aria-describedby={errors.root?.message ? 'activate-error' : undefined}
           >
-            {/* Global Error Alert - Live Region */}
-            {errors.root?.message && (
-              <div
-                id="activate-error"
-                className="mb-4 p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md"
-                role="alert"
-                aria-live="assertive"
-                aria-atomic="true"
-                data-testid="activate-error"
-              >
-                {errors.root.message}
-              </div>
-            )}
+            <FormRootError
+              id="activate-error"
+              error={errors.root?.message}
+              testId="activate-error"
+            />
 
             {/* Email Input (readonly, pre-filled) */}
             <FormInput
               name="email"
               type="email"
-              placeholder={t('email')}
+              label={t('email')}
+              placeholder="name@example.com"
               autoComplete="email"
               disabled={isLoading}
               readOnly
               className="bg-muted"
-              aria-label={t('email')}
-              aria-required="true"
-              aria-readonly="true"
             />
 
             {/* Code Input */}
@@ -224,37 +203,26 @@ export function ActivationForm() {
               name="code"
               type="text"
               inputMode="numeric"
-              placeholder={t('code')}
+              label={t('code')}
+              placeholder="123456"
               autoComplete="one-time-code"
               disabled={isLoading}
               maxLength={6}
               className="mt-5 text-center text-2xl tracking-widest"
               autoFocus
               onChange={handleCodeChange}
-              aria-label={t('code')}
-              aria-required="true"
-              aria-invalid={!!errors.code}
-              aria-describedby={errors.code ? 'code-error' : undefined}
             />
 
             {/* Submit Button */}
-            <Button
-              type="submit"
-              disabled={isDisabled}
-              className="h-14 mt-5 tracking-wide font-semibold w-full py-4 rounded-lg transition-all duration-300 ease-in-out flex items-center justify-center"
-              data-testid="activate-submit"
-              aria-label={isLoading ? `${t('submit')}...` : t('submit')}
-              aria-busy={isLoading}
-            >
-              <ShieldCheck className="w-6 h-6 -ms-2" aria-hidden="true" />
-              <span className="ms-3">{isLoading ? `${t('submit')}...` : t('submit')}</span>
-            </Button>
+            <SubmitButton isLoading={isLoading} icon={ShieldCheck} testId="activate-submit">
+              {t('submit')}
+            </SubmitButton>
 
             {/* Resend Code Button */}
             <Button
               type="button"
               onClick={handleResend}
-              disabled={isDisabled}
+              disabled={isResendDisabled}
               variant="ghost"
               className="mt-4 w-full flex items-center justify-center gap-2"
               data-testid="resend-button"

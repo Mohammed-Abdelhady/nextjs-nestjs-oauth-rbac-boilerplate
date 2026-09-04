@@ -21,16 +21,37 @@ export const FormInput = <TFieldValues extends FieldValues = FieldValues>({
   label,
   description,
   className,
+  onChange: consumerOnChange,
+  onBlur: consumerOnBlur,
   ...inputProps
-}: FormInputProps<TFieldValues>) => {
+}: FormInputProps<TFieldValues>): React.JSX.Element => {
+  const restInputProps: Record<string, unknown> = { ...inputProps };
+  delete restInputProps['aria-describedby'];
+  delete restInputProps['aria-invalid'];
+
   return (
     <BaseFormField
       name={name}
       label={label}
       description={description}
-      render={(field) => (
-        <Input {...inputProps} {...field} className={cn(getInputClassName(), className)} />
-      )}
+      render={(field) => {
+        const { onChange: fieldOnChange, onBlur: fieldOnBlur, ...restField } = field;
+        return (
+          <Input
+            {...restField}
+            {...restInputProps}
+            onChange={(e) => {
+              consumerOnChange?.(e);
+              fieldOnChange(e);
+            }}
+            onBlur={(e) => {
+              consumerOnBlur?.(e);
+              fieldOnBlur();
+            }}
+            className={cn(getInputClassName(), className)}
+          />
+        );
+      }}
     />
   );
 };

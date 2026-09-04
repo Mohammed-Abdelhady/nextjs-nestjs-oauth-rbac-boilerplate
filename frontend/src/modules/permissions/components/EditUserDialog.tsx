@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { useUpdateUserMutation } from '@/store/api/userApi';
 import { useToast } from '@/hooks/use-toast';
+import { parseApiError } from '@/lib/apiError';
 
 interface EditUserDialogProps {
   userId: string | null;
@@ -212,11 +213,8 @@ export function EditUserDialog({
       toast.success('User updated successfully');
       return true;
     } catch (error) {
-      const errorMessage =
-        error && typeof error === 'object' && 'data' in error && error.data
-          ? String((error.data as { message?: string }).message)
-          : 'Failed to update user';
-      toast.error(errorMessage);
+      const parsed = parseApiError(error);
+      toast.error(parsed.message || 'Failed to update user');
       return false;
     }
   };

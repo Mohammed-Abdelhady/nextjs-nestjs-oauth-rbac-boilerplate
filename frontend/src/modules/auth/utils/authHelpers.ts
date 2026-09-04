@@ -1,3 +1,5 @@
+import { parseApiError } from '../../../lib/apiError';
+
 /**
  * Validates if a string is a valid email format
  * Uses RFC 5322 standard email regex
@@ -123,37 +125,7 @@ export function getRedirectPath(
  * @deprecated Use parseApiError from '@/lib/apiError' for better error handling with i18n support
  */
 export function getErrorMessage(error: unknown): string {
-  if (typeof error === 'string') return error;
-
-  if (error && typeof error === 'object') {
-    // Check for RTK Query error format: { data: { error: { message, code } } }
-    if (
-      'data' in error &&
-      error.data &&
-      typeof error.data === 'object' &&
-      'error' in error.data &&
-      error.data.error &&
-      typeof error.data.error === 'object' &&
-      'message' in error.data.error
-    ) {
-      return String((error.data.error as { message: string }).message);
-    }
-    // Check for standard error message
-    if ('message' in error && typeof error.message === 'string') {
-      return error.message;
-    }
-    // Check for legacy format: { data: { message } }
-    if (
-      'data' in error &&
-      error.data &&
-      typeof error.data === 'object' &&
-      'message' in error.data
-    ) {
-      return String((error.data as { message: string }).message);
-    }
-  }
-
-  return 'An unexpected error occurred';
+  return parseApiError(error).message;
 }
 
 /**

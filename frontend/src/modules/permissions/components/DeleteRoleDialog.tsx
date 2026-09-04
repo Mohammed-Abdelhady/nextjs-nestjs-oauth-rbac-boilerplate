@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useDeleteRoleMutation, type Role } from '../api/rolesApi';
 import { toast } from 'sonner';
+import { parseApiError } from '@/lib/apiError';
 
 export interface DeleteRoleDialogProps {
   /**
@@ -67,12 +68,8 @@ export function DeleteRoleDialog({ open, onOpenChange, role, onSuccess }: Delete
       // Call success callback
       onSuccess?.();
     } catch (error: unknown) {
-      const errorMessage =
-        error && typeof error === 'object' && 'data' in error
-          ? (error.data as { message?: string })?.message || 'Failed to delete role'
-          : 'Failed to delete role';
-
-      toast.error(errorMessage);
+      const parsed = parseApiError(error);
+      toast.error(parsed.message || 'Failed to delete role');
     }
   };
 

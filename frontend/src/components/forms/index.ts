@@ -20,3 +20,10 @@ export { FormTextarea, type FormTextareaProps } from './FormTextarea';
 export { FormCheckbox, type FormCheckboxProps, type CheckboxOption } from './FormCheckbox';
 export { FormRadio, type FormRadioProps, type RadioOption } from './FormRadio';
 export { FormSwitch, type FormSwitchProps } from './FormSwitch';
+export { FormRootError, type FormRootErrorProps } from './FormRootError';
+export { SubmitButton, type SubmitButtonProps } from './SubmitButton';
+export {
+  PasswordVisibilityToggle,
+  type PasswordVisibilityToggleProps,
+} from './PasswordVisibilityToggle';
+export { PasswordRules, type PasswordRulesProps } from './PasswordRules';

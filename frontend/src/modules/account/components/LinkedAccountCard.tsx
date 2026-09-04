@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useUnlinkProviderMutation, useSetPrimaryProviderMutation } from '../api';
 import { getOAuthProviderIconPath, formatProviderName, type OAuthProvider } from '@/modules/oauth';
+import { parseApiError } from '@/lib/apiError';
 
 interface LinkedAccountCardProps {
   provider: string;
@@ -50,10 +51,8 @@ export function LinkedAccountCard({
       onLinkSuccess?.();
       setShowUnlinkDialog(false);
     } catch (error: unknown) {
-      const err = error as { data?: { message?: string } };
-      toast.error(
-        err?.data?.message || t('unlinkError', { provider: formatProviderName(provider) }),
-      );
+      const parsed = parseApiError(error);
+      toast.error(parsed.message || t('unlinkError', { provider: formatProviderName(provider) }));
     }
   };
 
@@ -65,9 +64,9 @@ export function LinkedAccountCard({
       toast.success(t('setPrimarySuccess', { provider: formatProviderName(provider) }));
       onLinkSuccess?.();
     } catch (error: unknown) {
-      const err = error as { data?: { message?: string } };
+      const parsed = parseApiError(error);
       toast.error(
-        err?.data?.message || t('setPrimaryError', { provider: formatProviderName(provider) }),
+        parsed.message || t('setPrimaryError', { provider: formatProviderName(provider) }),
       );
     }
   };

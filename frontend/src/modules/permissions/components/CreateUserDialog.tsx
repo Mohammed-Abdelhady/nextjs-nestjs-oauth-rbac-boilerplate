@@ -20,10 +20,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { PasswordVisibilityToggle } from '@/components/forms';
 import { useCreateUserMutation } from '@/store/api/userApi';
 import { useListRolesQuery } from '../api/rolesApi';
 import { useToast } from '@/hooks/use-toast';
+import { parseApiError } from '@/lib/apiError';
+import { validateCreateUserForm } from '../utils/createUserValidation';
 
 export interface CreateUserDialogProps {
   open: boolean;
@@ -67,32 +70,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
   const availableRoles = roles.filter((r) => !r.isProtected);
 
   const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!email.trim()) {
-      newErrors.email = tValidation('emailRequired');
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = tValidation('emailInvalid');
-    }
-
-    if (!name.trim()) {
-      newErrors.name = tValidation('nameRequired');
-    } else if (name.trim().length < 2) {
-      newErrors.name = tValidation('nameMinLength');
-    }
-
-    if (!password) {
-      newErrors.password = tValidation('passwordRequired');
-    } else if (password.length < 8) {
-      newErrors.password = tValidation('passwordMinLength');
-    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(password)) {
-      newErrors.password = tValidation('passwordStrength');
-    }
-
-    if (!role) {
-      newErrors.role = tValidation('roleRequired');
-    }
-
+    const newErrors = validateCreateUserForm({ email, name, password, role }, tValidation);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -116,11 +94,8 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
       handleClose();
       onSuccess?.();
     } catch (error) {
-      const errorMessage =
-        error && typeof error === 'object' && 'data' in error && error.data
-          ? String((error.data as { message?: string }).message)
-          : t('error');
-      toast.error(errorMessage);
+      const parsed = parseApiError(error);
+      toast.error(parsed.message || t('error'));
     }
   };
 
@@ -220,17 +195,14 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
                   if (errors.password) setErrors((prev) => ({ ...prev, password: '' }));
                 }}
                 disabled={isLoading}
-                className={errors.password ? 'border-red-500 pr-10' : 'pr-10'}
+                className={errors.password ? 'border-red-500 pe-10' : 'pe-10'}
                 data-testid="create-user-password-input"
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-                tabIndex={-1}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+              <PasswordVisibilityToggle
+                showPassword={showPassword}
+                onToggle={() => setShowPassword(!showPassword)}
+                testId="create-user-password-toggle"
+              />
             </div>
             {errors.password && (
               <p className="text-xs text-red-500" data-testid="password-error">

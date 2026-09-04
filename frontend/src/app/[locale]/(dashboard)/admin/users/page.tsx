@@ -21,6 +21,7 @@ import { USER_PERMISSIONS, PermissionGuard, RoutePermissionGuard } from '@/modul
 import { useUserFilters } from '@/modules/permissions/hooks/useUserFilters';
 import { useAppDispatch } from '@/store/hooks';
 import { baseApi } from '@/store/api/baseApi';
+import { parseApiError } from '@/lib/apiError';
 
 /** Section identifiers for user groups */
 enum UserSection {
@@ -170,14 +171,7 @@ export default function AdminUsersPage() {
           <Alert variant="destructive" data-testid="error-state">
             <AlertDescription className="flex items-center justify-between">
               <span>
-                {t('loadError')}{' '}
-                {error &&
-                'data' in error &&
-                typeof error.data === 'object' &&
-                error.data &&
-                'message' in error.data
-                  ? String(error.data.message)
-                  : t('tryAgain')}
+                {t('loadError')} {error ? parseApiError(error).message : t('tryAgain')}
               </span>
               <Button variant="outline" size="sm" onClick={() => refetch()}>
                 {tCommon('retry')}

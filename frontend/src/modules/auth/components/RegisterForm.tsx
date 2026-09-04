@@ -5,14 +5,20 @@ import { useRouter } from '@/i18n/navigation';
 import { z } from 'zod';
 import { FormProvider } from 'react-hook-form';
 import { useFormWithValidation } from '@/hooks/useFormWithValidation';
-import { FormInput, FormPassword } from '@/components/forms';
+import {
+  FormInput,
+  FormPassword,
+  FormRootError,
+  PasswordRules,
+  SubmitButton,
+} from '@/components/forms';
 import { useRegisterMutation } from '../store/authApi';
 import { zodEmail, zodPassword, zodName } from '@/lib/validations';
 import { UserPlus, LogIn } from 'lucide-react';
 import { IconLinkButton } from '@/components/ui/icon-link-button';
-import { Button } from '@/components/ui/button';
 import { useCallback, useMemo } from 'react';
 import { toast } from '@/lib/toast';
+import { parseApiError } from '@/lib/apiError';
 import { OAuthButtons, OAuthDivider } from '@/modules/oauth';
 
 /**
@@ -94,17 +100,13 @@ export function RegisterForm() {
         toast.success(tToast('success.registrationSuccess'));
         router.push(`/auth/activate?email=${encodeURIComponent(result.data.email)}`);
       } catch (err: unknown) {
-        // Handle API errors
-        const error = err as { data?: { error?: { code?: string; message?: string } } };
+        const parsed = parseApiError(err);
         let errorMessage = t('errors.serverError');
 
-        const errorCode = error.data?.error?.code;
-        const errorMsg = error.data?.error?.message;
-
-        if (errorCode === 'EMAIL_ALREADY_EXISTS' || errorMsg?.includes('already')) {
+        if (parsed.code === 'EMAIL_ALREADY_EXISTS' || parsed.message?.includes('already')) {
           errorMessage = t('errors.emailExists');
-        } else if (errorMsg) {
-          errorMessage = errorMsg;
+        } else if (parsed.message) {
+          errorMessage = parsed.message;
         }
 
         setError('root', {
@@ -160,74 +162,51 @@ export function RegisterForm() {
             aria-labelledby="register-heading"
             aria-describedby={errors.root?.message ? 'register-error' : undefined}
           >
-            {/* Global Error Alert - Live Region */}
-            {errors.root?.message && (
-              <div
-                id="register-error"
-                className="mb-4 p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md"
-                role="alert"
-                aria-live="assertive"
-                aria-atomic="true"
-                data-testid="register-error"
-              >
-                {errors.root.message}
-              </div>
-            )}
+            <FormRootError
+              id="register-error"
+              error={errors.root?.message}
+              testId="register-error"
+            />
 
             {/* Name Input */}
             <FormInput
               name="name"
               type="text"
-              placeholder={t('name')}
+              label={t('name')}
+              placeholder="Jane Doe"
               autoComplete="name"
               disabled={isLoading}
               autoFocus
-              aria-label={t('name')}
-              aria-required="true"
-              aria-invalid={!!errors.name}
-              aria-describedby={errors.name ? 'name-error' : undefined}
             />
 
             {/* Email Input */}
             <FormInput
               name="email"
               type="email"
-              placeholder={t('email')}
+              label={t('email')}
+              placeholder="name@example.com"
               autoComplete="email"
               disabled={isLoading}
               className="mt-5"
-              aria-label={t('email')}
-              aria-required="true"
-              aria-invalid={!!errors.email}
-              aria-describedby={errors.email ? 'email-error' : undefined}
             />
 
             {/* Password Input */}
             <FormPassword
               name="password"
-              placeholder={t('password')}
+              label={t('password')}
+              placeholder="••••••••"
               autoComplete="new-password"
               disabled={isLoading}
               showToggle={true}
               className="mt-5"
-              aria-label={t('password')}
-              aria-required="true"
-              aria-invalid={!!errors.password}
-              aria-describedby={errors.password ? 'password-error' : undefined}
             />
 
+            <PasswordRules name="password" className="mt-3" />
+
             {/* Submit Button */}
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="h-14 mt-5 tracking-wide font-semibold w-full py-4 rounded-lg transition-all duration-300 ease-in-out flex items-center justify-center"
-              data-testid="register-submit"
-              aria-label={isLoading ? `${t('submit')}...` : t('submit')}
-              aria-busy={isLoading}
-            >
-              <UserPlus className="w-6 h-6 -ms-2" aria-hidden="true" />
-              <span className="ms-3">{isLoading ? `${t('submit')}...` : t('submit')}</span>
-            </Button>
+            <SubmitButton isLoading={isLoading} icon={UserPlus} testId="register-submit">
+              {t('submit')}
+            </SubmitButton>
           </form>
         </FormProvider>
       </div>

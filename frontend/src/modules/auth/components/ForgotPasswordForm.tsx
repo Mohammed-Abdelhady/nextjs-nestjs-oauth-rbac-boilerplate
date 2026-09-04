@@ -4,14 +4,14 @@ import { useTranslations } from 'next-intl';
 import { z } from 'zod';
 import { FormProvider } from 'react-hook-form';
 import { useFormWithValidation } from '@/hooks/useFormWithValidation';
-import { FormInput } from '@/components/forms';
+import { FormInput, FormRootError, SubmitButton } from '@/components/forms';
 import { useForgotPasswordMutation } from '../store/authApi';
 import { zodEmail } from '@/lib/validations';
 import { Mail } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useCallback, useMemo } from 'react';
 import { toast } from '@/lib/toast';
 import { Link, useRouter } from '@/i18n/navigation';
+import { parseApiError } from '@/lib/apiError';
 
 /**
  * Forgot password form validation schema
@@ -74,17 +74,13 @@ export function ForgotPasswordForm() {
         // Redirect to reset password page with email
         router.push(`/auth/reset-password?email=${encodeURIComponent(data.email)}`);
       } catch (err: unknown) {
-        // Handle API errors
-        const error = err as { data?: { error?: { code?: string; message?: string } } };
+        const parsed = parseApiError(err);
         let errorMessage = t('errors.serverError');
 
-        const errorCode = error.data?.error?.code;
-        const errorMsg = error.data?.error?.message;
-
-        if (errorCode === 'NETWORK_ERROR') {
+        if (parsed.code === 'NETWORK_ERROR') {
           errorMessage = t('errors.networkError');
-        } else if (errorMsg) {
-          errorMessage = errorMsg;
+        } else if (parsed.message) {
+          errorMessage = parsed.message;
         }
 
         setError('root', {
@@ -122,44 +118,27 @@ export function ForgotPasswordForm() {
             aria-labelledby="forgot-password-heading"
             aria-describedby={errors.root?.message ? 'forgot-password-error' : undefined}
           >
-            {/* Global Error Alert - Live Region */}
-            {errors.root?.message && (
-              <div
-                id="forgot-password-error"
-                className="mb-4 p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md"
-                role="alert"
-                aria-live="assertive"
-                aria-atomic="true"
-                data-testid="forgot-password-error"
-              >
-                {errors.root.message}
-              </div>
-            )}
+            <FormRootError
+              id="forgot-password-error"
+              error={errors.root?.message}
+              testId="forgot-password-error"
+            />
 
             {/* Email Input */}
             <FormInput
               name="email"
               type="email"
-              placeholder={t('email')}
+              label={t('email')}
+              placeholder="name@example.com"
               autoComplete="email"
               disabled={isLoading}
               autoFocus
-              aria-label={t('email')}
-              aria-required="true"
             />
 
             {/* Submit Button */}
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="h-14 mt-5 tracking-wide font-semibold w-full py-4 rounded-lg transition-all duration-300 ease-in-out flex items-center justify-center"
-              data-testid="forgot-password-submit"
-              aria-label={isLoading ? `${t('submit')}...` : t('submit')}
-              aria-busy={isLoading}
-            >
-              <Mail className="w-6 h-6 -ms-2" aria-hidden="true" />
-              <span className="ms-3">{isLoading ? `${t('submit')}...` : t('submit')}</span>
-            </Button>
+            <SubmitButton isLoading={isLoading} icon={Mail} testId="forgot-password-submit">
+              {t('submit')}
+            </SubmitButton>
 
             {/* Back to Login Link */}
             <div className="mt-6 text-center">

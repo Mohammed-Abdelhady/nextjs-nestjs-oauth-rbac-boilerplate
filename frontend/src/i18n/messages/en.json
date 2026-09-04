@@ -27,6 +27,19 @@
     "confirmPassword": "Confirm Password",
     "forgotPassword": "Forgot Password?",
     "rememberMe": "Remember Me",
+    "passwordToggle": {
+      "show": "Show password",
+      "hide": "Hide password"
+    },
+    "passwordRules": {
+      "title": "Password requirements",
+      "minLength": "At least 8 characters",
+      "uppercase": "At least one uppercase letter",
+      "lowercase": "At least one lowercase letter",
+      "number": "At least one number",
+      "passed": "Passed",
+      "failed": "Not passed"
+    },
     "login": {
       "title": "Login to your account",
       "subtitle": "Welcome back! Please enter your credentials",

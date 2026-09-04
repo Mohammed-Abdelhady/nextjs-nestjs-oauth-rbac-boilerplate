@@ -5,14 +5,21 @@ import { useTranslations } from 'next-intl';
 import { z } from 'zod';
 import { FormProvider } from 'react-hook-form';
 import { useFormWithValidation } from '@/hooks/useFormWithValidation';
-import { FormInput, FormPassword } from '@/components/forms';
+import {
+  FormInput,
+  FormPassword,
+  FormRootError,
+  PasswordRules,
+  SubmitButton,
+} from '@/components/forms';
 import { useResetPasswordMutation } from '../store/authApi';
 import { zodPassword } from '@/lib/validations';
 import { KeyRound } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useCallback, useMemo, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import { Link, useRouter } from '@/i18n/navigation';
+import { parseApiError } from '@/lib/apiError';
+import { filterDigits } from '../utils/digitFilter';
 
 /**
  * Reset password form validation schema
@@ -116,21 +123,17 @@ export function ResetPasswordForm() {
           router.push('/auth/login');
         }, 1500);
       } catch (err: unknown) {
-        // Handle API errors
-        const error = err as { data?: { error?: { code?: string; message?: string } } };
+        const parsed = parseApiError(err);
         let errorMessage = t('errors.serverError');
 
-        const errorCode = error.data?.error?.code;
-        const errorMsg = error.data?.error?.message;
-
-        if (errorCode === 'RESET_CODE_INVALID' || errorMsg?.includes('Invalid')) {
+        if (parsed.code === 'RESET_CODE_INVALID' || parsed.message?.includes('Invalid')) {
           errorMessage = t('errors.codeInvalid');
-        } else if (errorCode === 'RESET_CODE_EXPIRED' || errorMsg?.includes('expired')) {
+        } else if (parsed.code === 'RESET_CODE_EXPIRED' || parsed.message?.includes('expired')) {
           errorMessage = t('errors.codeExpired');
-        } else if (errorCode === 'NETWORK_ERROR') {
+        } else if (parsed.code === 'NETWORK_ERROR') {
           errorMessage = t('errors.networkError');
-        } else if (errorMsg) {
-          errorMessage = errorMsg;
+        } else if (parsed.message) {
+          errorMessage = parsed.message;
         }
 
         setError('root', {
@@ -139,21 +142,15 @@ export function ResetPasswordForm() {
         });
         toast.error(errorMessage);
 
-        // Clear code field for retry
         setValue('code', '');
       }
     },
     [resetPassword, router, setError, setValue, t, tToast],
   );
 
-  // Handle code input to only allow numeric characters
-  const handleCodeChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-      setValue('code', value);
-    },
-    [setValue],
-  );
+  const handleCodeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    e.target.value = filterDigits(e.target.value, 6);
+  }, []);
 
   return (
     <section className="mt-12 flex flex-col items-center" aria-labelledby="reset-password-heading">
@@ -179,32 +176,22 @@ export function ResetPasswordForm() {
             aria-labelledby="reset-password-heading"
             aria-describedby={errors.root?.message ? 'reset-password-error' : undefined}
           >
-            {/* Global Error Alert - Live Region */}
-            {errors.root?.message && (
-              <div
-                id="reset-password-error"
-                className="mb-4 p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md"
-                role="alert"
-                aria-live="assertive"
-                aria-atomic="true"
-                data-testid="reset-password-error"
-              >
-                {errors.root.message}
-              </div>
-            )}
+            <FormRootError
+              id="reset-password-error"
+              error={errors.root?.message}
+              testId="reset-password-error"
+            />
 
             {/* Email Input (readonly, pre-filled) */}
             <FormInput
               name="email"
               type="email"
-              placeholder={t('email')}
+              label={t('email')}
+              placeholder="name@example.com"
               autoComplete="email"
               disabled={isLoading}
               readOnly
               className="bg-muted"
-              aria-label={t('email')}
-              aria-required="true"
-              aria-readonly="true"
             />
 
             {/* Code Input */}
@@ -212,53 +199,42 @@ export function ResetPasswordForm() {
               name="code"
               type="text"
               inputMode="numeric"
-              placeholder={t('code')}
+              label={t('code')}
+              placeholder="123456"
               autoComplete="one-time-code"
               disabled={isLoading}
               maxLength={6}
               className="mt-5 text-center text-2xl tracking-widest"
               autoFocus
               onChange={handleCodeChange}
-              aria-label={t('code')}
-              aria-required="true"
-              aria-invalid={!!errors.code}
-              aria-describedby={errors.code ? 'code-error' : undefined}
             />
 
             {/* New Password Input */}
             <FormPassword
               name="password"
-              placeholder={t('password')}
+              label={t('password')}
+              placeholder="••••••••"
               autoComplete="new-password"
               disabled={isLoading}
               className="mt-5"
-              aria-label={t('password')}
-              aria-required="true"
             />
+
+            <PasswordRules name="password" className="mt-3" />
 
             {/* Confirm Password Input */}
             <FormPassword
               name="confirmPassword"
-              placeholder={t('confirmPassword')}
+              label={t('confirmPassword')}
+              placeholder="••••••••"
               autoComplete="new-password"
               disabled={isLoading}
               className="mt-5"
-              aria-label={t('confirmPassword')}
-              aria-required="true"
             />
 
             {/* Submit Button */}
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="h-14 mt-5 tracking-wide font-semibold w-full py-4 rounded-lg transition-all duration-300 ease-in-out flex items-center justify-center"
-              data-testid="reset-password-submit"
-              aria-label={isLoading ? `${t('submit')}...` : t('submit')}
-              aria-busy={isLoading}
-            >
-              <KeyRound className="w-6 h-6 -ms-2" aria-hidden="true" />
-              <span className="ms-3">{isLoading ? `${t('submit')}...` : t('submit')}</span>
-            </Button>
+            <SubmitButton isLoading={isLoading} icon={KeyRound} testId="reset-password-submit">
+              {t('submit')}
+            </SubmitButton>
 
             {/* Back to Login Link */}
             <div className="mt-6 text-center">

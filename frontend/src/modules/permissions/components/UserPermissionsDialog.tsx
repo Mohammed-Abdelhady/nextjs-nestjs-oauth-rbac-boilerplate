@@ -19,67 +19,20 @@ import {
 import { useGetRoleQuery } from '../api/rolesApi';
 import { PermissionTreeView } from './PermissionTreeView';
 import { PermissionSearchDialog } from './PermissionSearchDialog';
+import { UserPermissionsSummary } from './UserPermissionsSummary';
 import { Loader2, Plus, Trash2, Shield, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { parseApiError } from '@/lib/apiError';
 
 export interface UserPermissionsDialogProps {
-  /**
-   * Whether the dialog is open
-   */
   open: boolean;
-
-  /**
-   * Callback when dialog should close
-   */
   onOpenChange: (open: boolean) => void;
-
-  /**
-   * User ID to manage permissions for
-   */
   userId: string | null;
-
-  /**
-   * User name for display
-   */
   userName?: string;
 }
 
 /**
- * UserPermissionsDialog - Comprehensive permission management dialog for users
- *
- * Displays and manages user permissions with clear distinction between:
- * - **Inherited Permissions**: Permissions from the user's assigned role (read-only, blue theme)
- * - **Direct Permissions**: Permissions assigned specifically to the user (editable, green theme)
- *
- * Features:
- * - Visual breakdown by permission source (role vs direct)
- * - Add multiple permissions at once
- * - Remove direct permissions individually
- * - Prevents duplicate assignments (inherited + direct)
- * - Wildcard permission (*) indicator
- * - Permission count summary
- *
- * @param open - Controls dialog visibility
- * @param onOpenChange - Callback when dialog should close
- * @param userId - ID of the user to manage permissions for
- * @param userName - Display name of the user (optional, for header)
- *
- * @example
- * ```tsx
- * const [open, setOpen] = useState(false);
- * const [userId, setUserId] = useState<string | null>(null);
- *
- * <UserPermissionsDialog
- *   open={open}
- *   onOpenChange={setOpen}
- *   userId={userId}
- *   userName="John Doe"
- * />
- * ```
- *
- * @see PermissionSelector - Used for adding new permissions
- * @see useGetUserPermissionsQuery - Fetches user permissions
- * @see useGetRoleQuery - Fetches role permissions for inheritance
+ * Dialog for viewing inherited and managing direct user permissions.
  */
 export function UserPermissionsDialog({
   open,
@@ -122,12 +75,8 @@ export function UserPermissionsDialog({
       // Refresh data
       refetch();
     } catch (error: unknown) {
-      const errorMessage =
-        error && typeof error === 'object' && 'data' in error
-          ? (error.data as { message?: string })?.message || t('addError')
-          : t('addError');
-
-      toast.error(errorMessage);
+      const parsed = parseApiError(error);
+      toast.error(parsed.message || t('addError'));
     }
   };
 
@@ -142,12 +91,8 @@ export function UserPermissionsDialog({
       // Refresh data
       refetch();
     } catch (error: unknown) {
-      const errorMessage =
-        error && typeof error === 'object' && 'data' in error
-          ? (error.data as { message?: string })?.message || t('removeError')
-          : t('removeError');
-
-      toast.error(errorMessage);
+      const parsed = parseApiError(error);
+      toast.error(parsed.message || t('removeError'));
     }
   };
 
@@ -183,33 +128,14 @@ export function UserPermissionsDialog({
               </div>
             ) : (
               <>
-                {/* Summary Header */}
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        <span className="font-medium">{t('currentRole')}</span>{' '}
-                        <Badge variant="secondary">{data?.role || 'None'}</Badge>
-                      </p>
-                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
-                        {t('totalPermissions', { count: effectivePermissions.length })} (
-                        {t('inheritedAndDirect', {
-                          inherited: inheritedPermissions.length,
-                          direct: directPermissions.length,
-                        })}
-                        )
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {hasWildcard && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
-                    <p className="text-sm text-amber-900 dark:text-amber-100">
-                      <strong>{t('wildcardTitle')}</strong> {t('wildcardDescription')}
-                    </p>
-                  </div>
-                )}
+                <UserPermissionsSummary
+                  role={data?.role}
+                  totalCount={effectivePermissions.length}
+                  inheritedCount={inheritedPermissions.length}
+                  directCount={directPermissions.length}
+                  hasWildcard={hasWildcard}
+                  t={t}
+                />
 
                 {/* Inherited Permissions (Read-only) - Tree View */}
                 <div className="space-y-3">

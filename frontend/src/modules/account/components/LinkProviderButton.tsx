@@ -14,6 +14,7 @@ import {
   waitForOAuthCallback,
   type OAuthProvider,
 } from '@/modules/oauth';
+import { parseApiError } from '@/lib/apiError';
 
 interface LinkProviderButtonProps {
   provider: OAuthProvider;
@@ -64,15 +65,13 @@ export function LinkProviderButton({
       toast.success(t('linkSuccess', { provider: formatProviderName(provider) }));
       onLinkSuccess?.();
     } catch (error: unknown) {
-      const err = error as Error & { data?: { message?: string } };
-      if (err.message === 'OAuth authorization timed out') {
+      const parsed = parseApiError(error);
+      if (parsed.message === 'OAuth authorization timed out') {
         toast.error(t('linkTimeout'));
-      } else if (err.message === 'OAuth authorization was cancelled') {
+      } else if (parsed.message === 'OAuth authorization was cancelled') {
         toast.info(t('linkCancelled'));
       } else {
-        toast.error(
-          err?.data?.message || t('linkError', { provider: formatProviderName(provider) }),
-        );
+        toast.error(parsed.message || t('linkError', { provider: formatProviderName(provider) }));
       }
     } finally {
       setIsLinking(false);

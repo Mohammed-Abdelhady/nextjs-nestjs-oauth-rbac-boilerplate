@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useUpdateRoleMutation, type Role } from '../api/rolesApi';
 import { PermissionSelector } from './PermissionSelector';
 import { toast } from 'sonner';
+import { parseApiError } from '@/lib/apiError';
 
 export interface EditRoleDialogProps {
   /**
@@ -227,12 +228,8 @@ export function EditRoleDialog({ open, onOpenChange, role, onSuccess }: EditRole
       onOpenChange(false);
       onSuccess?.();
     } catch (error: unknown) {
-      const errorMessage =
-        error && typeof error === 'object' && 'data' in error
-          ? (error.data as { message?: string })?.message || 'Failed to update role'
-          : 'Failed to update role';
-
-      toast.error(errorMessage);
+      const parsed = parseApiError(error);
+      toast.error(parsed.message || 'Failed to update role');
     }
   };
 

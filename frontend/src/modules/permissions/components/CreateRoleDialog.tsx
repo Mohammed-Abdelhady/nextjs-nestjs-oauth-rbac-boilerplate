@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useCreateRoleMutation } from '../api/rolesApi';
 import { PermissionSelector } from './PermissionSelector';
 import { toast } from 'sonner';
+import { parseApiError } from '@/lib/apiError';
 
 export interface CreateRoleDialogProps {
   /**
@@ -88,12 +89,8 @@ export function CreateRoleDialog({ open, onOpenChange, onSuccess }: CreateRoleDi
       // Call success callback
       onSuccess?.();
     } catch (error: unknown) {
-      const errorMessage =
-        error && typeof error === 'object' && 'data' in error
-          ? (error.data as { message?: string })?.message || 'Failed to create role'
-          : 'Failed to create role';
-
-      toast.error(errorMessage);
+      const parsed = parseApiError(error);
+      toast.error(parsed.message || 'Failed to create role');
     }
   };
 

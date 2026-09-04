@@ -7,8 +7,9 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FormPassword } from '@/components/forms';
+import { FormPassword, PasswordRules } from '@/components/forms';
 import { useChangePasswordMutation } from '@/modules/auth/store';
+import { parseApiError } from '@/lib/apiError';
 import {
   changePasswordSchema,
   type ChangePasswordFormData,
@@ -41,11 +42,8 @@ export function ChangePasswordCard() {
       toast.success(t('success'));
       form.reset();
     } catch (error) {
-      const errorMessage =
-        error && typeof error === 'object' && 'data' in error && error.data
-          ? String((error.data as { message?: string }).message)
-          : 'Failed to change password';
-      toast.error(errorMessage);
+      const parsed = parseApiError(error);
+      toast.error(parsed.message || 'Failed to change password');
     }
   };
 
@@ -77,6 +75,8 @@ export function ChangePasswordCard() {
               disabled={isLoading}
               data-testid="new-password-input"
             />
+
+            <PasswordRules name="newPassword" className="mt-2" />
 
             <FormPassword<ChangePasswordFormData>
               name="confirmPassword"

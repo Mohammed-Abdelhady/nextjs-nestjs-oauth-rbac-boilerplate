@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { PermissionSelector } from './PermissionSelector';
 import { useCreateRoleMutation, useUpdateRoleMutation, type Role } from '../api/rolesApi';
 import { useToast } from '@/hooks/use-toast';
+import { parseApiError } from '@/lib/apiError';
 
 interface RoleFormDialogProps {
   readonly open: boolean;
@@ -237,11 +238,8 @@ export function RoleFormDialog({ open, onOpenChange, mode, role }: RoleFormDialo
 
       onOpenChange(false);
     } catch (error) {
-      const errorMessage =
-        error && typeof error === 'object' && 'data' in error && error.data
-          ? String((error.data as { message?: string }).message)
-          : t('error');
-      toast.error(errorMessage);
+      const parsed = parseApiError(error);
+      toast.error(parsed.message || t('error'));
     }
   };
 

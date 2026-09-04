@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FormInput } from '@/components/forms';
 import { useGetCurrentUserQuery, useUpdateProfileMutation } from '@/modules/auth/store';
+import { parseApiError } from '@/lib/apiError';
 import { zodName } from '@/lib/validations/string';
 
 const updateProfileSchema = z.object({
@@ -53,11 +54,8 @@ export function UpdateProfileCard() {
       await updateProfile({ name: data.name }).unwrap();
       toast.success(t('success'));
     } catch (error) {
-      const errorMessage =
-        error && typeof error === 'object' && 'data' in error && error.data
-          ? String((error.data as { message?: string }).message)
-          : 'Failed to update profile';
-      toast.error(errorMessage);
+      const parsed = parseApiError(error);
+      toast.error(parsed.message || 'Failed to update profile');
     }
   };
 

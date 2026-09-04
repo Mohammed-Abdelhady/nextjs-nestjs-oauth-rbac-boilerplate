@@ -9,6 +9,7 @@ import { TimelineList } from '@/components/design-system';
 import { SessionCardTimeline } from '@/modules/sessions/components/SessionCardTimeline';
 import { RevokeAllSessionsButton } from '@/modules/sessions/components/RevokeAllSessionsButton';
 import { useGetSessionsQuery } from '@/modules/sessions';
+import { parseApiError } from '@/lib/apiError';
 
 /**
  * Sessions management page - Redesigned with timeline view
@@ -80,14 +81,7 @@ export default function SessionsPage() {
         <Alert variant="destructive" data-testid="error-state">
           <AlertDescription className="flex items-center justify-between">
             <span>
-              {t('loadError')}{' '}
-              {error &&
-              'data' in error &&
-              typeof error.data === 'object' &&
-              error.data &&
-              'message' in error.data
-                ? String(error.data.message)
-                : t('tryAgain')}
+              {t('loadError')} {error ? parseApiError(error).message : t('tryAgain')}
             </span>
             <Button variant="outline" size="sm" onClick={() => refetch()}>
               {tCommon('retry')}

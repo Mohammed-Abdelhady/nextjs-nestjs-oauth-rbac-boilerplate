@@ -5,14 +5,13 @@ import { useTranslations } from 'next-intl';
 import { z } from 'zod';
 import { FormProvider } from 'react-hook-form';
 import { useFormWithValidation } from '@/hooks/useFormWithValidation';
-import { FormInput, FormPassword } from '@/components/forms';
+import { FormInput, FormPassword, FormRootError, SubmitButton } from '@/components/forms';
 import { useLoginMutation } from '../store/authApi';
 import { translateAuthError, getRedirectPath } from '../utils/authHelpers';
 import { zodEmail } from '@/lib/validations';
 import { Link, useRouter } from '@/i18n/navigation';
 import { UserPlus, LogIn } from 'lucide-react';
 import { IconLinkButton } from '@/components/ui/icon-link-button';
-import { Button } from '@/components/ui/button';
 import { useCallback, useMemo } from 'react';
 import { OAuthButtons, OAuthDivider } from '@/modules/oauth';
 
@@ -154,60 +153,34 @@ export function LoginForm() {
             aria-labelledby="login-heading"
             aria-describedby={errors.root?.message ? 'login-error' : undefined}
           >
-            {/* Global Error Alert - Live Region */}
-            {errors.root?.message && (
-              <div
-                id="login-error"
-                className="mb-4 p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md"
-                role="alert"
-                aria-live="assertive"
-                aria-atomic="true"
-                data-testid="login-error"
-              >
-                {errors.root.message}
-              </div>
-            )}
+            <FormRootError id="login-error" error={errors.root?.message} testId="login-error" />
 
             {/* Email Input */}
             <FormInput
               name="email"
               type="email"
-              placeholder={t('email')}
+              label={t('email')}
+              placeholder="name@example.com"
               autoComplete="email"
               disabled={isLoading}
               autoFocus
-              aria-label={t('email')}
-              aria-required="true"
-              aria-invalid={!!errors.email}
-              aria-describedby={errors.email ? 'email-error' : undefined}
             />
 
             {/* Password Input */}
             <FormPassword
               name="password"
-              placeholder={t('password')}
+              label={t('password')}
+              placeholder="••••••••"
               autoComplete="current-password"
               disabled={isLoading}
               showToggle={false}
               className="mt-5"
-              aria-label={t('password')}
-              aria-required="true"
-              aria-invalid={!!errors.password}
-              aria-describedby={errors.password ? 'password-error' : undefined}
             />
 
             {/* Submit Button */}
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="h-14 mt-5 tracking-wide font-semibold w-full py-4 rounded-lg transition-all duration-300 ease-in-out flex items-center justify-center"
-              data-testid="login-submit"
-              aria-label={isLoading ? `${t('submit')}...` : t('submit')}
-              aria-busy={isLoading}
-            >
-              <LogIn className="w-6 h-6 -ms-2" aria-hidden="true" />
-              <span className="ms-3">{isLoading ? `${t('submit')}...` : t('submit')}</span>
-            </Button>
+            <SubmitButton isLoading={isLoading} icon={LogIn} testId="login-submit">
+              {t('submit')}
+            </SubmitButton>
 
             {/* Forgot Password Link */}
             <Link
