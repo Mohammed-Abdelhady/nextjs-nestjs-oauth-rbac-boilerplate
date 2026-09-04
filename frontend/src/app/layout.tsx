@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { ReduxProvider, AuthProvider, ThemeProvider } from '@/components/providers';
 import { routing } from '@/i18n/routing';
+import { getTextDirection } from '@/i18n/direction';
 import './globals.css';
 
 const geistSans = Geist({
@@ -40,7 +41,7 @@ export default async function RootLayout({
   const locale = params ? ((await params).locale ?? routing.defaultLocale) : routing.defaultLocale;
 
   return (
-    <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} suppressHydrationWarning>
+    <html lang={locale} dir={getTextDirection(locale)} suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ReduxProvider>
           <AuthProvider>

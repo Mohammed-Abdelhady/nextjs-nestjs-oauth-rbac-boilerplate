@@ -10,7 +10,15 @@ export interface FloatingActionZoneProps extends HTMLAttributes<HTMLDivElement> 
   /**
    * Position on screen
    */
-  position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+  position?:
+    | 'bottom-right'
+    | 'bottom-left'
+    | 'top-right'
+    | 'top-left'
+    | 'bottom-end'
+    | 'bottom-start'
+    | 'top-end'
+    | 'top-start';
 
   /**
    * Only show after scrolling
@@ -76,11 +84,15 @@ export const FloatingActionZone = forwardRef<HTMLDivElement, FloatingActionZoneP
       return () => window.removeEventListener('scroll', handleScroll);
     }, [showOnScroll, scrollThreshold]);
 
-    const positionClasses = {
-      'bottom-right': 'bottom-6 right-6',
-      'bottom-left': 'bottom-6 left-6',
-      'top-right': 'top-6 right-6',
-      'top-left': 'top-6 left-6',
+    const positionClasses: Record<NonNullable<FloatingActionZoneProps['position']>, string> = {
+      'bottom-right': 'bottom-6 end-6',
+      'bottom-left': 'bottom-6 start-6',
+      'top-right': 'top-6 end-6',
+      'top-left': 'top-6 start-6',
+      'bottom-end': 'bottom-6 end-6',
+      'bottom-start': 'bottom-6 start-6',
+      'top-end': 'top-6 end-6',
+      'top-start': 'top-6 start-6',
     };
 
     return (

@@ -107,7 +107,7 @@ export const SectionHeader = forwardRef<HTMLDivElement, SectionHeaderProps>(
             )}
             <span>
               {title}
-              {typeof count === 'number' && <span className="ml-2 text-tertiary">({count})</span>}
+              {typeof count === 'number' && <span className="ms-2 text-tertiary">({count})</span>}
             </span>
           </button>
 

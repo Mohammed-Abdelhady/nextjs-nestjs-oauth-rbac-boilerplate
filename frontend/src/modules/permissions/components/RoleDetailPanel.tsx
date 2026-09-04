@@ -147,7 +147,7 @@ export const RoleDetailPanel = memo(function RoleDetailPanel({
           disabled={isBaseRole}
           data-testid="edit-role-button"
         >
-          <Pencil className="h-3 w-3 mr-2" />
+          <Pencil className="h-3 w-3 me-2" />
           Edit Role
         </Button>
         <Button
@@ -157,7 +157,7 @@ export const RoleDetailPanel = memo(function RoleDetailPanel({
           disabled={role.isProtected}
           data-testid="delete-role-button"
         >
-          <Trash2 className="h-3 w-3 mr-2" />
+          <Trash2 className="h-3 w-3 me-2" />
           Delete
         </Button>
       </footer>

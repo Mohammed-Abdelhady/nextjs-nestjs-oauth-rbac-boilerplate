@@ -41,11 +41,11 @@ export const FormRadio = <TFieldValues extends FieldValues = FieldValues>({
           defaultValue={field.value}
           disabled={disabled}
           className={
-            orientation === 'horizontal' ? 'flex flex-row space-x-4' : 'flex flex-col space-y-1'
+            orientation === 'horizontal' ? 'flex flex-row gap-4' : 'flex flex-col space-y-1'
           }
         >
           {options.map((option) => (
-            <FormItem key={option.value} className="flex items-center space-x-3 space-y-0">
+            <FormItem key={option.value} className="flex items-center gap-3 space-y-0">
               <FormControl>
                 <RadioGroupItem value={option.value} disabled={disabled || option.disabled} />
               </FormControl>

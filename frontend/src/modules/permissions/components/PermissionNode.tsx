@@ -68,7 +68,9 @@ export const PermissionNode = memo(function PermissionNode({
       style={{ marginInlineStart: `${level * 16}px` }}
       data-testid={`permission-node-${permission}`}
     >
-      {level > 0 && <ChevronRight className="h-3 w-3 flex-shrink-0 text-muted-foreground" />}
+      {level > 0 && (
+        <ChevronRight className="h-3 w-3 flex-shrink-0 text-muted-foreground rtl:rotate-180" />
+      )}
       <code className="font-mono flex-1">
         <span className="font-semibold">{resource}</span>
         {action && <span className="text-muted-foreground">:{action}</span>}

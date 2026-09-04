@@ -129,7 +129,7 @@ export const PermissionSelector = memo(function PermissionSelector({
       {/* Wildcard Permission */}
       {showWildcard && (
         <div className="rounded-lg border border-warning/30 bg-warning/10 p-4">
-          <div className="flex items-start space-x-3">
+          <div className="flex items-start gap-3">
             <Checkbox
               id="wildcard-permission"
               checked={hasWildcard}

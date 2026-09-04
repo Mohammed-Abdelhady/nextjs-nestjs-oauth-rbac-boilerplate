@@ -146,21 +146,21 @@ export default function PermissionsDemoPage() {
               <div className="flex gap-2">
                 <PermissionGuard permission={USER_PERMISSIONS.READ_ALL}>
                   <Button size="sm" variant="outline">
-                    <Eye className="mr-2 h-4 w-4" />
+                    <Eye className="me-2 h-4 w-4" />
                     View
                   </Button>
                 </PermissionGuard>
 
                 <PermissionGuard permission={USER_PERMISSIONS.UPDATE_ALL}>
                   <Button size="sm" variant="outline">
-                    <Edit className="mr-2 h-4 w-4" />
+                    <Edit className="me-2 h-4 w-4" />
                     Edit
                   </Button>
                 </PermissionGuard>
 
                 <PermissionGuard permission={USER_PERMISSIONS.DELETE_ALL}>
                   <Button size="sm" variant="destructive">
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    <Trash2 className="me-2 h-4 w-4" />
                     Delete
                   </Button>
                 </PermissionGuard>

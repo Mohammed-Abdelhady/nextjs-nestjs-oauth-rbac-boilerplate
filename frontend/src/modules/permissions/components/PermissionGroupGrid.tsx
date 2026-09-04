@@ -34,7 +34,7 @@ export const PermissionGroupGrid = memo(function PermissionGroupGrid({
       {Object.entries(permissions).map(([, permission]) => {
         const id = `permission-${permission}${prefix ? `-${prefix}` : ''}`;
         return (
-          <div key={permission} className="flex items-start space-x-3">
+          <div key={permission} className="flex items-start gap-3">
             <Checkbox
               id={id}
               checked={selectedPermissions.includes(permission)}

@@ -192,7 +192,7 @@ export const PermissionSearchDialog = memo(function PermissionSearchDialog({
           {/* Wildcard Option */}
           {showWildcard && (
             <div className="rounded-lg border border-warning bg-warning/15 p-4 text-warning-foreground">
-              <div className="flex items-start space-x-3">
+              <div className="flex items-start gap-3">
                 <Checkbox
                   id="wildcard-permission"
                   checked={hasWildcard}
@@ -260,7 +260,7 @@ export const PermissionSearchDialog = memo(function PermissionSearchDialog({
               disabled={availableCount === 0 || isLoading}
               data-testid="confirm-add-permissions"
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="me-2 h-4 w-4" />
               Add {availableCount} Permission{availableCount !== 1 ? 's' : ''}
             </Button>
           </div>

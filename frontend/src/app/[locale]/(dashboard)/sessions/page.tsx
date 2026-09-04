@@ -58,7 +58,7 @@ export default function SessionsPage() {
               disabled={isLoading}
               data-testid="refresh-sessions-button"
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 me-2 ${isLoading ? 'animate-spin' : ''}`} />
               {t('refresh')}
             </Button>
             <RevokeAllSessionsButton otherSessionsCount={otherSessionsCount} />

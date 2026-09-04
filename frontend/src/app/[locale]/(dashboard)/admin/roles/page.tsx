@@ -100,7 +100,7 @@ export default function RolesPage() {
               </p>
             </div>
             <Button onClick={() => setCreateDialogOpen(true)} data-testid="create-role-button">
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="me-2 h-4 w-4" />
               {t('createRole')}
             </Button>
           </div>
@@ -156,7 +156,7 @@ export default function RolesPage() {
               </p>
               {!searchTerm && (
                 <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus className="me-2 h-4 w-4" />
                   {t('createRole')}
                 </Button>
               )}

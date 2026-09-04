@@ -2,6 +2,8 @@ import { Link } from '@/i18n/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Rocket, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 
 /**
  * Home Page
@@ -20,11 +22,15 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const t = await getTranslations({ locale, namespace: 'home' });
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex justify-center">
+    <div className="relative min-h-screen bg-background text-foreground flex justify-center">
+      <header className="absolute inset-x-0 top-0 z-10 flex items-center justify-end gap-2 p-4">
+        <LanguageSwitcher />
+        <ThemeSwitcher />
+      </header>
       <div className="max-w-screen-xl m-0 sm:m-20 bg-card shadow sm:rounded-lg flex justify-center flex-1">
         {/* Left Side - Welcome Content */}
         <section className="lg:w-1/2 xl:w-5/12 p-6 sm:p-12 flex flex-col justify-center">
-          <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
+          <div className="flex flex-col items-center lg:items-start text-center lg:text-start">
             {/* Main Heading */}
             <h1 className="text-3xl xl:text-4xl font-extrabold text-foreground mb-4">
               {t('title')}
@@ -40,7 +46,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
               <Button asChild className="w-full sm:w-auto" data-testid="cta-primary-button">
                 <Link href="/auth/login">
-                  <ChevronRight className="w-5 h-5 mr-2" />
+                  <ChevronRight className="w-5 h-5 me-2 rtl:rotate-180" />
                   {t('ctaPrimary')}
                 </Link>
               </Button>

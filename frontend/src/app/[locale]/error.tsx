@@ -39,7 +39,7 @@ export default function Error({
       actions={
         <>
           <Button onClick={() => reset()} className="w-full sm:w-auto">
-            <RefreshCw className="w-5 h-5 mr-2" />
+            <RefreshCw className="w-5 h-5 me-2" />
             {t('reload')}
           </Button>
           <Button
@@ -47,7 +47,7 @@ export default function Error({
             onClick={() => toast.info(tCommon('comingSoon'))}
             className="w-full sm:w-auto"
           >
-            <Mail className="w-5 h-5 mr-2" />
+            <Mail className="w-5 h-5 me-2" />
             {t('reportIssue')}
           </Button>
         </>

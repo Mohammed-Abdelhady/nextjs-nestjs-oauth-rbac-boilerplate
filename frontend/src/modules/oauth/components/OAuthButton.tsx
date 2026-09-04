@@ -119,7 +119,7 @@ export function OAuthButton({ provider, onSuccess, onError, disabled = false }: 
 
       <span
         className="
-        absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap
+        absolute -top-10 start-1/2 ltr:-translate-x-1/2 rtl:translate-x-1/2 whitespace-nowrap
         rounded-md bg-gray-900 px-3 py-1.5 text-xs font-medium text-white
         opacity-0 transition-opacity duration-200
         group-hover:opacity-100
@@ -130,7 +130,7 @@ export function OAuthButton({ provider, onSuccess, onError, disabled = false }: 
         {providerName}
         <span
           className="
-          absolute -bottom-1 left-1/2 -translate-x-1/2
+          absolute -bottom-1 start-1/2 ltr:-translate-x-1/2 rtl:translate-x-1/2
           h-2 w-2 rotate-45 bg-gray-900
         "
         />

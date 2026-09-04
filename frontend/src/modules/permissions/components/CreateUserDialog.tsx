@@ -271,7 +271,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
             <Button type="submit" disabled={isLoading} data-testid="submit-create-user-button">
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
                   {t('creating')}
                 </>
               ) : (

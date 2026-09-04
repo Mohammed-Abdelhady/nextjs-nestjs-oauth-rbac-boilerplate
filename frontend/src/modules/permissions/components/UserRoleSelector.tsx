@@ -133,7 +133,7 @@ export function UserRoleSelector({
                 )}
                 <span>{role.name}</span>
                 {role.isProtected && role.slug !== currentRole && (
-                  <Badge variant="secondary" className="ml-2 text-xs">
+                  <Badge variant="secondary" className="ms-2 text-xs">
                     {t('protected')}
                   </Badge>
                 )}
@@ -171,7 +171,7 @@ export function UserRoleSelector({
             >
               {isUpdating ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
                   {t('changing')}
                 </>
               ) : (

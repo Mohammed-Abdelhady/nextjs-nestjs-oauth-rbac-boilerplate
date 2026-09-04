@@ -77,7 +77,7 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
                 key={role.id}
                 onClick={() => onSelectRole(role.id)}
                 className={cn(
-                  'w-full text-left px-3 py-2 rounded-md text-sm transition-all duration-150',
+                  'w-full text-start px-3 py-2 rounded-md text-sm transition-all duration-150',
                   'flex items-center gap-2',
                   selectedRoleId === role.id
                     ? 'bg-primary/10 text-primary font-medium'
@@ -106,7 +106,7 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
                 key={role.id}
                 onClick={() => onSelectRole(role.id)}
                 className={cn(
-                  'w-full text-left px-3 py-2 rounded-md text-sm transition-all duration-150',
+                  'w-full text-start px-3 py-2 rounded-md text-sm transition-all duration-150',
                   'flex items-center gap-2',
                   selectedRoleId === role.id
                     ? 'bg-primary/10 text-primary font-medium'

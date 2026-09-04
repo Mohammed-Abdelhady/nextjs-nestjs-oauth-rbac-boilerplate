@@ -46,7 +46,7 @@ export function UserPermissionsBadge({
   if (hasWildcard) {
     return (
       <Badge variant="default" className="bg-amber-600 hover:bg-amber-700">
-        <Shield className="mr-1 h-3 w-3" />
+        <Shield className="me-1 h-3 w-3" />
         Wildcard (*)
       </Badge>
     );

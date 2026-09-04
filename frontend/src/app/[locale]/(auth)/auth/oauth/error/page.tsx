@@ -33,25 +33,25 @@ export default function OAuthErrorPage() {
         </p>
 
         {/* Helpful Information */}
-        <div className="mb-8 rounded-lg bg-muted/50 p-6 text-left">
+        <div className="mb-8 rounded-lg bg-muted/50 p-6 text-start">
           <h2 className="mb-3 text-lg font-semibold text-foreground">
             What might have gone wrong:
           </h2>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-start">
-              <span className="mr-2 text-destructive">•</span>
+              <span className="me-2 text-destructive">•</span>
               <span>You may have cancelled the authorization</span>
             </li>
             <li className="flex items-start">
-              <span className="mr-2 text-destructive">•</span>
+              <span className="me-2 text-destructive">•</span>
               <span>The authorization may have timed out</span>
             </li>
             <li className="flex items-start">
-              <span className="mr-2 text-destructive">•</span>
+              <span className="me-2 text-destructive">•</span>
               <span>There might be a temporary issue with the OAuth provider</span>
             </li>
             <li className="flex items-start">
-              <span className="mr-2 text-destructive">•</span>
+              <span className="me-2 text-destructive">•</span>
               <span>Your account may already be linked to another account</span>
             </li>
           </ul>

@@ -81,7 +81,7 @@ export function RevokeAllSessionsButton({
         className={className}
         data-testid="logout-all-sessions-button"
       >
-        <LogOut className="h-4 w-4 mr-2" />
+        <LogOut className="h-4 w-4 me-2" />
         {t('logoutAllOther')}
       </Button>
 
@@ -106,7 +106,7 @@ export function RevokeAllSessionsButton({
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-4 w-4 me-2 animate-spin" />
                   {t('loggingOut')}
                 </>
               ) : (

@@ -88,7 +88,7 @@ export function LinkedAccountCard({
                   <h3 className="font-medium">{formatProviderName(provider)}</h3>
                   {isPrimary && (
                     <Badge variant="default" className="text-xs">
-                      <CheckCircle2 className="mr-1 h-3 w-3" />
+                      <CheckCircle2 className="me-1 h-3 w-3" />
                       {t('primary')}
                     </Badge>
                   )}

@@ -28,7 +28,7 @@ export default function NotFound() {
         <>
           <Button asChild className="w-full sm:w-auto" data-testid="not-found-home-button">
             <Link href="/">
-              <Home className="w-5 h-5 mr-2" />
+              <Home className="w-5 h-5 me-2" />
               {t('goHome')}
             </Link>
           </Button>
@@ -38,7 +38,7 @@ export default function NotFound() {
             className="w-full sm:w-auto"
             data-testid="not-found-back-button"
           >
-            <ArrowLeft className="w-5 h-5 mr-2" />
+            <ArrowLeft className="w-5 h-5 me-2 rtl:rotate-180" />
             {t('goBack')}
           </Button>
         </>

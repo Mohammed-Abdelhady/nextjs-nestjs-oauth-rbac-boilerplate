@@ -172,14 +172,14 @@ export const UserActionsMenu = memo(function UserActionsMenu({
                 onClick={() => setEditDialogOpen(true)}
                 data-testid={`edit-user-${user._id}`}
               >
-                <Pencil className="mr-2 h-4 w-4" />
+                <Pencil className="me-2 h-4 w-4" />
                 Edit User
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={onManagePermissions}
                 data-testid={`manage-permissions-${user._id}`}
               >
-                <Settings className="mr-2 h-4 w-4" />
+                <Settings className="me-2 h-4 w-4" />
                 Manage Permissions
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -192,7 +192,7 @@ export const UserActionsMenu = memo(function UserActionsMenu({
               onClick={() => setConfirmAction('activate')}
               data-testid={`activate-user-${user._id}`}
             >
-              <UserCheck className="mr-2 h-4 w-4 text-green-600 dark:text-green-400" />
+              <UserCheck className="me-2 h-4 w-4 text-green-600 dark:text-green-400" />
               <span>Activate User</span>
             </DropdownMenuItem>
           ) : (
@@ -200,7 +200,7 @@ export const UserActionsMenu = memo(function UserActionsMenu({
               onClick={() => setConfirmAction('deactivate')}
               data-testid={`deactivate-user-${user._id}`}
             >
-              <UserX className="mr-2 h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <UserX className="me-2 h-4 w-4 text-amber-600 dark:text-amber-400" />
               <span>Deactivate User</span>
             </DropdownMenuItem>
           )}
@@ -214,7 +214,7 @@ export const UserActionsMenu = memo(function UserActionsMenu({
                 className="text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
                 data-testid={`delete-user-${user._id}`}
               >
-                <Trash2 className="mr-2 h-4 w-4" />
+                <Trash2 className="me-2 h-4 w-4" />
                 <span>Delete User</span>
               </DropdownMenuItem>
             </>
@@ -252,7 +252,7 @@ export const UserActionsMenu = memo(function UserActionsMenu({
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
                   Processing...
                 </>
               ) : (

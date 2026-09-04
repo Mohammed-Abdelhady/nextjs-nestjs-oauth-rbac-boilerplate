@@ -223,7 +223,7 @@ export function DashboardNav({ onNavigate }: DashboardNavProps = {}) {
                     <span>{sectionTitle}</span>
                   </div>
                   {isCollapsed ? (
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className="h-4 w-4 rtl:rotate-180" />
                   ) : (
                     <ChevronDown className="h-4 w-4" />
                   )}
@@ -231,7 +231,7 @@ export function DashboardNav({ onNavigate }: DashboardNavProps = {}) {
 
                 {/* Section Items */}
                 {!isCollapsed && (
-                  <div className="ml-4 space-y-1 border-l border-border pl-3">
+                  <div className="ms-4 space-y-1 border-s border-border ps-3">
                     {item.items.map(renderNavItem)}
                   </div>
                 )}

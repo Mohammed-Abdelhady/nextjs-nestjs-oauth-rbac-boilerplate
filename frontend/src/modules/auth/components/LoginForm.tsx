@@ -185,7 +185,7 @@ export function LoginForm() {
             {/* Forgot Password Link */}
             <Link
               href="/auth/forgot-password"
-              className="no-underline hover:underline text-primary text-md text-right absolute right-0 mt-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
+              className="no-underline hover:underline text-primary text-md text-end absolute end-0 mt-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
               data-testid="forgot-password-link"
               aria-label={t('forgotPassword')}
             >

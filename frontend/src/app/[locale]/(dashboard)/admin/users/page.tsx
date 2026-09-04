@@ -128,7 +128,7 @@ export default function AdminUsersPage() {
                 disabled={isLoading}
                 data-testid="refresh-users-button"
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`h-4 w-4 me-2 ${isLoading ? 'animate-spin' : ''}`} />
                 {t('refresh')}
               </Button>
               <PermissionGuard permission={USER_PERMISSIONS.CREATE_ALL}>

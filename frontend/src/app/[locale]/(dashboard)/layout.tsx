@@ -5,6 +5,11 @@ import { AuthGuard } from '@/components/providers/AuthGuard';
 import { DashboardNav } from '@/components/navigation/DashboardNav';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { ThemeSwitcher } from '@/components/ThemeSwitcher';
+import { LogoutButton } from '@/modules/auth/components/LogoutButton';
+import { useAppSelector } from '@/store/hooks';
+import { selectUser } from '@/modules/auth/store/authSlice';
 
 /**
  * Dashboard layout with sidebar navigation.
@@ -13,6 +18,7 @@ import { Menu, X } from 'lucide-react';
  */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const user = useAppSelector(selectUser);
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
@@ -40,7 +46,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <AuthGuard>
       <div className="flex min-h-screen">
         {/* Desktop Sidebar Navigation - Hidden on mobile */}
-        <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-border bg-background md:block">
+        <aside className="fixed start-0 top-0 z-40 hidden h-screen w-64 border-e border-border bg-background md:block">
           <div className="flex h-full flex-col">
             {/* Logo/Brand */}
             <div className="flex h-16 items-center border-b border-border px-6">
@@ -60,17 +66,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </aside>
 
         {/* Mobile Header */}
-        <div className="fixed left-0 right-0 top-0 z-50 flex h-16 items-center border-b border-border bg-background px-4 md:hidden">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setMobileMenuOpen(true)}
-            aria-label="Open menu"
-            data-testid="mobile-menu-button"
-          >
-            <Menu className="h-6 w-6" />
-          </Button>
-          <h1 className="ml-4 text-xl font-bold text-foreground">Auth App</h1>
+        <div className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-border bg-background px-4 md:hidden">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open menu"
+              data-testid="mobile-menu-button"
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
+            <h1 className="ms-2 text-xl font-bold text-foreground">Auth App</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            <ThemeSwitcher />
+            <LogoutButton />
+          </div>
         </div>
 
         {/* Mobile Sidebar - Slide-out drawer */}
@@ -85,7 +98,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             {/* Sidebar Drawer */}
             <aside
-              className="fixed left-0 top-0 z-50 h-screen w-64 border-r border-border bg-background md:hidden"
+              className="fixed start-0 top-0 z-50 h-screen w-64 border-e border-border bg-background ltr:animate-in ltr:slide-in-from-left rtl:animate-in rtl:slide-in-from-right duration-200 md:hidden"
               data-testid="mobile-sidebar"
             >
               <div className="flex h-full flex-col">
@@ -118,7 +131,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         )}
 
         {/* Main Content */}
-        <main className="flex-1 pt-16 md:ml-64 md:pt-0">{children}</main>
+        <div className="flex min-h-screen flex-1 flex-col md:ms-64">
+          {/* Desktop Header Row */}
+          <header className="hidden h-16 items-center justify-end border-b border-border bg-background px-6 md:flex">
+            <div className="flex items-center gap-2">
+              {user && (
+                <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
+                  <span className="text-sm font-medium text-foreground">{user.name}</span>
+                  <span className="text-xs text-muted-foreground">({user.role})</span>
+                </div>
+              )}
+              <LanguageSwitcher />
+              <ThemeSwitcher />
+              <LogoutButton />
+            </div>
+          </header>
+
+          <main className="flex-1 pt-16 md:pt-0">{children}</main>
+        </div>
       </div>
     </AuthGuard>
   );

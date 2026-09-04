@@ -1,11 +1,11 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
-import { Header } from '@/components/Header';
-import { Toaster } from '@/components/ui/sonner';
+import { DirectionProvider } from '@/components/providers';
+import { getTextDirection } from '@/i18n/direction';
 
 /**
- * Locale-specific layout that adds i18n support
- * Wraps pages with NextIntlClientProvider and adds Header/Toaster
+ * Locale-specific layout that adds i18n support.
+ * Wraps pages with NextIntlClientProvider and the direction-aware providers.
  */
 export default async function LocaleLayout({
   children,
@@ -19,9 +19,7 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider messages={messages} locale={locale}>
-      <Header />
-      {children}
-      <Toaster position="bottom-right" />
+      <DirectionProvider dir={getTextDirection(locale)}>{children}</DirectionProvider>
     </NextIntlClientProvider>
   );
 }

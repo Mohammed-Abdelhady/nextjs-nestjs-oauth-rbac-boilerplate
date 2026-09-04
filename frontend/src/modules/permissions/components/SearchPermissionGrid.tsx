@@ -31,7 +31,7 @@ export function SearchPermissionGrid({
   return (
     <div className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-muted p-4">
       {Object.entries(permissions).map(([, permission]) => (
-        <div key={permission} className="flex items-start space-x-3">
+        <div key={permission} className="flex items-start gap-3">
           <Checkbox
             id={`permission-${permission}`}
             checked={selectedPermissions.includes(permission)}

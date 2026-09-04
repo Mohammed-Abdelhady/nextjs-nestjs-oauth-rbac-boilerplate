@@ -178,7 +178,7 @@ export function UserPermissionsDialog({
                       onClick={() => setSearchDialogOpen(true)}
                       data-testid="add-permission-button"
                     >
-                      <Plus className="mr-2 h-4 w-4" />
+                      <Plus className="me-2 h-4 w-4" />
                       {t('addPermissions')}
                     </Button>
                   </div>
@@ -218,7 +218,7 @@ export function UserPermissionsDialog({
                                 className="h-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
                                 data-testid={`remove-permission-${permission}`}
                               >
-                                <Trash2 className="h-3 w-3 mr-1" />
+                                <Trash2 className="h-3 w-3 me-1" />
                                 {t('remove')}
                               </Button>
                             </div>
