@@ -63,7 +63,7 @@ async function bootstrap() {
   const environment = configService.get<string>('NODE_ENV', 'development');
 
   // 7. Swagger/OpenAPI Documentation
-  const swaggerEnabled = configService.get<boolean>('SWAGGER_ENABLED', false);
+  const swaggerEnabled = configService.get<boolean>('swagger.enabled', false);
   if (swaggerEnabled) {
     const config = new DocumentBuilder()
       .setTitle('FULL-MERN-AUTH-Boilerplate API')

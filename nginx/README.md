@@ -29,13 +29,16 @@ Nginx (Port 80/443)
 
 ```
 nginx/
-├── Dockerfile          # Nginx container build configuration
-├── nginx.conf          # Main nginx configuration
-├── ssl/                # SSL certificates (create this directory)
-│   ├── fullchain.pem   # Full certificate chain
-│   ├── privkey.pem     # Private key
-│   └── chain.pem       # Intermediate certificate chain
-└── README.md           # This file
+├── Dockerfile                  # Nginx container build configuration
+├── nginx.conf                  # Main nginx configuration
+├── production-nginx.conf       # Production configuration template
+├── snippets/
+│   └── security-headers.conf   # Security headers snippet
+├── ssl/                        # SSL certificates (create this directory)
+│   ├── fullchain.pem           # Full certificate chain
+│   ├── privkey.pem             # Private key
+│   └── chain.pem               # Intermediate certificate chain
+└── README.md                   # This file
 ```
 
 ## Configuration Features
@@ -45,7 +48,8 @@ nginx/
 - **TLS 1.2/1.3 Only**: Modern, secure protocols
 - **Strong Ciphers**: Uses only secure cipher suites
 - **HSTS**: Enforces HTTPS connections
-- **Security Headers**: X-Frame-Options, X-Content-Type-Options, etc.
+- **Security Headers**: Centralized in `snippets/security-headers.conf` and included across all blocks that send headers.
+- **Content Security Policy**: Drops `'unsafe-eval'` to block arbitrary script evaluation. Retains `'unsafe-inline'` for `style-src` because Next.js and Tailwind inject runtime style tags.
 - **Rate Limiting**: Multiple zones for different endpoint types
 - **Hidden Files**: Blocks access to sensitive files
 

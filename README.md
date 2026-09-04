@@ -79,7 +79,8 @@ cd FULL-MERN-AUTH-Boilerplate
 npm install
 
 # Start with Docker (recommended)
-docker compose up
+cp .env.docker.example .env.docker
+docker compose --env-file .env.docker up --build
 
 # Or start manually
 cd backend && npm install && npm run start:dev
@@ -125,6 +126,7 @@ Configure your application for production with domains, SSL, and Docker:
 
 ```bash
 npm run setup:prod
+docker compose --env-file .env -f docker-compose.prod.yml up -d --build
 ```
 
 The production setup wizard will configure:
