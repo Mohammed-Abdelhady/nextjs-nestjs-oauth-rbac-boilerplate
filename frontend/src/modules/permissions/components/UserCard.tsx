@@ -6,6 +6,7 @@ import { StatusBadge } from '@/components/design-system';
 import { UserRoleSelector } from './UserRoleSelector';
 import { UserActionsMenu } from './UserActionsMenu';
 import { USER_PERMISSIONS, PermissionGuard } from '@/modules/permissions';
+import { HOVER_REVEAL_CLASSES } from '@/constants/focusStyles';
 import { cn } from '@/lib/utils';
 import { getInitials, formatDateShort } from '@/lib/formatters';
 import { useUserActions } from '../hooks/useUserActions';
@@ -90,7 +91,7 @@ export const UserCard = memo(
           </Avatar>
 
           <div className="flex-1 min-w-0">
-            <h4 className="text-sm font-medium tracking-tight truncate">{user.name}</h4>
+            <h3 className="text-sm font-medium tracking-tight truncate">{user.name}</h3>
             <p className="text-xs text-tertiary tracking-wide truncate">{user.email}</p>
           </div>
 
@@ -137,11 +138,11 @@ export const UserCard = memo(
             </PermissionGuard>
           </div>
 
-          {/* Actions Menu - Co-located with dialogs */}
+          {/* Actions menu: revealed on hover, on focus inside, always on touch */}
           <div
             className={cn(
-              'transition-all duration-200 flex items-center',
-              isAdminRole ? 'invisible' : 'opacity-0 group-hover:opacity-100',
+              'motion-safe:transition-all motion-safe:duration-200 flex items-center',
+              isAdminRole ? 'invisible' : HOVER_REVEAL_CLASSES,
             )}
           >
             <PermissionGuard permission={USER_PERMISSIONS.UPDATE_ALL}>

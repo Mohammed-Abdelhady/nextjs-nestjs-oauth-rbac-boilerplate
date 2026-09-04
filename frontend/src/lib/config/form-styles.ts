@@ -36,6 +36,8 @@
  * ```
  */
 
+import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
+
 /**
  * Atomic design tokens - semantic color system
  *
@@ -95,7 +97,7 @@ const TOKENS = {
   // State styles
   states: {
     border: 'border',
-    focusOutline: 'focus:outline-none',
+    focusRing: FOCUS_RING_CLASSES,
     transition: 'transition-all duration-300 ease-in-out',
   },
 } as const;
@@ -114,7 +116,7 @@ const BASE_COMPOSITIONS = {
     TOKENS.colors.border,
     TOKENS.colors.placeholder,
     TOKENS.typography.fontSize,
-    TOKENS.states.focusOutline,
+    TOKENS.states.focusRing,
     TOKENS.colors.borderFocus,
     TOKENS.colors.bgFocus,
   ],

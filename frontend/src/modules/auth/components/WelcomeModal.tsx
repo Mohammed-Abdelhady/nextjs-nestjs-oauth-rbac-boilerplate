@@ -7,10 +7,13 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useAppSelector } from '@/store/hooks';
 import { selectUser } from '@/modules/auth/store/authSlice';
 import { getRoleDashboard } from '@/modules/auth/utils/roleRouting';
+import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
+import { cn } from '@/lib/utils';
 
 interface WelcomeModalProps {
   isOpen: boolean;
   userName: string;
+  /** Called when the dialog is dismissed with Escape, the overlay or the close button. */
   onClose?: () => void;
 }
 
@@ -20,8 +23,8 @@ export function WelcomeModal({ isOpen, userName, onClose }: WelcomeModalProps) {
   const user = useAppSelector(selectUser);
 
   const handleGetStarted = () => {
-    onClose?.();
-    // Navigate to role-based dashboard
+    // The dialog unmounts with the page, so it is not closed here: closing goes
+    // through onClose, which sends dismissals somewhere else entirely
     const dashboardUrl = user ? getRoleDashboard(user.role) : '/dashboard';
     router.push(dashboardUrl);
   };
@@ -61,8 +64,10 @@ export function WelcomeModal({ isOpen, userName, onClose }: WelcomeModalProps) {
             type="button"
             onClick={handleGetStarted}
             data-testid="welcome-get-started-button"
-            className="w-full max-w-xs bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-lg px-5 py-3 transition-all duration-150 focus:outline-none focus:ring-4 focus:ring-primary/50"
-            aria-label={t('cta')}
+            className={cn(
+              'w-full max-w-xs bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-lg px-5 py-3 transition-all duration-150',
+              FOCUS_RING_CLASSES,
+            )}
           >
             {t('cta')}
           </button>

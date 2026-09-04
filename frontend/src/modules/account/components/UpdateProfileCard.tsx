@@ -6,12 +6,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FormInput } from '@/components/forms';
+import { FormInput, SubmitButton } from '@/components/forms';
 import { useGetCurrentUserQuery, useUpdateProfileMutation } from '@/modules/auth/store';
 import { parseApiError } from '@/lib/apiError';
 import { zodName } from '@/lib/validations/string';
@@ -91,21 +89,13 @@ export function UpdateProfileCard() {
               <p className="text-xs text-muted-foreground">{t('emailHint')}</p>
             </div>
 
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full"
-              data-testid="update-profile-submit"
+            <SubmitButton
+              isLoading={isLoading}
+              className="h-10 mt-0 w-full py-2"
+              testId="update-profile-submit"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                  {t('submit')}...
-                </>
-              ) : (
-                t('submit')
-              )}
-            </Button>
+              {t('submit')}
+            </SubmitButton>
           </form>
         </FormProvider>
       </CardContent>

@@ -75,7 +75,7 @@ export const RoleDetailPanel = memo(function RoleDetailPanel({
       <div className={cn('flex items-center justify-center py-16 text-center', className)}>
         <div className="space-y-3">
           <Shield className="h-12 w-12 mx-auto text-muted-foreground" />
-          <h3 className="text-lg font-medium">No role selected</h3>
+          <h2 className="text-lg font-medium">No role selected</h2>
           <p className="text-sm text-muted-foreground max-w-sm">
             Select a role from the sidebar to view its details
           </p>

@@ -148,10 +148,15 @@ function EditUserForm({
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={isLoading} data-testid="submit-edit-user-button">
+        <Button
+          type="submit"
+          disabled={isLoading}
+          aria-busy={isLoading}
+          data-testid="submit-edit-user-button"
+        >
           {isLoading ? (
             <>
-              <Loader2 className="me-2 h-4 w-4 animate-spin" />
+              <Loader2 className="me-2 h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
               Saving...
             </>
           ) : (

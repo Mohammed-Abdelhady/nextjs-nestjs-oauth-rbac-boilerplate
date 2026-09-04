@@ -1,4 +1,7 @@
+'use client';
+
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { Loader2, type LucideIcon } from 'lucide-react';
 import { Button, type ButtonProps } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -10,6 +13,11 @@ export interface SubmitButtonProps extends ButtonProps {
   testId?: string;
 }
 
+/**
+ * Submit control that keeps its label while the request runs. The spinner is
+ * decorative; the busy state is carried by `aria-busy` and the appended
+ * screen-reader text.
+ */
 export function SubmitButton({
   isLoading = false,
   loadingText,
@@ -20,6 +28,8 @@ export function SubmitButton({
   disabled,
   ...props
 }: SubmitButtonProps): React.JSX.Element {
+  const t = useTranslations('common');
+
   return (
     <Button
       type="submit"
@@ -33,14 +43,12 @@ export function SubmitButton({
       {...props}
     >
       {isLoading ? (
-        <Loader2 className="w-6 h-6 -ms-2 animate-spin" aria-hidden="true" />
+        <Loader2 className="w-6 h-6 -ms-2 motion-safe:animate-spin" aria-hidden="true" />
       ) : (
         Icon && <Icon className="w-6 h-6 -ms-2" aria-hidden="true" />
       )}
       <span className="ms-3">{children}</span>
-      {isLoading && (
-        <span className="sr-only">{loadingText ? ` (${loadingText})` : ' (loading)'}</span>
-      )}
+      {isLoading && <span className="sr-only">{` (${loadingText ?? t('loading')})`}</span>}
     </Button>
   );
 }

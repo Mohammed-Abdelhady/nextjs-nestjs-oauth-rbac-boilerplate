@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
+import { LoadingRegion } from '@/components/layout/LoadingRegion';
 import { useAppSelector } from '@/store/hooks';
 import { selectUser, selectIsAuthenticated } from '@/modules/auth/store/authSlice';
 import { usePermission } from '../hooks/usePermission';
@@ -81,6 +83,7 @@ export function RoutePermissionGuard({
   anyPermissions,
   fallbackPath = '/403',
 }: Readonly<RoutePermissionGuardProps>) {
+  const t = useTranslations('common');
   const router = useRouter();
   const user = useAppSelector(selectUser);
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
@@ -127,9 +130,9 @@ export function RoutePermissionGuard({
     canAny,
   ]);
 
-  // Don't render if not authenticated or no user
+  // Wait for the session before deciding, without blanking the screen
   if (!isAuthenticated || !user) {
-    return null;
+    return <LoadingRegion label={t('loading')} testId="permission-guard-loading" />;
   }
 
   // Determine if user has required permissions
@@ -150,9 +153,9 @@ export function RoutePermissionGuard({
     hasAccess = false;
   }
 
-  // Don't render if not authorized
+  // Redirect to the fallback is in flight; keep the status region on screen
   if (!hasAccess) {
-    return null;
+    return <LoadingRegion label={t('loading')} testId="permission-guard-loading" />;
   }
 
   // User has permission, render children

@@ -27,7 +27,12 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         <LanguageSwitcher />
         <ThemeSwitcher />
       </header>
-      <div className="max-w-screen-xl m-0 sm:m-20 bg-card shadow sm:rounded-lg flex justify-center flex-1">
+      <main
+        id="main"
+        tabIndex={-1}
+        className="max-w-screen-xl m-0 sm:m-20 bg-card shadow sm:rounded-lg flex justify-center flex-1 focus-visible:outline-none"
+        data-testid="home-main"
+      >
         {/* Left Side - Welcome Content */}
         <section className="lg:w-1/2 xl:w-5/12 p-6 sm:p-12 flex flex-col justify-center">
           <div className="flex flex-col items-center lg:items-start text-center lg:text-start">
@@ -79,7 +84,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
             <p className="mt-8 text-xl font-semibold text-primary">{t('illustrationSubtitle')}</p>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -84,6 +84,8 @@ export const UserListSection = memo(function UserListSection({
   onCollapse,
   className,
 }: UserListSectionProps) {
+  const gridId = `user-grid-${id}`;
+
   return (
     <section data-testid={`user-list-section-${id}`} className={cn('space-y-4', className)}>
       {/* Section Header */}
@@ -94,13 +96,15 @@ export const UserListSection = memo(function UserListSection({
         collapsible
         collapsed={collapsed}
         onCollapse={onCollapse}
+        contentId={gridId}
       />
 
       {/* User Grid - Animated Collapse */}
       {!collapsed && (
         <div
+          id={gridId}
           className={cn('grid gap-4 md:grid-cols-2 lg:grid-cols-3', 'motion-safe:animate-fade-in')}
-          data-testid={`user-grid-${id}`}
+          data-testid={gridId}
         >
           {children}
         </div>

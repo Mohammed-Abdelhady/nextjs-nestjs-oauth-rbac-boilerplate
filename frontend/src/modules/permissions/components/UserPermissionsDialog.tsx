@@ -124,7 +124,10 @@ export function UserPermissionsDialog({
           <div className="space-y-6 py-6">
             {isLoading || isLoadingRole ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                <Loader2
+                  className="h-8 w-8 motion-safe:animate-spin text-gray-400"
+                  aria-hidden="true"
+                />
               </div>
             ) : (
               <>

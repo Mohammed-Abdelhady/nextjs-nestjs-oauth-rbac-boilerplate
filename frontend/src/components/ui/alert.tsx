@@ -23,12 +23,20 @@ const alertVariants = cva(
   },
 );
 
-const Alert = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
->(({ className, variant, ...props }, ref) => (
-  <div ref={ref} role="alert" className={cn(alertVariants({ variant }), className)} {...props} />
-));
+export interface AlertProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'role'>, VariantProps<typeof alertVariants> {
+  /**
+   * `alert` interrupts the screen reader for a live problem. Standing
+   * informational banners use `note` so they are read in document order.
+   */
+  role?: 'alert' | 'note' | 'status';
+}
+
+const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
+  ({ className, variant, role = 'alert', ...props }, ref) => (
+    <div ref={ref} role={role} className={cn(alertVariants({ variant }), className)} {...props} />
+  ),
+);
 Alert.displayName = 'Alert';
 
 const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(

@@ -152,15 +152,14 @@ export const UserActionsMenu = memo(function UserActionsMenu({
               className,
             )}
             disabled={disabled || isLoading}
+            aria-busy={isLoading}
             data-testid={`user-actions-menu-${user._id}`}
           >
+            <span>Actions</span>
             {isLoading ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 motion-safe:animate-spin" aria-hidden="true" />
             ) : (
-              <>
-                <span>Actions</span>
-                <MoreHorizontal className="h-3.5 w-3.5" />
-              </>
+              <MoreHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
             )}
           </Button>
         </DropdownMenuTrigger>
@@ -242,22 +241,22 @@ export const UserActionsMenu = memo(function UserActionsMenu({
             <AlertDialogDescription>{dialogContent.description}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isLoading} data-testid="cancel-user-action-button">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirm}
               disabled={isLoading}
+              aria-busy={isLoading}
+              data-testid="confirm-user-action-button"
               className={cn(
                 dialogContent.destructive && 'bg-red-600 hover:bg-red-700 focus:ring-red-600',
               )}
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                dialogContent.confirmText
+              {isLoading && (
+                <Loader2 className="me-2 h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
               )}
+              {dialogContent.confirmText}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

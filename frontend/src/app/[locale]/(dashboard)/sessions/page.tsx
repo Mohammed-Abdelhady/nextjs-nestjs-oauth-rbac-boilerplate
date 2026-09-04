@@ -56,26 +56,38 @@ export default function SessionsPage() {
               size="sm"
               onClick={() => refetch()}
               disabled={isLoading}
+              aria-busy={isLoading}
               data-testid="refresh-sessions-button"
             >
-              <RefreshCw className={`h-4 w-4 me-2 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                aria-hidden="true"
+                className={`h-4 w-4 me-2 ${isLoading ? 'motion-safe:animate-spin' : ''}`}
+              />
               {t('refresh')}
             </Button>
             <RevokeAllSessionsButton otherSessionsCount={otherSessionsCount} />
           </div>
         </div>
 
-        <Alert variant="warning" className="mt-4">
-          <Shield className="h-4 w-4" />
+        <Alert variant="warning" role="note" className="mt-4" data-testid="sessions-security-note">
+          <Shield className="h-4 w-4" aria-hidden="true" />
           <AlertDescription>{t('securityWarning')}</AlertDescription>
         </Alert>
       </div>
 
       {/* Loading State */}
       <Activity mode={isLoading ? 'visible' : 'hidden'}>
-        <div className="flex items-center justify-center py-12" data-testid="loading-skeleton">
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex items-center justify-center py-12"
+          data-testid="loading-skeleton"
+        >
           <div className="text-center space-y-4">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+            <Loader2
+              className="h-8 w-8 motion-safe:animate-spin mx-auto text-muted-foreground"
+              aria-hidden="true"
+            />
             <p className="text-sm text-muted-foreground">{t('loading')}</p>
           </div>
         </div>
@@ -88,7 +100,12 @@ export default function SessionsPage() {
             <span>
               {t('loadError')} {error ? parseApiError(error).message : t('tryAgain')}
             </span>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              data-testid="retry-sessions-button"
+            >
               {tCommon('retry')}
             </Button>
           </AlertDescription>
@@ -102,8 +119,8 @@ export default function SessionsPage() {
           data-testid="empty-state"
         >
           <div className="space-y-3">
-            <Shield className="h-12 w-12 mx-auto text-muted-foreground" />
-            <h3 className="text-lg font-semibold">{t('noSessions')}</h3>
+            <Shield className="h-12 w-12 mx-auto text-muted-foreground" aria-hidden="true" />
+            <h2 className="text-lg font-semibold">{t('noSessions')}</h2>
             <p className="text-sm text-muted-foreground max-w-sm">{t('noSessionsDescription')}</p>
           </div>
         </div>
@@ -113,12 +130,17 @@ export default function SessionsPage() {
       <Activity
         mode={!isLoading && !isError && sessions && sessions.length > 0 ? 'visible' : 'hidden'}
       >
-        <TimelineList
-          items={sessions || []}
-          renderItem={(session) => <SessionCardTimeline session={session} />}
-          highlightIndex={currentSessionIndex}
-          stagger={shouldAnimate}
-        />
+        <section aria-labelledby="sessions-list-heading" data-testid="sessions-list">
+          <h2 id="sessions-list-heading" className="sr-only">
+            {t('listHeading')}
+          </h2>
+          <TimelineList
+            items={sessions || []}
+            renderItem={(session) => <SessionCardTimeline session={session} />}
+            highlightIndex={currentSessionIndex}
+            stagger={shouldAnimate}
+          />
+        </section>
       </Activity>
     </div>
   );

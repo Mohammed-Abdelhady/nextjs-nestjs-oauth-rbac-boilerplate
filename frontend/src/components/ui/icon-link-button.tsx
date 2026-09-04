@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Link } from '@/i18n/navigation';
 import type { LucideIcon } from 'lucide-react';
+import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
 import { cn } from '@/lib/utils';
 
 interface IconLinkButtonProps {
@@ -47,7 +48,8 @@ export function IconLinkButton({
     <Link
       href={href}
       className={cn(
-        'h-14 w-full max-w-xs font-bold shadow-sm rounded-lg py-3 flex items-center justify-center transition-all duration-300 ease-in-out focus:outline-none hover:shadow focus:shadow-sm focus:shadow-outline',
+        'h-14 w-full max-w-xs font-bold shadow-sm rounded-lg py-3 flex items-center justify-center transition-all duration-300 ease-in-out hover:shadow',
+        FOCUS_RING_CLASSES,
         variantStyles[variant],
         className,
       )}

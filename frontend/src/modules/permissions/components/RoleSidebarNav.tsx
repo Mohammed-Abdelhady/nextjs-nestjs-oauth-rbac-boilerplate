@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { Lock, Shield } from 'lucide-react';
+import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
 import { cn } from '@/lib/utils';
 import type { Role } from '../api/rolesApi';
 
@@ -55,9 +56,14 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
 
   if (isLoading) {
     return (
-      <nav className="space-y-1" data-testid="role-sidebar-nav-loading">
+      <nav
+        role="status"
+        aria-live="polite"
+        className="space-y-1"
+        data-testid="role-sidebar-nav-loading"
+      >
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-10 rounded-md bg-muted animate-pulse" />
+          <div key={i} className="h-10 rounded-md bg-muted motion-safe:animate-pulse" />
         ))}
       </nav>
     );
@@ -68,26 +74,31 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
       {/* System Roles Section */}
       {systemRoles.length > 0 && (
         <section>
-          <h3 className="text-xs uppercase tracking-widest text-tertiary mb-2 px-3">
+          <h2 className="text-xs uppercase tracking-widest text-tertiary mb-2 px-3">
             System Roles
-          </h3>
+          </h2>
           <div className="space-y-1">
             {systemRoles.map((role) => (
               <button
                 key={role.id}
+                type="button"
                 onClick={() => onSelectRole(role.id)}
+                aria-current={selectedRoleId === role.id ? 'true' : undefined}
                 className={cn(
                   'w-full text-start px-3 py-2 rounded-md text-sm transition-all duration-150',
                   'flex items-center gap-2',
+                  FOCUS_RING_CLASSES,
                   selectedRoleId === role.id
                     ? 'bg-primary/10 text-primary font-medium'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                 )}
                 data-testid={`role-nav-item-${role.slug}`}
               >
-                <Shield className="h-3 w-3 flex-shrink-0" />
+                <Shield className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
                 <span className="flex-1 truncate">{role.name}</span>
-                {role.isProtected && <Lock className="h-3 w-3 flex-shrink-0 text-status-warning" />}
+                {role.isProtected && (
+                  <Lock className="h-3 w-3 flex-shrink-0 text-status-warning" aria-hidden="true" />
+                )}
               </button>
             ))}
           </div>
@@ -97,17 +108,20 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
       {/* Custom Roles Section */}
       {customRoles.length > 0 && (
         <section>
-          <h3 className="text-xs uppercase tracking-widest text-tertiary mb-2 px-3">
+          <h2 className="text-xs uppercase tracking-widest text-tertiary mb-2 px-3">
             Custom Roles ({customRoles.length})
-          </h3>
+          </h2>
           <div className="space-y-1">
             {customRoles.map((role) => (
               <button
                 key={role.id}
+                type="button"
                 onClick={() => onSelectRole(role.id)}
+                aria-current={selectedRoleId === role.id ? 'true' : undefined}
                 className={cn(
                   'w-full text-start px-3 py-2 rounded-md text-sm transition-all duration-150',
                   'flex items-center gap-2',
+                  FOCUS_RING_CLASSES,
                   selectedRoleId === role.id
                     ? 'bg-primary/10 text-primary font-medium'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -115,7 +129,9 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
                 data-testid={`role-nav-item-${role.slug}`}
               >
                 <span className="flex-1 truncate">{role.name}</span>
-                {role.isProtected && <Lock className="h-3 w-3 flex-shrink-0 text-status-warning" />}
+                {role.isProtected && (
+                  <Lock className="h-3 w-3 flex-shrink-0 text-status-warning" aria-hidden="true" />
+                )}
               </button>
             ))}
           </div>

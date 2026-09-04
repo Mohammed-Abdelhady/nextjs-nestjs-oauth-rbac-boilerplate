@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { Loader2, LogOut, MapPin, Clock, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -44,6 +45,7 @@ interface SessionCardTimelineProps {
  */
 export const SessionCardTimeline = memo(
   function SessionCardTimeline({ session }: SessionCardTimelineProps) {
+    const t = useTranslations('sessions');
     const [showConfirm, setShowConfirm] = useState(false);
     const [deleteSession, { isLoading }] = useDeleteSessionMutation();
     const { toast } = useToast();
@@ -87,12 +89,12 @@ export const SessionCardTimeline = memo(
                 size="lg"
               />
               <div className="flex-1">
-                <h4 className="text-sm font-medium tracking-tight flex items-center gap-2">
+                <h3 className="text-sm font-medium tracking-tight flex items-center gap-2">
                   <span data-testid="session-device-label">
                     {session.deviceName || deviceLabel}
                   </span>
                   {session.isCurrent && <CurrentSessionBadge pulse />}
-                </h4>
+                </h3>
                 <p className="text-xs text-tertiary mt-0.5" data-testid="session-browser-os">
                   {browser} · {os}
                 </p>
@@ -105,13 +107,15 @@ export const SessionCardTimeline = memo(
                 size="sm"
                 onClick={handleShowConfirm}
                 disabled={isLoading}
+                aria-busy={isLoading}
+                aria-label={t('logoutThisDevice')}
                 className="text-destructive hover:text-destructive hover:bg-destructive/10 ms-2"
                 data-testid="logout-session-button"
               >
                 {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
                 ) : (
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className="h-4 w-4" aria-hidden="true" />
                 )}
               </Button>
             )}
@@ -120,15 +124,15 @@ export const SessionCardTimeline = memo(
           {/* Session Metadata */}
           <div className="space-y-1 text-xs text-tertiary">
             <div className="flex items-center gap-2" data-testid="session-ip-row">
-              <MapPin className="h-3 w-3 flex-shrink-0" />
+              <MapPin className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
               <span data-testid="session-ip">{session.ip}</span>
             </div>
             <div className="flex items-center gap-2" data-testid="session-last-activity-row">
-              <Clock className="h-3 w-3 flex-shrink-0" />
+              <Clock className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
               <span data-testid="session-last-activity">Last active {lastActivity}</span>
             </div>
             <div className="flex items-center gap-2" data-testid="session-created-at-row">
-              <Calendar className="h-3 w-3 flex-shrink-0" />
+              <Calendar className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
               <span data-testid="session-created-at">Logged in {createdAt}</span>
             </div>
           </div>
@@ -149,10 +153,14 @@ export const SessionCardTimeline = memo(
               <AlertDialogAction
                 onClick={handleLogout}
                 disabled={isLoading}
+                aria-busy={isLoading}
                 data-testid="confirm-logout-button"
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                {isLoading ? 'Logging out...' : 'Logout'}
+                {isLoading && (
+                  <Loader2 className="me-2 h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
+                )}
+                {t('logout')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

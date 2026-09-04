@@ -37,17 +37,24 @@ export function ErrorPageLayout({
 
   return (
     <div className="min-h-screen bg-background text-foreground flex justify-center">
-      <div className="max-w-screen-xl m-0 sm:m-20 bg-card shadow sm:rounded-lg flex justify-center flex-1">
+      <main
+        id="main"
+        tabIndex={-1}
+        className="max-w-screen-xl m-0 sm:m-20 bg-card shadow sm:rounded-lg flex justify-center flex-1 focus-visible:outline-none"
+        data-testid="error-page-main"
+      >
         {/* Start Side - Error Content */}
         <div className="lg:w-1/2 xl:w-5/12 p-6 sm:p-12 flex flex-col justify-center">
           <div className="flex flex-col items-center lg:items-start text-center lg:text-start">
-            {/* Error Code */}
-            <div className="mb-6">
-              <h2 className={`text-8xl font-extrabold ${colorClass}`}>{code}</h2>
-            </div>
-
-            {/* Title */}
+            {/* Title carries the only h1; the status code repeats it visually */}
             <h1 className="text-3xl xl:text-4xl font-extrabold text-foreground mb-4">{title}</h1>
+
+            <p
+              aria-hidden="true"
+              className={`order-first mb-6 text-8xl font-extrabold ${colorClass}`}
+            >
+              {code}
+            </p>
 
             {/* Description */}
             <p className="text-lg text-muted-foreground mb-4 max-w-md">{description}</p>
@@ -71,7 +78,7 @@ export function ErrorPageLayout({
             <p className={`mt-8 text-xl font-semibold ${subtitleColorClass}`}>{subtitle}</p>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -101,7 +101,7 @@ export function UserRoleSelector({
       >
         <SelectTrigger className="w-full sm:w-[200px]" data-testid={`user-role-selector-${userId}`}>
           {isLoadingRoles ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
           ) : (
             <SelectValue>
               <div className="flex items-center gap-2">
@@ -167,11 +167,12 @@ export function UserRoleSelector({
             <AlertDialogAction
               onClick={handleConfirmRoleChange}
               disabled={isUpdating}
+              aria-busy={isUpdating}
               data-testid="confirm-role-change-button"
             >
               {isUpdating ? (
                 <>
-                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="me-2 h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
                   {t('changing')}
                 </>
               ) : (

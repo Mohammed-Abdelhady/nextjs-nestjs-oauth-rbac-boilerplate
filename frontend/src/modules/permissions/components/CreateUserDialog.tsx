@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Dialog,
@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
-import { PasswordVisibilityToggle } from '@/components/forms';
+import { FieldError, PasswordVisibilityToggle, SubmitButton } from '@/components/forms';
 import { useCreateUserMutation } from '@/store/api/userApi';
 import { useListRolesQuery } from '../api/rolesApi';
 import { useToast } from '@/hooks/use-toast';
@@ -55,6 +55,9 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
   const t = useTranslations('users.createUser');
   const tValidation = useTranslations('validation');
   const tCommon = useTranslations('common');
+  const uid = useId();
+  const fieldId = (name: string) => `${uid}-${name}`;
+  const errorId = (name: string) => `${uid}-${name}-error`;
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
@@ -119,17 +122,17 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} noValidate className="space-y-5">
           {/* Email Field */}
           <div className="space-y-2">
             <Label
-              htmlFor="email"
+              htmlFor={fieldId('email')}
               className="text-xs uppercase tracking-widest text-muted-foreground"
             >
               {t('email')}
             </Label>
             <Input
-              id="email"
+              id={fieldId('email')}
               type="email"
               placeholder={t('emailPlaceholder')}
               value={email}
@@ -138,26 +141,24 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
                 if (errors.email) setErrors((prev) => ({ ...prev, email: '' }));
               }}
               disabled={isLoading}
-              className={errors.email ? 'border-red-500' : ''}
+              aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? errorId('email') : undefined}
+              className={errors.email ? 'border-destructive' : ''}
               data-testid="create-user-email-input"
             />
-            {errors.email && (
-              <p className="text-xs text-red-500" data-testid="email-error">
-                {errors.email}
-              </p>
-            )}
+            <FieldError id={errorId('email')} message={errors.email} testId="email-error" />
           </div>
 
           {/* Name Field */}
           <div className="space-y-2">
             <Label
-              htmlFor="name"
+              htmlFor={fieldId('name')}
               className="text-xs uppercase tracking-widest text-muted-foreground"
             >
               {t('name')}
             </Label>
             <Input
-              id="name"
+              id={fieldId('name')}
               type="text"
               placeholder={t('namePlaceholder')}
               value={name}
@@ -166,27 +167,25 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
                 if (errors.name) setErrors((prev) => ({ ...prev, name: '' }));
               }}
               disabled={isLoading}
-              className={errors.name ? 'border-red-500' : ''}
+              aria-invalid={Boolean(errors.name)}
+              aria-describedby={errors.name ? errorId('name') : undefined}
+              className={errors.name ? 'border-destructive' : ''}
               data-testid="create-user-name-input"
             />
-            {errors.name && (
-              <p className="text-xs text-red-500" data-testid="name-error">
-                {errors.name}
-              </p>
-            )}
+            <FieldError id={errorId('name')} message={errors.name} testId="name-error" />
           </div>
 
           {/* Password Field */}
           <div className="space-y-2">
             <Label
-              htmlFor="password"
+              htmlFor={fieldId('password')}
               className="text-xs uppercase tracking-widest text-muted-foreground"
             >
               {t('password')}
             </Label>
             <div className="relative">
               <Input
-                id="password"
+                id={fieldId('password')}
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 value={password}
@@ -195,7 +194,9 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
                   if (errors.password) setErrors((prev) => ({ ...prev, password: '' }));
                 }}
                 disabled={isLoading}
-                className={errors.password ? 'border-red-500 pe-10' : 'pe-10'}
+                aria-invalid={Boolean(errors.password)}
+                aria-describedby={errors.password ? errorId('password') : undefined}
+                className={errors.password ? 'border-destructive pe-10' : 'pe-10'}
                 data-testid="create-user-password-input"
               />
               <PasswordVisibilityToggle
@@ -204,17 +205,17 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
                 testId="create-user-password-toggle"
               />
             </div>
-            {errors.password && (
-              <p className="text-xs text-red-500" data-testid="password-error">
-                {errors.password}
-              </p>
-            )}
+            <FieldError
+              id={errorId('password')}
+              message={errors.password}
+              testId="password-error"
+            />
           </div>
 
           {/* Role Field */}
           <div className="space-y-2">
             <Label
-              htmlFor="role"
+              htmlFor={fieldId('role')}
               className="text-xs uppercase tracking-widest text-muted-foreground"
             >
               {t('role')}
@@ -228,12 +229,14 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
               disabled={isLoading || isLoadingRoles}
             >
               <SelectTrigger
-                id="role"
-                className={errors.role ? 'border-red-500' : ''}
+                id={fieldId('role')}
+                aria-invalid={Boolean(errors.role)}
+                aria-describedby={errors.role ? errorId('role') : undefined}
+                className={errors.role ? 'border-destructive' : ''}
                 data-testid="create-user-role-select"
               >
                 {isLoadingRoles ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
                 ) : (
                   <SelectValue placeholder={t('selectRole')} />
                 )}
@@ -251,11 +254,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
                 ))}
               </SelectContent>
             </Select>
-            {errors.role && (
-              <p className="text-xs text-red-500" data-testid="role-error">
-                {errors.role}
-              </p>
-            )}
+            <FieldError id={errorId('role')} message={errors.role} testId="role-error" />
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
@@ -268,16 +267,14 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
             >
               {tCommon('cancel')}
             </Button>
-            <Button type="submit" disabled={isLoading} data-testid="submit-create-user-button">
-              {isLoading ? (
-                <>
-                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                  {t('creating')}
-                </>
-              ) : (
-                t('submit')
-              )}
-            </Button>
+            <SubmitButton
+              isLoading={isLoading}
+              loadingText={t('creating')}
+              className="h-10 mt-0 w-auto py-2"
+              testId="submit-create-user-button"
+            >
+              {t('submit')}
+            </SubmitButton>
           </DialogFooter>
         </form>
       </DialogContent>

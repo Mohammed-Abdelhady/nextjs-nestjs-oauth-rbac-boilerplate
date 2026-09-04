@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Link, usePathname } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
+import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
 import { cn } from '@/lib/utils';
 import {
   PermissionGuard,
@@ -125,6 +126,8 @@ function isNavSection(item: NavItem | NavSection): item is NavSection {
 export function DashboardNav({ onNavigate }: DashboardNavProps = {}) {
   const pathname = usePathname();
   const t = useTranslations('dashboard.nav');
+  const tShell = useTranslations('dashboard.shell');
+  const navId = useId();
 
   // Manage collapsed state for sections in localStorage
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => {
@@ -167,10 +170,11 @@ export function DashboardNav({ onNavigate }: DashboardNavProps = {}) {
           isActive
             ? 'bg-primary text-primary-foreground'
             : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+          FOCUS_RING_CLASSES,
         )}
         data-testid={`nav-link-${item.labelKey}`}
       >
-        <Icon className="h-4 w-4" />
+        <Icon className="h-4 w-4" aria-hidden="true" />
         {label}
       </Link>
     );
@@ -194,13 +198,14 @@ export function DashboardNav({ onNavigate }: DashboardNavProps = {}) {
   };
 
   return (
-    <nav className="space-y-1" data-testid="dashboard-nav">
+    <nav className="space-y-1" aria-label={tShell('mainNavigation')} data-testid="dashboard-nav">
       {NAV_SECTIONS.map((item) => {
         if (isNavSection(item)) {
           // Collapsible Section
           const isCollapsed = collapsedSections[item.titleKey] ?? false;
           const SectionIcon = item.icon;
           const sectionTitle = t(item.titleKey);
+          const sectionItemsId = `${navId}-${item.titleKey}`;
 
           return (
             <PermissionGuard
@@ -215,23 +220,31 @@ export function DashboardNav({ onNavigate }: DashboardNavProps = {}) {
                   type="button"
                   onClick={() => toggleSection(item.titleKey)}
                   aria-expanded={!isCollapsed}
-                  className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                  aria-controls={sectionItemsId}
+                  className={cn(
+                    'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
+                    FOCUS_RING_CLASSES,
+                  )}
                   data-testid={`nav-section-${item.titleKey}`}
                 >
                   <div className="flex items-center gap-3">
-                    <SectionIcon className="h-4 w-4" />
+                    <SectionIcon className="h-4 w-4" aria-hidden="true" />
                     <span>{sectionTitle}</span>
                   </div>
                   {isCollapsed ? (
-                    <ChevronRight className="h-4 w-4 rtl:rotate-180" />
+                    <ChevronRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
                   ) : (
-                    <ChevronDown className="h-4 w-4" />
+                    <ChevronDown className="h-4 w-4" aria-hidden="true" />
                   )}
                 </button>
 
                 {/* Section Items */}
                 {!isCollapsed && (
-                  <div className="ms-4 space-y-1 border-s border-border ps-3">
+                  <div
+                    id={sectionItemsId}
+                    className="ms-4 space-y-1 border-s border-border ps-3"
+                    data-testid={`nav-section-items-${item.titleKey}`}
+                  >
                     {item.items.map(renderNavItem)}
                   </div>
                 )}

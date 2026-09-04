@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter, usePathname } from '@/i18n/navigation';
+import { LoadingRegion } from '@/components/layout/LoadingRegion';
 import { useAppSelector } from '@/store/hooks';
 import { selectIsAuthenticated, selectAuthLoading } from '@/modules/auth/store/authSlice';
 
@@ -25,6 +27,7 @@ interface AuthGuardProps {
  * }
  */
 export function AuthGuard({ children }: Readonly<AuthGuardProps>) {
+  const t = useTranslations('common');
   const router = useRouter();
   const pathname = usePathname();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
@@ -43,14 +46,10 @@ export function AuthGuard({ children }: Readonly<AuthGuardProps>) {
     }
   }, [isAuthenticated, isAuthLoading, pathname, router]);
 
-  // Show nothing while loading auth state
-  if (isAuthLoading) {
-    return null;
-  }
-
-  // Show nothing while redirecting
-  if (!isAuthenticated) {
-    return null;
+  // Announce the wait instead of leaving a blank screen, both while the auth
+  // state resolves and while the redirect to login is in flight
+  if (isAuthLoading || !isAuthenticated) {
+    return <LoadingRegion label={t('loading')} testId="auth-guard-loading" />;
   }
 
   // User is authenticated, render children

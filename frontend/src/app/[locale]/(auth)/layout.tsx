@@ -12,7 +12,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <LanguageSwitcher />
         <ThemeSwitcher />
       </header>
-      {children}
+      <main id="main" tabIndex={-1} className="focus-visible:outline-none" data-testid="auth-main">
+        {children}
+      </main>
     </div>
   );
 }

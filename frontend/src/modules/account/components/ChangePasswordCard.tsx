@@ -4,10 +4,8 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { FormPassword, PasswordRules } from '@/components/forms';
+import { FormPassword, PasswordRules, SubmitButton } from '@/components/forms';
 import { useChangePasswordMutation } from '@/modules/auth/store';
 import { parseApiError } from '@/lib/apiError';
 import {
@@ -86,21 +84,13 @@ export function ChangePasswordCard() {
               data-testid="confirm-password-input"
             />
 
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full"
-              data-testid="change-password-submit"
+            <SubmitButton
+              isLoading={isLoading}
+              className="h-10 mt-0 w-full py-2"
+              testId="change-password-submit"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                  {t('submit')}...
-                </>
-              ) : (
-                t('submit')
-              )}
-            </Button>
+              {t('submit')}
+            </SubmitButton>
           </form>
         </FormProvider>
       </CardContent>

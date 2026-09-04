@@ -21,6 +21,7 @@ export { FormCheckbox, type FormCheckboxProps, type CheckboxOption } from './For
 export { FormRadio, type FormRadioProps, type RadioOption } from './FormRadio';
 export { FormSwitch, type FormSwitchProps } from './FormSwitch';
 export { FormRootError, type FormRootErrorProps } from './FormRootError';
+export { FieldError, type FieldErrorProps } from './FieldError';
 export { SubmitButton, type SubmitButtonProps } from './SubmitButton';
 export {
   PasswordVisibilityToggle,
