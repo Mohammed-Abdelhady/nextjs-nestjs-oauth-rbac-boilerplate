@@ -10,6 +10,7 @@ import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { isMongoDuplicateKeyError } from '../../common/utils/mongo-error.util';
 import {
+  OAuthCallbackParams,
   OAuthProfile,
   OAuthProviderStrategy,
 } from './oauth-provider.interface';
@@ -20,6 +21,8 @@ export interface OAuthLoginParams {
   redirectUri: string;
   codeVerifier?: string;
   nonce?: string;
+  /** Raw callback parameters, for providers that ship profile data with them. */
+  callbackParams?: OAuthCallbackParams;
   request: Request;
   response: Response;
 }
@@ -51,7 +54,7 @@ export class OAuthService {
       nonce: params.nonce,
     });
 
-    const profile = await strategy.fetchProfile(tokens);
+    const profile = await strategy.fetchProfile(tokens, params.callbackParams);
     this.assertEmailVerified(strategy, profile);
 
     const user = await this.findOrCreateUser(strategy.id, profile);

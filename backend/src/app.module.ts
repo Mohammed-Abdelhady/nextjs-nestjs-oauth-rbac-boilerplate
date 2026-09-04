@@ -17,6 +17,10 @@ import { OAuthModule } from './auth/oauth/oauth.module';
 import { GoogleOAuthStrategy } from './auth/oauth/strategies/google-oauth.strategy';
 import { GitHubOAuthStrategy } from './auth/oauth/strategies/github-oauth.strategy';
 import { FacebookOAuthStrategy } from './auth/oauth/strategies/facebook-oauth.strategy';
+import { MicrosoftOAuthStrategy } from './auth/oauth/strategies/microsoft-oauth.strategy';
+import { AppleOAuthStrategy } from './auth/oauth/strategies/apple-oauth.strategy';
+import { DiscordOAuthStrategy } from './auth/oauth/strategies/discord-oauth.strategy';
+import { LinkedInOAuthStrategy } from './auth/oauth/strategies/linkedin-oauth.strategy';
 import { AdminModule } from './admin/admin.module';
 import { CommonModule } from './common/common.module';
 import { MailModule } from './mail/mail.module';
@@ -81,6 +85,10 @@ import { Connection } from 'mongoose';
       GoogleOAuthStrategy,
       GitHubOAuthStrategy,
       FacebookOAuthStrategy,
+      MicrosoftOAuthStrategy,
+      AppleOAuthStrategy,
+      DiscordOAuthStrategy,
+      LinkedInOAuthStrategy,
     ]),
     AdminModule,
   ],

@@ -17,6 +17,7 @@ function strategy(
     supportsPkce: false,
     usesOidc: false,
     emailAlwaysVerified: true,
+    callbackMethod: 'GET',
     isEnabled: () => enabled,
     getAuthorizationUrl: () => `https://provider.test/${id}`,
     exchangeCode: () => Promise.resolve({ accessToken: 'token' }),

@@ -11,11 +11,13 @@ import {
   Matches,
   Max,
   Min,
-  MinLength,
 } from 'class-validator';
-import { OAUTH_STATE_SECRET_MIN_LENGTH } from '../auth/oauth/oauth.constants';
+import {
+  OAuthEnvironmentConfig,
+  OAuthEnvironmentVariables,
+} from './env.oauth.schema';
 
-export interface EnvironmentConfig {
+export interface EnvironmentConfig extends OAuthEnvironmentConfig {
   NODE_ENV: 'development' | 'production' | 'test';
   PORT: number;
   MONGO_URI: string;
@@ -23,18 +25,6 @@ export interface EnvironmentConfig {
   API_URL?: string;
   THROTTLE_TTL: number;
   THROTTLE_LIMIT: number;
-
-  OAUTH_STATE_SECRET: string;
-  OAUTH_CALLBACK_BASE_URL?: string;
-  OAUTH_GOOGLE_CLIENT_ID?: string;
-  OAUTH_GOOGLE_CLIENT_SECRET?: string;
-  OAUTH_GOOGLE_CALLBACK_URL?: string;
-  OAUTH_FACEBOOK_CLIENT_ID?: string;
-  OAUTH_FACEBOOK_CLIENT_SECRET?: string;
-  OAUTH_FACEBOOK_CALLBACK_URL?: string;
-  OAUTH_GITHUB_CLIENT_ID?: string;
-  OAUTH_GITHUB_CLIENT_SECRET?: string;
-  OAUTH_GITHUB_CALLBACK_URL?: string;
 
   SMTP_HOST?: string;
   SMTP_PORT?: number;
@@ -73,7 +63,7 @@ export function transformBoolean(
   };
 }
 
-export class EnvironmentVariables {
+export class EnvironmentVariables extends OAuthEnvironmentVariables {
   @IsEnum(['development', 'production', 'test'])
   @IsOptional()
   NODE_ENV: 'development' | 'production' | 'test' = 'development';
@@ -118,54 +108,6 @@ export class EnvironmentVariables {
   @Max(1000)
   @IsOptional()
   THROTTLE_LIMIT: number = 60;
-
-  @IsString()
-  @IsNotEmpty()
-  @MinLength(OAUTH_STATE_SECRET_MIN_LENGTH, {
-    message: `OAUTH_STATE_SECRET must be at least ${OAUTH_STATE_SECRET_MIN_LENGTH} characters`,
-  })
-  OAUTH_STATE_SECRET!: string;
-
-  @IsString()
-  @IsUrl({ require_protocol: true, require_tld: false })
-  @IsOptional()
-  OAUTH_CALLBACK_BASE_URL?: string;
-
-  @IsString()
-  @IsOptional()
-  OAUTH_GOOGLE_CLIENT_ID?: string;
-
-  @IsString()
-  @IsOptional()
-  OAUTH_GOOGLE_CLIENT_SECRET?: string;
-
-  @IsString()
-  @IsOptional()
-  OAUTH_GOOGLE_CALLBACK_URL?: string;
-
-  @IsString()
-  @IsOptional()
-  OAUTH_FACEBOOK_CLIENT_ID?: string;
-
-  @IsString()
-  @IsOptional()
-  OAUTH_FACEBOOK_CLIENT_SECRET?: string;
-
-  @IsString()
-  @IsOptional()
-  OAUTH_FACEBOOK_CALLBACK_URL?: string;
-
-  @IsString()
-  @IsOptional()
-  OAUTH_GITHUB_CLIENT_ID?: string;
-
-  @IsString()
-  @IsOptional()
-  OAUTH_GITHUB_CLIENT_SECRET?: string;
-
-  @IsString()
-  @IsOptional()
-  OAUTH_GITHUB_CALLBACK_URL?: string;
 
   @IsString()
   @IsOptional()

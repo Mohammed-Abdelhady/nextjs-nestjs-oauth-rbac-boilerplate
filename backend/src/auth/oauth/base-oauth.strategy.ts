@@ -6,6 +6,8 @@ import { OAuthProviderConfig } from '../../config/oauth.config';
 import {
   AuthorizationUrlParams,
   ExchangeCodeParams,
+  OAuthCallbackMethod,
+  OAuthCallbackParams,
   OAuthProfile,
   OAuthProviderStrategy,
   OAuthTokens,
@@ -28,6 +30,9 @@ export abstract class BaseOAuthStrategy implements OAuthProviderStrategy {
   abstract readonly usesOidc: boolean;
   abstract readonly emailAlwaysVerified: boolean;
 
+  /** Providers that post their callback override this with 'POST'. */
+  readonly callbackMethod: OAuthCallbackMethod = 'GET';
+
   protected readonly logger = new Logger(this.constructor.name);
 
   constructor(protected readonly configService: ConfigService) {}
@@ -44,7 +49,10 @@ export abstract class BaseOAuthStrategy implements OAuthProviderStrategy {
 
   abstract exchangeCode(params: ExchangeCodeParams): Promise<OAuthTokens>;
 
-  abstract fetchProfile(tokens: OAuthTokens): Promise<OAuthProfile>;
+  abstract fetchProfile(
+    tokens: OAuthTokens,
+    callbackParams?: OAuthCallbackParams,
+  ): Promise<OAuthProfile>;
 
   protected get providerConfig(): OAuthProviderConfig | undefined {
     return this.configService.get<OAuthProviderConfig>(

@@ -21,6 +21,13 @@ export interface OAuthProviderStrategy {
   /** Provider only ever returns addresses it has verified itself. */
   readonly emailAlwaysVerified: boolean;
 
+  /**
+   * HTTP method the provider uses for the callback. Apple posts a form when
+   * scopes are requested; everyone else redirects with a GET. A POST arrives
+   * cross site, so the state cookie for those providers needs SameSite=None.
+   */
+  readonly callbackMethod: OAuthCallbackMethod;
+
   /** True when the provider has credentials configured. */
   isEnabled(): boolean;
 
@@ -28,8 +35,20 @@ export interface OAuthProviderStrategy {
 
   exchangeCode(params: ExchangeCodeParams): Promise<OAuthTokens>;
 
-  fetchProfile(tokens: OAuthTokens): Promise<OAuthProfile>;
+  /**
+   * @param callbackParams raw query or form parameters of the callback, for
+   * providers that return profile data outside the token response
+   */
+  fetchProfile(
+    tokens: OAuthTokens,
+    callbackParams?: OAuthCallbackParams,
+  ): Promise<OAuthProfile>;
 }
+
+export type OAuthCallbackMethod = 'GET' | 'POST';
+
+/** Query string (GET) or form body (POST) of the provider callback. */
+export type OAuthCallbackParams = Record<string, string>;
 
 export interface AuthorizationUrlParams {
   state: string;

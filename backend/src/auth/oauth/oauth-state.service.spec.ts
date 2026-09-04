@@ -133,6 +133,42 @@ describe('OAuthStateService', () => {
       );
     });
 
+    it('relaxes SameSite for a cross site callback in production', () => {
+      const state = service('production');
+      const { response, cookie } = responseSpy();
+      const { payload } = state.create({
+        redirect: '/',
+        supportsPkce: false,
+        usesOidc: true,
+      });
+
+      state.write(response, 'apple', payload, true);
+
+      expect(cookie).toHaveBeenCalledWith(
+        'oauth_apple',
+        expect.any(String),
+        expect.objectContaining({ sameSite: 'none', secure: true }),
+      );
+    });
+
+    it('keeps SameSite=Lax for a cross site callback outside production', () => {
+      const state = service();
+      const { response, cookie } = responseSpy();
+      const { payload } = state.create({
+        redirect: '/',
+        supportsPkce: false,
+        usesOidc: true,
+      });
+
+      state.write(response, 'apple', payload, true);
+
+      expect(cookie).toHaveBeenCalledWith(
+        'oauth_apple',
+        expect.any(String),
+        expect.objectContaining({ sameSite: 'lax', secure: false }),
+      );
+    });
+
     it('clears with the same attributes it wrote', () => {
       const state = service();
       const { response, clearCookie } = responseSpy();

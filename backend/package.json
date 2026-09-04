@@ -47,6 +47,7 @@
     "class-validator": "^0.14.3",
     "cookie-parser": "^1.4.7",
     "helmet": "^8.1.0",
+    "jose": "^6.2.8",
     "mongoose": "^8.21.0",
     "nodemailer": "^8.0.5",
     "reflect-metadata": "^0.2.2",
@@ -94,8 +95,18 @@
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
+      "^.+\\.(t|j)s$": [
+        "ts-jest",
+        {
+          "tsconfig": {
+            "allowJs": true
+          }
+        }
+      ]
     },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!jose/)"
+    ],
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],

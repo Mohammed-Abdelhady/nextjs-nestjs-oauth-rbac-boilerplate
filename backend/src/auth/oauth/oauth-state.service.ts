@@ -74,9 +74,18 @@ export class OAuthStateService {
     };
   }
 
-  write(res: Response, provider: string, payload: OAuthStatePayload): void {
+  /**
+   * @param crossSite true for providers whose callback arrives as a cross site
+   * POST, which a SameSite=Lax cookie would not be sent with
+   */
+  write(
+    res: Response,
+    provider: string,
+    payload: OAuthStatePayload,
+    crossSite = false,
+  ): void {
     res.cookie(this.cookieName(provider), this.encode(payload), {
-      ...this.cookieOptions(),
+      ...this.cookieOptions(crossSite),
       maxAge: OAUTH_STATE_TTL_MS,
     });
   }
@@ -137,11 +146,19 @@ export class OAuthStateService {
     }
   }
 
-  private cookieOptions(): CookieOptions {
+  /**
+   * SameSite=None only holds up with Secure, so it is limited to production.
+   * A cross site provider therefore needs an HTTPS callback URL; in development
+   * the cookie stays Lax and the POST callback drops it.
+   */
+  private cookieOptions(crossSite = false): CookieOptions {
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production';
+
     return {
       httpOnly: true,
-      secure: this.configService.get<string>('NODE_ENV') === 'production',
-      sameSite: 'lax',
+      secure: isProduction,
+      sameSite: crossSite && isProduction ? 'none' : 'lax',
       path: this.cookiePath(),
     };
   }

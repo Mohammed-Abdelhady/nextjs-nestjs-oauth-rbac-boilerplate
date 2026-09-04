@@ -21,6 +21,9 @@
         "backend/src/auth/oauth/oauth.service.ts",
         "backend/src/auth/oauth/utils/id-token.util.ts",
         "backend/src/auth/oauth/utils/redirect.util.ts",
+        "backend/src/auth/oauth/utils/callback-params.util.ts",
+        "backend/src/auth/oauth/utils/callback-params.util.spec.ts",
+        "backend/src/auth/oauth/strategies/oauth-strategy.harness-spec.ts",
         "backend/src/auth/oauth/validators/is-registered-provider.validator.ts",
         "backend/src/user/services/account-linking.service.ts",
         "backend/src/user/services/profile-sync.service.ts",
@@ -136,48 +139,79 @@
       "docs": []
     },
     "microsoft": {
-      "status": "planned",
       "label": "Microsoft",
       "description": "Sign in with a Microsoft account or Entra ID tenant.",
       "kind": "oauth",
       "default": false,
-      "files": [],
-      "envVars": [],
-      "requires": [],
-      "docs": []
+      "files": [
+        "backend/src/auth/oauth/strategies/microsoft-oauth.strategy.ts",
+        "backend/src/auth/oauth/strategies/microsoft-oauth.strategy.spec.ts"
+      ],
+      "envVars": [
+        "OAUTH_MICROSOFT_CLIENT_ID",
+        "OAUTH_MICROSOFT_CLIENT_SECRET",
+        "OAUTH_MICROSOFT_CALLBACK_URL",
+        "OAUTH_MICROSOFT_TENANT"
+      ],
+      "requires": ["oauth-core"],
+      "docs": ["docs/setup-microsoft-oauth.md"]
     },
     "apple": {
-      "status": "planned",
       "label": "Apple",
-      "description": "Sign in with Apple.",
+      "description": "Sign in with Apple. Needs an HTTPS callback; Apple posts it as a form.",
       "kind": "oauth",
       "default": false,
-      "files": [],
-      "envVars": [],
-      "requires": [],
-      "docs": []
+      "files": [
+        "backend/src/auth/oauth/strategies/apple-oauth.strategy.ts",
+        "backend/src/auth/oauth/strategies/apple-oauth.strategy.spec.ts",
+        "backend/src/auth/oauth/utils/apple-client-secret.util.ts",
+        "backend/src/auth/oauth/utils/apple-client-secret.util.spec.ts",
+        "backend/src/auth/oauth/utils/apple-user-payload.util.ts",
+        "backend/src/auth/oauth/utils/apple-user-payload.util.spec.ts"
+      ],
+      "envVars": [
+        "OAUTH_APPLE_CLIENT_ID",
+        "OAUTH_APPLE_CALLBACK_URL",
+        "OAUTH_APPLE_TEAM_ID",
+        "OAUTH_APPLE_KEY_ID",
+        "OAUTH_APPLE_PRIVATE_KEY"
+      ],
+      "requires": ["oauth-core"],
+      "docs": ["docs/setup-apple-oauth.md"]
     },
     "discord": {
-      "status": "planned",
       "label": "Discord",
       "description": "Sign in with a Discord account.",
       "kind": "oauth",
       "default": false,
-      "files": [],
-      "envVars": [],
-      "requires": [],
-      "docs": []
+      "files": [
+        "backend/src/auth/oauth/strategies/discord-oauth.strategy.ts",
+        "backend/src/auth/oauth/strategies/discord-oauth.strategy.spec.ts"
+      ],
+      "envVars": [
+        "OAUTH_DISCORD_CLIENT_ID",
+        "OAUTH_DISCORD_CLIENT_SECRET",
+        "OAUTH_DISCORD_CALLBACK_URL"
+      ],
+      "requires": ["oauth-core"],
+      "docs": ["docs/setup-discord-oauth.md"]
     },
     "linkedin": {
-      "status": "planned",
       "label": "LinkedIn",
-      "description": "Sign in with LinkedIn OIDC.",
+      "description": "Sign in with LinkedIn OIDC. Needs the OpenID Connect product on the app.",
       "kind": "oauth",
       "default": false,
-      "files": [],
-      "envVars": [],
-      "requires": [],
-      "docs": []
+      "files": [
+        "backend/src/auth/oauth/strategies/linkedin-oauth.strategy.ts",
+        "backend/src/auth/oauth/strategies/linkedin-oauth.strategy.spec.ts"
+      ],
+      "envVars": [
+        "OAUTH_LINKEDIN_CLIENT_ID",
+        "OAUTH_LINKEDIN_CLIENT_SECRET",
+        "OAUTH_LINKEDIN_CALLBACK_URL"
+      ],
+      "requires": ["oauth-core"],
+      "docs": ["docs/setup-linkedin-oauth.md"]
     },
     "gitlab": {
       "status": "planned",
