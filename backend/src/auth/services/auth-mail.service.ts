@@ -51,6 +51,24 @@ export class AuthMailService {
   }
 
   /**
+   * Mail a one-time sign-in link.
+   *
+   * @param email - Recipient address
+   * @param link - Client URL carrying the token
+   * @param expiresInMinutes - Minutes until the link stops working
+   */
+  async sendMagicLink(
+    email: string,
+    link: string,
+    expiresInMinutes: number,
+  ): Promise<void> {
+    await this.send(
+      () => this.mailService.sendMagicLink(email, link, expiresInMinutes),
+      'Failed to send sign-in link email',
+    );
+  }
+
+  /**
    * Tell an account holder that their address was used in a registration.
    *
    * @param email - Recipient address

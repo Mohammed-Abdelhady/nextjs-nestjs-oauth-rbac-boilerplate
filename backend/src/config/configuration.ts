@@ -37,6 +37,14 @@ export interface Configuration {
     codeExpiresIn: number;
     maxAttempts: number;
   };
+  auth: {
+    passwordEnabled: boolean;
+  };
+  magicLink: {
+    enabled: boolean;
+    expiresIn: number;
+    maxPerHour: number;
+  };
   swagger: {
     enabled: boolean;
   };
@@ -46,6 +54,10 @@ export interface Configuration {
   };
   oauth: OAuthConfig;
 }
+
+/** Magic links need somewhere to send mail from, so they follow SMTP. */
+const isSmtpConfigured = (): boolean =>
+  Boolean(process.env.SMTP_HOST && process.env.EMAIL_FROM);
 
 const configuration = (): Configuration => {
   const port = Number.parseInt(process.env.PORT || '3000', 10);
@@ -96,6 +108,22 @@ const configuration = (): Configuration => {
       ),
       maxAttempts: Number.parseInt(
         process.env.ACTIVATION_MAX_ATTEMPTS || '5',
+        10,
+      ),
+    },
+    auth: {
+      passwordEnabled: process.env.AUTH_PASSWORD_ENABLED !== 'false',
+    },
+    magicLink: {
+      enabled: process.env.MAGIC_LINK_ENABLED
+        ? process.env.MAGIC_LINK_ENABLED === 'true'
+        : isSmtpConfigured(),
+      expiresIn: Number.parseInt(
+        process.env.MAGIC_LINK_EXPIRES_IN || '900000',
+        10,
+      ),
+      maxPerHour: Number.parseInt(
+        process.env.MAGIC_LINK_MAX_PER_HOUR || '5',
         10,
       ),
     },

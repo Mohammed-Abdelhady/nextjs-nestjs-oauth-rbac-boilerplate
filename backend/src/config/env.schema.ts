@@ -41,6 +41,12 @@ export interface EnvironmentConfig extends OAuthEnvironmentConfig {
   ACTIVATION_CODE_EXPIRES_IN?: number;
   ACTIVATION_MAX_ATTEMPTS?: number;
 
+  AUTH_PASSWORD_ENABLED?: boolean;
+
+  MAGIC_LINK_ENABLED?: boolean;
+  MAGIC_LINK_EXPIRES_IN?: number;
+  MAGIC_LINK_MAX_PER_HOUR?: number;
+
   SWAGGER_ENABLED?: boolean;
   PROFILE_SYNC_ENABLED?: boolean;
   PROFILE_SYNC_FIELDS?: string;
@@ -166,6 +172,33 @@ export class EnvironmentVariables extends OAuthEnvironmentVariables {
   @Max(10)
   @IsOptional()
   ACTIVATION_MAX_ATTEMPTS: number = 5;
+
+  @Transform(transformBoolean(true))
+  @IsBoolean()
+  @IsOptional()
+  AUTH_PASSWORD_ENABLED: boolean = true;
+
+  /**
+   * Left unset, magic links follow SMTP: on when a host and a sender address
+   * are configured, off otherwise. configuration.ts resolves that default.
+   */
+  @Transform(transformBoolean())
+  @IsBoolean()
+  @IsOptional()
+  MAGIC_LINK_ENABLED?: boolean;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(60000)
+  @IsOptional()
+  MAGIC_LINK_EXPIRES_IN: number = 900000;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  @IsOptional()
+  MAGIC_LINK_MAX_PER_HOUR: number = 5;
 
   @Transform(transformBoolean(false))
   @IsBoolean()

@@ -27,6 +27,14 @@ export enum ErrorCode {
   /** Failed to send email */
   EMAIL_SEND_FAILED = 'EMAIL_SEND_FAILED',
 
+  // Magic link errors
+  /** Magic link token is unknown, already used, or expired */
+  MAGIC_LINK_INVALID = 'MAGIC_LINK_INVALID',
+
+  // Feature flag errors
+  /** Route belongs to an authentication method this deployment turned off */
+  FEATURE_DISABLED = 'FEATURE_DISABLED',
+
   // Session errors
   /** Authentication session required */
   SESSION_REQUIRED = 'SESSION_REQUIRED',

@@ -106,15 +106,25 @@
       "docs": ["docs/setup-facebook-oauth.md", "docs/facebook-oauth-permissions.md"]
     },
     "magic-link": {
-      "status": "planned",
+      "status": "available",
       "label": "Magic link",
-      "description": "Sign in with a one-time link sent by email.",
+      "description": "Sign in with a one-time link sent by email. Works on its own or next to email and password.",
       "kind": "passwordless",
       "default": false,
-      "files": [],
-      "envVars": [],
-      "requires": ["email-password"],
-      "docs": []
+      "files": ["backend/src/auth/magic-link/**"],
+      "envVars": [
+        "MAGIC_LINK_ENABLED",
+        "MAGIC_LINK_EXPIRES_IN",
+        "MAGIC_LINK_MAX_PER_HOUR",
+        "SMTP_HOST",
+        "SMTP_PORT",
+        "SMTP_SECURE",
+        "SMTP_USER",
+        "SMTP_PASS",
+        "EMAIL_FROM"
+      ],
+      "requires": [],
+      "docs": ["docs/setup-magic-link.md"]
     },
     "totp": {
       "status": "planned",

@@ -20,6 +20,8 @@ import { SessionCookieService } from './services/session-cookie.service';
 import { VerificationCodeService } from './services/verification-code.service';
 import { PasswordResetCodeService } from './services/password-reset-code.service';
 import { AuthMailService } from './services/auth-mail.service';
+import { AuthFeaturesService } from './services/auth-features.service';
+import { FeatureEnabledGuard } from './guards/feature-enabled.guard';
 import { CommonModule } from '../common/common.module';
 import { MailModule } from '../mail/mail.module';
 import { UserModule } from '../user/user.module';
@@ -49,6 +51,8 @@ import { AuthGuard } from './guards/auth.guard';
     VerificationCodeService,
     PasswordResetCodeService,
     AuthMailService,
+    AuthFeaturesService,
+    FeatureEnabledGuard,
     AuthGuard,
     // Registered here, not in AppModule: AuthGuard injects the Role model,
     // which only resolves inside this module's context.
@@ -62,6 +66,9 @@ import { AuthGuard } from './guards/auth.guard';
     SessionService,
     SessionCookieService,
     VerificationCodeService,
+    AuthMailService,
+    AuthFeaturesService,
+    FeatureEnabledGuard,
     AuthGuard,
   ],
 })

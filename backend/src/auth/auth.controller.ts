@@ -18,6 +18,8 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ResendActivationDto } from './dto/resend-activation.dto';
 import { Public } from './decorators/public.decorator';
+import { RequiresFeature } from './decorators/requires-feature.decorator';
+import { AuthFeature } from './enums/auth-feature.enum';
 import { Throttle } from '@nestjs/throttler';
 import { SessionCookieService } from './services/session-cookie.service';
 import {
@@ -28,6 +30,13 @@ import {
   THROTTLE_REGISTER,
 } from '../common/constants/throttle';
 
+/**
+ * Password sign-in and the account lifecycle around it.
+ *
+ * The four routes that need a password close with AUTH_PASSWORD_ENABLED=false.
+ * Activation, resend and logout stay open: an activation code also confirms an
+ * address an admin moved an account to, which has nothing to do with passwords.
+ */
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
@@ -41,6 +50,7 @@ export class AuthController {
    * POST /api/auth/register
    */
   @Public()
+  @RequiresFeature(AuthFeature.PASSWORD)
   @Throttle(THROTTLE_REGISTER)
   @Post('register')
   @HttpCode(HttpStatus.OK)
@@ -99,6 +109,7 @@ export class AuthController {
    * POST /api/auth/login
    */
   @Public()
+  @RequiresFeature(AuthFeature.PASSWORD)
   @Throttle(THROTTLE_LOGIN)
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -143,6 +154,7 @@ export class AuthController {
    * POST /api/auth/forgot-password
    */
   @Public()
+  @RequiresFeature(AuthFeature.PASSWORD)
   @Throttle(THROTTLE_FORGOT_PASSWORD)
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
@@ -162,6 +174,7 @@ export class AuthController {
    * POST /api/auth/reset-password
    */
   @Public()
+  @RequiresFeature(AuthFeature.PASSWORD)
   @Throttle(THROTTLE_RESET_PASSWORD)
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)

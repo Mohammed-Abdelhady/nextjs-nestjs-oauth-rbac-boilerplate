@@ -25,7 +25,7 @@ import { SessionCookieService } from './services/session-cookie.service';
 import { SessionService } from './services/session.service';
 import { VerificationCodeService } from './services/verification-code.service';
 import { PasswordResetCodeService } from './services/password-reset-code.service';
-import { getEffectivePermissions } from './utils/permissions.util';
+import { toAuthenticatedUser } from './utils/authenticated-user.util';
 import { resolveActivatedUser } from './utils/activation.util';
 import { generateVerificationCode } from './utils/verification-code.util';
 
@@ -183,17 +183,9 @@ export class AuthService {
     this.logger.log(`User logged in: ${user.email}`);
     this.sessionCookieService.set(response, sessionToken);
 
-    const permissions = await getEffectivePermissions(user, this.roleModel);
-
-    return LoginResponseDto.success({
-      id: user._id.toString(),
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      authProvider: user.authProvider,
-      isVerified: user.isVerified,
-      permissions,
-    });
+    return LoginResponseDto.success(
+      await toAuthenticatedUser(user, this.roleModel),
+    );
   }
 
   async logout(

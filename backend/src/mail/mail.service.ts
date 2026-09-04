@@ -148,6 +148,56 @@ export class MailService {
   }
 
   /**
+   * Send a one-time sign-in link.
+   * The link is escaped before it reaches the HTML, in the text of the anchor
+   * and in its href.
+   * @param email - Recipient email address
+   * @param link - Client URL carrying the one-time token
+   * @param expiresInMinutes - Minutes until the link stops working
+   */
+  async sendMagicLink(
+    email: string,
+    link: string,
+    expiresInMinutes: number,
+  ): Promise<void> {
+    const safeLink = escapeHtml(link);
+    const safeExpiry = escapeHtml(String(expiresInMinutes));
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Your Sign-In Link</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #333;">Your Sign-In Link</h2>
+            <p>Use this link to sign in. It works once.</p>
+            <div style="margin: 20px 0;">
+              <a href="${safeLink}" style="background-color: #007bff; color: #ffffff; padding: 12px 20px; border-radius: 5px; text-decoration: none; display: inline-block;">Sign in</a>
+            </div>
+            <p>If the button does not work, paste this address into your browser:</p>
+            <p style="word-break: break-all; color: #555;">${safeLink}</p>
+            <p>The link expires in ${safeExpiry} minutes.</p>
+            <p>If you did not request this, ignore this email.</p>
+            <p>Best regards,<br>The Team</p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const text = `Use this link to sign in. It works once:\n\n${link}\n\nThe link expires in ${expiresInMinutes} minutes.\n\nIf you did not request this, ignore this email.\n\nBest regards,\nThe Team`;
+
+    await this.sendMail({
+      to: email,
+      subject: 'Your Sign-In Link',
+      html,
+      text,
+    });
+  }
+
+  /**
    * Tell an account holder that their address was used in a registration.
    * Sent instead of an activation code, so registration answers the same way
    * for an address that has an account and one that does not.

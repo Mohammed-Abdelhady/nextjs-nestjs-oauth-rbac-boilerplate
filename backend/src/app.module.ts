@@ -13,6 +13,8 @@ import { HealthModule } from './health/health.module';
 import { UserModule } from './user/user.module';
 import { SessionModule } from './session/session.module';
 import { AuthModule } from './auth/auth.module';
+import { AuthMethodsController } from './auth/auth-methods.controller';
+import { MagicLinkModule } from './auth/magic-link/magic-link.module';
 import { OAuthModule } from './auth/oauth/oauth.module';
 import { GoogleOAuthStrategy } from './auth/oauth/strategies/google-oauth.strategy';
 import { GitHubOAuthStrategy } from './auth/oauth/strategies/github-oauth.strategy';
@@ -90,9 +92,12 @@ import { Connection } from 'mongoose';
       DiscordOAuthStrategy,
       LinkedInOAuthStrategy,
     ]),
+    MagicLinkModule,
     AdminModule,
   ],
-  controllers: [AppController],
+  // AuthMethodsController sits here because this is the only context holding
+  // both the auth configuration and the OAuth registry.
+  controllers: [AppController, AuthMethodsController],
   providers: [
     AppService,
     {
