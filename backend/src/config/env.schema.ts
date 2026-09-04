@@ -1,0 +1,218 @@
+import 'reflect-metadata';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Matches,
+  Max,
+  Min,
+} from 'class-validator';
+
+export interface EnvironmentConfig {
+  NODE_ENV: 'development' | 'production' | 'test';
+  PORT: number;
+  MONGO_URI: string;
+  CLIENT_URL: string;
+  THROTTLE_TTL: number;
+  THROTTLE_LIMIT: number;
+
+  OAUTH_GOOGLE_CLIENT_ID?: string;
+  OAUTH_GOOGLE_CLIENT_SECRET?: string;
+  OAUTH_GOOGLE_CALLBACK_URL?: string;
+  OAUTH_FACEBOOK_CLIENT_ID?: string;
+  OAUTH_FACEBOOK_CLIENT_SECRET?: string;
+  OAUTH_FACEBOOK_CALLBACK_URL?: string;
+  OAUTH_GITHUB_CLIENT_ID?: string;
+  OAUTH_GITHUB_CLIENT_SECRET?: string;
+  OAUTH_GITHUB_CALLBACK_URL?: string;
+
+  SMTP_HOST?: string;
+  SMTP_PORT?: number;
+  SMTP_SECURE?: boolean;
+  SMTP_USER?: string;
+  SMTP_PASS?: string;
+  EMAIL_FROM?: string;
+
+  BCRYPT_ROUNDS?: number;
+
+  SESSION_COOKIE_NAME?: string;
+  SESSION_COOKIE_MAX_AGE?: number;
+
+  ACTIVATION_CODE_EXPIRES_IN?: number;
+  ACTIVATION_MAX_ATTEMPTS?: number;
+
+  SWAGGER_ENABLED?: boolean;
+  PROFILE_SYNC_ENABLED?: boolean;
+  PROFILE_SYNC_FIELDS?: string;
+}
+
+export function transformBoolean(
+  defaultValue?: boolean,
+): (params: { value: unknown }) => unknown {
+  return ({ value }: { value: unknown }): unknown => {
+    if (value === undefined || value === null || value === '') {
+      return defaultValue;
+    }
+    if (value === 'true' || value === true) {
+      return true;
+    }
+    if (value === 'false' || value === false) {
+      return false;
+    }
+    return value;
+  };
+}
+
+export class EnvironmentVariables {
+  @IsEnum(['development', 'production', 'test'])
+  @IsOptional()
+  NODE_ENV: 'development' | 'production' | 'test' = 'development';
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1000)
+  @Max(65535)
+  @IsOptional()
+  PORT: number = 3000;
+
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^mongodb(\+srv)?:\/\/.+$/, {
+    message:
+      'MONGO_URI must be a valid MongoDB connection string starting with mongodb:// or mongodb+srv://',
+  })
+  MONGO_URI!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsUrl({ require_protocol: true, require_tld: false })
+  @IsOptional()
+  CLIENT_URL: string = 'http://localhost:3000';
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(3600)
+  @IsOptional()
+  THROTTLE_TTL: number = 60;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  @IsOptional()
+  THROTTLE_LIMIT: number = 60;
+
+  @IsString()
+  @IsOptional()
+  OAUTH_GOOGLE_CLIENT_ID?: string;
+
+  @IsString()
+  @IsOptional()
+  OAUTH_GOOGLE_CLIENT_SECRET?: string;
+
+  @IsString()
+  @IsOptional()
+  OAUTH_GOOGLE_CALLBACK_URL?: string;
+
+  @IsString()
+  @IsOptional()
+  OAUTH_FACEBOOK_CLIENT_ID?: string;
+
+  @IsString()
+  @IsOptional()
+  OAUTH_FACEBOOK_CLIENT_SECRET?: string;
+
+  @IsString()
+  @IsOptional()
+  OAUTH_FACEBOOK_CALLBACK_URL?: string;
+
+  @IsString()
+  @IsOptional()
+  OAUTH_GITHUB_CLIENT_ID?: string;
+
+  @IsString()
+  @IsOptional()
+  OAUTH_GITHUB_CLIENT_SECRET?: string;
+
+  @IsString()
+  @IsOptional()
+  OAUTH_GITHUB_CALLBACK_URL?: string;
+
+  @IsString()
+  @IsOptional()
+  SMTP_HOST?: string;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(65535)
+  @IsOptional()
+  SMTP_PORT?: number;
+
+  @Transform(transformBoolean())
+  @IsBoolean()
+  @IsOptional()
+  SMTP_SECURE?: boolean;
+
+  @IsString()
+  @IsOptional()
+  SMTP_USER?: string;
+
+  @IsString()
+  @IsOptional()
+  SMTP_PASS?: string;
+
+  @IsString()
+  @IsOptional()
+  EMAIL_FROM?: string;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(4)
+  @Max(12)
+  @IsOptional()
+  BCRYPT_ROUNDS: number = 10;
+
+  @IsString()
+  @IsOptional()
+  SESSION_COOKIE_NAME?: string;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1000)
+  @IsOptional()
+  SESSION_COOKIE_MAX_AGE: number = 604800000;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(60000)
+  @IsOptional()
+  ACTIVATION_CODE_EXPIRES_IN: number = 900000;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(10)
+  @IsOptional()
+  ACTIVATION_MAX_ATTEMPTS: number = 5;
+
+  @Transform(transformBoolean(false))
+  @IsBoolean()
+  @IsOptional()
+  SWAGGER_ENABLED: boolean = false;
+
+  @Transform(transformBoolean(true))
+  @IsBoolean()
+  @IsOptional()
+  PROFILE_SYNC_ENABLED: boolean = true;
+
+  @IsString()
+  @IsOptional()
+  PROFILE_SYNC_FIELDS: string = 'name,picture';
+}

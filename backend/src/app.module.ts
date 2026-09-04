@@ -18,7 +18,8 @@ import { MailModule } from './mail/mail.module';
 import { DatabaseModule } from './database/database.module';
 import { RoleModule } from './role/role.module';
 import { MigrationModule } from './database/migrations/migration.module';
-import configuration, { EnvironmentVariables } from './config/configuration';
+import configuration from './config/configuration';
+import { validateEnvironment } from './config/env.validation';
 import { Connection } from 'mongoose';
 
 @Module({
@@ -31,11 +32,7 @@ import { Connection } from 'mongoose';
         allowUnknown: true,
         abortOnError: true,
       },
-      validate: (config: Record<string, unknown>) => {
-        const validatedConfig = new EnvironmentVariables();
-        Object.assign(validatedConfig, config);
-        return validatedConfig;
-      },
+      validate: validateEnvironment,
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],

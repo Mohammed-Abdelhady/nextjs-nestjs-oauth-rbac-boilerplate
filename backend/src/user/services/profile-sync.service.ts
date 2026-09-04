@@ -58,10 +58,13 @@ export class ProfileSyncService {
     }
 
     // Get sync fields from configuration (default: name, picture)
-    const syncFields =
-      this.configService
-        .get<string>('PROFILE_SYNC_FIELDS', 'name,picture')
-        .split(',') || [];
+    const rawFields =
+      this.configService.get<string>('profileSync.fields') ||
+      this.configService.get<string>('PROFILE_SYNC_FIELDS', 'name,picture');
+    const syncFields = rawFields
+      .split(',')
+      .map((field: string): string => field.trim())
+      .filter(Boolean);
 
     let updated = false;
 
@@ -189,10 +192,9 @@ export class ProfileSyncService {
     disabled: true, // Disabled until OAuth token storage implemented
   })
   async scheduleProfileSync(): Promise<void> {
-    const isEnabled = this.configService.get<boolean>(
-      'PROFILE_SYNC_ENABLED',
-      false,
-    );
+    const isEnabled =
+      this.configService.get<boolean>('profileSync.enabled') ??
+      this.configService.get<boolean>('PROFILE_SYNC_ENABLED', true);
 
     if (!isEnabled) {
       this.logger.debug('Automatic profile sync is disabled');

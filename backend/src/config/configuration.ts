@@ -1,217 +1,7 @@
-import {
-  IsBoolean,
-  IsEnum,
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsUrl,
-  Max,
-  Min,
-} from 'class-validator';
+import { createOAuthConfig, OAuthConfigMap } from './oauth.config';
 
-/**
- * Environment configuration interface
- * Defines all required and optional environment variables for the application
- */
-export interface EnvironmentConfig {
-  // Application
-  NODE_ENV: 'development' | 'production' | 'test';
-  PORT: number;
+export { EnvironmentConfig, EnvironmentVariables } from './env.schema';
 
-  // Database
-  MONGO_URI: string;
-
-  // Client
-  CLIENT_URL: string;
-
-  // Rate Limiting
-  THROTTLE_TTL: number;
-  THROTTLE_LIMIT: number;
-
-  // Security (optional, will be added later)
-  JWT_SECRET?: string;
-  MAIL_KEY?: string;
-  GOOGLE_CLIENT_ID?: string;
-  FACEBOOK_APP_ID?: string;
-
-  // OAuth
-  OAUTH_GOOGLE_CLIENT_ID?: string;
-  OAUTH_GOOGLE_CLIENT_SECRET?: string;
-  OAUTH_GOOGLE_CALLBACK_URL?: string;
-  OAUTH_FACEBOOK_CLIENT_ID?: string;
-  OAUTH_FACEBOOK_CLIENT_SECRET?: string;
-  OAUTH_FACEBOOK_CALLBACK_URL?: string;
-  OAUTH_GITHUB_CLIENT_ID?: string;
-  OAUTH_GITHUB_CLIENT_SECRET?: string;
-  OAUTH_GITHUB_CALLBACK_URL?: string;
-
-  // SMTP
-  SMTP_HOST?: string;
-  SMTP_PORT?: number;
-  SMTP_SECURE?: boolean;
-  SMTP_USER?: string;
-  SMTP_PASS?: string;
-  EMAIL_FROM?: string;
-
-  // Bcrypt
-  BCRYPT_ROUNDS?: number;
-
-  // Session
-  SESSION_COOKIE_NAME?: string;
-  SESSION_COOKIE_MAX_AGE?: number;
-
-  // Activation
-  ACTIVATION_CODE_EXPIRES_IN?: number;
-  ACTIVATION_MAX_ATTEMPTS?: number;
-}
-
-/**
- * Environment configuration class with validation decorators
- * Uses class-validator to ensure environment variables are valid on startup
- */
-export class EnvironmentVariables {
-  @IsEnum(['development', 'production', 'test'])
-  NODE_ENV: 'development' | 'production' | 'test' = 'development';
-
-  @IsInt()
-  @Min(1000)
-  @Max(65535)
-  PORT: number = 3000;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsUrl({ require_protocol: true })
-  MONGO_URI: string = 'mongodb://localhost:27017/authboiler';
-
-  @IsString()
-  @IsNotEmpty()
-  @IsUrl({ require_protocol: true })
-  CLIENT_URL: string = 'http://localhost:3000';
-
-  @IsInt()
-  @Min(1)
-  @Max(3600)
-  THROTTLE_TTL: number = 60;
-
-  @IsInt()
-  @Min(1)
-  @Max(1000)
-  THROTTLE_LIMIT: number = 60;
-
-  @IsString()
-  @IsOptional()
-  JWT_SECRET?: string;
-
-  @IsString()
-  @IsOptional()
-  MAIL_KEY?: string;
-
-  @IsString()
-  @IsOptional()
-  GOOGLE_CLIENT_ID?: string;
-
-  @IsString()
-  @IsOptional()
-  FACEBOOK_APP_ID?: string;
-
-  @IsString()
-  @IsOptional()
-  OAUTH_GOOGLE_CLIENT_ID?: string;
-
-  @IsString()
-  @IsOptional()
-  OAUTH_GOOGLE_CLIENT_SECRET?: string;
-
-  @IsString()
-  @IsOptional()
-  OAUTH_GOOGLE_CALLBACK_URL?: string;
-
-  @IsString()
-  @IsOptional()
-  OAUTH_FACEBOOK_CLIENT_ID?: string;
-
-  @IsString()
-  @IsOptional()
-  OAUTH_FACEBOOK_CLIENT_SECRET?: string;
-
-  @IsString()
-  @IsOptional()
-  OAUTH_FACEBOOK_CALLBACK_URL?: string;
-
-  @IsString()
-  @IsOptional()
-  OAUTH_GITHUB_CLIENT_ID?: string;
-
-  @IsString()
-  @IsOptional()
-  OAUTH_GITHUB_CLIENT_SECRET?: string;
-
-  @IsString()
-  @IsOptional()
-  OAUTH_GITHUB_CALLBACK_URL?: string;
-
-  // SMTP
-  @IsString()
-  @IsOptional()
-  SMTP_HOST?: string;
-
-  @IsInt()
-  @Min(1)
-  @Max(65535)
-  @IsOptional()
-  SMTP_PORT?: number;
-
-  @IsBoolean()
-  @IsOptional()
-  SMTP_SECURE?: boolean;
-
-  @IsString()
-  @IsOptional()
-  SMTP_USER?: string;
-
-  @IsString()
-  @IsOptional()
-  SMTP_PASS?: string;
-
-  @IsString()
-  @IsOptional()
-  EMAIL_FROM?: string;
-
-  // Bcrypt
-  @IsInt()
-  @Min(4)
-  @Max(12)
-  @IsOptional()
-  BCRYPT_ROUNDS?: number;
-
-  // Session
-  @IsString()
-  @IsOptional()
-  SESSION_COOKIE_NAME?: string;
-
-  @IsInt()
-  @Min(1000)
-  @IsOptional()
-  SESSION_COOKIE_MAX_AGE?: number;
-
-  // Activation
-  @IsInt()
-  @Min(60000)
-  @IsOptional()
-  ACTIVATION_CODE_EXPIRES_IN?: number;
-
-  @IsInt()
-  @Min(1)
-  @Max(10)
-  @IsOptional()
-  ACTIVATION_MAX_ATTEMPTS?: number;
-}
-
-/**
- * Configuration factory function
- * Returns a structured configuration object with type safety
- */
 export interface Configuration {
   server: {
     port: number;
@@ -246,26 +36,14 @@ export interface Configuration {
     codeExpiresIn: number;
     maxAttempts: number;
   };
-  oauth: {
-    google: {
-      enabled: boolean;
-      clientId?: string;
-      clientSecret?: string;
-      callbackUrl?: string;
-    };
-    facebook: {
-      enabled: boolean;
-      clientId?: string;
-      clientSecret?: string;
-      callbackUrl?: string;
-    };
-    github: {
-      enabled: boolean;
-      clientId?: string;
-      clientSecret?: string;
-      callbackUrl?: string;
-    };
+  swagger: {
+    enabled: boolean;
   };
+  profileSync: {
+    enabled: boolean;
+    fields: string;
+  };
+  oauth: OAuthConfigMap;
 }
 
 const configuration = (): Configuration => ({
@@ -315,38 +93,14 @@ const configuration = (): Configuration => ({
       10,
     ),
   },
-  oauth: {
-    google: {
-      enabled: !!(
-        process.env.OAUTH_GOOGLE_CLIENT_ID &&
-        process.env.OAUTH_GOOGLE_CLIENT_SECRET &&
-        process.env.OAUTH_GOOGLE_CALLBACK_URL
-      ),
-      clientId: process.env.OAUTH_GOOGLE_CLIENT_ID,
-      clientSecret: process.env.OAUTH_GOOGLE_CLIENT_SECRET,
-      callbackUrl: process.env.OAUTH_GOOGLE_CALLBACK_URL,
-    },
-    facebook: {
-      enabled: !!(
-        process.env.OAUTH_FACEBOOK_CLIENT_ID &&
-        process.env.OAUTH_FACEBOOK_CLIENT_SECRET &&
-        process.env.OAUTH_FACEBOOK_CALLBACK_URL
-      ),
-      clientId: process.env.OAUTH_FACEBOOK_CLIENT_ID,
-      clientSecret: process.env.OAUTH_FACEBOOK_CLIENT_SECRET,
-      callbackUrl: process.env.OAUTH_FACEBOOK_CALLBACK_URL,
-    },
-    github: {
-      enabled: !!(
-        process.env.OAUTH_GITHUB_CLIENT_ID &&
-        process.env.OAUTH_GITHUB_CLIENT_SECRET &&
-        process.env.OAUTH_GITHUB_CALLBACK_URL
-      ),
-      clientId: process.env.OAUTH_GITHUB_CLIENT_ID,
-      clientSecret: process.env.OAUTH_GITHUB_CLIENT_SECRET,
-      callbackUrl: process.env.OAUTH_GITHUB_CALLBACK_URL,
-    },
+  swagger: {
+    enabled: process.env.SWAGGER_ENABLED === 'true',
   },
+  profileSync: {
+    enabled: process.env.PROFILE_SYNC_ENABLED !== 'false',
+    fields: process.env.PROFILE_SYNC_FIELDS || 'name,picture',
+  },
+  oauth: createOAuthConfig(),
 });
 
 export default configuration;
