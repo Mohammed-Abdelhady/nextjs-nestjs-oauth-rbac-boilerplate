@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Shield, ShieldAlert } from 'lucide-react';
 import { parsePermission } from '../utils/permissionUtils';
@@ -45,12 +46,13 @@ export function PermissionsList({
   limit,
   onShowMore,
 }: PermissionsListProps) {
+  const t = useTranslations('permissions.list');
   const hasWildcard = permissions.includes('*');
 
   if (permissions.length === 0) {
     return (
       <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-center dark:border-gray-700 dark:bg-gray-800">
-        <p className="text-sm text-gray-600 dark:text-gray-400">No permissions assigned</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">{t('empty')}</p>
       </div>
     );
   }
@@ -59,14 +61,10 @@ export function PermissionsList({
     return (
       <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
         <div className="flex items-center gap-2">
-          <ShieldAlert className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+          <ShieldAlert className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
           <div>
-            <p className="font-semibold text-amber-900 dark:text-amber-100">
-              Wildcard Permission (*)
-            </p>
-            <p className="text-sm text-amber-700 dark:text-amber-300">
-              This grants all permissions
-            </p>
+            <p className="font-semibold text-amber-900 dark:text-amber-100">{t('wildcardTitle')}</p>
+            <p className="text-sm text-amber-700 dark:text-amber-300">{t('wildcardDescription')}</p>
           </div>
         </div>
       </div>
@@ -88,8 +86,13 @@ export function PermissionsList({
           );
         })}
         {remaining > 0 && (
-          <Badge variant="outline" className="cursor-pointer text-xs" onClick={onShowMore}>
-            +{remaining} more
+          <Badge
+            variant="outline"
+            className="cursor-pointer text-xs"
+            onClick={onShowMore}
+            data-testid="permissions-list-more-badge"
+          >
+            {t('moreBadge', { count: remaining })}
           </Badge>
         )}
       </div>
@@ -106,7 +109,7 @@ export function PermissionsList({
             className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
           >
             <div className="flex items-center gap-3">
-              <Shield className="h-4 w-4 text-gray-400" />
+              <Shield className="h-4 w-4 text-gray-400" aria-hidden="true" />
               <div>
                 <code className="text-sm font-mono text-gray-900 dark:text-gray-100">
                   {permission}
@@ -124,10 +127,12 @@ export function PermissionsList({
       })}
       {remaining > 0 && (
         <button
+          type="button"
           onClick={onShowMore}
           className="w-full rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+          data-testid="permissions-list-show-more"
         >
-          Show {remaining} more permission{remaining !== 1 ? 's' : ''}
+          {t('showMore', { count: remaining })}
         </button>
       )}
     </div>

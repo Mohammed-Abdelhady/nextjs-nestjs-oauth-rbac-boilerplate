@@ -255,7 +255,10 @@ export function ActivationForm() {
       <WelcomeModal
         isOpen={showWelcome}
         userName={userName}
-        onClose={() => setShowWelcome(false)}
+        onClose={() => {
+          setShowWelcome(false);
+          router.push('/dashboard');
+        }}
       />
     </section>
   );

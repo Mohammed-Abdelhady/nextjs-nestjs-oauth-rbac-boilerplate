@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Shield } from 'lucide-react';
 
@@ -37,8 +40,10 @@ export function UserPermissionsBadge({
   maxDisplay = 3,
   showCount = true,
 }: UserPermissionsBadgeProps) {
+  const t = useTranslations('permissions');
+
   if (permissions.length === 0) {
-    return <span className="text-sm text-gray-500 dark:text-gray-400">No permissions</span>;
+    return <span className="text-sm text-gray-500 dark:text-gray-400">{t('badge.empty')}</span>;
   }
 
   const hasWildcard = permissions.includes('*');
@@ -46,8 +51,8 @@ export function UserPermissionsBadge({
   if (hasWildcard) {
     return (
       <Badge variant="default" className="bg-amber-600 hover:bg-amber-700">
-        <Shield className="me-1 h-3 w-3" />
-        Wildcard (*)
+        <Shield className="me-1 h-3 w-3" aria-hidden="true" />
+        {t('tree.wildcardLabel')}
       </Badge>
     );
   }
@@ -64,7 +69,7 @@ export function UserPermissionsBadge({
       ))}
       {showCount && remainingCount > 0 && (
         <Badge variant="outline" className="text-xs">
-          +{remainingCount} more
+          {t('list.moreBadge', { count: remainingCount })}
         </Badge>
       )}
     </div>

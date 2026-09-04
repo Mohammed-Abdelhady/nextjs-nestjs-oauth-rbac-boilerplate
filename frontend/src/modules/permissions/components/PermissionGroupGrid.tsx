@@ -1,7 +1,9 @@
+'use client';
+
 import { memo } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { parsePermission } from '../utils/permissionUtils';
+import { usePermissionLabel } from '../hooks/usePermissionLabel';
 
 interface PermissionGroupGridProps {
   permissions: Record<string, string>;
@@ -11,17 +13,6 @@ interface PermissionGroupGridProps {
   prefix?: string;
 }
 
-function formatPermissionLabel(permission: string): string {
-  const parsed = parsePermission(permission);
-  if (!parsed) return permission;
-
-  const { action, scope } = parsed;
-  const actionLabel = action.charAt(0).toUpperCase() + action.slice(1);
-  const scopeLabel = scope ? ` (${scope})` : '';
-
-  return `${actionLabel}${scopeLabel}`;
-}
-
 export const PermissionGroupGrid = memo(function PermissionGroupGrid({
   permissions,
   selectedPermissions,
@@ -29,6 +20,8 @@ export const PermissionGroupGrid = memo(function PermissionGroupGrid({
   disabled = false,
   prefix = '',
 }: PermissionGroupGridProps) {
+  const formatPermissionLabel = usePermissionLabel();
+
   return (
     <div className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-muted p-4">
       {Object.entries(permissions).map(([, permission]) => {

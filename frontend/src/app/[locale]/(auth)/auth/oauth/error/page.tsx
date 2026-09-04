@@ -4,13 +4,18 @@ import { Link, useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
+import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
+import { cn } from '@/lib/utils';
+
+/** Keys of the bullet list under auth.oauth.errorPage. */
+const REASON_KEYS = ['reasonCancelled', 'reasonTimeout', 'reasonProvider', 'reasonLinked'];
 
 /**
  * OAuth Error Page
  * Displays user-friendly error message when OAuth authentication fails
  */
 export default function OAuthErrorPage() {
-  const t = useTranslations('auth.oauth');
+  const t = useTranslations('auth.oauth.errorPage');
   const router = useRouter();
 
   const handleTryAgain = () => {
@@ -22,38 +27,26 @@ export default function OAuthErrorPage() {
       <div className="w-full max-w-md text-center" data-testid="oauth-error-page">
         {/* Error Icon */}
         <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
-          <AlertCircle className="h-10 w-10 text-destructive" />
+          <AlertCircle className="h-10 w-10 text-destructive" aria-hidden="true" />
         </div>
 
         {/* Error Message */}
-        <h1 className="mb-2 text-3xl font-bold text-foreground">OAuth Authentication Failed</h1>
+        <h1 className="mb-2 text-3xl font-bold text-foreground">{t('title')}</h1>
 
-        <p className="mb-6 text-lg text-muted-foreground">
-          {t('error', { provider: 'OAuth Provider' })}
-        </p>
+        <p className="mb-6 text-lg text-muted-foreground">{t('description')}</p>
 
         {/* Helpful Information */}
         <div className="mb-8 rounded-lg bg-muted/50 p-6 text-start">
-          <h2 className="mb-3 text-lg font-semibold text-foreground">
-            What might have gone wrong:
-          </h2>
+          <h2 className="mb-3 text-lg font-semibold text-foreground">{t('reasonsTitle')}</h2>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li className="flex items-start">
-              <span className="me-2 text-destructive">•</span>
-              <span>You may have cancelled the authorization</span>
-            </li>
-            <li className="flex items-start">
-              <span className="me-2 text-destructive">•</span>
-              <span>The authorization may have timed out</span>
-            </li>
-            <li className="flex items-start">
-              <span className="me-2 text-destructive">•</span>
-              <span>There might be a temporary issue with the OAuth provider</span>
-            </li>
-            <li className="flex items-start">
-              <span className="me-2 text-destructive">•</span>
-              <span>Your account may already be linked to another account</span>
-            </li>
+            {REASON_KEYS.map((key) => (
+              <li key={key} className="flex items-start">
+                <span className="me-2 text-destructive" aria-hidden="true">
+                  •
+                </span>
+                <span>{t(key)}</span>
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -64,7 +57,7 @@ export default function OAuthErrorPage() {
             className="w-full sm:w-auto"
             data-testid="try-again-button"
           >
-            Try Again
+            {t('tryAgain')}
           </Button>
           <Button
             variant="outline"
@@ -72,21 +65,23 @@ export default function OAuthErrorPage() {
             className="w-full sm:w-auto"
             data-testid="go-home-button"
           >
-            Go to Home
+            {t('goHome')}
           </Button>
         </div>
 
         {/* Additional Help */}
         <p className="mt-6 text-sm text-muted-foreground">
-          If the problem persists, please{' '}
-          <Link
-            href="/contact"
-            data-testid="contact-support-link"
-            className="text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          >
-            contact support
-          </Link>
-          .
+          {t.rich('help', {
+            link: (chunks) => (
+              <Link
+                href="/auth/login"
+                data-testid="oauth-error-login-link"
+                className={cn('text-primary hover:underline', FOCUS_RING_CLASSES)}
+              >
+                {chunks}
+              </Link>
+            ),
+          })}
         </p>
       </div>
     </div>

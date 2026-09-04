@@ -40,10 +40,10 @@ export function ActivationGuard({ children }: Readonly<ActivationGuardProps>) {
   const isAuthLoading = useAppSelector(selectAuthLoading);
   const [showWelcome, setShowWelcome] = useState(true);
 
-  // Dismissing the modal used to leave an empty page behind
+  // Dismissing the modal navigates to dashboard since the user is signed in
   const handleCloseWelcome = useCallback(() => {
     setShowWelcome(false);
-    router.push('/auth/login');
+    router.push('/dashboard');
   }, [router]);
 
   if (isAuthLoading) {

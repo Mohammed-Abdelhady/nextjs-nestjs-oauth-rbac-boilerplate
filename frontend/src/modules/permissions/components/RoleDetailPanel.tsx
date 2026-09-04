@@ -1,4 +1,7 @@
+'use client';
+
 import { memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PermissionTreeView } from './PermissionTreeView';
@@ -60,6 +63,8 @@ export const RoleDetailPanel = memo(function RoleDetailPanel({
   isLoading = false,
   className,
 }: RoleDetailPanelProps) {
+  const t = useTranslations('roles.detail');
+
   if (isLoading) {
     return (
       <div className={cn('animate-pulse space-y-6', className)}>
@@ -74,11 +79,9 @@ export const RoleDetailPanel = memo(function RoleDetailPanel({
     return (
       <div className={cn('flex items-center justify-center py-16 text-center', className)}>
         <div className="space-y-3">
-          <Shield className="h-12 w-12 mx-auto text-muted-foreground" />
-          <h2 className="text-lg font-medium">No role selected</h2>
-          <p className="text-sm text-muted-foreground max-w-sm">
-            Select a role from the sidebar to view its details
-          </p>
+          <Shield className="h-12 w-12 mx-auto text-muted-foreground" aria-hidden="true" />
+          <h2 className="text-lg font-medium">{t('noRoleSelected')}</h2>
+          <p className="text-sm text-muted-foreground max-w-sm">{t('selectRoleHint')}</p>
         </div>
       </div>
     );
@@ -99,14 +102,14 @@ export const RoleDetailPanel = memo(function RoleDetailPanel({
           <div className="flex gap-2">
             {role.isSystemRole && (
               <Badge variant="outline" className="text-xs">
-                <Shield className="h-3 w-3 me-1" />
-                System
+                <Shield className="h-3 w-3 me-1" aria-hidden="true" />
+                {t('systemBadge')}
               </Badge>
             )}
             {role.isProtected && (
               <Badge variant="secondary" className="text-xs">
-                <Lock className="h-3 w-3 me-1" />
-                Protected
+                <Lock className="h-3 w-3 me-1" aria-hidden="true" />
+                {t('protectedBadge')}
               </Badge>
             )}
           </div>
@@ -124,14 +127,14 @@ export const RoleDetailPanel = memo(function RoleDetailPanel({
       <section>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs uppercase tracking-widest text-tertiary">
-            Permissions ({role.permissions.length})
+            {t('permissionsHeading', { count: role.permissions.length })}
           </h3>
           {role.permissions.includes('*') && (
             <Badge
               variant="outline"
               className="text-xs text-status-warning border-status-warning/30"
             >
-              Wildcard
+              {t('wildcardBadge')}
             </Badge>
           )}
         </div>
@@ -147,8 +150,8 @@ export const RoleDetailPanel = memo(function RoleDetailPanel({
           disabled={isBaseRole}
           data-testid="edit-role-button"
         >
-          <Pencil className="h-3 w-3 me-2" />
-          Edit Role
+          <Pencil className="h-3 w-3 me-2" aria-hidden="true" />
+          {t('editRole')}
         </Button>
         <Button
           variant="destructive"
@@ -157,8 +160,8 @@ export const RoleDetailPanel = memo(function RoleDetailPanel({
           disabled={role.isProtected}
           data-testid="delete-role-button"
         >
-          <Trash2 className="h-3 w-3 me-2" />
-          Delete
+          <Trash2 className="h-3 w-3 me-2" aria-hidden="true" />
+          {t('deleteRole')}
         </Button>
       </footer>
 
@@ -166,8 +169,7 @@ export const RoleDetailPanel = memo(function RoleDetailPanel({
       {isBaseRole && (
         <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 dark:bg-blue-950/50 dark:border-blue-900">
           <p className="text-xs text-blue-900 dark:text-blue-100">
-            <strong>Base role:</strong> This is a fundamental system role and cannot be edited. Only
-            permissions can be modified for this role.
+            <strong>{t('baseRoleNoticeTitle')}</strong> {t('baseRoleNotice')}
           </p>
         </div>
       )}
@@ -176,8 +178,7 @@ export const RoleDetailPanel = memo(function RoleDetailPanel({
       {role.isProtected && !isBaseRole && (
         <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 dark:bg-amber-950/50 dark:border-amber-900">
           <p className="text-xs text-amber-900 dark:text-amber-100">
-            <strong>Protected role:</strong> This role cannot be deleted to preserve system
-            integrity.
+            <strong>{t('protectedRoleNoticeTitle')}</strong> {t('protectedRoleNotice')}
           </p>
         </div>
       )}

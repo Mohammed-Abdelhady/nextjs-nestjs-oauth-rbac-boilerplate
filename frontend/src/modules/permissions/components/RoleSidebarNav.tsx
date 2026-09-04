@@ -1,4 +1,7 @@
+'use client';
+
 import { memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Lock, Shield } from 'lucide-react';
 import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
 import { cn } from '@/lib/utils';
@@ -50,6 +53,8 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
   onSelectRole,
   isLoading = false,
 }: RoleSidebarNavProps) {
+  const t = useTranslations('roles.sidebar');
+
   // Group roles by type
   const systemRoles = roles.filter((r) => r.isSystemRole);
   const customRoles = roles.filter((r) => !r.isSystemRole);
@@ -75,7 +80,7 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
       {systemRoles.length > 0 && (
         <section>
           <h2 className="text-xs uppercase tracking-widest text-tertiary mb-2 px-3">
-            System Roles
+            {t('systemRoles')}
           </h2>
           <div className="space-y-1">
             {systemRoles.map((role) => (
@@ -109,7 +114,7 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
       {customRoles.length > 0 && (
         <section>
           <h2 className="text-xs uppercase tracking-widest text-tertiary mb-2 px-3">
-            Custom Roles ({customRoles.length})
+            {t('customRoles', { count: customRoles.length })}
           </h2>
           <div className="space-y-1">
             {customRoles.map((role) => (
@@ -141,8 +146,8 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
       {/* Empty State */}
       {roles.length === 0 && (
         <div className="text-center py-8 px-3">
-          <Shield className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-          <p className="text-sm text-muted-foreground">No roles available</p>
+          <Shield className="h-8 w-8 mx-auto text-muted-foreground mb-2" aria-hidden="true" />
+          <p className="text-sm text-muted-foreground">{t('noRoles')}</p>
         </div>
       )}
     </nav>

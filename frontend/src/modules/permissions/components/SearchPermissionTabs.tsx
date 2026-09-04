@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SearchPermissionGrid } from './SearchPermissionGrid';
 import {
@@ -12,8 +13,8 @@ import {
 } from '../constants/permissions';
 
 export interface PermissionGroup {
+  /** Tab value and key of the group name under permissions.selector.groups */
   id: string;
-  name: string;
   permissions: Record<string, string>;
 }
 
@@ -22,12 +23,12 @@ export interface FilteredPermissionGroup extends PermissionGroup {
 }
 
 export const PERMISSION_GROUPS: PermissionGroup[] = [
-  { id: 'profile', name: 'Profile', permissions: PROFILE_PERMISSIONS },
-  { id: 'users', name: 'Users', permissions: USER_PERMISSIONS },
-  { id: 'roles', name: 'Roles', permissions: ROLE_PERMISSIONS },
-  { id: 'permissions', name: 'Permissions', permissions: PERMISSION_PERMISSIONS },
-  { id: 'sessions', name: 'Sessions', permissions: SESSION_PERMISSIONS },
-  { id: 'reports', name: 'Reports', permissions: REPORT_PERMISSIONS },
+  { id: 'profile', permissions: PROFILE_PERMISSIONS },
+  { id: 'users', permissions: USER_PERMISSIONS },
+  { id: 'roles', permissions: ROLE_PERMISSIONS },
+  { id: 'permissions', permissions: PERMISSION_PERMISSIONS },
+  { id: 'sessions', permissions: SESSION_PERMISSIONS },
+  { id: 'reports', permissions: REPORT_PERMISSIONS },
 ];
 
 export interface SearchPermissionTabsProps {
@@ -51,6 +52,9 @@ export function SearchPermissionTabs({
   isLoading = false,
   searchQuery,
 }: SearchPermissionTabsProps) {
+  const t = useTranslations('permissions.selector');
+  const tDialog = useTranslations('permissions.searchDialog');
+
   return (
     <Tabs
       value={activeTab}
@@ -58,10 +62,12 @@ export function SearchPermissionTabs({
       className="flex-1 flex flex-col overflow-hidden"
     >
       <TabsList className="grid w-full grid-cols-7">
-        <TabsTrigger value="all">All</TabsTrigger>
+        <TabsTrigger value="all" data-testid="permission-tab-all">
+          {t('allTab')}
+        </TabsTrigger>
         {PERMISSION_GROUPS.map((group) => (
-          <TabsTrigger key={group.id} value={group.id}>
-            {group.name}
+          <TabsTrigger key={group.id} value={group.id} data-testid={`permission-tab-${group.id}`}>
+            {t(`groups.${group.id}`)}
           </TabsTrigger>
         ))}
       </TabsList>
@@ -75,14 +81,15 @@ export function SearchPermissionTabs({
           return (
             <div key={group.id} className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold tracking-tight">{group.name}</h3>
+                <h3 className="text-sm font-semibold tracking-tight">{t(`groups.${group.id}`)}</h3>
                 <button
                   type="button"
                   onClick={() => onSelectAll(group.filteredPermissions)}
                   disabled={isLoading || groupPerms.length === 0}
                   className="text-xs text-primary hover:underline disabled:opacity-50"
+                  data-testid={`select-all-${group.id}`}
                 >
-                  {allSelected ? 'Deselect All' : 'Select All'}
+                  {allSelected ? t('deselectAll') : t('selectAll')}
                 </button>
               </div>
 
@@ -98,7 +105,7 @@ export function SearchPermissionTabs({
 
         {filteredGroups.length === 0 && (
           <div className="text-center py-12 text-sm text-muted-foreground">
-            No permissions found matching &quot;{searchQuery}&quot;
+            {tDialog('noPermissionsMatch', { query: searchQuery })}
           </div>
         )}
       </TabsContent>
@@ -108,6 +115,7 @@ export function SearchPermissionTabs({
         const filtered = filteredGroups.find((g) => g.id === group.id);
         const groupPerms = filtered ? Object.values(filtered.filteredPermissions) : [];
         const allSelected = groupPerms.every((p) => selectedPermissions.includes(p));
+        const category = t(`groups.${group.id}`).toLocaleLowerCase();
 
         return (
           <TabsContent
@@ -119,15 +127,16 @@ export function SearchPermissionTabs({
               <>
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-muted-foreground">
-                    {groupPerms.length} permission{groupPerms.length !== 1 ? 's' : ''} available
+                    {t('permissionsAvailable', { count: groupPerms.length })}
                   </p>
                   <button
                     type="button"
                     onClick={() => onSelectAll(filtered.filteredPermissions)}
                     disabled={isLoading}
                     className="text-xs text-primary hover:underline disabled:opacity-50"
+                    data-testid={`select-all-tab-${group.id}`}
                   >
-                    {allSelected ? 'Deselect All' : 'Select All'}
+                    {allSelected ? t('deselectAll') : t('selectAll')}
                   </button>
                 </div>
 
@@ -141,8 +150,8 @@ export function SearchPermissionTabs({
             ) : (
               <div className="text-center py-12 text-sm text-muted-foreground">
                 {searchQuery
-                  ? `No ${group.name.toLowerCase()} permissions found matching "${searchQuery}"`
-                  : `All ${group.name.toLowerCase()} permissions are already assigned`}
+                  ? tDialog('noCategoryPermissionsMatch', { category, query: searchQuery })
+                  : tDialog('categoryAllAssigned', { category })}
               </div>
             )}
           </TabsContent>

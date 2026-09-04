@@ -5,7 +5,6 @@ export {
   DeleteRoleDialog,
   EditRoleDialog,
   RoleDetailPanel,
-  RoleFormDialog,
   RoleSidebarNav,
 } from './components';
 

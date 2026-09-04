@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useState, useCallback } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Loader2, LogOut, MapPin, Clock, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -46,6 +46,8 @@ interface SessionCardTimelineProps {
 export const SessionCardTimeline = memo(
   function SessionCardTimeline({ session }: SessionCardTimelineProps) {
     const t = useTranslations('sessions');
+    const tCommon = useTranslations('common');
+    const locale = useLocale();
     const [showConfirm, setShowConfirm] = useState(false);
     const [deleteSession, { isLoading }] = useDeleteSessionMutation();
     const { toast } = useToast();
@@ -56,18 +58,18 @@ export const SessionCardTimeline = memo(
     const handleLogout = useCallback(async () => {
       try {
         await deleteSession(session.id).unwrap();
-        toast.success('Session terminated successfully');
+        toast.success(t('logoutSuccess'));
         setShowConfirm(false);
       } catch {
-        toast.error('Failed to terminate session. Please try again.');
+        toast.error(t('logoutError'));
       }
-    }, [deleteSession, session.id, toast]);
+    }, [deleteSession, session.id, toast, t]);
 
     const handleShowConfirm = useCallback(() => setShowConfirm(true), []);
     const handleHideConfirm = useCallback(() => setShowConfirm(false), []);
 
-    const lastActivity = formatTimeAgo(session.lastUsedAt || session.createdAt);
-    const createdAt = formatTimeAgo(session.createdAt);
+    const lastActivity = formatTimeAgo(session.lastUsedAt || session.createdAt, locale);
+    const createdAt = formatTimeAgo(session.createdAt, locale);
 
     return (
       <>
@@ -129,11 +131,13 @@ export const SessionCardTimeline = memo(
             </div>
             <div className="flex items-center gap-2" data-testid="session-last-activity-row">
               <Clock className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
-              <span data-testid="session-last-activity">Last active {lastActivity}</span>
+              <span data-testid="session-last-activity">
+                {t('lastActive', { time: lastActivity })}
+              </span>
             </div>
             <div className="flex items-center gap-2" data-testid="session-created-at-row">
               <Calendar className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
-              <span data-testid="session-created-at">Logged in {createdAt}</span>
+              <span data-testid="session-created-at">{t('loggedInAt', { time: createdAt })}</span>
             </div>
           </div>
         </article>
@@ -142,14 +146,18 @@ export const SessionCardTimeline = memo(
         <AlertDialog open={showConfirm} onOpenChange={handleHideConfirm}>
           <AlertDialogContent data-testid="logout-session-confirm-dialog">
             <AlertDialogHeader>
-              <AlertDialogTitle>Logout this device?</AlertDialogTitle>
+              <AlertDialogTitle>{t('logoutConfirmTitle')}</AlertDialogTitle>
               <AlertDialogDescription>
-                This will end the session on <strong>{deviceLabel}</strong>. The device will need to
-                log in again to access your account.
+                {t.rich('logoutConfirmDescription', {
+                  device: deviceLabel,
+                  strong: (chunks) => <strong>{chunks}</strong>,
+                })}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel data-testid="cancel-logout-button">Cancel</AlertDialogCancel>
+              <AlertDialogCancel data-testid="cancel-logout-button">
+                {tCommon('cancel')}
+              </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleLogout}
                 disabled={isLoading}

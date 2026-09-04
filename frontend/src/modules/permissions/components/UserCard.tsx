@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useCallback } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { StatusBadge } from '@/components/design-system';
 import { UserRoleSelector } from './UserRoleSelector';
@@ -50,10 +51,12 @@ export interface UserCardProps {
  */
 export const UserCard = memo(
   function UserCard({ user, onManagePermissions, className }: UserCardProps) {
+    const locale = useLocale();
+    const t = useTranslations('users.card');
     const { handleRoleChange, isUpdatingRole } = useUserActions();
 
     const initials = getInitials(user.name);
-    const joinedDate = formatDateShort(user.createdAt);
+    const joinedDate = formatDateShort(user.createdAt, locale);
 
     const handleManageClick = useCallback(() => {
       onManagePermissions?.(user._id);
@@ -120,13 +123,13 @@ export const UserCard = memo(
               permission={USER_PERMISSIONS.UPDATE_ALL}
               fallback={
                 <div className="text-xs text-tertiary capitalize">
-                  Role: <span className="font-medium">{user.role}</span>
+                  {t('role')} <span className="font-medium">{user.role}</span>
                 </div>
               }
             >
               {isProtectedRole || user.isDeleted ? (
                 <div className="text-xs text-tertiary capitalize">
-                  Role: <span className="font-medium">{user.role}</span>
+                  {t('role')} <span className="font-medium">{user.role}</span>
                 </div>
               ) : (
                 <UserRoleSelector
@@ -157,7 +160,7 @@ export const UserCard = memo(
 
         {/* Metadata Row */}
         <div className="flex items-center justify-between text-xs text-tertiary">
-          <span>Joined {joinedDate}</span>
+          <span>{t('joined', { date: joinedDate })}</span>
         </div>
       </article>
     );

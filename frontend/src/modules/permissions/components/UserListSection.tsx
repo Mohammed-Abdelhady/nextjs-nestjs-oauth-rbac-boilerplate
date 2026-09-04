@@ -1,4 +1,7 @@
+'use client';
+
 import { memo, ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import { SectionHeader } from '@/components/design-system';
 import { cn } from '@/lib/utils';
 
@@ -84,6 +87,7 @@ export const UserListSection = memo(function UserListSection({
   onCollapse,
   className,
 }: UserListSectionProps) {
+  const t = useTranslations('users.list');
   const gridId = `user-grid-${id}`;
 
   return (
@@ -112,7 +116,7 @@ export const UserListSection = memo(function UserListSection({
 
       {/* Empty State */}
       {!collapsed && count === 0 && (
-        <div className="py-8 text-center text-sm text-muted-foreground">No users in this group</div>
+        <div className="py-8 text-center text-sm text-muted-foreground">{t('emptyGroup')}</div>
       )}
     </section>
   );

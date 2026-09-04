@@ -133,7 +133,7 @@ export function EditRoleForm({ role, isLoading, onSubmit, onCancel }: EditRoleFo
             data-testid="edit-role-description-input"
           />
           {isBaseRole && (
-            <p className="text-xs text-tertiary">Base role descriptions cannot be changed</p>
+            <p className="text-xs text-tertiary">{t('baseRoleDescriptionImmutable')}</p>
           )}
         </div>
 

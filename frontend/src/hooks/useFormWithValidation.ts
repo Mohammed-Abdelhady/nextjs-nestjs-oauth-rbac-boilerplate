@@ -12,8 +12,8 @@ import { type z } from 'zod';
  * import { z } from 'zod';
  *
  * const loginSchema = z.object({
- *   email: zodEmail(),
- *   password: zodPassword(),
+ *   email: zodEmail({ required: true, messages: { required: t('emailRequired'), invalid: t('emailInvalid') } }),
+ *   password: zodPassword({ required: true, messages: passwordMessages }),
  * });
  *
  * type LoginFormValues = z.infer<typeof loginSchema>;

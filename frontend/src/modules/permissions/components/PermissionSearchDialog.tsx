@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback, memo } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { SearchBar } from '@/components/design-system';
 import { Plus, Shield } from 'lucide-react';
 import { WILDCARD_PERMISSION } from '../constants/permissions';
-import { formatPermissionLabel } from './SearchPermissionGrid';
+import { usePermissionLabel } from '../hooks/usePermissionLabel';
 import { SearchPermissionTabs, PERMISSION_GROUPS } from './SearchPermissionTabs';
 
 export interface PermissionSearchDialogProps {
@@ -92,6 +93,9 @@ export const PermissionSearchDialog = memo(function PermissionSearchDialog({
   isLoading = false,
   onConfirm,
 }: PermissionSearchDialogProps) {
+  const t = useTranslations('permissions.searchDialog');
+  const tSelector = useTranslations('permissions.selector');
+  const formatPermissionLabel = usePermissionLabel();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
 
@@ -163,7 +167,7 @@ export const PermissionSearchDialog = memo(function PermissionSearchDialog({
         filteredPermissions: Object.fromEntries(filteredPermissions),
       };
     }).filter((group) => Object.keys(group.filteredPermissions).length > 0);
-  }, [searchQuery, excludedPermissions]);
+  }, [searchQuery, excludedPermissions, formatPermissionLabel]);
 
   const hasWildcard = selectedPermissions.includes(WILDCARD_PERMISSION);
   const availableCount = selectedPermissions.filter((p) => !excludedPermissions.includes(p)).length;
@@ -172,16 +176,14 @@ export const PermissionSearchDialog = memo(function PermissionSearchDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-4xl overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Add Permissions</DialogTitle>
-          <DialogDescription>
-            Search and select permissions to add. Use tabs to browse by category.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden flex flex-col gap-4">
           {/* Search Bar */}
           <SearchBar
-            placeholder="Search permissions..."
+            placeholder={t('searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onClear={() => setSearchQuery('')}
@@ -205,11 +207,11 @@ export const PermissionSearchDialog = memo(function PermissionSearchDialog({
                     htmlFor="wildcard-permission"
                     className="font-semibold text-foreground flex items-center gap-2"
                   >
-                    <Shield className="h-4 w-4 text-warning" />
-                    Wildcard Permission (*)
+                    <Shield className="h-4 w-4 text-warning" aria-hidden="true" />
+                    {tSelector('wildcardTitle')}
                   </Label>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Grants all permissions. Use only for super administrators.
+                    {tSelector('wildcardDescription')}
                   </p>
                 </div>
               </div>
@@ -233,9 +235,7 @@ export const PermissionSearchDialog = memo(function PermissionSearchDialog({
           {/* Wildcard Notice */}
           {hasWildcard && (
             <div className="rounded-lg border border-border bg-muted p-4 text-center">
-              <p className="text-sm text-muted-foreground">
-                Wildcard permission selected. All other permissions are implicitly granted.
-              </p>
+              <p className="text-sm text-muted-foreground">{tSelector('wildcardNotice')}</p>
             </div>
           )}
         </div>
@@ -244,24 +244,27 @@ export const PermissionSearchDialog = memo(function PermissionSearchDialog({
         <div className="flex items-center justify-between pt-4 border-t border-border">
           <div className="text-sm text-muted-foreground">
             {hasWildcard ? (
-              <span>All permissions granted via wildcard (*)</span>
+              <span>{t('allGrantedWildcard')}</span>
             ) : (
-              <span>
-                {availableCount} new permission{availableCount !== 1 ? 's' : ''} selected
-              </span>
+              <span>{t('selectedCount', { count: availableCount })}</span>
             )}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
-              Cancel
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+              data-testid="cancel-add-permissions"
+            >
+              {t('cancel')}
             </Button>
             <Button
               onClick={onConfirm}
               disabled={availableCount === 0 || isLoading}
               data-testid="confirm-add-permissions"
             >
-              <Plus className="me-2 h-4 w-4" />
-              Add {availableCount} Permission{availableCount !== 1 ? 's' : ''}
+              <Plus className="me-2 h-4 w-4" aria-hidden="true" />
+              {t('addCount', { count: availableCount })}
             </Button>
           </div>
         </div>

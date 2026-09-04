@@ -27,60 +27,7 @@ import {
 } from '@/components/forms';
 import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
-import {
-  zodEmail,
-  zodName,
-  zodPassword,
-  zodUrl,
-  zodTextarea,
-  zodBoolean,
-  zodStringArray,
-  zodEnum,
-} from '@/lib/validations';
-import { z } from 'zod';
-
-// Define schema using base validators
-const exampleSchema = z.object({
-  // Text inputs
-  name: zodName({ required: true }),
-  email: zodEmail({
-    required: true,
-    messages: {
-      required: 'Email is required',
-      invalid: 'Please enter a valid email address',
-    },
-  }),
-  website: zodUrl({ required: false }),
-
-  // Password with confirmation
-  password: zodPassword({ min: 8 }),
-
-  // Select
-  country: zodEnum(['us', 'ca', 'uk', 'au']),
-
-  // Textarea
-  bio: zodTextarea({
-    min: 20,
-    max: 500,
-  }),
-
-  // Single checkbox
-  acceptTerms: zodBoolean().refine((val) => val === true, {
-    message: 'You must accept the terms and conditions',
-  }),
-
-  // Checkbox group
-  interests: zodStringArray.min(1, 'Select at least one interest'),
-
-  // Radio buttons
-  role: zodEnum(['user', 'admin', 'moderator']),
-
-  // Switch
-  notifications: zodBoolean(),
-});
-
-// Infer TypeScript type from schema
-type ExampleFormValues = z.infer<typeof exampleSchema>;
+import { exampleSchema, type ExampleFormValues } from './exampleSchema';
 
 export function GenericFormExample() {
   const [submittedData, setSubmittedData] = React.useState<ExampleFormValues | null>(null);

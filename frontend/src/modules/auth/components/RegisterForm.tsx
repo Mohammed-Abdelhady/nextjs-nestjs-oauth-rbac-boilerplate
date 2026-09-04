@@ -32,6 +32,7 @@ const createRegisterSchema = (t: (key: string) => string) =>
         required: t('errors.nameRequired'),
         min: t('errors.nameMinLength'),
         max: t('errors.nameMaxLength'),
+        pattern: t('errors.namePattern'),
       },
     }),
     email: zodEmail({
@@ -47,6 +48,9 @@ const createRegisterSchema = (t: (key: string) => string) =>
       messages: {
         required: t('errors.passwordRequired'),
         min: t('errors.passwordMinLength'),
+        uppercase: t('errors.passwordUppercase'),
+        lowercase: t('errors.passwordLowercase'),
+        number: t('errors.passwordNumber'),
       },
     }),
   });
@@ -173,7 +177,7 @@ export function RegisterForm() {
               name="name"
               type="text"
               label={t('name')}
-              placeholder="Jane Doe"
+              placeholder={t('namePlaceholder')}
               autoComplete="name"
               disabled={isLoading}
               autoFocus

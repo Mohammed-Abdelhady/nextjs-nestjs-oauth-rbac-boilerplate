@@ -3,6 +3,10 @@
  *
  * Reusable helper functions for creating dynamic validators.
  *
+ * Every message is supplied by the caller. The validators carry no English
+ * text of their own, so a form in any locale reads its messages from the
+ * translation files instead of falling back to the library.
+ *
  * @module lib/validations/utils
  */
 
@@ -27,11 +31,10 @@ export function makeOptional<T extends z.ZodTypeAny>(
  */
 export const createStringValidator = (
   pattern: RegExp,
-  patternMessage: string,
-  options?: { required?: boolean; message?: string },
+  options: { required?: boolean; message: string },
 ) => {
-  const schema = z.string().regex(pattern, options?.message || patternMessage);
-  return makeOptional(schema, options?.required);
+  const schema = z.string().regex(pattern, options.message);
+  return makeOptional(schema, options.required);
 };
 
 /**
@@ -40,32 +43,28 @@ export const createStringValidator = (
 export const createBoundedString = (
   defaultMin: number,
   defaultMax: number,
-  options?: {
+  options: {
     required?: boolean;
     min?: number;
     max?: number;
     pattern?: RegExp;
-    messages?: {
-      min?: string;
-      max?: string;
-      pattern?: string;
+    messages: {
+      min: string;
+      max: string;
+      pattern: string;
     };
   },
 ) => {
-  const min = options?.min ?? defaultMin;
-  const max = options?.max ?? defaultMax;
+  const min = options.min ?? defaultMin;
+  const max = options.max ?? defaultMax;
 
-  let schema = z
-    .string()
-    .trim()
-    .min(min, options?.messages?.min || `Must be at least ${min} characters`)
-    .max(max, options?.messages?.max || `Must not exceed ${max} characters`);
+  let schema = z.string().trim().min(min, options.messages.min).max(max, options.messages.max);
 
-  if (options?.pattern) {
-    schema = schema.regex(options.pattern, options.messages?.pattern || 'Invalid format');
+  if (options.pattern) {
+    schema = schema.regex(options.pattern, options.messages.pattern);
   }
 
-  return makeOptional(schema, options?.required);
+  return makeOptional(schema, options.required);
 };
 
 /**
@@ -74,32 +73,30 @@ export const createBoundedString = (
 export const createNumberInRange = (
   defaultMin: number,
   defaultMax: number,
-  options?: {
+  options: {
     required?: boolean;
     min?: number;
     max?: number;
     integer?: boolean;
-    messages?: {
-      integer?: string;
-      min?: string;
-      max?: string;
+    messages: {
+      integer: string;
+      min: string;
+      max: string;
     };
   },
 ) => {
-  const min = options?.min ?? defaultMin;
-  const max = options?.max ?? defaultMax;
+  const min = options.min ?? defaultMin;
+  const max = options.max ?? defaultMax;
 
   let schema = z.number();
 
-  if (options?.integer !== false) {
-    schema = schema.int(options?.messages?.integer || 'Must be a whole number');
+  if (options.integer !== false) {
+    schema = schema.int(options.messages.integer);
   }
 
-  schema = schema
-    .min(min, options?.messages?.min || `Must be at least ${min}`)
-    .max(max, options?.messages?.max || `Must not exceed ${max}`);
+  schema = schema.min(min, options.messages.min).max(max, options.messages.max);
 
-  return makeOptional(schema, options?.required);
+  return makeOptional(schema, options.required);
 };
 
 /**
@@ -107,11 +104,10 @@ export const createNumberInRange = (
  */
 export const createNumberValidator = (
   method: 'positive' | 'negative' | 'nonnegative' | 'int' | 'finite',
-  defaultMessage: string,
-  options?: { required?: boolean; message?: string },
+  options: { required?: boolean; message: string },
 ) => {
-  const schema = z.number()[method](options?.message || defaultMessage);
-  return makeOptional(schema, options?.required);
+  const schema = z.number()[method](options.message);
+  return makeOptional(schema, options.required);
 };
 
 /**
@@ -119,11 +115,10 @@ export const createNumberValidator = (
  */
 export const createDateValidator = (
   refineFn: (date: Date) => boolean,
-  defaultMessage: string,
-  options?: { required?: boolean; message?: string },
+  options: { required?: boolean; message: string },
 ) => {
-  const schema = z.date().refine(refineFn, { message: options?.message || defaultMessage });
-  return makeOptional(schema, options?.required);
+  const schema = z.date().refine(refineFn, { message: options.message });
+  return makeOptional(schema, options.required);
 };
 
 /**
@@ -132,30 +127,23 @@ export const createDateValidator = (
 export const createFileValidator = (
   maxSize: number,
   allowedTypes: string[],
-  options?: {
+  options: {
     required?: boolean;
     maxSize?: number;
     allowedTypes?: string[];
-    messages?: {
-      size?: string;
-      type?: string;
+    messages: {
+      size: string;
+      type: string;
     };
   },
 ) => {
-  const finalMaxSize = options?.maxSize ?? maxSize;
-  const finalTypes = options?.allowedTypes ?? allowedTypes;
+  const finalMaxSize = options.maxSize ?? maxSize;
+  const finalTypes = options.allowedTypes ?? allowedTypes;
 
   const schema = z
     .instanceof(File)
-    .refine(
-      (file) => file.size <= finalMaxSize,
-      options?.messages?.size || `File must be less than ${Math.round(finalMaxSize / 1_000_000)}MB`,
-    )
-    .refine(
-      (file) => finalTypes.includes(file.type),
-      options?.messages?.type ||
-        `Only ${finalTypes.map((t) => t.split('/')[1]?.toUpperCase()).join(', ')} files allowed`,
-    );
+    .refine((file) => file.size <= finalMaxSize, options.messages.size)
+    .refine((file) => finalTypes.includes(file.type), options.messages.type);
 
-  return makeOptional(schema, options?.required);
+  return makeOptional(schema, options.required);
 };

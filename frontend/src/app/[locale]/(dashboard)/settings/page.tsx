@@ -4,33 +4,69 @@ import {
   ChangePasswordCard,
   UpdateProfileCard,
 } from '@/modules/account';
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'Settings - Account Management',
-  description: 'Manage your linked OAuth accounts and profile synchronization',
-};
+interface SettingsPageProps {
+  params: Promise<{ locale: string }>;
+}
+
+/**
+ * Generate metadata for the settings page
+ */
+export async function generateMetadata({ params }: SettingsPageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'settings' });
+
+  return {
+    title: t('title'),
+    description: t('description'),
+  };
+}
 
 /**
  * Settings Page
  *
- * Allows users to manage their linked OAuth providers and profile sync
+ * Groups the account cards under headings so the card titles (h3) follow an h2
+ * instead of jumping straight from the page h1.
  */
-export default function SettingsPage() {
+export default async function SettingsPage({ params }: SettingsPageProps) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'settings' });
+
   return (
     <div className="container p-10">
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">Manage your account settings and preferences</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+          <p className="text-muted-foreground">{t('description')}</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <UpdateProfileCard />
-          <ChangePasswordCard />
-          <LinkedAccounts />
-          <ProfileSyncStatus />
-        </div>
+        <section aria-labelledby="settings-account-group" className="space-y-4">
+          <h2
+            id="settings-account-group"
+            className="text-xs uppercase tracking-widest text-muted-foreground"
+          >
+            {t('accountGroup')}
+          </h2>
+          <div className="grid gap-6 md:grid-cols-2">
+            <UpdateProfileCard />
+            <ChangePasswordCard />
+          </div>
+        </section>
+
+        <section aria-labelledby="settings-integrations-group" className="space-y-4">
+          <h2
+            id="settings-integrations-group"
+            className="text-xs uppercase tracking-widest text-muted-foreground"
+          >
+            {t('integrationsGroup')}
+          </h2>
+          <div className="grid gap-6 md:grid-cols-2">
+            <LinkedAccounts />
+            <ProfileSyncStatus />
+          </div>
+        </section>
       </div>
     </div>
   );

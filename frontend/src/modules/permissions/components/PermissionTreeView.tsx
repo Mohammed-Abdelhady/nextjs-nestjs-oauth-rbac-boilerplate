@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { PermissionNode } from './PermissionNode';
 import { Shield } from 'lucide-react';
 
@@ -50,6 +51,8 @@ export const PermissionTreeView = memo(function PermissionTreeView({
   showHeaders = true,
   className,
 }: PermissionTreeViewProps) {
+  const t = useTranslations('permissions.tree');
+
   // Group permissions by resource
   const groupedPermissions = useMemo(() => {
     const groups: Record<string, string[]> = {};
@@ -74,9 +77,7 @@ export const PermissionTreeView = memo(function PermissionTreeView({
   const hasWildcard = permissions.includes('*');
 
   if (permissions.length === 0) {
-    return (
-      <div className="text-center py-8 text-sm text-muted-foreground">No permissions assigned</div>
-    );
+    return <div className="text-center py-8 text-sm text-muted-foreground">{t('empty')}</div>;
   }
 
   return (
@@ -85,8 +86,8 @@ export const PermissionTreeView = memo(function PermissionTreeView({
       {hasWildcard && (
         <div className="mb-4 p-3 rounded-lg bg-warning/10 border border-warning/30">
           <p className="text-sm text-warning-foreground flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            <strong>Wildcard (*)</strong> - This role has all permissions
+            <Shield className="h-4 w-4" aria-hidden="true" />
+            <strong>{t('wildcardLabel')}</strong> {t('wildcardNotice')}
           </p>
         </div>
       )}

@@ -43,6 +43,9 @@ const createResetPasswordSchema = (t: (key: string) => string) =>
         messages: {
           required: t('errors.passwordRequired'),
           min: t('errors.passwordMinLength'),
+          uppercase: t('errors.passwordUppercase'),
+          lowercase: t('errors.passwordLowercase'),
+          number: t('errors.passwordNumber'),
         },
       }),
       confirmPassword: z

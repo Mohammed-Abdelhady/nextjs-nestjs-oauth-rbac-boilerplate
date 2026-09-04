@@ -5,5 +5,4 @@ export { CreateRoleDialog } from '@/modules/permissions/components/CreateRoleDia
 export { DeleteRoleDialog } from '@/modules/permissions/components/DeleteRoleDialog';
 export { EditRoleDialog } from '@/modules/permissions/components/EditRoleDialog';
 export { RoleDetailPanel } from '@/modules/permissions/components/RoleDetailPanel';
-export { RoleFormDialog } from '@/modules/permissions/components/RoleFormDialog';
 export { RoleSidebarNav } from '@/modules/permissions/components/RoleSidebarNav';

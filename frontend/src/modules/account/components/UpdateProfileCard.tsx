@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,11 +14,22 @@ import { useGetCurrentUserQuery, useUpdateProfileMutation } from '@/modules/auth
 import { parseApiError } from '@/lib/apiError';
 import { zodName } from '@/lib/validations/string';
 
-const updateProfileSchema = z.object({
-  name: zodName({ required: true, min: 2, max: 100 }),
-});
+const createUpdateProfileSchema = (t: (key: string) => string) =>
+  z.object({
+    name: zodName({
+      required: true,
+      min: 2,
+      max: 100,
+      messages: {
+        required: t('nameRequired'),
+        min: t('nameMinLength'),
+        max: t('nameMaxLength'),
+        pattern: t('namePattern'),
+      },
+    }),
+  });
 
-type UpdateProfileFormData = z.infer<typeof updateProfileSchema>;
+type UpdateProfileFormData = z.infer<ReturnType<typeof createUpdateProfileSchema>>;
 
 /**
  * UpdateProfileCard Component
@@ -28,6 +39,8 @@ export function UpdateProfileCard() {
   const t = useTranslations('settings.profile');
   const { data: user } = useGetCurrentUserQuery();
   const [updateProfile, { isLoading }] = useUpdateProfileMutation();
+
+  const updateProfileSchema = useMemo(() => createUpdateProfileSchema(t), [t]);
 
   const form = useForm<UpdateProfileFormData>({
     resolver: zodResolver(updateProfileSchema),
@@ -44,7 +57,7 @@ export function UpdateProfileCard() {
 
   const onSubmit = async (data: UpdateProfileFormData) => {
     if (data.name === user?.name) {
-      toast.info('No changes to save');
+      toast.info(t('noChanges'));
       return;
     }
 
@@ -53,7 +66,7 @@ export function UpdateProfileCard() {
       toast.success(t('success'));
     } catch (error) {
       const parsed = parseApiError(error);
-      toast.error(parsed.message || 'Failed to update profile');
+      toast.error(parsed.message || t('error'));
     }
   };
 
@@ -73,7 +86,7 @@ export function UpdateProfileCard() {
             <FormInput<UpdateProfileFormData>
               name="name"
               label={t('name')}
-              placeholder="John Doe"
+              placeholder={t('namePlaceholder')}
               disabled={isLoading}
               data-testid="profile-name-input"
             />

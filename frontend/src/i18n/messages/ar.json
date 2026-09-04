@@ -1,9 +1,26 @@
 {
   "common": {
-    "appName": "نظام المصادقة",
+    "appName": "منصة المصادقة",
     "welcome": "مرحباً",
     "language": "اللغة",
-    "loading": "للبدء، قم بتحرير ملف page.tsx."
+    "loading": "جارٍ التحميل...",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "create": "إنشاء",
+    "refresh": "تحديث",
+    "retry": "إعادة المحاولة",
+    "search": "بحث",
+    "clearSearch": "مسح البحث",
+    "required": "*",
+    "or": "أو",
+    "close": "إغلاق",
+    "skipToContent": "تخطي إلى المحتوى الرئيسي",
+    "switchToDarkMode": "التبديل إلى الوضع الداكن",
+    "switchToLightMode": "التبديل إلى الوضع الفاتح",
+    "switchToEnglish": "التبديل إلى الإنجليزية",
+    "switchToArabic": "التبديل إلى العربية"
   },
   "home": {
     "title": "نظام مصادقة متكامل للتطبيقات",
@@ -25,7 +42,20 @@
     "email": "البريد الإلكتروني",
     "password": "كلمة المرور",
     "confirmPassword": "تأكيد كلمة المرور",
-    "forgotPassword": "نسيت كلمة المرور؟",
+    "forgotPassword": {
+      "title": "نسيت كلمة المرور؟",
+      "subtitle": "أدخل عنوان بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين",
+      "email": "عنوان البريد الإلكتروني",
+      "submit": "إرسال رابط إعادة التعيين",
+      "backToLogin": "العودة لتسجيل الدخول",
+      "success": "إذا كان البريد الإلكتروني مسجلاً، ستتلقى رابط إعادة التعيين قريباً",
+      "errors": {
+        "emailRequired": "البريد الإلكتروني مطلوب",
+        "emailInvalid": "يرجى إدخال عنوان بريد إلكتروني صحيح",
+        "serverError": "حدث خطأ. يرجى المحاولة مرة أخرى لاحقاً",
+        "networkError": "خطأ في الاتصال. يرجى التحقق من اتصالك بالإنترنت"
+      }
+    },
     "rememberMe": "تذكرني",
     "passwordToggle": {
       "show": "إظهار كلمة المرور",
@@ -67,6 +97,7 @@
       "title": "إنشاء حسابك",
       "subtitle": "انضم إلينا اليوم",
       "name": "الاسم الكامل",
+      "namePlaceholder": "محمد عبد الله",
       "email": "عنوان البريد الإلكتروني",
       "password": "كلمة المرور",
       "submit": "إنشاء حساب",
@@ -77,6 +108,7 @@
         "nameRequired": "الاسم مطلوب",
         "nameMinLength": "يجب أن يكون الاسم حرفين على الأقل",
         "nameMaxLength": "يجب ألا يتجاوز الاسم 50 حرفاً",
+        "namePattern": "لا يمكن أن يحتوي الاسم إلا على حروف ومسافات وشرطات وفواصل عليا",
         "emailRequired": "البريد الإلكتروني مطلوب",
         "emailInvalid": "يرجى إدخال عنوان بريد إلكتروني صحيح",
         "emailExists": "البريد الإلكتروني مسجل بالفعل",
@@ -84,7 +116,10 @@
         "passwordMinLength": "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
         "passwordWeak": "يجب أن تحتوي كلمة المرور على حروف وأرقام",
         "serverError": "حدث خطأ. يرجى المحاولة مرة أخرى لاحقاً",
-        "networkError": "خطأ في الاتصال. يرجى التحقق من اتصالك بالإنترنت"
+        "networkError": "خطأ في الاتصال. يرجى التحقق من اتصالك بالإنترنت",
+        "passwordUppercase": "يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل",
+        "passwordLowercase": "يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل",
+        "passwordNumber": "يجب أن تحتوي كلمة المرور على رقم واحد على الأقل"
       }
     },
     "activate": {
@@ -106,20 +141,6 @@
         "codeInvalid": "رمز التحقق غير صحيح",
         "codeExpired": "انتهت صلاحية الرمز. يرجى التسجيل مرة أخرى",
         "codeLength": "يجب أن يكون الرمز 6 أرقام بالضبط",
-        "serverError": "حدث خطأ. يرجى المحاولة مرة أخرى لاحقاً",
-        "networkError": "خطأ في الاتصال. يرجى التحقق من اتصالك بالإنترنت"
-      }
-    },
-    "forgotPassword": {
-      "title": "نسيت كلمة المرور؟",
-      "subtitle": "أدخل عنوان بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين",
-      "email": "عنوان البريد الإلكتروني",
-      "submit": "إرسال رابط إعادة التعيين",
-      "backToLogin": "العودة لتسجيل الدخول",
-      "success": "إذا كان البريد الإلكتروني مسجلاً، ستتلقى رابط إعادة التعيين قريباً",
-      "errors": {
-        "emailRequired": "البريد الإلكتروني مطلوب",
-        "emailInvalid": "يرجى إدخال عنوان بريد إلكتروني صحيح",
         "serverError": "حدث خطأ. يرجى المحاولة مرة أخرى لاحقاً",
         "networkError": "خطأ في الاتصال. يرجى التحقق من اتصالك بالإنترنت"
       }
@@ -146,6 +167,9 @@
         "passwordRequired": "كلمة المرور مطلوبة",
         "passwordMinLength": "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
         "passwordWeak": "يجب أن تحتوي كلمة المرور على حروف وأرقام",
+        "passwordUppercase": "يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل",
+        "passwordLowercase": "يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل",
+        "passwordNumber": "يجب أن تحتوي كلمة المرور على رقم واحد على الأقل",
         "confirmRequired": "يرجى تأكيد كلمة المرور",
         "passwordMismatch": "كلمات المرور غير متطابقة",
         "tokenInvalid": "رمز إعادة التعيين غير صالح",
@@ -164,6 +188,18 @@
         "pending": "جارٍ تجهيز جلستك.",
         "errorTitle": "فشل تسجيل الدخول",
         "backToSignIn": "العودة إلى تسجيل الدخول"
+      },
+      "errorPage": {
+        "title": "فشلت المصادقة عبر موفر الخدمة",
+        "description": "تعذر إكمال تسجيل الدخول عبر موفر الخدمة.",
+        "reasonsTitle": "الأسباب المحتملة للخطأ:",
+        "reasonCancelled": "ربما قمت بإلغاء عملية التفويض",
+        "reasonTimeout": "ربما انتهت مهلة جلسة التفويض",
+        "reasonProvider": "قد تكون هناك مشكلة مؤقتة لدى موفر الخدمة",
+        "reasonLinked": "قد يكون حسابك مرتبطاً بالفعل بحساب آخر",
+        "tryAgain": "إعادة المحاولة",
+        "goHome": "الانتقال إلى الرئيسية",
+        "help": "إذا استمرت المشكلة، <link>عد إلى تسجيل الدخول</link>."
       }
     }
   },
@@ -282,32 +318,52 @@
       "newPassword": "كلمة المرور الجديدة",
       "confirmPassword": "تأكيد كلمة المرور الجديدة",
       "submit": "تحديث كلمة المرور",
-      "success": "تم تحديث كلمة المرور بنجاح"
+      "success": "تم تحديث كلمة المرور بنجاح",
+      "currentPasswordRequired": "كلمة المرور الحالية مطلوبة",
+      "newPasswordRequired": "كلمة المرور الجديدة مطلوبة",
+      "newPasswordMin": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل",
+      "newPasswordUppercase": "يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل",
+      "newPasswordLowercase": "يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل",
+      "newPasswordNumber": "يجب أن تحتوي كلمة المرور على رقم واحد على الأقل",
+      "confirmPasswordRequired": "يرجى تأكيد كلمة المرور",
+      "passwordsDoNotMatch": "كلمتا المرور غير متطابقتين",
+      "error": "فشل تغيير كلمة المرور"
     },
     "profile": {
       "title": "معلومات الملف الشخصي",
       "description": "قم بتحديث معلوماتك الشخصية.",
       "name": "الاسم الكامل",
+      "namePlaceholder": "محمد عبد الله",
       "email": "البريد الإلكتروني",
       "emailHint": "لا يمكن تغيير البريد الإلكتروني",
       "submit": "حفظ التغييرات",
-      "success": "تم تحديث الملف الشخصي بنجاح"
-    }
+      "success": "تم تحديث الملف الشخصي بنجاح",
+      "nameRequired": "الاسم مطلوب",
+      "nameMinLength": "يجب أن يتكون الاسم من حرفين على الأقل",
+      "nameMaxLength": "يجب ألا يتجاوز الاسم 100 حرف",
+      "namePattern": "لا يمكن أن يحتوي الاسم إلا على حروف ومسافات وشرطات وفواصل عليا",
+      "noChanges": "لا توجد تغييرات لحفظها",
+      "error": "فشل تحديث الملف الشخصي"
+    },
+    "title": "الإعدادات",
+    "description": "إدارة إعدادات حسابك وتفضيلاتك",
+    "accountGroup": "الحساب والأمان",
+    "integrationsGroup": "الحسابات المرتبطة والمزامنة"
   },
   "errors": {
-    "404": {
-      "title": "الصفحة غير موجودة",
-      "description": "الصفحة التي تبحث عنها غير موجودة أو تم نقلها إلى موقع آخر",
-      "subtitle": "ضائع في الفضاء؟",
-      "goHome": "الصفحة الرئيسية",
-      "goBack": "العودة"
-    },
     "403": {
       "title": "تم رفض الوصول",
       "description": "ليس لديك إذن للوصول إلى هذا المورد. يرجى الاتصال بالدعم إذا كنت تعتقد أن هذا خطأ.",
       "subtitle": "الوصول محظور",
       "goDashboard": "لوحة التحكم",
       "contactSupport": "اتصل بالدعم"
+    },
+    "404": {
+      "title": "الصفحة غير موجودة",
+      "description": "الصفحة التي تبحث عنها غير موجودة أو تم نقلها إلى موقع آخر",
+      "subtitle": "ضائع في الفضاء؟",
+      "goHome": "الصفحة الرئيسية",
+      "goBack": "العودة"
     },
     "500": {
       "title": "حدث خطأ ما",
@@ -391,6 +447,30 @@
       "navigationDescription": "روابط أقسام لوحة التحكم",
       "mainNavigation": "التنقل الرئيسي",
       "accountControls": "عناصر التحكم في الحساب"
+    },
+    "user": {
+      "title": "لوحة التحكم",
+      "description": "لوحة التحكم الشخصية",
+      "welcome": "مرحباً بك في لوحة التحكم. هذه الصفحة قيد الإنشاء.",
+      "featuresComingSoon": "ميزات لوحة التحكم قادمة قريباً..."
+    },
+    "admin": {
+      "title": "لوحة تحكم المسؤول",
+      "description": "لوحة تحكم المسؤول",
+      "welcome": "مرحباً بك في لوحة تحكم المسؤول. هذه الصفحة قيد الإنشاء.",
+      "featuresComingSoon": "ميزات المسؤول قادمة قريباً..."
+    },
+    "manager": {
+      "title": "لوحة تحكم المدير",
+      "description": "لوحة تحكم المدير",
+      "welcome": "مرحباً بك في لوحة تحكم المدير. هذه الصفحة قيد الإنشاء.",
+      "featuresComingSoon": "ميزات المدير قادمة قريباً..."
+    },
+    "support": {
+      "title": "لوحة تحكم الدعم",
+      "description": "لوحة تحكم الدعم الفني",
+      "welcome": "مرحباً بك في لوحة تحكم الدعم. هذه الصفحة قيد الإنشاء.",
+      "featuresComingSoon": "ميزات الدعم قادمة قريباً..."
     }
   },
   "sessions": {
@@ -419,20 +499,23 @@
     "logoutAllOther": "تسجيل خروج جميع الأجهزة الأخرى",
     "logoutAllConfirmTitle": "تسجيل خروج جميع الأجهزة الأخرى؟",
     "logoutAllConfirmDescription": "سيؤدي هذا إلى إنهاء جميع الجلسات باستثناء جلستك الحالية. ستحتاج جميع الأجهزة الأخرى ({count}) إلى تسجيل الدخول مرة أخرى.",
-    "logoutAllSuccess": "تم إنهاء {count} جلسة/جلسات",
+    "logoutAllSuccess": "{count, plural, zero {لم يتم إنهاء أي جلسة} one {تم إنهاء جلسة واحدة} two {تم إنهاء جلستين} few {تم إنهاء {count} جلسات} many {تم إنهاء {count} جلسة} other {تم إنهاء {count} جلسة}}",
     "logoutAllError": "فشل في تسجيل خروج جميع الجلسات. يرجى المحاولة مرة أخرى.",
     "logout": "تسجيل الخروج",
     "logoutAll": "تسجيل خروج الكل",
     "timeAgo": {
       "justNow": "الآن",
-      "minutesAgo": "منذ {count} دقيقة",
-      "hoursAgo": "منذ {count} ساعة",
-      "daysAgo": "منذ {count} يوم"
-    }
+      "minutesAgo": "{count, plural, zero {منذ أقل من دقيقة} one {منذ دقيقة واحدة} two {منذ دقيقتين} few {منذ {count} دقائق} many {منذ {count} دقيقة} other {منذ {count} دقيقة}}",
+      "hoursAgo": "{count, plural, zero {منذ أقل من ساعة} one {منذ ساعة واحدة} two {منذ ساعتين} few {منذ {count} ساعات} many {منذ {count} ساعة} other {منذ {count} ساعة}}",
+      "daysAgo": "{count, plural, zero {اليوم} one {منذ يوم واحد} two {منذ يومين} few {منذ {count} أيام} many {منذ {count} يوماً} other {منذ {count} يوم}}"
+    },
+    "lastActive": "آخر نشاط {time}",
+    "loggedInAt": "تم تسجيل الدخول {time}",
+    "cancel": "إلغاء"
   },
   "users": {
     "title": "المستخدمون",
-    "count": "{count} مستخدم مسجل",
+    "count": "{count, plural, zero {لا يوجد مستخدمون مسجلون} one {مستخدم واحد مسجل} two {مستخدمان مسجلان} few {{count} مستخدمين مسجلين} many {{count} مستخدماً مسجلاً} other {{count} مستخدم مسجل}}",
     "refresh": "تحديث",
     "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني...",
     "allRoles": "جميع الأدوار",
@@ -462,11 +545,60 @@
       "creating": "جارٍ الإنشاء...",
       "success": "تم إنشاء المستخدم بنجاح",
       "error": "فشل في إنشاء المستخدم"
+    },
+    "editUser": {
+      "title": "تعديل المستخدم",
+      "description": "تحديث معلومات المستخدم. سيتم حفظ التغييرات فوراً.",
+      "name": "الاسم الكامل",
+      "namePlaceholder": "محمد عبد الله",
+      "email": "البريد الإلكتروني",
+      "emailPlaceholder": "user@example.com",
+      "cancel": "إلغاء",
+      "save": "حفظ التغييرات",
+      "saving": "جارٍ الحفظ...",
+      "noChanges": "لا توجد تغييرات لحفظها",
+      "success": "تم تحديث المستخدم بنجاح",
+      "error": "فشل تحديث المستخدم",
+      "errors": {
+        "emailRequired": "البريد الإلكتروني مطلوب",
+        "emailInvalid": "صيغة البريد الإلكتروني غير صالحة",
+        "nameRequired": "الاسم مطلوب",
+        "nameMinLength": "يجب أن يتكون الاسم من حرفين على الأقل"
+      }
+    },
+    "actions": {
+      "menuLabel": "إجراءات",
+      "editUser": "تعديل المستخدم",
+      "managePermissions": "إدارة الصلاحيات",
+      "activateUser": "تفعيل المستخدم",
+      "deactivateUser": "إلغاء تفعيل المستخدم",
+      "deleteUser": "حذف المستخدم",
+      "activateTitle": "تفعيل المستخدم؟",
+      "activateDescription": "هل أنت متأكد من رغبتك في تفعيل <strong>{name}</strong>؟ سيؤدي ذلك إلى استعادة وصوله إلى النظام.",
+      "activateConfirm": "تفعيل",
+      "deactivateTitle": "إلغاء تفعيل المستخدم؟",
+      "deactivateDescription": "هل أنت متأكد من رغبتك في إلغاء تفعيل <strong>{name}</strong>؟ سيفقد الوصول إلى النظام ولكن يمكن استعادة حسابه لاحقاً.",
+      "deactivateConfirm": "إلغاء التفعيل",
+      "deleteTitle": "حذف المستخدم؟",
+      "deleteDescription": "هل أنت متأكد من رغبتك في حذف <strong>{name}</strong>؟ سيؤدي ذلك إلى إزالة حسابه وجميع البيانات المرتبطة به نهائياً. لا يمكن التراجع عن هذا الإجراء.",
+      "deleteConfirm": "حذف",
+      "cancel": "إلغاء",
+      "roleUpdateSuccess": "تم تحديث الدور بنجاح",
+      "activateSuccess": "تم تفعيل {name} بنجاح",
+      "deactivateSuccess": "تم إلغاء تفعيل {name} بنجاح",
+      "deleteSuccess": "تم حذف {name} بنجاح"
+    },
+    "card": {
+      "role": "الدور:",
+      "joined": "انضم في {date}"
+    },
+    "list": {
+      "emptyGroup": "لا يوجد مستخدمون في هذه المجموعة"
     }
   },
   "roles": {
     "title": "الأدوار",
-    "count": "{count} دور معرّف",
+    "count": "{count, plural, zero {لا توجد أدوار معرّفة} one {دور واحد معرّف} two {دوران معرّفان} few {{count} أدوار معرّفة} many {{count} دوراً معرّفاً} other {{count} دور معرّف}}",
     "createRole": "إنشاء دور",
     "searchPlaceholder": "البحث في الأدوار بالاسم أو الرمز أو الوصف...",
     "loading": "جارٍ تحميل الأدوار...",
@@ -495,16 +627,89 @@
       "update": "تحديث الدور",
       "createSuccess": "تم إنشاء الدور \"{name}\" بنجاح",
       "updateSuccess": "تم تحديث الدور \"{name}\" بنجاح",
-      "error": "حدث خطأ"
+      "error": "حدث خطأ",
+      "baseRoleAlertTitle": "دور أساسي:",
+      "baseRoleAlert": "دور المستخدم والمسؤول هما أساس النظام. لا يمكن تعديل الاسم والوصف، ولكن يمكنك تحديث الصلاحيات.",
+      "protectedRoleAlertTitle": "دور محمي:",
+      "protectedRoleAlert": "لا يمكن حذف هذا الدور وتتم إدارة صلاحياته الأساسية بواسطة النظام.",
+      "baseRoleNameImmutable": "لا يمكن تغيير أسماء الأدوار الأساسية",
+      "protectedRoleNameImmutable": "لا يمكن تغيير أسماء الأدوار المحمية",
+      "baseRoleDescriptionImmutable": "لا يمكن تغيير أوصاف الأدوار الأساسية"
+    },
+    "sidebar": {
+      "systemRoles": "أدوار النظام",
+      "customRoles": "{count, plural, zero {أدوار مخصصة (0)} one {دور مخصص (1)} two {دوران مخصصان (2)} few {أدوار مخصصة ({count})} many {دوراً مخصصاً ({count})} other {دور مخصص ({count})}}",
+      "noRoles": "لا توجد أدوار متاحة"
+    },
+    "detail": {
+      "noRoleSelected": "لم يتم تحديد أي دور",
+      "selectRoleHint": "اختر دوراً من الشريط الجانبي لعرض تفاصيله",
+      "systemBadge": "نظام",
+      "protectedBadge": "محمي",
+      "wildcardBadge": "شامل",
+      "permissionsHeading": "{count, plural, zero {صلاحيات (0)} one {صلاحية واحدة (1)} two {صلاحيتان (2)} few {صلاحيات ({count})} many {صلاحية ({count})} other {صلاحية ({count})}}",
+      "editRole": "تعديل الدور",
+      "deleteRole": "حذف",
+      "baseRoleNoticeTitle": "دور أساسي:",
+      "baseRoleNotice": "هذا دور نظام أساسي ولا يمكن تعديله. يمكن تعديل الصلاحيات فقط لهذا الدور.",
+      "protectedRoleNoticeTitle": "دور محمي:",
+      "protectedRoleNotice": "لا يمكن حذف هذا الدور للحفاظ على تكامل النظام."
+    },
+    "delete": {
+      "title": "حذف الدور",
+      "descriptionProtected": "هذا الدور محمي ولا يمكن حذفه.",
+      "descriptionConfirm": "هل أنت متأكد من رغبتك في حذف هذا الدور؟",
+      "protectedTitle": "دور محمي:",
+      "protectedNotice": "إن دور <strong>{name}</strong> هو دور نظام ولا يمكن حذفه. إنه مطلوب لعمل التطبيق بشكل صحيح.",
+      "roleName": "اسم الدور",
+      "description": "الوصف",
+      "permissions": "الصلاحيات",
+      "permissionsCount": "{count, plural, zero {0 صلاحية} one {صلاحية واحدة} two {صلاحيتان} few {{count} صلاحيات} many {{count} صلاحية} other {{count} صلاحية}}",
+      "warningTitle": "تحذير:",
+      "warningNotice": "لا يمكن التراجع عن هذا الإجراء. سيتعين إعادة تعيين المستخدمين الذين لديهم هذا الدور إلى دور آخر قبل الحذف.",
+      "cancel": "إلغاء",
+      "confirm": "حذف الدور",
+      "deleting": "جارٍ الحذف...",
+      "success": "تم حذف الدور بنجاح",
+      "error": "فشل حذف الدور"
     }
   },
   "permissions": {
+    "actions": {
+      "read": "قراءة",
+      "list": "عرض",
+      "create": "إنشاء",
+      "update": "تحديث",
+      "delete": "حذف",
+      "manage": "إدارة",
+      "grant": "منح",
+      "revoke": "سحب"
+    },
+    "scopes": {
+      "own": "الخاصة",
+      "all": "الكل"
+    },
+    "tree": {
+      "empty": "لا توجد صلاحيات معينة",
+      "wildcardLabel": "صلاحية شاملة (*)",
+      "wildcardNotice": "هذا الدور يملك جميع الصلاحيات"
+    },
+    "badge": {
+      "empty": "لا توجد صلاحيات"
+    },
+    "list": {
+      "empty": "لا توجد صلاحيات معينة",
+      "wildcardTitle": "صلاحية شاملة (*)",
+      "wildcardDescription": "تمنح جميع الصلاحيات",
+      "moreBadge": "+{count} أخرى",
+      "showMore": "{count, plural, zero {لا توجد صلاحيات أخرى} one {عرض صلاحية واحدة أخرى} two {عرض صلاحيتين أخريين} few {عرض {count} صلاحيات أخرى} many {عرض {count} صلاحية أخرى} other {عرض {count} صلاحية أخرى}}"
+    },
     "dialog": {
       "title": "إدارة صلاحيات المستخدم",
       "descriptionWithUser": "إدارة صلاحيات {name}",
       "descriptionGeneric": "إضافة أو إزالة صلاحيات لهذا المستخدم",
       "currentRole": "الدور الحالي:",
-      "totalPermissions": "{count} صلاحية إجمالية",
+      "totalPermissions": "{count, plural, zero {لا توجد صلاحيات} one {صلاحية واحدة إجمالاً} two {صلاحيتان إجمالاً} few {{count} صلاحيات إجمالية} many {{count} صلاحية إجمالية} other {{count} صلاحية إجمالية}}",
       "inheritedAndDirect": "{inherited} موروثة + {direct} مباشرة",
       "wildcardTitle": "صلاحية شاملة (*):",
       "wildcardDescription": "هذا المستخدم لديه جميع الصلاحيات.",
@@ -515,7 +720,7 @@
       "noDirectPermissions": "لا توجد صلاحيات مباشرة معينة",
       "removePermissions": "إزالة الصلاحيات",
       "remove": "إزالة",
-      "addSuccess": "تمت إضافة {count} صلاحية/صلاحيات بنجاح",
+      "addSuccess": "{count, plural, zero {لم تتم إضافة أي صلاحيات} one {تمت إضافة صلاحية واحدة بنجاح} two {تمت إضافة صلاحيتين بنجاح} few {تمت إضافة {count} صلاحيات بنجاح} many {تمت إضافة {count} صلاحية بنجاح} other {تمت إضافة {count} صلاحية بنجاح}}",
       "removeSuccess": "تمت إزالة الصلاحية بنجاح",
       "addError": "فشل في إضافة الصلاحيات",
       "removeError": "فشل في إزالة الصلاحية"
@@ -531,27 +736,38 @@
       "cannotAssignProtected": "لا يمكن تعيين أدوار المشرف المحمية",
       "changeSuccess": "تم تغيير دور المستخدم إلى {role}",
       "changeError": "فشل في تغيير دور المستخدم"
+    },
+    "selector": {
+      "groups": {
+        "profile": "الملف الشخصي",
+        "users": "المستخدمون",
+        "roles": "الأدوار",
+        "permissions": "الصلاحيات",
+        "sessions": "الجلسات",
+        "reports": "التقارير"
+      },
+      "allTab": "الكل",
+      "selectAll": "تحديد الكل",
+      "deselectAll": "إلغاء تحديد الكل",
+      "wildcardTitle": "صلاحية شاملة (*)",
+      "wildcardDescription": "تمنح جميع الصلاحيات. تُستخدم للمسؤولين المتميزين فقط.",
+      "wildcardNotice": "تم تحديد الصلاحية الشاملة. يتم منح جميع الصلاحيات الأخرى تلقائياً.",
+      "wildcardSelected": "تم منح جميع الصلاحيات عبر الصلاحية الشاملة (*)",
+      "permissionsAvailable": "{count, plural, zero {لا توجد صلاحيات متاحة} one {صلاحية واحدة متاحة} two {صلاحيتان متاحتان} few {{count} صلاحيات متاحة} many {{count} صلاحية متاحة} other {{count} صلاحية متاحة}}",
+      "permissionsSelected": "{count, plural, zero {لم يتم تحديد أي صلاحيات} one {تم تحديد صلاحية واحدة} two {تم تحديد صلاحيتين} few {تم تحديد {count} صلاحيات} many {تم تحديد {count} صلاحية} other {تم تحديد {count} صلاحية}}"
+    },
+    "searchDialog": {
+      "title": "إضافة صلاحيات",
+      "description": "ابحث وحدد الصلاحيات لإضافتها. استخدم علامات التبويب للتصفح حسب الفئة.",
+      "searchPlaceholder": "البحث في الصلاحيات...",
+      "noPermissionsMatch": "لم يتم العثور على صلاحيات تطابق \"{query}\"",
+      "noCategoryPermissionsMatch": "لم يتم العثور على صلاحيات {category} تطابق \"{query}\"",
+      "categoryAllAssigned": "تم تعيين جميع صلاحيات {category} بالفعل",
+      "selectedCount": "{count, plural, zero {لم يتم تحديد أي صلاحيات جديدة} one {تم تحديد صلاحية جديدة واحدة} two {تم تحديد صلاحيتين جديدتين} few {تم تحديد {count} صلاحيات جديدة} many {تم تحديد {count} صلاحية جديدة} other {تم تحديد {count} صلاحية جديدة}}",
+      "allGrantedWildcard": "تم منح جميع الصلاحيات عبر الصلاحية الشاملة (*)",
+      "cancel": "إلغاء",
+      "addCount": "{count, plural, zero {إضافة صلاحيات} one {إضافة صلاحية واحدة} two {إضافة صلاحيتين} few {إضافة {count} صلاحيات} many {إضافة {count} صلاحية} other {إضافة {count} صلاحية}}"
     }
-  },
-  "common": {
-    "cancel": "إلغاء",
-    "save": "حفظ",
-    "delete": "حذف",
-    "edit": "تعديل",
-    "create": "إنشاء",
-    "loading": "جارٍ التحميل...",
-    "refresh": "تحديث",
-    "retry": "إعادة المحاولة",
-    "search": "بحث",
-    "clearSearch": "مسح البحث",
-    "required": "*",
-    "or": "أو",
-    "close": "إغلاق",
-    "skipToContent": "تخطي إلى المحتوى الرئيسي",
-    "switchToDarkMode": "التبديل إلى الوضع الداكن",
-    "switchToLightMode": "التبديل إلى الوضع الفاتح",
-    "switchToEnglish": "التبديل إلى الإنجليزية",
-    "switchToArabic": "التبديل إلى العربية"
   },
   "validation": {
     "emailRequired": "البريد الإلكتروني مطلوب",

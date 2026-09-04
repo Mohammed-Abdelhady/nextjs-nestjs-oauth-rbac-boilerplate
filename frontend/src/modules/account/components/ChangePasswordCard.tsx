@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
@@ -9,7 +10,7 @@ import { FormPassword, PasswordRules, SubmitButton } from '@/components/forms';
 import { useChangePasswordMutation } from '@/modules/auth/store';
 import { parseApiError } from '@/lib/apiError';
 import {
-  changePasswordSchema,
+  createChangePasswordSchema,
   type ChangePasswordFormData,
 } from '@/lib/validations/changePassword';
 
@@ -21,8 +22,10 @@ export function ChangePasswordCard() {
   const t = useTranslations('settings.password');
   const [changePassword, { isLoading }] = useChangePasswordMutation();
 
+  const schema = useMemo(() => createChangePasswordSchema(t), [t]);
+
   const form = useForm<ChangePasswordFormData>({
-    resolver: zodResolver(changePasswordSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       currentPassword: '',
       newPassword: '',
@@ -41,7 +44,7 @@ export function ChangePasswordCard() {
       form.reset();
     } catch (error) {
       const parsed = parseApiError(error);
-      toast.error(parsed.message || 'Failed to change password');
+      toast.error(parsed.message || t('error'));
     }
   };
 

@@ -78,3 +78,24 @@ export const ALL_PERMISSIONS = [
  * Type for all valid permissions
  */
 export type Permission = (typeof ALL_PERMISSIONS)[number];
+
+// ========== Label Segments ==========
+/**
+ * Action segments that have a translated label under permissions.actions.
+ * Anything outside this list falls back to the raw segment.
+ */
+export const PERMISSION_ACTIONS = [
+  'read',
+  'list',
+  'create',
+  'update',
+  'delete',
+  'manage',
+  'grant',
+  'revoke',
+] as const;
+
+/**
+ * Scope segments that have a translated label under permissions.scopes.
+ */
+export const PERMISSION_SCOPES = ['own', 'all'] as const;

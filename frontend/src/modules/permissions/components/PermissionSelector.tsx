@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback, memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -40,17 +41,18 @@ export interface PermissionSelectorProps {
 }
 
 interface PermissionGroup {
-  name: string;
+  /** Tab value and key of the group name under permissions.selector.groups */
+  id: string;
   permissions: Record<string, string>;
 }
 
 const PERMISSION_GROUPS: PermissionGroup[] = [
-  { name: 'Profile', permissions: PROFILE_PERMISSIONS },
-  { name: 'Users', permissions: USER_PERMISSIONS },
-  { name: 'Roles', permissions: ROLE_PERMISSIONS },
-  { name: 'Permissions', permissions: PERMISSION_PERMISSIONS },
-  { name: 'Sessions', permissions: SESSION_PERMISSIONS },
-  { name: 'Reports', permissions: REPORT_PERMISSIONS },
+  { id: 'profile', permissions: PROFILE_PERMISSIONS },
+  { id: 'users', permissions: USER_PERMISSIONS },
+  { id: 'roles', permissions: ROLE_PERMISSIONS },
+  { id: 'permissions', permissions: PERMISSION_PERMISSIONS },
+  { id: 'sessions', permissions: SESSION_PERMISSIONS },
+  { id: 'reports', permissions: REPORT_PERMISSIONS },
 ];
 
 /**
@@ -63,6 +65,7 @@ export const PermissionSelector = memo(function PermissionSelector({
   disabled = false,
   showWildcard = true,
 }: PermissionSelectorProps) {
+  const t = useTranslations('permissions.selector');
   const [activeTab, setActiveTab] = useState('all');
   const handleTogglePermission = useCallback(
     (permission: string) => {
@@ -119,7 +122,7 @@ export const PermissionSelector = memo(function PermissionSelector({
     const stats: Record<string, number> = {};
     PERMISSION_GROUPS.forEach((group) => {
       const groupPerms = Object.values(group.permissions);
-      stats[group.name] = groupPerms.filter((p) => selectedPermissions.includes(p)).length;
+      stats[group.id] = groupPerms.filter((p) => selectedPermissions.includes(p)).length;
     });
     return stats;
   }, [selectedPermissions]);
@@ -142,11 +145,9 @@ export const PermissionSelector = memo(function PermissionSelector({
                 htmlFor="wildcard-permission"
                 className="font-semibold text-warning-foreground"
               >
-                Wildcard Permission (*)
+                {t('wildcardTitle')}
               </Label>
-              <p className="mt-1 text-sm text-warning-foreground">
-                Grants all permissions. Use only for super administrators.
-              </p>
+              <p className="mt-1 text-sm text-warning-foreground">{t('wildcardDescription')}</p>
             </div>
           </div>
         </div>
@@ -156,8 +157,8 @@ export const PermissionSelector = memo(function PermissionSelector({
       {!hasWildcard && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="all" className="text-xs">
-              All
+            <TabsTrigger value="all" className="text-xs" data-testid="permission-group-tab-all">
+              {t('allTab')}
               {selectedPermissions.length > 0 && (
                 <span className="ms-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px]">
                   {selectedPermissions.length}
@@ -165,11 +166,16 @@ export const PermissionSelector = memo(function PermissionSelector({
               )}
             </TabsTrigger>
             {PERMISSION_GROUPS.map((group) => (
-              <TabsTrigger key={group.name} value={group.name.toLowerCase()} className="text-xs">
-                {group.name}
-                {groupStats[group.name] > 0 && (
+              <TabsTrigger
+                key={group.id}
+                value={group.id}
+                className="text-xs"
+                data-testid={`permission-group-tab-${group.id}`}
+              >
+                {t(`groups.${group.id}`)}
+                {groupStats[group.id] > 0 && (
                   <span className="ms-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px]">
-                    {groupStats[group.name]}
+                    {groupStats[group.id]}
                   </span>
                 )}
               </TabsTrigger>
@@ -183,16 +189,19 @@ export const PermissionSelector = memo(function PermissionSelector({
               const allSelected = groupPerms.every((p) => selectedPermissions.includes(p));
 
               return (
-                <div key={group.name} className="space-y-3">
+                <div key={group.id} className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold tracking-tight">{group.name}</h3>
+                    <h3 className="text-sm font-semibold tracking-tight">
+                      {t(`groups.${group.id}`)}
+                    </h3>
                     <button
                       type="button"
                       onClick={() => handleSelectAll(group.permissions)}
                       disabled={disabled}
                       className="text-xs text-primary hover:underline disabled:opacity-50"
+                      data-testid={`permission-group-select-all-${group.id}`}
                     >
-                      {allSelected ? 'Deselect All' : 'Select All'}
+                      {allSelected ? t('deselectAll') : t('selectAll')}
                     </button>
                   </div>
 
@@ -213,22 +222,19 @@ export const PermissionSelector = memo(function PermissionSelector({
             const allSelected = groupPerms.every((p) => selectedPermissions.includes(p));
 
             return (
-              <TabsContent
-                key={group.name}
-                value={group.name.toLowerCase()}
-                className="mt-4 space-y-4"
-              >
+              <TabsContent key={group.id} value={group.id} className="mt-4 space-y-4">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-muted-foreground">
-                    {groupPerms.length} permission{groupPerms.length !== 1 ? 's' : ''} available
+                    {t('permissionsAvailable', { count: groupPerms.length })}
                   </p>
                   <button
                     type="button"
                     onClick={() => handleSelectAll(group.permissions)}
                     disabled={disabled}
                     className="text-xs text-primary hover:underline disabled:opacity-50"
+                    data-testid={`permission-group-select-all-tab-${group.id}`}
                   >
-                    {allSelected ? 'Deselect All' : 'Select All'}
+                    {allSelected ? t('deselectAll') : t('selectAll')}
                   </button>
                 </div>
 
@@ -237,7 +243,7 @@ export const PermissionSelector = memo(function PermissionSelector({
                   selectedPermissions={selectedPermissions}
                   onTogglePermission={handleTogglePermission}
                   disabled={disabled}
-                  prefix={group.name}
+                  prefix={group.id}
                 />
               </TabsContent>
             );
@@ -248,21 +254,16 @@ export const PermissionSelector = memo(function PermissionSelector({
       {/* Wildcard Notice */}
       {hasWildcard && (
         <div className="rounded-lg border border-border bg-muted p-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            Wildcard permission selected. All other permissions are implicitly granted.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('wildcardNotice')}</p>
         </div>
       )}
 
       {/* Permission Count */}
       <div className="text-sm text-muted-foreground">
         {hasWildcard ? (
-          <span>All permissions granted via wildcard (*)</span>
+          <span>{t('wildcardSelected')}</span>
         ) : (
-          <span>
-            {selectedPermissions.length} permission{selectedPermissions.length !== 1 ? 's' : ''}{' '}
-            selected
-          </span>
+          <span>{t('permissionsSelected', { count: selectedPermissions.length })}</span>
         )}
       </div>
     </div>
