@@ -47,6 +47,9 @@ export interface EnvironmentConfig extends OAuthEnvironmentConfig {
   MAGIC_LINK_EXPIRES_IN?: number;
   MAGIC_LINK_MAX_PER_HOUR?: number;
 
+  TWO_FACTOR_ENABLED?: boolean;
+  TOTP_ENCRYPTION_KEY?: string;
+
   SWAGGER_ENABLED?: boolean;
   PROFILE_SYNC_ENABLED?: boolean;
   PROFILE_SYNC_FIELDS?: string;
@@ -67,6 +70,18 @@ export function transformBoolean(
     }
     return value;
   };
+}
+
+/**
+ * Treat a key that is present but blank as unset. A `.env` copied from an
+ * example often keeps the line with nothing after the `=`.
+ */
+export function transformOptionalString({
+  value,
+}: {
+  value: unknown;
+}): unknown {
+  return value === '' ? undefined : value;
 }
 
 export class EnvironmentVariables extends OAuthEnvironmentVariables {
@@ -199,6 +214,25 @@ export class EnvironmentVariables extends OAuthEnvironmentVariables {
   @Max(50)
   @IsOptional()
   MAGIC_LINK_MAX_PER_HOUR: number = 5;
+
+  @Transform(transformBoolean(true))
+  @IsBoolean()
+  @IsOptional()
+  TWO_FACTOR_ENABLED: boolean = true;
+
+  /**
+   * Optional at boot on purpose. A deployment that never turns two-factor on
+   * should not have to hold a key, so the missing key is reported by the first
+   * request that needs it rather than by a failed start.
+   */
+  @Transform(transformOptionalString)
+  @IsString()
+  @IsOptional()
+  @Matches(/^[A-Za-z0-9+/]{43}=$/, {
+    message:
+      'TOTP_ENCRYPTION_KEY must be 32 bytes in base64, as produced by `openssl rand -base64 32`',
+  })
+  TOTP_ENCRYPTION_KEY?: string;
 
   @Transform(transformBoolean(false))
   @IsBoolean()

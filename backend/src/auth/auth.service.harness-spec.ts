@@ -9,6 +9,7 @@ import { SessionService } from './services/session.service';
 import { SessionCookieService } from './services/session-cookie.service';
 import { VerificationCodeService } from './services/verification-code.service';
 import { PasswordResetCodeService } from './services/password-reset-code.service';
+import { SignInService } from './services/sign-in.service';
 import { User } from '../user/schemas/user.schema';
 import { Role } from '../role/schemas/role.schema';
 import { AuthProvider } from '../user/enums/auth-provider.enum';
@@ -45,7 +46,19 @@ export interface AuthServiceHarness {
     clearPasswordReset: jest.Mock;
   };
   sessionCookieService: { set: jest.Mock; clear: jest.Mock; read: jest.Mock };
+  signInService: { completeSignIn: jest.Mock; issueSession: jest.Mock };
 }
+
+/** Summary a finished sign-in hands back, as SignInService would build it. */
+export const MOCK_USER_SUMMARY = {
+  id: '507f1f77bcf86cd799439011',
+  email: 'user@example.com',
+  name: 'Test User',
+  role: 'user',
+  authProvider: AuthProvider.EMAIL,
+  isVerified: true,
+  permissions: ['read'],
+};
 
 export const MOCK_USER_ID = new Types.ObjectId('507f1f77bcf86cd799439011');
 
@@ -133,6 +146,13 @@ export async function createAuthServiceHarness(): Promise<AuthServiceHarness> {
     read: jest.fn(),
   };
 
+  const signInService = {
+    completeSignIn: jest
+      .fn()
+      .mockResolvedValue({ requiresTwoFactor: false, user: MOCK_USER_SUMMARY }),
+    issueSession: jest.fn().mockResolvedValue(MOCK_USER_SUMMARY),
+  };
+
   const module: TestingModule = await Test.createTestingModule({
     providers: [
       AuthService,
@@ -144,6 +164,7 @@ export async function createAuthServiceHarness(): Promise<AuthServiceHarness> {
       { provide: VerificationCodeService, useValue: verificationCodeService },
       { provide: PasswordResetCodeService, useValue: passwordResetCodeService },
       { provide: SessionCookieService, useValue: sessionCookieService },
+      { provide: SignInService, useValue: signInService },
     ],
   }).compile();
 
@@ -157,5 +178,6 @@ export async function createAuthServiceHarness(): Promise<AuthServiceHarness> {
     verificationCodeService,
     passwordResetCodeService,
     sessionCookieService,
+    signInService,
   };
 }

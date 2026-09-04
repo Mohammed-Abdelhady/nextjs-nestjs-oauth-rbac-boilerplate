@@ -133,4 +133,48 @@ describe('validateEnvironment', () => {
 
     expect(result.PROFILE_SYNC_ENABLED).toBe(false);
   });
+
+  it('TWO_FACTOR_ENABLED defaults to true', () => {
+    expect(validateEnvironment(baseEnv).TWO_FACTOR_ENABLED).toBe(true);
+  });
+
+  it("TWO_FACTOR_ENABLED='false' yields false", () => {
+    const result = validateEnvironment({
+      ...baseEnv,
+      TWO_FACTOR_ENABLED: 'false',
+    });
+
+    expect(result.TWO_FACTOR_ENABLED).toBe(false);
+  });
+
+  it('boots without TOTP_ENCRYPTION_KEY', () => {
+    expect(validateEnvironment(baseEnv).TOTP_ENCRYPTION_KEY).toBeUndefined();
+  });
+
+  it('accepts a 32 byte base64 TOTP_ENCRYPTION_KEY', () => {
+    const key = Buffer.alloc(32, 7).toString('base64');
+
+    expect(
+      validateEnvironment({ ...baseEnv, TOTP_ENCRYPTION_KEY: key })
+        .TOTP_ENCRYPTION_KEY,
+    ).toBe(key);
+  });
+
+  it('reads a blank TOTP_ENCRYPTION_KEY as unset', () => {
+    const result = validateEnvironment({
+      ...baseEnv,
+      TOTP_ENCRYPTION_KEY: '',
+    });
+
+    expect(result.TOTP_ENCRYPTION_KEY).toBeUndefined();
+  });
+
+  it('rejects a TOTP_ENCRYPTION_KEY that is not 32 bytes', () => {
+    expect(() =>
+      validateEnvironment({
+        ...baseEnv,
+        TOTP_ENCRYPTION_KEY: Buffer.alloc(16, 7).toString('base64'),
+      }),
+    ).toThrow(/TOTP_ENCRYPTION_KEY/);
+  });
 });

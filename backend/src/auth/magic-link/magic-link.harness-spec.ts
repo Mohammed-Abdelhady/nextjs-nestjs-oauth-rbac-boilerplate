@@ -6,10 +6,8 @@ import { Types } from 'mongoose';
 import { MagicLinkService } from './magic-link.service';
 import { PendingMagicLink } from './schemas/pending-magic-link.schema';
 import { AuthMailService } from '../services/auth-mail.service';
-import { SessionService } from '../services/session.service';
-import { SessionCookieService } from '../services/session-cookie.service';
+import { SignInService } from '../services/sign-in.service';
 import { User } from '../../user/schemas/user.schema';
-import { Role } from '../../role/schemas/role.schema';
 import { AuthProvider } from '../../user/enums/auth-provider.enum';
 
 /**
@@ -27,8 +25,7 @@ export interface MagicLinkHarness {
   };
   userModel: { findOne: jest.Mock; create: jest.Mock };
   authMailService: { sendMagicLink: jest.Mock };
-  sessionService: { createSession: jest.Mock };
-  sessionCookieService: { set: jest.Mock };
+  signInService: { completeSignIn: jest.Mock; issueSession: jest.Mock };
 }
 
 export const MAGIC_LINK_EXPIRES_IN = 900000;
@@ -44,6 +41,17 @@ export const MOCK_USER = {
   isVerified: true,
   isDeleted: false,
   save: jest.fn().mockResolvedValue(undefined),
+};
+
+/** Summary a finished sign-in hands back, as SignInService would build it. */
+export const MOCK_USER_SUMMARY = {
+  id: '507f1f77bcf86cd799439011',
+  email: 'user@example.com',
+  name: 'Test User',
+  role: 'user',
+  authProvider: AuthProvider.EMAIL,
+  isVerified: true,
+  permissions: ['read'],
 };
 
 export const MOCK_REQUEST = {
@@ -77,14 +85,6 @@ export async function createMagicLinkHarness(): Promise<MagicLinkHarness> {
     create: jest.fn().mockResolvedValue(MOCK_USER),
   };
 
-  const roleModel = {
-    findOne: jest.fn().mockReturnValue({
-      exec: jest
-        .fn()
-        .mockResolvedValue({ slug: 'user', permissions: ['read'] }),
-    }),
-  };
-
   const configService = {
     get: jest.fn((key: string, defaultValue?: string | number) =>
       key in CONFIG_VALUES ? CONFIG_VALUES[key] : defaultValue,
@@ -95,11 +95,12 @@ export async function createMagicLinkHarness(): Promise<MagicLinkHarness> {
     sendMagicLink: jest.fn().mockResolvedValue(undefined),
   };
 
-  const sessionService = {
-    createSession: jest.fn().mockResolvedValue('session-token-123'),
+  const signInService = {
+    completeSignIn: jest
+      .fn()
+      .mockResolvedValue({ requiresTwoFactor: false, user: MOCK_USER_SUMMARY }),
+    issueSession: jest.fn().mockResolvedValue(MOCK_USER_SUMMARY),
   };
-
-  const sessionCookieService = { set: jest.fn() };
 
   const module: TestingModule = await Test.createTestingModule({
     providers: [
@@ -109,11 +110,9 @@ export async function createMagicLinkHarness(): Promise<MagicLinkHarness> {
         useValue: pendingModel,
       },
       { provide: getModelToken(User.name), useValue: userModel },
-      { provide: getModelToken(Role.name), useValue: roleModel },
       { provide: ConfigService, useValue: configService },
       { provide: AuthMailService, useValue: authMailService },
-      { provide: SessionService, useValue: sessionService },
-      { provide: SessionCookieService, useValue: sessionCookieService },
+      { provide: SignInService, useValue: signInService },
     ],
   }).compile();
 
@@ -122,7 +121,6 @@ export async function createMagicLinkHarness(): Promise<MagicLinkHarness> {
     pendingModel,
     userModel,
     authMailService,
-    sessionService,
-    sessionCookieService,
+    signInService,
   };
 }

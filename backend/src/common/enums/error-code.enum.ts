@@ -31,6 +31,20 @@ export enum ErrorCode {
   /** Magic link token is unknown, already used, or expired */
   MAGIC_LINK_INVALID = 'MAGIC_LINK_INVALID',
 
+  // Two-factor errors
+  /** Submitted TOTP code or recovery code did not match */
+  TWO_FACTOR_CODE_INVALID = 'TWO_FACTOR_CODE_INVALID',
+  /** Challenge cookie is missing, tampered with, expired, or out of attempts */
+  TWO_FACTOR_CHALLENGE_INVALID = 'TWO_FACTOR_CHALLENGE_INVALID',
+  /** Second factor is already confirmed on this account */
+  TWO_FACTOR_ALREADY_ENABLED = 'TWO_FACTOR_ALREADY_ENABLED',
+  /** Account has no confirmed second factor */
+  TWO_FACTOR_NOT_ENABLED = 'TWO_FACTOR_NOT_ENABLED',
+  /** Confirm was called without a pending secret from setup */
+  TWO_FACTOR_SETUP_REQUIRED = 'TWO_FACTOR_SETUP_REQUIRED',
+  /** TOTP_ENCRYPTION_KEY is missing or not 32 bytes */
+  TWO_FACTOR_NOT_CONFIGURED = 'TWO_FACTOR_NOT_CONFIGURED',
+
   // Feature flag errors
   /** Route belongs to an authentication method this deployment turned off */
   FEATURE_DISABLED = 'FEATURE_DISABLED',

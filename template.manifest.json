@@ -127,15 +127,18 @@
       "docs": ["docs/setup-magic-link.md"]
     },
     "totp": {
-      "status": "planned",
+      "status": "available",
       "label": "TOTP two-factor",
-      "description": "Second factor from an authenticator app.",
+      "description": "Second factor from an authenticator app, on top of password, magic link or OAuth sign-in. Includes single-use recovery codes.",
       "kind": "second-factor",
       "default": false,
-      "files": [],
-      "envVars": [],
-      "requires": ["email-password"],
-      "docs": []
+      "files": [
+        "backend/src/auth/two-factor/**",
+        "backend/src/user/schemas/two-factor.schema.ts"
+      ],
+      "envVars": ["TWO_FACTOR_ENABLED", "TOTP_ENCRYPTION_KEY"],
+      "requires": [],
+      "docs": ["docs/setup-two-factor.md"]
     },
     "passkeys": {
       "status": "planned",

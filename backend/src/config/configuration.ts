@@ -45,6 +45,10 @@ export interface Configuration {
     expiresIn: number;
     maxPerHour: number;
   };
+  twoFactor: {
+    enabled: boolean;
+    encryptionKey?: string;
+  };
   swagger: {
     enabled: boolean;
   };
@@ -126,6 +130,10 @@ const configuration = (): Configuration => {
         process.env.MAGIC_LINK_MAX_PER_HOUR || '5',
         10,
       ),
+    },
+    twoFactor: {
+      enabled: process.env.TWO_FACTOR_ENABLED !== 'false',
+      encryptionKey: process.env.TOTP_ENCRYPTION_KEY,
     },
     swagger: {
       enabled: process.env.SWAGGER_ENABLED === 'true',

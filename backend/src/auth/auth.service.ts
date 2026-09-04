@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Response } from 'express';
 import { User, UserDocument } from '../user/schemas/user.schema';
-import { Role, RoleDocument } from '../role/schemas/role.schema';
 import { RegisterDto } from './dto/register.dto';
 import { ActivateDto } from './dto/activate.dto';
 import { LoginDto } from './dto/login.dto';
@@ -25,7 +24,7 @@ import { SessionCookieService } from './services/session-cookie.service';
 import { SessionService } from './services/session.service';
 import { VerificationCodeService } from './services/verification-code.service';
 import { PasswordResetCodeService } from './services/password-reset-code.service';
-import { toAuthenticatedUser } from './utils/authenticated-user.util';
+import { SignInService } from './services/sign-in.service';
 import { resolveActivatedUser } from './utils/activation.util';
 import { generateVerificationCode } from './utils/verification-code.util';
 
@@ -35,13 +34,13 @@ export class AuthService {
 
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-    @InjectModel(Role.name) private readonly roleModel: Model<RoleDocument>,
     private readonly hashService: HashService,
     private readonly authMailService: AuthMailService,
     private readonly sessionService: SessionService,
     private readonly verificationCodeService: VerificationCodeService,
     private readonly passwordResetCodeService: PasswordResetCodeService,
     private readonly sessionCookieService: SessionCookieService,
+    private readonly signInService: SignInService,
   ) {}
 
   /**
@@ -172,20 +171,15 @@ export class AuthService {
       );
     }
 
-    const userAgent = response.req.headers['user-agent'] || 'Unknown';
-    const ip = response.req.ip || '127.0.0.1';
-    const sessionToken = await this.sessionService.createSession(
-      user._id,
-      userAgent,
-      ip,
-    );
+    const outcome = await this.signInService.completeSignIn(user, response);
+
+    if (outcome.requiresTwoFactor) {
+      this.logger.log(`Password accepted, second factor owed: ${user.email}`);
+      return LoginResponseDto.twoFactorRequired();
+    }
 
     this.logger.log(`User logged in: ${user.email}`);
-    this.sessionCookieService.set(response, sessionToken);
-
-    return LoginResponseDto.success(
-      await toAuthenticatedUser(user, this.roleModel),
-    );
+    return LoginResponseDto.success(outcome.user);
   }
 
   async logout(

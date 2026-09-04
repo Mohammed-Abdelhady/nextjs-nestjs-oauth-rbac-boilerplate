@@ -133,19 +133,32 @@ describe('MagicLinkService', () => {
         { $set: { consumedAt: expect.any(Date) as Date } },
         { new: true },
       );
-      expect(harness.sessionService.createSession).toHaveBeenCalledWith(
-        MOCK_USER._id,
-        'test-agent',
-        '127.0.0.1',
-      );
-      expect(harness.sessionCookieService.set).toHaveBeenCalledWith(
+      expect(harness.signInService.completeSignIn).toHaveBeenCalledWith(
+        MOCK_USER,
         MOCK_RESPONSE,
-        'session-token-123',
       );
+      expect(result.data.requiresTwoFactor).toBe(false);
       expect(result.data.user).toMatchObject({
         email: EMAIL,
         permissions: ['read'],
       });
+    });
+
+    it('should hold the sign-in when the account owes a second factor', async () => {
+      harness.pendingModel.findOneAndUpdate.mockResolvedValueOnce(
+        pendingLink(new Date(Date.now() + 60000)),
+      );
+      harness.userModel.findOne.mockResolvedValueOnce(MOCK_USER);
+      harness.signInService.completeSignIn.mockResolvedValueOnce({
+        requiresTwoFactor: true,
+      });
+
+      const result = await harness.service.verify(
+        { token: TOKEN },
+        MOCK_RESPONSE,
+      );
+
+      expect(result.data).toEqual({ requiresTwoFactor: true, user: null });
     });
 
     it('should create a verified account without a password for a new address', async () => {
@@ -173,7 +186,7 @@ describe('MagicLinkService', () => {
         code: ErrorCode.MAGIC_LINK_INVALID,
         status: 400,
       });
-      expect(harness.sessionService.createSession).not.toHaveBeenCalled();
+      expect(harness.signInService.completeSignIn).not.toHaveBeenCalled();
     });
 
     it('should reject an expired token', async () => {
@@ -203,7 +216,7 @@ describe('MagicLinkService', () => {
       ).rejects.toMatchObject({
         code: ErrorCode.MAGIC_LINK_INVALID,
       });
-      expect(harness.sessionCookieService.set).not.toHaveBeenCalled();
+      expect(harness.signInService.completeSignIn).not.toHaveBeenCalled();
     });
 
     it('should verify an account that had not confirmed its address', async () => {

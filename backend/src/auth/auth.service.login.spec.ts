@@ -4,6 +4,7 @@ import {
   MOCK_RESPONSE,
   MOCK_USER,
   MOCK_USER_ID,
+  MOCK_USER_SUMMARY,
 } from './auth.service.harness-spec';
 import { ErrorCode } from '../common/enums/error-code.enum';
 
@@ -69,15 +70,32 @@ describe('AuthService sign-in and password reset', () => {
       );
 
       expect(result.success).toBe(true);
-      expect(harness.sessionService.createSession).toHaveBeenCalledWith(
-        MOCK_USER_ID,
-        'test-agent',
-        '127.0.0.1',
-      );
-      expect(harness.sessionCookieService.set).toHaveBeenCalledWith(
+      expect(result.data).toEqual({
+        requiresTwoFactor: false,
+        user: MOCK_USER_SUMMARY,
+      });
+      expect(harness.signInService.completeSignIn).toHaveBeenCalledWith(
+        MOCK_USER,
         MOCK_RESPONSE,
-        'session-token-123',
       );
+    });
+
+    it('should hold the sign-in when the account owes a second factor', async () => {
+      harness.userModel.findOne.mockReturnValue({
+        select: jest.fn().mockResolvedValue(MOCK_USER),
+      });
+      harness.hashService.compare.mockResolvedValue(true);
+      harness.signInService.completeSignIn.mockResolvedValue({
+        requiresTwoFactor: true,
+      });
+
+      const result = await harness.service.login(
+        { email: 'user@example.com', password: 'Password123!' },
+        MOCK_RESPONSE,
+      );
+
+      expect(result.data).toEqual({ requiresTwoFactor: true, user: null });
+      expect(harness.sessionService.createSession).not.toHaveBeenCalled();
     });
   });
 

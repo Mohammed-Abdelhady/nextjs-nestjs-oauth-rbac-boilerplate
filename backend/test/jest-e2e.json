@@ -6,5 +6,7 @@
   "transform": {
     "^.+\\.(t|j)s$": ["ts-jest", { "tsconfig": { "allowJs": true } }]
   },
-  "transformIgnorePatterns": ["/node_modules/(?!jose/)"]
+  "transformIgnorePatterns": [
+    "/node_modules/(?!(.*/)?(jose|@scure/base|@noble/hashes)/)"
+  ]
 }

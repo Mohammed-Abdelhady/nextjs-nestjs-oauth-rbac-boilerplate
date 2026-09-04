@@ -28,14 +28,16 @@ export class AuthMethodsController {
   @ApiOperation({
     summary: 'List enabled sign-in methods',
     description:
-      'Returns the password and magic link switches together with the OAuth ' +
-      'providers that have credentials, so a client renders only what works.',
+      'Returns the password, magic link and two-factor switches together with ' +
+      'the OAuth providers that have credentials, so a client renders only ' +
+      'what works.',
   })
   getMethods(): ApiResponse<AuthMethodsResponseDto> {
     return ApiResponse.success({
       methods: {
         password: this.authFeaturesService.isEnabled(AuthFeature.PASSWORD),
         magicLink: this.authFeaturesService.isEnabled(AuthFeature.MAGIC_LINK),
+        twoFactor: this.authFeaturesService.isEnabled(AuthFeature.TWO_FACTOR),
         oauth: this.oauthRegistry.listEnabled(),
       },
     });

@@ -193,6 +193,7 @@ export class UserProfileService {
       permissions: effectivePermissions,
       authProvider: user.authProvider,
       isVerified: user.isVerified,
+      twoFactorEnabled: user.twoFactor?.enabled === true,
       avatarUrl: user.avatarUrl,
       linkedProviders: user.linkedProviders,
       primaryProvider: user.primaryProvider,

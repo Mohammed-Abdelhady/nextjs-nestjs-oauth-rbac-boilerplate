@@ -50,6 +50,12 @@ export class UserProfileDto {
   isVerified!: boolean;
 
   @ApiProperty({
+    description: 'Whether sign-in on this account asks for a TOTP code',
+    example: false,
+  })
+  twoFactorEnabled!: boolean;
+
+  @ApiProperty({
     description: 'Avatar URL synced from the primary provider',
     example: null,
     required: false,

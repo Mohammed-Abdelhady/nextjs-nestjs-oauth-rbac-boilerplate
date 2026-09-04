@@ -15,6 +15,12 @@ export class AuthMethodsDto {
   magicLink!: boolean;
 
   @ApiProperty({
+    description: 'Accounts may add a TOTP second factor',
+    example: true,
+  })
+  twoFactor!: boolean;
+
+  @ApiProperty({
     description: 'OAuth providers with credentials configured',
     example: [{ id: 'google', displayName: 'Google' }],
   })

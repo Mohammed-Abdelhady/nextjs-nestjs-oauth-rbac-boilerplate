@@ -1,3 +1,11 @@
+// AuthModule reaches the otplib adapter through the two-factor services; this
+// spec only reads module metadata.
+jest.mock('../two-factor/utils/totp.util', () => ({
+  generateTotpSecret: jest.fn(),
+  buildOtpauthUrl: jest.fn(),
+  checkTotpDelta: jest.fn(),
+}));
+
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import { MagicLinkModule } from './magic-link.module';
 import { MagicLinkController } from './magic-link.controller';
@@ -7,6 +15,7 @@ import { AuthMailService } from '../services/auth-mail.service';
 import { AuthFeaturesService } from '../services/auth-features.service';
 import { SessionService } from '../services/session.service';
 import { SessionCookieService } from '../services/session-cookie.service';
+import { SignInService } from '../services/sign-in.service';
 import { FeatureEnabledGuard } from '../guards/feature-enabled.guard';
 
 /**
@@ -40,6 +49,7 @@ describe('Magic link wiring', () => {
     ['AuthFeaturesService', AuthFeaturesService],
     ['SessionService', SessionService],
     ['SessionCookieService', SessionCookieService],
+    ['SignInService', SignInService],
     ['FeatureEnabledGuard', FeatureEnabledGuard],
   ])('exports %s from AuthModule', (_name, provider) => {
     expect(metadataOf(AuthModule, MODULE_METADATA.EXPORTS)).toContain(provider);

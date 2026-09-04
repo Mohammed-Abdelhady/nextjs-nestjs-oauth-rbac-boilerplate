@@ -21,11 +21,8 @@ import {
 } from './utils/magic-link-token.util';
 import { LoginResponseDto } from '../dto/login-response.dto';
 import { AuthMailService } from '../services/auth-mail.service';
-import { SessionService } from '../services/session.service';
-import { SessionCookieService } from '../services/session-cookie.service';
-import { toAuthenticatedUser } from '../utils/authenticated-user.util';
+import { SignInService } from '../services/sign-in.service';
 import { User, UserDocument } from '../../user/schemas/user.schema';
-import { Role, RoleDocument } from '../../role/schemas/role.schema';
 import { AuthProvider } from '../../user/enums/auth-provider.enum';
 import { ApiResponse } from '../../common/dto/api-response.dto';
 import { AppException } from '../../common/exceptions/app.exception';
@@ -48,11 +45,9 @@ export class MagicLinkService {
     @InjectModel(PendingMagicLink.name)
     private readonly pendingMagicLinkModel: Model<PendingMagicLinkDocument>,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-    @InjectModel(Role.name) private readonly roleModel: Model<RoleDocument>,
     private readonly configService: ConfigService,
     private readonly authMailService: AuthMailService,
-    private readonly sessionService: SessionService,
-    private readonly sessionCookieService: SessionCookieService,
+    private readonly signInService: SignInService,
   ) {
     this.expiresIn = this.configService.get<number>(
       'magicLink.expiresIn',
@@ -110,7 +105,8 @@ export class MagicLinkService {
   }
 
   /**
-   * Spend a link and sign its owner in.
+   * Spend a link and sign its owner in. An account with a second factor gets
+   * the challenge cookie and `requiresTwoFactor` instead of a session.
    *
    * @throws AppException MAGIC_LINK_INVALID when the token is unknown, already
    * spent, expired, or belongs to a deleted account
@@ -134,20 +130,15 @@ export class MagicLinkService {
     }
 
     const user = await this.resolveUser(link.email);
-    const userAgent = response.req.headers['user-agent'] || 'Unknown';
-    const ip = response.req.ip || '127.0.0.1';
-    const sessionToken = await this.sessionService.createSession(
-      user._id,
-      userAgent,
-      ip,
-    );
+    const outcome = await this.signInService.completeSignIn(user, response);
 
-    this.sessionCookieService.set(response, sessionToken);
+    if (outcome.requiresTwoFactor) {
+      this.logger.log(`Link spent, second factor owed: ${user.email}`);
+      return LoginResponseDto.twoFactorRequired();
+    }
+
     this.logger.log(`User signed in with a magic link: ${user.email}`);
-
-    return LoginResponseDto.success(
-      await toAuthenticatedUser(user, this.roleModel),
-    );
+    return LoginResponseDto.success(outcome.user);
   }
 
   /**

@@ -10,12 +10,17 @@ describe('AuthMethodsController', () => {
   async function createController(config: {
     passwordEnabled: boolean;
     magicLinkEnabled: boolean;
+    twoFactorEnabled: boolean;
   }): Promise<AuthMethodsController> {
+    const values: Record<string, boolean> = {
+      'auth.passwordEnabled': config.passwordEnabled,
+      'magicLink.enabled': config.magicLinkEnabled,
+      'twoFactor.enabled': config.twoFactorEnabled,
+    };
+
     const configService = {
-      get: jest.fn((key: string) =>
-        key === 'auth.passwordEnabled'
-          ? config.passwordEnabled
-          : config.magicLinkEnabled,
+      get: jest.fn((key: string, fallback?: boolean) =>
+        key in values ? values[key] : fallback,
       ),
     } as unknown as ConfigService;
 
@@ -39,11 +44,19 @@ describe('AuthMethodsController', () => {
     const controller = await createController({
       passwordEnabled: true,
       magicLinkEnabled: true,
+      twoFactorEnabled: true,
     });
 
     expect(controller.getMethods()).toEqual({
       success: true,
-      data: { methods: { password: true, magicLink: true, oauth: providers } },
+      data: {
+        methods: {
+          password: true,
+          magicLink: true,
+          twoFactor: true,
+          oauth: providers,
+        },
+      },
       message: undefined,
     });
   });
@@ -52,11 +65,13 @@ describe('AuthMethodsController', () => {
     const controller = await createController({
       passwordEnabled: false,
       magicLinkEnabled: true,
+      twoFactorEnabled: false,
     });
 
     expect(controller.getMethods().data.methods).toMatchObject({
       password: false,
       magicLink: true,
+      twoFactor: false,
     });
   });
 });

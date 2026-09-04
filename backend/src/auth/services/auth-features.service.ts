@@ -4,21 +4,23 @@ import { AuthFeature } from '../enums/auth-feature.enum';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 
-/** Configuration key holding the switch for each method. */
+/** Configuration key holding the switch for each feature. */
 const FEATURE_CONFIG_KEYS: Record<AuthFeature, string> = {
   [AuthFeature.PASSWORD]: 'auth.passwordEnabled',
   [AuthFeature.MAGIC_LINK]: 'magicLink.enabled',
+  [AuthFeature.TWO_FACTOR]: 'twoFactor.enabled',
 };
 
 /** Used when the key is absent, which happens in tests with a partial config. */
 const FEATURE_FALLBACKS: Record<AuthFeature, boolean> = {
   [AuthFeature.PASSWORD]: true,
   [AuthFeature.MAGIC_LINK]: false,
+  [AuthFeature.TWO_FACTOR]: true,
 };
 
 /**
- * Single answer to "is this sign-in method on?", read by the guard that closes
- * the routes and by the discovery endpoint that lists them.
+ * Single answer to "is this feature on?", read by the guard that closes the
+ * routes and by the discovery endpoint that lists them.
  */
 @Injectable()
 export class AuthFeaturesService {

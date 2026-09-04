@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 import { EMAIL_PROVIDER } from '../../common/constants/oauth-providers';
+import { TwoFactor, TwoFactorSchema } from './two-factor.schema';
 
 /**
  * One OAuth account linked to a user, keyed by the provider id from the OAuth registry.
@@ -64,6 +65,13 @@ export class User {
 
   @Prop()
   lastSyncedProvider?: string;
+
+  /**
+   * Second factor state. Optional subdocument, so accounts written before it
+   * existed read back with the defaults and need no migration.
+   */
+  @Prop({ type: TwoFactorSchema, default: () => ({}) })
+  twoFactor!: TwoFactor;
 
   /** Virtual: 'email' when password sign-in applies, plus every linked OAuth provider. */
   linkedProviders!: string[];

@@ -186,18 +186,23 @@ export class OAuthController {
         );
       }
 
-      await this.oauthService.login({
+      const outcome = await this.oauthService.login({
         strategy,
         code: params.code,
         redirectUri: this.registry.getCallbackUrl(strategy.id),
         codeVerifier: payload.codeVerifier,
         nonce: payload.nonce,
         callbackParams: params,
-        request,
         response,
       });
 
       this.stateService.clear(response, strategy.id);
+
+      if (outcome.requiresTwoFactor) {
+        this.redirectService.toTwoFactorChallenge(response, payload.redirect);
+        return;
+      }
+
       this.redirectService.toClientSuccess(response, payload.redirect);
     } catch (error) {
       this.stateService.clear(response, providerId);

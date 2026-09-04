@@ -30,6 +30,7 @@ interface MethodsBody {
     methods: {
       password: boolean;
       magicLink: boolean;
+      twoFactor: boolean;
       oauth: { id: string; displayName: string }[];
     };
   };
@@ -79,6 +80,7 @@ describe('AppModule boot (e2e)', () => {
     expect(body.success).toBe(true);
     expect(typeof body.data.methods.password).toBe('boolean');
     expect(typeof body.data.methods.magicLink).toBe('boolean');
+    expect(typeof body.data.methods.twoFactor).toBe('boolean');
     expect(Array.isArray(body.data.methods.oauth)).toBe(true);
   });
 
@@ -114,6 +116,35 @@ describe('AppModule boot (e2e)', () => {
     expect((response.body as ErrorBody).error.code).toBe(
       magicLinkOn ? 'MAGIC_LINK_INVALID' : 'FEATURE_DISABLED',
     );
+  });
+
+  it('should answer the two-factor verify route without a session', async () => {
+    const methods: Response = await request(e2e.httpServer)
+      .get('/api/auth/methods')
+      .expect(200);
+
+    const twoFactorOn = (methods.body as MethodsBody).data.methods.twoFactor;
+    const response: Response = await request(e2e.httpServer)
+      .post('/api/auth/2fa/verify')
+      .send({ code: '123456' });
+
+    // Public route, so a request without the challenge cookie reaches the
+    // handler and is turned away there rather than by the session guard.
+    expect(response.status).toBe(twoFactorOn ? 401 : 404);
+    expect((response.body as ErrorBody).error.code).toBe(
+      twoFactorOn ? 'TWO_FACTOR_CHALLENGE_INVALID' : 'FEATURE_DISABLED',
+    );
+  });
+
+  it('should keep the two-factor setup route behind a session', async () => {
+    // The session guard is global and runs before the feature guard, so this
+    // answers the same way whether or not the feature is on.
+    const response: Response = await request(e2e.httpServer)
+      .post('/api/auth/2fa/setup')
+      .send({})
+      .expect(401);
+
+    expect((response.body as ErrorBody).error.code).toBe('SESSION_REQUIRED');
   });
 
   it('should return a request id header', async () => {

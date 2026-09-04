@@ -50,6 +50,7 @@
     "jose": "^6.2.8",
     "mongoose": "^8.21.0",
     "nodemailer": "^8.0.5",
+    "otplib": "^13.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
@@ -105,7 +106,7 @@
       ]
     },
     "transformIgnorePatterns": [
-      "/node_modules/(?!jose/)"
+      "/node_modules/(?!(.*/)?(jose|@scure/base|@noble/hashes)/)"
     ],
     "collectCoverageFrom": [
       "**/*.(t|j)s"

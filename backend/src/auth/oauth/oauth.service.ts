@@ -1,9 +1,8 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Request, Response } from 'express';
-import { SessionService } from '../services/session.service';
-import { SessionCookieService } from '../services/session-cookie.service';
+import { Response } from 'express';
+import { SignInService, SignInOutcome } from '../services/sign-in.service';
 import { User, UserDocument } from '../../user/schemas/user.schema';
 import { ProfileSyncService } from '../../user/services/profile-sync.service';
 import { AppException } from '../../common/exceptions/app.exception';
@@ -23,7 +22,6 @@ export interface OAuthLoginParams {
   nonce?: string;
   /** Raw callback parameters, for providers that ship profile data with them. */
   callbackParams?: OAuthCallbackParams;
-  request: Request;
   response: Response;
 }
 
@@ -39,12 +37,15 @@ export class OAuthService {
 
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-    private readonly sessionService: SessionService,
-    private readonly sessionCookieService: SessionCookieService,
+    private readonly signInService: SignInService,
     private readonly profileSyncService: ProfileSyncService,
   ) {}
 
-  async login(params: OAuthLoginParams): Promise<UserDocument> {
+  /**
+   * @returns whether a second factor is still owed, which the controller turns
+   * into a redirect to the challenge page rather than to the client callback
+   */
+  async login(params: OAuthLoginParams): Promise<SignInOutcome> {
     const { strategy } = params;
 
     const tokens = await strategy.exchangeCode({
@@ -64,17 +65,17 @@ export class OAuthService {
       profile,
     );
 
-    const userAgent = params.request.headers['user-agent'] ?? 'Unknown';
-    const ip = params.request.ip ?? '127.0.0.1';
-    const sessionToken = await this.sessionService.createSession(
-      user._id,
-      userAgent,
-      ip,
+    const outcome = await this.signInService.completeSignIn(
+      user,
+      params.response,
     );
-    this.sessionCookieService.set(params.response, sessionToken);
 
-    this.logger.log(`User authenticated through ${strategy.id}`);
-    return user;
+    this.logger.log(
+      outcome.requiresTwoFactor
+        ? `Second factor owed after ${strategy.id}`
+        : `User authenticated through ${strategy.id}`,
+    );
+    return outcome;
   }
 
   /**

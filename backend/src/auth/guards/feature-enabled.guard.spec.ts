@@ -1,3 +1,11 @@
+// The two-factor controller pulls in the otplib adapter; this spec only reads
+// the feature metadata off the class.
+jest.mock('../two-factor/utils/totp.util', () => ({
+  generateTotpSecret: jest.fn(),
+  buildOtpauthUrl: jest.fn(),
+  checkTotpDelta: jest.fn(),
+}));
+
 import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { FeatureEnabledGuard } from './feature-enabled.guard';
@@ -6,6 +14,7 @@ import { AuthFeature } from '../enums/auth-feature.enum';
 import { AUTH_FEATURE_KEY } from '../decorators/requires-feature.decorator';
 import { AuthController } from '../auth.controller';
 import { MagicLinkController } from '../magic-link/magic-link.controller';
+import { TwoFactorController } from '../two-factor/two-factor.controller';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 
 class UngatedController {
@@ -30,16 +39,22 @@ function contextFor(
   } as unknown as ExecutionContext;
 }
 
+/** Configuration key each feature reads, mirroring AuthFeaturesService. */
+const CONFIG_KEYS: Record<string, AuthFeature> = {
+  'auth.passwordEnabled': AuthFeature.PASSWORD,
+  'magicLink.enabled': AuthFeature.MAGIC_LINK,
+  'twoFactor.enabled': AuthFeature.TWO_FACTOR,
+};
+
 describe('FeatureEnabledGuard', () => {
-  function createGuard(enabled: Record<AuthFeature, boolean>): {
+  function createGuard(enabled: Partial<Record<AuthFeature, boolean>>): {
     guard: FeatureEnabledGuard;
   } {
     const configService = {
-      get: jest.fn((key: string) =>
-        key === 'auth.passwordEnabled'
-          ? enabled[AuthFeature.PASSWORD]
-          : enabled[AuthFeature.MAGIC_LINK],
-      ),
+      get: jest.fn((key: string, fallback?: boolean) => {
+        const feature = CONFIG_KEYS[key];
+        return feature ? (enabled[feature] ?? fallback) : fallback;
+      }),
     };
 
     const guard = new FeatureEnabledGuard(
@@ -101,6 +116,23 @@ describe('FeatureEnabledGuard', () => {
       ),
     ).toThrow(
       expect.objectContaining({ code: ErrorCode.FEATURE_DISABLED }) as Error,
+    );
+  });
+
+  it('should let the two-factor routes through when the feature is on', () => {
+    const { guard } = createGuard({ [AuthFeature.TWO_FACTOR]: true });
+
+    expect(guard.canActivate(contextFor(TwoFactorController))).toBe(true);
+  });
+
+  it('should answer 404 FEATURE_DISABLED for the two-factor routes when the feature is off', () => {
+    const { guard } = createGuard({ [AuthFeature.TWO_FACTOR]: false });
+
+    expect(() => guard.canActivate(contextFor(TwoFactorController))).toThrow(
+      expect.objectContaining({
+        code: ErrorCode.FEATURE_DISABLED,
+        status: 404,
+      }) as Error,
     );
   });
 });
