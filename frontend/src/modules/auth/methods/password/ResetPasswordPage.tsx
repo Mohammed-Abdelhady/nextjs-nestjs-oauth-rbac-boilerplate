@@ -1,5 +1,5 @@
-import { AuthLayout } from '../components/AuthLayout';
-import { ResetPasswordForm } from '../components/ResetPasswordForm';
+import { AuthLayout } from '@/modules/auth/components/AuthLayout';
+import { ResetPasswordForm } from './ResetPasswordForm';
 
 /**
  * ResetPasswordPage component

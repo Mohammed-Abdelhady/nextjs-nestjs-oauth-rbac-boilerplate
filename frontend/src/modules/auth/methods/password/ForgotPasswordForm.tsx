@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { FormProvider } from 'react-hook-form';
 import { useFormWithValidation } from '@/hooks/useFormWithValidation';
 import { FormInput, FormRootError, SubmitButton } from '@/components/forms';
-import { useForgotPasswordMutation } from '../store/authApi';
+import { useForgotPasswordMutation } from '@/modules/auth/store/authApi';
 import { zodEmail } from '@/lib/validations';
 import { Mail } from 'lucide-react';
 import { useCallback, useMemo } from 'react';

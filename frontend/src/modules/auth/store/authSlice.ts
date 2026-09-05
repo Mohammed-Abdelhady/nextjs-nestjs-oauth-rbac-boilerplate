@@ -75,11 +75,16 @@ export const authSlice = createSlice({
       state.isLoading = true;
       state.error = null;
     });
+    // A reply without a user means the account still owes a second factor, so
+    // there is no session to record yet.
     builder.addMatcher(authApi.endpoints.login.matchFulfilled, (state, action) => {
-      state.user = action.payload.user;
-      state.isAuthenticated = true;
       state.isLoading = false;
       state.error = null;
+      if (action.payload.user === null) {
+        return;
+      }
+      state.user = action.payload.user;
+      state.isAuthenticated = true;
     });
     builder.addMatcher(authApi.endpoints.login.matchRejected, (state, action) => {
       state.isLoading = false;

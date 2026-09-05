@@ -1,0 +1,98 @@
+'use client';
+
+import { useCallback, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useFeatureDisabledHandler } from '@/modules/auth/hooks/useFeatureDisabled';
+import { translatableErrorCode } from '@/modules/auth/utils/errorCodeMessage';
+import { useConfirmTwoFactorMutation, useSetupTwoFactorMutation } from '../api';
+import { SETUP_STEP, type SetupStep, type TwoFactorSetup } from '../types';
+
+export interface TwoFactorSetupFlow {
+  step: SetupStep;
+  setup: TwoFactorSetup | null;
+  recoveryCodes: string[];
+  /** Translated message for the step that failed, or null. */
+  error: string | null;
+  isBusy: boolean;
+  start: (password?: string) => Promise<void>;
+  goToConfirm: () => void;
+  goToScan: () => void;
+  confirm: (code: string) => Promise<void>;
+  reset: () => void;
+}
+
+/**
+ * Drives the four steps of turning the second factor on: prove who you are,
+ * scan the secret, confirm a first code, keep the recovery codes.
+ */
+export function useTwoFactorSetup(): TwoFactorSetupFlow {
+  const tCodes = useTranslations('errors.codes');
+  const handleFeatureDisabled = useFeatureDisabledHandler();
+  const [startSetup, { isLoading: isStarting }] = useSetupTwoFactorMutation();
+  const [confirmSetup, { isLoading: isConfirming }] = useConfirmTwoFactorMutation();
+
+  const [step, setStep] = useState<SetupStep>(SETUP_STEP.REAUTH);
+  const [setup, setSetup] = useState<TwoFactorSetup | null>(null);
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const start = useCallback(
+    async (password?: string) => {
+      setError(null);
+      try {
+        setSetup(await startSetup({ password }).unwrap());
+        setStep(SETUP_STEP.SCAN);
+      } catch (err) {
+        // The card unmounts with its dialogs once the refetch lands.
+        if (handleFeatureDisabled(err)) {
+          return;
+        }
+        setError(tCodes(translatableErrorCode(err)));
+      }
+    },
+    [handleFeatureDisabled, startSetup, tCodes],
+  );
+
+  const confirm = useCallback(
+    async (code: string) => {
+      setError(null);
+      try {
+        const result = await confirmSetup({ code }).unwrap();
+        setRecoveryCodes(result.recoveryCodes);
+        setStep(SETUP_STEP.RECOVERY_CODES);
+      } catch (err) {
+        if (handleFeatureDisabled(err)) {
+          return;
+        }
+        setError(tCodes(translatableErrorCode(err)));
+      }
+    },
+    [confirmSetup, handleFeatureDisabled, tCodes],
+  );
+
+  const reset = useCallback(() => {
+    setStep(SETUP_STEP.REAUTH);
+    setSetup(null);
+    setRecoveryCodes([]);
+    setError(null);
+  }, []);
+
+  return {
+    step,
+    setup,
+    recoveryCodes,
+    error,
+    isBusy: isStarting || isConfirming,
+    start,
+    goToConfirm: useCallback(() => {
+      setError(null);
+      setStep(SETUP_STEP.CONFIRM);
+    }, []),
+    goToScan: useCallback(() => {
+      setError(null);
+      setStep(SETUP_STEP.SCAN);
+    }, []),
+    confirm,
+    reset,
+  };
+}

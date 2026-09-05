@@ -12,6 +12,9 @@ export interface User {
   name: string;
   role: UserRole;
   permissions: string[];
+  /** Only the profile endpoint reports these; a sign-in reply leaves them out. */
+  twoFactorEnabled?: boolean;
+  linkedProviders?: string[];
 }
 
 /**
@@ -35,12 +38,42 @@ export interface LoginRequest {
 }
 
 /**
- * Login response from API
- * Uses httpOnly cookies for session management (no token in response)
+ * Body every sign-in route returns. When the account owes a second factor
+ * there is no session yet, so `user` is null and the code goes to /auth/2fa.
  */
 export interface LoginResponse {
-  user: User;
+  requiresTwoFactor: boolean;
+  user: User | null;
   message?: string;
+}
+
+/**
+ * Sign-in methods this deployment accepts, from GET /api/auth/methods.
+ *
+ * `passkeys` is the extension point for WebAuthn. The backend does not report
+ * it yet and nothing renders it, so it normalises to false.
+ */
+export interface AuthMethods {
+  password: boolean;
+  magicLink: boolean;
+  twoFactor: boolean;
+  passkeys: boolean;
+  oauth: AuthMethodProvider[];
+}
+
+/**
+ * One OAuth provider as the methods endpoint lists it. Same shape as the
+ * OAuth module's provider summary, kept separate so the core sign-in types do
+ * not depend on a feature module.
+ */
+export interface AuthMethodProvider {
+  id: string;
+  displayName: string;
+}
+
+/** Payload of the methods endpoint before normalisation. */
+export interface AuthMethodsResponse {
+  methods: Omit<AuthMethods, 'passkeys'> & { passkeys?: boolean };
 }
 
 /**

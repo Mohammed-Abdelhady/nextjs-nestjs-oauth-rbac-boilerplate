@@ -12,14 +12,14 @@ import {
   PasswordRules,
   SubmitButton,
 } from '@/components/forms';
-import { useResetPasswordMutation } from '../store/authApi';
+import { useResetPasswordMutation } from '@/modules/auth/store/authApi';
 import { zodPassword } from '@/lib/validations';
 import { KeyRound } from 'lucide-react';
 import { useCallback, useMemo, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import { Link, useRouter } from '@/i18n/navigation';
 import { parseApiError } from '@/lib/apiError';
-import { filterDigits } from '../utils/digitFilter';
+import { filterDigits } from '@/modules/auth/utils/digitFilter';
 
 /**
  * Reset password form validation schema

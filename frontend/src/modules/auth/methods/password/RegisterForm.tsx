@@ -12,7 +12,7 @@ import {
   PasswordRules,
   SubmitButton,
 } from '@/components/forms';
-import { useRegisterMutation } from '../store/authApi';
+import { useRegisterMutation } from '@/modules/auth/store/authApi';
 import { zodEmail, zodPassword, zodName } from '@/lib/validations';
 import { UserPlus, LogIn } from 'lucide-react';
 import { IconLinkButton } from '@/components/ui/icon-link-button';
@@ -20,6 +20,7 @@ import { useCallback, useMemo } from 'react';
 import { toast } from '@/lib/toast';
 import { parseApiError } from '@/lib/apiError';
 import { OAuthButtons, OAuthDivider } from '@/modules/oauth';
+import { useAuthMethods } from '@/modules/auth/hooks/useAuthMethods';
 
 /**
  * Registration form validation schema using centralized validators
@@ -69,6 +70,8 @@ export function RegisterForm() {
   const tToast = useTranslations('toast');
   const router = useRouter();
   const [register, { isLoading }] = useRegisterMutation();
+  const { methods } = useAuthMethods();
+  const hasOAuth = (methods?.oauth.length ?? 0) > 0;
 
   // Memoize schema creation when translation function changes
   const registerSchema = useMemo(() => createRegisterSchema(t), [t]);
@@ -148,13 +151,15 @@ export function RegisterForm() {
           </IconLinkButton>
         </div>
 
-        {/* OAuth Buttons */}
-        <div className="my-6">
-          <OAuthButtons />
-        </div>
-
-        {/* Divider */}
-        <OAuthDivider />
+        {/* OAuth buttons, only where the backend has providers configured */}
+        {hasOAuth && (
+          <>
+            <div className="my-6">
+              <OAuthButtons />
+            </div>
+            <OAuthDivider />
+          </>
+        )}
 
         {/* Registration Form */}
         <FormProvider {...form}>

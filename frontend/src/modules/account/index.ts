@@ -4,7 +4,6 @@ export {
   LinkedAccountCard,
   LinkProviderButton,
   ProfileSyncStatus,
-  ChangePasswordCard,
   UpdateProfileCard,
 } from './components';
 

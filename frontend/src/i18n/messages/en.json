@@ -109,6 +109,10 @@
       "submit": "Create Account",
       "haveAccount": "Already have an account?",
       "signIn": "Sign in",
+      "magicLinkOnlyTitle": "No account to create",
+      "magicLinkOnlyBody": "This site signs you in with a link sent by email. The first link you use creates your account.",
+      "providerOnlyTitle": "No account to create",
+      "providerOnlyBody": "This site signs you in through one of the providers on the sign-in page. Your account is created the first time you use one.",
       "divider": "Or sign up with e-mail",
       "errors": {
         "nameRequired": "Name is required",
@@ -183,6 +187,44 @@
         "serverError": "An error occurred. Please try again later",
         "networkError": "Network error. Please check your connection"
       }
+    },
+    "methods": {
+      "noneEnabled": "No sign-in method is available. Ask an administrator to turn one on."
+    },
+    "magicLink": {
+      "title": "Email me a sign-in link",
+      "description": "We send a link that signs you in. No password needed.",
+      "email": "Email address",
+      "submit": "Send the link",
+      "error": "The link could not be sent. Try again.",
+      "sentTitle": "Check your inbox",
+      "sentBody": "If {email} has an account, a sign-in link is on its way. The link works once and expires shortly.",
+      "resend": "Send another link",
+      "resendCooldown": "Send another link ({seconds}s)",
+      "errors": {
+        "emailRequired": "Email is required",
+        "emailInvalid": "Please enter a valid email address"
+      },
+      "verify": {
+        "title": "Signing you in",
+        "pending": "Checking your link.",
+        "errorTitle": "This link did not work",
+        "requestNew": "Request a new link",
+        "backToSignIn": "Back to sign in"
+      }
+    },
+    "twoFactor": {
+      "title": "Two-step verification",
+      "description": "Enter the six digit code from your authenticator app.",
+      "code": "Authentication code",
+      "recoveryCode": "Recovery code",
+      "useRecoveryCode": "Use a recovery code",
+      "useCode": "Use a code from the app",
+      "submit": "Verify",
+      "backToSignIn": "Back to sign in",
+      "answerRequired": "Enter a code to continue",
+      "codeLength": "The code is six digits",
+      "recoveryCodeLength": "A recovery code is ten characters"
     },
     "oauth": {
       "signInWith": "Sign in with {provider}",
@@ -335,6 +377,66 @@
       "passwordsDoNotMatch": "Passwords do not match",
       "error": "Failed to change password"
     },
+    "twoFactor": {
+      "title": "Two-step verification",
+      "description": "Ask for a code from an authenticator app at every sign-in.",
+      "statusOn": "On",
+      "statusOff": "Off",
+      "setup": {
+        "open": "Set up",
+        "title": "Set up two-step verification",
+        "reauth": {
+          "description": "Confirm it is you before changing how you sign in.",
+          "passwordBody": "Enter your current password to continue.",
+          "passwordlessBody": "Your account has no password, so the session you signed in on is the proof. Sign in again if this is refused.",
+          "password": "Current password",
+          "continue": "Continue"
+        },
+        "scan": {
+          "description": "Add the account to your authenticator app.",
+          "body": "Scan this code with your authenticator app, or type the key below into it.",
+          "qrLabel": "QR code for your authenticator app",
+          "secretLabel": "Setup key",
+          "copySecret": "Copy the setup key",
+          "continue": "I have added it"
+        },
+        "confirm": {
+          "description": "Enter the first code your app shows.",
+          "body": "Your app now shows a six digit code that changes every 30 seconds.",
+          "code": "Authentication code",
+          "codeLength": "The code is six digits",
+          "submit": "Turn on",
+          "back": "Back"
+        },
+        "recoveryCodes": {
+          "description": "Save these codes somewhere safe.",
+          "body": "Each code signs you in once if you lose your authenticator app. They are shown here and nowhere else.",
+          "acknowledge": "I saved these codes",
+          "done": "Done"
+        }
+      },
+      "recoveryCodes": {
+        "copy": "Copy",
+        "copied": "Copied",
+        "download": "Download"
+      },
+      "disable": {
+        "open": "Turn off",
+        "title": "Turn off two-step verification?",
+        "description": "Sign-in stops asking for a code. You can turn it back on later.",
+        "password": "Current password",
+        "submit": "Turn off",
+        "success": "Two-step verification is off"
+      },
+      "regenerate": {
+        "open": "Replace recovery codes",
+        "title": "Replace recovery codes",
+        "description": "The old codes stop working, used or not.",
+        "submit": "Replace codes",
+        "done": "Here are your new codes. The old ones no longer work.",
+        "close": "Done"
+      }
+    },
     "profile": {
       "title": "Profile Information",
       "description": "Update your personal information.",
@@ -430,6 +532,14 @@
       "PERMISSION_ALREADY_EXISTS": "This permission is already assigned",
       "PERMISSION_NOT_FOUND": "Permission not found",
       "INVALID_PERMISSION_FORMAT": "Invalid permission format",
+      "MAGIC_LINK_INVALID": "This sign-in link is no longer valid. Request a new one",
+      "TWO_FACTOR_CODE_INVALID": "That code is not right. Try the current one from your app",
+      "TWO_FACTOR_CHALLENGE_INVALID": "This sign-in attempt expired. Start again from the sign-in page",
+      "TWO_FACTOR_ALREADY_ENABLED": "Two-step verification is already on for this account",
+      "TWO_FACTOR_NOT_ENABLED": "Two-step verification is not on for this account",
+      "TWO_FACTOR_SETUP_REQUIRED": "Start the setup again before entering a code",
+      "TWO_FACTOR_NOT_CONFIGURED": "Two-step verification is not configured on this server",
+      "FEATURE_DISABLED": "This sign-in method is turned off here",
       "UNKNOWN_ERROR": "An unexpected error occurred. Please try again"
     }
   },

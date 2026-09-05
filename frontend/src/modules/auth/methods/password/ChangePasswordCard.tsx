@@ -8,6 +8,7 @@ import { toast } from '@/lib/toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormPassword, PasswordRules, SubmitButton } from '@/components/forms';
 import { useChangePasswordMutation } from '@/modules/auth/store';
+import { useAuthMethods } from '@/modules/auth/hooks/useAuthMethods';
 import { parseApiError } from '@/lib/apiError';
 import {
   createChangePasswordSchema,
@@ -15,11 +16,14 @@ import {
 } from '@/lib/validations/changePassword';
 
 /**
- * ChangePasswordCard Component
- * Allows users to change their password from the Settings page
+ * Password change, for the settings page.
+ *
+ * A deployment with password sign-in turned off has no password to change, so
+ * the card is not rendered there.
  */
 export function ChangePasswordCard() {
   const t = useTranslations('settings.password');
+  const { methods } = useAuthMethods();
   const [changePassword, { isLoading }] = useChangePasswordMutation();
 
   const schema = useMemo(() => createChangePasswordSchema(t), [t]);
@@ -48,8 +52,12 @@ export function ChangePasswordCard() {
     }
   };
 
+  if (methods !== undefined && !methods.password) {
+    return null;
+  }
+
   return (
-    <Card>
+    <Card data-testid="change-password-card">
       <CardHeader>
         <CardTitle>{t('title')}</CardTitle>
         <CardDescription>{t('description')}</CardDescription>
