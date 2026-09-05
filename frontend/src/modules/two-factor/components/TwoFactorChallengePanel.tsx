@@ -10,6 +10,7 @@ import { Link } from '@/i18n/navigation';
 import { useCompleteSignIn } from '@/modules/auth/hooks/useCompleteSignIn';
 import { useFeatureDisabledHandler } from '@/modules/auth/hooks/useFeatureDisabled';
 import { translatableErrorCode } from '@/modules/auth/utils/errorCodeMessage';
+import { PasskeyChallengeButton } from '@/modules/passkeys'; // feature:passkeys
 import { useVerifyTwoFactorMutation } from '../api';
 import { createAnswerSchema, toAnswer, type AnswerFormData } from '../utils/answerSchema';
 import { TwoFactorAnswerFields } from './TwoFactorAnswerFields';
@@ -101,6 +102,10 @@ export function TwoFactorChallengePanel({ redirect }: TwoFactorChallengePanelPro
           </SubmitButton>
         </form>
       </FormProvider>
+
+      {/* feature:passkeys:start */}
+      <PasskeyChallengeButton redirect={redirect} />
+      {/* feature:passkeys:end */}
 
       <Link
         href="/auth/login"

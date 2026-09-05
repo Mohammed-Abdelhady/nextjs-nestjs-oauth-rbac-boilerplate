@@ -226,6 +226,19 @@
       "codeLength": "The code is six digits",
       "recoveryCodeLength": "A recovery code is ten characters"
     },
+    "passkeys": {
+      "description": "Use the passkey saved on this device.",
+      "signIn": "Sign in with a passkey",
+      "useInstead": "Use a passkey instead",
+      "unsupported": "This browser cannot use passkeys.",
+      "errors": {
+        "notAllowed": "The prompt was dismissed or timed out. Try again",
+        "invalidState": "This device already has a passkey for your account",
+        "aborted": "The prompt closed before it finished. Try again",
+        "unsupported": "This browser or device cannot use that passkey",
+        "failed": "The passkey did not work. Try again"
+      }
+    },
     "oauth": {
       "signInWith": "Sign in with {provider}",
       "continue": "Or continue with",
@@ -437,6 +450,54 @@
         "close": "Done"
       }
     },
+    "passkeys": {
+      "title": "Passkeys",
+      "description": "Sign in with your fingerprint, face or screen lock instead of a password.",
+      "count": "{count, plural, =0 {None} =1 {1 passkey} other {{count} passkeys}}",
+      "add": "Add a passkey",
+      "noPlatformAuthenticator": "This device has no built-in authenticator. A security key or your phone works too.",
+      "empty": "No passkeys yet. Add one to sign in without a password.",
+      "listLabel": "Your passkeys",
+      "backedUp": "Backed up",
+      "added": "Added {date}",
+      "lastUsed": "Last used {date}",
+      "neverUsed": "Not used yet",
+      "deviceType": {
+        "singleDevice": "One device",
+        "multiDevice": "Several devices"
+      },
+      "deviceNames": {
+        "mac": "Mac",
+        "iphone": "iPhone",
+        "ipad": "iPad",
+        "android": "Android phone",
+        "windows": "Windows PC",
+        "linux": "Linux computer",
+        "other": "Passkey"
+      },
+      "name": {
+        "title": "Name this passkey",
+        "description": "The name shows here only, to tell your passkeys apart.",
+        "field": "Name",
+        "submit": "Save"
+      },
+      "rename": {
+        "title": "Rename passkey",
+        "description": "Pick a name that tells you which device this is.",
+        "label": "Rename {name}"
+      },
+      "delete": {
+        "title": "Remove this passkey?",
+        "description": "{name} stops working for sign-in. The key stays on your device until you delete it there.",
+        "label": "Remove {name}",
+        "submit": "Remove",
+        "success": "The passkey was removed"
+      },
+      "errors": {
+        "nameRequired": "Enter a name",
+        "nameTooLong": "A name can be at most {max} characters"
+      }
+    },
     "profile": {
       "title": "Profile Information",
       "description": "Update your personal information.",
@@ -539,6 +600,11 @@
       "TWO_FACTOR_NOT_ENABLED": "Two-step verification is not on for this account",
       "TWO_FACTOR_SETUP_REQUIRED": "Start the setup again before entering a code",
       "TWO_FACTOR_NOT_CONFIGURED": "Two-step verification is not configured on this server",
+      "PASSKEY_CHALLENGE_INVALID": "This passkey attempt expired. Start again",
+      "PASSKEY_VERIFICATION_FAILED": "That passkey could not be used to sign in",
+      "PASSKEY_NOT_FOUND": "That passkey is no longer on your account",
+      "PASSKEY_LAST_SIGN_IN_METHOD": "This is the only way into your account. Add a password or another passkey first",
+      "PASSKEY_NOT_CONFIGURED": "Passkeys are not configured on this server",
       "FEATURE_DISABLED": "This sign-in method is turned off here",
       "UNKNOWN_ERROR": "An unexpected error occurred. Please try again"
     }

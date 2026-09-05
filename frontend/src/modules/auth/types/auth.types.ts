@@ -14,6 +14,8 @@ export interface User {
   permissions: string[];
   /** Only the profile endpoint reports these; a sign-in reply leaves them out. */
   twoFactorEnabled?: boolean;
+  /** How many passkeys are registered on the account. */
+  passkeyCount?: number;
   linkedProviders?: string[];
 }
 
@@ -50,8 +52,8 @@ export interface LoginResponse {
 /**
  * Sign-in methods this deployment accepts, from GET /api/auth/methods.
  *
- * `passkeys` is the extension point for WebAuthn. The backend does not report
- * it yet and nothing renders it, so it normalises to false.
+ * A backend older than the passkey routes leaves `passkeys` out, which
+ * normalises to false rather than to a button nothing answers.
  */
 export interface AuthMethods {
   password: boolean;

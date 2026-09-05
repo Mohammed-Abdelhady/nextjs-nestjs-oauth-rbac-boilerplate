@@ -21,7 +21,7 @@ const NOTHING_ENABLED: AuthMethods = {
 };
 
 function countsAsEnabled(methods: AuthMethods): boolean {
-  return methods.password || methods.magicLink || methods.oauth.length > 0;
+  return methods.password || methods.magicLink || methods.passkeys || methods.oauth.length > 0;
 }
 
 /**

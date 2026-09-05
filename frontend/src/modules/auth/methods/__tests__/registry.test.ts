@@ -29,9 +29,35 @@ describe('enabledAuthMethods', () => {
     expect(idsFor(methods({ magicLink: true }))).toEqual([AUTH_METHOD_ID.MAGIC_LINK]);
   });
 
+  it('renders only the passkey button when only passkeys are on', () => {
+    expect(idsFor(methods({ passkeys: true }))).toEqual([AUTH_METHOD_ID.PASSKEYS]);
+  });
+
   it('puts the password form above the magic link form', () => {
     expect(idsFor(methods({ password: true, magicLink: true }))).toEqual([
       AUTH_METHOD_ID.PASSWORD,
+      AUTH_METHOD_ID.MAGIC_LINK,
+    ]);
+  });
+
+  it('opens on the passkey button where passwords are off', () => {
+    expect(idsFor(methods({ passkeys: true, magicLink: true }))).toEqual([
+      AUTH_METHOD_ID.PASSKEYS,
+      AUTH_METHOD_ID.MAGIC_LINK,
+    ]);
+  });
+
+  it('keeps the password form first where passwords are on', () => {
+    expect(idsFor(methods({ password: true, passkeys: true }))).toEqual([
+      AUTH_METHOD_ID.PASSWORD,
+      AUTH_METHOD_ID.PASSKEYS,
+    ]);
+  });
+
+  it('orders all three password, passkey, magic link', () => {
+    expect(idsFor(methods({ password: true, passkeys: true, magicLink: true }))).toEqual([
+      AUTH_METHOD_ID.PASSWORD,
+      AUTH_METHOD_ID.PASSKEYS,
       AUTH_METHOD_ID.MAGIC_LINK,
     ]);
   });
@@ -42,7 +68,9 @@ describe('enabledAuthMethods', () => {
     expect(idsFor(methods({ twoFactor: true }))).toEqual([]);
   });
 
-  it('does not render passkeys yet, even when the backend reports them', () => {
-    expect(idsFor(methods({ passkeys: true }))).toEqual([]);
+  it('renders nothing extra for a method the registry does not carry', () => {
+    expect(
+      idsFor(methods({ twoFactor: true, oauth: [{ id: 'github', displayName: 'GitHub' }] })),
+    ).toEqual([]);
   });
 });

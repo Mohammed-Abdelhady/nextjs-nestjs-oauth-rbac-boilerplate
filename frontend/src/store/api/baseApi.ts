@@ -30,6 +30,7 @@ export const baseApi = createApi({
     'Roles',
     'Permissions',
     'Sessions',
+    'Passkeys', // feature:passkeys
   ],
   endpoints: () => ({}),
 });

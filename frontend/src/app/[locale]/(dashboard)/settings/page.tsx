@@ -1,6 +1,7 @@
 import { LinkedAccounts, ProfileSyncStatus, UpdateProfileCard } from '@/modules/account';
 import { ChangePasswordCard } from '@/modules/auth/methods/password';
-import { TwoFactorCard } from '@/modules/two-factor';
+import { PasskeysCard } from '@/modules/passkeys'; // feature:passkeys
+import { TwoFactorCard } from '@/modules/two-factor'; // feature:totp
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 
@@ -49,7 +50,12 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
           <div className="grid gap-6 md:grid-cols-2">
             <UpdateProfileCard />
             <ChangePasswordCard />
+            {/* feature:totp:start */}
             <TwoFactorCard />
+            {/* feature:totp:end */}
+            {/* feature:passkeys:start */}
+            <PasskeysCard />
+            {/* feature:passkeys:end */}
           </div>
         </section>
 

@@ -5,7 +5,6 @@ export const AUTH_METHODS_PATH = '/api/auth/methods';
 export const AUTH_METHOD_ID = {
   PASSWORD: 'password',
   MAGIC_LINK: 'magicLink',
-  /** Reserved for WebAuthn. Nothing renders it yet. */
   PASSKEYS: 'passkeys',
 } as const;
 
