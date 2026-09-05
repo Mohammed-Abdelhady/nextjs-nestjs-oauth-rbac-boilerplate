@@ -25,6 +25,11 @@ import { MicrosoftOAuthStrategy } from './auth/oauth/strategies/microsoft-oauth.
 import { AppleOAuthStrategy } from './auth/oauth/strategies/apple-oauth.strategy';
 import { DiscordOAuthStrategy } from './auth/oauth/strategies/discord-oauth.strategy';
 import { LinkedInOAuthStrategy } from './auth/oauth/strategies/linkedin-oauth.strategy';
+import { GitLabOAuthStrategy } from './auth/oauth/strategies/gitlab-oauth.strategy';
+import { XOAuthStrategy } from './auth/oauth/strategies/x-oauth.strategy';
+import { SlackOAuthStrategy } from './auth/oauth/strategies/slack-oauth.strategy';
+import { TwitchOAuthStrategy } from './auth/oauth/strategies/twitch-oauth.strategy';
+import { OidcOAuthStrategy } from './auth/oauth/strategies/oidc-oauth.strategy';
 import { AdminModule } from './admin/admin.module';
 import { CommonModule } from './common/common.module';
 import { MailModule } from './mail/mail.module';
@@ -93,6 +98,11 @@ import { Connection } from 'mongoose';
       AppleOAuthStrategy,
       DiscordOAuthStrategy,
       LinkedInOAuthStrategy,
+      GitLabOAuthStrategy,
+      XOAuthStrategy,
+      SlackOAuthStrategy,
+      TwitchOAuthStrategy,
+      OidcOAuthStrategy,
     ]),
     MagicLinkModule,
     PasskeysModule,
