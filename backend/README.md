@@ -1,224 +1,197 @@
 # Backend
 
-NestJS 11 API with MongoDB, authentication, and role-based access control.
+NestJS 11 API with MongoDB, cookie-based sessions, dynamic RBAC, two-factor authentication, passkeys, and OAuth.
 
-## Quick Start
+## Quick start
 
 ```bash
 npm install
 npm run migration:up     # Apply migrations
-npm run seed             # Seed test data
-npm run start:dev        # Development (http://localhost:5000)
+npm run seed             # Seed roles and test accounts
+npm run start:dev        # Development server (http://localhost:5000)
 npm run build            # Production build
 npm run start:prod       # Production server
 ```
 
-## Tech Stack
+## Tech stack
 
-- **NestJS 11** - Node.js framework
-- **TypeScript 5.7** - Type safety
-- **MongoDB** - Database
-- **Mongoose 8** - ODM
-- **bcrypt** - Password hashing
-- **Nodemailer** - Email service
-- **Passport** - OAuth strategies
+- **NestJS 11** on Express
+- **TypeScript 5.x** with strict mode
+- **MongoDB 7** with **Mongoose 8**
+- **bcrypt** for password hashing
+- **Nodemailer** with SMTP transport
+- **@simplewebauthn/server** for WebAuthn passkeys
+- **Custom OAuth provider registry** for OAuth 2.0 and OIDC
 
-## Project Structure
+## Project structure
 
 ```
 src/
-├── auth/               # Authentication module
-│   ├── controllers/    # Auth endpoints
+├── auth/               # Authentication, sessions, 2FA, passkeys, and OAuth
+│   ├── oauth/          # Unified OAuth provider registry and strategies
+│   ├── passkeys/       # WebAuthn options and verification
 │   ├── services/       # Auth logic
-│   ├── guards/         # AuthGuard, registered globally
-│   ├── dto/            # Request/Response DTOs
-│   └── decorators/     # @Public, @CurrentUser
-├── user/               # User module
-│   ├── schemas/        # User schema
-│   └── enums/          # UserRole enum
-├── session/            # Session module
-├── permission/         # Permission module
-├── mail/               # Email service
-├── database/           # DB config, migrations, seeds
-└── common/             # Shared utilities
+│   └── guards/         # SessionAuthGuard, RolesGuard, PermissionsGuard
+├── user/               # User profile and linked account management
+├── role/               # Role CRUD and hierarchy
+├── admin/              # User administration and direct permission assignment
+├── session/            # Session management and device metadata
+├── mail/               # Nodemailer email dispatch
+├── database/           # Mongoose schemas, migrations, seeds
+├── health/             # Health check endpoint
+└── common/             # Interceptors, filters, DTOs, and constants
 ```
 
-## Environment Variables
+## Key environment variables
 
-Create `.env`:
+Configure these in `backend/.env`:
 
 ```bash
 PORT=5000
 NODE_ENV=development
 MONGO_URI=mongodb://localhost:27017/authboiler
-CLIENT_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:3000
 
-# SMTP
+# Session and state security
+SESSION_SECRET=your-secure-session-secret
+OAUTH_STATE_SECRET=your-secure-oauth-state-secret
+TOTP_ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+# SMTP email service
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
+SMTP_SECURE=false
 SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
 EMAIL_FROM=noreply@yourapp.com
 
-# OAuth (optional)
-GOOGLE_CLIENT_ID=your-client-id
-GOOGLE_CLIENT_SECRET=your-secret
-FACEBOOK_APP_ID=your-app-id
-FACEBOOK_APP_SECRET=your-secret
-GITHUB_CLIENT_ID=your-client-id
-GITHUB_CLIENT_SECRET=your-secret
+# OAuth providers (optional)
+OAUTH_GOOGLE_CLIENT_ID=your-client-id
+OAUTH_GOOGLE_CLIENT_SECRET=your-client-secret
+OAUTH_GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/oauth/google/callback
 
-# Security
-BCRYPT_ROUNDS=10
-SESSION_EXPIRES_IN=604800000  # 7 days
-
-# Swagger (development only)
+# Swagger API docs
 SWAGGER_ENABLED=true
 ```
 
-## API Endpoints
+## API endpoints
 
-### Authentication (Public)
+### Authentication (`/api/auth`)
 
-| Method | Endpoint                    | Description         |
-| ------ | --------------------------- | ------------------- |
-| POST   | `/api/auth/register`        | Register with email |
-| POST   | `/api/auth/activate`        | Verify email code   |
-| POST   | `/api/auth/login`           | Login               |
-| POST   | `/api/auth/logout`          | Logout              |
-| POST   | `/api/auth/forgot-password` | Request reset       |
-| POST   | `/api/auth/reset-password`  | Reset password      |
-| POST   | `/api/auth/oauth/authorize` | Get OAuth URL       |
-| POST   | `/api/auth/oauth/callback`  | OAuth callback      |
+| Method | Endpoint                    | Description                         | Auth    |
+| ------ | --------------------------- | ----------------------------------- | ------- |
+| POST   | `/api/auth/register`        | Register new account                | Public  |
+| POST   | `/api/auth/resend-code`     | Resend verification code            | Public  |
+| POST   | `/api/auth/activate`        | Verify account with 6-digit code    | Public  |
+| POST   | `/api/auth/login`           | Email/password sign-in              | Public  |
+| POST   | `/api/auth/logout`          | Revoke session cookie               | Session |
+| POST   | `/api/auth/forgot-password` | Request password reset token        | Public  |
+| POST   | `/api/auth/reset-password`  | Reset password using token          | Public  |
+| GET    | `/api/auth/methods`         | List enabled authentication options | Public  |
 
-### User (Protected)
+### Magic link (`/api/auth/magic-link`)
 
-| Method | Endpoint                           | Description       |
-| ------ | ---------------------------------- | ----------------- |
-| GET    | `/api/user/profile`                | Get profile       |
-| PATCH  | `/api/user/profile`                | Update profile    |
-| POST   | `/api/user/password`               | Change password   |
-| GET    | `/api/user/sessions`               | List sessions     |
-| DELETE | `/api/user/sessions/:id`           | Revoke session    |
-| POST   | `/api/user/sessions/revoke-others` | Revoke all others |
+| Method | Endpoint                      | Description                  | Auth   |
+| ------ | ----------------------------- | ---------------------------- | ------ |
+| POST   | `/api/auth/magic-link/send`   | Send passwordless login link | Public |
+| POST   | `/api/auth/magic-link/verify` | Consume magic link token     | Public |
 
-### Admin (Protected + Permission)
+### Two-factor authentication (`/api/auth/2fa`)
 
-| Method | Endpoint                    | Description |
-| ------ | --------------------------- | ----------- |
-| GET    | `/api/admin/users`          | List users  |
-| PATCH  | `/api/admin/users/:id/role` | Update role |
-| DELETE | `/api/admin/users/:id`      | Delete user |
+| Method | Endpoint                       | Description                            | Auth             |
+| ------ | ------------------------------ | -------------------------------------- | ---------------- |
+| POST   | `/api/auth/2fa/generate`       | Generate TOTP secret and QR code       | Session          |
+| POST   | `/api/auth/2fa/enable`         | Verify code and enable 2FA             | Session          |
+| POST   | `/api/auth/2fa/verify`         | Complete login challenge               | Challenge cookie |
+| POST   | `/api/auth/2fa/disable`        | Disable two-factor authentication      | Session          |
+| POST   | `/api/auth/2fa/recovery-codes` | Generate new single-use recovery codes | Session          |
 
-## Database
+### Passkeys (`/api/auth/passkeys` and `/api/user/passkeys`)
 
-### Commands
+| Method | Endpoint                              | Description                       | Auth    |
+| ------ | ------------------------------------- | --------------------------------- | ------- |
+| POST   | `/api/auth/passkeys/login/options`    | Get WebAuthn assertion options    | Public  |
+| POST   | `/api/auth/passkeys/login/verify`     | Verify passkey login assertion    | Public  |
+| POST   | `/api/user/passkeys/register/options` | Get WebAuthn registration options | Session |
+| POST   | `/api/user/passkeys/register/verify`  | Save new passkey public key       | Session |
+| GET    | `/api/user/passkeys`                  | List registered passkeys          | Session |
+| DELETE | `/api/user/passkeys/:id`              | Remove a passkey                  | Session |
 
-```bash
-npm run migration:create <name>  # Create migration
-npm run migration:up             # Apply migrations
-npm run migration:down           # Rollback
-npm run migration:status         # Check status
-npm run seed                     # Seed data
-npm run seed:reset               # Clear and reseed
-```
+### OAuth (`/api/auth/oauth`)
 
-### Models
+| Method | Endpoint                             | Description                      | Auth   |
+| ------ | ------------------------------------ | -------------------------------- | ------ |
+| GET    | `/api/auth/oauth/providers`          | List enabled OAuth providers     | Public |
+| GET    | `/api/auth/oauth/:provider/start`    | Start OAuth login flow           | Public |
+| GET    | `/api/auth/oauth/:provider/callback` | OAuth redirect callback          | Public |
+| POST   | `/api/auth/oauth/:provider/callback` | OAuth form post callback (Apple) | Public |
 
-**User**
+### User profile and sessions (`/api/user`)
 
-```typescript
-{
-  email: string;
-  password: string;      // bcrypt hashed
-  name: string;
-  role: 'user' | 'support' | 'manager' | 'admin';
-  isVerified: boolean;
-  googleId?: string;
-  facebookId?: string;
-  githubId?: string;
-}
-```
+| Method | Endpoint                        | Description                      | Auth    |
+| ------ | ------------------------------- | -------------------------------- | ------- |
+| GET    | `/api/user/profile`             | Get authenticated user profile   | Session |
+| PATCH  | `/api/user/profile`             | Update profile information       | Session |
+| POST   | `/api/user/password`            | Change account password          | Session |
+| GET    | `/api/user/providers`           | List linked social identities    | Session |
+| DELETE | `/api/user/providers/:provider` | Unlink a social identity         | Session |
+| GET    | `/api/user/sessions`            | List active user sessions        | Session |
+| DELETE | `/api/user/sessions/:id`        | Revoke a specific session        | Session |
+| DELETE | `/api/user/sessions/all`        | Revoke all other active sessions | Session |
 
-**Session**
+### Roles (`/api/roles`)
 
-```typescript
-{
-  user: ObjectId;
-  token: string;
-  userAgent: string;
-  ip: string;
-  isValid: boolean;
-  expiresAt: Date; // TTL auto-cleanup
-}
-```
+| Method | Endpoint         | Description                      | Required permission |
+| ------ | ---------------- | -------------------------------- | ------------------- |
+| GET    | `/api/roles`     | List all roles                   | `roles:read`        |
+| POST   | `/api/roles`     | Create a new role                | `roles:write`       |
+| GET    | `/api/roles/:id` | Get role details                 | `roles:read`        |
+| PUT    | `/api/roles/:id` | Update role permissions or level | `roles:write`       |
+| DELETE | `/api/roles/:id` | Delete custom role               | `roles:write`       |
 
-### Seed Users
+### Administration (`/api/admin`)
 
-| Role    | Email              | Password    |
-| ------- | ------------------ | ----------- |
-| USER    | user@seed.local    | User123!    |
-| SUPPORT | support@seed.local | Support123! |
-| MANAGER | manager@seed.local | Manager123! |
-| ADMIN   | admin@seed.local   | Admin123!   |
+| Method | Endpoint                           | Description                       | Required permission  |
+| ------ | ---------------------------------- | --------------------------------- | -------------------- |
+| GET    | `/api/admin/users`                 | Paginated list of users           | `users:read`         |
+| GET    | `/api/admin/users/:id`             | Get user details                  | `users:read`         |
+| PATCH  | `/api/admin/users/:id/role`        | Update user role assignment       | `users:manage_roles` |
+| PATCH  | `/api/admin/users/:id/status`      | Activate or deactivate account    | `users:write`        |
+| DELETE | `/api/admin/users/:id`             | Remove user account               | `users:delete`       |
+| GET    | `/api/admin/permissions`           | List all system permissions       | `permissions:read`   |
+| POST   | `/api/admin/users/:id/permissions` | Assign direct permission override | `permissions:assign` |
 
-## Role Hierarchy
+### Health check
 
-```
-ADMIN (4)     Full system access
-    ↓
-MANAGER (3)   Team management
-    ↓
-SUPPORT (2)   Customer service
-    ↓
-USER (1)      Default role
-```
+| Method | Endpoint  | Description                | Auth   |
+| ------ | --------- | -------------------------- | ------ |
+| GET    | `/health` | Server and database status | Public |
 
-## Guards
-
-```typescript
-// Public route (no auth)
-@Public()
-@Post('register')
-
-// Every route needs a valid session: AuthGuard runs as APP_GUARD
-@Get('profile')
-
-// Opt out for routes that anyone may call
-@Public()
-@Post('login')
-```
-
-## API Documentation
-
-Enable Swagger: Set `SWAGGER_ENABLED=true`
-
-- **Swagger UI**: http://localhost:5000/api/docs
-- **OpenAPI JSON**: http://localhost:5000/api/docs-json
-- **Postman Collection**: See `docs/postman/`
-
-## Testing
+## Database management
 
 ```bash
-npm test              # Unit tests
-npm run test:watch    # Watch mode
-npm run test:cov      # Coverage
-npm run test:e2e      # E2E tests
+npm run migration:create <name>  # Create migration script
+npm run migration:up             # Apply pending migrations
+npm run migration:down           # Revert last migration batch
+npm run migration:status         # Show migration history
+npm run seed                     # Seed roles and development accounts
+npm run seed:reset               # Wipe database and reseed
 ```
 
-## Docker
+### Seed accounts
 
-```bash
-docker build -t backend .
-docker run -p 5000:5000 --env-file .env backend
-```
+The seed script creates two test users in development environments:
 
-Or use `docker compose up` from root directory.
+| Account            | Role    | Password                                                          |
+| ------------------ | ------- | ----------------------------------------------------------------- |
+| `admin@seed.local` | `admin` | Random base64 string printed to stdout (or `SEED_ADMIN_PASSWORD`) |
+| `user@seed.local`  | `user`  | Random base64 string printed to stdout (or `SEED_USER_PASSWORD`)  |
 
 ## Documentation
 
-- [Database Management](docs/database-management.md)
-- [Authentication Flow](docs/authentication-flow.md)
-- [User Roles & Permissions](docs/user-roles-permissions.md)
-- [API Responses](docs/api-responses.md)
-- [OAuth Authentication](docs/oauth-authentication.md)
+- [Authentication flow](docs/authentication-flow.md)
+- [OAuth authentication](docs/oauth-authentication.md)
+- [User roles and permissions](docs/user-roles-permissions.md)
+- [Database management](docs/database-management.md)
+- [API responses](docs/api-responses.md)
+- [Postman collection](docs/postman/README.md)

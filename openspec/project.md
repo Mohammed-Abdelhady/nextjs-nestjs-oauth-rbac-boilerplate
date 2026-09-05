@@ -16,50 +16,45 @@ The project is currently being refactored from an older Express/React stack to a
 
 ### Backend (NestJS)
 
--   **Framework**: NestJS 11.0.1 (Node.js framework)
--   **Language**: TypeScript 5.7.3
+-   **Framework**: NestJS 11 (Node.js framework)
+-   **Language**: TypeScript 5.x
 -   **Platform**: Express.js
--   **Database**: MongoDB with Mongoose ODM (to be installed)
+-   **Database**: MongoDB 7 with Mongoose 8 ODM
 -   **Authentication**:
-    -   JWT tokens with `@nestjs/jwt` and `@nestjs/passport`
-    -   Password hashing: bcrypt (work factor ≥10)
-    -   OAuth: Passport strategies for Google and Facebook
--   **Email Service**: SendGrid (`@sendgrid/mail`)
+    -   Stateful cookie sessions (`sid` in development, `__Host-sid` in production)
+    -   Cryptographic token hashing: SHA-256 `tokenHash` stored in database
+    -   Password hashing: bcrypt
+    -   Two-factor authentication: TOTP with encrypted secrets and recovery codes
+    -   Passkeys: WebAuthn with `@simplewebauthn/server`
+    -   OAuth: Provider registry supporting 12 identity providers plus generic OIDC
+-   **Email Service**: Nodemailer with SMTP transport
 -   **Validation**: class-validator and class-transformer for DTOs
 -   **Security**:
-    -   Helmet for HTTP headers
+    -   Helmet for HTTP security headers
     -   Rate limiting with `@nestjs/throttler`
     -   CORS configuration
 -   **Testing**: Jest for unit tests, Supertest for E2E
--   **Code Quality**: ESLint 9.18.0, Prettier 3.4.2
--   **Build Tool**: NestJS CLI with ts-loader
+-   **Code Quality**: ESLint, Prettier
+-   **Build Tool**: NestJS CLI
 
 ### Frontend (Next.js)
 
--   **Framework**: Next.js 16.1.2 with App Router
+-   **Framework**: Next.js 16 with App Router
 -   **Language**: TypeScript 5.x
--   **UI Library**: React 19.2.3
--   **Styling**: Tailwind CSS 4.x (utility-first)
--   **State Management**: React Context API + hooks
--   **Data Fetching**: Native fetch API or axios
--   **Form Validation**: Zod for schema validation
--   **HTTP Client**: Fetch API with custom wrapper
--   **Code Quality**: ESLint 9.x with Next.js config
--   **Testing**: React Testing Library + Playwright for E2E (to be configured)
+-   **UI Library**: React 19
+-   **Styling**: Tailwind CSS 4
+-   **Components**: shadcn/ui, Radix UI, Lucide Icons
+-   **State Management & Data Fetching**: Redux Toolkit with RTK Query
+-   **Form Validation**: React Hook Form with Zod
+-   **Internationalization**: next-intl
+-   **Testing**: Playwright for E2E testing
 
 ### Database
 
--   **Primary Database**: MongoDB 6.x+
--   **ODM**: Mongoose with TypeScript schemas
--   **Connection**: Connection pooling enabled
--   **Indexes**: Email (unique), googleId, facebookId
-
-### Legacy Stack (Reference - in old-code/)
-
--   **Backend**: Express.js with MongoDB (Mongoose)
--   **Frontend**: React 16.13.1 with React Router
--   **Authentication**: JWT, SendGrid for emails, Google/Facebook OAuth libraries
--   **Note**: Legacy code uses weak HMAC-SHA1 hashing - migrate to bcrypt
+-   **Primary Database**: MongoDB 7
+-   **ODM**: Mongoose 8
+-   **Collections**: `users`, `sessions`, `roles`, `pendingregistrations`, `pendingpasswordresets`, `pendingmagiclinks`, `passkeys`, `twofactorchallenges`
+-   **TTL Indexes**: Automatic expiration for sessions, verification codes, and temporary challenges
 
 ## Project Conventions
 
@@ -262,7 +257,6 @@ The project is currently being refactored from an older Express/React stack to a
     -   First line max 72 characters
     -   Body provides context if needed
 -   **Commit Frequency**: Small, atomic commits with clear intent
--   **Co-authored**: Include `Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>` when AI-assisted
 
 #### Pull Request Process
 

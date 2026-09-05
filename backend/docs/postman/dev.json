@@ -4,22 +4,17 @@
   "values": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000/api",
-      "enabled": true
-    },
-    {
-      "key": "jwtToken",
-      "value": "",
+      "value": "http://localhost:5000/api",
       "enabled": true
     },
     {
       "key": "testEmail",
-      "value": "test@example.com",
+      "value": "admin@seed.local",
       "enabled": true
     },
     {
       "key": "testPassword",
-      "value": "Password123",
+      "value": "Password123!",
       "enabled": true
     },
     {

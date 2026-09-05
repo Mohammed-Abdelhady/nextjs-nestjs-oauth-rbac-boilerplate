@@ -741,7 +741,7 @@ If upgrading from a role-based inheritance system:
 
    ```bash
    cd backend
-   npm run migration:run add-permissions-to-users
+   npm run migration:up
    ```
 
 2. **Verify Users Have Permissions**:
@@ -757,7 +757,7 @@ If upgrading from a role-based inheritance system:
    - Replace `@Roles()` decorator with `@RequirePermissions()`
    - Update guards to use `PermissionGuard`
 
-See [MIGRATION.md](./MIGRATION.md) for detailed migration steps.
+See [MIGRATION-GUIDE.md](./MIGRATION-GUIDE.md) for detailed migration steps.
 
 ---
 

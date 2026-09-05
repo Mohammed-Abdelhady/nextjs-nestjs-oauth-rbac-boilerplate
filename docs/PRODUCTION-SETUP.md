@@ -118,7 +118,7 @@ NGINX_HTTPS_PORT=443
 
 ### 2. Update Nginx Configuration
 
-Edit [`nginx/nginx.conf`](nginx/nginx.conf) and replace `server_name _;` with your domains:
+Edit [`nginx/nginx.conf`](../nginx/nginx.conf) and replace `server_name _;` with your domains:
 
 ```nginx
 server_name example.com www.example.com;
@@ -404,7 +404,7 @@ docker-compose -f docker-compose.prod.yml logs -f nginx | grep error
 
 ### Nginx Performance
 
-Edit [`nginx/nginx.conf`](nginx/nginx.conf) to adjust:
+Edit [`nginx/nginx.conf`](../nginx/nginx.conf) to adjust:
 
 ```nginx
 # Worker processes (usually auto is best)
@@ -422,7 +422,7 @@ client_max_body_size 20M;
 
 ### Docker Resources
 
-Edit [`docker-compose.prod.yml`](docker-compose.prod.yml) to adjust limits:
+Edit [`docker-compose.prod.yml`](../docker-compose.prod.yml) to adjust limits:
 
 ```yaml
 deploy:
@@ -488,5 +488,5 @@ For issues or questions:
 
 1. Check the logs: `docker-compose -f docker-compose.prod.yml logs`
 2. Review this documentation
-3. Check the [nginx README](nginx/README.md)
+3. Check the [nginx README](../nginx/README.md)
 4. Open an issue on GitHub

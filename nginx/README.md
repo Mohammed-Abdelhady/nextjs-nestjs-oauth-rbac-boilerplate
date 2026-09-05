@@ -160,7 +160,7 @@ MONGO_PASSWORD=your-secure-password
 
 ### 4. Update nginx.conf
 
-Replace `yourdomain.com` in [`nginx.conf`](nginx/nginx.conf) with your actual domain:
+Replace `yourdomain.com` in [`nginx.conf`](./nginx.conf) with your actual domain:
 
 ```nginx
 server_name yourdomain.com www.yourdomain.com;
@@ -250,7 +250,7 @@ The configuration includes three rate limiting zones:
 2. **API**: 20 requests/second (for API endpoints)
 3. **Auth**: 5 requests/second (for authentication endpoints)
 
-Adjust these values in [`nginx.conf`](nginx/nginx.conf) based on your needs.
+Adjust these values in [`nginx.conf`](./nginx.conf) based on your needs.
 
 ## Troubleshooting
 
@@ -269,7 +269,7 @@ chmod 644 nginx/ssl/*.pem
 
 **Problem**: Ports 80 or 443 already in use
 
-**Solution**: Stop conflicting services or change port mappings in [`docker-compose.prod.yml`](docker-compose.prod.yml)
+**Solution**: Stop conflicting services or change port mappings in [`docker-compose.prod.yml`](../docker-compose.prod.yml)
 
 ### Upstream Connection Errors
 
