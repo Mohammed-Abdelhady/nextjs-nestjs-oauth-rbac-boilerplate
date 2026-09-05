@@ -135,9 +135,12 @@ export class TwoFactorController {
   @ApiOperation({
     summary: 'Answer a two-factor challenge',
     description:
-      'Reads the challenge cookie left by the sign-in, checks the code or a ' +
-      'recovery code, then sets the session cookie and returns the account. ' +
-      'Five wrong codes end the challenge.',
+      'Reads the challenge cookie left by the sign-in, checks a code, a ' +
+      'recovery code or a passkey, then sets the session cookie and returns ' +
+      'the account. A passkey answer is fetched from ' +
+      'POST /auth/passkeys/login/options first and sent as passkeyResponse; it ' +
+      'has to belong to the challenged account. Five wrong answers end the ' +
+      'challenge.',
   })
   @ApiBody({ type: VerifyTwoFactorDto })
   async verify(

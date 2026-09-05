@@ -12,6 +12,9 @@ import { TwoFactorLoginService } from './two-factor-login.service';
 import { TwoFactorChallengeService } from './services/two-factor-challenge.service';
 import { TwoFactorVerificationService } from './services/two-factor-verification.service';
 import { SignInService } from '../services/sign-in.service';
+import { AuthFeaturesService } from '../services/auth-features.service';
+import { PasskeyAssertionService } from '../passkeys/services/passkey-assertion.service';
+import { PasskeyCredentialDto } from '../passkeys/dto/passkey-credential.dto';
 import { checkTotpDelta } from './utils/totp.util';
 import {
   createCrypto,
@@ -40,6 +43,15 @@ const USER_SUMMARY = {
   permissions: ['read'],
 };
 
+/** A credential body, standing in for what the browser would send. */
+const PASSKEY_RESPONSE = {
+  id: 'credential-id',
+  rawId: 'credential-id',
+  response: {},
+  clientExtensionResults: {},
+  type: 'public-key',
+} as PasskeyCredentialDto;
+
 interface Harness {
   service: TwoFactorLoginService;
   challengeService: {
@@ -49,9 +61,14 @@ interface Harness {
     clear: jest.Mock;
   };
   signInService: { issueSession: jest.Mock };
+  passkeyAssertions: { verify: jest.Mock };
 }
 
-function createHarness(user: MockUser | null): Harness {
+function createHarness(
+  user: MockUser | null,
+  passkeyOwner: Types.ObjectId = USER_ID,
+  passkeysEnabled = true,
+): Harness {
   const userModel = { findById: jest.fn().mockResolvedValue(user) };
 
   const challengeService = {
@@ -67,6 +84,19 @@ function createHarness(user: MockUser | null): Harness {
     issueSession: jest.fn().mockResolvedValue(USER_SUMMARY),
   };
 
+  const passkeyAssertions = {
+    verify: jest.fn().mockResolvedValue({
+      passkey: { user: passkeyOwner },
+      userVerified: true,
+    }),
+  };
+
+  const authFeaturesService = new AuthFeaturesService({
+    get: jest.fn((key: string, fallback?: boolean) =>
+      key === 'passkeys.enabled' ? passkeysEnabled : fallback,
+    ),
+  } as unknown as ConstructorParameters<typeof AuthFeaturesService>[0]);
+
   return {
     service: new TwoFactorLoginService(
       userModel as unknown as ConstructorParameters<
@@ -75,9 +105,12 @@ function createHarness(user: MockUser | null): Harness {
       challengeService as unknown as TwoFactorChallengeService,
       new TwoFactorVerificationService(createCrypto()),
       signInService as unknown as SignInService,
+      authFeaturesService,
+      passkeyAssertions as unknown as PasskeyAssertionService,
     ),
     challengeService,
     signInService,
+    passkeyAssertions,
   };
 }
 
@@ -136,6 +169,72 @@ describe('TwoFactorLoginService', () => {
     );
     expect(harness.challengeService.consume).not.toHaveBeenCalled();
     expect(harness.signInService.issueSession).not.toHaveBeenCalled();
+  });
+
+  it('should accept a passkey in place of a code', async () => {
+    const user = createEnabledUser(createCrypto());
+    const harness = createHarness(user);
+
+    const result = await harness.service.verify(
+      { passkeyResponse: PASSKEY_RESPONSE },
+      MOCK_REQUEST,
+      MOCK_RESPONSE,
+    );
+
+    expect(result.data).toEqual({
+      requiresTwoFactor: false,
+      user: USER_SUMMARY,
+    });
+    expect(harness.passkeyAssertions.verify).toHaveBeenCalledWith(
+      PASSKEY_RESPONSE,
+      MOCK_REQUEST,
+      MOCK_RESPONSE,
+    );
+    expect(harness.challengeService.consume).toHaveBeenCalledWith(CHALLENGE_ID);
+  });
+
+  it('should refuse a passkey registered to another account', async () => {
+    const harness = createHarness(
+      createEnabledUser(createCrypto()),
+      new Types.ObjectId('507f1f77bcf86cd799439099'),
+    );
+
+    await expect(
+      harness.service.verify(
+        { passkeyResponse: PASSKEY_RESPONSE },
+        MOCK_REQUEST,
+        MOCK_RESPONSE,
+      ),
+    ).rejects.toMatchObject({
+      code: ErrorCode.PASSKEY_VERIFICATION_FAILED,
+      status: 401,
+    });
+
+    expect(harness.challengeService.registerFailure).toHaveBeenCalledWith(
+      CHALLENGE_ID,
+    );
+    expect(harness.signInService.issueSession).not.toHaveBeenCalled();
+  });
+
+  it('should refuse a passkey while the method is off', async () => {
+    const harness = createHarness(
+      createEnabledUser(createCrypto()),
+      USER_ID,
+      false,
+    );
+
+    await expect(
+      harness.service.verify(
+        { passkeyResponse: PASSKEY_RESPONSE },
+        MOCK_REQUEST,
+        MOCK_RESPONSE,
+      ),
+    ).rejects.toMatchObject({
+      code: ErrorCode.FEATURE_DISABLED,
+      status: 404,
+    });
+
+    expect(harness.passkeyAssertions.verify).not.toHaveBeenCalled();
   });
 
   it('should refuse a challenge whose account is gone', async () => {

@@ -1,9 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, Matches } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsObject,
+  IsOptional,
+  IsString,
+  Matches,
+  ValidateNested,
+} from 'class-validator';
+import { PasskeyCredentialDto } from '../../passkeys/dto/passkey-credential.dto';
 
 /**
- * One of the two ways to answer a challenge. A code comes from the app; a
- * recovery code is one of the ten handed out at setup and works once.
+ * One of the three ways to answer a challenge. A code comes from the app, a
+ * recovery code is one of the ten handed out at setup and works once, and a
+ * passkey is signed by an authenticator the account already registered.
  */
 export class VerifyTwoFactorDto {
   @ApiProperty({
@@ -27,4 +36,17 @@ export class VerifyTwoFactorDto {
     message: 'recoveryCode must be ten base32 characters',
   })
   recoveryCode?: string;
+
+  @ApiProperty({
+    description:
+      'Credential from navigator.credentials.get(), fetched with the options ' +
+      'from POST /auth/passkeys/login/options while the challenge cookie is set',
+    type: PasskeyCredentialDto,
+    required: false,
+  })
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => PasskeyCredentialDto)
+  passkeyResponse?: PasskeyCredentialDto;
 }

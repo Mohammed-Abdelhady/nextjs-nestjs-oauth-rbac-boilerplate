@@ -56,6 +56,12 @@ export class UserProfileDto {
   twoFactorEnabled!: boolean;
 
   @ApiProperty({
+    description: 'How many passkeys are registered on the account',
+    example: 2,
+  })
+  passkeyCount!: number;
+
+  @ApiProperty({
     description: 'Avatar URL synced from the primary provider',
     example: null,
     required: false,

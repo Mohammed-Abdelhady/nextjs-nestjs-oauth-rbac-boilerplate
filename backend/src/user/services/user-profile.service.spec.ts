@@ -7,6 +7,7 @@ import { User } from '../schemas/user.schema';
 import { UserRole } from '../enums/user-role.enum';
 import { AuthProvider } from '../enums/auth-provider.enum';
 import { Role } from '../../role/schemas/role.schema';
+import { Passkey } from '../../auth/passkeys/schemas/passkey.schema';
 import { SessionService } from '../../auth/services/session.service';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
@@ -42,6 +43,10 @@ describe('UserProfileService', () => {
     }),
   };
 
+  const mockPasskeyModel = {
+    countDocuments: jest.fn().mockResolvedValue(0),
+  };
+
   const mockSessionService = {
     invalidateAllSessions: jest.fn().mockResolvedValue(1),
     invalidateAllSessionsExcept: jest.fn().mockResolvedValue(1),
@@ -53,6 +58,7 @@ describe('UserProfileService', () => {
         UserProfileService,
         { provide: getModelToken(User.name), useValue: mockUserModel },
         { provide: getModelToken(Role.name), useValue: mockRoleModel },
+        { provide: getModelToken(Passkey.name), useValue: mockPasskeyModel },
         { provide: SessionService, useValue: mockSessionService },
       ],
     }).compile();

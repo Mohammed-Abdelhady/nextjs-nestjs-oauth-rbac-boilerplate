@@ -31,8 +31,16 @@ interface MethodsBody {
       password: boolean;
       magicLink: boolean;
       twoFactor: boolean;
+      passkeys: boolean;
       oauth: { id: string; displayName: string }[];
     };
+  };
+}
+
+interface OptionsBody {
+  data: {
+    challenge: string;
+    allowCredentials: unknown[];
   };
 }
 
@@ -81,6 +89,7 @@ describe('AppModule boot (e2e)', () => {
     expect(typeof body.data.methods.password).toBe('boolean');
     expect(typeof body.data.methods.magicLink).toBe('boolean');
     expect(typeof body.data.methods.twoFactor).toBe('boolean');
+    expect(typeof body.data.methods.passkeys).toBe('boolean');
     expect(Array.isArray(body.data.methods.oauth)).toBe(true);
   });
 
@@ -142,6 +151,68 @@ describe('AppModule boot (e2e)', () => {
     const response: Response = await request(e2e.httpServer)
       .post('/api/auth/2fa/setup')
       .send({})
+      .expect(401);
+
+    expect((response.body as ErrorBody).error.code).toBe('SESSION_REQUIRED');
+  });
+
+  it('should hand out passkey sign-in options without a session', async () => {
+    const methods: Response = await request(e2e.httpServer)
+      .get('/api/auth/methods')
+      .expect(200);
+
+    const passkeysOn = (methods.body as MethodsBody).data.methods.passkeys;
+    const response: Response = await request(e2e.httpServer)
+      .post('/api/auth/passkeys/login/options')
+      .send({});
+
+    if (!passkeysOn) {
+      expect(response.status).toBe(404);
+      expect((response.body as ErrorBody).error.code).toBe('FEATURE_DISABLED');
+      return;
+    }
+
+    expect(response.status).toBe(200);
+    const body = response.body as OptionsBody;
+    expect(typeof body.data.challenge).toBe('string');
+    // Discoverable credentials only, and nothing that would confirm an account.
+    expect(body.data.allowCredentials).toEqual([]);
+    expect(response.headers['set-cookie']).toEqual(
+      expect.arrayContaining([expect.stringContaining('pk_challenge=')]),
+    );
+  });
+
+  it('should answer the passkey verify route without a session', async () => {
+    const methods: Response = await request(e2e.httpServer)
+      .get('/api/auth/methods')
+      .expect(200);
+
+    const passkeysOn = (methods.body as MethodsBody).data.methods.passkeys;
+    const response: Response = await request(e2e.httpServer)
+      .post('/api/auth/passkeys/login/verify')
+      .send({
+        response: {
+          id: 'unknown',
+          rawId: 'unknown',
+          response: {},
+          clientExtensionResults: {},
+          type: 'public-key',
+        },
+      });
+
+    // Public route, so a request without the challenge cookie reaches the
+    // handler and is turned away there rather than by the session guard.
+    expect(response.status).toBe(passkeysOn ? 401 : 404);
+    expect((response.body as ErrorBody).error.code).toBe(
+      passkeysOn ? 'PASSKEY_CHALLENGE_INVALID' : 'FEATURE_DISABLED',
+    );
+  });
+
+  it('should keep the passkey list behind a session', async () => {
+    // The session guard is global and runs before the feature guard, so this
+    // answers the same way whether or not the method is on.
+    const response: Response = await request(e2e.httpServer)
+      .get('/api/auth/passkeys')
       .expect(401);
 
     expect((response.body as ErrorBody).error.code).toBe('SESSION_REQUIRED');

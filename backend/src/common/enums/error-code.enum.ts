@@ -45,6 +45,18 @@ export enum ErrorCode {
   /** TOTP_ENCRYPTION_KEY is missing or not 32 bytes */
   TWO_FACTOR_NOT_CONFIGURED = 'TWO_FACTOR_NOT_CONFIGURED',
 
+  // Passkey errors
+  /** Challenge cookie is missing, tampered with, expired, or for another step */
+  PASSKEY_CHALLENGE_INVALID = 'PASSKEY_CHALLENGE_INVALID',
+  /** Credential is unknown, its signature failed, or its counter went backwards */
+  PASSKEY_VERIFICATION_FAILED = 'PASSKEY_VERIFICATION_FAILED',
+  /** No passkey with that id on this account */
+  PASSKEY_NOT_FOUND = 'PASSKEY_NOT_FOUND',
+  /** Removing it would leave the account with no way to sign in */
+  PASSKEY_LAST_SIGN_IN_METHOD = 'PASSKEY_LAST_SIGN_IN_METHOD',
+  /** The secret the challenge cookie is signed with is missing */
+  PASSKEY_NOT_CONFIGURED = 'PASSKEY_NOT_CONFIGURED',
+
   // Feature flag errors
   /** Route belongs to an authentication method this deployment turned off */
   FEATURE_DISABLED = 'FEATURE_DISABLED',

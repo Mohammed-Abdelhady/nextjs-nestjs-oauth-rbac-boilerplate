@@ -11,11 +11,13 @@ describe('AuthMethodsController', () => {
     passwordEnabled: boolean;
     magicLinkEnabled: boolean;
     twoFactorEnabled: boolean;
+    passkeysEnabled?: boolean;
   }): Promise<AuthMethodsController> {
     const values: Record<string, boolean> = {
       'auth.passwordEnabled': config.passwordEnabled,
       'magicLink.enabled': config.magicLinkEnabled,
       'twoFactor.enabled': config.twoFactorEnabled,
+      'passkeys.enabled': config.passkeysEnabled ?? true,
     };
 
     const configService = {
@@ -54,6 +56,7 @@ describe('AuthMethodsController', () => {
           password: true,
           magicLink: true,
           twoFactor: true,
+          passkeys: true,
           oauth: providers,
         },
       },
@@ -66,12 +69,14 @@ describe('AuthMethodsController', () => {
       passwordEnabled: false,
       magicLinkEnabled: true,
       twoFactorEnabled: false,
+      passkeysEnabled: false,
     });
 
     expect(controller.getMethods().data.methods).toMatchObject({
       password: false,
       magicLink: true,
       twoFactor: false,
+      passkeys: false,
     });
   });
 });

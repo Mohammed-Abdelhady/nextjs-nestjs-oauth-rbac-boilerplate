@@ -1,4 +1,5 @@
 import { createOAuthConfig, OAuthConfig } from './oauth.config';
+import { APP_NAME } from '../common/constants/app';
 
 export { EnvironmentConfig, EnvironmentVariables } from './env.schema';
 
@@ -49,6 +50,12 @@ export interface Configuration {
     enabled: boolean;
     encryptionKey?: string;
   };
+  passkeys: {
+    enabled: boolean;
+    rpId: string;
+    rpName: string;
+    origin: string;
+  };
   swagger: {
     enabled: boolean;
   };
@@ -63,9 +70,26 @@ export interface Configuration {
 const isSmtpConfigured = (): boolean =>
   Boolean(process.env.SMTP_HOST && process.env.EMAIL_FROM);
 
+/**
+ * The part of the client URL a passkey is bound to. The RP id is a bare
+ * hostname with no port and no scheme; the origin keeps both and has no
+ * trailing slash, which is what the browser sends back for verification.
+ */
+const clientUrlPart = (
+  clientUrl: string,
+  part: 'hostname' | 'origin',
+): string => {
+  try {
+    return new URL(clientUrl)[part];
+  } catch {
+    return part === 'hostname' ? 'localhost' : 'http://localhost:3000';
+  }
+};
+
 const configuration = (): Configuration => {
   const port = Number.parseInt(process.env.PORT || '3000', 10);
   const apiUrl = process.env.API_URL || `http://localhost:${port}`;
+  const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
 
   return {
     server: {
@@ -77,7 +101,7 @@ const configuration = (): Configuration => {
       uri: process.env.MONGO_URI || 'mongodb://localhost:27017/authboiler',
     },
     cors: {
-      clientUrl: process.env.CLIENT_URL || 'http://localhost:3000',
+      clientUrl,
     },
     throttle: {
       ttl: Number.parseInt(process.env.THROTTLE_TTL || '60', 10),
@@ -134,6 +158,14 @@ const configuration = (): Configuration => {
     twoFactor: {
       enabled: process.env.TWO_FACTOR_ENABLED !== 'false',
       encryptionKey: process.env.TOTP_ENCRYPTION_KEY,
+    },
+    passkeys: {
+      enabled: process.env.PASSKEYS_ENABLED !== 'false',
+      rpId: process.env.WEBAUTHN_RP_ID || clientUrlPart(clientUrl, 'hostname'),
+      rpName: process.env.WEBAUTHN_RP_NAME || APP_NAME,
+      // Through the same reader as the default: a configured origin with a
+      // trailing slash or a path would fail every check the browser sends.
+      origin: clientUrlPart(process.env.WEBAUTHN_ORIGIN || clientUrl, 'origin'),
     },
     swagger: {
       enabled: process.env.SWAGGER_ENABLED === 'true',

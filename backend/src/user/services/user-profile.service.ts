@@ -4,6 +4,10 @@ import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from '../schemas/user.schema';
 import { Role, RoleDocument } from '../../role/schemas/role.schema';
+import {
+  Passkey,
+  PasskeyDocument,
+} from '../../auth/passkeys/schemas/passkey.schema';
 import { SessionService } from '../../auth/services/session.service';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
@@ -32,6 +36,8 @@ export class UserProfileService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @InjectModel(Role.name) private readonly roleModel: Model<RoleDocument>,
+    @InjectModel(Passkey.name)
+    private readonly passkeyModel: Model<PasskeyDocument>,
     private readonly sessionService: SessionService,
   ) {}
 
@@ -184,6 +190,9 @@ export class UserProfileService {
       user,
       this.roleModel,
     );
+    const passkeyCount = await this.passkeyModel.countDocuments({
+      user: user._id,
+    });
 
     return {
       id: user._id.toString(),
@@ -194,6 +203,7 @@ export class UserProfileService {
       authProvider: user.authProvider,
       isVerified: user.isVerified,
       twoFactorEnabled: user.twoFactor?.enabled === true,
+      passkeyCount,
       avatarUrl: user.avatarUrl,
       linkedProviders: user.linkedProviders,
       primaryProvider: user.primaryProvider,

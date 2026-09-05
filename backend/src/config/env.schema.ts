@@ -50,6 +50,11 @@ export interface EnvironmentConfig extends OAuthEnvironmentConfig {
   TWO_FACTOR_ENABLED?: boolean;
   TOTP_ENCRYPTION_KEY?: string;
 
+  PASSKEYS_ENABLED?: boolean;
+  WEBAUTHN_RP_ID?: string;
+  WEBAUTHN_RP_NAME?: string;
+  WEBAUTHN_ORIGIN?: string;
+
   SWAGGER_ENABLED?: boolean;
   PROFILE_SYNC_ENABLED?: boolean;
   PROFILE_SYNC_FIELDS?: string;
@@ -233,6 +238,35 @@ export class EnvironmentVariables extends OAuthEnvironmentVariables {
       'TOTP_ENCRYPTION_KEY must be 32 bytes in base64, as produced by `openssl rand -base64 32`',
   })
   TOTP_ENCRYPTION_KEY?: string;
+
+  @Transform(transformBoolean(true))
+  @IsBoolean()
+  @IsOptional()
+  PASSKEYS_ENABLED: boolean = true;
+
+  /**
+   * Domain the credentials are bound to. Left unset it follows the hostname of
+   * CLIENT_URL, which is right whenever the client and the passkey prompt share
+   * a domain. A credential registered under one RP id cannot be used under
+   * another, so changing this invalidates every stored passkey.
+   */
+  @Transform(transformOptionalString)
+  @IsString()
+  @IsOptional()
+  WEBAUTHN_RP_ID?: string;
+
+  /** Name the browser shows in the passkey prompt. */
+  @Transform(transformOptionalString)
+  @IsString()
+  @IsOptional()
+  WEBAUTHN_RP_NAME?: string;
+
+  /** Origin the browser must be on. Defaults to the origin of CLIENT_URL. */
+  @Transform(transformOptionalString)
+  @IsString()
+  @IsUrl({ require_protocol: true, require_tld: false })
+  @IsOptional()
+  WEBAUTHN_ORIGIN?: string;
 
   @Transform(transformBoolean(false))
   @IsBoolean()

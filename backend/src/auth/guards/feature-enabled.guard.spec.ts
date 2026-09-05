@@ -15,6 +15,8 @@ import { AUTH_FEATURE_KEY } from '../decorators/requires-feature.decorator';
 import { AuthController } from '../auth.controller';
 import { MagicLinkController } from '../magic-link/magic-link.controller';
 import { TwoFactorController } from '../two-factor/two-factor.controller';
+import { PasskeysController } from '../passkeys/passkeys.controller';
+import { PasskeyLoginController } from '../passkeys/passkey-login.controller';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 
 class UngatedController {
@@ -44,6 +46,7 @@ const CONFIG_KEYS: Record<string, AuthFeature> = {
   'auth.passwordEnabled': AuthFeature.PASSWORD,
   'magicLink.enabled': AuthFeature.MAGIC_LINK,
   'twoFactor.enabled': AuthFeature.TWO_FACTOR,
+  'passkeys.enabled': AuthFeature.PASSKEYS,
 };
 
 describe('FeatureEnabledGuard', () => {
@@ -124,6 +127,35 @@ describe('FeatureEnabledGuard', () => {
 
     expect(guard.canActivate(contextFor(TwoFactorController))).toBe(true);
   });
+
+  it.each([
+    ['management', PasskeysController],
+    ['sign-in', PasskeyLoginController],
+  ])(
+    'should let the passkey %s routes through when the method is on',
+    (_name, controller) => {
+      const { guard } = createGuard({ [AuthFeature.PASSKEYS]: true });
+
+      expect(guard.canActivate(contextFor(controller))).toBe(true);
+    },
+  );
+
+  it.each([
+    ['management', PasskeysController],
+    ['sign-in', PasskeyLoginController],
+  ])(
+    'should answer 404 FEATURE_DISABLED for the passkey %s routes when the method is off',
+    (_name, controller) => {
+      const { guard } = createGuard({ [AuthFeature.PASSKEYS]: false });
+
+      expect(() => guard.canActivate(contextFor(controller))).toThrow(
+        expect.objectContaining({
+          code: ErrorCode.FEATURE_DISABLED,
+          status: 404,
+        }) as Error,
+      );
+    },
+  );
 
   it('should answer 404 FEATURE_DISABLED for the two-factor routes when the feature is off', () => {
     const { guard } = createGuard({ [AuthFeature.TWO_FACTOR]: false });

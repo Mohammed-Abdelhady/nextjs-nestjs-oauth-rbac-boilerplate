@@ -21,6 +21,12 @@ export class AuthMethodsDto {
   twoFactor!: boolean;
 
   @ApiProperty({
+    description: 'Passkeys can be registered and used to sign in',
+    example: true,
+  })
+  passkeys!: boolean;
+
+  @ApiProperty({
     description: 'OAuth providers with credentials configured',
     example: [{ id: 'google', displayName: 'Google' }],
   })

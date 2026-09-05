@@ -9,4 +9,6 @@ export enum AuthFeature {
   MAGIC_LINK = 'magicLink',
   /** TOTP second factor, on top of whichever method signed the user in. */
   TWO_FACTOR = 'twoFactor',
+  /** WebAuthn credentials, used to sign in and as a second factor. */
+  PASSKEYS = 'passkeys',
 }

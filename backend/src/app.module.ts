@@ -16,6 +16,7 @@ import { AuthModule } from './auth/auth.module';
 import { AuthMethodsController } from './auth/auth-methods.controller';
 import { MagicLinkModule } from './auth/magic-link/magic-link.module';
 import { TwoFactorModule } from './auth/two-factor/two-factor.module';
+import { PasskeysModule } from './auth/passkeys/passkeys.module';
 import { OAuthModule } from './auth/oauth/oauth.module';
 import { GoogleOAuthStrategy } from './auth/oauth/strategies/google-oauth.strategy';
 import { GitHubOAuthStrategy } from './auth/oauth/strategies/github-oauth.strategy';
@@ -94,6 +95,7 @@ import { Connection } from 'mongoose';
       LinkedInOAuthStrategy,
     ]),
     MagicLinkModule,
+    PasskeysModule,
     TwoFactorModule,
     AdminModule,
   ],

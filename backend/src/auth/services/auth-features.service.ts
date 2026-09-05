@@ -9,6 +9,7 @@ const FEATURE_CONFIG_KEYS: Record<AuthFeature, string> = {
   [AuthFeature.PASSWORD]: 'auth.passwordEnabled',
   [AuthFeature.MAGIC_LINK]: 'magicLink.enabled',
   [AuthFeature.TWO_FACTOR]: 'twoFactor.enabled',
+  [AuthFeature.PASSKEYS]: 'passkeys.enabled',
 };
 
 /** Used when the key is absent, which happens in tests with a partial config. */
@@ -16,6 +17,7 @@ const FEATURE_FALLBACKS: Record<AuthFeature, boolean> = {
   [AuthFeature.PASSWORD]: true,
   [AuthFeature.MAGIC_LINK]: false,
   [AuthFeature.TWO_FACTOR]: true,
+  [AuthFeature.PASSKEYS]: true,
 };
 
 /**
