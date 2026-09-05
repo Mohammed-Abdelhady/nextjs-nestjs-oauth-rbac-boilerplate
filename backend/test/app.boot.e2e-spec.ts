@@ -1,11 +1,18 @@
 import request from 'supertest';
 import type { Response } from 'supertest';
 import { bootE2eApp, type E2eApp } from './utils/e2e-app';
+import {
+  OAUTH_BOOT_PROVIDER_IDS,
+  applyOAuthBootEnv,
+} from './constants/oauth-boot-env';
 
 /**
  * Smoke test for the wiring itself: the whole AppModule has to compile and
  * answer on its two unauthenticated routes. It catches provider graph breakage,
  * such as a global guard whose dependencies do not resolve.
+ *
+ * Every OAuth provider is switched on with dummy credentials before the app
+ * boots, so a strategy that cannot be constructed or registered fails here.
  *
  * Runs against the MONGO_URI of the environment, like the other e2e suites. To
  * run it without a database, install mongodb-memory-server
@@ -50,13 +57,16 @@ interface ErrorBody {
 
 describe('AppModule boot (e2e)', () => {
   let e2e: E2eApp;
+  let restoreEnv: () => void;
 
   beforeAll(async () => {
+    restoreEnv = applyOAuthBootEnv();
     e2e = await bootE2eApp();
   });
 
   afterAll(async () => {
     await e2e.app.close();
+    restoreEnv();
   });
 
   it('should answer the health check', async () => {
@@ -77,6 +87,21 @@ describe('AppModule boot (e2e)', () => {
     const body = response.body as ProvidersBody;
     expect(body.success).toBe(true);
     expect(Array.isArray(body.data.providers)).toBe(true);
+  });
+
+  it('should list every registered provider once its variables are set', async () => {
+    const response: Response = await request(e2e.httpServer)
+      .get('/api/auth/oauth/providers')
+      .expect(200);
+
+    const listed = (response.body as ProvidersBody).data.providers.map(
+      (provider) => provider.id,
+    );
+
+    expect(listed).toEqual(expect.arrayContaining(OAUTH_BOOT_PROVIDER_IDS));
+    for (const provider of (response.body as ProvidersBody).data.providers) {
+      expect(provider.displayName).toEqual(expect.any(String));
+    }
   });
 
   it('should list the enabled sign-in methods without a session', async () => {

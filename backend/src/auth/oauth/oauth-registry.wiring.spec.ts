@@ -8,6 +8,11 @@ import { MicrosoftOAuthStrategy } from './strategies/microsoft-oauth.strategy';
 import { AppleOAuthStrategy } from './strategies/apple-oauth.strategy';
 import { DiscordOAuthStrategy } from './strategies/discord-oauth.strategy';
 import { LinkedInOAuthStrategy } from './strategies/linkedin-oauth.strategy';
+import { GitLabOAuthStrategy } from './strategies/gitlab-oauth.strategy';
+import { XOAuthStrategy } from './strategies/x-oauth.strategy';
+import { SlackOAuthStrategy } from './strategies/slack-oauth.strategy';
+import { TwitchOAuthStrategy } from './strategies/twitch-oauth.strategy';
+import { OidcOAuthStrategy } from './strategies/oidc-oauth.strategy';
 import { createOAuthConfig } from '../../config/oauth.config';
 
 /**
@@ -18,6 +23,19 @@ import { createOAuthConfig } from '../../config/oauth.config';
  */
 
 const CALLBACK_BASE_URL = 'https://api.example.com/api/auth/oauth';
+const OIDC_ISSUER = 'https://sso.example.com';
+
+/**
+ * The generic provider reads its endpoints from the issuer's discovery
+ * document at startup. Spelling all four out keeps this spec off the network.
+ */
+const OIDC_ENDPOINTS: Record<string, string> = {
+  OAUTH_OIDC_ISSUER: OIDC_ISSUER,
+  OAUTH_OIDC_AUTHORIZATION_URL: `${OIDC_ISSUER}/authorize`,
+  OAUTH_OIDC_TOKEN_URL: `${OIDC_ISSUER}/token`,
+  OAUTH_OIDC_USERINFO_URL: `${OIDC_ISSUER}/userinfo`,
+  OAUTH_OIDC_JWKS_URL: `${OIDC_ISSUER}/jwks`,
+};
 
 const PROVIDER_ENV: Record<string, string> = {
   OAUTH_GOOGLE_CLIENT_ID: 'google-id',
@@ -38,6 +56,17 @@ const PROVIDER_ENV: Record<string, string> = {
   OAUTH_DISCORD_CLIENT_SECRET: 'discord-secret',
   OAUTH_LINKEDIN_CLIENT_ID: 'linkedin-id',
   OAUTH_LINKEDIN_CLIENT_SECRET: 'linkedin-secret',
+  OAUTH_GITLAB_CLIENT_ID: 'gitlab-id',
+  OAUTH_GITLAB_CLIENT_SECRET: 'gitlab-secret',
+  OAUTH_X_CLIENT_ID: 'x-id',
+  OAUTH_X_CLIENT_SECRET: 'x-secret',
+  OAUTH_SLACK_CLIENT_ID: 'slack-id',
+  OAUTH_SLACK_CLIENT_SECRET: 'slack-secret',
+  OAUTH_TWITCH_CLIENT_ID: 'twitch-id',
+  OAUTH_TWITCH_CLIENT_SECRET: 'twitch-secret',
+  OAUTH_OIDC_CLIENT_ID: 'oidc-id',
+  OAUTH_OIDC_CLIENT_SECRET: 'oidc-secret',
+  ...OIDC_ENDPOINTS,
 };
 
 function configServiceFromEnv(env: Record<string, string>): ConfigService {
@@ -73,6 +102,11 @@ function registryFor(env: Record<string, string>): OAuthRegistryService {
     new AppleOAuthStrategy(configService),
     new DiscordOAuthStrategy(configService),
     new LinkedInOAuthStrategy(configService),
+    new GitLabOAuthStrategy(configService),
+    new XOAuthStrategy(configService),
+    new SlackOAuthStrategy(configService),
+    new TwitchOAuthStrategy(configService),
+    new OidcOAuthStrategy(configService),
   ];
 
   return new OAuthRegistryService(strategies, configService);
@@ -88,6 +122,11 @@ describe('OAuth provider wiring', () => {
       'apple',
       'discord',
       'linkedin',
+      'gitlab',
+      'x',
+      'slack',
+      'twitch',
+      'oidc',
     ]);
   });
 
@@ -100,7 +139,34 @@ describe('OAuth provider wiring', () => {
       { id: 'apple', displayName: 'Apple' },
       { id: 'discord', displayName: 'Discord' },
       { id: 'linkedin', displayName: 'LinkedIn' },
+      { id: 'gitlab', displayName: 'GitLab' },
+      { id: 'x', displayName: 'X' },
+      { id: 'slack', displayName: 'Slack' },
+      { id: 'twitch', displayName: 'Twitch' },
+      { id: 'oidc', displayName: 'Single sign-on' },
     ]);
+  });
+
+  it('serves the generic provider under the id it was given', () => {
+    const registry = registryFor({
+      ...PROVIDER_ENV,
+      OAUTH_OIDC_PROVIDER_ID: 'keycloak',
+      OAUTH_OIDC_DISPLAY_NAME: 'Company account',
+    });
+
+    expect(registry.has('oidc')).toBe(false);
+    expect(registry.isEnabled('keycloak')).toBe(true);
+    expect(registry.getCallbackUrl('keycloak')).toBe(
+      `${CALLBACK_BASE_URL}/keycloak/callback`,
+    );
+  });
+
+  it('keeps the generic provider off until its endpoints resolve', () => {
+    const withoutEndpoints = { ...PROVIDER_ENV };
+    delete withoutEndpoints.OAUTH_OIDC_JWKS_URL;
+
+    // Discovery only runs in onModuleInit, which no strategy here has had.
+    expect(registryFor(withoutEndpoints).isEnabled('oidc')).toBe(false);
   });
 
   it('leaves every provider off when nothing is configured', () => {

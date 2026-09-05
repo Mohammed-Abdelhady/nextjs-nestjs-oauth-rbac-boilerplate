@@ -160,7 +160,8 @@
       "default": false,
       "files": [
         "backend/src/auth/passkeys/**",
-        "backend/src/auth/passkeys/schemas/passkey.schema.ts"
+        "backend/src/auth/passkeys/schemas/passkey.schema.ts",
+        "frontend/src/modules/passkeys/**"
       ],
       "envVars": [
         "PASSKEYS_ENABLED",
@@ -247,59 +248,108 @@
       "docs": ["docs/setup-linkedin-oauth.md"]
     },
     "gitlab": {
-      "status": "planned",
+      "status": "available",
       "label": "GitLab",
-      "description": "Sign in with GitLab, hosted or self-managed.",
+      "description": "Sign in with GitLab OIDC, hosted or self-managed. One base URL points it at your own instance.",
       "kind": "oauth",
       "default": false,
-      "files": [],
-      "envVars": [],
-      "requires": [],
-      "docs": []
+      "files": [
+        "backend/src/auth/oauth/strategies/gitlab-oauth.strategy.ts",
+        "backend/src/auth/oauth/strategies/gitlab-oauth.strategy.spec.ts"
+      ],
+      "envVars": [
+        "OAUTH_GITLAB_CLIENT_ID",
+        "OAUTH_GITLAB_CLIENT_SECRET",
+        "OAUTH_GITLAB_CALLBACK_URL",
+        "OAUTH_GITLAB_BASE_URL"
+      ],
+      "requires": ["oauth-core"],
+      "docs": ["docs/setup-gitlab-oauth.md"]
     },
     "x": {
-      "status": "planned",
+      "status": "available",
       "label": "X",
-      "description": "Sign in with X.",
+      "description": "Sign in with X. OAuth 2.0 with mandatory PKCE; the address needs the users.email scope on the app.",
       "kind": "oauth",
       "default": false,
-      "files": [],
-      "envVars": [],
-      "requires": [],
-      "docs": []
+      "files": [
+        "backend/src/auth/oauth/strategies/x-oauth.strategy.ts",
+        "backend/src/auth/oauth/strategies/x-oauth.strategy.spec.ts"
+      ],
+      "envVars": [
+        "OAUTH_X_CLIENT_ID",
+        "OAUTH_X_CLIENT_SECRET",
+        "OAUTH_X_CALLBACK_URL"
+      ],
+      "requires": ["oauth-core"],
+      "docs": ["docs/setup-x-oauth.md"]
     },
     "slack": {
-      "status": "planned",
+      "status": "available",
       "label": "Slack",
-      "description": "Sign in with Slack OIDC.",
+      "description": "Sign in with Slack OIDC. Identities are per workspace.",
       "kind": "oauth",
       "default": false,
-      "files": [],
-      "envVars": [],
-      "requires": [],
-      "docs": []
+      "files": [
+        "backend/src/auth/oauth/strategies/slack-oauth.strategy.ts",
+        "backend/src/auth/oauth/strategies/slack-oauth.strategy.spec.ts"
+      ],
+      "envVars": [
+        "OAUTH_SLACK_CLIENT_ID",
+        "OAUTH_SLACK_CLIENT_SECRET",
+        "OAUTH_SLACK_CALLBACK_URL"
+      ],
+      "requires": ["oauth-core"],
+      "docs": ["docs/setup-slack-oauth.md"]
     },
     "twitch": {
-      "status": "planned",
+      "status": "available",
       "label": "Twitch",
-      "description": "Sign in with Twitch OIDC.",
+      "description": "Sign in with Twitch OIDC. The email claim is requested through the claims parameter.",
       "kind": "oauth",
       "default": false,
-      "files": [],
-      "envVars": [],
-      "requires": [],
-      "docs": []
+      "files": [
+        "backend/src/auth/oauth/strategies/twitch-oauth.strategy.ts",
+        "backend/src/auth/oauth/strategies/twitch-oauth.strategy.spec.ts"
+      ],
+      "envVars": [
+        "OAUTH_TWITCH_CLIENT_ID",
+        "OAUTH_TWITCH_CLIENT_SECRET",
+        "OAUTH_TWITCH_CALLBACK_URL"
+      ],
+      "requires": ["oauth-core"],
+      "docs": ["docs/setup-twitch-oauth.md"]
     },
     "oidc": {
-      "status": "planned",
+      "status": "available",
       "label": "Generic OIDC",
-      "description": "Any OpenID Connect provider configured by discovery URL.",
+      "description": "Any OpenID Connect issuer, configured from environment variables. Endpoints come from the discovery document at startup.",
       "kind": "oauth",
       "default": false,
-      "files": [],
-      "envVars": [],
-      "requires": [],
-      "docs": []
+      "files": [
+        "backend/src/auth/oauth/strategies/oidc-oauth.strategy.ts",
+        "backend/src/auth/oauth/strategies/oidc-oauth.strategy.spec.ts",
+        "backend/src/auth/oauth/strategies/oidc-oauth.login.spec.ts",
+        "backend/src/auth/oauth/strategies/oidc-oauth.harness-spec.ts",
+        "backend/src/auth/oauth/utils/oidc-discovery.util.ts",
+        "backend/src/auth/oauth/utils/oidc-discovery.util.spec.ts",
+        "backend/src/auth/oauth/utils/oidc-settings.util.ts"
+      ],
+      "envVars": [
+        "OAUTH_OIDC_CLIENT_ID",
+        "OAUTH_OIDC_CLIENT_SECRET",
+        "OAUTH_OIDC_CALLBACK_URL",
+        "OAUTH_OIDC_ISSUER",
+        "OAUTH_OIDC_PROVIDER_ID",
+        "OAUTH_OIDC_DISPLAY_NAME",
+        "OAUTH_OIDC_SCOPES",
+        "OAUTH_OIDC_AUTHORIZATION_URL",
+        "OAUTH_OIDC_TOKEN_URL",
+        "OAUTH_OIDC_USERINFO_URL",
+        "OAUTH_OIDC_JWKS_URL"
+      ],
+      "requires": ["oauth-core"],
+      "docs": ["docs/setup-oidc-oauth.md"]
     }
   },
   "core": {

@@ -1,6 +1,6 @@
 import {
+  GENERIC_OIDC_PROVIDER,
   SUPPORTED_OAUTH_PROVIDERS,
-  SupportedOAuthProvider,
 } from '../common/constants/oauth-providers';
 
 export interface OAuthProviderConfig {
@@ -18,10 +18,11 @@ export interface OAuthProviderConfig {
   extra: Record<string, string>;
 }
 
-export type OAuthProvidersConfig = Record<
-  SupportedOAuthProvider,
-  OAuthProviderConfig
->;
+/**
+ * Keyed by provider id. Every entry of SUPPORTED_OAUTH_PROVIDERS is present;
+ * the generic OIDC provider adds one more under the id it was given.
+ */
+export type OAuthProvidersConfig = Record<string, OAuthProviderConfig>;
 
 export interface OAuthConfig {
   /** HMAC key for the signed state cookie. */
@@ -57,7 +58,7 @@ function readExtraVariables(prefix: string): Record<string, string> {
  * strategy and read what they need from `extra`.
  */
 export function createOAuthProvidersConfig(): OAuthProvidersConfig {
-  const providers: Partial<OAuthProvidersConfig> = {};
+  const providers: OAuthProvidersConfig = {};
 
   for (const provider of SUPPORTED_OAUTH_PROVIDERS) {
     const prefix = `OAUTH_${provider.toUpperCase()}_`;
@@ -73,7 +74,25 @@ export function createOAuthProvidersConfig(): OAuthProvidersConfig {
     };
   }
 
-  return providers as OAuthProvidersConfig;
+  aliasGenericOidcProvider(providers);
+  return providers;
+}
+
+/**
+ * The generic OIDC provider is routed under OAUTH_OIDC_PROVIDER_ID rather than
+ * under `oidc`, so its configuration has to be reachable under that id too.
+ * Everything else looks providers up by the id the strategy reports.
+ */
+function aliasGenericOidcProvider(providers: OAuthProvidersConfig): void {
+  const slug = providers[GENERIC_OIDC_PROVIDER]?.extra.PROVIDER_ID;
+  // An id that is already taken is left alone here. The generic strategy
+  // refuses to construct on the same id, which reports it rather than hiding
+  // the built-in provider behind it.
+  if (!slug || slug === GENERIC_OIDC_PROVIDER || providers[slug]) {
+    return;
+  }
+
+  providers[slug] = providers[GENERIC_OIDC_PROVIDER];
 }
 
 export function createOAuthConfig(apiUrl: string): OAuthConfig {
