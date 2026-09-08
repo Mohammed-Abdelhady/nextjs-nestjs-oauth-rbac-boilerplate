@@ -41,7 +41,21 @@ export async function runHttpProbes(
       };
     }
     if (target.locale) {
-      if (!body.includes(`lang="${target.locale}"`) || !body.includes('<form')) {
+      const html = body.match(/<html\b[^>]*>/i)?.[0] ?? '';
+      const loading =
+        body.match(/<div\b[^>]*data-testid="store-rehydration-loading"[^>]*>/i)?.[0] ?? '';
+      const direction = target.locale === 'ar' ? 'rtl' : 'ltr';
+      // PersistGate serves this accessible shell before the browser hydrates the login form.
+      if (
+        !html.includes(`lang="${target.locale}"`) ||
+        !html.includes(`dir="${direction}"`) ||
+        !loading.includes('role="status"') ||
+        !loading.includes('aria-busy="true"') ||
+        !loading.includes('aria-live="polite"') ||
+        !/<script\b[^>]*src="\/_next\/static\/[^"<>]+\.js(?:\?[^"<>]*)?"[^>]*>/i.test(body) ||
+        !/<script\b[^>]*>[^<]*self\.__next_f\.push\(/i.test(body) ||
+        body.includes('id="__next_error__"')
+      ) {
         return { failure: target.name, reason: 'login document contract' };
       }
     } else {

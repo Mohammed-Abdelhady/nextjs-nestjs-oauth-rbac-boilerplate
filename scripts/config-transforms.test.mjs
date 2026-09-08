@@ -155,8 +155,14 @@ function probeResponse(url) {
     return new Response(JSON.stringify({ status: 'healthy', timestamp: '2026-09-08T00:00:00Z' }));
   }
   if (url === 'http://nginx:8080/health') return new Response('{"status":"healthy"}');
-  if (url === 'http://frontend:3000/en/auth/login') return new Response('<html lang="en"><form>');
-  if (url === 'http://frontend:3000/ar/auth/login') return new Response('<html lang="ar"><form>');
+  if (url.startsWith('http://frontend:3000/')) {
+    const locale = url.includes('/ar/') ? 'ar' : 'en';
+    const direction = locale === 'ar' ? 'rtl' : 'ltr';
+    return new Response(`<!DOCTYPE html><html lang="${locale}" dir="${direction}"><body>
+      <div role="status" aria-busy="true" aria-live="polite" data-testid="store-rehydration-loading"></div>
+      <script src="/_next/static/chunks/app.js" async></script>
+      <script>self.__next_f.push([1,"bootstrap"])</script></body></html>`);
+  }
   if (url === 'http://backend:5000/api/auth/methods') {
     return new Response('{"data":{"methods":{"password":true,"oauth":[]}}}');
   }
@@ -242,7 +248,7 @@ for (const [name, response, reason] of [
 for (const [name, suffix, body] of [
   ['nginx shape', ':8080/health', '{"status":"healthy","extra":true}'],
   ['English document', '/en/auth/login', '<html lang="ar"><form>'],
-  ['Arabic form', '/ar/auth/login', '<html lang="ar">'],
+  ['Arabic shell', '/ar/auth/login', '<html lang="ar">'],
   [
     'enabled external method',
     '/api/auth/methods',
@@ -262,6 +268,37 @@ for (const [name, suffix, body] of [
     assert.ok(result.failure);
     assert.throws(() => validateProbeResults(JSON.stringify(result)), /contract/);
   });
+}
+
+for (const locale of ['en', 'ar']) {
+  for (const [name, mutate] of [
+    ['blank document', () => ''],
+    ['error document', () => '<html><body>Application error</body></html>'],
+    ['wrong locale', (html) => html.replace(`lang="${locale}"`, 'lang="fr"')],
+    ['wrong direction', (html) => html.replace(/dir="(?:rtl|ltr)"/, 'dir="auto"')],
+    ['missing loading shell', (html) => html.replace('store-rehydration-loading', 'unrelated')],
+    ['missing status role', (html) => html.replace('role="status"', 'role="none"')],
+    ['inactive loading shell', (html) => html.replace('aria-busy="true"', 'aria-busy="false"')],
+    ['missing announcement', (html) => html.replace('aria-live="polite"', '')],
+    [
+      'missing script asset',
+      (html) => html.replace('/_next/static/chunks/app.js', '/unrelated.js'),
+    ],
+    ['missing bootstrap', (html) => html.replace('self.__next_f.push', 'unrelated')],
+    ['Next error document', (html) => html.replace('<html ', '<html id="__next_error__" ')],
+  ]) {
+    test(`SSR probe rejects ${locale} ${name}`, async () => {
+      const url = `http://frontend:3000/${locale}/auth/login`;
+      const html = await probeResponse(url).text();
+      const result = await runHttpProbes((target) =>
+        target === url ? new Response(mutate(html)) : probeResponse(target),
+      );
+      assert.deepEqual(result, {
+        failure: `frontend-${locale}`,
+        reason: 'login document contract',
+      });
+    });
+  }
 }
 
 test('request failures and timeouts retain only sanitized reasons', async () => {
