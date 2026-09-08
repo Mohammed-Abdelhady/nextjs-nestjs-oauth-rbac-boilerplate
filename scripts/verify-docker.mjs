@@ -162,7 +162,13 @@ export function smokeModel(original, fixtureDirectory) {
     PASSKEYS_ENABLED: 'false',
     SWAGGER_ENABLED: 'false',
   };
-  services.frontend.environment = { NODE_ENV: 'production', HOSTNAME: '0.0.0.0', PORT: '3000' };
+  const frontendPort = String(original.services.frontend.environment?.PORT);
+  assert.equal(frontendPort, '3000', 'frontend PORT must match its listener and probe');
+  services.frontend.environment = {
+    NODE_ENV: 'production',
+    HOSTNAME: '0.0.0.0',
+    PORT: frontendPort,
+  };
   for (const [name, port] of [
     ['backend', 5000],
     ['frontend', 3000],
@@ -353,6 +359,46 @@ async function smoke(dockerHost) {
             })),
           ),
         );
+        const frontend = await compose(['ps', '--quiet', 'frontend'], {
+          signal: undefined,
+          timeout: 10_000,
+        });
+        if (/^[a-f0-9]{12,64}$/.test(frontend)) {
+          const health = await docker(
+            [
+              'inspect',
+              '--format',
+              '{{.State.Health.Status}} {{.State.Health.FailingStreak}}{{range .State.Health.Log}} {{.ExitCode}}{{end}}',
+              frontend,
+            ],
+            { signal: undefined, timeout: 10_000 },
+          );
+          if (/^(healthy|unhealthy|starting)( \d+)+$/.test(health))
+            console.error(`frontend health status, failing streak, probe exit codes: ${health}`);
+          const listeners = await compose(
+            [
+              'exec',
+              '--no-TTY',
+              'frontend',
+              'node',
+              '--input-type=module',
+              '-e',
+              `
+            for (const host of ['127.0.0.1', '[::1]']) {
+              try {
+                const response = await fetch('http://' + host + ':3000/en/auth/login', { redirect: 'manual', signal: AbortSignal.timeout(5000) });
+                console.log(JSON.stringify({ host, status: response.status }));
+              } catch (error) {
+                const code = error.cause?.code;
+                console.log(JSON.stringify({ host, reason: ['ECONNREFUSED', 'ETIMEDOUT', 'ENETUNREACH'].includes(code) ? code : 'REQUEST_FAILED' }));
+              }
+            }
+          `,
+            ],
+            { signal: undefined, timeout: 15_000 },
+          );
+          console.error(listeners);
+        }
       } catch {
         console.error('container status unavailable');
       }

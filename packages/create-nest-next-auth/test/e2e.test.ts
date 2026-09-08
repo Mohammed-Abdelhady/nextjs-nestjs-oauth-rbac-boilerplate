@@ -233,6 +233,26 @@ describe('the packed CLI', () => {
     },
   );
 
+  it.each(['full', 'test-scope-email-password'])(
+    'keeps root README relative links usable for %s',
+    (name) => {
+      const project = join(packed.workspace, name);
+      const readme = readFileSync(join(project, 'README.md'), 'utf8');
+      for (const match of readme.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+        const target = match[1].split('#')[0];
+        if (!target || /^[a-z]+:/i.test(target)) continue;
+        expect(existsSync(join(project, target)), target).toBe(true);
+      }
+    },
+  );
+
+  it('prints the Compose environment-file command exactly', () => {
+    const result = scaffold(packed, 'next-steps', 'email-password');
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+    expect(String(result.stdout)).toContain('docker compose --env-file .env.docker up -d');
+    expect(String(result.stdout)).not.toContain('docker compose up -d');
+  });
+
   it('names the generated root package after the directory', () => {
     const manifest: unknown = JSON.parse(
       readFileSync(join(packed.workspace, 'full', 'package.json'), 'utf8'),
@@ -252,6 +272,13 @@ describe('the packed CLI', () => {
     expect(existsSync(strategy('facebook'))).toBe(false);
     expect(existsSync(join(project, 'docs/setup-github-oauth.md'))).toBe(false);
     expect(existsSync(join(project, 'docs/setup-google-oauth.md'))).toBe(true);
+
+    const providerFixture = readFileSync(
+      join(project, 'backend/test/constants/oauth-boot-env.ts'),
+      'utf8',
+    );
+    const ids = providerFixture.split('export const OAUTH_BOOT_PROVIDER_IDS = [')[1].split('];')[0];
+    expect([...ids.matchAll(/'([^']+)'/g)].map((match) => match[1])).toEqual(['google']);
 
     const env = readFileSync(join(project, 'backend/.env.example'), 'utf8');
     expect(env).toContain('AUTH_FEATURES=oauth-core,email-password,google');

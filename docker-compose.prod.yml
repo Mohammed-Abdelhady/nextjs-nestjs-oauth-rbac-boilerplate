@@ -80,10 +80,20 @@ services:
         required: false
     environment:
       NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
     depends_on:
       - backend
     healthcheck:
-      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000']
+      test:
+        [
+          'CMD',
+          'wget',
+          '--no-verbose',
+          '--tries=1',
+          '--spider',
+          'http://127.0.0.1:3000/en/auth/login',
+        ]
       interval: 30s
       timeout: 10s
       retries: 3

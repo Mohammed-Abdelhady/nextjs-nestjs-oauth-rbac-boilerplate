@@ -12,7 +12,7 @@ export function buildNextSteps(input: NextStepsInput): string[] {
   steps.push(
     'cp backend/.env.example backend/.env',
     'cp .env.docker.example .env.docker',
-    'docker compose up -d',
+    'docker compose --env-file .env.docker up -d',
   );
   return steps;
 }

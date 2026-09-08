@@ -154,11 +154,17 @@ The response returns:
 {
   "success": true,
   "data": {
-    "emailPassword": true,
-    "magicLink": true,
-    "passkeys": true,
-    "totp": true,
-    "oauth": ["google", "github", "facebook"]
+    "methods": {
+      "password": true,
+      "magicLink": true,
+      "passkeys": true,
+      "twoFactor": true,
+      "oauth": [
+        { "id": "google", "displayName": "Google" },
+        { "id": "github", "displayName": "GitHub" },
+        { "id": "facebook", "displayName": "Facebook" }
+      ]
+    }
   }
 }
 ```

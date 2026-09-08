@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { configureBackendPort, configureFrontendPort } from './lib/config-transforms.js';
 
 /**
  * Project Initialization Script
@@ -66,7 +67,7 @@ async function collectBasicInfo(rl) {
 async function collectEnvironmentConfig(rl, dbName) {
   log.step('Environment Configuration');
 
-  const frontendPort = await ask(rl, 'Frontend port', '3000');
+  const frontendPort = await ask(rl, 'Frontend host port (Docker container stays on 3000)', '3000');
   const backendPort = await ask(rl, 'Backend port', '5001');
   const mongoUri = await ask(rl, 'MongoDB URI', `mongodb://localhost:27017/${dbName}`);
 
@@ -261,26 +262,10 @@ function updateDockerFiles(config) {
       `MONGO_INITDB_DATABASE: ${config.dbName}`,
     );
 
-    // Update backend published port in dev compose
-    content = content.replace(
-      /(container_name:\s*[\S]*backend[\S]*[\s\S]*?ports:\s*\n\s*-\s*')\d+:\d+(')/,
-      `$1${config.env.backendPort}:${config.env.backendPort}$2`,
-    );
-
-    // Update backend exposed port in prod compose
-    content = content.replace(
-      /(container_name:\s*[\S]*backend[\S]*[\s\S]*?expose:\s*\n\s*-\s*')\d+(')/,
-      `$1${config.env.backendPort}$2`,
-    );
-
-    // Update backend healthcheck URL
-    content = content.replace(
-      /(http:\/\/localhost:)\d+(\/api\/health)/g,
-      `$1${config.env.backendPort}$2`,
-    );
-
-    // Update backend PORT environment variable in compose
-    content = content.replace(/(PORT:\s*)\d+/g, `$1${config.env.backendPort}`);
+    if (file.endsWith('.yml')) {
+      content = configureBackendPort(content, config.env.backendPort);
+      content = configureFrontendPort(content, config.env.frontendPort);
+    }
 
     // Update frontend NEXT_PUBLIC_API_URL in compose
     content = content.replace(
@@ -295,18 +280,9 @@ function updateDockerFiles(config) {
       `NEXT_PUBLIC_API_URL=http://localhost:${config.env.backendPort}`,
     );
 
-    // Update frontend port in dev compose if modified
-    content = content.replace(
-      /(container_name:\s*[\S]*frontend[\S]*[\s\S]*?ports:\s*\n\s*-\s*')\d+:\d+(')/,
-      `$1${config.env.frontendPort}:${config.env.frontendPort}$2`,
-    );
     content = content.replace(
       /(CLIENT_URL:\s*\${CLIENT_URL:-http:\/\/localhost:)\d+(\})/g,
       `$1${config.env.frontendPort}$2`,
-    );
-    content = content.replace(
-      /(container_name:\s*[\S]*frontend[\S]*[\s\S]*?healthcheck:[\s\S]*?http:\/\/localhost:)\d+/,
-      `$1${config.env.frontendPort}`,
     );
     content = content.replace(
       /^CLIENT_URL=http:\/\/localhost:\d+/m,

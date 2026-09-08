@@ -33,7 +33,7 @@ To scaffold a project with only the authentication methods you want:
 npx create-nest-next-auth my-app
 ```
 
-The CLI prompts for the sign-in methods to keep. It removes unused strategy files, controller endpoints, frontend UI modules, environment variables, and setup docs. See [packages/create-nest-next-auth/README.md](./packages/create-nest-next-auth/README.md) for CLI options and flags.
+The CLI prompts for the sign-in methods to keep. It removes unused strategy files, controller endpoints, frontend UI modules, environment variables, and setup docs. See [CLI options and flags](https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/blob/master/packages/create-nest-next-auth/README.md).
 
 ## Choose your auth methods
 
@@ -78,12 +78,11 @@ docker compose --env-file .env.docker up --build
 ### Start manually
 
 ```bash
-# Run both workspaces concurrently
-npm run dev
+# In one terminal, start the backend:
+npm run start:dev -w backend
 
-# Or run backend and frontend in separate terminals:
-cd backend && npm run start:dev
-cd frontend && npm run dev
+# In another terminal, start the frontend:
+npm run dev -w frontend
 ```
 
 Endpoints:
