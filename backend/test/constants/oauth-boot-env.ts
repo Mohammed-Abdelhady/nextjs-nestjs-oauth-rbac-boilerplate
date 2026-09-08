@@ -44,18 +44,18 @@ export const OAUTH_BOOT_ENV: Record<string, string> = {
 };
 
 export const OAUTH_BOOT_PROVIDER_IDS = [
-  'google',
-  'github',
-  'facebook',
-  'microsoft',
-  'apple',
-  'discord',
-  'linkedin',
-  'gitlab',
-  'x',
-  'slack',
-  'twitch',
-  'oidc',
+  'google', // feature:google
+  'github', // feature:github
+  'facebook', // feature:facebook
+  'microsoft', // feature:microsoft
+  'apple', // feature:apple
+  'discord', // feature:discord
+  'linkedin', // feature:linkedin
+  'gitlab', // feature:gitlab
+  'x', // feature:x
+  'slack', // feature:slack
+  'twitch', // feature:twitch
+  'oidc', // feature:oidc
 ];
 
 /**

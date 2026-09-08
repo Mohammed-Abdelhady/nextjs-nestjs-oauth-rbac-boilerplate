@@ -13,13 +13,8 @@ import {
  * answer on its two unauthenticated routes. It catches provider graph breakage,
  * such as a global guard whose dependencies do not resolve.
  *
- * Every OAuth provider is switched on with dummy credentials before the app
- * boots, so a strategy that cannot be constructed or registered fails here.
- *
- * Runs against the MONGO_URI of the environment, like the other e2e suites. To
- * run it without a database, install mongodb-memory-server
- * (`npm i -D mongodb-memory-server -w backend`) and set process.env.MONGO_URI
- * from `MongoMemoryServer.create()` in a beforeAll before bootE2eApp().
+ * Selected OAuth providers receive dummy configuration before boot. The shared
+ * fixture owns a disposable Mongo database and a nondelivering mail sink.
  */
 interface HealthBody {
   status: string;
@@ -109,7 +104,7 @@ describe('AppModule boot (e2e)', () => {
       (provider) => provider.id,
     );
 
-    expect(listed).toEqual(expect.arrayContaining(OAUTH_BOOT_PROVIDER_IDS));
+    expect([...listed].sort()).toEqual([...OAUTH_BOOT_PROVIDER_IDS].sort());
     for (const provider of (response.body as ProvidersBody).data.providers) {
       expect(provider.displayName).toEqual(expect.any(String));
     }
