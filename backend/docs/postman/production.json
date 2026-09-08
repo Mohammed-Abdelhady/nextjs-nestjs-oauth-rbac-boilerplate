@@ -8,18 +8,13 @@
       "enabled": true
     },
     {
-      "key": "jwtToken",
-      "value": "",
-      "enabled": true
-    },
-    {
       "key": "testEmail",
       "value": "test@example.com",
       "enabled": true
     },
     {
       "key": "testPassword",
-      "value": "Password123",
+      "value": "Password123!",
       "enabled": true
     },
     {

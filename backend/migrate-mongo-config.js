@@ -10,13 +10,7 @@ const config = {
     // Use MONGO_URI from environment or fallback to localhost
     url: process.env.MONGO_URI || 'mongodb://localhost:27017/authboiler',
 
-    // Database options
-    options: {
-      // UseNewUrlParser and useUnifiedTopology are deprecated in MongoDB 4.0+
-      // but included for compatibility with older versions
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    },
+    options: {},
   },
 
   // The directory where migration files are stored

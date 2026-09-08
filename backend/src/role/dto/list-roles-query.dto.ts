@@ -1,4 +1,11 @@
-import { IsOptional, IsInt, Min, Max, IsString } from 'class-validator';
+import {
+  IsOptional,
+  IsInt,
+  Min,
+  Max,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -32,8 +39,10 @@ export class ListRolesQueryDto {
   @ApiPropertyOptional({
     description: 'Search by role name or slug',
     example: 'editor',
+    maxLength: 100,
   })
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   search?: string;
 }

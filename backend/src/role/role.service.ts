@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   ConflictException,
   BadRequestException,
@@ -12,10 +13,25 @@ import { User, UserDocument } from '../user/schemas/user.schema';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { ListRolesQueryDto } from './dto/list-roles-query.dto';
-import { RoleResponseDto, RoleListData } from './dto/role-response.dto';
+import {
+  RoleResponseDto,
+  RoleListData,
+  RoleUpdateResponseDto,
+} from './dto/role-response.dto';
+import { UserRole } from '../user/enums/user-role.enum';
+import { WILDCARD_PERMISSION } from '../common/constants/permissions';
+import { CUSTOM_ROLE_LEVEL } from '../common/utils/role-hierarchy';
+import {
+  assertValidPermissions,
+  generateSlug,
+  mapRoleToResponseDto,
+} from './utils/role.util';
+import { escapeRegex } from '../common/utils/escape-regex';
 
 @Injectable()
 export class RoleService {
+  private readonly logger = new Logger(RoleService.name);
+
   constructor(
     @InjectModel(Role.name) private readonly roleModel: Model<RoleDocument>,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
@@ -25,10 +41,8 @@ export class RoleService {
    * Create a new role with validation
    */
   async create(dto: CreateRoleDto): Promise<RoleResponseDto> {
-    // Generate slug from name
-    const slug = this.generateSlug(dto.name);
+    const slug = generateSlug(dto.name);
 
-    // Check if slug already exists
     const existing = await this.roleModel.findOne({ slug });
     if (existing) {
       throw new ConflictException(
@@ -36,16 +50,15 @@ export class RoleService {
       );
     }
 
-    // Validate permissions format
-    this.validatePermissions(dto.permissions);
+    assertValidPermissions(dto.permissions);
 
-    // Create role
     const role = new this.roleModel({
       name: dto.name,
       slug,
       description: dto.description,
       isSystemRole: false,
       isProtected: false,
+      level: CUSTOM_ROLE_LEVEL,
       permissions: dto.permissions,
     });
 
@@ -64,9 +77,10 @@ export class RoleService {
     // Build filter
     const filter: FilterQuery<RoleDocument> = {};
     if (search) {
+      const escaped = escapeRegex(search);
       filter.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { slug: { $regex: search, $options: 'i' } },
+        { name: { $regex: escaped, $options: 'i' } },
+        { slug: { $regex: escaped, $options: 'i' } },
       ];
     }
 
@@ -101,44 +115,51 @@ export class RoleService {
   }
 
   /**
-   * Update an existing role
+   * Update an existing role.
+   * System roles keep their slug. Renaming a custom role moves every user
+   * assigned to the old slug onto the new one.
    */
-  async update(idOrSlug: string, dto: UpdateRoleDto): Promise<RoleResponseDto> {
+  async update(
+    idOrSlug: string,
+    dto: UpdateRoleDto,
+  ): Promise<RoleUpdateResponseDto> {
     const role = await this.findRoleByIdOrSlug(idOrSlug);
+    const previousSlug = role.slug;
+    const nextSlug = dto.name ? generateSlug(dto.name) : previousSlug;
 
-    // Prevent updating protected roles
-    if (role.isProtected) {
+    if (role.isSystemRole && nextSlug !== previousSlug) {
       throw new ForbiddenException(
-        'Cannot modify protected role. The USER role is immutable.',
+        `System role "${previousSlug}" cannot be renamed to a different slug`,
       );
     }
 
-    // If name is being changed, regenerate slug and check uniqueness
-    if (dto.name && dto.name !== role.name) {
-      const newSlug = this.generateSlug(dto.name);
-      const existing = await this.roleModel.findOne({ slug: newSlug });
-      if (existing && existing._id.toString() !== role._id.toString()) {
-        throw new ConflictException(
-          `Role with name "${dto.name}" already exists`,
-        );
-      }
-      role.name = dto.name;
-      role.slug = newSlug;
+    if (dto.permissions) {
+      assertValidPermissions(dto.permissions);
+      this.assertAdminKeepsWildcard(previousSlug, dto.permissions);
     }
 
-    // Update other fields
+    if (dto.name && dto.name !== role.name) {
+      await this.assertSlugAvailable(nextSlug, role);
+      role.name = dto.name;
+      role.slug = nextSlug;
+    }
+
     if (dto.description !== undefined) {
       role.description = dto.description;
     }
 
     if (dto.permissions) {
-      this.validatePermissions(dto.permissions);
       role.permissions = dto.permissions;
     }
 
     await role.save();
 
-    return this.mapToResponseDto(role);
+    let usersMoved = 0;
+    if (nextSlug !== previousSlug) {
+      usersMoved = await this.moveUsers(previousSlug, nextSlug);
+    }
+
+    return { ...this.mapToResponseDto(role), usersMoved };
   }
 
   /**
@@ -147,10 +168,10 @@ export class RoleService {
   async delete(idOrSlug: string): Promise<void> {
     const role = await this.findRoleByIdOrSlug(idOrSlug);
 
-    // Prevent deleting protected roles
-    if (role.isProtected) {
+    // System and protected roles are permanent
+    if (role.isSystemRole || role.isProtected) {
       throw new ForbiddenException(
-        'Cannot delete protected role. The USER role is immutable.',
+        `Role "${role.slug}" is protected and cannot be deleted`,
       );
     }
 
@@ -212,30 +233,49 @@ export class RoleService {
   }
 
   /**
-   * Generate URL-safe slug from role name
+   * Reject a slug already taken by another role
    */
-  private generateSlug(name: string): string {
-    return name
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-');
+  private async assertSlugAvailable(
+    slug: string,
+    role: RoleDocument,
+  ): Promise<void> {
+    const existing = await this.roleModel.findOne({ slug });
+
+    if (existing && existing._id.toString() !== role._id.toString()) {
+      throw new ConflictException(`Role with slug "${slug}" already exists`);
+    }
   }
 
   /**
-   * Validate permission format
+   * The admin role keeps the wildcard permission, otherwise the last
+   * account able to manage the system loses its access
    */
-  private validatePermissions(permissions: string[]): void {
-    const permissionRegex = /^([a-z-]+:[a-z-]+(:[a-z-]+)?|\*)$/;
-
-    for (const permission of permissions) {
-      if (!permissionRegex.test(permission)) {
-        throw new BadRequestException(
-          `Invalid permission format: "${permission}". Must be resource:action[:scope] or wildcard "*"`,
-        );
-      }
+  private assertAdminKeepsWildcard(slug: string, permissions: string[]): void {
+    if (slug !== (UserRole.ADMIN as string)) {
+      return;
     }
+
+    if (!permissions.includes(WILDCARD_PERMISSION)) {
+      throw new ForbiddenException(
+        `The "${WILDCARD_PERMISSION}" permission cannot be removed from the admin role`,
+      );
+    }
+  }
+
+  /**
+   * Move every user from a renamed slug onto the new one
+   */
+  private async moveUsers(fromSlug: string, toSlug: string): Promise<number> {
+    const result = await this.userModel.updateMany(
+      { role: fromSlug },
+      { $set: { role: toSlug } },
+    );
+
+    this.logger.log(
+      `Role renamed from "${fromSlug}" to "${toSlug}", ${result.modifiedCount} user(s) moved`,
+    );
+
+    return result.modifiedCount;
   }
 
   /**
@@ -244,16 +284,6 @@ export class RoleService {
   private mapToResponseDto(
     role: RoleDocument | (Role & { _id: { toString(): string } }),
   ): RoleResponseDto {
-    return {
-      id: role._id.toString(),
-      name: role.name,
-      slug: role.slug,
-      description: role.description,
-      isSystemRole: role.isSystemRole,
-      isProtected: role.isProtected,
-      permissions: role.permissions,
-      createdAt: role.createdAt,
-      updatedAt: role.updatedAt,
-    };
+    return mapRoleToResponseDto(role);
   }
 }

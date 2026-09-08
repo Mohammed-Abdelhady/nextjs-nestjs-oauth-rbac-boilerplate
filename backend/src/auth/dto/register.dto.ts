@@ -8,6 +8,12 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import {
+  NAME_MAX_LENGTH,
+  NAME_MESSAGE,
+  NAME_MIN_LENGTH,
+  NAME_REGEX,
+} from '../../common/constants/name';
 
 export class RegisterDto {
   @ApiProperty({
@@ -39,13 +45,18 @@ export class RegisterDto {
   @ApiProperty({
     description: 'User full name',
     example: 'John Doe',
-    minLength: 2,
-    maxLength: 50,
+    minLength: NAME_MIN_LENGTH,
+    maxLength: NAME_MAX_LENGTH,
   })
   @IsString({ message: 'Name must be a string' })
   @IsNotEmpty({ message: 'Name is required' })
-  @MinLength(2, { message: 'Name must be at least 2 characters' })
-  @MaxLength(50, { message: 'Name must not exceed 50 characters' })
+  @MinLength(NAME_MIN_LENGTH, {
+    message: `Name must be at least ${NAME_MIN_LENGTH} characters`,
+  })
+  @MaxLength(NAME_MAX_LENGTH, {
+    message: `Name must not exceed ${NAME_MAX_LENGTH} characters`,
+  })
+  @Matches(NAME_REGEX, { message: NAME_MESSAGE })
   @Transform(({ value }: { value: string }) => value?.trim())
   name!: string;
 }

@@ -1,41 +1,36 @@
-import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { HealthService } from './health.service';
+import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Response } from 'express';
+import { HealthService, HealthResponse } from './health.service';
+import { Public } from '../auth/decorators/public.decorator';
 
-/**
- * Health check controller
- * Provides endpoint for monitoring application health status
- */
 @ApiTags('health')
 @Controller('health')
 export class HealthController {
   constructor(private readonly healthService: HealthService) {}
 
-  /**
-   * Get comprehensive health status
-   * @returns Health status information
-   */
+  @Public()
   @Get()
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Health check',
     description:
-      'Returns health status of application, including database connectivity and uptime.',
+      'Returns health status of the application and database connectivity.',
   })
-  getHealth() {
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Application is healthy',
+  })
+  @ApiResponse({
+    status: HttpStatus.SERVICE_UNAVAILABLE,
+    description: 'Database is disconnected or application is unhealthy',
+  })
+  getHealth(@Res({ passthrough: true }) res: Response): HealthResponse {
     const health = this.healthService.getHealth();
 
-    // Return 503 if unhealthy
     if (health.status === 'unhealthy') {
-      return {
-        httpStatus: HttpStatus.SERVICE_UNAVAILABLE,
-        ...health,
-      };
+      res.status(HttpStatus.SERVICE_UNAVAILABLE);
     }
 
-    return {
-      httpStatus: HttpStatus.OK,
-      ...health,
-    };
+    return health;
   }
 }

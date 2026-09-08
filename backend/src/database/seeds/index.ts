@@ -26,7 +26,7 @@ async function bootstrap() {
   const args = process.argv.slice(2);
   const shouldReset = args.includes('--reset');
 
-  console.log('🌱 Starting database seeding...');
+  console.log('Starting database seeding...');
   console.log('Environment:', process.env.NODE_ENV || 'development');
 
   try {
@@ -40,11 +40,11 @@ async function bootstrap() {
 
     // Execute seeding or reset
     if (shouldReset) {
-      console.log('⚠️  Reset mode enabled - clearing all data...');
+      console.log('Reset mode enabled - clearing all data...');
       await seedService.resetDatabase();
     } else {
       const result = await seedService.seedAll();
-      console.log('✅ Seeding completed successfully!');
+      console.log('Seeding completed successfully');
       console.log('Summary:', JSON.stringify(result, null, 2));
     }
 
@@ -53,7 +53,7 @@ async function bootstrap() {
     process.exit(0);
   } catch (error) {
     console.error(
-      '❌ Seeding failed:',
+      'Seeding failed:',
       error instanceof Error ? error.message : String(error),
     );
     if (error instanceof Error && error.stack) {

@@ -22,6 +22,14 @@ export class Role {
   @Prop({ default: false })
   isProtected!: boolean;
 
+  /**
+   * Hierarchy level. Higher levels manage lower ones.
+   * Left unset on documents created before the field existed; readers fall back
+   * to the seed map and then to the custom-role level.
+   */
+  @Prop({ type: Number, min: 0 })
+  level?: number;
+
   @Prop({ type: [String], default: [] })
   permissions!: string[];
 

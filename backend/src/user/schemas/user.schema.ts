@@ -1,6 +1,24 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import { AuthProvider } from '../enums/auth-provider.enum';
+import { EMAIL_PROVIDER } from '../../common/constants/oauth-providers';
+import { TwoFactor, TwoFactorSchema } from './two-factor.schema'; // feature:totp
+
+/**
+ * One OAuth account linked to a user, keyed by the provider id from the OAuth registry.
+ */
+@Schema({ _id: false })
+export class LinkedAccount {
+  @Prop({ required: true })
+  provider!: string;
+
+  @Prop({ required: true })
+  providerId!: string;
+
+  @Prop({ required: true, default: () => new Date() })
+  linkedAt!: Date;
+}
+
+export const LinkedAccountSchema = SchemaFactory.createForClass(LinkedAccount);
 
 @Schema({ timestamps: true })
 export class User {
@@ -13,38 +31,24 @@ export class User {
   @Prop({ required: true, trim: true })
   name!: string;
 
+  @Prop()
+  avatarUrl?: string;
+
   @Prop({ type: String, default: 'user' })
   role!: string;
 
   @Prop({ type: [String], default: [] })
   permissions!: string[];
 
-  @Prop({ enum: AuthProvider, default: AuthProvider.EMAIL })
-  authProvider!: AuthProvider;
+  /** Provider the account was created with: 'email' or an OAuth provider id. */
+  @Prop({ type: String, default: EMAIL_PROVIDER })
+  authProvider!: string;
 
-  @Prop({ sparse: true, unique: true })
-  googleId?: string;
-
-  @Prop({ sparse: true, unique: true })
-  facebookId?: string;
-
-  @Prop({ sparse: true, unique: true })
-  githubId?: string;
+  @Prop({ type: [LinkedAccountSchema], default: [] })
+  linkedAccounts!: LinkedAccount[];
 
   @Prop({ default: false })
   isVerified!: boolean;
-
-  @Prop()
-  verificationToken?: string;
-
-  @Prop()
-  verificationExpires?: Date;
-
-  @Prop()
-  resetPasswordToken?: string;
-
-  @Prop()
-  resetPasswordExpires?: Date;
 
   @Prop({ default: false })
   isDeleted!: boolean;
@@ -52,17 +56,27 @@ export class User {
   @Prop()
   deletedAt?: Date;
 
-  @Prop({ type: [String], default: [] })
-  linkedProviders!: string[];
-
-  @Prop({ enum: AuthProvider, nullable: true })
-  primaryProvider?: AuthProvider;
+  /** Provider id used as the source of truth for profile sync. */
+  @Prop({ type: String })
+  primaryProvider?: string;
 
   @Prop()
   profileSyncedAt?: Date;
 
   @Prop()
   lastSyncedProvider?: string;
+
+  // feature:totp:start
+  /**
+   * Second factor state. Optional subdocument, so accounts written before it
+   * existed read back with the defaults and need no migration.
+   */
+  @Prop({ type: TwoFactorSchema, default: () => ({}) })
+  twoFactor!: TwoFactor;
+  // feature:totp:end
+
+  /** Virtual: 'email' when password sign-in applies, plus every linked OAuth provider. */
+  linkedProviders!: string[];
 
   // Timestamp fields (automatically managed by Mongoose with timestamps: true)
   createdAt!: Date;
@@ -74,8 +88,23 @@ export type UserDocument = HydratedDocument<User>;
 export const UserSchema: MongooseSchema<User> =
   SchemaFactory.createForClass(User);
 
+UserSchema.virtual('linkedProviders').get(function (
+  this: UserDocument,
+): string[] {
+  const oauthProviders = (this.linkedAccounts ?? []).map(
+    (account) => account.provider,
+  );
+  if (this.authProvider === EMAIL_PROVIDER) {
+    return [EMAIL_PROVIDER, ...oauthProviders];
+  }
+  return oauthProviders;
+});
+
 // Indexes
 UserSchema.index({ createdAt: -1 });
 UserSchema.index({ isDeleted: 1 });
-UserSchema.index({ linkedProviders: 1 });
 UserSchema.index({ role: 1 });
+UserSchema.index(
+  { 'linkedAccounts.provider': 1, 'linkedAccounts.providerId': 1 },
+  { unique: true, sparse: true },
+);

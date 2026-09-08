@@ -1,229 +1,169 @@
-import { Injectable, Logger, HttpStatus } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from '../schemas/user.schema';
-import { AuthProvider } from '../enums/auth-provider.enum';
+import { EMAIL_PROVIDER } from '../../common/constants/oauth-providers';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
-import { OAuthUserProfile } from '../../auth/strategies/oauth.strategy.interface';
+import { isMongoDuplicateKeyError } from '../../common/utils/mongo-error.util';
+import { OAuthProfile } from '../../auth/oauth/oauth-provider.interface';
+
+const LINKED_ACCOUNT_FIELDS = 'linkedAccounts authProvider primaryProvider';
 
 /**
- * Account Linking Service
+ * Links and unlinks OAuth accounts on a user.
  *
- * Manages linking/unlinking multiple OAuth providers to a single user account.
- * Provides validation to ensure:
- * - No duplicate provider links
- * - No email conflicts
- * - At least one auth method remains
- * - Provider IDs are unique across users
+ * Provider ids come from the OAuth registry; this service only stores them as
+ * entries of `linkedAccounts` and derives `linkedProviders` from that array.
  */
 @Injectable()
 export class AccountLinkingService {
   private readonly logger = new Logger(AccountLinkingService.name);
 
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+  ) {}
 
   /**
-   * Link an OAuth provider to an existing user account
+   * Adds a provider account to a user.
    *
-   * @param userId - User ID to link provider to
-   * @param provider - OAuth provider (google, facebook, github)
-   * @param profile - OAuth user profile from provider
-   * @returns Updated user document
-   * @throws AppException if validation fails
+   * @throws AppException when the provider is linked already, belongs to
+   * another user, or reports a different email address
    */
   async linkProvider(
     userId: string,
-    provider: AuthProvider,
-    profile: OAuthUserProfile,
-  ): Promise<User> {
-    // Get user
-    const user = await this.userModel.findById(userId).exec();
-    if (!user || user.isDeleted) {
-      throw new AppException(
-        ErrorCode.USER_NOT_FOUND,
-        'User not found',
-        HttpStatus.NOT_FOUND,
-      );
-    }
+    provider: string,
+    profile: OAuthProfile,
+  ): Promise<UserDocument> {
+    const user = await this.requireUser(userId);
 
-    // VALIDATION 1: Check provider not already linked to THIS user
     if (user.linkedProviders.includes(provider)) {
       throw new AppException(
         ErrorCode.PROVIDER_ALREADY_LINKED,
         `${provider} is already linked to your account`,
         HttpStatus.CONFLICT,
+        { provider },
       );
     }
 
-    // VALIDATION 2: Check provider ID not linked to OTHER user
-    const providerIdField = this.getProviderIdField(provider);
-    const existingUser = await this.userModel
-      .findOne({
-        [providerIdField]: profile.providerId,
-        _id: { $ne: userId },
-      })
-      .exec();
-
-    if (existingUser) {
-      throw new AppException(
-        ErrorCode.PROVIDER_LINKED_TO_OTHER_ACCOUNT,
-        `This ${provider} account is already linked to another user`,
-        HttpStatus.CONFLICT,
-      );
-    }
-
-    // VALIDATION 3: Email match
     if (profile.email && profile.email !== user.email) {
-      this.logger.warn(
-        `Email mismatch when linking ${provider}: user=${user.email}, provider=${profile.email}`,
-      );
+      this.logger.warn(`Email mismatch while linking ${provider}`);
       throw new AppException(
         ErrorCode.EMAIL_MISMATCH_ON_LINK,
-        `Email from ${provider} (${profile.email}) does not match your account email (${user.email})`,
+        `The email on this ${provider} account does not match your account email`,
         HttpStatus.CONFLICT,
+        { provider },
       );
     }
 
-    // LINK PROVIDER
-    user.linkedProviders.push(provider);
-    // Dynamic property access requires type assertion
-    (user as unknown as Record<string, unknown>)[providerIdField] =
-      profile.providerId;
+    user.linkedAccounts.push({
+      provider,
+      providerId: profile.providerId,
+      linkedAt: new Date(),
+    });
 
-    // If first linked provider (besides email), set as primary
-    if (!user.primaryProvider && provider !== AuthProvider.EMAIL) {
+    if (!user.primaryProvider) {
       user.primaryProvider = provider;
     }
 
-    await user.save();
+    try {
+      await user.save();
+    } catch (error) {
+      if (isMongoDuplicateKeyError(error)) {
+        throw new AppException(
+          ErrorCode.OAUTH_ACCOUNT_LINKED_ELSEWHERE,
+          `This ${provider} account is already linked to another user`,
+          HttpStatus.CONFLICT,
+          { provider },
+        );
+      }
+      throw error;
+    }
 
-    this.logger.log(`User ${userId} linked ${provider} account successfully`);
-
+    this.logger.log(`User ${userId} linked a ${provider} account`);
     return user;
   }
 
   /**
-   * Unlink an OAuth provider from a user account
+   * Removes a provider account from a user.
    *
-   * @param userId - User ID to unlink provider from
-   * @param provider - OAuth provider to unlink
-   * @returns Updated user document
-   * @throws AppException if validation fails
+   * @throws AppException when the provider is not linked or it is the only
+   * remaining sign-in method
    */
-  async unlinkProvider(userId: string, provider: AuthProvider): Promise<User> {
-    const user = await this.userModel.findById(userId).exec();
-    if (!user || user.isDeleted) {
+  async unlinkProvider(
+    userId: string,
+    provider: string,
+  ): Promise<UserDocument> {
+    const user = await this.requireUser(userId);
+
+    if (provider === EMAIL_PROVIDER) {
       throw new AppException(
-        ErrorCode.USER_NOT_FOUND,
-        'User not found',
-        HttpStatus.NOT_FOUND,
+        ErrorCode.VALIDATION_ERROR,
+        'Email sign-in cannot be unlinked',
+        HttpStatus.BAD_REQUEST,
+        { provider },
       );
     }
 
-    // VALIDATION 1: Check provider is linked
     if (!user.linkedProviders.includes(provider)) {
       throw new AppException(
         ErrorCode.PROVIDER_NOT_LINKED,
         `${provider} is not linked to your account`,
         HttpStatus.BAD_REQUEST,
+        { provider },
       );
     }
 
-    // VALIDATION 2: Cannot unlink last auth method
     if (user.linkedProviders.length === 1) {
       throw new AppException(
         ErrorCode.CANNOT_UNLINK_LAST_PROVIDER,
-        'You must have at least one authentication method',
+        'You must keep at least one sign-in method',
         HttpStatus.BAD_REQUEST,
+        { provider },
       );
     }
 
-    // UNLINK PROVIDER
-    user.linkedProviders = user.linkedProviders.filter(
-      (p) => (p as AuthProvider) !== provider,
+    user.linkedAccounts = user.linkedAccounts.filter(
+      (account) => account.provider !== provider,
     );
 
-    // Clear provider ID field
-    const providerIdField = this.getProviderIdField(provider);
-    // Dynamic property access requires type assertion
-    (user as unknown as Record<string, unknown>)[providerIdField] = undefined;
-
-    // If unlinking primary, set new primary to first remaining provider
     if (user.primaryProvider === provider) {
-      user.primaryProvider = user.linkedProviders[0] as AuthProvider;
+      user.primaryProvider = user.linkedAccounts[0]?.provider;
     }
 
     await user.save();
 
-    this.logger.log(`User ${userId} unlinked ${provider} account successfully`);
-
+    this.logger.log(`User ${userId} unlinked their ${provider} account`);
     return user;
   }
 
-  /**
-   * Get all linked providers for a user
-   *
-   * @param userId - User ID
-   * @returns Array of linked providers
-   */
-  async getLinkedProviders(userId: string): Promise<AuthProvider[]> {
-    const user = await this.userModel
-      .findById(userId)
-      .select('linkedProviders')
-      .exec();
-
-    if (!user || user.isDeleted) {
-      throw new AppException(
-        ErrorCode.USER_NOT_FOUND,
-        'User not found',
-        HttpStatus.NOT_FOUND,
-      );
-    }
-
-    return user.linkedProviders as AuthProvider[];
+  /** Every sign-in method on the account, including 'email'. */
+  async getLinkedProviders(userId: string): Promise<string[]> {
+    const user = await this.requireUser(userId, LINKED_ACCOUNT_FIELDS);
+    return user.linkedProviders;
   }
 
-  /**
-   * Check if a provider can be unlinked (at least one other auth method exists)
-   *
-   * @param userId - User ID
-   * @param provider - Provider to check
-   * @returns True if provider can be unlinked
-   */
-  async canUnlinkProvider(
-    userId: string,
-    provider: AuthProvider,
-  ): Promise<boolean> {
+  async canUnlinkProvider(userId: string, provider: string): Promise<boolean> {
     const user = await this.userModel
       .findById(userId)
-      .select('linkedProviders')
+      .select(LINKED_ACCOUNT_FIELDS)
       .exec();
 
     if (!user || user.isDeleted) {
       return false;
     }
 
-    // Can unlink if more than one provider is linked
     return (
-      user.linkedProviders.includes(provider) && user.linkedProviders.length > 1
+      provider !== EMAIL_PROVIDER &&
+      user.linkedProviders.includes(provider) &&
+      user.linkedProviders.length > 1
     );
   }
 
-  /**
-   * Check if a provider is the primary provider
-   *
-   * @param userId - User ID
-   * @param provider - Provider to check
-   * @returns True if provider is primary
-   */
-  async isPrimaryProvider(
-    userId: string,
-    provider: AuthProvider,
-  ): Promise<boolean> {
+  async isPrimaryProvider(userId: string, provider: string): Promise<boolean> {
     const user = await this.userModel
       .findById(userId)
-      .select('primaryProvider')
+      .select('primaryProvider isDeleted')
       .exec();
 
     if (!user || user.isDeleted) {
@@ -234,18 +174,51 @@ export class AccountLinkingService {
   }
 
   /**
-   * Set a provider as the primary provider for profile syncing
+   * Chooses which provider profile sync follows.
    *
-   * @param userId - User ID
-   * @param provider - Provider to set as primary
-   * @returns Updated user document
-   * @throws AppException if provider is not linked
+   * @throws AppException when the provider is not linked or is email sign-in
    */
   async setPrimaryProvider(
     userId: string,
-    provider: AuthProvider,
-  ): Promise<User> {
-    const user = await this.userModel.findById(userId).exec();
+    provider: string,
+  ): Promise<UserDocument> {
+    const user = await this.requireUser(userId);
+
+    if (provider === EMAIL_PROVIDER) {
+      throw new AppException(
+        ErrorCode.VALIDATION_ERROR,
+        'Email sign-in has no profile to sync',
+        HttpStatus.BAD_REQUEST,
+        { provider },
+      );
+    }
+
+    if (!user.linkedProviders.includes(provider)) {
+      throw new AppException(
+        ErrorCode.PROVIDER_NOT_LINKED,
+        `${provider} is not linked to your account`,
+        HttpStatus.BAD_REQUEST,
+        { provider },
+      );
+    }
+
+    user.primaryProvider = provider;
+    await user.save();
+
+    this.logger.log(`User ${userId} set ${provider} as primary provider`);
+    return user;
+  }
+
+  private async requireUser(
+    userId: string,
+    fields?: string,
+  ): Promise<UserDocument> {
+    const query = this.userModel.findById(userId);
+    if (fields) {
+      query.select(`${fields} isDeleted`);
+    }
+    const user = await query.exec();
+
     if (!user || user.isDeleted) {
       throw new AppException(
         ErrorCode.USER_NOT_FOUND,
@@ -254,54 +227,6 @@ export class AccountLinkingService {
       );
     }
 
-    // Validate provider is linked
-    if (!user.linkedProviders.includes(provider)) {
-      throw new AppException(
-        ErrorCode.PROVIDER_NOT_LINKED,
-        `${provider} is not linked to your account`,
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    // EMAIL provider cannot be primary (no profile to sync)
-    if (provider === AuthProvider.EMAIL) {
-      throw new AppException(
-        ErrorCode.VALIDATION_ERROR,
-        'Email provider cannot be set as primary for profile syncing',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    user.primaryProvider = provider;
-    await user.save();
-
-    this.logger.log(`User ${userId} set ${provider} as primary provider`);
-
     return user;
-  }
-
-  /**
-   * Get the provider ID field name for a given provider
-   *
-   * @param provider - OAuth provider
-   * @returns Field name (e.g., 'googleId', 'githubId')
-   */
-  private getProviderIdField(provider: AuthProvider): string {
-    const fieldMap: Record<string, string> = {
-      [AuthProvider.GOOGLE]: 'googleId',
-      [AuthProvider.FACEBOOK]: 'facebookId',
-      [AuthProvider.GITHUB]: 'githubId',
-    };
-
-    const field = fieldMap[provider];
-    if (!field) {
-      throw new AppException(
-        ErrorCode.INVALID_OAUTH_PROVIDER,
-        `Invalid OAuth provider: ${provider}`,
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    return field;
   }
 }

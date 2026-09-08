@@ -1,19 +1,15 @@
 import { HydratedDocument } from 'mongoose';
 import { UserRole } from '../enums/user-role.enum';
-import { User } from '../schemas/user.schema';
+import { LinkedAccount, User } from '../schemas/user.schema';
 
 export interface IUser {
   email: string;
   password?: string;
   name: string;
+  avatarUrl?: string;
   role: UserRole;
-  googleId?: string;
-  facebookId?: string;
+  linkedAccounts: LinkedAccount[];
   isVerified: boolean;
-  verificationToken?: string;
-  verificationExpires?: Date;
-  resetPasswordToken?: string;
-  resetPasswordExpires?: Date;
   isDeleted: boolean;
   deletedAt?: Date;
 }

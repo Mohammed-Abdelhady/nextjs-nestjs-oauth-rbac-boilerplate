@@ -1,4 +1,3 @@
-import { AuthProvider } from '../../user/enums/auth-provider.enum';
 import { ApiResponse } from '../../common/dto/api-response.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -39,11 +38,11 @@ export class AdminUserDto {
   permissions!: string[];
 
   @ApiProperty({
-    description: 'Authentication provider (LOCAL, GOOGLE, FACEBOOK, GITHUB)',
-    enum: ['LOCAL', 'GOOGLE', 'FACEBOOK', 'GITHUB'],
-    example: 'LOCAL',
+    description:
+      "Provider the account was created with: 'email' or an OAuth provider id",
+    example: 'email',
   })
-  authProvider!: AuthProvider;
+  authProvider!: string;
 
   @ApiProperty({
     description: 'Whether the user email is verified',
@@ -58,18 +57,19 @@ export class AdminUserDto {
   isDeleted!: boolean;
 
   @ApiProperty({
-    description: 'Google OAuth ID (if authenticated via Google)',
+    description: 'Avatar URL synced from the primary provider',
     example: null,
     required: false,
   })
-  googleId?: string | null;
+  avatarUrl?: string;
 
   @ApiProperty({
-    description: 'Facebook OAuth ID (if authenticated via Facebook)',
-    example: null,
-    required: false,
+    description:
+      "Sign-in methods on the account: 'email' plus linked provider ids",
+    example: ['email', 'google'],
+    type: [String],
   })
-  facebookId?: string | null;
+  linkedProviders!: string[];
 
   @ApiProperty({
     description: 'Account creation timestamp',

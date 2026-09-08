@@ -3,24 +3,41 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import * as path from 'path';
+import * as fs from 'fs';
 
 import { UserDocument } from '../../user/schemas/user.schema';
 import { AuthProvider } from '../../user/enums/auth-provider.enum';
 
-import { SEED_USERS } from './user.seed';
+import { getSeedUsers, printSeedCredentials } from './user.seed';
 import { RoleSeedService } from './role.seed';
 
-/**
- * Seed Service
- *
- * This service handles database seeding operations.
- * It provides methods to seed users and other data for development/testing purposes.
- *
- * @remarks
- * - Seeding is blocked in production by default for safety
- * - All seed operations are idempotent (safe to run multiple times)
- * - Seed users use @seed.local domain for easy identification
- */
+function getChangelogCollectionName(): string {
+  const possiblePaths = [
+    path.resolve(process.cwd(), 'migrate-mongo-config.js'),
+    path.resolve(process.cwd(), 'backend/migrate-mongo-config.js'),
+    path.resolve(__dirname, '../../../migrate-mongo-config.js'),
+  ];
+
+  for (const configPath of possiblePaths) {
+    if (fs.existsSync(configPath)) {
+      try {
+        const content = fs.readFileSync(configPath, 'utf8');
+        const match = content.match(
+          /changelogCollectionName:\s*['"]([^'"]+)['"]/,
+        );
+        if (match && match[1]) {
+          return match[1];
+        }
+      } catch {
+        // Fall back to next candidate path
+      }
+    }
+  }
+
+  return 'migrations';
+}
+
 @Injectable()
 export class SeedService {
   private readonly logger = new Logger(SeedService.name);
@@ -31,15 +48,6 @@ export class SeedService {
     private readonly roleSeedService: RoleSeedService,
   ) {}
 
-  /**
-   * Seed all data
-   *
-   * This method orchestrates all seeding operations.
-   * It calls individual seed methods and returns a summary.
-   *
-   * @returns Summary of seeded records
-   * @throws Error if running in production without force flag
-   */
   async seedAll(): Promise<{
     roles: string;
     users: number;
@@ -47,22 +55,15 @@ export class SeedService {
   }> {
     this.logger.log('Starting database seeding...');
 
-    // Check environment
-    const nodeEnv = this.configService.get<string>(
-      'server.nodeEnv',
-      'development',
-    );
-    if (nodeEnv === 'production') {
+    const nodeEnv = process.env.NODE_ENV;
+    if (nodeEnv !== 'development' && nodeEnv !== 'test') {
       throw new Error(
-        'Seeding is not allowed in production environment. ' +
-          'If you really want to seed production data, use the --force flag.',
+        'Database seeding is only allowed when NODE_ENV is "development" or "test".',
       );
     }
 
-    // Seed roles first (users depend on roles)
     await this.roleSeedService.seed();
 
-    // Seed users
     const usersCount = await this.seedUsers();
 
     const summary = {
@@ -75,21 +76,15 @@ export class SeedService {
     return summary;
   }
 
-  /**
-   * Seed users
-   *
-   * Creates seed users for each role (USER, SUPPORT, MANAGER, ADMIN).
-   * Each user is checked for existence before creation to ensure idempotency.
-   *
-   * @returns Number of users created
-   */
   async seedUsers(): Promise<number> {
     this.logger.log('Seeding users...');
     let createdCount = 0;
 
-    for (const userData of SEED_USERS) {
+    const seedUsers = getSeedUsers();
+    printSeedCredentials(seedUsers);
+
+    for (const userData of seedUsers) {
       try {
-        // Check if user already exists
         const existingUser = await this.userModel.findOne({
           email: userData.email,
         });
@@ -99,18 +94,16 @@ export class SeedService {
           continue;
         }
 
-        // Hash password
         const hashedPassword = await bcrypt.hash(
           userData.password,
           this.configService.get<number>('bcrypt.rounds', 10),
         );
 
-        // Create user with explicit MongoDB ObjectId
         await this.userModel.create({
-          _id: new Types.ObjectId(), // Explicitly generate MongoDB ObjectId
+          _id: new Types.ObjectId(),
           ...userData,
           password: hashedPassword,
-          isVerified: true, // All seed users are verified
+          isVerified: true,
           authProvider: AuthProvider.EMAIL,
           permissions: userData.permissions || [],
         });
@@ -123,7 +116,6 @@ export class SeedService {
         this.logger.error(
           `Failed to create seed user ${userData.email}: ${error instanceof Error ? error.message : String(error)}`,
         );
-        // Continue with next user even if one fails
       }
     }
 
@@ -131,37 +123,34 @@ export class SeedService {
     return createdCount;
   }
 
-  /**
-   * Reset database
-   *
-   * Drops all collections and reseeds database.
-   * This is a destructive operation and should be used with caution.
-   *
-   * @throws Error if running in production
-   */
   async resetDatabase(): Promise<void> {
     this.logger.warn('Resetting database...');
 
-    // Check environment
-    const nodeEnv = this.configService.get<string>(
-      'server.nodeEnv',
-      'development',
-    );
-    if (nodeEnv === 'production') {
+    const nodeEnv = process.env.NODE_ENV;
+    if (nodeEnv !== 'development' && nodeEnv !== 'test') {
       throw new Error(
-        'Database reset is not allowed in production environment.',
+        'Database reset is only allowed when NODE_ENV is "development" or "test".',
       );
     }
 
-    // Drop all collections
+    const changelogCollection = getChangelogCollectionName();
+    const skippedCollections = new Set<string>([
+      changelogCollection,
+      `${changelogCollection}_lock`,
+      'changelog_lock',
+      'migrations_lock',
+    ]);
+
     const collections = Object.values(this.userModel.db.collections);
     for (const collection of collections) {
+      if (skippedCollections.has(collection.collectionName)) {
+        continue;
+      }
       await collection.deleteMany({});
     }
 
-    this.logger.warn('All collections cleared');
+    this.logger.warn('All application collections cleared');
 
-    // Reseed
     await this.seedAll();
 
     this.logger.warn('Database reset completed');

@@ -1,0 +1,46 @@
+import { Controller, Get } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Public } from './decorators/public.decorator';
+import { AuthFeature } from './enums/auth-feature.enum';
+import { AuthFeaturesService } from './services/auth-features.service';
+import { AuthMethodsResponseDto } from './dto/auth-methods-response.dto';
+import { OAuthRegistryService } from './oauth/oauth-registry.service'; // feature:oauth-core
+import { ApiResponse } from '../common/dto/api-response.dto';
+
+/**
+ * What this deployment accepts as a sign-in. Registered in AppModule, which is
+ * where both the auth configuration and the OAuth registry are in scope.
+ */
+@ApiTags('auth')
+@Controller('auth')
+export class AuthMethodsController {
+  constructor(
+    private readonly authFeaturesService: AuthFeaturesService,
+    private readonly oauthRegistry: OAuthRegistryService, // feature:oauth-core
+  ) {}
+
+  /**
+   * List enabled sign-in methods
+   * GET /api/auth/methods
+   */
+  @Public()
+  @Get('methods')
+  @ApiOperation({
+    summary: 'List enabled sign-in methods',
+    description:
+      'Returns the password, magic link, two-factor and passkey switches ' +
+      'together with the OAuth providers that have credentials, so a client ' +
+      'renders only what works.',
+  })
+  getMethods(): ApiResponse<AuthMethodsResponseDto> {
+    return ApiResponse.success({
+      methods: {
+        password: this.authFeaturesService.isEnabled(AuthFeature.PASSWORD),
+        magicLink: this.authFeaturesService.isEnabled(AuthFeature.MAGIC_LINK), // feature:magic-link
+        twoFactor: this.authFeaturesService.isEnabled(AuthFeature.TWO_FACTOR), // feature:totp
+        passkeys: this.authFeaturesService.isEnabled(AuthFeature.PASSKEYS), // feature:passkeys
+        oauth: this.oauthRegistry.listEnabled(), // feature:oauth-core
+      },
+    });
+  }
+}

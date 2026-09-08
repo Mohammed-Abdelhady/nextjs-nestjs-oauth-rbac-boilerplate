@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
+import { HttpStatus } from '@nestjs/common';
+import { Response } from 'express';
 import { HealthController } from './health.controller';
-import { HealthService } from './health.service';
+import { HealthService, HealthResponse } from './health.service';
 
 describe('HealthController', () => {
   let controller: HealthController;
-  let service: HealthService;
 
   const mockHealthService = {
     getHealth: jest.fn(),
@@ -23,7 +23,6 @@ describe('HealthController', () => {
     }).compile();
 
     controller = module.get<HealthController>(HealthController);
-    service = module.get<HealthService>(HealthService);
   });
 
   afterEach(() => {
@@ -36,88 +35,37 @@ describe('HealthController', () => {
 
   describe('getHealth', () => {
     it('should return healthy status when database is connected', () => {
-      const healthData = {
-        status: 'healthy' as const,
-        timestamp: '2024-01-01T00:00:00.000Z',
-        uptime: 100,
-        database: {
-          status: 'connected' as const,
-          responseTime: 5,
-        },
-        memory: {
-          used: 100,
-          total: 500,
-          percentage: 20,
-          unit: 'MB',
-        },
-        environment: 'development',
+      const healthData: HealthResponse = {
+        status: 'healthy',
+        timestamp: '2026-09-03T00:00:00.000Z',
       };
 
       mockHealthService.getHealth.mockReturnValue(healthData);
+      const statusMock = jest.fn();
+      const mockRes = { status: statusMock } as unknown as Response;
 
-      const result = controller.getHealth();
+      const result = controller.getHealth(mockRes);
 
-      expect(service.getHealth).toHaveBeenCalled();
-      expect(result).toEqual({
-        httpStatus: 200,
-        ...healthData,
-      });
+      expect(mockHealthService.getHealth).toHaveBeenCalled();
+      expect(statusMock).not.toHaveBeenCalled();
+      expect(result).toEqual(healthData);
     });
 
-    it('should return unhealthy status when database is disconnected', () => {
-      const healthData = {
-        status: 'unhealthy' as const,
-        timestamp: '2024-01-01T00:00:00.000Z',
-        uptime: 100,
-        database: {
-          status: 'disconnected' as const,
-        },
-        memory: {
-          used: 100,
-          total: 500,
-          percentage: 20,
-          unit: 'MB',
-        },
-        environment: 'development',
+    it('should set status 503 and return unhealthy status when database is disconnected', () => {
+      const healthData: HealthResponse = {
+        status: 'unhealthy',
+        timestamp: '2026-09-03T00:00:00.000Z',
       };
 
       mockHealthService.getHealth.mockReturnValue(healthData);
+      const statusMock = jest.fn();
+      const mockRes = { status: statusMock } as unknown as Response;
 
-      const result = controller.getHealth();
+      const result = controller.getHealth(mockRes);
 
-      expect(service.getHealth).toHaveBeenCalled();
-      expect(result).toEqual({
-        httpStatus: 503,
-        ...healthData,
-      });
-    });
-
-    it('should return unhealthy status when database has error', () => {
-      const healthData = {
-        status: 'unhealthy' as const,
-        timestamp: '2024-01-01T00:00:00.000Z',
-        uptime: 100,
-        database: {
-          status: 'error' as const,
-        },
-        memory: {
-          used: 100,
-          total: 500,
-          percentage: 20,
-          unit: 'MB',
-        },
-        environment: 'development',
-      };
-
-      mockHealthService.getHealth.mockReturnValue(healthData);
-
-      const result = controller.getHealth();
-
-      expect(service.getHealth).toHaveBeenCalled();
-      expect(result).toEqual({
-        httpStatus: 503,
-        ...healthData,
-      });
+      expect(mockHealthService.getHealth).toHaveBeenCalled();
+      expect(statusMock).toHaveBeenCalledWith(HttpStatus.SERVICE_UNAVAILABLE);
+      expect(result).toEqual(healthData);
     });
   });
 });

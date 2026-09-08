@@ -365,20 +365,13 @@ async getReports() { ... }
 async deleteUser() { ... }
 ```
 
-### Verified User Guard
-
-```typescript
-// Require email verification
-@UseGuards(AuthGuard, VerifiedGuard)
-@Post('orders')
-async createOrder() { ... }
-```
-
 ### Combined Guards
 
+Authentication is global, so a route only lists the guard it adds on top.
+
 ```typescript
-// Require: Authenticated + Verified + MANAGER role
-@UseGuards(AuthGuard, VerifiedGuard, RolesGuard)
+// Require: Authenticated + MANAGER role
+@UseGuards(RolesGuard)
 @Roles(UserRole.MANAGER)
 @Get('team')
 async getTeam() { ... }

@@ -13,7 +13,7 @@ export const ROLES_KEY = 'roles';
  * @example
  * ```typescript
  * @Roles(UserRole.ADMIN)
- * @UseGuards(AuthGuard, RolesGuard)
+ * @UseGuards(RolesGuard)
  * @Get('admin-only')
  * adminOnlyEndpoint() { ... }
  * ```
@@ -21,7 +21,7 @@ export const ROLES_KEY = 'roles';
  * @example
  * ```typescript
  * @Roles(UserRole.ADMIN, UserRole.MANAGER)
- * @UseGuards(AuthGuard, RolesGuard)
+ * @UseGuards(RolesGuard)
  * @Get('admin-or-manager')
  * adminOrManagerEndpoint() { ... }
  * ```
