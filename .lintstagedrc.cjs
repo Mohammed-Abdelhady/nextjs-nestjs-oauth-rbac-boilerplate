@@ -18,7 +18,7 @@ module.exports = {
       `bash -c 'grep -l -E "(eslint-disable-next-line|@ts-ignore)" ${filenames.map((f) => `"${f}"`).join(' ')} && exit 1 || exit 0'`,
     'eslint --fix --max-warnings 0 --config frontend/eslint.config.mjs',
     () => 'cd frontend && npx tsc --noEmit',
-    // Frontend tests not yet configured, will be added later
+    (filenames) => `cd frontend && npx vitest related --run ${filenames.join(' ')}`,
   ],
 
   // Common files

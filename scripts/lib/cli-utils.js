@@ -125,12 +125,15 @@ export function readFile(filePath) {
   }
 }
 
-export function writeFile(filePath, content) {
+export function writeFile(filePath, content, options = {}) {
   const dir = path.dirname(filePath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
-  fs.writeFileSync(filePath, content);
+  fs.writeFileSync(filePath, content, options);
+  if (typeof options === 'object' && options !== null && options.mode !== undefined) {
+    fs.chmodSync(filePath, options.mode);
+  }
 }
 
 export function fileExists(filePath) {

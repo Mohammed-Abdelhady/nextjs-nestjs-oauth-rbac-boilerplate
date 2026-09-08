@@ -3,14 +3,14 @@ services:
     image: mongo:7
     container_name: authboiler-mongodb-prod
     restart: unless-stopped
-    ports:
-      - '27017:27017'
+    expose:
+      - '27017'
     volumes:
       - mongo-data-prod:/data/db
     environment:
-      MONGO_INITDB_DATABASE: authboiler
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-changeme}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-authboiler}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:?MONGO_USERNAME is required}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?MONGO_PASSWORD is required}
     healthcheck:
       test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
       interval: 10s
@@ -29,16 +29,20 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
       target: production
     container_name: authboiler-backend-prod
     restart: unless-stopped
     expose:
       - '5000'
+    env_file:
+      - path: .env
+        required: false
     environment:
       NODE_ENV: production
-      MONGO_URI: mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-changeme}@mongodb:27017/authboiler?authSource=admin
-      BACKEND_URL: http://backend:5000
+      PORT: 5000
+      MONGO_URI: mongodb://${MONGO_USERNAME:?MONGO_USERNAME is required}:${MONGO_PASSWORD:?MONGO_PASSWORD is required}@mongodb:27017/${MONGO_DATABASE:-authboiler}?authSource=admin
       CLIENT_URL: ${CLIENT_URL:-https://yourdomain.com}
     depends_on:
       mongodb:
@@ -62,16 +66,20 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: .
+      dockerfile: frontend/Dockerfile
       target: production
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://yourdomain.com}
     container_name: authboiler-frontend-prod
     restart: unless-stopped
     expose:
       - '3000'
+    env_file:
+      - path: .env
+        required: false
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://yourdomain.com}
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://yourdomain.com}
     depends_on:
       - backend
     healthcheck:
@@ -97,8 +105,8 @@ services:
     container_name: authboiler-nginx-prod
     restart: unless-stopped
     ports:
-      - '80:80'
-      - '443:443'
+      - '80:8080'
+      - '443:8443'
     volumes:
       - ./nginx/ssl:/etc/nginx/ssl:ro
       - certbot-webroot:/var/www/certbot
@@ -111,7 +119,7 @@ services:
       frontend:
         condition: service_healthy
     healthcheck:
-      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost/health']
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:8080/health']
       interval: 30s
       timeout: 10s
       retries: 3

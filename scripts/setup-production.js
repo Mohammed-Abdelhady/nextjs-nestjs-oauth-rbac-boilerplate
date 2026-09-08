@@ -9,6 +9,7 @@
  * Usage: node scripts/setup-production.js
  */
 
+import crypto from 'node:crypto';
 import path from 'node:path';
 import {
   colors,
@@ -148,7 +149,8 @@ async function configureDatabase(rl, appSlug) {
   log.step('MongoDB Configuration');
 
   const username = await ask(rl, 'MongoDB username', 'admin');
-  const password = await ask(rl, 'MongoDB password', 'changeme');
+  const passwordInput = await ask(rl, 'MongoDB password (leave empty to generate)', '');
+  const password = passwordInput || crypto.randomBytes(32).toString('base64url');
   const dbName = await ask(rl, 'Database name', toSnakeCase(appSlug));
 
   return { username, password, dbName };
@@ -195,19 +197,18 @@ BACKEND_DOMAIN=${config.domains.backendDomain}
 # Frontend Configuration
 # ══════════════════════════════════════════
 NEXT_PUBLIC_API_URL=https://${config.domains.backendDomain}
-NEXT_PUBLIC_APP_URL=https://${config.domains.frontendDomain}
 
 # ══════════════════════════════════════════
 # Backend Configuration
 # ══════════════════════════════════════════
 NODE_ENV=production
 CLIENT_URL=https://${config.domains.frontendDomain}
-BACKEND_URL=http://backend:5000
 PORT=5000
 
 # ══════════════════════════════════════════
 # MongoDB Configuration
 # ══════════════════════════════════════════
+MONGO_DATABASE=${config.database.dbName}
 MONGO_USERNAME=${config.database.username}
 MONGO_PASSWORD=${config.database.password}
 MONGO_URI=mongodb://${config.database.username}:${config.database.password}@mongodb:27017/${config.database.dbName}?authSource=admin
@@ -230,13 +231,12 @@ NGINX_HTTPS_PORT=${config.ports.httpsPort}
 APP_NAME=${config.appName}
 
 # ══════════════════════════════════════════
-# Security (generate your own secrets!)
+# Security
 # ══════════════════════════════════════════
-# SESSION_SECRET=your-session-secret
-# JWT_SECRET=your-jwt-secret
+# JWT_SECRET=
 
 # ══════════════════════════════════════════
-# SMTP Configuration (required for emails)
+# SMTP Configuration
 # ══════════════════════════════════════════
 # SMTP_HOST=smtp.gmail.com
 # SMTP_PORT=587
@@ -275,8 +275,15 @@ function updateDockerCompose(config) {
   content = content.replaceAll('authboiler-certbot', `${appSlug}-certbot`);
 
   // Update database name
+  content = content.replaceAll(
+    'MONGO_DATABASE:-authboiler',
+    `MONGO_DATABASE:-${config.database.dbName}`,
+  );
   content = content.replaceAll('/authboiler', `/${config.database.dbName}`);
-  content = content.replaceAll('MONGO_INITDB_DATABASE: authboiler', `MONGO_INITDB_DATABASE: ${config.database.dbName}`);
+  content = content.replaceAll(
+    'MONGO_INITDB_DATABASE: authboiler',
+    `MONGO_INITDB_DATABASE: ${config.database.dbName}`,
+  );
 
   writeFile(filePath, content);
   log.success('docker-compose.prod.yml updated');
@@ -285,8 +292,123 @@ function updateDockerCompose(config) {
 // ═══════════════════════════════════════════════════════════════
 // Update Nginx Configuration
 // ═══════════════════════════════════════════════════════════════
+function generateApiServerBlock(backendDomain) {
+  return `    # API server (${backendDomain})
+    server {
+        listen 443 ssl http2;
+        listen [::]:443 ssl http2;
+        server_name ${backendDomain};
+
+        # SSL/TLS configuration
+        ssl_certificate /etc/nginx/ssl/fullchain.pem;
+        ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+        ssl_trusted_certificate /etc/nginx/ssl/chain.pem;
+
+        # SSL protocols and ciphers
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384';
+        ssl_prefer_server_ciphers off;
+
+        # SSL session configuration
+        ssl_session_timeout 1d;
+        ssl_session_cache shared:SSL:50m;
+        ssl_session_tickets off;
+
+        # OCSP stapling
+        ssl_stapling on;
+        ssl_stapling_verify on;
+        resolver 8.8.8.8 8.8.4.4 valid=300s;
+        resolver_timeout 5s;
+
+        # HSTS
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+
+        # Proxy to backend upstream
+        location / {
+            limit_req zone=api burst=30 nodelay;
+
+            proxy_pass http://backend;
+            proxy_http_version 1.1;
+
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Host $host;
+            proxy_set_header X-Forwarded-Port $server_port;
+
+            proxy_connect_timeout 60s;
+            proxy_send_timeout 60s;
+            proxy_read_timeout 60s;
+
+            proxy_buffering on;
+            proxy_buffer_size 4k;
+            proxy_buffers 8 4k;
+            proxy_busy_buffers_size 8k;
+
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_redirect off;
+        }
+
+        # Auth endpoints with stricter rate limiting
+        location /api/auth/ {
+            limit_req zone=auth burst=10 nodelay;
+
+            proxy_pass http://backend;
+            proxy_http_version 1.1;
+
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Host $host;
+
+            proxy_connect_timeout 60s;
+            proxy_send_timeout 60s;
+            proxy_read_timeout 60s;
+
+            proxy_buffering on;
+            proxy_buffer_size 4k;
+            proxy_buffers 8 4k;
+
+            proxy_redirect off;
+        }
+
+        # Health check endpoint
+        location /health {
+            limit_req zone=general burst=10 nodelay;
+
+            proxy_pass http://backend/api/health;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # Deny access to hidden files
+        location ~ /\\. {
+            deny all;
+            access_log off;
+            log_not_found off;
+        }
+
+        # Deny access to sensitive files
+        location ~* \\.(env|log|git|svn|sql|bak|backup)$ {
+            deny all;
+            access_log off;
+            log_not_found off;
+        }
+    }`;
+}
+
 function updateNginxConfig(config) {
   const configFiles = ['nginx/nginx.conf', 'nginx/production-nginx.conf'];
+  const frontendDomains =
+    config.domains.mainDomain === config.domains.frontendDomain
+      ? config.domains.mainDomain
+      : `${config.domains.mainDomain} ${config.domains.frontendDomain}`;
 
   for (const file of configFiles) {
     const filePath = path.join(ROOT_DIR, file);
@@ -302,11 +424,25 @@ function updateNginxConfig(config) {
 
     let content = readFile(filePath);
 
-    // Update server_name
-    content = content.replaceAll(
-      /server_name\s+[^;]+;/g,
-      `server_name ${config.domains.mainDomain} ${config.domains.frontendDomain};`
+    // Remove existing API server block to prevent duplicates
+    content = content.replace(/\n\s*# API server\s*\([^\)]*\)[\s\S]*?# End API server\n/, '\n');
+
+    // Update server_name for the frontend HTTPS block
+    content = content.replace(
+      /(# HTTPS server[\s\S]*?server_name\s+)[^;]+;/,
+      `$1${frontendDomains};`,
     );
+
+    // Insert API server block before config inclusions or end of http block
+    const apiBlock = `\n${generateApiServerBlock(config.domains.backendDomain)}\n    # End API server\n`;
+    if (content.includes('include /etc/nginx/conf.d/*.conf;')) {
+      content = content.replace(
+        'include /etc/nginx/conf.d/*.conf;',
+        `${apiBlock}\n    include /etc/nginx/conf.d/*.conf;`,
+      );
+    } else {
+      content = content.replace(/\n\}\s*$/, `\n${apiBlock}\n}\n`);
+    }
 
     writeFile(filePath, content);
     log.success(`${file} updated`);
@@ -335,13 +471,14 @@ async function generateSSLCertificates(config) {
         `-keyout ${sslDir}/privkey.pem ` +
         `-out ${sslDir}/fullchain.pem ` +
         `-subj "/C=US/ST=State/L=City/O=${config.appName}/CN=${config.domains.mainDomain}"`,
-      { silent: true }
+      { silent: true },
     );
 
     if (result.success) {
       // Create chain.pem (copy of fullchain for self-signed)
       exec(`cp ${sslDir}/fullchain.pem ${sslDir}/chain.pem`, { silent: true });
       exec(`chmod 644 ${sslDir}/*.pem`, { silent: true });
+      exec(`chmod 600 ${sslDir}/privkey.pem`, { silent: true });
       spinner.stop(true);
       log.success('Self-signed certificates generated');
     } else {
@@ -355,7 +492,9 @@ async function generateSSLCertificates(config) {
     log.info('');
     log.info('To obtain certificates, run:');
     console.log(`  ${colors.cyan}docker compose -f docker-compose.prod.yml up -d${colors.reset}`);
-    console.log(`  ${colors.cyan}docker compose -f docker-compose.prod.yml run --rm certbot certonly --webroot --webroot-path /var/www/certbot --email ${config.ssl.email} --agree-tos --no-eff-email -d ${config.domains.mainDomain} -d ${config.domains.frontendDomain}${colors.reset}`);
+    console.log(
+      `  ${colors.cyan}docker compose -f docker-compose.prod.yml run --rm certbot certonly --webroot --webroot-path /var/www/certbot --email ${config.ssl.email} --agree-tos --no-eff-email -d ${config.domains.mainDomain} -d ${config.domains.frontendDomain} -d ${config.domains.backendDomain}${colors.reset}`,
+    );
   }
 }
 
@@ -401,15 +540,29 @@ function printFinalInstructions(config) {
   drawBox('Setup Complete!', { color: colors.green });
 
   console.log(`${colors.cyan}Access your application:${colors.reset}`);
-  console.log(`  Frontend:    ${colors.green}https://${config.domains.frontendDomain}${colors.reset}`);
-  console.log(`  Backend:     ${colors.green}https://${config.domains.backendDomain}${colors.reset}`);
-  console.log(`  Health:      ${colors.green}https://${config.domains.backendDomain}/health${colors.reset}`);
+  console.log(
+    `  Frontend:    ${colors.green}https://${config.domains.frontendDomain}${colors.reset}`,
+  );
+  console.log(
+    `  Backend:     ${colors.green}https://${config.domains.backendDomain}${colors.reset}`,
+  );
+  console.log(
+    `  Health:      ${colors.green}https://${config.domains.backendDomain}/health${colors.reset}`,
+  );
 
   console.log(`\n${colors.cyan}Useful commands:${colors.reset}`);
-  console.log(`  Start services:    ${colors.green}docker compose -f docker-compose.prod.yml up -d${colors.reset}`);
-  console.log(`  View logs:         ${colors.green}docker compose -f docker-compose.prod.yml logs -f${colors.reset}`);
-  console.log(`  Stop services:     ${colors.green}docker compose -f docker-compose.prod.yml down${colors.reset}`);
-  console.log(`  Check status:      ${colors.green}docker compose -f docker-compose.prod.yml ps${colors.reset}`);
+  console.log(
+    `  Start services:    ${colors.green}docker compose -f docker-compose.prod.yml up -d${colors.reset}`,
+  );
+  console.log(
+    `  View logs:         ${colors.green}docker compose -f docker-compose.prod.yml logs -f${colors.reset}`,
+  );
+  console.log(
+    `  Stop services:     ${colors.green}docker compose -f docker-compose.prod.yml down${colors.reset}`,
+  );
+  console.log(
+    `  Check status:      ${colors.green}docker compose -f docker-compose.prod.yml ps${colors.reset}`,
+  );
 
   console.log(`\n${colors.cyan}Important notes:${colors.reset}`);
   if (config.ssl.sslType === 'self-signed') {
@@ -485,7 +638,7 @@ async function main() {
     if (fileExists(envPath)) {
       backupFile(envPath);
     }
-    writeFile(envPath, envContent);
+    writeFile(envPath, envContent, { mode: 0o600 });
     log.success('.env file created');
 
     // Update Docker Compose
