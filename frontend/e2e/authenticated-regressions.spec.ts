@@ -1,7 +1,25 @@
+import type { TestInfo } from '@playwright/test';
+import { runFailureDiagnostics } from '../../scripts/lib/failure-diagnostics.mjs';
+import { writeFile } from 'node:fs/promises';
 import { test, expect } from './fixtures/authenticated';
 import { settleAnimations } from './utils/accessibility';
 
 const profile = (url: string) => url.endsWith('/api/user/profile');
+
+const overflowCaptures = new WeakMap<TestInfo, (signal: AbortSignal) => Promise<void>>();
+
+test.afterEach(async ({ page }, testInfo) => {
+  const started = performance.now();
+  const capture = overflowCaptures.get(testInfo);
+  overflowCaptures.delete(testInfo);
+  if (!capture) return;
+  // afterEach has a separate teardown budget; the original error is already recorded.
+  await runFailureDiagnostics({
+    budgetMs: (testInfo.timeout || 6000) - (performance.now() - started),
+    capture,
+    cancel: () => page.close({ runBeforeUnload: false }),
+  });
+});
 
 for (const actor of [
   { email: 'admin@seed.local', password: 'Admin123!', landing: '/admin/dashboard' },
@@ -98,9 +116,77 @@ for (const mobile of [false, true]) {
       await expect(page.getByTestId(/^session-card-timeline-/)).toHaveCount(2);
       if (mobile) await expect(page.getByTestId('mobile-sidebar')).toBeHidden();
       await settleAnimations(page);
-      await expect
-        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-        .toBe(true);
+      try {
+        await expect
+          .poll(() =>
+            page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+          )
+          .toBe(true);
+      } catch (error) {
+        overflowCaptures.set(testInfo, async (signal) => {
+          signal.throwIfAborted();
+          const geometry = await page.evaluate(() => {
+            const walker = document.createTreeWalker(
+              document.documentElement,
+              NodeFilter.SHOW_ELEMENT,
+            );
+            let current: Node | null = walker.currentNode;
+            let scanned = 0;
+            const overflowing = [];
+            let matching = 0;
+            while (current && scanned < 3000) {
+              const element = current as Element;
+              current = walker.nextNode();
+              scanned++;
+              const rect = element.getBoundingClientRect();
+              if (!rect.width || !rect.height || (rect.left >= 0 && rect.right <= innerWidth))
+                continue;
+              matching++;
+              if (overflowing.length === 20) continue;
+              const style = getComputedStyle(element);
+              overflowing.push({
+                tag: element.tagName,
+                testId: element.getAttribute('data-testid')?.slice(0, 120) ?? null,
+                rect: {
+                  left: rect.left,
+                  right: rect.right,
+                  width: rect.width,
+                  height: rect.height,
+                },
+                styles: {
+                  display: style.display,
+                  position: style.position,
+                  direction: style.direction,
+                  overflowX: style.overflowX,
+                  visibility: style.visibility,
+                  transform: style.transform.slice(0, 120),
+                  width: style.width,
+                  minWidth: style.minWidth,
+                },
+              });
+            }
+            return {
+              viewportWidth: innerWidth,
+              documentWidth: document.documentElement.scrollWidth,
+              direction: document.documentElement.dir,
+              scanned,
+              truncated: current !== null,
+              matchingWithinScan: matching,
+              overflowing,
+            };
+          });
+          signal.throwIfAborted();
+          await writeFile(testInfo.outputPath('overflow-geometry.json'), JSON.stringify(geometry), {
+            signal,
+          });
+          signal.throwIfAborted();
+          await page.screenshot({
+            path: testInfo.outputPath('overflow-failure.png'),
+            timeout: 5000,
+          });
+        });
+        throw error;
+      }
       await testInfo.attach('arabic-session', {
         body: await page.screenshot({ path: testInfo.outputPath('page.png'), fullPage: true }),
         contentType: 'image/png',

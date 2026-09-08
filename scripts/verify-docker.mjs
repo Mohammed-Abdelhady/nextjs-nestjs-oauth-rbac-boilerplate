@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { httpProbeProgram, validateProbeResults } from './lib/docker-http-probes.mjs';
 import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { realpathSync } from 'node:fs';
@@ -169,15 +170,6 @@ export function smokeModel(original, fixtureDirectory) {
     HOSTNAME: '0.0.0.0',
     PORT: frontendPort,
   };
-  for (const [name, port] of [
-    ['backend', 5000],
-    ['frontend', 3000],
-    ['nginx', 8080],
-  ]) {
-    services[name].ports = [
-      { target: port, published: '0', host_ip: '127.0.0.1', protocol: 'tcp' },
-    ];
-  }
   services.nginx.volumes = [
     {
       type: 'bind',
@@ -193,23 +185,6 @@ export function httpFixture(config) {
   const route = config.match(/location = \/health\s*\{[^{}]*'\{"status":"healthy"\}'[^{}]*\}/)?.[0];
   assert(route, 'exact HTTP health route not found');
   return `pid /tmp/nginx.pid;\nevents {}\nhttp { server { listen 8080; listen [::]:8080;\n${route}\nlocation / { return 301 https://$host$request_uri; }\n} }\n`;
-}
-
-async function request(origin, path, signal) {
-  const response = await fetch(`${origin}${path}`, {
-    redirect: 'manual',
-    signal: AbortSignal.any([signal, AbortSignal.timeout(10_000)]),
-  });
-  assert.equal(response.status, 200, `${path} status`);
-  assert.equal(response.headers.get('location'), null, `${path} redirected`);
-  const chunks = [];
-  let size = 0;
-  for await (const chunk of response.body) {
-    size += chunk.length;
-    assert(size <= MAX_OUTPUT, `${path} response too large`);
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks).toString('utf8');
 }
 
 async function verifyCheckout() {
@@ -300,39 +275,12 @@ async function smoke(dockerHost) {
       { timeout: 260_000 },
     );
     console.log(`startup completed in ${((performance.now() - started) / 1000).toFixed(1)}s`);
-    phase = 'assertions';
-    const origins = {};
-    for (const [name, port] of [
-      ['backend', 5000],
-      ['frontend', 3000],
-      ['nginx', 8080],
-    ]) {
-      const address = await compose(['port', name, String(port)]);
-      assert(/^127\.0\.0\.1:\d+$/.test(address), `${name} must bind loopback`);
-      origins[name] = `http://${address}`;
-    }
-    const health = JSON.parse(await request(origins.backend, '/health', controller.signal));
-    assert.deepEqual(Object.keys(health).sort(), ['status', 'timestamp']);
-    assert.equal(health.status, 'healthy');
-    assert(Number.isFinite(Date.parse(health.timestamp)), 'health timestamp');
-    assert.deepEqual(JSON.parse(await request(origins.nginx, '/health', controller.signal)), {
-      status: 'healthy',
-    });
-    for (const locale of ['en', 'ar']) {
-      const html = await request(origins.frontend, `/${locale}/auth/login`, controller.signal);
-      assert(html.includes(`lang="${locale}"`), `${locale} login document language`);
-      assert(html.includes('<form'), `${locale} login form`);
-    }
-    const methods = JSON.parse(
-      await request(origins.backend, '/api/auth/methods', controller.signal),
-    ).data?.methods;
-    assert(methods && typeof methods.password === 'boolean', 'auth method response');
-    for (const name of ['magicLink', 'twoFactor', 'passkeys'])
-      assert(!methods[name], `${name} disabled`);
-    assert(
-      !methods.oauth || (Array.isArray(methods.oauth) && methods.oauth.length === 0),
-      'external providers disabled',
+    phase = 'container HTTP probes';
+    const results = await compose(
+      ['exec', '-T', 'backend', 'node', '--input-type=module', '-e', httpProbeProgram()],
+      { timeout: 65_000 },
     );
+    validateProbeResults(results);
     console.log('synthetic app and HTTP nginx checks passed; production TLS/certbot unverified');
   } catch (error) {
     process.exitCode ||= 1;

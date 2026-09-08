@@ -152,6 +152,17 @@ jobs:
           retention-days: 3
           if-no-files-found: ignore
 
+      - name: Retain synthetic overflow failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-overflow-diagnostics
+          path: |
+            output/playwright/authenticated/**/overflow-geometry.json
+            output/playwright/authenticated/**/overflow-failure.png
+          retention-days: 3
+          if-no-files-found: ignore
+
   docker:
     name: docker
     runs-on: ubuntu-latest
