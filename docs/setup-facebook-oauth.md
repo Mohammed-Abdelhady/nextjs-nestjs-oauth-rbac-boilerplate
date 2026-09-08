@@ -83,13 +83,13 @@ Facebook Login allows users to sign in with their Facebook account. The applicat
 **Valid OAuth Redirect URIs**:
 
 ```
-http://localhost:3000/auth/oauth/callback/facebook
-https://yourdomain.com/auth/oauth/callback/facebook
+http://localhost:5000/api/auth/oauth/facebook/callback
+https://yourdomain.com/api/auth/oauth/facebook/callback
 ```
 
 **Important**:
 
-- The callback URL must include `/facebook` at the end (provider-specific)
+- The callback URL must match `/api/auth/oauth/facebook/callback`
 - Add both development and production URLs
 - Must match exactly with backend `.env` configuration
 
@@ -193,18 +193,18 @@ Add to `backend/.env`:
 # Facebook OAuth Configuration
 OAUTH_FACEBOOK_CLIENT_ID=your-app-id-here
 OAUTH_FACEBOOK_CLIENT_SECRET=your-app-secret-here
-OAUTH_FACEBOOK_CALLBACK_URL=http://localhost:3000/auth/oauth/callback/facebook
+OAUTH_FACEBOOK_CALLBACK_URL=http://localhost:5000/api/auth/oauth/facebook/callback
 
-# Production overrides
-# OAUTH_FACEBOOK_CALLBACK_URL=https://yourdomain.com/auth/oauth/callback/facebook
+# Production override
+# OAUTH_FACEBOOK_CALLBACK_URL=https://yourdomain.com/api/auth/oauth/facebook/callback
 ```
 
 **Important**:
 
 - Use `OAUTH_FACEBOOK_CLIENT_ID` (not `FACEBOOK_APP_ID`)
-- Callback URL must end with `/facebook` (provider-specific)
+- Callback URL must match `/api/auth/oauth/facebook/callback`
 - Must match exactly with Facebook Developer Console redirect URI
-- App Secret must NEVER be committed to version control
+- App Secret must never be committed to version control
 
 ### Frontend Configuration
 
@@ -264,20 +264,15 @@ Before testing, ensure your app is in Development mode:
 
 7. You should be redirected back and logged in
 
-### API Testing with cURL
+### Manual Testing
 
-Get authorization URL:
+Open the start endpoint directly in your browser:
 
-```bash
-curl -X POST http://localhost:3000/api/auth/oauth/authorize \
-  -H "Content-Type: application/json" \
-  -d '{
-    "provider": "facebook",
-    "redirectUri": "http://localhost:3000/auth/callback"
-  }'
+```
+http://localhost:5000/api/auth/oauth/facebook/start?redirect=/dashboard
 ```
 
-Visit the returned `authorizationUrl` in your browser.
+The browser receives an HTTP 302 redirect with the signed state cookie and loads Facebook's login dialog.
 
 ---
 

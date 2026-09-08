@@ -53,8 +53,8 @@ Secure authentication system with email verification and social login.
 
 **Authorization callback URL**:
 
-- Development: `http://localhost:3000/api/auth/oauth/callback`
-- Production: `https://yourdomain.com/api/auth/oauth/callback`
+- Development: `http://localhost:5000/api/auth/oauth/github/callback`
+- Production: `https://yourdomain.com/api/auth/oauth/github/callback`
 
 **Important**:
 
@@ -100,24 +100,17 @@ Add to `backend/.env`:
 
 ```bash
 # GitHub OAuth Configuration
-GITHUB_CLIENT_ID=Iv1.1234567890abcdef
-GITHUB_CLIENT_SECRET=your-client-secret-here
-GITHUB_CALLBACK_URL=http://localhost:3000/api/auth/oauth/callback
+OAUTH_GITHUB_CLIENT_ID=Iv1.1234567890abcdef
+OAUTH_GITHUB_CLIENT_SECRET=your-client-secret-here
+OAUTH_GITHUB_CALLBACK_URL=http://localhost:5000/api/auth/oauth/github/callback
 
-# Production overrides
-# GITHUB_CALLBACK_URL=https://yourdomain.com/api/auth/oauth/callback
+# Production override
+# OAUTH_GITHUB_CALLBACK_URL=https://yourdomain.com/api/auth/oauth/github/callback
 ```
 
 ### Frontend Configuration
 
-Add to `frontend/.env.local`:
-
-```bash
-# GitHub OAuth Configuration
-NEXT_PUBLIC_GITHUB_CLIENT_ID=Iv1.1234567890abcdef
-```
-
-**Note**: Only Client ID is needed in frontend.
+The frontend discovers enabled OAuth providers by querying `GET /api/auth/oauth/providers`. When `OAUTH_GITHUB_CLIENT_ID` is present on the backend, the GitHub sign-in button appears automatically.
 
 ---
 
@@ -125,51 +118,34 @@ NEXT_PUBLIC_GITHUB_CLIENT_ID=Iv1.1234567890abcdef
 
 ### Using the Application
 
-1. Start your backend:
+1. Start the backend:
 
    ```bash
    cd backend
    npm run start:dev
    ```
 
-2. Start your frontend:
+2. Start the frontend:
 
    ```bash
    cd frontend
    npm run dev
    ```
 
-3. Navigate to: `http://localhost:3000/auth/login`
+3. Navigate to `http://localhost:3000/auth/login`.
+4. Click **Sign in with GitHub**.
+5. Authorize the application on GitHub.
+6. The browser redirects to `http://localhost:5000/api/auth/oauth/github/callback`, sets your session cookie, and returns to the dashboard.
 
-4. Click **Sign in with GitHub** button
+### Manual Testing
 
-5. Authorize the application
+Open the start endpoint directly in your browser:
 
-6. You should be redirected back and logged in
-
-### Manual Testing with cURL
-
-Get authorization URL:
-
-```bash
-curl -X POST http://localhost:3000/api/auth/oauth/authorize \
-  -H "Content-Type: application/json" \
-  -d '{
-    "provider": "github",
-    "redirectUri": "http://localhost:3000/auth/callback"
-  }'
+```
+http://localhost:5000/api/auth/oauth/github/start?redirect=/dashboard
 ```
 
-Response:
-
-```json
-{
-  "authorizationUrl": "https://github.com/login/oauth/authorize?client_id=...",
-  "state": "random-state-string"
-}
-```
-
-Visit the `authorizationUrl` in your browser.
+The browser receives an HTTP 302 redirect with the signed state cookie and loads GitHub's authorization page.
 
 ### Test with GitHub's OAuth Tool
 
@@ -224,8 +200,8 @@ In your authorization URL:
 
 ```typescript
 const authUrl = new URL('https://github.com/login/oauth/authorize');
-authUrl.searchParams.append('client_id', process.env.GITHUB_CLIENT_ID);
-authUrl.searchParams.append('redirect_uri', process.env.GITHUB_CALLBACK_URL);
+authUrl.searchParams.append('client_id', process.env.OAUTH_GITHUB_CLIENT_ID);
+authUrl.searchParams.append('redirect_uri', process.env.OAUTH_GITHUB_CALLBACK_URL);
 authUrl.searchParams.append('scope', 'user:email read:user');
 authUrl.searchParams.append('state', stateToken);
 ```
@@ -298,17 +274,17 @@ if (!primaryEmail) {
 
 **Solution**:
 
-1. Check `GITHUB_CALLBACK_URL` in `.env`
+1. Check `OAUTH_GITHUB_CALLBACK_URL` in `backend/.env`
 2. Verify it matches OAuth app settings exactly
 3. Include protocol (`http://` or `https://`)
-4. Include port if not standard (`:3000`)
+4. Include port (`:5000`)
 5. No trailing slashes
 
 Example:
 
-- ✅ Correct: `http://localhost:3000/api/auth/oauth/callback`
-- ❌ Wrong: `http://localhost:3000/api/auth/oauth/callback/`
-- ❌ Wrong: `localhost:3000/api/auth/oauth/callback`
+- Correct: `http://localhost:5000/api/auth/oauth/github/callback`
+- Wrong: `http://localhost:5000/api/auth/oauth/github/callback/`
+- Wrong: `localhost:5000/api/auth/oauth/github/callback`
 
 ### Error: "Bad verification code"
 

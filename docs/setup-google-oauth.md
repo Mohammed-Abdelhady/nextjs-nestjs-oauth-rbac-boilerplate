@@ -30,19 +30,7 @@ Google OAuth allows users to sign in with their Google account without creating 
 
 ---
 
-## Step 2: Enable Google+ API
-
-1. In your project, navigate to **APIs & Services** → **Library**
-2. Search for **Google+ API**
-3. Click on **Google+ API**
-4. Click **Enable**
-5. Wait for API to be enabled
-
-**Note**: Google+ API is deprecated but still required for OAuth user info.
-
----
-
-## Step 3: Configure OAuth Consent Screen
+## Step 2: Configure OAuth Consent Screen
 
 The consent screen is what users see when they authorize your app.
 
@@ -108,7 +96,7 @@ If your app is in "Testing" mode:
 
 ---
 
-## Step 4: Create OAuth 2.0 Credentials
+## Step 3: Create OAuth 2.0 Credentials
 
 1. Navigate to **APIs & Services** → **Credentials**
 2. Click **Create Credentials** → **OAuth client ID**
@@ -127,10 +115,10 @@ If your app is in "Testing" mode:
 
 **Authorized redirect URIs**:
 
-- Development: `http://localhost:3000/api/auth/oauth/callback`
-- Production: `https://yourdomain.com/api/auth/oauth/callback`
+- Development: `http://localhost:5000/api/auth/oauth/google/callback`
+- Production: `https://yourdomain.com/api/auth/oauth/google/callback`
 
-**Important**: Match your backend API URL exactly.
+Match your backend API URL and port.
 
 4. Click **Create**
 5. Copy your credentials:
@@ -139,7 +127,7 @@ If your app is in "Testing" mode:
 
 ---
 
-## Step 5: Configure Environment Variables
+## Step 4: Configure Environment Variables
 
 ### Backend Configuration
 
@@ -147,97 +135,63 @@ Add to `backend/.env`:
 
 ```bash
 # Google OAuth Configuration
-GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your-client-secret
-GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/oauth/callback
+OAUTH_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+OAUTH_GOOGLE_CLIENT_SECRET=your-client-secret
+OAUTH_GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/oauth/google/callback
 
-# Production overrides
-# GOOGLE_CALLBACK_URL=https://yourdomain.com/api/auth/oauth/callback
+# Production override
+# OAUTH_GOOGLE_CALLBACK_URL=https://yourdomain.com/api/auth/oauth/google/callback
 ```
 
 ### Frontend Configuration
 
-Add to `frontend/.env.local`:
-
-```bash
-# Google OAuth Configuration
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-```
-
-**Note**: Only Client ID is needed in frontend. Client Secret must stay on backend.
+The frontend discovers enabled OAuth providers dynamically by querying `GET /api/auth/oauth/providers`. When `OAUTH_GOOGLE_CLIENT_ID` is set on the backend, the Google sign-in button appears automatically.
 
 ---
 
-## Step 6: Test OAuth Flow
+## Step 5: Test OAuth Flow
 
 ### Using the Application
 
-1. Start your backend:
+1. Start the backend:
 
    ```bash
    cd backend
    npm run start:dev
    ```
 
-2. Start your frontend:
+2. Start the frontend:
 
    ```bash
    cd frontend
    npm run dev
    ```
 
-3. Navigate to login page: `http://localhost:3000/auth/login`
+3. Navigate to `http://localhost:3000/auth/login`.
+4. Click **Sign in with Google**.
+5. Authorize the application on the Google consent page.
+6. The browser redirects to `http://localhost:5000/api/auth/oauth/google/callback`, sets your session cookie, and lands on the dashboard.
 
-4. Click **Sign in with Google** button
+### Manual Testing
 
-5. You should be redirected to Google login
+Open the start endpoint directly in your browser:
 
-6. Sign in with a test user account
-
-7. Authorize the application
-
-8. You should be redirected back and logged in
-
-### Manual Testing with cURL
-
-Get authorization URL:
-
-```bash
-curl -X POST http://localhost:3000/api/auth/oauth/authorize \
-  -H "Content-Type: application/json" \
-  -d '{
-    "provider": "google",
-    "redirectUri": "http://localhost:3000/auth/callback"
-  }'
+```
+http://localhost:5000/api/auth/oauth/google/start?redirect=/dashboard
 ```
 
-Response:
-
-```json
-{
-  "authorizationUrl": "https://accounts.google.com/o/oauth2/v2/auth?client_id=...",
-  "state": "random-state-string"
-}
-```
-
-Visit the `authorizationUrl` in your browser.
+The browser receives an HTTP 302 redirect with the signed state cookie and loads the Google consent page.
 
 ---
 
-## Step 7: Publish Your App (Production Only)
+## Step 6: Publish Your App (Production Only)
 
 If your app is in "Testing" mode, publish it for public access:
 
 1. Navigate to **OAuth consent screen**
-2. Check app status (should be "Testing")
+2. Check app status
 3. Click **Publish App**
-4. Review the checklist:
-   - Verified domains
-   - Privacy policy link
-   - Terms of service link
-5. Click **Confirm**
-
-**Verification Required**: Apps requesting sensitive scopes need Google verification.
+4. Confirm submission
 
 ---
 
@@ -245,14 +199,10 @@ If your app is in "Testing" mode, publish it for public access:
 
 ### Error: "Redirect URI Mismatch"
 
-**Cause**: Redirect URI in request doesn't match configured URIs.
+The redirect URI configured in Google Cloud Console must match `OAUTH_GOOGLE_CALLBACK_URL` in `backend/.env`.
 
-**Solution**:
-
-1. Check `GOOGLE_CALLBACK_URL` in `.env` matches exactly
-2. Verify redirect URI in Google Console includes protocol and port
-3. Ensure no trailing slashes
-4. Example: `http://localhost:3000/api/auth/oauth/callback`
+1. Verify redirect URI in Google Console includes protocol, port, and exact path: `http://localhost:5000/api/auth/oauth/google/callback`
+2. Verify `OAUTH_GOOGLE_CALLBACK_URL` matches without trailing slashes.
 
 ### Error: "Access Blocked: This app's request is invalid"
 
