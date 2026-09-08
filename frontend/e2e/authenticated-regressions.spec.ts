@@ -1,4 +1,5 @@
 import { test, expect } from './fixtures/authenticated';
+import { settleAnimations } from './utils/accessibility';
 
 const profile = (url: string) => url.endsWith('/api/user/profile');
 
@@ -95,9 +96,11 @@ for (const mobile of [false, true]) {
       await page.keyboard.press('Enter');
       await expect(page).toHaveURL('http://127.0.0.1:3107/ar/sessions');
       await expect(page.getByTestId(/^session-card-timeline-/)).toHaveCount(2);
-      expect(
-        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
-      ).toBe(true);
+      if (mobile) await expect(page.getByTestId('mobile-sidebar')).toBeHidden();
+      await settleAnimations(page);
+      await expect
+        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+        .toBe(true);
       await testInfo.attach('arabic-session', {
         body: await page.screenshot({ path: testInfo.outputPath('page.png'), fullPage: true }),
         contentType: 'image/png',

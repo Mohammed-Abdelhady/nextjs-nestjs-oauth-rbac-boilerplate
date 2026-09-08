@@ -8,7 +8,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LoadingRegion } from '@/components/layout/LoadingRegion';
 import { PaginationControl } from '@/components/pagination';
 import { useGetUsersQuery } from '@/modules/users/api/usersApi';
-import { useListRolesQuery } from '@/modules/roles/api/rolesApi';
 import { UserListSkeleton, UserListToolbar, UserGroupedList } from '@/modules/users/components';
 import { CreateUserButton } from '@/modules/permissions/components/CreateUserButton';
 import { USER_PERMISSIONS, PermissionGuard, RoutePermissionGuard } from '@/modules/permissions';
@@ -40,9 +39,6 @@ export default function AdminUsersPage() {
     const timer = setTimeout(() => setShouldAnimate(false), 600);
     return () => clearTimeout(timer);
   }, []);
-
-  const { data: rolesData } = useListRolesQuery(undefined);
-  const roles = useMemo(() => rolesData?.roles?.map((r) => r.slug) || [], [rolesData?.roles]);
 
   const {
     data: usersData,
@@ -148,7 +144,6 @@ export default function AdminUsersPage() {
             setRoleFilter(role);
             setPage(1);
           }}
-          roles={roles}
         />
 
         {/* State 1: Skeleton Loading */}

@@ -29,7 +29,7 @@ export default function RolesPage() {
 
   const debouncedSearch = useDebounce(searchTerm, 300);
 
-  const { data, isLoading, isFetching, isError, error, refetch } = useListRolesQuery({
+  const { data, currentData, isLoading, isFetching, isError, error, refetch } = useListRolesQuery({
     page,
     limit: 20,
     search: debouncedSearch.trim() || undefined,
@@ -39,7 +39,12 @@ export default function RolesPage() {
   const totalPages = data?.totalPages || 1;
   const totalCount = data?.total ?? roles.length;
 
-  const effectiveSelectedRoleId = selectedRoleId || (roles.length > 0 ? roles[0].id : null);
+  const lastPage = Math.max(1, currentData?.totalPages ?? page);
+  if (!isFetching && !isError && page > lastPage) setPage(lastPage);
+
+  const effectiveSelectedRoleId = roles.some((role) => role.id === selectedRoleId)
+    ? selectedRoleId
+    : (roles[0]?.id ?? null);
 
   const selectedRole = useMemo(
     () => roles.find((r) => r.id === effectiveSelectedRoleId) || null,

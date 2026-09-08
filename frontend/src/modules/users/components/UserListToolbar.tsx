@@ -1,13 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { RoleFilter } from './RoleFilter';
 import { SearchBar } from '@/components/design-system';
 
 export interface UserListToolbarProps {
@@ -16,7 +10,6 @@ export interface UserListToolbarProps {
   onSearchClear: () => void;
   roleFilter: string;
   onRoleFilterChange: (role: string) => void;
-  roles: string[];
 }
 
 export function UserListToolbar({
@@ -25,7 +18,6 @@ export function UserListToolbar({
   onSearchClear,
   roleFilter,
   onRoleFilterChange,
-  roles,
 }: UserListToolbarProps) {
   const t = useTranslations('users');
 
@@ -41,19 +33,7 @@ export function UserListToolbar({
           data-testid="search-users-input"
         />
       </div>
-      <Select value={roleFilter} onValueChange={onRoleFilterChange}>
-        <SelectTrigger className="w-full sm:w-50" data-testid="role-filter">
-          <SelectValue placeholder={t('allRoles')} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">{t('allRoles')}</SelectItem>
-          {roles.map((role) => (
-            <SelectItem key={role} value={role}>
-              {role.charAt(0).toUpperCase() + role.slice(1)}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <RoleFilter value={roleFilter} onChange={onRoleFilterChange} />
     </div>
   );
 }

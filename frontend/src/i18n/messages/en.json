@@ -776,7 +776,10 @@
     },
     "list": {
       "emptyGroup": "No users in this group"
-    }
+    },
+    "roleFilterTitle": "Filter by role",
+    "roleFilterHint": "Search or browse roles, then choose one to filter users.",
+    "roleFilterError": "Could not load roles. Please try again."
   },
   "roles": {
     "title": "Roles",
