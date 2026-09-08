@@ -11,6 +11,7 @@ import {
   compareWithRepository,
   linkDependencies,
   REPO_ROOT,
+  runTool,
   scaffold,
   typecheck,
 } from './combination-helpers.js';
@@ -64,7 +65,7 @@ function everything(): string[] {
 beforeAll(async () => {
   workspace = mkdtempSync(join(tmpdir(), 'cna-combinations-'));
   manifest = await loadManifest(REPO_ROOT);
-  built = buildCli();
+  built = await buildCli();
 });
 
 afterAll(() => {
@@ -72,9 +73,9 @@ afterAll(() => {
 });
 
 /** Scaffolds one selection and returns where it landed. */
-function generate(name: string, features: string[]): string {
+async function generate(name: string, features: string[]): Promise<string> {
   const project = join(workspace, name.replace(/\W+/g, '-'));
-  const result = scaffold(project, features);
+  const result = await scaffold(project, features);
   expect(result.ok, result.output).toBe(true);
   linkDependencies(project);
   const availability = verifyFeatureAvailability(project, features);
@@ -82,10 +83,10 @@ function generate(name: string, features: string[]): string {
   return project;
 }
 
-function expectTypechecks(project: string): void {
-  const backend = typecheck(project, 'backend');
+async function expectTypechecks(project: string): Promise<void> {
+  const backend = await typecheck(project, 'backend');
   expect(backend.ok, backend.output).toBe(true);
-  const frontend = typecheck(project, 'frontend');
+  const frontend = await typecheck(project, 'frontend');
   expect(frontend.ok, frontend.output).toBe(true);
 }
 
@@ -94,14 +95,30 @@ describe('generated projects', () => {
     expect(built.ok, built.output).toBe(true);
   });
 
-  it.each(COMBINATIONS)('typechecks with $name', ({ name, features }) => {
-    expectTypechecks(generate(name, features));
+  it.each(COMBINATIONS)('typechecks with $name', async ({ name, features }) => {
+    const project = await generate(name, features);
+    await expectTypechecks(project);
+    if (features.includes('google') && features.length === 2) {
+      const api = await runTool(
+        process.execPath,
+        [
+          join(REPO_ROOT, 'node_modules/jest/bin/jest.js'),
+          '--config',
+          'test/jest-e2e.json',
+          '--runInBand',
+          '--runTestsByPath',
+          'test/app.boot.e2e-spec.ts',
+        ],
+        { cwd: join(project, 'backend') },
+      );
+      expect(api.ok, api.output).toBe(true);
+    }
   });
 
   it('typechecks with everything the manifest offers', async () => {
     const features = everything();
-    const project = generate('everything', features);
-    expectTypechecks(project);
+    const project = await generate('everything', features);
+    await expectTypechecks(project);
 
     // Retained application and API test files differ only by feature markers.
     const differences = await compareWithRepository(project, features);

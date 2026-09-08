@@ -1,4 +1,5 @@
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { existsSync, mkdirSync, readFileSync, symlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,29 +21,55 @@ export interface CommandResult {
   output: string;
 }
 
-/** Builds the CLI, which also refreshes template/ from the repository. */
-export function buildCli(): CommandResult {
+const execute = promisify(execFile);
+
+export async function runTool(
+  executable: string,
+  args: string[],
+  options: { cwd?: string; timeout?: number; signal?: AbortSignal } = {},
+): Promise<CommandResult> {
   try {
-    execFileSync('npm', ['run', 'build'], {
-      cwd: PACKAGE_DIR,
-      timeout: BUILD_TIMEOUT,
+    const { stdout, stderr } = await execute(executable, args, {
+      cwd: options.cwd,
+      timeout: options.timeout ?? BUILD_TIMEOUT,
+      signal: options.signal,
+      maxBuffer: 8 * 1024 * 1024,
       encoding: 'utf8',
-      stdio: 'pipe',
       env: { ...process.env, npm_config_update_notifier: 'false' },
     });
-    return { ok: true, output: '' };
+    return { ok: true, output: `${stdout}${stderr}` };
   } catch (error) {
-    return { ok: false, output: error instanceof Error ? error.message : String(error) };
+    if (!(error instanceof Error)) return { ok: false, output: String(error) };
+    const { stdout = '', stderr = '' } = error as Error & { stdout?: string; stderr?: string };
+    // execFile already appends stderr to its message; retain each captured stream once.
+    const reason =
+      stderr && error.message.endsWith(stderr)
+        ? error.message.slice(0, -stderr.length)
+        : error.message;
+    return {
+      ok: false,
+      output: [reason, stdout, stderr]
+        .map((part) => part.trimEnd())
+        .filter(Boolean)
+        .join('\n'),
+    };
   }
 }
 
-export function scaffold(target: string, features: string[]): CommandResult {
-  const result = spawnSync(
-    process.execPath,
-    [CLI, target, '--features', features.join(','), '--no-install', '--no-git'],
-    { encoding: 'utf8', timeout: BUILD_TIMEOUT },
-  );
-  return { ok: result.status === 0, output: `${result.stdout ?? ''}${result.stderr ?? ''}` };
+/** Yield while child tools run so Vitest can process worker messages. */
+export function buildCli(): Promise<CommandResult> {
+  return runTool('npm', ['run', 'build'], { cwd: PACKAGE_DIR });
+}
+
+export function scaffold(target: string, features: string[]): Promise<CommandResult> {
+  return runTool(process.execPath, [
+    CLI,
+    target,
+    '--features',
+    features.join(','),
+    '--no-install',
+    '--no-git',
+  ]);
 }
 
 /**
@@ -62,13 +89,8 @@ export function linkDependencies(project: string): void {
   }
 }
 
-export function typecheck(project: string, workspace: string): CommandResult {
-  const result = spawnSync(process.execPath, [TYPESCRIPT_BIN, '--noEmit', '-p', workspace], {
-    cwd: project,
-    encoding: 'utf8',
-    timeout: BUILD_TIMEOUT,
-  });
-  return { ok: result.status === 0, output: `${result.stdout ?? ''}${result.stderr ?? ''}` };
+export function typecheck(project: string, workspace: string): Promise<CommandResult> {
+  return runTool(process.execPath, [TYPESCRIPT_BIN, '--noEmit', '-p', workspace], { cwd: project });
 }
 
 /** Where the full selection has to match the repository, marker lines aside. */
