@@ -2,7 +2,6 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '@/store/store';
 import type { AuthState, User } from '../types/auth.types';
 import { authApi } from './authApi';
-import { oauthApi } from '@/modules/oauth/api/oauthApi';
 
 /**
  * Initial authentication state
@@ -76,11 +75,16 @@ export const authSlice = createSlice({
       state.isLoading = true;
       state.error = null;
     });
+    // A reply without a user means the account still owes a second factor, so
+    // there is no session to record yet.
     builder.addMatcher(authApi.endpoints.login.matchFulfilled, (state, action) => {
-      state.user = action.payload.user;
-      state.isAuthenticated = true;
       state.isLoading = false;
       state.error = null;
+      if (action.payload.user === null) {
+        return;
+      }
+      state.user = action.payload.user;
+      state.isAuthenticated = true;
     });
     builder.addMatcher(authApi.endpoints.login.matchRejected, (state, action) => {
       state.isLoading = false;
@@ -103,22 +107,6 @@ export const authSlice = createSlice({
     builder.addMatcher(authApi.endpoints.getCurrentUser.matchRejected, (state) => {
       state.user = null;
       state.isAuthenticated = false;
-    });
-
-    // Handle OAuth callback mutation lifecycle
-    builder.addMatcher(oauthApi.endpoints.handleCallback.matchPending, (state) => {
-      state.isLoading = true;
-      state.error = null;
-    });
-    builder.addMatcher(oauthApi.endpoints.handleCallback.matchFulfilled, (state, action) => {
-      state.user = action.payload.user;
-      state.isAuthenticated = true;
-      state.isLoading = false;
-      state.error = null;
-    });
-    builder.addMatcher(oauthApi.endpoints.handleCallback.matchRejected, (state, action) => {
-      state.isLoading = false;
-      state.error = action.error.message || 'OAuth authentication failed';
     });
   },
 });

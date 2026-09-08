@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const alertVariants = cva(
-  'relative w-full rounded-lg border px-4 py-3 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground [&>svg~*]:pl-7',
+  'relative w-full rounded-lg border px-4 py-3 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:start-4 [&>svg]:top-4 [&>svg]:text-foreground [&>svg~*]:ps-7',
   {
     variants: {
       variant: {
@@ -11,10 +11,10 @@ const alertVariants = cva(
         destructive:
           'border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive',
         warning:
-          'border-amber-500/50 text-amber-900 dark:text-amber-100 bg-amber-50 dark:bg-amber-950/30 [&>svg]:text-amber-600 dark:[&>svg]:text-amber-400',
+          'border-warning/50 bg-warning text-warning-foreground [&>svg]:text-warning-foreground',
         success:
-          'border-green-500/50 text-green-900 dark:text-green-100 bg-green-50 dark:bg-green-950/30 [&>svg]:text-green-600 dark:[&>svg]:text-green-400',
-        info: 'border-blue-500/50 text-blue-900 dark:text-blue-100 bg-blue-50 dark:bg-blue-950/30 [&>svg]:text-blue-600 dark:[&>svg]:text-blue-400',
+          'border-success/50 bg-success text-success-foreground [&>svg]:text-success-foreground',
+        info: 'border-info/50 bg-info text-info-foreground [&>svg]:text-info-foreground',
       },
     },
     defaultVariants: {
@@ -23,12 +23,20 @@ const alertVariants = cva(
   },
 );
 
-const Alert = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
->(({ className, variant, ...props }, ref) => (
-  <div ref={ref} role="alert" className={cn(alertVariants({ variant }), className)} {...props} />
-));
+export interface AlertProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'role'>, VariantProps<typeof alertVariants> {
+  /**
+   * `alert` interrupts the screen reader for a live problem. Standing
+   * informational banners use `note` so they are read in document order.
+   */
+  role?: 'alert' | 'note' | 'status';
+}
+
+const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
+  ({ className, variant, role = 'alert', ...props }, ref) => (
+    <div ref={ref} role={role} className={cn(alertVariants({ variant }), className)} {...props} />
+  ),
+);
 Alert.displayName = 'Alert';
 
 const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(

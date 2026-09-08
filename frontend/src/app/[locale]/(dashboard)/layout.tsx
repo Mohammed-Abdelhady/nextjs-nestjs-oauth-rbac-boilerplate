@@ -1,124 +1,68 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { AuthGuard } from '@/components/providers/AuthGuard';
-import { DashboardNav } from '@/components/navigation/DashboardNav';
-import { Button } from '@/components/ui/button';
-import { Menu, X } from 'lucide-react';
+import { MobileNavSheet } from '@/components/navigation/MobileNavSheet';
+import { SidebarBrand } from '@/components/navigation/SidebarBrand';
+import { SidebarPanel } from '@/components/navigation/SidebarPanel';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { ThemeSwitcher } from '@/components/ThemeSwitcher';
+import { LogoutButton } from '@/modules/auth/components/LogoutButton';
+import { useAppSelector } from '@/store/hooks';
+import { selectUser } from '@/modules/auth/store/authSlice';
 
 /**
- * Dashboard layout with sidebar navigation.
- * Wraps all dashboard pages with authentication and navigation.
- * Responsive with mobile hamburger menu.
+ * Dashboard shell: fixed sidebar from `md` up, drawer below it, one header row
+ * with the account controls, and the single `main#main` the skip link targets.
  */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const closeMobileMenu = () => setMobileMenuOpen(false);
-
-  // Handle Escape key to close mobile menu
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && mobileMenuOpen) {
-        closeMobileMenu();
-      }
-    };
-
-    if (mobileMenuOpen) {
-      document.addEventListener('keydown', handleEscape);
-      // Prevent body scroll when menu is open
-      document.body.style.overflow = 'hidden';
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = '';
-    };
-  }, [mobileMenuOpen]);
+  const t = useTranslations('dashboard.shell');
+  const user = useAppSelector(selectUser);
 
   return (
     <AuthGuard>
       <div className="flex min-h-screen">
-        {/* Desktop Sidebar Navigation - Hidden on mobile */}
-        <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-border bg-background md:block">
-          <div className="flex h-full flex-col">
-            {/* Logo/Brand */}
-            <div className="flex h-16 items-center border-b border-border px-6">
-              <h1 className="text-xl font-bold text-foreground">Auth App</h1>
-            </div>
-
-            {/* Navigation */}
-            <div className="flex-1 overflow-y-auto p-4">
-              <DashboardNav />
-            </div>
-
-            {/* Footer */}
-            <div className="border-t border-border p-4">
-              <p className="text-xs text-muted-foreground">© 2024 Auth App</p>
-            </div>
-          </div>
+        <aside
+          className="fixed start-0 top-0 z-40 hidden h-screen w-64 border-e border-border bg-background md:block"
+          data-testid="dashboard-sidebar"
+        >
+          <SidebarPanel />
         </aside>
 
-        {/* Mobile Header */}
-        <div className="fixed left-0 right-0 top-0 z-50 flex h-16 items-center border-b border-border bg-background px-4 md:hidden">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setMobileMenuOpen(true)}
-            aria-label="Open menu"
-            data-testid="mobile-menu-button"
-          >
-            <Menu className="h-6 w-6" />
-          </Button>
-          <h1 className="ml-4 text-xl font-bold text-foreground">Auth App</h1>
-        </div>
+        <div className="flex min-h-screen flex-1 flex-col md:ms-64">
+          <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border bg-background px-4 md:px-6">
+            <div className="flex items-center gap-2 md:hidden">
+              <MobileNavSheet />
+              <SidebarBrand />
+            </div>
 
-        {/* Mobile Sidebar - Slide-out drawer */}
-        {mobileMenuOpen && (
-          <>
-            {/* Backdrop */}
             <div
-              className="fixed inset-0 z-50 bg-black/50 md:hidden"
-              onClick={closeMobileMenu}
-              data-testid="mobile-menu-backdrop"
-            />
-
-            {/* Sidebar Drawer */}
-            <aside
-              className="fixed left-0 top-0 z-50 h-screen w-64 border-r border-border bg-background md:hidden"
-              data-testid="mobile-sidebar"
+              role="group"
+              aria-label={t('accountControls')}
+              className="ms-auto flex items-center gap-2"
+              data-testid="dashboard-account-controls"
             >
-              <div className="flex h-full flex-col">
-                {/* Header with Close Button */}
-                <div className="flex h-16 items-center justify-between border-b border-border px-4">
-                  <h1 className="text-xl font-bold text-foreground">Auth App</h1>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={closeMobileMenu}
-                    aria-label="Close menu"
-                    data-testid="mobile-menu-close"
-                  >
-                    <X className="h-6 w-6" />
-                  </Button>
+              {user && (
+                <div className="hidden items-center gap-2 rounded-lg bg-muted px-3 py-2 sm:flex">
+                  <span className="text-sm font-medium text-foreground">{user.name}</span>
+                  <span className="text-xs text-muted-foreground">({user.role})</span>
                 </div>
+              )}
+              <LanguageSwitcher />
+              <ThemeSwitcher />
+              <LogoutButton />
+            </div>
+          </header>
 
-                {/* Navigation */}
-                <div className="flex-1 overflow-y-auto p-4">
-                  <DashboardNav onNavigate={closeMobileMenu} />
-                </div>
-
-                {/* Footer */}
-                <div className="border-t border-border p-4">
-                  <p className="text-xs text-muted-foreground">© 2024 Auth App</p>
-                </div>
-              </div>
-            </aside>
-          </>
-        )}
-
-        {/* Main Content */}
-        <main className="flex-1 pt-16 md:ml-64 md:pt-0">{children}</main>
+          <main
+            id="main"
+            tabIndex={-1}
+            className="flex-1 focus-visible:outline-none"
+            data-testid="dashboard-main"
+          >
+            {children}
+          </main>
+        </div>
       </div>
     </AuthGuard>
   );

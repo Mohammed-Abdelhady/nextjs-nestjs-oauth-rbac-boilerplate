@@ -48,7 +48,7 @@ export function CreateUserButton({ onSuccess, className }: CreateUserButtonProps
   return (
     <>
       <Button onClick={() => setOpen(true)} className={className} data-testid="create-user-button">
-        <UserPlus className="h-4 w-4 mr-2" />
+        <UserPlus className="h-4 w-4 me-2" />
         Add User
       </Button>
 

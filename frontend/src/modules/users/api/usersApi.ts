@@ -45,6 +45,9 @@ export const usersApi = baseApi.injectEndpoints({
       },
       transformResponse: (response: { success: boolean; data: ApiUsersResponse }) => {
         const { data, pagination } = response.data;
+        const totalPages =
+          pagination.totalPages ??
+          Math.max(1, Math.ceil(pagination.total / (pagination.limit || 20)));
         return {
           users: data.map((user) => ({
             ...user,
@@ -53,6 +56,7 @@ export const usersApi = baseApi.injectEndpoints({
           total: pagination.total,
           page: pagination.page,
           limit: pagination.limit,
+          totalPages,
         };
       },
       providesTags: (result) =>
@@ -171,13 +175,11 @@ export const usersApi = baseApi.injectEndpoints({
     /**
      * Delete user (admin)
      */
-    deleteUser: builder.mutation<{ message: string }, string>({
+    deleteUser: builder.mutation<void, string>({
       query: (userId) => ({
         url: `/api/admin/users/${userId}`,
         method: 'DELETE',
       }),
-      transformResponse: (response: { success: boolean; data: { message: string } }) =>
-        response.data,
       invalidatesTags: (result, error, userId) => [
         { type: 'User', id: userId },
         { type: 'User', id: 'LIST' },

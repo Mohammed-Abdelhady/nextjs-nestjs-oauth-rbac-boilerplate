@@ -1,6 +1,10 @@
 import { forwardRef, HTMLAttributes, ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
 import { cn } from '@/lib/utils';
+
+const TITLE_CLASSES =
+  'flex items-center gap-2 text-xs uppercase tracking-widest text-tertiary font-medium';
 
 export interface SectionHeaderProps extends HTMLAttributes<HTMLDivElement> {
   /**
@@ -32,6 +36,12 @@ export interface SectionHeaderProps extends HTMLAttributes<HTMLDivElement> {
    * Callback when collapse state changes
    */
   onCollapse?: (collapsed: boolean) => void;
+
+  /**
+   * Id of the region the toggle shows and hides. Required for `aria-controls`
+   * when the section is collapsible.
+   */
+  contentId?: string;
 }
 
 /**
@@ -65,6 +75,7 @@ export const SectionHeader = forwardRef<HTMLDivElement, SectionHeaderProps>(
       collapsible = false,
       collapsed = false,
       onCollapse,
+      contentId,
       className,
       ...props
     },
@@ -76,42 +87,50 @@ export const SectionHeader = forwardRef<HTMLDivElement, SectionHeaderProps>(
       }
     };
 
+    const titleContent = (
+      <span>
+        {title}
+        {typeof count === 'number' && <span className="ms-2 text-tertiary">({count})</span>}
+      </span>
+    );
+
     return (
       <div
         ref={ref}
         data-testid="section-header"
-        className={cn('pb-3 border-b border-border-subtle/50 mb-4', className)}
+        className={cn('pb-3 border-b border-border mb-4', className)}
         {...props}
       >
         <div className="flex items-center justify-between">
-          {/* Title with optional collapse */}
-          <button
-            type="button"
-            onClick={handleToggle}
-            disabled={!collapsible}
-            className={cn(
-              'flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground/40 font-medium',
-              collapsible && 'hover:text-muted-foreground/60 transition-colors cursor-pointer',
-              !collapsible && 'cursor-default',
-            )}
-            data-testid="section-header-title"
-          >
-            {collapsible && (
-              <ChevronDown
+          {/* A static section is a plain heading; a collapsible one wraps a toggle */}
+          <h2 className={cn(!collapsible && TITLE_CLASSES)} data-testid="section-header-heading">
+            {collapsible ? (
+              <button
+                type="button"
+                onClick={handleToggle}
+                aria-expanded={!collapsed}
+                aria-controls={contentId}
                 className={cn(
-                  'h-3 w-3 transition-transform duration-200',
-                  collapsed && '-rotate-90',
+                  TITLE_CLASSES,
+                  'rounded-sm hover:text-foreground transition-colors cursor-pointer',
+                  FOCUS_RING_CLASSES,
                 )}
-                data-testid="collapse-icon"
-              />
+                data-testid="section-header-title"
+              >
+                <ChevronDown
+                  aria-hidden="true"
+                  className={cn(
+                    'h-3 w-3 motion-safe:transition-transform motion-safe:duration-200',
+                    collapsed && '-rotate-90',
+                  )}
+                  data-testid="collapse-icon"
+                />
+                {titleContent}
+              </button>
+            ) : (
+              titleContent
             )}
-            <span>
-              {title}
-              {typeof count === 'number' && (
-                <span className="ml-2 text-muted-foreground/30">({count})</span>
-              )}
-            </span>
-          </button>
+          </h2>
 
           {/* Actions */}
           {actions && <div className="flex items-center gap-2">{actions}</div>}

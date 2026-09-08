@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +11,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useDeleteRoleMutation, type Role } from '../api/rolesApi';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
+import { parseApiError } from '@/lib/apiError';
 
 export interface DeleteRoleDialogProps {
   /**
@@ -51,6 +53,7 @@ export interface DeleteRoleDialogProps {
  * ```
  */
 export function DeleteRoleDialog({ open, onOpenChange, role, onSuccess }: DeleteRoleDialogProps) {
+  const t = useTranslations('roles.delete');
   const [deleteRole, { isLoading }] = useDeleteRoleMutation();
 
   const handleDelete = async () => {
@@ -59,7 +62,7 @@ export function DeleteRoleDialog({ open, onOpenChange, role, onSuccess }: Delete
     try {
       await deleteRole(role.id).unwrap();
 
-      toast.success('Role deleted successfully');
+      toast.success(t('success'));
 
       // Close dialog
       onOpenChange(false);
@@ -67,12 +70,8 @@ export function DeleteRoleDialog({ open, onOpenChange, role, onSuccess }: Delete
       // Call success callback
       onSuccess?.();
     } catch (error: unknown) {
-      const errorMessage =
-        error && typeof error === 'object' && 'data' in error
-          ? (error.data as { message?: string })?.message || 'Failed to delete role'
-          : 'Failed to delete role';
-
-      toast.error(errorMessage);
+      const parsed = parseApiError(error);
+      toast.error(parsed.message || t('error'));
     }
   };
 
@@ -84,11 +83,9 @@ export function DeleteRoleDialog({ open, onOpenChange, role, onSuccess }: Delete
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete Role</DialogTitle>
+          <DialogTitle>{t('title')}</DialogTitle>
           <DialogDescription>
-            {isProtected
-              ? 'This role is protected and cannot be deleted.'
-              : 'Are you sure you want to delete this role?'}
+            {isProtected ? t('descriptionProtected') : t('descriptionConfirm')}
           </DialogDescription>
         </DialogHeader>
 
@@ -96,9 +93,11 @@ export function DeleteRoleDialog({ open, onOpenChange, role, onSuccess }: Delete
           {isProtected ? (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
               <p className="text-sm text-amber-900 dark:text-amber-100">
-                <strong>Protected Role:</strong> The <strong>{role.name}</strong> role is a system
-                role and cannot be deleted. It is required for the application to function
-                correctly.
+                <strong>{t('protectedTitle')}</strong>{' '}
+                {t.rich('protectedNotice', {
+                  name: role.name,
+                  strong: (chunks) => <strong>{chunks}</strong>,
+                })}
               </p>
             </div>
           ) : (
@@ -107,14 +106,14 @@ export function DeleteRoleDialog({ open, onOpenChange, role, onSuccess }: Delete
                 <dl className="space-y-2">
                   <div>
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Role Name
+                      {t('roleName')}
                     </dt>
                     <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">{role.name}</dd>
                   </div>
                   {role.description && (
                     <div>
                       <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        Description
+                        {t('description')}
                       </dt>
                       <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
                         {role.description}
@@ -123,11 +122,10 @@ export function DeleteRoleDialog({ open, onOpenChange, role, onSuccess }: Delete
                   )}
                   <div>
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Permissions
+                      {t('permissions')}
                     </dt>
                     <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                      {role.permissions.length} permission
-                      {role.permissions.length !== 1 ? 's' : ''}
+                      {t('permissionsCount', { count: role.permissions.length })}
                     </dd>
                   </div>
                 </dl>
@@ -135,8 +133,7 @@ export function DeleteRoleDialog({ open, onOpenChange, role, onSuccess }: Delete
 
               <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950">
                 <p className="text-sm text-red-900 dark:text-red-100">
-                  <strong>Warning:</strong> This action cannot be undone. Users with this role will
-                  need to be reassigned to another role before deletion.
+                  <strong>{t('warningTitle')}</strong> {t('warningNotice')}
                 </p>
               </div>
             </>
@@ -151,7 +148,7 @@ export function DeleteRoleDialog({ open, onOpenChange, role, onSuccess }: Delete
             disabled={isLoading}
             data-testid="cancel-button"
           >
-            Cancel
+            {t('cancel')}
           </Button>
           {!isProtected && (
             <Button
@@ -159,9 +156,10 @@ export function DeleteRoleDialog({ open, onOpenChange, role, onSuccess }: Delete
               variant="destructive"
               onClick={handleDelete}
               disabled={isLoading}
+              aria-busy={isLoading}
               data-testid="delete-role-button"
             >
-              {isLoading ? 'Deleting...' : 'Delete Role'}
+              {isLoading ? t('deleting') : t('confirm')}
             </Button>
           )}
         </DialogFooter>

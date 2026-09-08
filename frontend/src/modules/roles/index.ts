@@ -1,11 +1,9 @@
 // Components
 export {
-  CreateRoleButton,
   CreateRoleDialog,
   DeleteRoleDialog,
   EditRoleDialog,
   RoleDetailPanel,
-  RoleFormDialog,
   RoleSidebarNav,
 } from './components';
 

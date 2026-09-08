@@ -1,29 +1,26 @@
-import type { OAuthProvider } from '@/modules/oauth';
+import type { OAuthProvider } from '@/modules/oauth'; // feature:oauth-core
 
+// feature:oauth-core:start
 /**
- * Response type for linked providers endpoint
+ * Response type for linked providers endpoint.
+ * Providers are 'email' plus the linked OAuth provider ids.
  */
 export interface LinkedProvidersResponse {
   providers: string[];
   primaryProvider?: string;
 }
+// feature:oauth-core:end
 
-/**
- * Request type for linking a provider
- */
-export interface LinkProviderRequest {
-  provider: OAuthProvider;
-  code: string;
-  state?: string;
-}
-
+// feature:oauth-core:start
 /**
  * Request type for setting primary provider
  */
 export interface SetPrimaryProviderRequest {
   provider: OAuthProvider;
 }
+// feature:oauth-core:end
 
+// feature:oauth-core:start
 /**
  * Profile Sync Status Response
  */
@@ -33,7 +30,9 @@ export interface ProfileSyncStatus {
   primaryProvider?: OAuthProvider;
   canSync: boolean;
 }
+// feature:oauth-core:end
 
+// feature:oauth-core:start
 /**
  * Manual Sync Response
  */
@@ -42,6 +41,7 @@ export interface ManualSyncResponse {
   provider: OAuthProvider;
   message: string;
 }
+// feature:oauth-core:end
 
 /**
  * User for account operations

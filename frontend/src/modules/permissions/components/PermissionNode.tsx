@@ -51,11 +51,10 @@ export const PermissionNode = memo(function PermissionNode({
 
   // Variant styles
   const variantStyles = {
-    default: 'bg-surface-secondary border-border-subtle text-foreground',
-    inherited:
-      'bg-blue-50 border-blue-100 text-blue-900 dark:bg-blue-950/50 dark:border-blue-900 dark:text-blue-100',
+    default: 'bg-muted border-border text-foreground',
+    inherited: 'bg-info/10 border-info/30 text-info-foreground dark:bg-info/20 dark:border-info/40',
     direct:
-      'bg-green-50 border-green-100 text-green-900 dark:bg-green-950/50 dark:border-green-900 dark:text-green-100',
+      'bg-success/10 border-success/30 text-success-foreground dark:bg-success/20 dark:border-success/40',
   };
 
   return (
@@ -66,14 +65,16 @@ export const PermissionNode = memo(function PermissionNode({
         variantStyles[variant],
         className,
       )}
-      style={{ marginLeft: `${level * 16}px` }}
+      style={{ marginInlineStart: `${level * 16}px` }}
       data-testid={`permission-node-${permission}`}
     >
-      {level > 0 && <ChevronRight className="h-3 w-3 flex-shrink-0 text-muted-foreground/40" />}
+      {level > 0 && (
+        <ChevronRight className="h-3 w-3 flex-shrink-0 text-muted-foreground rtl:rotate-180" />
+      )}
       <code className="font-mono flex-1">
         <span className="font-semibold">{resource}</span>
-        {action && <span className="text-muted-foreground/60">:{action}</span>}
-        {scope && <span className="text-muted-foreground/40">:{scope}</span>}
+        {action && <span className="text-muted-foreground">:{action}</span>}
+        {scope && <span className="text-tertiary">:{scope}</span>}
       </code>
     </div>
   );

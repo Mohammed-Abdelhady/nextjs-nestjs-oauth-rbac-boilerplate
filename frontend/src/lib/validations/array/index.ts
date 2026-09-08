@@ -1,7 +1,8 @@
 /**
  * Array Validators
  *
- * Collection of array validation schemas.
+ * Collection of array validation schemas. Every message comes from the caller
+ * so the schema reads in the active locale.
  *
  * @module lib/validations/array
  */
@@ -11,21 +12,24 @@ import { z } from 'zod';
 /**
  * Generic array validator factory
  * @example
- * zodArray(z.string()).min(1).max(10)
+ * zodArray(z.string(), { required: t('required'), invalid: t('mustBeList') }).min(1).max(10)
  */
-export const zodArray = <T extends z.ZodTypeAny>(schema: T) =>
+export const zodArray = <T extends z.ZodTypeAny>(
+  schema: T,
+  messages: { required: string; invalid: string },
+) =>
   z.array(schema, {
-    required_error: 'This field is required',
-    invalid_type_error: 'Must be an array',
+    required_error: messages.required,
+    invalid_type_error: messages.invalid,
   });
 
 /**
  * Non-empty array validator factory
  * @example
- * zodNonEmptyArray(z.string())
+ * zodNonEmptyArray(z.string(), t('atLeastOneItem'))
  */
-export const zodNonEmptyArray = <T extends z.ZodTypeAny>(schema: T) =>
-  z.array(schema).nonempty('Array must contain at least one item');
+export const zodNonEmptyArray = <T extends z.ZodTypeAny>(schema: T, message: string) =>
+  z.array(schema).nonempty(message);
 
 /**
  * String array validator
@@ -44,12 +48,10 @@ export const zodNumberArray = z.array(z.number());
 /**
  * Unique array validator factory (no duplicates)
  * @example
- * zodUniqueArray(z.string())
+ * zodUniqueArray(z.string(), t('itemsMustBeUnique'))
  */
-export const zodUniqueArray = <T extends z.ZodTypeAny>(schema: T) =>
-  z
-    .array(schema)
-    .refine((arr) => new Set(arr).size === arr.length, { message: 'Array items must be unique' });
+export const zodUniqueArray = <T extends z.ZodTypeAny>(schema: T, message: string) =>
+  z.array(schema).refine((arr) => new Set(arr).size === arr.length, { message });
 
 /**
  * Object array validator factory

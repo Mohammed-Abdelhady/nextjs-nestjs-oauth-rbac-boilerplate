@@ -64,10 +64,10 @@ export const SplitView = forwardRef<HTMLDivElement, SplitViewProps>(
           {sidebar}
         </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 min-w-0" data-testid="split-view-content">
+        {/* Content pane. Not a <main>: the page layout owns the single one */}
+        <div className="flex-1 min-w-0" data-testid="split-view-content">
           {content}
-        </main>
+        </div>
       </div>
     );
   },

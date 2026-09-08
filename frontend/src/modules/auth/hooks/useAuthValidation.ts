@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { useAppDispatch } from '@/store/hooks';
 import { useGetCurrentUserQuery } from '../store/authApi';
 import { logout } from '../store/authSlice';

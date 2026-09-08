@@ -1,16 +1,19 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { CheckCircle2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useAppSelector } from '@/store/hooks';
 import { selectUser } from '@/modules/auth/store/authSlice';
 import { getRoleDashboard } from '@/modules/auth/utils/roleRouting';
+import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
+import { cn } from '@/lib/utils';
 
 interface WelcomeModalProps {
   isOpen: boolean;
   userName: string;
+  /** Called when the dialog is dismissed with Escape, the overlay or the close button. */
   onClose?: () => void;
 }
 
@@ -20,8 +23,8 @@ export function WelcomeModal({ isOpen, userName, onClose }: WelcomeModalProps) {
   const user = useAppSelector(selectUser);
 
   const handleGetStarted = () => {
-    onClose?.();
-    // Navigate to role-based dashboard
+    // The dialog unmounts with the page, so it is not closed here: closing goes
+    // through onClose, which sends dismissals somewhere else entirely
     const dashboardUrl = user ? getRoleDashboard(user.role) : '/dashboard';
     router.push(dashboardUrl);
   };
@@ -38,6 +41,7 @@ export function WelcomeModal({ isOpen, userName, onClose }: WelcomeModalProps) {
         className="sm:max-w-md"
         onKeyDown={handleKeyDown}
         aria-describedby="welcome-description"
+        data-testid="welcome-modal"
       >
         <div className="flex flex-col items-center text-center py-6 space-y-6">
           <div className="relative">
@@ -60,8 +64,11 @@ export function WelcomeModal({ isOpen, userName, onClose }: WelcomeModalProps) {
           <button
             type="button"
             onClick={handleGetStarted}
-            className="w-full max-w-xs bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-lg px-5 py-3 transition-all duration-150 focus:outline-none focus:ring-4 focus:ring-primary/50"
-            aria-label={t('cta')}
+            data-testid="welcome-get-started-button"
+            className={cn(
+              'w-full max-w-xs bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-lg px-5 py-3 transition-all duration-150',
+              FOCUS_RING_CLASSES,
+            )}
           >
             {t('cta')}
           </button>

@@ -1,5 +1,3 @@
-'use client';
-
 import { AuthLayout } from '../components/AuthLayout';
 import { ActivationForm } from '../components/ActivationForm';
 import { ActivationGuard } from '@/components/providers/ActivationGuard';

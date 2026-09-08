@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useRevokeAllOtherSessionsMutation } from '../api/sessionsApi';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/lib/toast';
 
 export interface RevokeAllSessionsButtonProps {
   /** Number of other sessions that will be revoked */
@@ -51,7 +51,6 @@ export function RevokeAllSessionsButton({
 }: RevokeAllSessionsButtonProps) {
   const [open, setOpen] = useState(false);
   const [revokeAllOtherSessions, { isLoading }] = useRevokeAllOtherSessionsMutation();
-  const { toast } = useToast();
   const t = useTranslations('sessions');
   const tCommon = useTranslations('common');
 
@@ -81,7 +80,7 @@ export function RevokeAllSessionsButton({
         className={className}
         data-testid="logout-all-sessions-button"
       >
-        <LogOut className="h-4 w-4 mr-2" />
+        <LogOut className="h-4 w-4 me-2" />
         {t('logoutAllOther')}
       </Button>
 
@@ -101,12 +100,13 @@ export function RevokeAllSessionsButton({
             <AlertDialogAction
               onClick={handleRevoke}
               disabled={isLoading}
+              aria-busy={isLoading}
               data-testid="confirm-logout-all"
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-4 w-4 me-2 motion-safe:animate-spin" aria-hidden="true" />
                   {t('loggingOut')}
                 </>
               ) : (

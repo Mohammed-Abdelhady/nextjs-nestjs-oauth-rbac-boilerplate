@@ -1,0 +1,189 @@
+'use client';
+
+import { useId, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { FieldError, SubmitButton } from '@/components/forms';
+import { PermissionSelector } from './PermissionSelector';
+import type { Role } from '../api/rolesApi';
+
+export interface EditRoleFormValues {
+  name: string;
+  description: string;
+  permissions: string[];
+}
+
+export interface EditRoleFormProps {
+  role: Role;
+  isLoading: boolean;
+  onSubmit: (data: EditRoleFormValues) => void;
+  onCancel: () => void;
+}
+
+interface EditRoleFormErrors {
+  name?: string;
+  permissions?: string;
+}
+
+/**
+ * Body of the edit dialog. It remounts when the role changes through a key prop,
+ * so the fields start from the role that is being edited.
+ */
+export function EditRoleForm({ role, isLoading, onSubmit, onCancel }: EditRoleFormProps) {
+  const t = useTranslations('roles.form');
+  const uid = useId();
+  const nameId = `${uid}-name`;
+  const nameErrorId = `${uid}-name-error`;
+  const descriptionId = `${uid}-description`;
+  const permissionsLabelId = `${uid}-permissions-label`;
+  const permissionsErrorId = `${uid}-permissions-error`;
+
+  const [name, setName] = useState(role.name || '');
+  const [description, setDescription] = useState(role.description || '');
+  const [permissions, setPermissions] = useState<string[]>(role.permissions || []);
+  const [errors, setErrors] = useState<EditRoleFormErrors>({});
+
+  const isProtected = role.isProtected;
+  const isBaseRole = role.slug === 'user' || role.slug === 'admin';
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const nextErrors: EditRoleFormErrors = {};
+    if (!name.trim()) nextErrors.name = t('nameError');
+    if (permissions.length === 0) nextErrors.permissions = t('permissionsError');
+
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+
+    onSubmit({ name, description, permissions });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} noValidate>
+      <DialogHeader>
+        <DialogTitle>{t('editTitle', { name: role.name })}</DialogTitle>
+        <DialogDescription>{t('editDescription')}</DialogDescription>
+      </DialogHeader>
+
+      <div className="space-y-6 py-6">
+        {isBaseRole && (
+          <Alert variant="info" role="note" data-testid="base-role-note">
+            <AlertDescription>
+              <strong>Base Role:</strong> User and Admin roles are fundamental to the system. Name
+              and description cannot be modified, but you can update permissions.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {isProtected && !isBaseRole && (
+          <Alert variant="warning" role="note" data-testid="protected-role-note">
+            <AlertDescription>
+              <strong>Protected Role:</strong> This role cannot be deleted and its core permissions
+              are managed by the system.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Role Name */}
+        <div className="space-y-2">
+          <Label htmlFor={nameId}>
+            {t('nameLabel')} <span className="text-destructive">{t('nameRequired')}</span>
+          </Label>
+          <Input
+            id={nameId}
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
+            }}
+            disabled={isLoading || isProtected || isBaseRole}
+            required
+            aria-invalid={Boolean(errors.name)}
+            aria-describedby={errors.name ? nameErrorId : undefined}
+            data-testid="edit-role-name-input"
+          />
+          <FieldError id={nameErrorId} message={errors.name} testId="edit-role-name-error" />
+          {(isProtected || isBaseRole) && (
+            <p className="text-xs text-tertiary">
+              {isBaseRole
+                ? 'Base role names cannot be changed'
+                : 'Protected role names cannot be changed'}
+            </p>
+          )}
+        </div>
+
+        {/* Description */}
+        <div className="space-y-2">
+          <Label htmlFor={descriptionId}>{t('descriptionLabel')}</Label>
+          <Textarea
+            id={descriptionId}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder={t('descriptionPlaceholder')}
+            rows={3}
+            disabled={isLoading || isBaseRole}
+            data-testid="edit-role-description-input"
+          />
+          {isBaseRole && (
+            <p className="text-xs text-tertiary">{t('baseRoleDescriptionImmutable')}</p>
+          )}
+        </div>
+
+        {/* Permissions */}
+        <div className="space-y-2">
+          <Label id={permissionsLabelId}>
+            {t('permissionsLabel')}{' '}
+            <span className="text-destructive">{t('permissionsRequired')}</span>
+          </Label>
+          <div
+            role="group"
+            aria-labelledby={permissionsLabelId}
+            aria-describedby={errors.permissions ? permissionsErrorId : undefined}
+          >
+            <PermissionSelector
+              selectedPermissions={permissions}
+              onChange={(next) => {
+                setPermissions(next);
+                if (errors.permissions) setErrors((prev) => ({ ...prev, permissions: undefined }));
+              }}
+              disabled={isLoading}
+            />
+          </div>
+          <FieldError
+            id={permissionsErrorId}
+            message={errors.permissions}
+            testId="edit-role-permissions-error"
+          />
+        </div>
+      </div>
+
+      <DialogFooter>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isLoading}
+          data-testid="cancel-button"
+        >
+          {t('cancel')}
+        </Button>
+        <SubmitButton
+          isLoading={isLoading}
+          loadingText={t('updating')}
+          className="h-10 mt-0 w-auto py-2"
+          testId="save-role-button"
+        >
+          {t('update')}
+        </SubmitButton>
+      </DialogFooter>
+    </form>
+  );
+}

@@ -36,6 +36,8 @@
  * ```
  */
 
+import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
+
 /**
  * Atomic design tokens - semantic color system
  *
@@ -66,12 +68,6 @@ const TOKENS = {
     border: 'border-border',
     borderFocus: 'focus:border-ring',
     placeholder: 'placeholder-muted-foreground',
-    buttonPrimaryBg: 'bg-primary',
-    buttonPrimaryBgHover: 'hover:opacity-90',
-    buttonPrimaryText: 'text-primary-foreground',
-    buttonSecondaryBg: 'bg-secondary',
-    buttonSecondaryBgHover: 'hover:bg-secondary/80',
-    buttonSecondaryText: 'text-secondary-foreground',
   },
 
   // Spacing & layout
@@ -84,8 +80,6 @@ const TOKENS = {
   typography: {
     fontSize: 'text-sm',
     fontWeight: 'font-medium',
-    buttonPrimaryFont: 'tracking-wide font-semibold',
-    buttonSecondaryFont: 'font-bold',
   },
 
   // Component-specific dimensions
@@ -100,20 +94,10 @@ const TOKENS = {
     resize: 'resize-none',
   },
 
-  button: {
-    height: 'h-14',
-    display: 'flex items-center justify-center',
-    focusRing: 'focus:shadow-outline focus:outline-none',
-    primaryPadding: 'py-4',
-    secondaryPadding: 'py-3',
-    secondaryMaxWidth: 'max-w-xs',
-    secondaryShadow: 'shadow-sm focus:shadow-sm focus:shadow-outline',
-  },
-
   // State styles
   states: {
     border: 'border',
-    focusOutline: 'focus:outline-none',
+    focusRing: FOCUS_RING_CLASSES,
     transition: 'transition-all duration-300 ease-in-out',
   },
 } as const;
@@ -132,18 +116,9 @@ const BASE_COMPOSITIONS = {
     TOKENS.colors.border,
     TOKENS.colors.placeholder,
     TOKENS.typography.fontSize,
-    TOKENS.states.focusOutline,
+    TOKENS.states.focusRing,
     TOKENS.colors.borderFocus,
     TOKENS.colors.bgFocus,
-  ],
-
-  // Shared by both button variants
-  button: [
-    TOKENS.button.height,
-    TOKENS.spacing.width,
-    TOKENS.spacing.borderRadius,
-    TOKENS.states.transition,
-    TOKENS.button.display,
   ],
 } as const;
 
@@ -164,33 +139,7 @@ export const FORM_STYLES = {
     ].join(' '),
   },
 
-  button: {
-    primary: [
-      ...BASE_COMPOSITIONS.button,
-      TOKENS.typography.buttonPrimaryFont,
-      TOKENS.colors.buttonPrimaryBg,
-      TOKENS.colors.buttonPrimaryText,
-      TOKENS.button.primaryPadding,
-      TOKENS.colors.buttonPrimaryBgHover,
-      TOKENS.button.focusRing,
-    ].join(' '),
-
-    secondary: [
-      ...BASE_COMPOSITIONS.button,
-      TOKENS.button.secondaryMaxWidth,
-      TOKENS.typography.buttonSecondaryFont,
-      TOKENS.button.secondaryShadow,
-      TOKENS.button.secondaryPadding,
-      TOKENS.colors.buttonSecondaryBg,
-      TOKENS.colors.buttonSecondaryText,
-      TOKENS.states.focusOutline,
-      TOKENS.colors.buttonSecondaryBgHover,
-    ].join(' '),
-  },
-
-  error: 'text-sm font-medium text-destructive mt-1',
-  label: 'sr-only',
-  container: 'space-y-0',
+  container: 'space-y-2',
 } as const;
 
 /**
@@ -203,13 +152,8 @@ const buildClassName = (baseClass: string, additionalClasses?: string): string =
 /**
  * Helper functions for applying form styles
  */
-export const getInputClassName = (additionalClasses?: string) =>
+export const getInputClassName = (additionalClasses?: string): string =>
   buildClassName(FORM_STYLES.input.base, additionalClasses);
 
-export const getTextareaClassName = (additionalClasses?: string) =>
+export const getTextareaClassName = (additionalClasses?: string): string =>
   buildClassName(FORM_STYLES.textarea.base, additionalClasses);
-
-export const getButtonClassName = (
-  variant: 'primary' | 'secondary' = 'primary',
-  additionalClasses?: string,
-) => buildClassName(FORM_STYLES.button[variant], additionalClasses);

@@ -1,10 +1,11 @@
 import { useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   useUpdateUserStatusMutation,
   useUpdateUserRoleMutation,
   useDeleteUserMutation,
-} from '@/store/api/userApi';
-import { useToast } from '@/hooks/use-toast';
+} from '@/modules/users/api/usersApi';
+import { toast } from '@/lib/toast';
 import { getErrorMessage } from '@/modules/auth/utils/authHelpers';
 
 /**
@@ -59,7 +60,7 @@ export function useUserActions(): UseUserActionsReturn {
   const [updateStatus, { isLoading: isUpdatingStatus }] = useUpdateUserStatusMutation();
   const [updateRole, { isLoading: isUpdatingRole }] = useUpdateUserRoleMutation();
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
-  const { toast } = useToast();
+  const t = useTranslations('users.actions');
 
   /**
    * Update user role.
@@ -68,12 +69,12 @@ export function useUserActions(): UseUserActionsReturn {
     async (userId: string, newRole: string) => {
       try {
         await updateRole({ userId, role: newRole }).unwrap();
-        toast.success('Role updated successfully');
+        toast.success(t('roleUpdateSuccess'));
       } catch (error) {
         toast.error(getErrorMessage(error));
       }
     },
-    [updateRole, toast],
+    [updateRole, t],
   );
 
   /**
@@ -85,7 +86,9 @@ export function useUserActions(): UseUserActionsReturn {
       try {
         await updateStatus({ userId, isActive }).unwrap();
         toast.success(
-          isActive ? `${userName} activated successfully` : `${userName} deactivated successfully`,
+          isActive
+            ? t('activateSuccess', { name: userName })
+            : t('deactivateSuccess', { name: userName }),
         );
         return true;
       } catch (error) {
@@ -93,7 +96,7 @@ export function useUserActions(): UseUserActionsReturn {
         return false;
       }
     },
-    [updateStatus, toast],
+    [updateStatus, t],
   );
 
   /**
@@ -104,14 +107,14 @@ export function useUserActions(): UseUserActionsReturn {
     async (userId: string, userName: string): Promise<boolean> => {
       try {
         await deleteUser(userId).unwrap();
-        toast.success(`${userName} deleted successfully`);
+        toast.success(t('deleteSuccess', { name: userName }));
         return true;
       } catch (error) {
         toast.error(getErrorMessage(error));
         return false;
       }
     },
-    [deleteUser, toast],
+    [deleteUser, t],
   );
 
   const isLoading = isUpdatingStatus || isUpdatingRole || isDeleting;

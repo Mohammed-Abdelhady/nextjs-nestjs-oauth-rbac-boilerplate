@@ -1,5 +1,9 @@
+'use client';
+
 import { forwardRef, InputHTMLAttributes } from 'react';
+import { useTranslations } from 'next-intl';
 import { Search, X } from 'lucide-react';
+import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
 import { cn } from '@/lib/utils';
 
 export interface SearchBarProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
@@ -19,10 +23,9 @@ export interface SearchBarProps extends Omit<InputHTMLAttributes<HTMLInputElemen
  *
  * Features:
  * - No border, only bottom underline
- * - Search icon on the left
- * - Optional clear button on the right
- * - Minimal aesthetic with refined transitions
- * - Focus state with accent color underline
+ * - Search icon on the leading edge
+ * - Optional clear button on the trailing edge, 24px hit area
+ * - Focus ring on the input, accent underline while focused
  *
  * @example
  * ```tsx
@@ -37,10 +40,15 @@ export interface SearchBarProps extends Omit<InputHTMLAttributes<HTMLInputElemen
  */
 export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
   ({ className, onClear, showClear = false, value, ...props }, ref) => {
+    const t = useTranslations('common');
+
     return (
       <div className={cn('relative group', className)}>
         {/* Search Icon */}
-        <Search className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 transition-colors group-focus-within:text-accent-primary" />
+        <Search
+          aria-hidden="true"
+          className="absolute start-0 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary"
+        />
 
         {/* Input */}
         <input
@@ -48,11 +56,12 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
           type="text"
           value={value}
           className={cn(
-            'w-full bg-transparent pl-7 pr-8 py-2',
-            'text-sm text-foreground placeholder:text-muted-foreground/40',
-            'border-0 border-b border-border-subtle',
-            'focus:outline-none focus:border-accent-primary',
+            'w-full bg-transparent ps-7 pe-8 py-2',
+            'text-sm text-foreground placeholder:text-muted-foreground',
+            'border-0 border-b border-border rounded-sm',
+            'focus:border-primary',
             'transition-all duration-200 ease-out',
+            FOCUS_RING_CLASSES,
           )}
           data-testid="search-bar"
           {...props}
@@ -64,17 +73,18 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
             type="button"
             onClick={onClear}
             className={cn(
-              'absolute right-0 top-1/2 -translate-y-1/2',
-              'h-5 w-5 rounded-full',
+              'absolute end-0 top-1/2 -translate-y-1/2',
+              'h-6 w-6 rounded-full',
               'flex items-center justify-center',
-              'text-muted-foreground/40 hover:text-muted-foreground',
-              'hover:bg-muted/20',
+              'text-muted-foreground hover:text-foreground',
+              'hover:bg-muted',
               'transition-colors duration-150',
+              FOCUS_RING_CLASSES,
             )}
             data-testid="clear-search-button"
-            aria-label="Clear search"
+            aria-label={t('clearSearch')}
           >
-            <X className="h-3 w-3" />
+            <X className="h-3 w-3" aria-hidden="true" />
           </button>
         )}
       </div>

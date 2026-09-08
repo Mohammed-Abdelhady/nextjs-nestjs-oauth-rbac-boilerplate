@@ -2,10 +2,17 @@
 
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
+import { LoadingRegion } from '@/components/layout/LoadingRegion';
 import { store, persistor } from '@/store/store';
 
 interface ReduxProviderProps {
   readonly children: React.ReactNode;
+
+  /**
+   * Announced while the persisted store rehydrates. It comes from the server
+   * layout because this provider sits above the next-intl client provider.
+   */
+  readonly loadingLabel: string;
 }
 
 /**
@@ -14,14 +21,17 @@ interface ReduxProviderProps {
  * Wraps the app with Redux store provider and PersistGate for state rehydration
  *
  * @example
- * <ReduxProvider>
+ * <ReduxProvider loadingLabel="Loading...">
  *   <YourApp />
  * </ReduxProvider>
  */
-export function ReduxProvider({ children }: Readonly<ReduxProviderProps>) {
+export function ReduxProvider({ children, loadingLabel }: Readonly<ReduxProviderProps>) {
   return (
     <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
+      <PersistGate
+        loading={<LoadingRegion label={loadingLabel} testId="store-rehydration-loading" />}
+        persistor={persistor}
+      >
         {children}
       </PersistGate>
     </Provider>

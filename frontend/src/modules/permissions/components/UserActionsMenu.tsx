@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,20 +10,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Settings, MoreHorizontal, UserCheck, UserX, Trash2, Loader2, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUserActions } from '../hooks/useUserActions';
 import { EditUserDialog } from './EditUserDialog';
+import { UserActionConfirmDialog, type UserConfirmAction } from './UserActionConfirmDialog';
 
 export interface UserActionsMenuUser {
   _id: string;
@@ -42,8 +34,6 @@ export interface UserActionsMenuProps {
   /** Additional className */
   className?: string;
 }
-
-type ConfirmActionType = 'activate' | 'deactivate' | 'delete' | null;
 
 /**
  * UserActionsMenu - Dropdown menu with user actions and co-located dialogs.
@@ -69,7 +59,8 @@ export const UserActionsMenu = memo(function UserActionsMenu({
   disabled = false,
   className,
 }: UserActionsMenuProps) {
-  const [confirmAction, setConfirmAction] = useState<ConfirmActionType>(null);
+  const t = useTranslations('users.actions');
+  const [confirmAction, setConfirmAction] = useState<UserConfirmAction | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const { handleStatusChange, handleDelete, isLoading } = useUserActions();
 
@@ -92,51 +83,7 @@ export const UserActionsMenu = memo(function UserActionsMenu({
     }
   }, [confirmAction, handleStatusChange, handleDelete, user._id, user.name]);
 
-  // Get dialog content based on action type
-  const getDialogContent = () => {
-    switch (confirmAction) {
-      case 'activate':
-        return {
-          title: 'Activate User?',
-          description: (
-            <>
-              Are you sure you want to activate <strong>{user.name}</strong>? This will restore
-              their access to the system.
-            </>
-          ),
-          confirmText: 'Activate',
-          destructive: false,
-        };
-      case 'deactivate':
-        return {
-          title: 'Deactivate User?',
-          description: (
-            <>
-              Are you sure you want to deactivate <strong>{user.name}</strong>? They will lose
-              access to the system but their account can be restored later.
-            </>
-          ),
-          confirmText: 'Deactivate',
-          destructive: false,
-        };
-      case 'delete':
-        return {
-          title: 'Delete User?',
-          description: (
-            <>
-              Are you sure you want to delete <strong>{user.name}</strong>? This will permanently
-              remove their account and all associated data. This action cannot be undone.
-            </>
-          ),
-          confirmText: 'Delete',
-          destructive: true,
-        };
-      default:
-        return { title: '', description: '', confirmText: '', destructive: false };
-    }
-  };
-
-  const dialogContent = getDialogContent();
+  const handleCancelConfirm = useCallback(() => setConfirmAction(null), []);
 
   return (
     <>
@@ -147,20 +94,19 @@ export const UserActionsMenu = memo(function UserActionsMenu({
             size="sm"
             className={cn(
               'h-8 px-3 gap-1.5 text-xs font-medium',
-              'border border-transparent hover:border-border-subtle',
+              'border border-transparent hover:border-border',
               'transition-all duration-200',
               className,
             )}
             disabled={disabled || isLoading}
+            aria-busy={isLoading}
             data-testid={`user-actions-menu-${user._id}`}
           >
+            <span>{t('menuLabel')}</span>
             {isLoading ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 motion-safe:animate-spin" aria-hidden="true" />
             ) : (
-              <>
-                <span>Actions</span>
-                <MoreHorizontal className="h-3.5 w-3.5" />
-              </>
+              <MoreHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
             )}
           </Button>
         </DropdownMenuTrigger>
@@ -172,15 +118,15 @@ export const UserActionsMenu = memo(function UserActionsMenu({
                 onClick={() => setEditDialogOpen(true)}
                 data-testid={`edit-user-${user._id}`}
               >
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit User
+                <Pencil className="me-2 h-4 w-4" aria-hidden="true" />
+                {t('editUser')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={onManagePermissions}
                 data-testid={`manage-permissions-${user._id}`}
               >
-                <Settings className="mr-2 h-4 w-4" />
-                Manage Permissions
+                <Settings className="me-2 h-4 w-4" aria-hidden="true" />
+                {t('managePermissions')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
             </>
@@ -192,16 +138,22 @@ export const UserActionsMenu = memo(function UserActionsMenu({
               onClick={() => setConfirmAction('activate')}
               data-testid={`activate-user-${user._id}`}
             >
-              <UserCheck className="mr-2 h-4 w-4 text-green-600 dark:text-green-400" />
-              <span>Activate User</span>
+              <UserCheck
+                className="me-2 h-4 w-4 text-green-600 dark:text-green-400"
+                aria-hidden="true"
+              />
+              <span>{t('activateUser')}</span>
             </DropdownMenuItem>
           ) : (
             <DropdownMenuItem
               onClick={() => setConfirmAction('deactivate')}
               data-testid={`deactivate-user-${user._id}`}
             >
-              <UserX className="mr-2 h-4 w-4 text-amber-600 dark:text-amber-400" />
-              <span>Deactivate User</span>
+              <UserX
+                className="me-2 h-4 w-4 text-amber-600 dark:text-amber-400"
+                aria-hidden="true"
+              />
+              <span>{t('deactivateUser')}</span>
             </DropdownMenuItem>
           )}
 
@@ -214,8 +166,8 @@ export const UserActionsMenu = memo(function UserActionsMenu({
                 className="text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
                 data-testid={`delete-user-${user._id}`}
               >
-                <Trash2 className="mr-2 h-4 w-4" />
-                <span>Delete User</span>
+                <Trash2 className="me-2 h-4 w-4" aria-hidden="true" />
+                <span>{t('deleteUser')}</span>
               </DropdownMenuItem>
             </>
           )}
@@ -232,36 +184,13 @@ export const UserActionsMenu = memo(function UserActionsMenu({
       />
 
       {/* Co-located Confirmation Dialog */}
-      <AlertDialog
-        open={confirmAction !== null}
-        onOpenChange={(open) => !open && setConfirmAction(null)}
-      >
-        <AlertDialogContent data-testid="user-action-confirm-dialog">
-          <AlertDialogHeader>
-            <AlertDialogTitle>{dialogContent.title}</AlertDialogTitle>
-            <AlertDialogDescription>{dialogContent.description}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirm}
-              disabled={isLoading}
-              className={cn(
-                dialogContent.destructive && 'bg-red-600 hover:bg-red-700 focus:ring-red-600',
-              )}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                dialogContent.confirmText
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <UserActionConfirmDialog
+        action={confirmAction}
+        userName={user.name}
+        isLoading={isLoading}
+        onConfirm={handleConfirm}
+        onCancel={handleCancelConfirm}
+      />
     </>
   );
 });

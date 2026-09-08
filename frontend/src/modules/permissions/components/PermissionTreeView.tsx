@@ -1,6 +1,4 @@
-'use client';
-
-import { memo, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { PermissionNode } from './PermissionNode';
 import { Shield } from 'lucide-react';
 
@@ -26,6 +24,25 @@ export interface PermissionTreeViewProps {
   className?: string;
 }
 
+function groupPermissions(permissions: string[]): Record<string, string[]> {
+  const groups: Record<string, string[]> = {};
+
+  permissions.forEach((perm) => {
+    if (perm === '*') {
+      groups['wildcard'] = ['*'];
+      return;
+    }
+
+    const resource = perm.split(':')[0];
+    if (!groups[resource]) {
+      groups[resource] = [];
+    }
+    groups[resource].push(perm);
+  });
+
+  return groups;
+}
+
 /**
  * PermissionTreeView - Hierarchical permission display
  *
@@ -44,51 +61,30 @@ export interface PermissionTreeViewProps {
  * />
  * ```
  */
-export const PermissionTreeView = memo(function PermissionTreeView({
+export function PermissionTreeView({
   permissions,
   variant = 'default',
   showHeaders = true,
   className,
 }: PermissionTreeViewProps) {
-  // Group permissions by resource
-  const groupedPermissions = useMemo(() => {
-    const groups: Record<string, string[]> = {};
-
-    permissions.forEach((perm) => {
-      if (perm === '*') {
-        groups['wildcard'] = ['*'];
-        return;
-      }
-
-      const resource = perm.split(':')[0];
-      if (!groups[resource]) {
-        groups[resource] = [];
-      }
-      groups[resource].push(perm);
-    });
-
-    return groups;
-  }, [permissions]);
+  const t = useTranslations('permissions.tree');
+  const groupedPermissions = groupPermissions(permissions);
 
   // Check for wildcard
   const hasWildcard = permissions.includes('*');
 
   if (permissions.length === 0) {
-    return (
-      <div className="text-center py-8 text-sm text-muted-foreground/60">
-        No permissions assigned
-      </div>
-    );
+    return <div className="text-center py-8 text-sm text-muted-foreground">{t('empty')}</div>;
   }
 
   return (
     <div className={className} data-testid="permission-tree-view">
       {/* Wildcard Warning */}
       {hasWildcard && (
-        <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 dark:bg-amber-950/50 dark:border-amber-900">
-          <p className="text-sm text-amber-900 dark:text-amber-100 flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            <strong>Wildcard (*)</strong> - This role has all permissions
+        <div className="mb-4 p-3 rounded-lg bg-warning/10 border border-warning/30">
+          <p className="text-sm text-warning-foreground flex items-center gap-2">
+            <Shield className="h-4 w-4" aria-hidden="true" />
+            <strong>{t('wildcardLabel')}</strong> {t('wildcardNotice')}
           </p>
         </div>
       )}
@@ -99,9 +95,7 @@ export const PermissionTreeView = memo(function PermissionTreeView({
           <div key={resource} className="space-y-2">
             {/* Resource Header */}
             {showHeaders && resource !== 'wildcard' && (
-              <h4 className="text-xs uppercase tracking-widest text-muted-foreground/40">
-                {resource}
-              </h4>
+              <h4 className="text-xs uppercase tracking-widest text-tertiary">{resource}</h4>
             )}
 
             {/* Permission Nodes */}
@@ -120,4 +114,4 @@ export const PermissionTreeView = memo(function PermissionTreeView({
       </div>
     </div>
   );
-});
+}

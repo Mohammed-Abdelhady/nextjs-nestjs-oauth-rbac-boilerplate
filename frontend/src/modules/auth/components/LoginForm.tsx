@@ -1,129 +1,33 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { Fragment } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { z } from 'zod';
-import { FormProvider } from 'react-hook-form';
-import { useFormWithValidation } from '@/hooks/useFormWithValidation';
-import { FormInput, FormPassword } from '@/components/forms';
-import { useLoginMutation } from '../store/authApi';
-import { translateAuthError, getRedirectPath } from '../utils/authHelpers';
-import { zodEmail } from '@/lib/validations';
-import Link from 'next/link';
-import { UserPlus, LogIn } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
+import { AuthDivider } from '@/components/ui/auth-divider';
 import { IconLinkButton } from '@/components/ui/icon-link-button';
-import { Button } from '@/components/ui/button';
-import { useCallback, useMemo } from 'react';
-import { OAuthButtons, OAuthDivider } from '@/modules/oauth';
+import { OAuthButtons } from '@/modules/oauth'; // feature:oauth-core
+import { enabledAuthMethods } from '../methods/registry';
+import type { AuthMethods } from '../types/auth.types';
+import { AuthMethodsGate } from './AuthMethodsGate';
+
+interface SignInMethodsProps {
+  methods: AuthMethods;
+  redirect: string | null;
+}
 
 /**
- * Login form validation schema using centralized validators
- * Note: Login doesn't use zodPassword because it doesn't enforce
- * strong password rules (uppercase, lowercase, number) for existing users
+ * OAuth buttons first, then one form per enabled method with a divider between
+ * them. A deployment with a single method gets that method on its own.
  */
-const createLoginSchema = (t: (key: string) => string) =>
-  z.object({
-    email: zodEmail({
-      required: true,
-      messages: {
-        required: t('errors.emailRequired'),
-        invalid: t('errors.emailInvalid'),
-      },
-    }),
-    password: z
-      .string({ required_error: t('errors.passwordRequired') })
-      .min(1, t('errors.passwordRequired'))
-      .min(6, t('errors.passwordMinLength')),
-  });
-
-type LoginFormData = z.infer<ReturnType<typeof createLoginSchema>>;
-
-/**
- * LoginForm component with validation and API integration
- * Optimized for performance with memoization and minimal re-renders
- *
- * @example
- * <LoginForm />
- */
-export function LoginForm() {
+function SignInMethods({ methods, redirect }: SignInMethodsProps) {
   const t = useTranslations('auth.login');
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [login, { isLoading }] = useLoginMutation();
-
-  // Memoize schema creation when translation function changes
-  const loginSchema = useMemo(() => createLoginSchema(t), [t]);
-
-  // Initialize form with validation
-  const form = useFormWithValidation({
-    schema: loginSchema,
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-    mode: 'onBlur',
-  });
-
-  const {
-    handleSubmit,
-    formState: { errors },
-    setError,
-  } = form;
-
-  // Memoize submit handler to prevent recreating on every render
-  const onSubmit = useCallback(
-    async (data: LoginFormData) => {
-      try {
-        const response = await login({
-          email: data.email,
-          password: data.password,
-        }).unwrap();
-
-        // Determine redirect path based on user permissions
-        const explicitRedirect = searchParams.get('redirect');
-        let defaultPath = '/dashboard';
-
-        // Redirect to admin dashboard if user has admin-level permissions
-        if (!explicitRedirect && response.user) {
-          const hasAdminPermissions =
-            response.user.permissions.includes('*') || // Wildcard permission
-            response.user.permissions.includes('users:list:all') ||
-            response.user.permissions.includes('roles:manage:all') ||
-            response.user.permissions.includes('permissions:manage:all');
-
-          if (hasAdminPermissions) {
-            defaultPath = '/admin/dashboard';
-          }
-        }
-
-        const redirectPath = getRedirectPath(explicitRedirect ?? defaultPath);
-        router.push(redirectPath);
-      } catch (err) {
-        // Handle API errors with translation
-        const errorMessage = translateAuthError(err, t);
-        setError('root', {
-          type: 'manual',
-          message: errorMessage,
-        });
-        // Error toast is automatically shown by errorInterceptor middleware
-      }
-    },
-    [login, searchParams, router, setError, t],
-  );
+  const entries = enabledAuthMethods(methods);
+  const hasOAuth = methods.oauth.length > 0;
 
   return (
-    <section className="mt-12 flex flex-col items-center" aria-labelledby="login-heading">
-      {/* Title */}
-      <h1
-        id="login-heading"
-        className="text-2xl xl:text-3xl font-extrabold text-foreground"
-        data-testid="login-title"
-      >
-        {t('title')}
-      </h1>
-
-      <div className="w-full flex-1 mt-8">
-        {/* Sign Up Link */}
+    <>
+      {methods.password && (
         <div className="flex flex-col items-center">
           <IconLinkButton
             href="/auth/register"
@@ -135,91 +39,49 @@ export function LoginForm() {
             {t('signUp')}
           </IconLinkButton>
         </div>
+      )}
 
-        {/* OAuth Buttons */}
+      {/* feature:oauth-core:start */}
+      {hasOAuth && (
         <div className="my-6">
-          <OAuthButtons mode="signin" />
+          <OAuthButtons redirect={redirect ?? undefined} />
         </div>
+      )}
+      {/* feature:oauth-core:end */}
 
-        {/* Divider */}
-        <OAuthDivider />
+      {entries.map(({ id, Form }, index) => (
+        <Fragment key={id}>
+          {(index > 0 || hasOAuth) && <AuthDivider />}
+          <Form redirect={redirect} isOnlyMethod={entries.length === 1} />
+        </Fragment>
+      ))}
+    </>
+  );
+}
 
-        {/* Login Form */}
-        <FormProvider {...form}>
-          <form
-            className="mx-auto max-w-xs relative"
-            onSubmit={handleSubmit(onSubmit)}
-            data-testid="login-form"
-            noValidate
-            aria-labelledby="login-heading"
-            aria-describedby={errors.root?.message ? 'login-error' : undefined}
-          >
-            {/* Global Error Alert - Live Region */}
-            {errors.root?.message && (
-              <div
-                id="login-error"
-                className="mb-4 p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md"
-                role="alert"
-                aria-live="assertive"
-                aria-atomic="true"
-                data-testid="login-error"
-              >
-                {errors.root.message}
-              </div>
-            )}
+/**
+ * The sign-in screen. It asks the backend which methods are on and renders
+ * only those, so a password field never appears where passwords are off.
+ */
+export function LoginForm() {
+  const t = useTranslations('auth.login');
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect');
 
-            {/* Email Input */}
-            <FormInput
-              name="email"
-              type="email"
-              placeholder={t('email')}
-              autoComplete="email"
-              disabled={isLoading}
-              autoFocus
-              aria-label={t('email')}
-              aria-required="true"
-              aria-invalid={!!errors.email}
-              aria-describedby={errors.email ? 'email-error' : undefined}
-            />
+  return (
+    <section className="mt-12 flex flex-col items-center" aria-labelledby="login-heading">
+      <h1
+        id="login-heading"
+        className="text-2xl xl:text-3xl font-extrabold text-foreground"
+        data-testid="login-title"
+      >
+        {t('title')}
+      </h1>
 
-            {/* Password Input */}
-            <FormPassword
-              name="password"
-              placeholder={t('password')}
-              autoComplete="current-password"
-              disabled={isLoading}
-              showToggle={false}
-              className="mt-5"
-              aria-label={t('password')}
-              aria-required="true"
-              aria-invalid={!!errors.password}
-              aria-describedby={errors.password ? 'password-error' : undefined}
-            />
-
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="h-14 mt-5 tracking-wide font-semibold w-full py-4 rounded-lg transition-all duration-300 ease-in-out flex items-center justify-center"
-              data-testid="login-submit"
-              aria-label={isLoading ? `${t('submit')}...` : t('submit')}
-              aria-busy={isLoading}
-            >
-              <LogIn className="w-6 h-6 -ms-2" aria-hidden="true" />
-              <span className="ms-3">{isLoading ? `${t('submit')}...` : t('submit')}</span>
-            </Button>
-
-            {/* Forgot Password Link */}
-            <Link
-              href="/auth/forgot-password"
-              className="no-underline hover:underline text-primary text-md text-right absolute right-0 mt-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
-              data-testid="forgot-password-link"
-              aria-label={t('forgotPassword')}
-            >
-              {t('forgotPassword')}
-            </Link>
-          </form>
-        </FormProvider>
+      <div className="mt-8 w-full flex-1">
+        <AuthMethodsGate>
+          {(methods) => <SignInMethods methods={methods} redirect={redirect} />}
+        </AuthMethodsGate>
       </div>
     </section>
   );

@@ -1,3 +1,5 @@
+import { parseApiError } from '../../../lib/apiError';
+
 /**
  * Validates if a string is a valid email format
  * Uses RFC 5322 standard email regex
@@ -49,29 +51,60 @@ export function isTokenExpired(token: string): boolean | null {
   }
 }
 
+const DEFAULT_REDIRECT_PATH = '/dashboard';
+
+const AUTH_PAGES = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+  '/auth/activate',
+];
+
 /**
- * Determines the redirect path after login
- * Prioritizes query parameter, then defaults to home
+ * Determines the redirect path after authentication
+ * Accepts only same-origin relative paths
  *
- * @param pathname - Current pathname or redirect query param
- * @returns Path to redirect to after login
+ * @param pathname - Current pathname or redirect query parameter
+ * @param defaultPath - Fallback path when candidate is rejected (defaults to /dashboard)
+ * @returns Safe relative path to redirect to
  *
  * @example
  * getRedirectPath('/dashboard') // '/dashboard'
- * getRedirectPath('/auth/login') // '/'
- * getRedirectPath('') // '/'
+ * getRedirectPath('https://evil.com') // '/dashboard'
+ * getRedirectPath('/auth/login') // '/dashboard'
  */
-export function getRedirectPath(pathname: string): string {
-  // Don't redirect back to auth pages
-  const authPages = [
-    '/auth/login',
-    '/auth/register',
-    '/auth/forgot-password',
-    '/auth/reset-password',
-  ];
+export function getRedirectPath(
+  pathname?: string | null,
+  defaultPath: string = DEFAULT_REDIRECT_PATH,
+): string {
+  if (!pathname || typeof pathname !== 'string') {
+    return defaultPath;
+  }
 
-  if (!pathname || authPages.some((page) => pathname.startsWith(page))) {
-    return '/';
+  // Must start with a single '/' and not '//' or '/\'
+  if (!pathname.startsWith('/') || pathname.startsWith('//') || pathname.startsWith('/\\')) {
+    return defaultPath;
+  }
+
+  // Must not contain a scheme
+  const hasScheme =
+    /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(pathname) ||
+    pathname.includes('://') ||
+    pathname.toLowerCase().includes('javascript:') ||
+    pathname.toLowerCase().includes('data:');
+  if (hasScheme) {
+    return defaultPath;
+  }
+
+  // Must not be an auth page
+  const cleanPath = pathname.split('?')[0].split('#')[0];
+  const isAuthPage =
+    cleanPath === '/auth' ||
+    cleanPath.startsWith('/auth/') ||
+    AUTH_PAGES.some((page) => cleanPath === page || cleanPath.startsWith(`${page}/`));
+  if (isAuthPage) {
+    return defaultPath;
   }
 
   return pathname;
@@ -92,37 +125,7 @@ export function getRedirectPath(pathname: string): string {
  * @deprecated Use parseApiError from '@/lib/apiError' for better error handling with i18n support
  */
 export function getErrorMessage(error: unknown): string {
-  if (typeof error === 'string') return error;
-
-  if (error && typeof error === 'object') {
-    // Check for RTK Query error format: { data: { error: { message, code } } }
-    if (
-      'data' in error &&
-      error.data &&
-      typeof error.data === 'object' &&
-      'error' in error.data &&
-      error.data.error &&
-      typeof error.data.error === 'object' &&
-      'message' in error.data.error
-    ) {
-      return String((error.data.error as { message: string }).message);
-    }
-    // Check for standard error message
-    if ('message' in error && typeof error.message === 'string') {
-      return error.message;
-    }
-    // Check for legacy format: { data: { message } }
-    if (
-      'data' in error &&
-      error.data &&
-      typeof error.data === 'object' &&
-      'message' in error.data
-    ) {
-      return String((error.data as { message: string }).message);
-    }
-  }
-
-  return 'An unexpected error occurred';
+  return parseApiError(error).message;
 }
 
 /**
