@@ -13,6 +13,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useRevokeAllOtherSessionsMutation } from '../api/sessionsApi';
 import { toast } from '@/lib/toast';
@@ -71,52 +72,47 @@ export function RevokeAllSessionsButton({
   }
 
   return (
-    <>
-      <Button
-        variant="destructive"
-        size="sm"
-        onClick={() => setOpen(true)}
-        disabled={isLoading}
-        className={className}
-        data-testid="logout-all-sessions-button"
-      >
-        <LogOut className="h-4 w-4 me-2" />
-        {t('logoutAllOther')}
-      </Button>
-
-      {/* Co-located confirmation dialog */}
-      <AlertDialog open={open} onOpenChange={setOpen}>
-        <AlertDialogContent data-testid="revoke-all-confirm-dialog">
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('logoutAllConfirmTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('logoutAllConfirmDescription', { count: otherSessionsCount })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel data-testid="cancel-logout-all">
-              {tCommon('cancel')}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleRevoke}
-              disabled={isLoading}
-              aria-busy={isLoading}
-              data-testid="confirm-logout-all"
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 me-2 motion-safe:animate-spin" aria-hidden="true" />
-                  {t('loggingOut')}
-                </>
-              ) : (
-                t('logoutAll')
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="destructive"
+          size="sm"
+          disabled={isLoading}
+          className={className}
+          data-testid="logout-all-sessions-button"
+        >
+          <LogOut className="h-4 w-4 me-2" />
+          {t('logoutAllOther')}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent data-testid="revoke-all-confirm-dialog">
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t('logoutAllConfirmTitle')}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {t('logoutAllConfirmDescription', { count: otherSessionsCount })}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel data-testid="cancel-logout-all">{tCommon('cancel')}</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleRevoke}
+            disabled={isLoading}
+            aria-busy={isLoading}
+            data-testid="confirm-logout-all"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 me-2 motion-safe:animate-spin" aria-hidden="true" />
+                {t('loggingOut')}
+              </>
+            ) : (
+              t('logoutAll')
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 

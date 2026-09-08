@@ -12,8 +12,8 @@ import { useAppSelector } from '@/store/hooks';
 import { selectUser } from '@/modules/auth/store/authSlice';
 
 /**
- * Dashboard shell: fixed sidebar from `md` up, drawer below it, one header row
- * with the account controls, and the single `main#main` the skip link targets.
+ * Dashboard shell: fixed sidebar from `md` up, drawer below it, a header
+ * with wrapping account controls, and the single `main#main` the skip link targets.
  */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const t = useTranslations('dashboard.shell');
@@ -29,8 +29,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <SidebarPanel />
         </aside>
 
-        <div className="flex min-h-screen flex-1 flex-col md:ms-64">
-          <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border bg-background px-4 md:px-6">
+        <div className="flex min-h-screen min-w-0 flex-1 flex-col md:ms-64">
+          <header className="sticky top-0 z-30 flex min-h-16 flex-wrap items-center gap-2 border-b border-border bg-background px-4 py-2 md:flex-nowrap md:px-6 md:py-0">
             <div className="flex items-center gap-2 md:hidden">
               <MobileNavSheet />
               <SidebarBrand />
