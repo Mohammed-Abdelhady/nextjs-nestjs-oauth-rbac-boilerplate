@@ -1,6 +1,6 @@
 # Audit status
 
-Draft — **NOT READY for release**. Status recorded on 2026-09-08. Functional repairs have passed local verification and bounded independent recheck. Hosted results were pending at the dated pre-push capture in the production report.
+Draft — **NOT READY for release**. Status recorded on 2026-09-08. This pre-push record includes accepted bounded independent rechecks of the functional repairs and the five-path browser/HTTP-contract repair. Subsequent 320px sessions wrapping and dialog focus repairs passed local checks, including 78/78 authenticated browser cases, and bounded independent recheck. New hosted confirmation remains pending.
 
 This ledger preserves all 137 finding IDs, titles, task mappings and dispositions from the 2026-09-03 audit inventory. It records review status, not 137 resolved findings. Historical implementation records do not establish independent closure. Current local verification and release limits are in [Production hardening](production-hardening.md).
 
@@ -11,9 +11,9 @@ This ledger preserves all 137 finding IDs, titles, task mappings and disposition
 | unmapped needs evidence            |       10 | No exact task mapping or sufficient disposition evidence is established.                                                    |
 | verified within named test scope   |        3 | The existing T21 selector, fixture and browser synchronization coverage passed; independent audit closure is still pending. |
 
-CodeQL reported **31 untriaged alerts: 30 high and 1 medium**. This is a reported count, not a validated finding inventory. No alert details were investigated. These alerts and the separate post-PR functional findings do not change the 137-row ledger below.
+The CodeQL PR summary for revision `954b99a319d171d8dd488372fda6f4f530440dce`, observed on 2026-09-08, reported **31 untriaged alerts: 30 high and 1 medium**. This is a reported count, not a validated finding inventory. No alert details were investigated. These alerts and the separate post-PR functional findings do not change the 137-row ledger below.
 
-The security rows remain blocked. Later fixes to persistence, navigation, localization and accessibility do not automatically close similarly named historical findings. Operational finding T30-OP-001 and generated-template finding T30-CLI-002 are separate from these 137 rows; their narrower status is recorded in the production report. The subsequent FR001–FR003 and GR001–GR007 functional repairs and CI-COMB-01 passed local verification and bounded independent recheck. No historical row is closed by association with those repairs.
+The security rows remain blocked. Later fixes to persistence, navigation, localization and accessibility do not automatically close similarly named historical findings. Operational finding T30-OP-001 and generated-template finding T30-CLI-002 are separate from these 137 rows; their narrower status is recorded in the production report. The subsequent FR001–FR003, GR001–GR007, CI-COMB-01 and HFR001/HFR002 repairs passed local verification and bounded independent recheck. The browser layout and SSR probe changes passed scoped independent recheck; hosted confirmation is pending. Subsequent 320px sessions wrapping and dialog focus repairs passed bounded independent recheck; new hosted evidence is pending. No historical row is closed by association with those repairs.
 
 | ID   | Audit title                                             | Task     | Disposition                        |
 | ---- | ------------------------------------------------------- | -------- | ---------------------------------- |
