@@ -69,7 +69,7 @@ The project is currently being refactored from an older Express/React stack to a
 -   **Naming Conventions**:
     -   Classes: PascalCase (e.g., `AppController`, `AuthService`, `UserEntity`)
     -   Methods/Functions: camelCase (e.g., `createUser`, `validateToken`, `findByEmail`)
-    -   Constants: UPPER_SNAKE_CASE (e.g., `API_KEY`, `MAX_LOGIN_ATTEMPTS`, `JWT_EXPIRY`)
+    -   Constants: UPPER_SNAKE_CASE (e.g., `API_KEY`, `MAX_LOGIN_ATTEMPTS`, `SESSION_COOKIE_MAX_AGE`)
     -   Files: kebab-case for modules (e.g., `auth.module.ts`, `user.service.ts`)
     -   DTOs: Suffix with `Dto` (e.g., `CreateUserDto`, `LoginDto`, `UpdateProfileDto`)
     -   Interfaces: Prefix with `I` or suffix with `Interface` (e.g., `IUser`, `JwtPayload`)
@@ -127,12 +127,11 @@ The project is currently being refactored from an older Express/React stack to a
     │   ├── auth.controller.ts
     │   ├── auth.service.ts
     │   ├── guards/
-    │   │   ├── jwt-auth.guard.ts
+    │   │   ├── auth.guard.ts
     │   │   └── roles.guard.ts
-    │   ├── strategies/
-    │   │   ├── jwt.strategy.ts
-    │   │   ├── google.strategy.ts
-    │   │   └── facebook.strategy.ts
+    │   ├── oauth/
+    │   │   ├── oauth.controller.ts
+    │   │   └── strategies/
     │   └── dto/
     │       ├── register.dto.ts
     │       ├── login.dto.ts
@@ -156,7 +155,7 @@ The project is currently being refactored from an older Express/React stack to a
     └── config/
         └── configuration.ts
     ```
--   **Authentication**: JWT-based authentication with Passport strategies
+-   **Authentication**: Cookie sessions (httpOnly `sid`) plus an OAuth provider registry
 -   **Database**: MongoDB with Mongoose ODM, typed schemas
 -   **Error Handling**: Global exception filters with structured error responses
 -   **Configuration**: @nestjs/config with environment validation
@@ -188,8 +187,10 @@ The project is currently being refactored from an older Express/React stack to a
     ├── hooks/
     │   ├── useAuth.ts
     │   └── useLocalStorage.ts
-    ├── context/
-    │   └── AuthContext.tsx
+    ├── store/
+    │   └── authSlice.ts
+    ├── modules/
+    │   └── auth/
     ├── types/
     │   ├── user.ts
     │   └── auth.ts
@@ -206,13 +207,13 @@ The project is currently being refactored from an older Express/React stack to a
     -   Loading and error boundaries
 -   **API Communication**:
     -   Native fetch API with custom wrapper
-    -   Centralized API client in `lib/api/`
-    -   Automatic token injection from auth context
+    -   RTK Query for server state (`authApi`, feature APIs)
+    -   Session cookie sent automatically; no Bearer token injection
     -   Error handling and retry logic
 -   **Authentication Flow**:
-    -   JWT tokens stored in httpOnly cookies (preferred) or localStorage
-    -   AuthContext provides: user, token, isAuthenticated, login, logout, register
-    -   Route protection via middleware or client-side guards
+    -   Session cookies (`sid`) are httpOnly; Redux only stores an `isAuthenticated` hint
+    -   `getCurrentUser` validates the cookie; AuthGuard waits until validation settles
+    -   Route protection via AuthGuard after RTK Query validation
 
 ### Testing Strategy
 
@@ -274,10 +275,10 @@ The project is currently being refactored from an older Express/React stack to a
 ### Authentication Flow
 
 1. **Registration**: User provides email/password → Server sends verification email → User verifies email
-2. **Login**: User provides credentials → Server validates → Returns JWT token
-3. **Social Auth**: User clicks Google/Facebook → OAuth flow → Server creates/updates user → Returns token
-4. **Password Reset**: User requests reset → Server sends reset link → User creates new password
-5. **Protected Routes**: Client includes token in requests → Server validates → Grants/denies access
+2. **Login**: User provides credentials → Server validates → Sets httpOnly session cookie
+3. **Social Auth**: User clicks a provider → Backend OAuth start/callback → Session cookie
+4. **Password Reset**: User requests reset → Server sends a 6-digit code → User creates new password
+5. **Protected Routes**: Browser sends the session cookie → Server validates → Grants/denies access
 
 ### User Roles
 
@@ -331,18 +332,18 @@ POST   /api/auth/facebook
 
 ```
 GET    /api/user/profile
-       Headers: Authorization: Bearer <jwt>
+       Cookie: sid=<session>
        Response: { user: {...} }
        Status: 200 (success), 401 (unauthorized)
 
 PUT    /api/user/profile
-       Headers: Authorization: Bearer <jwt>
+       Cookie: sid=<session>
        Body: { name, ... } (password excluded)
        Response: { user: {...} }
        Status: 200 (success), 401 (unauthorized), 400 (validation)
 
 GET    /api/user/list (Admin only)
-       Headers: Authorization: Bearer <jwt>
+       Cookie: sid=<session>
        Query: ?page=1&limit=10
        Response: { users: [...], total, page, pages }
        Status: 200 (success), 401 (unauthorized), 403 (forbidden)
@@ -371,19 +372,18 @@ GET    /api/user/list (Admin only)
 -   Allow letters, spaces, hyphens, apostrophes
 -   Trim whitespace
 
-#### JWT Token Configuration
+#### Session Configuration
 
--   **Access Token**: Expires in 7 days (configurable via env)
--   **Activation Token**: Expires in 24 hours
--   **Reset Password Token**: Expires in 1 hour
--   **Algorithm**: HS256
--   **Payload**: `{ userId, email, role, iat, exp }`
+-   **Cookie**: httpOnly `sid` (or `__Host-sid` in production)
+-   **Lifetime**: 7 days (configurable via `SESSION_COOKIE_MAX_AGE`)
+-   **Activation**: 6-digit email code, 15 minutes
+-   **Password reset**: 6-digit email code, not a JWT
 
 ### Security Considerations
 
 #### Authentication Security
 
--   JWT tokens with secure secrets (min 32 characters)
+-   Session cookies with `OAUTH_STATE_SECRET` (min 32 characters) for OAuth/passkey state
 -   Password hashing with bcrypt (work factor ≥10)
 -   Email verification required before activation
 -   Rate limiting on authentication endpoints:
@@ -533,7 +533,7 @@ GET    /api/user/list (Admin only)
 
 Ensure all secrets are properly configured:
 
--   Use strong JWT secrets (min 32 characters, random)
+-   Use a strong `OAUTH_STATE_SECRET` (min 32 characters, random)
 -   Configure MONGO_URI with authentication
 -   Set NODE_ENV=production
 -   Configure CLIENT_URL with production domain
@@ -589,7 +589,7 @@ Ensure all secrets are properly configured:
 -   **Log Levels**: error, warn, info, debug
 -   **Never Log**:
     -   Passwords (plain or hashed)
-    -   JWT tokens
+    -   Session cookies
     -   API keys
     -   Sensitive user data (SSN, credit cards)
 -   **Always Log**:
@@ -723,7 +723,7 @@ describe('LoginForm', () => {
 
 ### Adding a New Protected Route
 
-1. **Backend**: Create endpoint with `@UseGuards(JwtAuthGuard)`
+1. **Backend**: Create endpoint behind the global session AuthGuard
 2. **Frontend**: Create page in `app/(protected)/` directory
 3. **Middleware**: Add route protection logic if needed
 4. **Tests**: Write E2E test for the flow
@@ -731,7 +731,7 @@ describe('LoginForm', () => {
 ### Adding a New Authentication Method
 
 1. Create change proposal in `openspec/changes/`
-2. Add Passport strategy in `auth/strategies/`
+2. Add a provider strategy in `auth/oauth/strategies/` (or a passwordless module)
 3. Add controller endpoint in `auth.controller.ts`
 4. Update AuthService with new method
 5. Add DTO for validation
@@ -756,10 +756,10 @@ describe('LoginForm', () => {
 -   Verify MongoDB is running
 -   Check network connectivity
 
-**Issue**: JWT token validation fails
--   Verify JWT_SECRET matches between creation and validation
--   Check token expiration
--   Ensure Authorization header format: `Bearer <token>`
+**Issue**: Session validation fails
+-   Verify the `sid` cookie is sent (`credentials: 'include'`)
+-   Check session expiry
+-   Confirm the cookie was issued on the same origin/path
 
 **Issue**: Email not sending
 -   Verify MAIL_KEY (SendGrid API key)
@@ -774,9 +774,9 @@ describe('LoginForm', () => {
 -   Check protocol (http vs https)
 
 **Issue**: Authentication not persisting
--   Check token storage (cookies/localStorage)
--   Verify AuthContext is properly wrapping app
--   Check token expiration
+-   Check the session cookie (`sid`) and `credentials: 'include'`
+-   Verify AuthProvider / AuthGuard wrap protected routes
+-   Confirm `getCurrentUser` succeeds before treating `isAuthenticated` as truth
 
 **Issue**: Next.js hydration errors
 -   Ensure server and client render same content
@@ -818,8 +818,8 @@ describe('LoginForm', () => {
   name: string,                     // Required, 2-50 characters
   role: 'user' | 'admin',          // Default: 'user'
   isVerified: boolean,              // Email verification status, default: false
-  verificationToken?: string,       // JWT token for email verification
-  resetPasswordToken?: string,      // JWT token for password reset
+  linkedAccounts: { provider, providerId, linkedAt }[],
+  primaryProvider?: string,
   resetPasswordExpires?: Date,      // Expiration for reset token
   googleId?: string,                // Google OAuth ID (indexed)
   facebookId?: string,              // Facebook OAuth ID (indexed)
@@ -854,15 +854,12 @@ MONGO_TEST_URI=mongodb://localhost:27017/authboiler-test  # Test database
 # Frontend URL (for CORS and email links)
 CLIENT_URL=http://localhost:3000            # Frontend application URL
 
-# JWT Secrets (generate with: openssl rand -base64 32)
-JWT_SECRET=your-super-secret-key-min-32-chars           # Main JWT secret
-JWT_ACCOUNT_ACTIVATION=activation-secret-key            # Account activation token
-JWT_RESET_PASSWORD=reset-password-secret-key            # Password reset token
+# Session
+SESSION_COOKIE_NAME=sid
+SESSION_COOKIE_MAX_AGE=604800000
 
-# JWT Expiration
-JWT_EXPIRES_IN=7d                           # Access token expiry (7 days)
-JWT_ACTIVATION_EXPIRES_IN=24h               # Activation token expiry (24 hours)
-JWT_RESET_EXPIRES_IN=1h                     # Reset token expiry (1 hour)
+# OAuth / passkey state signing (generate with: openssl rand -base64 48)
+OAUTH_STATE_SECRET=your-super-secret-oauth-state-key-min-32-chars
 
 # Email Service (SendGrid)
 MAIL_KEY=SG.your-sendgrid-api-key          # SendGrid API key
