@@ -1,0 +1,96 @@
+f3322738be70916431d2230f82f15fab
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MagicLinkController = void 0;
+const common_1 = require("@nestjs/common");
+const swagger_1 = require("@nestjs/swagger");
+const throttler_1 = require("@nestjs/throttler");
+const magic_link_service_1 = require("./magic-link.service");
+const request_magic_link_dto_1 = require("./dto/request-magic-link.dto");
+const verify_magic_link_dto_1 = require("./dto/verify-magic-link.dto");
+const public_decorator_1 = require("../decorators/public.decorator");
+const requires_feature_decorator_1 = require("../decorators/requires-feature.decorator");
+const auth_feature_enum_1 = require("../enums/auth-feature.enum");
+const throttle_1 = require("../../common/constants/throttle");
+/**
+ * Passwordless sign-in routes.
+ *
+ * The mailed link points at the client, which reads the token and posts it
+ * here. There is no GET verify route: a link that signs in on a plain GET is
+ * spent by the first mail scanner that follows it.
+ */
+let MagicLinkController = class MagicLinkController {
+    magicLinkService;
+    constructor(magicLinkService) {
+        this.magicLinkService = magicLinkService;
+    }
+    /**
+     * Request a sign-in link
+     * POST /api/auth/magic-link/request
+     */
+    async request(dto, request) {
+        return this.magicLinkService.request(dto, request);
+    }
+    /**
+     * Spend a sign-in link
+     * POST /api/auth/magic-link/verify
+     */
+    async verify(dto, response) {
+        const result = await this.magicLinkService.verify(dto, response);
+        return response.status(common_1.HttpStatus.OK).json(result);
+    }
+};
+exports.MagicLinkController = MagicLinkController;
+__decorate([
+    (0, public_decorator_1.Public)(),
+    (0, throttler_1.Throttle)(throttle_1.THROTTLE_MAGIC_LINK_REQUEST),
+    (0, common_1.Post)('request'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Request a sign-in link',
+        description: 'Mails a one-time sign-in link. The reply is the same whether or not the ' +
+            'address has an account, and whether or not a link was mailed.',
+    }),
+    (0, swagger_1.ApiBody)({ type: request_magic_link_dto_1.RequestMagicLinkDto }),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [request_magic_link_dto_1.RequestMagicLinkDto, Object]),
+    __metadata("design:returntype", Promise)
+], MagicLinkController.prototype, "request", null);
+__decorate([
+    (0, public_decorator_1.Public)(),
+    (0, throttler_1.Throttle)(throttle_1.THROTTLE_MAGIC_LINK_VERIFY),
+    (0, common_1.Post)('verify'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Sign in with a link token',
+        description: 'Spends the token, sets the session cookie and returns the account. ' +
+            'The token works once; a spent or expired one answers MAGIC_LINK_INVALID.',
+    }),
+    (0, swagger_1.ApiBody)({ type: verify_magic_link_dto_1.VerifyMagicLinkDto }),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [verify_magic_link_dto_1.VerifyMagicLinkDto, Object]),
+    __metadata("design:returntype", Promise)
+], MagicLinkController.prototype, "verify", null);
+exports.MagicLinkController = MagicLinkController = __decorate([
+    (0, swagger_1.ApiTags)('auth'),
+    (0, common_1.Controller)('auth/magic-link'),
+    (0, requires_feature_decorator_1.RequiresFeature)(auth_feature_enum_1.AuthFeature.MAGIC_LINK),
+    __metadata("design:paramtypes", [magic_link_service_1.MagicLinkService])
+], MagicLinkController);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9tYWdpYy1saW5rL21hZ2ljLWxpbmsuY29udHJvbGxlci50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7QUFBQSwyQ0FRd0I7QUFDeEIsNkNBQWlFO0FBQ2pFLGlEQUE2QztBQUU3Qyw2REFBd0Q7QUFDeEQseUVBQW1FO0FBQ25FLHVFQUFpRTtBQUNqRSxxRUFBd0Q7QUFDeEQseUZBQTJFO0FBQzNFLGtFQUF5RDtBQUN6RCw4REFHeUM7QUFFekM7Ozs7OztHQU1HO0FBSUksSUFBTSxtQkFBbUIsR0FBekIsTUFBTSxtQkFBbUI7SUFDRDtJQUE3QixZQUE2QixnQkFBa0M7UUFBbEMscUJBQWdCLEdBQWhCLGdCQUFnQixDQUFrQjtJQUFHLENBQUM7SUFFbkU7OztPQUdHO0lBWUcsQUFBTixLQUFLLENBQUMsT0FBTyxDQUFTLEdBQXdCLEVBQVMsT0FBZ0I7UUFDckUsT0FBTyxJQUFJLENBQUMsZ0JBQWdCLENBQUMsT0FBTyxDQUFDLEdBQUcsRUFBRSxPQUFPLENBQUMsQ0FBQztJQUNyRCxDQUFDO0lBRUQ7OztPQUdHO0lBWUcsQUFBTixLQUFLLENBQUMsTUFBTSxDQUFTLEdBQXVCLEVBQVMsUUFBa0I7UUFDckUsTUFBTSxNQUFNLEdBQUcsTUFBTSxJQUFJLENBQUMsZ0JBQWdCLENBQUMsTUFBTSxDQUFDLEdBQUcsRUFBRSxRQUFRLENBQUMsQ0FBQztRQUNqRSxPQUFPLFFBQVEsQ0FBQyxNQUFNLENBQUMsbUJBQVUsQ0FBQyxFQUFFLENBQUMsQ0FBQyxJQUFJLENBQUMsTUFBTSxDQUFDLENBQUM7SUFDckQsQ0FBQztDQUNGLENBQUE7QUF6Q1ksa0RBQW1CO0FBa0J4QjtJQVhMLElBQUEseUJBQU0sR0FBRTtJQUNSLElBQUEsb0JBQVEsRUFBQyxzQ0FBMkIsQ0FBQztJQUNyQyxJQUFBLGFBQUksRUFBQyxTQUFTLENBQUM7SUFDZixJQUFBLGlCQUFRLEVBQUMsbUJBQVUsQ0FBQyxFQUFFLENBQUM7SUFDdkIsSUFBQSxzQkFBWSxFQUFDO1FBQ1osT0FBTyxFQUFFLHdCQUF3QjtRQUNqQyxXQUFXLEVBQ1QsMEVBQTBFO1lBQzFFLCtEQUErRDtLQUNsRSxDQUFDO0lBQ0QsSUFBQSxpQkFBTyxFQUFDLEVBQUUsSUFBSSxFQUFFLDRDQUFtQixFQUFFLENBQUM7SUFDeEIsV0FBQSxJQUFBLGFBQUksR0FBRSxDQUFBO0lBQTRCLFdBQUEsSUFBQSxZQUFHLEdBQUUsQ0FBQTs7cUNBQTNCLDRDQUFtQjs7a0RBRTdDO0FBaUJLO0lBWEwsSUFBQSx5QkFBTSxHQUFFO0lBQ1IsSUFBQSxvQkFBUSxFQUFDLHFDQUEwQixDQUFDO0lBQ3BDLElBQUEsYUFBSSxFQUFDLFFBQVEsQ0FBQztJQUNkLElBQUEsaUJBQVEsRUFBQyxtQkFBVSxDQUFDLEVBQUUsQ0FBQztJQUN2QixJQUFBLHNCQUFZLEVBQUM7UUFDWixPQUFPLEVBQUUsMkJBQTJCO1FBQ3BDLFdBQVcsRUFDVCxxRUFBcUU7WUFDckUsMEVBQTBFO0tBQzdFLENBQUM7SUFDRCxJQUFBLGlCQUFPLEVBQUMsRUFBRSxJQUFJLEVBQUUsMENBQWtCLEVBQUUsQ0FBQztJQUN4QixXQUFBLElBQUEsYUFBSSxHQUFFLENBQUE7SUFBMkIsV0FBQSxJQUFBLFlBQUcsR0FBRSxDQUFBOztxQ0FBMUIsMENBQWtCOztpREFHM0M7OEJBeENVLG1CQUFtQjtJQUgvQixJQUFBLGlCQUFPLEVBQUMsTUFBTSxDQUFDO0lBQ2YsSUFBQSxtQkFBVSxFQUFDLGlCQUFpQixDQUFDO0lBQzdCLElBQUEsNENBQWUsRUFBQywrQkFBVyxDQUFDLFVBQVUsQ0FBQztxQ0FFUyxxQ0FBZ0I7R0FEcEQsbUJBQW1CLENBeUMvQiIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy9hdXRoL21hZ2ljLWxpbmsvbWFnaWMtbGluay5jb250cm9sbGVyLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7XG4gIEJvZHksXG4gIENvbnRyb2xsZXIsXG4gIEh0dHBDb2RlLFxuICBIdHRwU3RhdHVzLFxuICBQb3N0LFxuICBSZXEsXG4gIFJlcyxcbn0gZnJvbSAnQG5lc3Rqcy9jb21tb24nO1xuaW1wb3J0IHsgQXBpQm9keSwgQXBpT3BlcmF0aW9uLCBBcGlUYWdzIH0gZnJvbSAnQG5lc3Rqcy9zd2FnZ2VyJztcbmltcG9ydCB7IFRocm90dGxlIH0gZnJvbSAnQG5lc3Rqcy90aHJvdHRsZXInO1xuaW1wb3J0IHsgUmVxdWVzdCwgUmVzcG9uc2UgfSBmcm9tICdleHByZXNzJztcbmltcG9ydCB7IE1hZ2ljTGlua1NlcnZpY2UgfSBmcm9tICcuL21hZ2ljLWxpbmsuc2VydmljZSc7XG5pbXBvcnQgeyBSZXF1ZXN0TWFnaWNMaW5rRHRvIH0gZnJvbSAnLi9kdG8vcmVxdWVzdC1tYWdpYy1saW5rLmR0byc7XG5pbXBvcnQgeyBWZXJpZnlNYWdpY0xpbmtEdG8gfSBmcm9tICcuL2R0by92ZXJpZnktbWFnaWMtbGluay5kdG8nO1xuaW1wb3J0IHsgUHVibGljIH0gZnJvbSAnLi4vZGVjb3JhdG9ycy9wdWJsaWMuZGVjb3JhdG9yJztcbmltcG9ydCB7IFJlcXVpcmVzRmVhdHVyZSB9IGZyb20gJy4uL2RlY29yYXRvcnMvcmVxdWlyZXMtZmVhdHVyZS5kZWNvcmF0b3InO1xuaW1wb3J0IHsgQXV0aEZlYXR1cmUgfSBmcm9tICcuLi9lbnVtcy9hdXRoLWZlYXR1cmUuZW51bSc7XG5pbXBvcnQge1xuICBUSFJPVFRMRV9NQUdJQ19MSU5LX1JFUVVFU1QsXG4gIFRIUk9UVExFX01BR0lDX0xJTktfVkVSSUZZLFxufSBmcm9tICcuLi8uLi9jb21tb24vY29uc3RhbnRzL3Rocm90dGxlJztcblxuLyoqXG4gKiBQYXNzd29yZGxlc3Mgc2lnbi1pbiByb3V0ZXMuXG4gKlxuICogVGhlIG1haWxlZCBsaW5rIHBvaW50cyBhdCB0aGUgY2xpZW50LCB3aGljaCByZWFkcyB0aGUgdG9rZW4gYW5kIHBvc3RzIGl0XG4gKiBoZXJlLiBUaGVyZSBpcyBubyBHRVQgdmVyaWZ5IHJvdXRlOiBhIGxpbmsgdGhhdCBzaWducyBpbiBvbiBhIHBsYWluIEdFVCBpc1xuICogc3BlbnQgYnkgdGhlIGZpcnN0IG1haWwgc2Nhbm5lciB0aGF0IGZvbGxvd3MgaXQuXG4gKi9cbkBBcGlUYWdzKCdhdXRoJylcbkBDb250cm9sbGVyKCdhdXRoL21hZ2ljLWxpbmsnKVxuQFJlcXVpcmVzRmVhdHVyZShBdXRoRmVhdHVyZS5NQUdJQ19MSU5LKVxuZXhwb3J0IGNsYXNzIE1hZ2ljTGlua0NvbnRyb2xsZXIge1xuICBjb25zdHJ1Y3Rvcihwcml2YXRlIHJlYWRvbmx5IG1hZ2ljTGlua1NlcnZpY2U6IE1hZ2ljTGlua1NlcnZpY2UpIHt9XG5cbiAgLyoqXG4gICAqIFJlcXVlc3QgYSBzaWduLWluIGxpbmtcbiAgICogUE9TVCAvYXBpL2F1dGgvbWFnaWMtbGluay9yZXF1ZXN0XG4gICAqL1xuICBAUHVibGljKClcbiAgQFRocm90dGxlKFRIUk9UVExFX01BR0lDX0xJTktfUkVRVUVTVClcbiAgQFBvc3QoJ3JlcXVlc3QnKVxuICBASHR0cENvZGUoSHR0cFN0YXR1cy5PSylcbiAgQEFwaU9wZXJhdGlvbih7XG4gICAgc3VtbWFyeTogJ1JlcXVlc3QgYSBzaWduLWluIGxpbmsnLFxuICAgIGRlc2NyaXB0aW9uOlxuICAgICAgJ01haWxzIGEgb25lLXRpbWUgc2lnbi1pbiBsaW5rLiBUaGUgcmVwbHkgaXMgdGhlIHNhbWUgd2hldGhlciBvciBub3QgdGhlICcgK1xuICAgICAgJ2FkZHJlc3MgaGFzIGFuIGFjY291bnQsIGFuZCB3aGV0aGVyIG9yIG5vdCBhIGxpbmsgd2FzIG1haWxlZC4nLFxuICB9KVxuICBAQXBpQm9keSh7IHR5cGU6IFJlcXVlc3RNYWdpY0xpbmtEdG8gfSlcbiAgYXN5bmMgcmVxdWVzdChAQm9keSgpIGR0bzogUmVxdWVzdE1hZ2ljTGlua0R0bywgQFJlcSgpIHJlcXVlc3Q6IFJlcXVlc3QpIHtcbiAgICByZXR1cm4gdGhpcy5tYWdpY0xpbmtTZXJ2aWNlLnJlcXVlc3QoZHRvLCByZXF1ZXN0KTtcbiAgfVxuXG4gIC8qKlxuICAgKiBTcGVuZCBhIHNpZ24taW4gbGlua1xuICAgKiBQT1NUIC9hcGkvYXV0aC9tYWdpYy1saW5rL3ZlcmlmeVxuICAgKi9cbiAgQFB1YmxpYygpXG4gIEBUaHJvdHRsZShUSFJPVFRMRV9NQUdJQ19MSU5LX1ZFUklGWSlcbiAgQFBvc3QoJ3ZlcmlmeScpXG4gIEBIdHRwQ29kZShIdHRwU3RhdHVzLk9LKVxuICBAQXBpT3BlcmF0aW9uKHtcbiAgICBzdW1tYXJ5OiAnU2lnbiBpbiB3aXRoIGEgbGluayB0b2tlbicsXG4gICAgZGVzY3JpcHRpb246XG4gICAgICAnU3BlbmRzIHRoZSB0b2tlbiwgc2V0cyB0aGUgc2Vzc2lvbiBjb29raWUgYW5kIHJldHVybnMgdGhlIGFjY291bnQuICcgK1xuICAgICAgJ1RoZSB0b2tlbiB3b3JrcyBvbmNlOyBhIHNwZW50IG9yIGV4cGlyZWQgb25lIGFuc3dlcnMgTUFHSUNfTElOS19JTlZBTElELicsXG4gIH0pXG4gIEBBcGlCb2R5KHsgdHlwZTogVmVyaWZ5TWFnaWNMaW5rRHRvIH0pXG4gIGFzeW5jIHZlcmlmeShAQm9keSgpIGR0bzogVmVyaWZ5TWFnaWNMaW5rRHRvLCBAUmVzKCkgcmVzcG9uc2U6IFJlc3BvbnNlKSB7XG4gICAgY29uc3QgcmVzdWx0ID0gYXdhaXQgdGhpcy5tYWdpY0xpbmtTZXJ2aWNlLnZlcmlmeShkdG8sIHJlc3BvbnNlKTtcbiAgICByZXR1cm4gcmVzcG9uc2Uuc3RhdHVzKEh0dHBTdGF0dXMuT0spLmpzb24ocmVzdWx0KTtcbiAgfVxufVxuIl0sInZlcnNpb24iOjN9

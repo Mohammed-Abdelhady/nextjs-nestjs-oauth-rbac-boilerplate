@@ -1,0 +1,30 @@
+{
+  "captured_at": "2026-09-08T12:11:54.963085+00:00",
+  "base_head": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+  "candidate": "/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz",
+  "files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "def3d439a41b6b6d0084d251dde2f1ca5a4f1a5013e68b08ed0d62182edcafc7"
+    },
+    {
+      "path": "frontend/e2e/authenticated-regressions.spec.ts",
+      "sha256": "832ae56c4cd905a1d202ca6e975608c59fa02389f7312e0311216e394cb41fd9"
+    },
+    {
+      "path": "scripts/config-transforms.test.mjs",
+      "sha256": "5859fdf7546b21f7d8282517102fca96ac2e340465681ad2a58aaec4461e43f9"
+    },
+    {
+      "path": "scripts/lib/docker-http-probes.mjs",
+      "sha256": "e6c14c80b4ade1ac8657786151e2cfb3c1d4ad30f710e7aaa01c603b1dbcc437"
+    },
+    {
+      "path": "scripts/verify-docker.mjs",
+      "sha256": "e300867e7eea32d617fed0bd6be2c5b5dc7092e1dcc30b01c4e3b1ff8055bda0"
+    }
+  ],
+  "fingerprint": "822ea784c2549dd6fa229f2e7d5d1dd0926b9564065472cb4f15ab823e99c195",
+  "fingerprint_format": "sha256 of sorted path TAB sha256 NEWLINE",
+  "source_frozen": true
+}

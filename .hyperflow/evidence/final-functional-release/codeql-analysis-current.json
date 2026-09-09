@@ -1,0 +1,84 @@
+{
+  "conclusion": "success",
+  "databaseId": 34232151876,
+  "headSha": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+  "jobs": [
+    {
+      "completedAt": "2026-09-08T13:29:32Z",
+      "conclusion": "success",
+      "databaseId": 102080703300,
+      "name": "analyze",
+      "startedAt": "2026-09-08T13:28:16Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-09-08T13:28:18Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-09-08T13:28:17Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-08T13:28:19Z",
+          "conclusion": "success",
+          "name": "Checkout repository",
+          "number": 2,
+          "startedAt": "2026-09-08T13:28:18Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-08T13:28:29Z",
+          "conclusion": "success",
+          "name": "Initialize CodeQL",
+          "number": 3,
+          "startedAt": "2026-09-08T13:28:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-08T13:29:30Z",
+          "conclusion": "success",
+          "name": "Perform CodeQL Analysis",
+          "number": 4,
+          "startedAt": "2026-09-08T13:28:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-08T13:29:30Z",
+          "conclusion": "success",
+          "name": "Post Perform CodeQL Analysis",
+          "number": 6,
+          "startedAt": "2026-09-08T13:29:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-08T13:29:31Z",
+          "conclusion": "success",
+          "name": "Post Initialize CodeQL",
+          "number": 7,
+          "startedAt": "2026-09-08T13:29:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-08T13:29:31Z",
+          "conclusion": "success",
+          "name": "Post Checkout repository",
+          "number": 8,
+          "startedAt": "2026-09-08T13:29:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-08T13:29:31Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 9,
+          "startedAt": "2026-09-08T13:29:31Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34232151876/job/102080703300"
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34232151876"
+}

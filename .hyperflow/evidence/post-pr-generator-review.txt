@@ -1,0 +1,59 @@
+**NEEDS_FIX — ordinary generator and operations review of PR #72.**
+
+Verified candidate `/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz`:
+
+- Head: `3e84f52312196c03aaefc109ceca05c71bebc712`
+- Base/merge-base: `f1d2282d70cf728567fa9877e15176f0ff3705c8`
+- Working tree clean before and after review.
+
+The findings below are supported by source inspection. Docker, HTTP and generated API runtime outcomes remain **needs-evidence**; no blocked runtime checks were retried.
+
+1. **GR001 · P1 — Shared environment changes the frontend listener to 5000.**  
+   **Location:** `docker-compose.yml:71–80`; `docker-compose.prod.yml:78–86`.  
+   **Trigger:** Use the supplied Docker example or production helper output, both containing `PORT=5000`. Frontend services inherit that variable without overriding it. Installed Next source uses `PORT` for both development and standalone listeners, while mappings, health checks and nginx expect 3000.  
+   **Impact:** Source configuration directs traffic and health checks to the wrong port. The smoke fixture masks this mismatch by replacing frontend environment with `PORT=3000` at `scripts/verify-docker.mjs:165`.  
+   **Repair/verification:** Explicitly set the frontend listener port in both Compose files. Add a configuration assertion using the supplied synthetic/example environment; ensure the existing smoke check preserves this actual configuration contract. Runtime confirmation remains needs-evidence.
+
+2. **GR002 · P2 — Printed scaffold startup command omits the interpolation environment.**  
+   **Location:** `packages/create-nest-next-auth/src/scaffold/next-steps.ts:13–15`.  
+   **Trigger:** Follow generated instructions in a fresh shell: create `.env.docker`, then run `docker compose up -d`. Compose requires interpolated `MONGO_USERNAME` and `MONGO_PASSWORD` at `docker-compose.yml:12–13`; service `env_file` does not supply these interpolation values.  
+   **Expected/actual:** Startup should consume the copied file; the printed command does not select it. Root `README.md:75` already documents the correct `--env-file .env.docker` form.  
+   **Repair/verification:** Align printed instructions with that command and assert the exact next-step output. Existing non-starting Compose configuration validation with synthetic values can confirm resolution when permitted; runtime execution remains needs-evidence.
+
+3. **GR003 · P1 — Production nginx helper no longer matches the supplied configuration.**  
+   **Location:** `scripts/setup-production.js:298–300,431–434`.  
+   **Trigger:** Generate production configuration using the current nginx files. The helper inserts an API listener on 443, but production publishes host 443 to container 8443 (`docker-compose.prod.yml:109`). Its frontend-domain replacement also requires `# HTTPS server`, which neither current nginx configuration contains.  
+   **Expected/actual:** Generated virtual hosts should use the published listener and configured domains; the API block uses an unpublished port and frontend `server_name` remains unchanged.  
+   **Repair/verification:** Update listener generation and domain targeting to the current configuration structure. Test the transformation against both current nginx fixtures, including a repeated invocation. Live routing remains needs-evidence.
+
+4. **GR004 · P2 — Initialization changes the backend port but leaves its health check behind.**  
+   **Location:** `scripts/init.js:264–283`.  
+   **Trigger:** Initialize with backend port 5001—the helper’s default—or another non-5000 port. The helper updates mappings, exposure and `PORT`, but its health-check replacement only matches `/api/health`. Both current Compose files use `/health`.  
+   **Expected/actual:** Health checks should follow the chosen listener; they retain port 5000.  
+   **Impact:** The generated configuration checks a different port, potentially preventing dependent production services from starting.  
+   **Repair/verification:** Match the current health endpoint and verify default/custom-port transformations across both Compose fixtures. Container health confirmation remains needs-evidence.
+
+5. **GR005 · P2 — Partial OAuth generation retains an all-provider API expectation.**  
+   **Location:** `backend/test/constants/oauth-boot-env.ts:46–58`; `backend/test/app.boot.e2e-spec.ts:102–117`.  
+   **Trigger:** Generate with `email-password,google`. The manifest removes other provider implementations, but the retained fixture still lists all twelve provider IDs. Its assertion requires every listed ID.  
+   **Expected/actual:** Retained tests should expect selected providers; the fixture requires removed providers. The reported combination gate typechecks generated projects but does not execute this API suite.  
+   **Repair/verification:** Make fixture expectations follow provider selection while preserving full-template coverage. Add a generated Google-only fixture assertion. API execution remains needs-evidence; this finding concerns fixture compatibility, not authentication implementation.
+
+6. **GR006 · P2 — Manual startup documentation invokes a missing root script.**  
+   **Location:** `README.md:80–82`; `package.json:12–22`.  
+   **Trigger:** Run the documented root `npm run dev`.  
+   **Expected/actual:** Documentation promises concurrent startup; root `package.json` defines no `dev` script.  
+   **Repair/verification:** Remove or correct that instruction using existing workspace commands. Verify every documented startup script against the corresponding manifest. The missing-script contract is directly demonstrated by source.
+
+7. **GR007 · P3 — Every generated README retains a missing documentation link.**  
+   **Location:** `README.md:36`; `packages/create-nest-next-auth/scripts/sync-template.mjs:37–44`.  
+   **Trigger:** Open CLI documentation through a generated project’s README. The link targets `./packages/create-nest-next-auth/README.md`, while template synchronization excludes the entire `packages` directory. Documentation pruning leaves this paragraph intact.  
+   **Repair/verification:** Use a stable repository documentation URL or include an appropriate consumer document. Check relative-link targets in default and pruned generated trees.
+
+Coverage included CLI selection/scaffolding, manifest ownership, marker parsing, template filters, compiled availability, retained fixture imports, test configuration, generated CI guards, package and hook commands, Docker/nginx helpers, documentation contracts, and ordinary DTO mapping. Parser review covered nesting, malformed and unmatched markers, CRLF preservation, and validation inside removed blocks. Its stack bookkeeping is linear with nesting-depth storage; template work includes repeated file scans and file-by-pattern matching. No measured performance improvement or exhaustive correctness claim is supported.
+
+**Prior repairs:** OP001’s frontend fixture availability and CLI002’s optional helper-import guards are present in this head and pass source reinspection. The curated report records 99 CLI tests and nine combination checks passing; I did not rerun package commands. Those results do not cover GR005’s retained API assertion.
+
+Authentication/security/policy implementation, paused security candidates, admin-status operations, security audit rows and frontend UI were excluded. Docker/socket and helper HTTP runtime checks remain blocked. No files were changed.
+
+Return GR001–GR007 to root for validation and owner repair. Independent recheck is required before closing accepted findings; this review does not authorize release.

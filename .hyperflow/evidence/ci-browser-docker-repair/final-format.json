@@ -1,0 +1,15 @@
+{
+  "name": "final-format",
+  "command": [
+    "node",
+    "node_modules/prettier/bin/prettier.cjs",
+    "--check",
+    "scripts/verify-docker.mjs",
+    "scripts/lib/docker-http-probes.mjs",
+    "scripts/config-transforms.test.mjs",
+    "frontend/e2e/authenticated-regressions.spec.ts",
+    ".github/workflows/ci.yml"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.19
+}

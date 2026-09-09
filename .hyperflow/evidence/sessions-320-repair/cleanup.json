@@ -1,0 +1,17 @@
+{
+  "captured_at": "2026-09-08T13:18:39.903089+00:00",
+  "ports": {
+    "3107": "free",
+    "5107": "free",
+    "5108": "free"
+  },
+  "command_sessions_closed": [
+    35465,
+    89829,
+    88463,
+    98860
+  ],
+  "browser_fixture_teardown": "completed without teardown error; backend fixture awaits owned child exit; Playwright owns frontend process",
+  "candidate_and_node22_retained": true,
+  "commits_or_pushes": false
+}

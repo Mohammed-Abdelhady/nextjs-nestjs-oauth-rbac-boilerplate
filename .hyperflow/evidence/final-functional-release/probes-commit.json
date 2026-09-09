@@ -1,0 +1,10 @@
+{
+  "exit": 0,
+  "seconds": 0.69,
+  "head": "bc256e03276726fd9e7043e27d83229c01959df4",
+  "paths": [
+    "scripts/config-transforms.test.mjs",
+    "scripts/lib/docker-http-probes.mjs"
+  ],
+  "hook_formatting": []
+}

@@ -4,10 +4,12 @@ import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from '../schemas/user.schema';
 import { Role, RoleDocument } from '../../role/schemas/role.schema';
+// feature:passkeys:start
 import {
   Passkey,
   PasskeyDocument,
 } from '../../auth/passkeys/schemas/passkey.schema';
+// feature:passkeys:end
 import { SessionService } from '../../auth/services/session.service';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
@@ -36,8 +38,10 @@ export class UserProfileService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @InjectModel(Role.name) private readonly roleModel: Model<RoleDocument>,
+    // feature:passkeys:start
     @InjectModel(Passkey.name)
     private readonly passkeyModel: Model<PasskeyDocument>,
+    // feature:passkeys:end
     private readonly sessionService: SessionService,
   ) {}
 
@@ -190,9 +194,11 @@ export class UserProfileService {
       user,
       this.roleModel,
     );
+    // feature:passkeys:start
     const passkeyCount = await this.passkeyModel.countDocuments({
       user: user._id,
     });
+    // feature:passkeys:end
 
     return {
       id: user._id.toString(),
@@ -202,8 +208,8 @@ export class UserProfileService {
       permissions: effectivePermissions,
       authProvider: user.authProvider,
       isVerified: user.isVerified,
-      twoFactorEnabled: user.twoFactor?.enabled === true,
-      passkeyCount,
+      twoFactorEnabled: user.twoFactor?.enabled === true, // feature:totp
+      passkeyCount, // feature:passkeys
       avatarUrl: user.avatarUrl,
       linkedProviders: user.linkedProviders,
       primaryProvider: user.primaryProvider,

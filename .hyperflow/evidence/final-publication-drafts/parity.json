@@ -1,0 +1,25 @@
+{
+  "captured_at": "2026-09-08T13:22:31.148796+00:00",
+  "boundary": "pre-push; five-path independent review accepted, sessions 320px independent review pending, new hosted confirmation pending",
+  "ledger_rows": 137,
+  "unique_ids": 137,
+  "exact_row_parity": true,
+  "parity_reference": "candidate published audit ledger",
+  "dispositions": {
+    "blocked by existing review control": 22,
+    "needs independent re-review": 102,
+    "unmapped needs evidence": 10,
+    "verified within named test scope": 3
+  },
+  "cross_links_resolve_in_drafts": true,
+  "pr_link_placeholders": 2,
+  "publication_condition": "Replace both FINAL_PUSHED_REVISION placeholders only at authorized release with actual final pushed revision; update pending results only from accepted evidence.",
+  "candidate_written": false,
+  "candidate_frozen_hashes_unchanged": true,
+  "candidate_aggregate_fingerprint": "b16a0fc5a6f122c475ba761629d0aa4fa475255889305eb40a92774d73b3d620",
+  "drafts": {
+    "production-hardening.md": "8305b40909dc00158195ac871e640e116f87dd21b0b0d5d5b43c5225b95f8c40",
+    "audit-status.md": "860f69ea9bc9789cfade503d7e845005936a70b191b51ab8a05ca4c5a45a425a",
+    "pr-body.md": "3c0e270e810db017f75a707406c14f6c23f6d40f935b040fb9842940932dec8f"
+  }
+}

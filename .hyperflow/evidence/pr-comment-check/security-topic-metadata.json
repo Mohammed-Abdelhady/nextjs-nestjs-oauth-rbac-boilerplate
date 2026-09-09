@@ -1,0 +1,23 @@
+[
+  {
+    "id": 3957131041,
+    "url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131041",
+    "path": "scripts/setup-production.js",
+    "category": "Production-setup command execution concern",
+    "disposition": "EXCLUDED after body-level classification; no source validation, reproduction or remediation"
+  },
+  {
+    "id": 3957131052,
+    "url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131052",
+    "path": "scripts/init.js",
+    "category": "Generated secret-file permissions concern",
+    "disposition": "EXCLUDED after body-level classification; no source validation, reproduction or remediation"
+  },
+  {
+    "id": 3957131055,
+    "url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131055",
+    "path": "frontend/package.json",
+    "category": "Dependency security-advisory concern",
+    "disposition": "EXCLUDED after body-level classification; no source validation, reproduction or remediation"
+  }
+]

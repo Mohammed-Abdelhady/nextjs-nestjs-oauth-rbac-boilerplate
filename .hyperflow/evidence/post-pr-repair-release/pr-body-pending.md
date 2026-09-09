@@ -1,0 +1,9 @@
+This draft hardens the authentication template and adds disposable API/browser fixtures for generated projects and application journeys. It covers authentication feature pruning, English/Arabic lifecycle and accessibility regressions, role pagination/filtering, current API contracts, and CI/Compose/nginx configuration.
+
+Independent rechecks accepted FR001–FR003, GR001–GR007 and CI-COMB-01 within their bounded criteria. Hosted confirmation of the runner, browser-synchronization and Docker-health repairs is pending for commit `fc19e55e4f2ae1978c19178e1078c76b47acfa2d`.
+
+Local Node 22.18.0 gates pass: lint, types, production build; 708 backend, 123 frontend, 107 CLI and 18 configuration tests; 72 API cases; 116 browser cases; nine generated-combination assertions. All browser cases executed without skips or retries. The preceding fresh `npm ci` preserved the lockfile. Generated projects retain product units and functional API tests; the browser harness is maintainer-only. Authenticated fixtures use actual per-case login after database resets.
+
+**NOT READY for release.** Security review remains blocked. The recorded CodeQL inventory contains 31 untriaged alerts (30 high, 1 medium); no alert details were investigated. Docker/TLS runtime and live provider/mail/hardware behavior remain outside verified local scope. No package publication, merge or deployment occurred.
+
+See the [verification report](https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/blob/fc19e55e4f2ae1978c19178e1078c76b47acfa2d/.hyperflow/reports/production-hardening.md) and [137-finding audit ledger](https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/blob/fc19e55e4f2ae1978c19178e1078c76b47acfa2d/.hyperflow/reports/audit-status.md). The ledger preserves unresolved and blocked dispositions; it does not claim 137 findings closed.

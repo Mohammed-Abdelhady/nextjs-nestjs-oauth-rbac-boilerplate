@@ -1,0 +1,57 @@
+{
+  "capturedAt": "2026-09-08T08:35:55.504Z",
+  "baseRevision": "68cefb61f450b94c195a8d6cf325ac5e26c15349",
+  "files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "c0e8121c3dab5daa2084fc3b03e3317091a9e9102d05a52cbee218dd66f00a91"
+    },
+    {
+      "path": ".dockerignore",
+      "sha256": "f7737b0371c9c43bab5a593e0b602bac5a2caa7594fe6e96b94fc4183bfdfeb6"
+    },
+    {
+      "path": "nginx/.dockerignore",
+      "sha256": "63d96f409343b309868e853db096d4f0741997f1503c37db045d1b82c79d5bf5"
+    },
+    {
+      "path": "nginx/nginx.conf",
+      "sha256": "5f7b28c9c9fd6ff5a9af6bc326225e28b9e34061f16fc3276bdc9e3baf7d7beb"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "06f42527ce2a2b9dceecca5a824d13acc790f9cbacab118669d17d506856e844"
+    },
+    {
+      "path": "scripts/verify-docker.mjs",
+      "sha256": "4abf2cc9fdf3cee8ba2e0131d31b5535e45b210bb444a1d8cc126a3e98703324"
+    },
+    {
+      "path": "packages/create-nest-next-auth/scripts/sync-template.mjs",
+      "sha256": "e1c621e0000ac2838e6cb92ffb03d0d8ef6633b892beeab73f615838eda43d5b"
+    },
+    {
+      "path": "packages/create-nest-next-auth/test/e2e.test.ts",
+      "sha256": "e77d47178e1e040e545561b97664d9c64dcd2ea9be31479db834aa99ab507a8a"
+    }
+  ],
+  "captureHash": "dba214cd37aff1a42453d05497f91c73ea04be2ef7c0e92db4c84183be6e4ac2",
+  "changedOperationalPaths": [
+    ".dockerignore"
+  ],
+  "regressions": [
+    {
+      "path": ".hyperflow/evidence/t30-operational/lightweight-checks.mjs",
+      "sha256": "659acfbd3c235838a497a3f2460d0362c353e33dbfb57ae24baa840492226658"
+    },
+    {
+      "path": ".hyperflow/evidence/t30-operational-repair/filtered-context-check.mjs",
+      "sha256": "85d0c48a20f70f576d7ba8d7b88df9f59536b806f090ca67a75d9754d757ff4a"
+    },
+    {
+      "path": ".hyperflow/evidence/t30-operational-repair/http-probe-checks.mjs",
+      "sha256": "271f78be71b9286f9ae1f31442f2ee057b28f40cbe69dcee22fb0db763849196"
+    }
+  ],
+  "sourceWritesStopped": true
+}

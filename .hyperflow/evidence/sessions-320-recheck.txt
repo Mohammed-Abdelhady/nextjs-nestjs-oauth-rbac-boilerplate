@@ -1,0 +1,19 @@
+**SESSIONS-320-LAYOUT — CLOSED.** The action group now wraps at [sessions/page.tsx:56](/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz/frontend/src/app/[locale]/(dashboard)/sessions/page.tsx:56), preserving labels, styles and controls. Both 320px journeys pass strict document-width, button bounds/content, keyboard-order and touch-access assertions. I inspected all four screenshots: complete labels fit, and the one-session state omits revoke-all.
+
+The accepted pre-repair capture recorded document widths of 353px English and 371px Arabic. Current assertions establish widths ≤320px; no new numeric geometry JSON was emitted. This demonstrates repair relative to that accepted capture, without establishing a matched runtime comparison against committed HEAD.
+
+**SESSIONS-320-FOCUS — CLOSED.** [RevokeAllSessionsButton.tsx:75](/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz/frontend/src/modules/sessions/components/RevokeAllSessionsButton.tsx:75) connects the existing ref-forwarding button through `AlertDialogTrigger asChild`. Controlled state, mutation and error handling remain unchanged. The initial evidence records both cancel-focus failures; final tests pass cancel and Escape restoration while the trigger exists.
+
+The journeys also verify refresh preserves both identities, cancellation preserves state, and confirmation leaves the original current session while removing the other and its revoke-all trigger. No assertion demands focus on that removed trigger.
+
+**Verification:** Owner reports confirm authenticated **78/78**, zero skipped/flaky/errors; frontend **123/123**; build/lint/types/format/diff passing. Wider en/ar 385/390/1280 cases pass. The earlier spec is an exact unchanged prefix; all four other accepted source hashes match. Both patches reconstruct their declared baselines.
+
+HEAD and both fingerprints matched before/after:
+
+- HEAD: `954b99a319d171d8dd488372fda6f4f530440dce`
+- Three-path: `32940748ef11983edd7ea5f3110e6ac7792a6ba4611a3566a2cd927a42c09d3f`
+- Seven-path: `b16a0fc5a6f122c475ba761629d0aa4fa475255889305eb40a92774d73b3d620`
+
+No new actionable defect found. The repair adds constant control overhead without new state, listeners or network operations. Coverage uses bounded synthetic sessions, not exhaustive content or mutation-failure cases.
+
+I ran no tests and made no writes. Prior scoped acceptances remain intact; hosted Docker closure remains pending. No broader readiness or release approval is implied.

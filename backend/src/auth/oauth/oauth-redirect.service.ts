@@ -7,7 +7,7 @@ import {
   OAUTH_CLIENT_CALLBACK_PATH,
   OAUTH_DEFAULT_REDIRECT,
 } from './oauth.constants';
-import { TWO_FACTOR_CLIENT_PATH } from '../two-factor/constants/two-factor.constants';
+import { TWO_FACTOR_CLIENT_PATH } from '../../common/constants/client-paths';
 
 /**
  * Builds the 302 responses that hand control back to the client application.

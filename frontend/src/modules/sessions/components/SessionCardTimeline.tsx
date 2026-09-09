@@ -96,7 +96,10 @@ export const SessionCardTimeline = memo(
                   </span>
                   {session.isCurrent && <CurrentSessionBadge pulse />}
                 </h3>
-                <p className="text-xs text-tertiary mt-0.5" data-testid="session-browser-os">
+                <p
+                  className="text-xs text-muted-foreground mt-0.5"
+                  data-testid="session-browser-os"
+                >
                   {browser} · {os}
                 </p>
               </div>
@@ -123,7 +126,7 @@ export const SessionCardTimeline = memo(
           </header>
 
           {/* Session Metadata */}
-          <div className="space-y-1 text-xs text-tertiary">
+          <div className="space-y-1 text-xs text-muted-foreground">
             <div className="flex items-center gap-2" data-testid="session-ip-row">
               <MapPin className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
               <span data-testid="session-ip">{session.ip}</span>

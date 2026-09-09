@@ -1,0 +1,21 @@
+{
+  "captured_at": "2026-09-08T13:36:57.617034+00:00",
+  "head": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+  "remote_and_pr_match": true,
+  "candidate_clean": true,
+  "pr_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72",
+  "pr_state": "OPEN/DRAFT",
+  "ci_run": 34232151880,
+  "functional_ci": "SUCCESS",
+  "codeql_analysis": "SUCCESS",
+  "codeql_pr_gate": "FAILURE",
+  "untriaged_summary_counts": {
+    "high": 30,
+    "medium": 1
+  },
+  "source_preserved": 847,
+  "no_merge_deploy_publication": true,
+  "fallback_scope": "codex-only",
+  "release_readiness": "NOT READY; security review blocked and CodeQL gate unresolved",
+  "ownership_released": true
+}

@@ -1,0 +1,606 @@
+[
+  {
+    "viewport": 1280,
+    "document": 1280,
+    "dir": "rtl",
+    "nodes": [
+      {
+        "tag": "DIV",
+        "id": null,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 844,
+          "top": 0,
+          "right": 1024,
+          "bottom": 844,
+          "left": 0
+        },
+        "minWidth": "0px",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "HEADER",
+        "id": null,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 64,
+          "top": 0,
+          "right": 1024,
+          "bottom": 64,
+          "left": 0
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "DIV",
+        "id": null,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "minWidth": "0px",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "DIV",
+        "id": "dashboard-account-controls",
+        "rect": {
+          "x": 24,
+          "y": 11.5,
+          "width": 487.984375,
+          "height": 40,
+          "top": 11.5,
+          "right": 511.984375,
+          "bottom": 51.5,
+          "left": 24
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "A",
+        "id": "skip-to-content-link",
+        "rect": {
+          "x": 1276,
+          "y": 3,
+          "width": 1,
+          "height": 1,
+          "top": 3,
+          "right": 1277,
+          "bottom": 4,
+          "left": 1276
+        },
+        "minWidth": "0px",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "DIV",
+        "id": "sessions-page",
+        "rect": {
+          "x": 128,
+          "y": 64,
+          "width": 896,
+          "height": 546.75,
+          "top": 64,
+          "right": 1024,
+          "bottom": 610.75,
+          "left": 128
+        },
+        "minWidth": "0px",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "DIV",
+        "id": null,
+        "rect": {
+          "x": 144,
+          "y": 139.375,
+          "width": 355.390625,
+          "height": 36,
+          "top": 139.375,
+          "right": 499.390625,
+          "bottom": 175.375,
+          "left": 144
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "BUTTON",
+        "id": "refresh-sessions-button",
+        "rect": {
+          "x": 401.625,
+          "y": 139.375,
+          "width": 97.765625,
+          "height": 36,
+          "top": 139.375,
+          "right": 499.390625,
+          "bottom": 175.375,
+          "left": 401.625
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "BUTTON",
+        "id": "logout-all-sessions-button",
+        "rect": {
+          "x": 144,
+          "y": 139.375,
+          "width": 249.625,
+          "height": 36,
+          "top": 139.375,
+          "right": 393.625,
+          "bottom": 175.375,
+          "left": 144
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      }
+    ]
+  },
+  {
+    "viewport": 390,
+    "document": 390,
+    "dir": "rtl",
+    "nodes": [
+      {
+        "tag": "DIV",
+        "id": null,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        },
+        "minWidth": "0px",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "HEADER",
+        "id": null,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 105,
+          "top": 0,
+          "right": 390,
+          "bottom": 105,
+          "left": 0
+        },
+        "minWidth": "auto",
+        "flexWrap": "wrap"
+      },
+      {
+        "tag": "DIV",
+        "id": null,
+        "rect": {
+          "x": 238.25,
+          "y": 8,
+          "width": 135.75,
+          "height": 40,
+          "top": 8,
+          "right": 374,
+          "bottom": 48,
+          "left": 238.25
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "DIV",
+        "id": "dashboard-account-controls",
+        "rect": {
+          "x": 16,
+          "y": 56,
+          "width": 234.53125,
+          "height": 40,
+          "top": 56,
+          "right": 250.53125,
+          "bottom": 96,
+          "left": 16
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "A",
+        "id": "skip-to-content-link",
+        "rect": {
+          "x": 386,
+          "y": 3,
+          "width": 1,
+          "height": 1,
+          "top": 3,
+          "right": 387,
+          "bottom": 4,
+          "left": 386
+        },
+        "minWidth": "0px",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "DIV",
+        "id": "sessions-page",
+        "rect": {
+          "x": 0,
+          "y": 105,
+          "width": 390,
+          "height": 618.75,
+          "top": 105,
+          "right": 390,
+          "bottom": 723.75,
+          "left": 0
+        },
+        "minWidth": "0px",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "DIV",
+        "id": null,
+        "rect": {
+          "x": 18.609375,
+          "y": 243.75,
+          "width": 355.390625,
+          "height": 36,
+          "top": 243.75,
+          "right": 374,
+          "bottom": 279.75,
+          "left": 18.609375
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "BUTTON",
+        "id": "refresh-sessions-button",
+        "rect": {
+          "x": 276.234375,
+          "y": 243.75,
+          "width": 97.765625,
+          "height": 36,
+          "top": 243.75,
+          "right": 374,
+          "bottom": 279.75,
+          "left": 276.234375
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "BUTTON",
+        "id": "logout-all-sessions-button",
+        "rect": {
+          "x": 18.609375,
+          "y": 243.75,
+          "width": 249.625,
+          "height": 36,
+          "top": 243.75,
+          "right": 268.234375,
+          "bottom": 279.75,
+          "left": 18.609375
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      }
+    ]
+  },
+  {
+    "viewport": 385,
+    "document": 385,
+    "dir": "rtl",
+    "nodes": [
+      {
+        "tag": "DIV",
+        "id": null,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 385,
+          "height": 844,
+          "top": 0,
+          "right": 385,
+          "bottom": 844,
+          "left": 0
+        },
+        "minWidth": "0px",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "HEADER",
+        "id": null,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 385,
+          "height": 105,
+          "top": 0,
+          "right": 385,
+          "bottom": 105,
+          "left": 0
+        },
+        "minWidth": "auto",
+        "flexWrap": "wrap"
+      },
+      {
+        "tag": "DIV",
+        "id": null,
+        "rect": {
+          "x": 233.25,
+          "y": 8,
+          "width": 135.75,
+          "height": 40,
+          "top": 8,
+          "right": 369,
+          "bottom": 48,
+          "left": 233.25
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "DIV",
+        "id": "dashboard-account-controls",
+        "rect": {
+          "x": 16,
+          "y": 56,
+          "width": 234.53125,
+          "height": 40,
+          "top": 56,
+          "right": 250.53125,
+          "bottom": 96,
+          "left": 16
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "A",
+        "id": "skip-to-content-link",
+        "rect": {
+          "x": 381,
+          "y": 3,
+          "width": 1,
+          "height": 1,
+          "top": 3,
+          "right": 382,
+          "bottom": 4,
+          "left": 381
+        },
+        "minWidth": "0px",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "DIV",
+        "id": "sessions-page",
+        "rect": {
+          "x": 0,
+          "y": 105,
+          "width": 385,
+          "height": 618.75,
+          "top": 105,
+          "right": 385,
+          "bottom": 723.75,
+          "left": 0
+        },
+        "minWidth": "0px",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "DIV",
+        "id": null,
+        "rect": {
+          "x": 13.609375,
+          "y": 243.75,
+          "width": 355.390625,
+          "height": 36,
+          "top": 243.75,
+          "right": 369,
+          "bottom": 279.75,
+          "left": 13.609375
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "BUTTON",
+        "id": "refresh-sessions-button",
+        "rect": {
+          "x": 271.234375,
+          "y": 243.75,
+          "width": 97.765625,
+          "height": 36,
+          "top": 243.75,
+          "right": 369,
+          "bottom": 279.75,
+          "left": 271.234375
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "BUTTON",
+        "id": "logout-all-sessions-button",
+        "rect": {
+          "x": 13.609375,
+          "y": 243.75,
+          "width": 249.625,
+          "height": 36,
+          "top": 243.75,
+          "right": 263.234375,
+          "bottom": 279.75,
+          "left": 13.609375
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      }
+    ]
+  },
+  {
+    "viewport": 320,
+    "document": 371,
+    "dir": "rtl",
+    "nodes": [
+      {
+        "tag": "DIV",
+        "id": null,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 320,
+          "height": 844,
+          "top": 0,
+          "right": 320,
+          "bottom": 844,
+          "left": 0
+        },
+        "minWidth": "0px",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "HEADER",
+        "id": null,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 320,
+          "height": 105,
+          "top": 0,
+          "right": 320,
+          "bottom": 105,
+          "left": 0
+        },
+        "minWidth": "auto",
+        "flexWrap": "wrap"
+      },
+      {
+        "tag": "DIV",
+        "id": null,
+        "rect": {
+          "x": 168.25,
+          "y": 8,
+          "width": 135.75,
+          "height": 40,
+          "top": 8,
+          "right": 304,
+          "bottom": 48,
+          "left": 168.25
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "DIV",
+        "id": "dashboard-account-controls",
+        "rect": {
+          "x": 16,
+          "y": 56,
+          "width": 234.53125,
+          "height": 40,
+          "top": 56,
+          "right": 250.53125,
+          "bottom": 96,
+          "left": 16
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "A",
+        "id": "skip-to-content-link",
+        "rect": {
+          "x": 316,
+          "y": 3,
+          "width": 1,
+          "height": 1,
+          "top": 3,
+          "right": 317,
+          "bottom": 4,
+          "left": 316
+        },
+        "minWidth": "0px",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "DIV",
+        "id": "sessions-page",
+        "rect": {
+          "x": 0,
+          "y": 105,
+          "width": 320,
+          "height": 654.75,
+          "top": 105,
+          "right": 320,
+          "bottom": 759.75,
+          "left": 0
+        },
+        "minWidth": "0px",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "DIV",
+        "id": null,
+        "rect": {
+          "x": -51.390625,
+          "y": 243.75,
+          "width": 355.390625,
+          "height": 36,
+          "top": 243.75,
+          "right": 304,
+          "bottom": 279.75,
+          "left": -51.390625
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "BUTTON",
+        "id": "refresh-sessions-button",
+        "rect": {
+          "x": 206.234375,
+          "y": 243.75,
+          "width": 97.765625,
+          "height": 36,
+          "top": 243.75,
+          "right": 304,
+          "bottom": 279.75,
+          "left": 206.234375
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      },
+      {
+        "tag": "BUTTON",
+        "id": "logout-all-sessions-button",
+        "rect": {
+          "x": -51.390625,
+          "y": 243.75,
+          "width": 249.625,
+          "height": 36,
+          "top": 243.75,
+          "right": 198.234375,
+          "bottom": 279.75,
+          "left": -51.390625
+        },
+        "minWidth": "auto",
+        "flexWrap": "nowrap"
+      }
+    ]
+  }
+]

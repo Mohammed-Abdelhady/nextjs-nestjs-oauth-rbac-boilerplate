@@ -9,7 +9,7 @@ npm install
 npm run dev          # Development (http://localhost:3000)
 npm run build        # Production build
 npm run lint         # ESLint check
-npm run test:e2e     # Playwright E2E tests
+npm test             # Product unit tests
 ```
 
 ## Tech Stack
@@ -145,6 +145,8 @@ npx shadcn@latest add button dialog
 
 ## Testing
 
+Run `npm test` for product unit tests. The following browser commands are for the original source repository only. Its full-feature Playwright harness is maintainer tooling; generated projects omit that harness, its configurations and these commands. Generated projects retain product unit tests and the backend functional API suite (`npm run test:e2e -w backend` from the project root).
+
 ```bash
 npm run test:e2e          # Run all E2E tests
 npm run test:e2e:ui       # Interactive UI mode
@@ -152,7 +154,7 @@ npm run test:e2e:headed   # See browser
 npm run test:e2e:debug    # Debug mode
 ```
 
-Test files: `e2e/*.spec.ts`
+Source repository browser files: `e2e/*.spec.ts`.
 
 ## Deployment
 

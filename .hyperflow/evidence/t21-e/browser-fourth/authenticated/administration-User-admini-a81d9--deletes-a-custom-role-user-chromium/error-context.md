@@ -1,0 +1,178 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+    - alert [ref=e2]
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+        - /url: '#main'
+    - generic [ref=e4]:
+        - complementary [ref=e5]:
+            - generic [ref=e6]:
+                - link "Auth App, go to dashboard" [ref=e8] [cursor=pointer]:
+                    - /url: /en/dashboard
+                    - text: Auth App
+                - navigation "Main navigation" [ref=e10]:
+                    - link "Dashboard" [ref=e12] [cursor=pointer]:
+                        - /url: /en/dashboard
+                        - img [ref=e13]
+                        - text: Dashboard
+                    - link "Settings" [ref=e19] [cursor=pointer]:
+                        - /url: /en/settings
+                        - img [ref=e20]
+                        - text: Settings
+                    - generic [ref=e23]:
+                        - button "Admin" [expanded] [ref=e24]:
+                            - generic [ref=e25]:
+                                - img [ref=e26]
+                                - generic [ref=e28]: Admin
+                            - img [ref=e29]
+                        - generic [ref=e31]:
+                            - link "Users" [ref=e32] [cursor=pointer]:
+                                - /url: /en/admin/users
+                                - img [ref=e33]
+                                - text: Users
+                            - link "Roles" [ref=e38] [cursor=pointer]:
+                                - /url: /en/admin/roles
+                                - img [ref=e39]
+                                - text: Roles
+                            - link "Permissions Demo" [ref=e41] [cursor=pointer]:
+                                - /url: /en/admin/permissions-demo
+                                - img [ref=e42]
+                                - text: Permissions Demo
+                    - generic [ref=e45]:
+                        - button "Activity" [expanded] [ref=e46]:
+                            - generic [ref=e47]:
+                                - img [ref=e48]
+                                - generic [ref=e50]: Activity
+                            - img [ref=e51]
+                        - link "Sessions" [ref=e54] [cursor=pointer]:
+                            - /url: /en/sessions
+                            - img [ref=e55]
+                            - text: Sessions
+                - paragraph [ref=e58]: © 2024 Auth App
+        - generic [ref=e59]:
+            - banner [ref=e60]:
+                - group "Account controls" [ref=e61]:
+                    - generic [ref=e62]:
+                        - generic [ref=e63]: Seed Admin
+                        - generic [ref=e64]: (admin)
+                    - generic [ref=e65]:
+                        - button "Switch to English" [ref=e66]: English
+                        - button "Switch to Arabic" [ref=e67]: العربية
+                    - button "Switch to light mode" [ref=e68]:
+                        - img
+                    - button "Logout" [ref=e69]:
+                        - img
+                        - generic [ref=e70]: Logout
+            - main [ref=e71]:
+                - generic [ref=e72]:
+                    - generic [ref=e74]:
+                        - generic [ref=e75]:
+                            - heading "Users" [level=1] [ref=e76]
+                            - paragraph [ref=e77]: 5 users registered
+                        - generic [ref=e78]:
+                            - button "Refresh" [ref=e79]:
+                                - img
+                                - text: Refresh
+                            - button "Add User" [ref=e80]:
+                                - img
+                                - text: Add User
+                    - generic [ref=e81]:
+                        - generic [ref=e83]:
+                            - img [ref=e84]
+                            - textbox "Search by name or email..." [ref=e87]
+                        - combobox [ref=e88]:
+                            - generic: All Roles
+                            - img [ref=e89]
+                    - generic [ref=e92]:
+                        - heading "Verified Users(5)" [level=2] [ref=e95]:
+                            - button "Verified Users(5)" [expanded] [ref=e96] [cursor=pointer]:
+                                - img [ref=e97]
+                                - generic [ref=e99]:
+                                    - text: Verified Users
+                                    - generic [ref=e100]: (5)
+                        - generic [ref=e101]:
+                            - article [ref=e103]:
+                                - generic [ref=e104]:
+                                    - generic [ref=e106]: EU
+                                    - generic [ref=e107]:
+                                        - heading "Edited User" [level=3] [ref=e108]
+                                        - paragraph [ref=e109]: created@example.test
+                                    - generic [ref=e111]: Verified
+                                - generic [ref=e112]:
+                                    - combobox [ref=e114]:
+                                        - generic:
+                                            - generic:
+                                                - generic: Fixture Editor
+                                        - img [ref=e115]
+                                    - button "Actions" [ref=e118]:
+                                        - generic [ref=e119]: Actions
+                                        - img
+                                - generic [ref=e121]: Joined Sep 2026
+                            - article [ref=e123]:
+                                - generic [ref=e124]:
+                                    - generic [ref=e126]: SU
+                                    - generic [ref=e127]:
+                                        - heading "Seed User" [level=3] [ref=e128]
+                                        - paragraph [ref=e129]: user@seed.local
+                                    - generic [ref=e131]: Verified
+                                - generic [ref=e132]:
+                                    - generic [ref=e134]: 'Role: user'
+                                    - button "Actions" [ref=e136]:
+                                        - generic [ref=e137]: Actions
+                                        - img
+                                - generic [ref=e139]: Joined Sep 2026
+                            - article [ref=e141]:
+                                - generic [ref=e142]:
+                                    - generic [ref=e144]: SM
+                                    - generic [ref=e145]:
+                                        - heading "Seed Manager" [level=3] [ref=e146]
+                                        - paragraph [ref=e147]: manager@seed.local
+                                    - generic [ref=e149]: Verified
+                                - generic [ref=e150]:
+                                    - combobox [ref=e152]:
+                                        - generic:
+                                            - generic:
+                                                - img
+                                                - img
+                                                - generic: Manager
+                                        - img [ref=e153]
+                                    - button "Actions" [ref=e156]:
+                                        - generic [ref=e157]: Actions
+                                        - img
+                                - generic [ref=e159]: Joined Sep 2026
+                            - article [ref=e161]:
+                                - generic [ref=e162]:
+                                    - generic [ref=e164]: SS
+                                    - generic [ref=e165]:
+                                        - heading "Seed Support" [level=3] [ref=e166]
+                                        - paragraph [ref=e167]: support@seed.local
+                                    - generic [ref=e169]: Verified
+                                - generic [ref=e170]:
+                                    - combobox [ref=e172]:
+                                        - generic:
+                                            - generic:
+                                                - img
+                                                - img
+                                                - generic: Support
+                                        - img [ref=e173]
+                                    - button "Actions" [ref=e176]:
+                                        - generic [ref=e177]: Actions
+                                        - img
+                                - generic [ref=e179]: Joined Sep 2026
+                            - article [ref=e181]:
+                                - generic [ref=e182]:
+                                    - generic [ref=e184]: SA
+                                    - generic [ref=e185]:
+                                        - heading "Seed Admin" [level=3] [ref=e186]
+                                        - paragraph [ref=e187]: admin@seed.local
+                                    - generic [ref=e189]: Verified
+                                - generic [ref=e192]: 'Role: admin'
+                                - generic [ref=e194]: Joined Sep 2026
+                    - generic [ref=e195]: Showing 5 of 5 users
+    - region "Notifications alt+T":
+        - list:
+            - listitem [ref=e196]:
+                - img [ref=e198]
+                - generic [ref=e201]: Cannot read properties of null (reading 'data')
+```

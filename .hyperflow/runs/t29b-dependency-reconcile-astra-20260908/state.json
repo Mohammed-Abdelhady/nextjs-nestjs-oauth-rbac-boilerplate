@@ -1,0 +1,17 @@
+{
+  "status": "ready_for_review",
+  "lane": "astra-specialist",
+  "model": "gpt-6-astra",
+  "effort": "high",
+  "serviceTier": "default",
+  "profile": "astra-specialist",
+  "startedAt": "2026-09-08T07:31:13.586Z",
+  "pid": 63385,
+  "result": "unaccepted",
+  "orphanProtection": "best-effort parent PID monitoring; it cannot detect a model-service outage while the parent remains alive",
+  "childPid": 63386,
+  "finishedAt": "2026-09-08T07:42:53.091Z",
+  "exitCode": 0,
+  "signal": null,
+  "reason": null
+}

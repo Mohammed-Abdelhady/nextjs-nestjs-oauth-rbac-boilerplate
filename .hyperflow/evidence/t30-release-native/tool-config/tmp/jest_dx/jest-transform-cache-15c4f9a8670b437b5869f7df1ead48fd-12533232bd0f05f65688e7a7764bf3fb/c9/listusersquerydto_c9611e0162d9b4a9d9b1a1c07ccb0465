@@ -1,0 +1,130 @@
+25b1ab69636a77df855f7265b0689b42
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ListUsersQueryDto = void 0;
+const class_validator_1 = require("class-validator");
+const class_transformer_1 = require("class-transformer");
+const swagger_1 = require("@nestjs/swagger");
+const roles_1 = require("../../common/constants/roles");
+const transform_1 = require("../../common/utils/transform");
+/**
+ * Query parameters for listing users with pagination and filtering.
+ */
+class ListUsersQueryDto {
+    page = 1;
+    limit = 10;
+    search;
+    role;
+    status;
+    isVerified;
+    sortBy = 'createdAt';
+    sortOrder = 'desc';
+}
+exports.ListUsersQueryDto = ListUsersQueryDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Page number (default: 1)',
+        example: 1,
+        minimum: 1,
+        type: Number,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_transformer_1.Type)(() => Number),
+    __metadata("design:type", Number)
+], ListUsersQueryDto.prototype, "page", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Items per page (default: 10, max: 100)',
+        example: 10,
+        minimum: 1,
+        maximum: 100,
+        type: Number,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.Max)(100),
+    (0, class_transformer_1.Type)(() => Number),
+    __metadata("design:type", Number)
+], ListUsersQueryDto.prototype, "limit", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Search by email or name',
+        example: 'john',
+        type: String,
+        maxLength: 100,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(100),
+    __metadata("design:type", String)
+], ListUsersQueryDto.prototype, "search", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by role slug, custom roles included',
+        example: 'support',
+        type: String,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(roles_1.ROLE_SLUG_MAX_LENGTH),
+    (0, class_validator_1.Matches)(roles_1.ROLE_SLUG_REGEX, { message: roles_1.ROLE_SLUG_MESSAGE }),
+    __metadata("design:type", String)
+], ListUsersQueryDto.prototype, "role", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by status (active, inactive, deleted)',
+        enum: ['active', 'inactive', 'deleted'],
+        example: 'active',
+        type: String,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsIn)(['active', 'inactive', 'deleted']),
+    __metadata("design:type", String)
+], ListUsersQueryDto.prototype, "status", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Filter by verification status',
+        example: true,
+        type: Boolean,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_transformer_1.Transform)(transform_1.toBoolean),
+    __metadata("design:type", Boolean)
+], ListUsersQueryDto.prototype, "isVerified", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Sort field (default: createdAt)',
+        enum: ['createdAt', 'updatedAt', 'name', 'email'],
+        example: 'createdAt',
+        type: String,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsIn)(['createdAt', 'updatedAt', 'name', 'email']),
+    __metadata("design:type", String)
+], ListUsersQueryDto.prototype, "sortBy", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Sort order (default: desc)',
+        enum: ['asc', 'desc'],
+        example: 'desc',
+        type: String,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsIn)(['asc', 'desc']),
+    __metadata("design:type", String)
+], ListUsersQueryDto.prototype, "sortOrder", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYWRtaW4vZHRvL2xpc3QtdXNlcnMtcXVlcnkuZHRvLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLHFEQVV5QjtBQUN6Qix5REFBb0Q7QUFDcEQsNkNBQXNEO0FBQ3RELHdEQUlzQztBQUN0Qyw0REFBeUQ7QUFFekQ7O0dBRUc7QUFDSCxNQUFhLGlCQUFpQjtJQVc1QixJQUFJLEdBQVksQ0FBQyxDQUFDO0lBY2xCLEtBQUssR0FBWSxFQUFFLENBQUM7SUFXcEIsTUFBTSxDQUFVO0lBV2hCLElBQUksQ0FBVTtJQVVkLE1BQU0sQ0FBcUM7SUFVM0MsVUFBVSxDQUFXO0lBV3JCLE1BQU0sR0FBWSxXQUFXLENBQUM7SUFVOUIsU0FBUyxHQUFvQixNQUFNLENBQUM7Q0FDckM7QUF6RkQsOENBeUZDO0FBOUVDO0lBVkMsSUFBQSw2QkFBbUIsRUFBQztRQUNuQixXQUFXLEVBQUUsMEJBQTBCO1FBQ3ZDLE9BQU8sRUFBRSxDQUFDO1FBQ1YsT0FBTyxFQUFFLENBQUM7UUFDVixJQUFJLEVBQUUsTUFBTTtLQUNiLENBQUM7SUFDRCxJQUFBLDRCQUFVLEdBQUU7SUFDWixJQUFBLHVCQUFLLEdBQUU7SUFDUCxJQUFBLHFCQUFHLEVBQUMsQ0FBQyxDQUFDO0lBQ04sSUFBQSx3QkFBSSxFQUFDLEdBQUcsRUFBRSxDQUFDLE1BQU0sQ0FBQzs7K0NBQ0Q7QUFjbEI7SUFaQyxJQUFBLDZCQUFtQixFQUFDO1FBQ25CLFdBQVcsRUFBRSx3Q0FBd0M7UUFDckQsT0FBTyxFQUFFLEVBQUU7UUFDWCxPQUFPLEVBQUUsQ0FBQztRQUNWLE9BQU8sRUFBRSxHQUFHO1FBQ1osSUFBSSxFQUFFLE1BQU07S0FDYixDQUFDO0lBQ0QsSUFBQSw0QkFBVSxHQUFFO0lBQ1osSUFBQSx1QkFBSyxHQUFFO0lBQ1AsSUFBQSxxQkFBRyxFQUFDLENBQUMsQ0FBQztJQUNOLElBQUEscUJBQUcsRUFBQyxHQUFHLENBQUM7SUFDUixJQUFBLHdCQUFJLEVBQUMsR0FBRyxFQUFFLENBQUMsTUFBTSxDQUFDOztnREFDQztBQVdwQjtJQVRDLElBQUEsNkJBQW1CLEVBQUM7UUFDbkIsV0FBVyxFQUFFLHlCQUF5QjtRQUN0QyxPQUFPLEVBQUUsTUFBTTtRQUNmLElBQUksRUFBRSxNQUFNO1FBQ1osU0FBUyxFQUFFLEdBQUc7S0FDZixDQUFDO0lBQ0QsSUFBQSw0QkFBVSxHQUFFO0lBQ1osSUFBQSwwQkFBUSxHQUFFO0lBQ1YsSUFBQSwyQkFBUyxFQUFDLEdBQUcsQ0FBQzs7aURBQ0M7QUFXaEI7SUFUQyxJQUFBLDZCQUFtQixFQUFDO1FBQ25CLFdBQVcsRUFBRSw0Q0FBNEM7UUFDekQsT0FBTyxFQUFFLFNBQVM7UUFDbEIsSUFBSSxFQUFFLE1BQU07S0FDYixDQUFDO0lBQ0QsSUFBQSw0QkFBVSxHQUFFO0lBQ1osSUFBQSwwQkFBUSxHQUFFO0lBQ1YsSUFBQSwyQkFBUyxFQUFDLDRCQUFvQixDQUFDO0lBQy9CLElBQUEseUJBQU8sRUFBQyx1QkFBZSxFQUFFLEVBQUUsT0FBTyxFQUFFLHlCQUFpQixFQUFFLENBQUM7OytDQUMzQztBQVVkO0lBUkMsSUFBQSw2QkFBbUIsRUFBQztRQUNuQixXQUFXLEVBQUUsOENBQThDO1FBQzNELElBQUksRUFBRSxDQUFDLFFBQVEsRUFBRSxVQUFVLEVBQUUsU0FBUyxDQUFDO1FBQ3ZDLE9BQU8sRUFBRSxRQUFRO1FBQ2pCLElBQUksRUFBRSxNQUFNO0tBQ2IsQ0FBQztJQUNELElBQUEsNEJBQVUsR0FBRTtJQUNaLElBQUEsc0JBQUksRUFBQyxDQUFDLFFBQVEsRUFBRSxVQUFVLEVBQUUsU0FBUyxDQUFDLENBQUM7O2lEQUNHO0FBVTNDO0lBUkMsSUFBQSw2QkFBbUIsRUFBQztRQUNuQixXQUFXLEVBQUUsK0JBQStCO1FBQzVDLE9BQU8sRUFBRSxJQUFJO1FBQ2IsSUFBSSxFQUFFLE9BQU87S0FDZCxDQUFDO0lBQ0QsSUFBQSw0QkFBVSxHQUFFO0lBQ1osSUFBQSwyQkFBUyxHQUFFO0lBQ1gsSUFBQSw2QkFBUyxFQUFDLHFCQUFTLENBQUM7O3FEQUNBO0FBV3JCO0lBVEMsSUFBQSw2QkFBbUIsRUFBQztRQUNuQixXQUFXLEVBQUUsaUNBQWlDO1FBQzlDLElBQUksRUFBRSxDQUFDLFdBQVcsRUFBRSxXQUFXLEVBQUUsTUFBTSxFQUFFLE9BQU8sQ0FBQztRQUNqRCxPQUFPLEVBQUUsV0FBVztRQUNwQixJQUFJLEVBQUUsTUFBTTtLQUNiLENBQUM7SUFDRCxJQUFBLDRCQUFVLEdBQUU7SUFDWixJQUFBLDBCQUFRLEdBQUU7SUFDVixJQUFBLHNCQUFJLEVBQUMsQ0FBQyxXQUFXLEVBQUUsV0FBVyxFQUFFLE1BQU0sRUFBRSxPQUFPLENBQUMsQ0FBQzs7aURBQ3BCO0FBVTlCO0lBUkMsSUFBQSw2QkFBbUIsRUFBQztRQUNuQixXQUFXLEVBQUUsNEJBQTRCO1FBQ3pDLElBQUksRUFBRSxDQUFDLEtBQUssRUFBRSxNQUFNLENBQUM7UUFDckIsT0FBTyxFQUFFLE1BQU07UUFDZixJQUFJLEVBQUUsTUFBTTtLQUNiLENBQUM7SUFDRCxJQUFBLDRCQUFVLEdBQUU7SUFDWixJQUFBLHNCQUFJLEVBQUMsQ0FBQyxLQUFLLEVBQUUsTUFBTSxDQUFDLENBQUM7O29EQUNjIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL2FkbWluL2R0by9saXN0LXVzZXJzLXF1ZXJ5LmR0by50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQge1xuICBJc09wdGlvbmFsLFxuICBJc0ludCxcbiAgSXNTdHJpbmcsXG4gIElzSW4sXG4gIElzQm9vbGVhbixcbiAgTWF0Y2hlcyxcbiAgTWF4TGVuZ3RoLFxuICBNaW4sXG4gIE1heCxcbn0gZnJvbSAnY2xhc3MtdmFsaWRhdG9yJztcbmltcG9ydCB7IFRyYW5zZm9ybSwgVHlwZSB9IGZyb20gJ2NsYXNzLXRyYW5zZm9ybWVyJztcbmltcG9ydCB7IEFwaVByb3BlcnR5T3B0aW9uYWwgfSBmcm9tICdAbmVzdGpzL3N3YWdnZXInO1xuaW1wb3J0IHtcbiAgUk9MRV9TTFVHX01BWF9MRU5HVEgsXG4gIFJPTEVfU0xVR19NRVNTQUdFLFxuICBST0xFX1NMVUdfUkVHRVgsXG59IGZyb20gJy4uLy4uL2NvbW1vbi9jb25zdGFudHMvcm9sZXMnO1xuaW1wb3J0IHsgdG9Cb29sZWFuIH0gZnJvbSAnLi4vLi4vY29tbW9uL3V0aWxzL3RyYW5zZm9ybSc7XG5cbi8qKlxuICogUXVlcnkgcGFyYW1ldGVycyBmb3IgbGlzdGluZyB1c2VycyB3aXRoIHBhZ2luYXRpb24gYW5kIGZpbHRlcmluZy5cbiAqL1xuZXhwb3J0IGNsYXNzIExpc3RVc2Vyc1F1ZXJ5RHRvIHtcbiAgQEFwaVByb3BlcnR5T3B0aW9uYWwoe1xuICAgIGRlc2NyaXB0aW9uOiAnUGFnZSBudW1iZXIgKGRlZmF1bHQ6IDEpJyxcbiAgICBleGFtcGxlOiAxLFxuICAgIG1pbmltdW06IDEsXG4gICAgdHlwZTogTnVtYmVyLFxuICB9KVxuICBASXNPcHRpb25hbCgpXG4gIEBJc0ludCgpXG4gIEBNaW4oMSlcbiAgQFR5cGUoKCkgPT4gTnVtYmVyKVxuICBwYWdlPzogbnVtYmVyID0gMTtcblxuICBAQXBpUHJvcGVydHlPcHRpb25hbCh7XG4gICAgZGVzY3JpcHRpb246ICdJdGVtcyBwZXIgcGFnZSAoZGVmYXVsdDogMTAsIG1heDogMTAwKScsXG4gICAgZXhhbXBsZTogMTAsXG4gICAgbWluaW11bTogMSxcbiAgICBtYXhpbXVtOiAxMDAsXG4gICAgdHlwZTogTnVtYmVyLFxuICB9KVxuICBASXNPcHRpb25hbCgpXG4gIEBJc0ludCgpXG4gIEBNaW4oMSlcbiAgQE1heCgxMDApXG4gIEBUeXBlKCgpID0+IE51bWJlcilcbiAgbGltaXQ/OiBudW1iZXIgPSAxMDtcblxuICBAQXBpUHJvcGVydHlPcHRpb25hbCh7XG4gICAgZGVzY3JpcHRpb246ICdTZWFyY2ggYnkgZW1haWwgb3IgbmFtZScsXG4gICAgZXhhbXBsZTogJ2pvaG4nLFxuICAgIHR5cGU6IFN0cmluZyxcbiAgICBtYXhMZW5ndGg6IDEwMCxcbiAgfSlcbiAgQElzT3B0aW9uYWwoKVxuICBASXNTdHJpbmcoKVxuICBATWF4TGVuZ3RoKDEwMClcbiAgc2VhcmNoPzogc3RyaW5nO1xuXG4gIEBBcGlQcm9wZXJ0eU9wdGlvbmFsKHtcbiAgICBkZXNjcmlwdGlvbjogJ0ZpbHRlciBieSByb2xlIHNsdWcsIGN1c3RvbSByb2xlcyBpbmNsdWRlZCcsXG4gICAgZXhhbXBsZTogJ3N1cHBvcnQnLFxuICAgIHR5cGU6IFN0cmluZyxcbiAgfSlcbiAgQElzT3B0aW9uYWwoKVxuICBASXNTdHJpbmcoKVxuICBATWF4TGVuZ3RoKFJPTEVfU0xVR19NQVhfTEVOR1RIKVxuICBATWF0Y2hlcyhST0xFX1NMVUdfUkVHRVgsIHsgbWVzc2FnZTogUk9MRV9TTFVHX01FU1NBR0UgfSlcbiAgcm9sZT86IHN0cmluZztcblxuICBAQXBpUHJvcGVydHlPcHRpb25hbCh7XG4gICAgZGVzY3JpcHRpb246ICdGaWx0ZXIgYnkgc3RhdHVzIChhY3RpdmUsIGluYWN0aXZlLCBkZWxldGVkKScsXG4gICAgZW51bTogWydhY3RpdmUnLCAnaW5hY3RpdmUnLCAnZGVsZXRlZCddLFxuICAgIGV4YW1wbGU6ICdhY3RpdmUnLFxuICAgIHR5cGU6IFN0cmluZyxcbiAgfSlcbiAgQElzT3B0aW9uYWwoKVxuICBASXNJbihbJ2FjdGl2ZScsICdpbmFjdGl2ZScsICdkZWxldGVkJ10pXG4gIHN0YXR1cz86ICdhY3RpdmUnIHwgJ2luYWN0aXZlJyB8ICdkZWxldGVkJztcblxuICBAQXBpUHJvcGVydHlPcHRpb25hbCh7XG4gICAgZGVzY3JpcHRpb246ICdGaWx0ZXIgYnkgdmVyaWZpY2F0aW9uIHN0YXR1cycsXG4gICAgZXhhbXBsZTogdHJ1ZSxcbiAgICB0eXBlOiBCb29sZWFuLFxuICB9KVxuICBASXNPcHRpb25hbCgpXG4gIEBJc0Jvb2xlYW4oKVxuICBAVHJhbnNmb3JtKHRvQm9vbGVhbilcbiAgaXNWZXJpZmllZD86IGJvb2xlYW47XG5cbiAgQEFwaVByb3BlcnR5T3B0aW9uYWwoe1xuICAgIGRlc2NyaXB0aW9uOiAnU29ydCBmaWVsZCAoZGVmYXVsdDogY3JlYXRlZEF0KScsXG4gICAgZW51bTogWydjcmVhdGVkQXQnLCAndXBkYXRlZEF0JywgJ25hbWUnLCAnZW1haWwnXSxcbiAgICBleGFtcGxlOiAnY3JlYXRlZEF0JyxcbiAgICB0eXBlOiBTdHJpbmcsXG4gIH0pXG4gIEBJc09wdGlvbmFsKClcbiAgQElzU3RyaW5nKClcbiAgQElzSW4oWydjcmVhdGVkQXQnLCAndXBkYXRlZEF0JywgJ25hbWUnLCAnZW1haWwnXSlcbiAgc29ydEJ5Pzogc3RyaW5nID0gJ2NyZWF0ZWRBdCc7XG5cbiAgQEFwaVByb3BlcnR5T3B0aW9uYWwoe1xuICAgIGRlc2NyaXB0aW9uOiAnU29ydCBvcmRlciAoZGVmYXVsdDogZGVzYyknLFxuICAgIGVudW06IFsnYXNjJywgJ2Rlc2MnXSxcbiAgICBleGFtcGxlOiAnZGVzYycsXG4gICAgdHlwZTogU3RyaW5nLFxuICB9KVxuICBASXNPcHRpb25hbCgpXG4gIEBJc0luKFsnYXNjJywgJ2Rlc2MnXSlcbiAgc29ydE9yZGVyPzogJ2FzYycgfCAnZGVzYycgPSAnZGVzYyc7XG59XG4iXSwidmVyc2lvbiI6M30=

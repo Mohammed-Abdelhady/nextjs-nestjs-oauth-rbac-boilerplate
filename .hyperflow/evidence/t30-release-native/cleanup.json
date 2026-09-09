@@ -1,0 +1,21 @@
+{
+  "ports": {
+    "3107": {
+      "free": true,
+      "pids": []
+    },
+    "5107": {
+      "free": true,
+      "pids": []
+    },
+    "5108": {
+      "free": true,
+      "pids": []
+    }
+  },
+  "integration_started_services": false,
+  "candidate_status": "",
+  "candidate_retained_for_review": true,
+  "dependencies_and_runtime_retained": true,
+  "owned_temp_directory_retained_for_hooks": "/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-gates-k9fbrit6"
+}

@@ -1,0 +1,110 @@
+8e82625dbcdb0c86f455bc2d845ae5f6
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AuthModule = void 0;
+const common_1 = require("@nestjs/common");
+const mongoose_1 = require("@nestjs/mongoose");
+const core_1 = require("@nestjs/core");
+const config_1 = require("@nestjs/config");
+const auth_service_1 = require("./auth.service");
+const auth_controller_1 = require("./auth.controller");
+const pending_registration_schema_1 = require("./schemas/pending-registration.schema");
+const pending_password_reset_schema_1 = require("./schemas/pending-password-reset.schema");
+// feature:totp:start
+const two_factor_challenge_schema_1 = require("./two-factor/schemas/two-factor-challenge.schema");
+// feature:totp:end
+const user_schema_1 = require("../user/schemas/user.schema");
+const session_schema_1 = require("../session/schemas/session.schema");
+const role_schema_1 = require("../role/schemas/role.schema");
+const session_service_1 = require("./services/session.service");
+const session_cookie_service_1 = require("./services/session-cookie.service");
+const sign_in_service_1 = require("./services/sign-in.service");
+const totp_secret_crypto_service_1 = require("./two-factor/services/totp-secret-crypto.service"); // feature:totp
+const two_factor_challenge_service_1 = require("./two-factor/services/two-factor-challenge.service"); // feature:totp
+const two_factor_verification_service_1 = require("./two-factor/services/two-factor-verification.service"); // feature:totp
+const verification_code_service_1 = require("./services/verification-code.service");
+const password_reset_code_service_1 = require("./services/password-reset-code.service");
+const auth_mail_service_1 = require("./services/auth-mail.service");
+const auth_features_service_1 = require("./services/auth-features.service");
+const feature_enabled_guard_1 = require("./guards/feature-enabled.guard");
+const common_module_1 = require("../common/common.module");
+const mail_module_1 = require("../mail/mail.module");
+const user_module_1 = require("../user/user.module");
+const session_module_1 = require("../session/session.module");
+const auth_guard_1 = require("./guards/auth.guard");
+let AuthModule = class AuthModule {
+};
+exports.AuthModule = AuthModule;
+exports.AuthModule = AuthModule = __decorate([
+    (0, common_1.Module)({
+        imports: [
+            config_1.ConfigModule,
+            mongoose_1.MongooseModule.forFeature([
+                { name: pending_registration_schema_1.PendingRegistration.name, schema: pending_registration_schema_1.PendingRegistrationSchema },
+                { name: pending_password_reset_schema_1.PendingPasswordReset.name, schema: pending_password_reset_schema_1.PendingPasswordResetSchema },
+                { name: two_factor_challenge_schema_1.TwoFactorChallenge.name, schema: two_factor_challenge_schema_1.TwoFactorChallengeSchema }, // feature:totp
+                { name: user_schema_1.User.name, schema: user_schema_1.UserSchema },
+                { name: session_schema_1.Session.name, schema: session_schema_1.SessionSchema },
+                { name: role_schema_1.Role.name, schema: role_schema_1.RoleSchema },
+            ]),
+            common_module_1.CommonModule,
+            mail_module_1.MailModule,
+            (0, common_1.forwardRef)(() => user_module_1.UserModule),
+            session_module_1.SessionModule,
+        ],
+        controllers: [auth_controller_1.AuthController],
+        providers: [
+            auth_service_1.AuthService,
+            session_service_1.SessionService,
+            session_cookie_service_1.SessionCookieService,
+            verification_code_service_1.VerificationCodeService,
+            password_reset_code_service_1.PasswordResetCodeService,
+            auth_mail_service_1.AuthMailService,
+            auth_features_service_1.AuthFeaturesService,
+            // feature:totp:start
+            // The second factor hooks into every sign-in path, so the pieces those
+            // paths need are declared here rather than in TwoFactorModule.
+            totp_secret_crypto_service_1.TotpSecretCryptoService,
+            two_factor_challenge_service_1.TwoFactorChallengeService,
+            two_factor_verification_service_1.TwoFactorVerificationService,
+            // feature:totp:end
+            sign_in_service_1.SignInService,
+            feature_enabled_guard_1.FeatureEnabledGuard,
+            auth_guard_1.AuthGuard,
+            // Registered here, not in AppModule: AuthGuard injects the Role model,
+            // which only resolves inside this module's context.
+            {
+                provide: core_1.APP_GUARD,
+                useClass: auth_guard_1.AuthGuard,
+            },
+        ],
+        exports: [
+            auth_service_1.AuthService,
+            session_service_1.SessionService,
+            session_cookie_service_1.SessionCookieService,
+            verification_code_service_1.VerificationCodeService,
+            auth_mail_service_1.AuthMailService,
+            auth_features_service_1.AuthFeaturesService,
+            // feature:totp:start
+            totp_secret_crypto_service_1.TotpSecretCryptoService,
+            two_factor_challenge_service_1.TwoFactorChallengeService,
+            two_factor_verification_service_1.TwoFactorVerificationService,
+            // feature:totp:end
+            sign_in_service_1.SignInService,
+            feature_enabled_guard_1.FeatureEnabledGuard,
+            auth_guard_1.AuthGuard,
+        ],
+    })
+], AuthModule);
+/**
+ * Decorators are exported directly from their source files:
+ * - @Public() from './decorators/public.decorator'
+ * - @CurrentUser() from './decorators/current-user.decorator'
+ */
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9hdXRoLm1vZHVsZS50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7QUFBQSwyQ0FBb0Q7QUFDcEQsK0NBQWtEO0FBQ2xELHVDQUF5QztBQUN6QywyQ0FBOEM7QUFDOUMsaURBQTZDO0FBQzdDLHVEQUFtRDtBQUNuRCx1RkFHK0M7QUFDL0MsMkZBR2lEO0FBQ2pELHFCQUFxQjtBQUNyQixrR0FHMEQ7QUFDMUQsbUJBQW1CO0FBQ25CLDZEQUErRDtBQUMvRCxzRUFBMkU7QUFDM0UsNkRBQStEO0FBQy9ELGdFQUE0RDtBQUM1RCw4RUFBeUU7QUFDekUsZ0VBQTJEO0FBQzNELGlHQUEyRixDQUFDLGVBQWU7QUFDM0cscUdBQStGLENBQUMsZUFBZTtBQUMvRywyR0FBcUcsQ0FBQyxlQUFlO0FBQ3JILG9GQUErRTtBQUMvRSx3RkFBa0Y7QUFDbEYsb0VBQStEO0FBQy9ELDRFQUF1RTtBQUN2RSwwRUFBcUU7QUFDckUsMkRBQXVEO0FBQ3ZELHFEQUFpRDtBQUNqRCxxREFBaUQ7QUFDakQsOERBQTBEO0FBQzFELG9EQUFnRDtBQTZEekMsSUFBTSxVQUFVLEdBQWhCLE1BQU0sVUFBVTtDQUFHLENBQUE7QUFBYixnQ0FBVTtxQkFBVixVQUFVO0lBM0R0QixJQUFBLGVBQU0sRUFBQztRQUNOLE9BQU8sRUFBRTtZQUNQLHFCQUFZO1lBQ1oseUJBQWMsQ0FBQyxVQUFVLENBQUM7Z0JBQ3hCLEVBQUUsSUFBSSxFQUFFLGlEQUFtQixDQUFDLElBQUksRUFBRSxNQUFNLEVBQUUsdURBQXlCLEVBQUU7Z0JBQ3JFLEVBQUUsSUFBSSxFQUFFLG9EQUFvQixDQUFDLElBQUksRUFBRSxNQUFNLEVBQUUsMERBQTBCLEVBQUU7Z0JBQ3ZFLEVBQUUsSUFBSSxFQUFFLGdEQUFrQixDQUFDLElBQUksRUFBRSxNQUFNLEVBQUUsc0RBQXdCLEVBQUUsRUFBRSxlQUFlO2dCQUNwRixFQUFFLElBQUksRUFBRSxrQkFBSSxDQUFDLElBQUksRUFBRSxNQUFNLEVBQUUsd0JBQVUsRUFBRTtnQkFDdkMsRUFBRSxJQUFJLEVBQUUsd0JBQU8sQ0FBQyxJQUFJLEVBQUUsTUFBTSxFQUFFLDhCQUFhLEVBQUU7Z0JBQzdDLEVBQUUsSUFBSSxFQUFFLGtCQUFJLENBQUMsSUFBSSxFQUFFLE1BQU0sRUFBRSx3QkFBVSxFQUFFO2FBQ3hDLENBQUM7WUFDRiw0QkFBWTtZQUNaLHdCQUFVO1lBQ1YsSUFBQSxtQkFBVSxFQUFDLEdBQUcsRUFBRSxDQUFDLHdCQUFVLENBQUM7WUFDNUIsOEJBQWE7U0FDZDtRQUNELFdBQVcsRUFBRSxDQUFDLGdDQUFjLENBQUM7UUFDN0IsU0FBUyxFQUFFO1lBQ1QsMEJBQVc7WUFDWCxnQ0FBYztZQUNkLDZDQUFvQjtZQUNwQixtREFBdUI7WUFDdkIsc0RBQXdCO1lBQ3hCLG1DQUFlO1lBQ2YsMkNBQW1CO1lBQ25CLHFCQUFxQjtZQUNyQix1RUFBdUU7WUFDdkUsK0RBQStEO1lBQy9ELG9EQUF1QjtZQUN2Qix3REFBeUI7WUFDekIsOERBQTRCO1lBQzVCLG1CQUFtQjtZQUNuQiwrQkFBYTtZQUNiLDJDQUFtQjtZQUNuQixzQkFBUztZQUNULHVFQUF1RTtZQUN2RSxvREFBb0Q7WUFDcEQ7Z0JBQ0UsT0FBTyxFQUFFLGdCQUFTO2dCQUNsQixRQUFRLEVBQUUsc0JBQVM7YUFDcEI7U0FDRjtRQUNELE9BQU8sRUFBRTtZQUNQLDBCQUFXO1lBQ1gsZ0NBQWM7WUFDZCw2Q0FBb0I7WUFDcEIsbURBQXVCO1lBQ3ZCLG1DQUFlO1lBQ2YsMkNBQW1CO1lBQ25CLHFCQUFxQjtZQUNyQixvREFBdUI7WUFDdkIsd0RBQXlCO1lBQ3pCLDhEQUE0QjtZQUM1QixtQkFBbUI7WUFDbkIsK0JBQWE7WUFDYiwyQ0FBbUI7WUFDbkIsc0JBQVM7U0FDVjtLQUNGLENBQUM7R0FDVyxVQUFVLENBQUc7QUFFMUI7Ozs7R0FJRyIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy9hdXRoL2F1dGgubW9kdWxlLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IE1vZHVsZSwgZm9yd2FyZFJlZiB9IGZyb20gJ0BuZXN0anMvY29tbW9uJztcbmltcG9ydCB7IE1vbmdvb3NlTW9kdWxlIH0gZnJvbSAnQG5lc3Rqcy9tb25nb29zZSc7XG5pbXBvcnQgeyBBUFBfR1VBUkQgfSBmcm9tICdAbmVzdGpzL2NvcmUnO1xuaW1wb3J0IHsgQ29uZmlnTW9kdWxlIH0gZnJvbSAnQG5lc3Rqcy9jb25maWcnO1xuaW1wb3J0IHsgQXV0aFNlcnZpY2UgfSBmcm9tICcuL2F1dGguc2VydmljZSc7XG5pbXBvcnQgeyBBdXRoQ29udHJvbGxlciB9IGZyb20gJy4vYXV0aC5jb250cm9sbGVyJztcbmltcG9ydCB7XG4gIFBlbmRpbmdSZWdpc3RyYXRpb24sXG4gIFBlbmRpbmdSZWdpc3RyYXRpb25TY2hlbWEsXG59IGZyb20gJy4vc2NoZW1hcy9wZW5kaW5nLXJlZ2lzdHJhdGlvbi5zY2hlbWEnO1xuaW1wb3J0IHtcbiAgUGVuZGluZ1Bhc3N3b3JkUmVzZXQsXG4gIFBlbmRpbmdQYXNzd29yZFJlc2V0U2NoZW1hLFxufSBmcm9tICcuL3NjaGVtYXMvcGVuZGluZy1wYXNzd29yZC1yZXNldC5zY2hlbWEnO1xuLy8gZmVhdHVyZTp0b3RwOnN0YXJ0XG5pbXBvcnQge1xuICBUd29GYWN0b3JDaGFsbGVuZ2UsXG4gIFR3b0ZhY3RvckNoYWxsZW5nZVNjaGVtYSxcbn0gZnJvbSAnLi90d28tZmFjdG9yL3NjaGVtYXMvdHdvLWZhY3Rvci1jaGFsbGVuZ2Uuc2NoZW1hJztcbi8vIGZlYXR1cmU6dG90cDplbmRcbmltcG9ydCB7IFVzZXIsIFVzZXJTY2hlbWEgfSBmcm9tICcuLi91c2VyL3NjaGVtYXMvdXNlci5zY2hlbWEnO1xuaW1wb3J0IHsgU2Vzc2lvbiwgU2Vzc2lvblNjaGVtYSB9IGZyb20gJy4uL3Nlc3Npb24vc2NoZW1hcy9zZXNzaW9uLnNjaGVtYSc7XG5pbXBvcnQgeyBSb2xlLCBSb2xlU2NoZW1hIH0gZnJvbSAnLi4vcm9sZS9zY2hlbWFzL3JvbGUuc2NoZW1hJztcbmltcG9ydCB7IFNlc3Npb25TZXJ2aWNlIH0gZnJvbSAnLi9zZXJ2aWNlcy9zZXNzaW9uLnNlcnZpY2UnO1xuaW1wb3J0IHsgU2Vzc2lvbkNvb2tpZVNlcnZpY2UgfSBmcm9tICcuL3NlcnZpY2VzL3Nlc3Npb24tY29va2llLnNlcnZpY2UnO1xuaW1wb3J0IHsgU2lnbkluU2VydmljZSB9IGZyb20gJy4vc2VydmljZXMvc2lnbi1pbi5zZXJ2aWNlJztcbmltcG9ydCB7IFRvdHBTZWNyZXRDcnlwdG9TZXJ2aWNlIH0gZnJvbSAnLi90d28tZmFjdG9yL3NlcnZpY2VzL3RvdHAtc2VjcmV0LWNyeXB0by5zZXJ2aWNlJzsgLy8gZmVhdHVyZTp0b3RwXG5pbXBvcnQgeyBUd29GYWN0b3JDaGFsbGVuZ2VTZXJ2aWNlIH0gZnJvbSAnLi90d28tZmFjdG9yL3NlcnZpY2VzL3R3by1mYWN0b3ItY2hhbGxlbmdlLnNlcnZpY2UnOyAvLyBmZWF0dXJlOnRvdHBcbmltcG9ydCB7IFR3b0ZhY3RvclZlcmlmaWNhdGlvblNlcnZpY2UgfSBmcm9tICcuL3R3by1mYWN0b3Ivc2VydmljZXMvdHdvLWZhY3Rvci12ZXJpZmljYXRpb24uc2VydmljZSc7IC8vIGZlYXR1cmU6dG90cFxuaW1wb3J0IHsgVmVyaWZpY2F0aW9uQ29kZVNlcnZpY2UgfSBmcm9tICcuL3NlcnZpY2VzL3ZlcmlmaWNhdGlvbi1jb2RlLnNlcnZpY2UnO1xuaW1wb3J0IHsgUGFzc3dvcmRSZXNldENvZGVTZXJ2aWNlIH0gZnJvbSAnLi9zZXJ2aWNlcy9wYXNzd29yZC1yZXNldC1jb2RlLnNlcnZpY2UnO1xuaW1wb3J0IHsgQXV0aE1haWxTZXJ2aWNlIH0gZnJvbSAnLi9zZXJ2aWNlcy9hdXRoLW1haWwuc2VydmljZSc7XG5pbXBvcnQgeyBBdXRoRmVhdHVyZXNTZXJ2aWNlIH0gZnJvbSAnLi9zZXJ2aWNlcy9hdXRoLWZlYXR1cmVzLnNlcnZpY2UnO1xuaW1wb3J0IHsgRmVhdHVyZUVuYWJsZWRHdWFyZCB9IGZyb20gJy4vZ3VhcmRzL2ZlYXR1cmUtZW5hYmxlZC5ndWFyZCc7XG5pbXBvcnQgeyBDb21tb25Nb2R1bGUgfSBmcm9tICcuLi9jb21tb24vY29tbW9uLm1vZHVsZSc7XG5pbXBvcnQgeyBNYWlsTW9kdWxlIH0gZnJvbSAnLi4vbWFpbC9tYWlsLm1vZHVsZSc7XG5pbXBvcnQgeyBVc2VyTW9kdWxlIH0gZnJvbSAnLi4vdXNlci91c2VyLm1vZHVsZSc7XG5pbXBvcnQgeyBTZXNzaW9uTW9kdWxlIH0gZnJvbSAnLi4vc2Vzc2lvbi9zZXNzaW9uLm1vZHVsZSc7XG5pbXBvcnQgeyBBdXRoR3VhcmQgfSBmcm9tICcuL2d1YXJkcy9hdXRoLmd1YXJkJztcblxuQE1vZHVsZSh7XG4gIGltcG9ydHM6IFtcbiAgICBDb25maWdNb2R1bGUsXG4gICAgTW9uZ29vc2VNb2R1bGUuZm9yRmVhdHVyZShbXG4gICAgICB7IG5hbWU6IFBlbmRpbmdSZWdpc3RyYXRpb24ubmFtZSwgc2NoZW1hOiBQZW5kaW5nUmVnaXN0cmF0aW9uU2NoZW1hIH0sXG4gICAgICB7IG5hbWU6IFBlbmRpbmdQYXNzd29yZFJlc2V0Lm5hbWUsIHNjaGVtYTogUGVuZGluZ1Bhc3N3b3JkUmVzZXRTY2hlbWEgfSxcbiAgICAgIHsgbmFtZTogVHdvRmFjdG9yQ2hhbGxlbmdlLm5hbWUsIHNjaGVtYTogVHdvRmFjdG9yQ2hhbGxlbmdlU2NoZW1hIH0sIC8vIGZlYXR1cmU6dG90cFxuICAgICAgeyBuYW1lOiBVc2VyLm5hbWUsIHNjaGVtYTogVXNlclNjaGVtYSB9LFxuICAgICAgeyBuYW1lOiBTZXNzaW9uLm5hbWUsIHNjaGVtYTogU2Vzc2lvblNjaGVtYSB9LFxuICAgICAgeyBuYW1lOiBSb2xlLm5hbWUsIHNjaGVtYTogUm9sZVNjaGVtYSB9LFxuICAgIF0pLFxuICAgIENvbW1vbk1vZHVsZSxcbiAgICBNYWlsTW9kdWxlLFxuICAgIGZvcndhcmRSZWYoKCkgPT4gVXNlck1vZHVsZSksXG4gICAgU2Vzc2lvbk1vZHVsZSxcbiAgXSxcbiAgY29udHJvbGxlcnM6IFtBdXRoQ29udHJvbGxlcl0sXG4gIHByb3ZpZGVyczogW1xuICAgIEF1dGhTZXJ2aWNlLFxuICAgIFNlc3Npb25TZXJ2aWNlLFxuICAgIFNlc3Npb25Db29raWVTZXJ2aWNlLFxuICAgIFZlcmlmaWNhdGlvbkNvZGVTZXJ2aWNlLFxuICAgIFBhc3N3b3JkUmVzZXRDb2RlU2VydmljZSxcbiAgICBBdXRoTWFpbFNlcnZpY2UsXG4gICAgQXV0aEZlYXR1cmVzU2VydmljZSxcbiAgICAvLyBmZWF0dXJlOnRvdHA6c3RhcnRcbiAgICAvLyBUaGUgc2Vjb25kIGZhY3RvciBob29rcyBpbnRvIGV2ZXJ5IHNpZ24taW4gcGF0aCwgc28gdGhlIHBpZWNlcyB0aG9zZVxuICAgIC8vIHBhdGhzIG5lZWQgYXJlIGRlY2xhcmVkIGhlcmUgcmF0aGVyIHRoYW4gaW4gVHdvRmFjdG9yTW9kdWxlLlxuICAgIFRvdHBTZWNyZXRDcnlwdG9TZXJ2aWNlLFxuICAgIFR3b0ZhY3RvckNoYWxsZW5nZVNlcnZpY2UsXG4gICAgVHdvRmFjdG9yVmVyaWZpY2F0aW9uU2VydmljZSxcbiAgICAvLyBmZWF0dXJlOnRvdHA6ZW5kXG4gICAgU2lnbkluU2VydmljZSxcbiAgICBGZWF0dXJlRW5hYmxlZEd1YXJkLFxuICAgIEF1dGhHdWFyZCxcbiAgICAvLyBSZWdpc3RlcmVkIGhlcmUsIG5vdCBpbiBBcHBNb2R1bGU6IEF1dGhHdWFyZCBpbmplY3RzIHRoZSBSb2xlIG1vZGVsLFxuICAgIC8vIHdoaWNoIG9ubHkgcmVzb2x2ZXMgaW5zaWRlIHRoaXMgbW9kdWxlJ3MgY29udGV4dC5cbiAgICB7XG4gICAgICBwcm92aWRlOiBBUFBfR1VBUkQsXG4gICAgICB1c2VDbGFzczogQXV0aEd1YXJkLFxuICAgIH0sXG4gIF0sXG4gIGV4cG9ydHM6IFtcbiAgICBBdXRoU2VydmljZSxcbiAgICBTZXNzaW9uU2VydmljZSxcbiAgICBTZXNzaW9uQ29va2llU2VydmljZSxcbiAgICBWZXJpZmljYXRpb25Db2RlU2VydmljZSxcbiAgICBBdXRoTWFpbFNlcnZpY2UsXG4gICAgQXV0aEZlYXR1cmVzU2VydmljZSxcbiAgICAvLyBmZWF0dXJlOnRvdHA6c3RhcnRcbiAgICBUb3RwU2VjcmV0Q3J5cHRvU2VydmljZSxcbiAgICBUd29GYWN0b3JDaGFsbGVuZ2VTZXJ2aWNlLFxuICAgIFR3b0ZhY3RvclZlcmlmaWNhdGlvblNlcnZpY2UsXG4gICAgLy8gZmVhdHVyZTp0b3RwOmVuZFxuICAgIFNpZ25JblNlcnZpY2UsXG4gICAgRmVhdHVyZUVuYWJsZWRHdWFyZCxcbiAgICBBdXRoR3VhcmQsXG4gIF0sXG59KVxuZXhwb3J0IGNsYXNzIEF1dGhNb2R1bGUge31cblxuLyoqXG4gKiBEZWNvcmF0b3JzIGFyZSBleHBvcnRlZCBkaXJlY3RseSBmcm9tIHRoZWlyIHNvdXJjZSBmaWxlczpcbiAqIC0gQFB1YmxpYygpIGZyb20gJy4vZGVjb3JhdG9ycy9wdWJsaWMuZGVjb3JhdG9yJ1xuICogLSBAQ3VycmVudFVzZXIoKSBmcm9tICcuL2RlY29yYXRvcnMvY3VycmVudC11c2VyLmRlY29yYXRvcidcbiAqL1xuIl0sInZlcnNpb24iOjN9

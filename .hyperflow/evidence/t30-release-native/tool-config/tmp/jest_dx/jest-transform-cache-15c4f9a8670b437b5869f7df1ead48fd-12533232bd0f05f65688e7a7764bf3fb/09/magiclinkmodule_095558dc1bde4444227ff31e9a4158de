@@ -1,0 +1,43 @@
+3fc86ea5f6951c1cc290b469ecbe1454
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MagicLinkModule = void 0;
+const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
+const mongoose_1 = require("@nestjs/mongoose");
+const auth_module_1 = require("../auth.module");
+const magic_link_controller_1 = require("./magic-link.controller");
+const magic_link_service_1 = require("./magic-link.service");
+const pending_magic_link_schema_1 = require("./schemas/pending-magic-link.schema");
+const user_schema_1 = require("../../user/schemas/user.schema");
+const role_schema_1 = require("../../role/schemas/role.schema");
+/**
+ * Passwordless sign-in. Sessions, mail and the feature switch come from
+ * AuthModule, so this module can be dropped without touching the rest of auth.
+ */
+let MagicLinkModule = class MagicLinkModule {
+};
+exports.MagicLinkModule = MagicLinkModule;
+exports.MagicLinkModule = MagicLinkModule = __decorate([
+    (0, common_1.Module)({
+        imports: [
+            config_1.ConfigModule,
+            mongoose_1.MongooseModule.forFeature([
+                { name: pending_magic_link_schema_1.PendingMagicLink.name, schema: pending_magic_link_schema_1.PendingMagicLinkSchema },
+                { name: user_schema_1.User.name, schema: user_schema_1.UserSchema },
+                { name: role_schema_1.Role.name, schema: role_schema_1.RoleSchema },
+            ]),
+            auth_module_1.AuthModule,
+        ],
+        controllers: [magic_link_controller_1.MagicLinkController],
+        providers: [magic_link_service_1.MagicLinkService],
+        exports: [magic_link_service_1.MagicLinkService],
+    })
+], MagicLinkModule);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9tYWdpYy1saW5rL21hZ2ljLWxpbmsubW9kdWxlLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7OztBQUFBLDJDQUF3QztBQUN4QywyQ0FBOEM7QUFDOUMsK0NBQWtEO0FBQ2xELGdEQUE0QztBQUM1QyxtRUFBOEQ7QUFDOUQsNkRBQXdEO0FBQ3hELG1GQUc2QztBQUM3QyxnRUFBa0U7QUFDbEUsZ0VBQWtFO0FBRWxFOzs7R0FHRztBQWVJLElBQU0sZUFBZSxHQUFyQixNQUFNLGVBQWU7Q0FBRyxDQUFBO0FBQWxCLDBDQUFlOzBCQUFmLGVBQWU7SUFkM0IsSUFBQSxlQUFNLEVBQUM7UUFDTixPQUFPLEVBQUU7WUFDUCxxQkFBWTtZQUNaLHlCQUFjLENBQUMsVUFBVSxDQUFDO2dCQUN4QixFQUFFLElBQUksRUFBRSw0Q0FBZ0IsQ0FBQyxJQUFJLEVBQUUsTUFBTSxFQUFFLGtEQUFzQixFQUFFO2dCQUMvRCxFQUFFLElBQUksRUFBRSxrQkFBSSxDQUFDLElBQUksRUFBRSxNQUFNLEVBQUUsd0JBQVUsRUFBRTtnQkFDdkMsRUFBRSxJQUFJLEVBQUUsa0JBQUksQ0FBQyxJQUFJLEVBQUUsTUFBTSxFQUFFLHdCQUFVLEVBQUU7YUFDeEMsQ0FBQztZQUNGLHdCQUFVO1NBQ1g7UUFDRCxXQUFXLEVBQUUsQ0FBQywyQ0FBbUIsQ0FBQztRQUNsQyxTQUFTLEVBQUUsQ0FBQyxxQ0FBZ0IsQ0FBQztRQUM3QixPQUFPLEVBQUUsQ0FBQyxxQ0FBZ0IsQ0FBQztLQUM1QixDQUFDO0dBQ1csZUFBZSxDQUFHIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL2F1dGgvbWFnaWMtbGluay9tYWdpYy1saW5rLm1vZHVsZS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBNb2R1bGUgfSBmcm9tICdAbmVzdGpzL2NvbW1vbic7XG5pbXBvcnQgeyBDb25maWdNb2R1bGUgfSBmcm9tICdAbmVzdGpzL2NvbmZpZyc7XG5pbXBvcnQgeyBNb25nb29zZU1vZHVsZSB9IGZyb20gJ0BuZXN0anMvbW9uZ29vc2UnO1xuaW1wb3J0IHsgQXV0aE1vZHVsZSB9IGZyb20gJy4uL2F1dGgubW9kdWxlJztcbmltcG9ydCB7IE1hZ2ljTGlua0NvbnRyb2xsZXIgfSBmcm9tICcuL21hZ2ljLWxpbmsuY29udHJvbGxlcic7XG5pbXBvcnQgeyBNYWdpY0xpbmtTZXJ2aWNlIH0gZnJvbSAnLi9tYWdpYy1saW5rLnNlcnZpY2UnO1xuaW1wb3J0IHtcbiAgUGVuZGluZ01hZ2ljTGluayxcbiAgUGVuZGluZ01hZ2ljTGlua1NjaGVtYSxcbn0gZnJvbSAnLi9zY2hlbWFzL3BlbmRpbmctbWFnaWMtbGluay5zY2hlbWEnO1xuaW1wb3J0IHsgVXNlciwgVXNlclNjaGVtYSB9IGZyb20gJy4uLy4uL3VzZXIvc2NoZW1hcy91c2VyLnNjaGVtYSc7XG5pbXBvcnQgeyBSb2xlLCBSb2xlU2NoZW1hIH0gZnJvbSAnLi4vLi4vcm9sZS9zY2hlbWFzL3JvbGUuc2NoZW1hJztcblxuLyoqXG4gKiBQYXNzd29yZGxlc3Mgc2lnbi1pbi4gU2Vzc2lvbnMsIG1haWwgYW5kIHRoZSBmZWF0dXJlIHN3aXRjaCBjb21lIGZyb21cbiAqIEF1dGhNb2R1bGUsIHNvIHRoaXMgbW9kdWxlIGNhbiBiZSBkcm9wcGVkIHdpdGhvdXQgdG91Y2hpbmcgdGhlIHJlc3Qgb2YgYXV0aC5cbiAqL1xuQE1vZHVsZSh7XG4gIGltcG9ydHM6IFtcbiAgICBDb25maWdNb2R1bGUsXG4gICAgTW9uZ29vc2VNb2R1bGUuZm9yRmVhdHVyZShbXG4gICAgICB7IG5hbWU6IFBlbmRpbmdNYWdpY0xpbmsubmFtZSwgc2NoZW1hOiBQZW5kaW5nTWFnaWNMaW5rU2NoZW1hIH0sXG4gICAgICB7IG5hbWU6IFVzZXIubmFtZSwgc2NoZW1hOiBVc2VyU2NoZW1hIH0sXG4gICAgICB7IG5hbWU6IFJvbGUubmFtZSwgc2NoZW1hOiBSb2xlU2NoZW1hIH0sXG4gICAgXSksXG4gICAgQXV0aE1vZHVsZSxcbiAgXSxcbiAgY29udHJvbGxlcnM6IFtNYWdpY0xpbmtDb250cm9sbGVyXSxcbiAgcHJvdmlkZXJzOiBbTWFnaWNMaW5rU2VydmljZV0sXG4gIGV4cG9ydHM6IFtNYWdpY0xpbmtTZXJ2aWNlXSxcbn0pXG5leHBvcnQgY2xhc3MgTWFnaWNMaW5rTW9kdWxlIHt9XG4iXSwidmVyc2lvbiI6M30=

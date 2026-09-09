@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Request, Response } from 'express';
@@ -8,20 +8,21 @@ import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { LoginResponseDto } from '../dto/login-response.dto';
 import { SignInService } from '../services/sign-in.service';
-import { AuthFeaturesService } from '../services/auth-features.service';
-import { AuthFeature } from '../enums/auth-feature.enum';
-import { PasskeyAssertionService } from '../passkeys/services/passkey-assertion.service';
 import { VerifyTwoFactorDto } from './dto/verify-two-factor.dto';
 import { TwoFactorChallengeService } from './services/two-factor-challenge.service';
 import { TwoFactorVerificationService } from './services/two-factor-verification.service';
+import {
+  SECOND_FACTOR_VERIFIERS,
+  SecondFactorVerifier,
+} from './services/second-factor-verifiers';
 
 /**
  * The second half of a sign-in that was held for a code. The first half left a
  * challenge cookie; this turns a correct answer into the session it was owed.
  *
- * The answer is a TOTP code, a recovery code, or a passkey. A passkey works
- * here because it proves possession of a key the account registered, which is
- * the same thing a code from the authenticator app proves.
+ * The answer is a TOTP code, a recovery code, or whatever a registered second
+ * factor verifier accepts. A passkey is one of those: it proves possession of
+ * a key the account registered, which is what a code from the app proves.
  */
 @Injectable()
 export class TwoFactorLoginService {
@@ -32,8 +33,8 @@ export class TwoFactorLoginService {
     private readonly challengeService: TwoFactorChallengeService,
     private readonly verificationService: TwoFactorVerificationService,
     private readonly signInService: SignInService,
-    private readonly authFeaturesService: AuthFeaturesService,
-    private readonly passkeyAssertions: PasskeyAssertionService,
+    @Inject(SECOND_FACTOR_VERIFIERS)
+    private readonly verifiers: SecondFactorVerifier[],
   ) {}
 
   /**
@@ -74,13 +75,8 @@ export class TwoFactorLoginService {
   }
 
   /**
-   * A passkey answers the challenge in place of a code. It is checked against
-   * the passkey challenge cookie the client picked up from
-   * POST /auth/passkeys/login/options, and has to belong to the account the
-   * two-factor challenge was issued for.
-   *
-   * @throws AppException PASSKEY_VERIFICATION_FAILED when the credential
-   * belongs to another account
+   * A code goes to the verification service. Anything else is a credential a
+   * registered verifier owns, such as a passkey.
    */
   private async checkSecondFactor(
     dto: VerifyTwoFactorDto,
@@ -88,25 +84,16 @@ export class TwoFactorLoginService {
     request: Request,
     response: Response,
   ): Promise<void> {
-    if (!dto.passkeyResponse) {
+    const verifier = this.verifiers.find((candidate) =>
+      candidate.supports(dto),
+    );
+
+    if (!verifier) {
       await this.verificationService.verifySecondFactor(user, dto);
       return;
     }
 
-    this.authFeaturesService.assertEnabled(AuthFeature.PASSKEYS);
-    const { passkey } = await this.passkeyAssertions.verify(
-      dto.passkeyResponse,
-      request,
-      response,
-    );
-
-    if (passkey.user.toString() !== user._id.toString()) {
-      throw new AppException(
-        ErrorCode.PASSKEY_VERIFICATION_FAILED,
-        'That passkey could not be used to sign in',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
+    await verifier.verify(dto, user, request, response);
   }
 
   private async discard(

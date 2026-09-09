@@ -1,0 +1,14 @@
+{
+  "frontend/src/app/[locale]/(dashboard)/sessions/page.tsx": {
+    "sha256": "e653bec7354e954b781e5b6906e55851657edb39979702c60ccc763fe965cba8",
+    "snapshot": "before-0.txt"
+  },
+  "frontend/e2e/authenticated-regressions.spec.ts": {
+    "sha256": "ea8135ddefa557c279e6db27e7442e8222038666a6fa3268f85c2ec32236d08f",
+    "snapshot": "before-1.txt"
+  },
+  "frontend/src/modules/sessions/components/RevokeAllSessionsButton.tsx": {
+    "sha256": "c8574928393b785a5b3e538a992c54c7e77b02e8cd07bf4ab0f50adb064d9540",
+    "snapshot": "/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/sessions-320-repair/before-2.txt"
+  }
+}

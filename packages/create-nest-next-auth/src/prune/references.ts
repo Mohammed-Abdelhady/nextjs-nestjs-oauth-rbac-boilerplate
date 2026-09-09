@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { extname, join, posix } from 'node:path';
-import { SOURCE_EXTENSIONS } from '../constants/index.js';
+import { FRONTEND_ALIAS, FRONTEND_SOURCE, SOURCE_EXTENSIONS } from '../constants/index.js';
 import type { DanglingReference } from '../types.js';
 import { listFiles } from '../utils/fs.js';
 
@@ -21,9 +21,27 @@ function withoutExtension(path: string): string {
   return isSource ? path.slice(0, -extension.length) : path;
 }
 
+/** First path segment of a file, which is the workspace it belongs to. */
+function workspaceOf(importer: string): string {
+  return importer.split('/')[0];
+}
+
+/**
+ * Turns an import into a project path. Relative specifiers resolve against the
+ * importer; `@/x` is the frontend alias for frontend/src/x, and `src/x` is the
+ * baseUrl form inside a workspace. Anything else is a package name.
+ */
 function resolveSpecifier(importer: string, specifier: string): string | undefined {
-  if (!specifier.startsWith('.')) return undefined;
-  return withoutExtension(posix.normalize(posix.join(posix.dirname(importer), specifier)));
+  if (specifier.startsWith('.')) {
+    return withoutExtension(posix.normalize(posix.join(posix.dirname(importer), specifier)));
+  }
+  if (specifier.startsWith(FRONTEND_ALIAS)) {
+    return withoutExtension(posix.join(FRONTEND_SOURCE, specifier.slice(FRONTEND_ALIAS.length)));
+  }
+  if (specifier.startsWith('src/')) {
+    return withoutExtension(posix.join(workspaceOf(importer), specifier));
+  }
+  return undefined;
 }
 
 /**
@@ -43,7 +61,6 @@ export async function findDanglingReferences(
     // An index file is imported through its directory.
     if (path.endsWith('/index')) byPath.set(path.slice(0, -'/index'.length), path);
   }
-  const bySuffix = deletedSources.map((path) => ({ path, suffix: `/${path.split('/').pop()}` }));
   const dangling: DanglingReference[] = [];
 
   for (const file of (await listFiles(root)).filter(isSourceFile)) {
@@ -52,7 +69,8 @@ export async function findDanglingReferences(
     lines.forEach((line, index) => {
       for (const match of line.matchAll(SPECIFIER)) {
         const specifier = match[1];
-        const target = matchDeleted(file, specifier, byPath, bySuffix);
+        const resolved = resolveSpecifier(file, specifier);
+        const target = resolved === undefined ? undefined : byPath.get(resolved);
         if (target === undefined) continue;
         dangling.push({ file, line: index + 1, specifier, target });
       }
@@ -60,19 +78,4 @@ export async function findDanglingReferences(
   }
 
   return dangling;
-}
-
-function matchDeleted(
-  importer: string,
-  specifier: string,
-  byPath: Map<string, string>,
-  bySuffix: { path: string; suffix: string }[],
-): string | undefined {
-  const resolved = resolveSpecifier(importer, specifier);
-  if (resolved !== undefined) return byPath.get(resolved);
-
-  // Alias imports such as @/auth/strategies/google-oauth.strategy or src/... .
-  const normalized = withoutExtension(specifier);
-  const hit = bySuffix.find(({ suffix }) => normalized.endsWith(suffix));
-  return hit?.path;
 }

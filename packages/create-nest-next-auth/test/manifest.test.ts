@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { loadManifest } from '../src/manifest/load.js';
 import { availableFeatures, defaultFeatureIds, resolveSelection } from '../src/manifest/select.js';
 import { ManifestError, validateManifest } from '../src/manifest/validate.js';
+import { FEATURE_KIND_ORDER } from '../src/constants/index.js';
+import { listFiles } from '../src/utils/fs.js';
 
 const REPO_ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 
@@ -97,11 +99,25 @@ describe('the repository manifest', () => {
     expect(Object.keys(manifest.features).length).toBeGreaterThan(4);
   });
 
-  it('offers the methods that exist today and hides the planned ones', async () => {
+  it('preselects email and password with the three first-party providers', async () => {
     const manifest = await loadManifest(REPO_ROOT);
-    const offered = availableFeatures(manifest).map(({ id }) => id);
-    expect(offered).toEqual(['email-password', 'google', 'github', 'facebook']);
-    expect(defaultFeatureIds(manifest)).toEqual(offered);
+    expect(defaultFeatureIds(manifest)).toEqual([
+      'email-password',
+      'google',
+      'github',
+      'facebook',
+    ]);
+  });
+
+  it('keeps hidden features out of the prompt and off the defaults', async () => {
+    const manifest = await loadManifest(REPO_ROOT);
+    const hidden = availableFeatures(manifest).filter(({ feature }) => feature.kind === 'hidden');
+
+    expect(hidden.map(({ id }) => id)).toEqual(['oauth-core']);
+    for (const { id, feature } of hidden) {
+      expect(feature.default, `${id} is hidden and cannot be a default`).toBe(false);
+      expect(FEATURE_KIND_ORDER).not.toContain(feature.kind);
+    }
   });
 
   it('gives every planned feature an empty file list', async () => {
@@ -123,11 +139,30 @@ describe('the repository manifest', () => {
     }
   });
 
-  it('drops planned ids from a selection and pulls in requirements', async () => {
+  it('drops unknown ids from a selection and pulls in requirements', async () => {
     const manifest = await loadManifest(REPO_ROOT);
     const selection = resolveSelection(manifest, ['google', 'apple', 'nope']);
-    expect(selection.selected).toEqual(['google']);
-    expect(selection.rejected).toEqual(['apple', 'nope']);
+
+    expect(selection.selected).toEqual(['oauth-core', 'google', 'apple']);
+    expect(selection.added).toEqual(['oauth-core']);
+    expect(selection.rejected).toEqual(['nope']);
     expect(selection.removed).toContain('facebook');
+  });
+
+  it('claims every file that exists, so a delete list is never stale', async () => {
+    const manifest = await loadManifest(REPO_ROOT);
+    const present = new Set(await listFiles(REPO_ROOT));
+
+    for (const [id, entry] of Object.entries(manifest.features)) {
+      for (const path of entry.files) {
+        if (path.includes('*')) continue;
+        expect(present.has(path), `features.${id} lists ${path}, which does not exist`).toBe(true);
+      }
+      for (const path of entry.docs) {
+        expect(present.has(path), `features.${id} lists doc ${path}, which does not exist`).toBe(
+          true,
+        );
+      }
+    }
   });
 });

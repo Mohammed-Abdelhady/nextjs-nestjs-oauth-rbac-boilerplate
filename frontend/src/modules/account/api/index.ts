@@ -1,2 +1,2 @@
-export * from './accountLinkingApi';
-export * from './profileSyncApi';
+export * from './accountLinkingApi'; // feature:oauth-core
+export * from './profileSyncApi'; // feature:oauth-core

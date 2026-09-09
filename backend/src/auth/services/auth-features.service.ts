@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthFeature } from '../enums/auth-feature.enum';
+import { AVAILABLE_AUTH_FEATURES } from '../constants/available-auth-features';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 
@@ -29,6 +30,8 @@ export class AuthFeaturesService {
   constructor(private readonly configService: ConfigService) {}
 
   isEnabled(feature: AuthFeature): boolean {
+    if (!AVAILABLE_AUTH_FEATURES.has(feature)) return false;
+
     return this.configService.get<boolean>(
       FEATURE_CONFIG_KEYS[feature],
       FEATURE_FALLBACKS[feature],

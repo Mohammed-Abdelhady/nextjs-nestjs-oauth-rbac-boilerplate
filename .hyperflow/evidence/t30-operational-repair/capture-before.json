@@ -1,0 +1,39 @@
+{
+  "capturedAt": "2026-09-08T08:11:50.443Z",
+  "baseRevision": "68cefb61f450b94c195a8d6cf325ac5e26c15349",
+  "files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "c0e8121c3dab5daa2084fc3b03e3317091a9e9102d05a52cbee218dd66f00a91"
+    },
+    {
+      "path": ".dockerignore",
+      "sha256": "1b230fbf8f1d69bfa8e418fe712c7409a9419d31d2a5a3ae53ba5808dd997685"
+    },
+    {
+      "path": "nginx/.dockerignore",
+      "sha256": "63d96f409343b309868e853db096d4f0741997f1503c37db045d1b82c79d5bf5"
+    },
+    {
+      "path": "nginx/nginx.conf",
+      "sha256": "5f7b28c9c9fd6ff5a9af6bc326225e28b9e34061f16fc3276bdc9e3baf7d7beb"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "06f42527ce2a2b9dceecca5a824d13acc790f9cbacab118669d17d506856e844"
+    },
+    {
+      "path": "scripts/verify-docker.mjs",
+      "sha256": "4abf2cc9fdf3cee8ba2e0131d31b5535e45b210bb444a1d8cc126a3e98703324"
+    },
+    {
+      "path": "packages/create-nest-next-auth/scripts/sync-template.mjs",
+      "sha256": "e1c621e0000ac2838e6cb92ffb03d0d8ef6633b892beeab73f615838eda43d5b"
+    },
+    {
+      "path": "packages/create-nest-next-auth/test/e2e.test.ts",
+      "sha256": "e77d47178e1e040e545561b97664d9c64dcd2ea9be31479db834aa99ab507a8a"
+    }
+  ],
+  "captureHash": "4e305e34367d0ee3c5aa938ed3a8cdcdbfa3b9dc2770c2006feae973f46df711"
+}

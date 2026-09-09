@@ -1,0 +1,62 @@
+{
+  "baseRefName": "master",
+  "changedFiles": 795,
+  "headRefName": "feat/production-hardening",
+  "headRefOid": "3e84f52312196c03aaefc109ceca05c71bebc712",
+  "isDraft": true,
+  "number": 72,
+  "state": "OPEN",
+  "statusCheckRollup": [
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34210159665/job/102008985012",
+      "name": "quality",
+      "startedAt": "2026-09-08T09:28:15Z",
+      "status": "IN_PROGRESS",
+      "workflowName": "CI"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34210159667/job/102008984746",
+      "name": "analyze",
+      "startedAt": "2026-09-08T09:28:16Z",
+      "status": "IN_PROGRESS",
+      "workflowName": "CodeQL"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34210159665/job/102008985300",
+      "name": "scaffold-combinations",
+      "startedAt": "2026-09-08T09:28:15Z",
+      "status": "IN_PROGRESS",
+      "workflowName": "CI"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34210159665/job/102008985401",
+      "name": "backend and browser integration",
+      "startedAt": "2026-09-08T09:28:17Z",
+      "status": "IN_PROGRESS",
+      "workflowName": "CI"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34210159665/job/102008985357",
+      "name": "docker",
+      "startedAt": "2026-09-08T09:28:15Z",
+      "status": "IN_PROGRESS",
+      "workflowName": "CI"
+    }
+  ],
+  "url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72"
+}

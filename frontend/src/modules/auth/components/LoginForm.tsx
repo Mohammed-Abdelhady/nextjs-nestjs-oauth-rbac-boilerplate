@@ -4,8 +4,9 @@ import { Fragment } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { UserPlus } from 'lucide-react';
+import { AuthDivider } from '@/components/ui/auth-divider';
 import { IconLinkButton } from '@/components/ui/icon-link-button';
-import { OAuthButtons, OAuthDivider } from '@/modules/oauth';
+import { OAuthButtons } from '@/modules/oauth'; // feature:oauth-core
 import { enabledAuthMethods } from '../methods/registry';
 import type { AuthMethods } from '../types/auth.types';
 import { AuthMethodsGate } from './AuthMethodsGate';
@@ -40,15 +41,17 @@ function SignInMethods({ methods, redirect }: SignInMethodsProps) {
         </div>
       )}
 
+      {/* feature:oauth-core:start */}
       {hasOAuth && (
         <div className="my-6">
           <OAuthButtons redirect={redirect ?? undefined} />
         </div>
       )}
+      {/* feature:oauth-core:end */}
 
       {entries.map(({ id, Form }, index) => (
         <Fragment key={id}>
-          {(index > 0 || hasOAuth) && <OAuthDivider />}
+          {(index > 0 || hasOAuth) && <AuthDivider />}
           <Form redirect={redirect} isOnlyMethod={entries.length === 1} />
         </Fragment>
       ))}

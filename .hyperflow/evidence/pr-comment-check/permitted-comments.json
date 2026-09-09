@@ -1,0 +1,65 @@
+[
+  {
+    "body": "Starting review on this PR (head 3e84f52).",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#issuecomment-5583243593",
+    "id": 5583243593,
+    "kind": "issue",
+    "path": null
+  },
+  {
+    "body": "## Visual guide \u2014 what this PR does\n\nThis PR turns the repository into a configurable authentication starter, then hardens the generated backend and frontend flows.\n\n### Big picture\n\n| Area | What changed |\n|---|---|\n| Product UI | Localized sign-in, account, session, passkey, two-factor, OAuth, and admin flows |\n| Backend | Auth feature gates, OAuth providers, passkeys, two-factor auth, sessions, permissions, migrations, and error handling |\n| Generator | A `create-nest-next-auth` CLI that copies and prunes the template from selected auth options |\n| Tooling | CI, CodeQL, Docker checks, browser fixtures, package checks, and local hooks |\n| Docs | Setup guides, provider guides, architecture notes, and explicit verification limits |\n\n### Before -> after\n\n```text\nfixed full-stack boilerplate\n  -> choose authentication features\n  -> generate a pruned project\n  -> configure backend and frontend\n  -> sign in with an enabled method\n  -> complete optional second factor or passkey flow\n  -> use account, session, and admin routes\n```\n\n### File map\n\nStart with these areas:\n\n```text\npackages/create-nest-next-auth/   generator, manifest, pruning, package contract\nbackend/src/auth/                 authentication methods and session boundaries\nbackend/src/admin/                permission and user administration paths\nfrontend/src/modules/auth/        sign-in routing, forms, and auth state\nfrontend/src/modules/passkeys/    browser passkey behavior\nfrontend/src/modules/two-factor/  setup, challenge, and recovery flows\n.github/workflows/ci.yml          claimed automated verification\nscripts/verify-docker.mjs         Docker verification boundary\n```\n\nThe lockfile, generated message catalogs, Postman collection, and broad test fixtures account for much of the bulk. Review the auth/session trust boundaries and generator pruning rules before that mechanical material.\n\n### Two-minute verification\n\n1. Read the selected auth feature flow in `packages/create-nest-next-auth/`.\n2. Confirm disabled methods are rejected by the backend, not only hidden in the UI.\n3. Trace one password or OAuth sign-in through session creation and return routing.\n4. Check that generated projects keep runnable root, backend, and frontend gates.\n5. Compare the GitHub checks with the validation claims in the PR body.\n\n### Out of scope\n\nThis draft does not claim production TLS, live Docker runtime verification, external provider conformance, actual mail delivery, hardware passkey behavior, or release readiness.\n",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#issuecomment-5583244478",
+    "id": 5583244478,
+    "kind": "issue",
+    "path": null
+  },
+  {
+    "body": "The head moved from 3e84f52 to fc19e55 during review. Re-baselining the diff and verification before the formal review.",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#issuecomment-5583914763",
+    "id": 5583914763,
+    "kind": "issue",
+    "path": null
+  },
+  {
+    "body": "Critical: `up()` only changes users whose permission list is missing or empty, but `down()` pulls these strings from every user in the role. A rollback can delete pre-existing direct grants that this migration never created.\n\nFix: Record exactly which rows the migration changed, or use a migration marker that makes rollback ownership explicit. The rollback must only restore those rows. Add a fixture where a user already owns one of the default strings and prove it survives `up` followed by `down`.",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131027",
+    "id": 3957131027,
+    "kind": "inline",
+    "path": "backend/migrations/20260904000001-add-default-permissions-to-users.js"
+  },
+  {
+    "body": "Critical: The rollback unsets all `linkedAccounts`, but it only maps Google, Facebook, and GitHub back to legacy fields. Any Microsoft, Apple, GitLab, OIDC, or other provider linked after `up()` loses its provider ID permanently on `down()`.\n\nFix: Preserve every provider in a rollback-safe representation or fail closed when an account cannot be represented by the legacy schema. Add `up`, create a non-legacy link, `down`, and `up` round-trip coverage before this migration is usable.",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131034",
+    "id": 3957131034,
+    "kind": "inline",
+    "path": "backend/migrations/20260904000002-linked-accounts.js"
+  },
+  {
+    "body": "Warning: This acceptance condition still fails on the exact head in hosted CI. The Arabic mobile run remains wider than the 390px viewport even after the sidebar closes and animations settle. The job finished 71/72, so the mobile RTL path is not green.\n\nFix: Use the failure trace to identify the overflowing element, repair the layout rather than relaxing this assertion, and add 320px and 375px cases with long localized values.",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131062",
+    "id": 3957131062,
+    "kind": "inline",
+    "path": "frontend/e2e/authenticated-regressions.spec.ts"
+  },
+  {
+    "body": "Warning: The exact-head Docker job starts all four services healthy, then fails during assertions, but this error reduces every Docker failure to `docker --config exited 1`. The new diagnostics still cannot identify which assertion-phase command failed.\n\nFix: Attach a safe operation label or the non-secret argument tail to each command error and preserve bounded, redacted stderr. Then fix the failing assertion and rerun the Docker job to completion.",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131069",
+    "id": 3957131069,
+    "kind": "inline",
+    "path": "scripts/verify-docker.mjs"
+  },
+  {
+    "body": "Warning: This changed human-maintained file is still 537 lines. The exact-head budget scan found 17 changed human-maintained code, config, translation, and documentation files over the 350-line limit after excluding the lockfile and Postman export. `scripts/init.js` is 491 lines, `scripts/verify-docker.mjs` is 467, and `openspec/project.md` is 953.\n\nFix: Split each file by responsibility before approval. For these scripts, move configuration collection, file generation, command execution, and reporting into focused modules with their own tests.",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131073",
+    "id": 3957131073,
+    "kind": "inline",
+    "path": "scripts/setup-production.js"
+  },
+  {
+    "body": "Warning: This updated section now says the project uses stateful cookie sessions, but later sections still specify JWT access tokens, Passport JWT, AuthContext, native fetch wrappers, and bearer-auth endpoint examples. The project context remains internally contradictory after this partial update.\n\nFix: Rewrite the stale architecture, endpoint, security, dependency, and setup sections against the current session, RTK Query, provider-registry, and Node 22 implementation. Add a lightweight docs contract so the old JWT model cannot drift back in.",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131076",
+    "id": 3957131076,
+    "kind": "inline",
+    "path": "openspec/project.md"
+  }
+]

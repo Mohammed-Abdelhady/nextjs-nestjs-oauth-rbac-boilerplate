@@ -1,0 +1,36 @@
+0d7eca9ff5664b951c3fe06c67f7b670
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DisableTwoFactorDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
+const class_validator_1 = require("class-validator");
+const verify_two_factor_dto_1 = require("./verify-two-factor.dto");
+/**
+ * Turning the second factor off needs a code or a recovery code, plus the
+ * password when the account has one.
+ */
+class DisableTwoFactorDto extends verify_two_factor_dto_1.VerifyTwoFactorDto {
+    password;
+}
+exports.DisableTwoFactorDto = DisableTwoFactorDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Current password, required for accounts that have one',
+        example: 'Password123!',
+        required: false,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(128),
+    __metadata("design:type", String)
+], DisableTwoFactorDto.prototype, "password", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC90d28tZmFjdG9yL2R0by9kaXNhYmxlLXR3by1mYWN0b3IuZHRvLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLDZDQUE4QztBQUM5QyxxREFBa0U7QUFDbEUsbUVBQTZEO0FBRTdEOzs7R0FHRztBQUNILE1BQWEsbUJBQW9CLFNBQVEsMENBQWtCO0lBU3pELFFBQVEsQ0FBVTtDQUNuQjtBQVZELGtEQVVDO0FBREM7SUFSQyxJQUFBLHFCQUFXLEVBQUM7UUFDWCxXQUFXLEVBQUUsdURBQXVEO1FBQ3BFLE9BQU8sRUFBRSxjQUFjO1FBQ3ZCLFFBQVEsRUFBRSxLQUFLO0tBQ2hCLENBQUM7SUFDRCxJQUFBLDRCQUFVLEdBQUU7SUFDWixJQUFBLDBCQUFRLEdBQUU7SUFDVixJQUFBLDJCQUFTLEVBQUMsR0FBRyxDQUFDOztxREFDRyIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy9hdXRoL3R3by1mYWN0b3IvZHRvL2Rpc2FibGUtdHdvLWZhY3Rvci5kdG8udHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgQXBpUHJvcGVydHkgfSBmcm9tICdAbmVzdGpzL3N3YWdnZXInO1xuaW1wb3J0IHsgSXNPcHRpb25hbCwgSXNTdHJpbmcsIE1heExlbmd0aCB9IGZyb20gJ2NsYXNzLXZhbGlkYXRvcic7XG5pbXBvcnQgeyBWZXJpZnlUd29GYWN0b3JEdG8gfSBmcm9tICcuL3ZlcmlmeS10d28tZmFjdG9yLmR0byc7XG5cbi8qKlxuICogVHVybmluZyB0aGUgc2Vjb25kIGZhY3RvciBvZmYgbmVlZHMgYSBjb2RlIG9yIGEgcmVjb3ZlcnkgY29kZSwgcGx1cyB0aGVcbiAqIHBhc3N3b3JkIHdoZW4gdGhlIGFjY291bnQgaGFzIG9uZS5cbiAqL1xuZXhwb3J0IGNsYXNzIERpc2FibGVUd29GYWN0b3JEdG8gZXh0ZW5kcyBWZXJpZnlUd29GYWN0b3JEdG8ge1xuICBAQXBpUHJvcGVydHkoe1xuICAgIGRlc2NyaXB0aW9uOiAnQ3VycmVudCBwYXNzd29yZCwgcmVxdWlyZWQgZm9yIGFjY291bnRzIHRoYXQgaGF2ZSBvbmUnLFxuICAgIGV4YW1wbGU6ICdQYXNzd29yZDEyMyEnLFxuICAgIHJlcXVpcmVkOiBmYWxzZSxcbiAgfSlcbiAgQElzT3B0aW9uYWwoKVxuICBASXNTdHJpbmcoKVxuICBATWF4TGVuZ3RoKDEyOClcbiAgcGFzc3dvcmQ/OiBzdHJpbmc7XG59XG4iXSwidmVyc2lvbiI6M30=

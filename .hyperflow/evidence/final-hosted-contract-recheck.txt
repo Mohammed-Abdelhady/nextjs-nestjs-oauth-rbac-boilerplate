@@ -1,0 +1,24 @@
+**CI-BROWSER-PRODUCT — CLOSED for the scoped repair.** [Dashboard layout:32](/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz/frontend/src/app/[locale]/(dashboard)/layout.tsx:32) adds `min-w-0` and lets the mobile header wrap without removing controls. The skip link’s logical inset preserves its focused placement and Enter navigation.
+
+Evidence supports the diagnosis and repair:
+
+- Controlled 385px capture: document width changes from 387 to 385 after removing the flex minimum.
+- Final en/ar geometry matches viewport width at 385, 390 and 1280px.
+- Six passing regressions verify control bounds/actionability, theme changes, skip-link focus and navigation.
+- The strict overflow predicate and bounded failure diagnostics remain intact.
+
+**CI-DOCKER-SSR — NEEDS_EVIDENCE for hosted closure; source repair passes.** [docker-http-probes.mjs:43](/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz/scripts/lib/docker-http-probes.mjs:43) checks the observed localized HTML direction, loading status/busy/live attributes, Next static script and inline bootstrap. The 22 new negative cases cover both locales and the specified missing/wrong/error responses. Status, empty-`Location` rejection, response/time limits and other endpoint semantics are unchanged.
+
+`actual-ssr-probe.json` records success against both native frontend documents; its other endpoints were synthetic. This does not establish Docker success. The owner needs the next normal hosted run to confirm the repaired contract there. Hydrated forms remain browser coverage.
+
+**320px observation — remains open, outside this batch.** Final geometry demonstrates document widths of 353px English and 371px Arabic. The unchanged action row at `sessions/page.tsx:56` exceeds the available 288px. This supports the proposed separate wrapping repair. However, no matching base-revision 320px capture establishes the prior visual extent; “pre-existing” is supported by unchanged source, not a before/after runtime comparison. No introduced defect is demonstrated.
+
+No new actionable defect found in the five-path delta. Layout changes add no state or listeners. SSR processing remains bounded by the 1MiB response cap and a fixed set of checks; this is an emitted-document contract, not general HTML validation.
+
+Independently verified before/after:
+
+- HEAD: `954b99a319d171d8dd488372fda6f4f530440dce`
+- Fingerprint: `221cdad95491ce949f4a7c6b005435c4894e2b8b3aa7ea71bd1318ff7d7ee16a`
+- Exact five-path scope; supplied patch reconstructs HEAD.
+
+Owner evidence confirms config65/frontend123/authenticated76/anonymous44 passing, browser skipped/flaky counts zero, and build/lint/types passing. I ran no tests and made no writes. Prior closures and control exclusions remain intact; no broader readiness or release approval is implied.

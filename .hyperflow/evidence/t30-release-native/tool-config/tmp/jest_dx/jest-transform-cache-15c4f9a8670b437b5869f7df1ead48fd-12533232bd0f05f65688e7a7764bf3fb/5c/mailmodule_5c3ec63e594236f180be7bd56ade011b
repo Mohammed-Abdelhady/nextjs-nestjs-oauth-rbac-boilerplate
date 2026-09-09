@@ -1,0 +1,22 @@
+742761bd8b7c651f3a3ec3d81a0b0c9c
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MailModule = void 0;
+const common_1 = require("@nestjs/common");
+const mail_service_1 = require("./mail.service");
+let MailModule = class MailModule {
+};
+exports.MailModule = MailModule;
+exports.MailModule = MailModule = __decorate([
+    (0, common_1.Module)({
+        providers: [mail_service_1.MailService],
+        exports: [mail_service_1.MailService],
+    })
+], MailModule);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvbWFpbC9tYWlsLm1vZHVsZS50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7QUFBQSwyQ0FBd0M7QUFDeEMsaURBQTZDO0FBTXRDLElBQU0sVUFBVSxHQUFoQixNQUFNLFVBQVU7Q0FBRyxDQUFBO0FBQWIsZ0NBQVU7cUJBQVYsVUFBVTtJQUp0QixJQUFBLGVBQU0sRUFBQztRQUNOLFNBQVMsRUFBRSxDQUFDLDBCQUFXLENBQUM7UUFDeEIsT0FBTyxFQUFFLENBQUMsMEJBQVcsQ0FBQztLQUN2QixDQUFDO0dBQ1csVUFBVSxDQUFHIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL21haWwvbWFpbC5tb2R1bGUudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgTW9kdWxlIH0gZnJvbSAnQG5lc3Rqcy9jb21tb24nO1xuaW1wb3J0IHsgTWFpbFNlcnZpY2UgfSBmcm9tICcuL21haWwuc2VydmljZSc7XG5cbkBNb2R1bGUoe1xuICBwcm92aWRlcnM6IFtNYWlsU2VydmljZV0sXG4gIGV4cG9ydHM6IFtNYWlsU2VydmljZV0sXG59KVxuZXhwb3J0IGNsYXNzIE1haWxNb2R1bGUge31cbiJdLCJ2ZXJzaW9uIjozfQ==

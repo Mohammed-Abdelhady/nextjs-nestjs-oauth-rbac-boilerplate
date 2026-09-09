@@ -1,3 +1,4 @@
+import type { ApiBody } from '../types/e2e-responses';
 import request from 'supertest';
 import type { Response } from 'supertest';
 import {
@@ -22,7 +23,7 @@ describe('Role access and permission validation (e2e)', () => {
   });
 
   afterAll(async () => {
-    await e2e.app.close();
+    await e2e?.close();
   });
 
   describe('Permission validation', () => {
@@ -40,7 +41,7 @@ describe('Role access and permission validation (e2e)', () => {
         .send({ name: 'Valid Permissions Role', permissions: validPermissions })
         .expect(201);
 
-      const role = response.body as RoleResponse;
+      const role = (response.body as ApiBody<RoleResponse>).data;
       expect(role.permissions).toEqual(validPermissions);
 
       await adminAgent.delete(`/api/roles/${role.slug}`);
@@ -52,7 +53,7 @@ describe('Role access and permission validation (e2e)', () => {
         .send({ name: 'Wildcard Role', permissions: ['*'] })
         .expect(201);
 
-      const role = response.body as RoleResponse;
+      const role = (response.body as ApiBody<RoleResponse>).data;
       expect(role.permissions).toContain('*');
 
       await adminAgent.delete(`/api/roles/${role.slug}`);
@@ -63,9 +64,9 @@ describe('Role access and permission validation (e2e)', () => {
     it('should mark seeded roles as system roles', async () => {
       const response: Response = await adminAgent.get('/api/roles').expect(200);
 
-      const systemRoles = (response.body as RoleResponse[]).filter(
-        (role) => role.isSystemRole,
-      );
+      const systemRoles = (
+        response.body as ApiBody<{ roles: RoleResponse[] }>
+      ).data.roles.filter((role) => role.isSystemRole);
 
       expect(systemRoles.length).toBeGreaterThan(0);
       expect(systemRoles.some((role) => role.slug === 'admin')).toBe(true);
@@ -77,7 +78,9 @@ describe('Role access and permission validation (e2e)', () => {
         .get('/api/roles/user')
         .expect(200);
 
-      expect((response.body as RoleResponse).isProtected).toBe(true);
+      expect((response.body as ApiBody<RoleResponse>).data.isProtected).toBe(
+        true,
+      );
     });
   });
 
@@ -107,18 +110,20 @@ describe('Role access and permission validation (e2e)', () => {
   describe('Effective permissions per user', () => {
     it('should verify admin has wildcard permission', async () => {
       const response: Response = await adminAgent
-        .get('/api/auth/me')
+        .get('/api/user/profile')
         .expect(200);
 
-      expect((response.body as UserResponse).permissions).toContain('*');
+      expect(
+        (response.body as ApiBody<UserResponse>).data.permissions,
+      ).toContain('*');
     });
 
     it('should verify regular user has limited permissions', async () => {
       const response: Response = await userAgent
-        .get('/api/auth/me')
+        .get('/api/user/profile')
         .expect(200);
 
-      const user = response.body as UserResponse;
+      const user = (response.body as ApiBody<UserResponse>).data;
       expect(user.permissions).not.toContain('*');
       expect(user.permissions).not.toContain('users:read:all');
     });

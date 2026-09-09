@@ -1,0 +1,22 @@
+[
+  {
+    "gate": "test",
+    "command": [
+      "npm",
+      "run",
+      "test"
+    ],
+    "exit": 0,
+    "seconds": 26.9
+  },
+  {
+    "gate": "build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exit": 0,
+    "seconds": 13.83
+  }
+]

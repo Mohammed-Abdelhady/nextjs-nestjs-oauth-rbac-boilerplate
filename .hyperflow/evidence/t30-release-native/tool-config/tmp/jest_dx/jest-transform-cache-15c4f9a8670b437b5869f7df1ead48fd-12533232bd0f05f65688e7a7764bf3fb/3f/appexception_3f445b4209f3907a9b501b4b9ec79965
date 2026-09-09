@@ -1,0 +1,32 @@
+691d0281b8dece3cfd5977d651f7eb92
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AppException = void 0;
+const common_1 = require("@nestjs/common");
+/**
+ * Custom exception class that includes error codes for standardized API responses.
+ * Extends HttpException to maintain compatibility with NestJS exception handling.
+ */
+class AppException extends common_1.HttpException {
+    code;
+    details;
+    constructor(code, message, statusCode = common_1.HttpStatus.INTERNAL_SERVER_ERROR, details) {
+        super(message, statusCode);
+        this.code = code;
+        this.details = details;
+    }
+    /**
+     * Get the error code for this exception.
+     */
+    getCode() {
+        return this.code;
+    }
+    /**
+     * Get optional additional context for this exception.
+     */
+    getDetails() {
+        return this.details;
+    }
+}
+exports.AppException = AppException;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29tbW9uL2V4Y2VwdGlvbnMvYXBwLmV4Y2VwdGlvbi50cyIsIm1hcHBpbmdzIjoiOzs7QUFBQSwyQ0FBMkQ7QUFHM0Q7OztHQUdHO0FBQ0gsTUFBYSxZQUFhLFNBQVEsc0JBQWE7SUFDcEMsSUFBSSxDQUFZO0lBQ2hCLE9BQU8sQ0FBMkI7SUFFM0MsWUFDRSxJQUFlLEVBQ2YsT0FBZSxFQUNmLGFBQXlCLG1CQUFVLENBQUMscUJBQXFCLEVBQ3pELE9BQWlDO1FBRWpDLEtBQUssQ0FBQyxPQUFPLEVBQUUsVUFBVSxDQUFDLENBQUM7UUFDM0IsSUFBSSxDQUFDLElBQUksR0FBRyxJQUFJLENBQUM7UUFDakIsSUFBSSxDQUFDLE9BQU8sR0FBRyxPQUFPLENBQUM7SUFDekIsQ0FBQztJQUVEOztPQUVHO0lBQ0gsT0FBTztRQUNMLE9BQU8sSUFBSSxDQUFDLElBQUksQ0FBQztJQUNuQixDQUFDO0lBRUQ7O09BRUc7SUFDSCxVQUFVO1FBQ1IsT0FBTyxJQUFJLENBQUMsT0FBTyxDQUFDO0lBQ3RCLENBQUM7Q0FDRjtBQTVCRCxvQ0E0QkMiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29tbW9uL2V4Y2VwdGlvbnMvYXBwLmV4Y2VwdGlvbi50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBIdHRwRXhjZXB0aW9uLCBIdHRwU3RhdHVzIH0gZnJvbSAnQG5lc3Rqcy9jb21tb24nO1xuaW1wb3J0IHsgRXJyb3JDb2RlIH0gZnJvbSAnLi4vZW51bXMvZXJyb3ItY29kZS5lbnVtJztcblxuLyoqXG4gKiBDdXN0b20gZXhjZXB0aW9uIGNsYXNzIHRoYXQgaW5jbHVkZXMgZXJyb3IgY29kZXMgZm9yIHN0YW5kYXJkaXplZCBBUEkgcmVzcG9uc2VzLlxuICogRXh0ZW5kcyBIdHRwRXhjZXB0aW9uIHRvIG1haW50YWluIGNvbXBhdGliaWxpdHkgd2l0aCBOZXN0SlMgZXhjZXB0aW9uIGhhbmRsaW5nLlxuICovXG5leHBvcnQgY2xhc3MgQXBwRXhjZXB0aW9uIGV4dGVuZHMgSHR0cEV4Y2VwdGlvbiB7XG4gIHJlYWRvbmx5IGNvZGU6IEVycm9yQ29kZTtcbiAgcmVhZG9ubHkgZGV0YWlscz86IFJlY29yZDxzdHJpbmcsIHVua25vd24+O1xuXG4gIGNvbnN0cnVjdG9yKFxuICAgIGNvZGU6IEVycm9yQ29kZSxcbiAgICBtZXNzYWdlOiBzdHJpbmcsXG4gICAgc3RhdHVzQ29kZTogSHR0cFN0YXR1cyA9IEh0dHBTdGF0dXMuSU5URVJOQUxfU0VSVkVSX0VSUk9SLFxuICAgIGRldGFpbHM/OiBSZWNvcmQ8c3RyaW5nLCB1bmtub3duPixcbiAgKSB7XG4gICAgc3VwZXIobWVzc2FnZSwgc3RhdHVzQ29kZSk7XG4gICAgdGhpcy5jb2RlID0gY29kZTtcbiAgICB0aGlzLmRldGFpbHMgPSBkZXRhaWxzO1xuICB9XG5cbiAgLyoqXG4gICAqIEdldCB0aGUgZXJyb3IgY29kZSBmb3IgdGhpcyBleGNlcHRpb24uXG4gICAqL1xuICBnZXRDb2RlKCk6IEVycm9yQ29kZSB7XG4gICAgcmV0dXJuIHRoaXMuY29kZTtcbiAgfVxuXG4gIC8qKlxuICAgKiBHZXQgb3B0aW9uYWwgYWRkaXRpb25hbCBjb250ZXh0IGZvciB0aGlzIGV4Y2VwdGlvbi5cbiAgICovXG4gIGdldERldGFpbHMoKTogUmVjb3JkPHN0cmluZywgdW5rbm93bj4gfCB1bmRlZmluZWQge1xuICAgIHJldHVybiB0aGlzLmRldGFpbHM7XG4gIH1cbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

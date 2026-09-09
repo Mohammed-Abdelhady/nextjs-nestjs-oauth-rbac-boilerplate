@@ -1,0 +1,95 @@
+{
+  "observed_at": "2026-09-08T10:49:23.881098+00:00",
+  "runs": [
+    {
+      "conclusion": "failure",
+      "jobs": [
+        {
+          "databaseId": 102030188022,
+          "name": "scaffold-combinations",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "databaseId": 102030188166,
+          "name": "docker",
+          "status": "completed",
+          "conclusion": "failure"
+        },
+        {
+          "databaseId": 102030188193,
+          "name": "backend and browser integration",
+          "status": "completed",
+          "conclusion": "failure"
+        },
+        {
+          "databaseId": 102030188352,
+          "name": "quality",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "status": "completed",
+      "url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34216745039",
+      "run_id": 34216745039
+    },
+    {
+      "conclusion": "success",
+      "jobs": [
+        {
+          "databaseId": 102030187725,
+          "name": "analyze",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "status": "completed",
+      "url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34216745015",
+      "run_id": 34216745015
+    }
+  ],
+  "checks": [
+    {
+      "bucket": "fail",
+      "link": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/runs/102030586802",
+      "name": "CodeQL",
+      "state": "FAILURE",
+      "workflow": ""
+    },
+    {
+      "bucket": "pass",
+      "link": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34216745039/job/102030188352",
+      "name": "quality",
+      "state": "SUCCESS",
+      "workflow": "CI"
+    },
+    {
+      "bucket": "pass",
+      "link": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34216745015/job/102030187725",
+      "name": "analyze",
+      "state": "SUCCESS",
+      "workflow": "CodeQL"
+    },
+    {
+      "bucket": "pass",
+      "link": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34216745039/job/102030188022",
+      "name": "scaffold-combinations",
+      "state": "SUCCESS",
+      "workflow": "CI"
+    },
+    {
+      "bucket": "fail",
+      "link": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34216745039/job/102030188193",
+      "name": "backend and browser integration",
+      "state": "FAILURE",
+      "workflow": "CI"
+    },
+    {
+      "bucket": "fail",
+      "link": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34216745039/job/102030188166",
+      "name": "docker",
+      "state": "FAILURE",
+      "workflow": "CI"
+    }
+  ]
+}

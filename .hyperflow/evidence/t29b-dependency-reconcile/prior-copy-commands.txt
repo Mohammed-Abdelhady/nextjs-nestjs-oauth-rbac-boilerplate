@@ -1,0 +1,54 @@
+/bin/zsh -lc 'set -euo pipefail
+EVIDENCE_DIR="$PWD/.hyperflow/evidence/t29b-final-gates"
+mkdir -p "$EVIDENCE_DIR"
+SNAPSHOT_DIR=$(mktemp -d /private/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/t29b-final-gates-XXXXXX)
+rsync -a '"\\
+  --exclude='.git/' \\
+  --exclude='node_modules/' \\
+  --include='/.env.docker.example' \\
+  --include='/backend/.env.example' \\
+  --include='/frontend/.env.example' \\
+  --exclude='.env' \\
+  --exclude='.env.*' \\
+  --exclude='**/.env' \\
+  --exclude='**/.env.*' \\
+  \""'$PWD/" "$SNAPSHOT_DIR/"
+rsync -aL '"\\
+  --exclude='.env' \\
+  --exclude='.env.*' \\
+  --exclude='**/.env' \\
+  --exclude='**/.env.*' \\
+  \""'$PWD/node_modules/" "$SNAPSHOT_DIR/node_modules/"
+printf '"'%s\\n' \""'$SNAPSHOT_DIR" > "$EVIDENCE_DIR/snapshot-path.txt"
+printf '"'%s\\n' \"source_revision="'$(git rev-parse HEAD)" > "$EVIDENCE_DIR/snapshot-capture.txt"
+printf '"'%s\\n' \"source_fingerprint="'$( { git rev-parse HEAD; git status --porcelain=v1; git diff --no-ext-diff -- . '"':(exclude).env' ':(exclude).env.*'; git ls-files --others --exclude-standard -- . ':(exclude).env' ':(exclude).env.*'; } | shasum -a 256 | awk '{print "'$1}'"')\" >> \""'$EVIDENCE_DIR/snapshot-capture.txt"
+printf '"'%s\\n' \"snapshot_fingerprint="'$(cd "$SNAPSHOT_DIR" && { find . -path '"'./.git' -prune -o -type f "'! -path '"'./node_modules/*' -print | LC_ALL=C sort | xargs shasum -a 256; } | shasum -a 256 | awk '{print "'$1}'"')\" >> \""'$EVIDENCE_DIR/snapshot-capture.txt"
+printf '"'%s\\n' \"allowlisted_templates="'$(cd "$SNAPSHOT_DIR" && find . -type f -name '"'.env*' -print | LC_ALL=C sort | paste -sd, -)\" >> \""'$EVIDENCE_DIR/snapshot-capture.txt"
+printf '"'%s\\n' \"source_size="'$(du -sh -I .git -I node_modules "$PWD" | awk '"'{print "'$1}'"')\" >> \""'$EVIDENCE_DIR/snapshot-capture.txt"
+printf '"'%s\\n' \"snapshot_size="'$(du -sh "$SNAPSHOT_DIR" | awk '"'{print "'$1}'"')\" >> \""'$EVIDENCE_DIR/snapshot-capture.txt"
+printf '"'%s\\n' \"source_fingerprint_after="'$( { git rev-parse HEAD; git status --porcelain=v1; git diff --no-ext-diff -- . '"':(exclude).env' ':(exclude).env.*'; git ls-files --others --exclude-standard -- . ':(exclude).env' ':(exclude).env.*'; } | shasum -a 256 | awk '{print "'$1}'"')\" >> \""'$EVIDENCE_DIR/snapshot-capture.txt"
+cat "$EVIDENCE_DIR/snapshot-capture.txt"'
+
+/bin/zsh -lc 'set -euo pipefail
+EVIDENCE_DIR="$PWD/.hyperflow/evidence/t29b-final-gates"
+SNAPSHOT_DIR=$(<"$EVIDENCE_DIR/snapshot-path.txt")
+rsync -a --delete '"\\
+  --exclude='.env' \\
+  --exclude='.env.*' \\
+  --exclude='**/.env' \\
+  --exclude='**/.env.*' \\
+  \""'$PWD/node_modules/" "$SNAPSHOT_DIR/node_modules/"
+printf '"'%s\\n' \"snapshot_node_modules_link_count="'$(find "$SNAPSHOT_DIR/node_modules" -type l | wc -l | tr -d '"' ')\" >> \""'$EVIDENCE_DIR/snapshot-capture.txt"
+printf '"'%s\\n' \"snapshot_vitest_link="'$(readlink "$SNAPSHOT_DIR/node_modules/.bin/vitest")" >> "$EVIDENCE_DIR/snapshot-capture.txt"
+printf '"'%s\\n' \"snapshot_workspace_links="'$(for link in backend frontend create-nest-next-auth; do printf '"'%s=%s;' \""'$link" "$(readlink "$SNAPSHOT_DIR/node_modules/$link")"; done)" >> "$EVIDENCE_DIR/snapshot-capture.txt"
+tail -n 4 "$EVIDENCE_DIR/snapshot-capture.txt"'
+
+/bin/zsh -lc 'set -e
+EVIDENCE_DIR="$PWD/.hyperflow/evidence/t29b-final-gates"
+SNAPSHOT_DIR=$(<"$EVIDENCE_DIR/snapshot-path.txt")
+printf '"'source_commander='; node -p \"require('./node_modules/commander/package.json').version\"
+printf 'snapshot_commander='; (cd \""'$SNAPSHOT_DIR" && node -p "require('"'./node_modules/commander/package.json').version\")
+printf 'ci_references_in_cli_tests='; rg -n '\\bCI\\b|process\\.env\\.CI' packages/create-nest-next-auth/src packages/create-nest-next-auth/test || true
+printf 'source_implementation_fingerprint='; { git rev-parse HEAD; git diff --no-ext-diff -- ':"'!.hyperflow/evidence/t29b-final-gates/**'"' ':(exclude).env' ':(exclude).env.*'; git ls-files --others --exclude-standard -- . ':"'!.hyperflow/evidence/t29b-final-gates/**'"' ':(exclude).env' ':(exclude).env.*'; } | shasum -a 256 | awk '{print "'$1}'"'
+printf 'snapshot_still_present='; test -d \""'$SNAPSHOT_DIR" && echo yes || echo no
+printf '"'generated_fixture_dirs='; find /private/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T -maxdepth 1 -type d -name 'cna-e2e-*' -print | wc -l | tr -d ' '; printf '\\n'"

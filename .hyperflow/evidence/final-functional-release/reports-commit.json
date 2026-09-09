@@ -1,0 +1,17 @@
+{
+  "exit": 0,
+  "seconds": 0.91,
+  "head": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+  "paths": [
+    ".hyperflow/reports/production-hardening.md",
+    ".hyperflow/reports/audit-status.md"
+  ],
+  "hook_formatting": [
+    {
+      "path": ".hyperflow/reports/production-hardening.md",
+      "prettier_only": true,
+      "before_sha256": "5e29b89943d8aa3598361118c9896b821eb45f557480628f1c46d2f7419b90a2",
+      "after_sha256": "406191ca0b84cea286269a77279865857bffc37c912192536d3ebf2b9f2125c4"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "lint"
+  ],
+  "exit": 0,
+  "seconds": 12.08
+}

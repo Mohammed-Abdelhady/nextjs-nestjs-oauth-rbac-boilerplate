@@ -1,0 +1,53 @@
+9f58a377c9e9dfdd6d6fc8f86acdf76c
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TwoFactorChallengeSchema = exports.TwoFactorChallenge = void 0;
+const mongoose_1 = require("@nestjs/mongoose");
+const mongoose_2 = require("mongoose");
+/**
+ * One pending login challenge. The signed cookie carries the nonce; the count
+ * of wrong codes lives here, because a client that holds its own cookie could
+ * otherwise keep replaying the attempt it likes.
+ */
+let TwoFactorChallenge = class TwoFactorChallenge {
+    user;
+    /** sha256 of the nonce inside the cookie, hex encoded. */
+    nonceHash;
+    attempts;
+    /** The TTL index clears the record shortly after the challenge lapses. */
+    expiresAt;
+    // Timestamp fields (automatically managed by Mongoose with timestamps: true)
+    createdAt;
+    updatedAt;
+};
+exports.TwoFactorChallenge = TwoFactorChallenge;
+__decorate([
+    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'User', required: true }),
+    __metadata("design:type", mongoose_2.Types.ObjectId)
+], TwoFactorChallenge.prototype, "user", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, unique: true }),
+    __metadata("design:type", String)
+], TwoFactorChallenge.prototype, "nonceHash", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Number, default: 0 }),
+    __metadata("design:type", Number)
+], TwoFactorChallenge.prototype, "attempts", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, index: { expireAfterSeconds: 0 } }),
+    __metadata("design:type", Date)
+], TwoFactorChallenge.prototype, "expiresAt", void 0);
+exports.TwoFactorChallenge = TwoFactorChallenge = __decorate([
+    (0, mongoose_1.Schema)({ timestamps: true })
+], TwoFactorChallenge);
+exports.TwoFactorChallengeSchema = mongoose_1.SchemaFactory.createForClass(TwoFactorChallenge);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC90d28tZmFjdG9yL3NjaGVtYXMvdHdvLWZhY3Rvci1jaGFsbGVuZ2Uuc2NoZW1hLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLCtDQUErRDtBQUMvRCx1Q0FBNkU7QUFFN0U7Ozs7R0FJRztBQUVJLElBQU0sa0JBQWtCLEdBQXhCLE1BQU0sa0JBQWtCO0lBRTdCLElBQUksQ0FBa0I7SUFFdEIsMERBQTBEO0lBRTFELFNBQVMsQ0FBVTtJQUduQixRQUFRLENBQVU7SUFFbEIsMEVBQTBFO0lBRTFFLFNBQVMsQ0FBUTtJQUVqQiw2RUFBNkU7SUFDN0UsU0FBUyxDQUFRO0lBQ2pCLFNBQVMsQ0FBUTtDQUNsQixDQUFBO0FBbEJZLGdEQUFrQjtBQUU3QjtJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsSUFBSSxFQUFFLGdCQUFLLENBQUMsUUFBUSxFQUFFLEdBQUcsRUFBRSxNQUFNLEVBQUUsUUFBUSxFQUFFLElBQUksRUFBRSxDQUFDOzhCQUNyRCxnQkFBSyxDQUFDLFFBQVE7Z0RBQUM7QUFJdEI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLFFBQVEsRUFBRSxJQUFJLEVBQUUsTUFBTSxFQUFFLElBQUksRUFBRSxDQUFDOztxREFDcEI7QUFHbkI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLElBQUksRUFBRSxNQUFNLEVBQUUsT0FBTyxFQUFFLENBQUMsRUFBRSxDQUFDOztvREFDakI7QUFJbEI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLFFBQVEsRUFBRSxJQUFJLEVBQUUsS0FBSyxFQUFFLEVBQUUsa0JBQWtCLEVBQUUsQ0FBQyxFQUFFLEVBQUUsQ0FBQzs4QkFDL0MsSUFBSTtxREFBQzs2QkFiTixrQkFBa0I7SUFEOUIsSUFBQSxpQkFBTSxFQUFDLEVBQUUsVUFBVSxFQUFFLElBQUksRUFBRSxDQUFDO0dBQ2hCLGtCQUFrQixDQWtCOUI7QUFJWSxRQUFBLHdCQUF3QixHQUNuQyx3QkFBYSxDQUFDLGNBQWMsQ0FBQyxrQkFBa0IsQ0FBQyxDQUFDIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL2F1dGgvdHdvLWZhY3Rvci9zY2hlbWFzL3R3by1mYWN0b3ItY2hhbGxlbmdlLnNjaGVtYS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBQcm9wLCBTY2hlbWEsIFNjaGVtYUZhY3RvcnkgfSBmcm9tICdAbmVzdGpzL21vbmdvb3NlJztcbmltcG9ydCB7IEh5ZHJhdGVkRG9jdW1lbnQsIFNjaGVtYSBhcyBNb25nb29zZVNjaGVtYSwgVHlwZXMgfSBmcm9tICdtb25nb29zZSc7XG5cbi8qKlxuICogT25lIHBlbmRpbmcgbG9naW4gY2hhbGxlbmdlLiBUaGUgc2lnbmVkIGNvb2tpZSBjYXJyaWVzIHRoZSBub25jZTsgdGhlIGNvdW50XG4gKiBvZiB3cm9uZyBjb2RlcyBsaXZlcyBoZXJlLCBiZWNhdXNlIGEgY2xpZW50IHRoYXQgaG9sZHMgaXRzIG93biBjb29raWUgY291bGRcbiAqIG90aGVyd2lzZSBrZWVwIHJlcGxheWluZyB0aGUgYXR0ZW1wdCBpdCBsaWtlcy5cbiAqL1xuQFNjaGVtYSh7IHRpbWVzdGFtcHM6IHRydWUgfSlcbmV4cG9ydCBjbGFzcyBUd29GYWN0b3JDaGFsbGVuZ2Uge1xuICBAUHJvcCh7IHR5cGU6IFR5cGVzLk9iamVjdElkLCByZWY6ICdVc2VyJywgcmVxdWlyZWQ6IHRydWUgfSlcbiAgdXNlciE6IFR5cGVzLk9iamVjdElkO1xuXG4gIC8qKiBzaGEyNTYgb2YgdGhlIG5vbmNlIGluc2lkZSB0aGUgY29va2llLCBoZXggZW5jb2RlZC4gKi9cbiAgQFByb3AoeyByZXF1aXJlZDogdHJ1ZSwgdW5pcXVlOiB0cnVlIH0pXG4gIG5vbmNlSGFzaCE6IHN0cmluZztcblxuICBAUHJvcCh7IHR5cGU6IE51bWJlciwgZGVmYXVsdDogMCB9KVxuICBhdHRlbXB0cyE6IG51bWJlcjtcblxuICAvKiogVGhlIFRUTCBpbmRleCBjbGVhcnMgdGhlIHJlY29yZCBzaG9ydGx5IGFmdGVyIHRoZSBjaGFsbGVuZ2UgbGFwc2VzLiAqL1xuICBAUHJvcCh7IHJlcXVpcmVkOiB0cnVlLCBpbmRleDogeyBleHBpcmVBZnRlclNlY29uZHM6IDAgfSB9KVxuICBleHBpcmVzQXQhOiBEYXRlO1xuXG4gIC8vIFRpbWVzdGFtcCBmaWVsZHMgKGF1dG9tYXRpY2FsbHkgbWFuYWdlZCBieSBNb25nb29zZSB3aXRoIHRpbWVzdGFtcHM6IHRydWUpXG4gIGNyZWF0ZWRBdCE6IERhdGU7XG4gIHVwZGF0ZWRBdCE6IERhdGU7XG59XG5cbmV4cG9ydCB0eXBlIFR3b0ZhY3RvckNoYWxsZW5nZURvY3VtZW50ID0gSHlkcmF0ZWREb2N1bWVudDxUd29GYWN0b3JDaGFsbGVuZ2U+O1xuXG5leHBvcnQgY29uc3QgVHdvRmFjdG9yQ2hhbGxlbmdlU2NoZW1hOiBNb25nb29zZVNjaGVtYTxUd29GYWN0b3JDaGFsbGVuZ2U+ID1cbiAgU2NoZW1hRmFjdG9yeS5jcmVhdGVGb3JDbGFzcyhUd29GYWN0b3JDaGFsbGVuZ2UpO1xuIl0sInZlcnNpb24iOjN9

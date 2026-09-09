@@ -1,0 +1,36 @@
+{
+  "captured_at": "2026-09-08T13:01:19.342970+00:00",
+  "base_head": "954b99a319d171d8dd488372fda6f4f530440dce",
+  "candidate": "/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz",
+  "files": [
+    {
+      "path": "frontend/e2e/authenticated-regressions.spec.ts",
+      "sha256": "ea8135ddefa557c279e6db27e7442e8222038666a6fa3268f85c2ec32236d08f",
+      "before_git_blob": "dd280cbac7659754a517ae20a5ebeedb925021eb"
+    },
+    {
+      "path": "frontend/src/app/[locale]/(dashboard)/layout.tsx",
+      "sha256": "dddf4718f4970a27299c4cc81f1062d27fd08f3d2c95453f2c2bb27283e2e989",
+      "before_git_blob": "461878c8c9cb5abfb8c8a43048954b99073f71a5"
+    },
+    {
+      "path": "frontend/src/app/[locale]/layout.tsx",
+      "sha256": "48b14c9070204c56606609eb0e560b32fb4f1bb1e3a7ce27092ac56dc08a5ce1",
+      "before_git_blob": "24a0f0461885b6da90bd56cd0d2ff6079cda2070"
+    },
+    {
+      "path": "scripts/config-transforms.test.mjs",
+      "sha256": "52508a8ddebb612641100a1f3d37c5f76503cb19bb7777d52ab3b2da413242e7",
+      "before_git_blob": "9d8357b683a554440f0d0d1518ecd4d5985b6f8e"
+    },
+    {
+      "path": "scripts/lib/docker-http-probes.mjs",
+      "sha256": "719d0a3f5a901ab7682fdcc443c4e221ec0103820e956f7c40b730e58ededb3a",
+      "before_git_blob": "1e655f1f9fc0f76d14826f76963aff08f14d7a55"
+    }
+  ],
+  "fingerprint": "221cdad95491ce949f4a7c6b005435c4894e2b8b3aa7ea71bd1318ff7d7ee16a",
+  "fingerprint_format": "sha256 of sorted path TAB sha256 NEWLINE",
+  "source_frozen": true,
+  "fallback_scope": "codex-only"
+}

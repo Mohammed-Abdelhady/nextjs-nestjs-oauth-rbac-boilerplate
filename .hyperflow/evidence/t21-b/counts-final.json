@@ -1,0 +1,18 @@
+{
+  "en-desktop": {
+    "failed": 2,
+    "passed": 9
+  },
+  "en-mobile": {
+    "failed": 2,
+    "passed": 9
+  },
+  "ar-desktop": {
+    "failed": 2,
+    "passed": 9
+  },
+  "ar-mobile": {
+    "failed": 2,
+    "passed": 9
+  }
+}

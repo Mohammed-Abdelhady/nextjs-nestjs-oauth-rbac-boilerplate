@@ -1,0 +1,37 @@
+98e39ba7299704ce3cbaf513c1c46190
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.VerifyMagicLinkDto = void 0;
+const class_validator_1 = require("class-validator");
+const swagger_1 = require("@nestjs/swagger");
+const magic_link_constants_1 = require("../constants/magic-link.constants");
+/**
+ * Validation stays loose on purpose: a token that is the wrong shape should
+ * come back as MAGIC_LINK_INVALID like any other token that does not resolve,
+ * so the client has one error code to handle.
+ */
+class VerifyMagicLinkDto {
+    token;
+}
+exports.VerifyMagicLinkDto = VerifyMagicLinkDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Token from the query string of the mailed link',
+        example: 'K3m1s0Xh2Wc9pQ8v7RtY6uI5oP4aS3dF2gH1jK0lZxC',
+        maxLength: magic_link_constants_1.MAGIC_LINK_MAX_TOKEN_LENGTH,
+    }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)({ message: 'Token is required' }),
+    (0, class_validator_1.MaxLength)(magic_link_constants_1.MAGIC_LINK_MAX_TOKEN_LENGTH),
+    __metadata("design:type", String)
+], VerifyMagicLinkDto.prototype, "token", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9tYWdpYy1saW5rL2R0by92ZXJpZnktbWFnaWMtbGluay5kdG8udHMiLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7O0FBQUEscURBQWtFO0FBQ2xFLDZDQUE4QztBQUM5Qyw0RUFBZ0Y7QUFFaEY7Ozs7R0FJRztBQUNILE1BQWEsa0JBQWtCO0lBUzdCLEtBQUssQ0FBVTtDQUNoQjtBQVZELGdEQVVDO0FBREM7SUFSQyxJQUFBLHFCQUFXLEVBQUM7UUFDWCxXQUFXLEVBQUUsZ0RBQWdEO1FBQzdELE9BQU8sRUFBRSw2Q0FBNkM7UUFDdEQsU0FBUyxFQUFFLGtEQUEyQjtLQUN2QyxDQUFDO0lBQ0QsSUFBQSwwQkFBUSxHQUFFO0lBQ1YsSUFBQSw0QkFBVSxFQUFDLEVBQUUsT0FBTyxFQUFFLG1CQUFtQixFQUFFLENBQUM7SUFDNUMsSUFBQSwyQkFBUyxFQUFDLGtEQUEyQixDQUFDOztpREFDeEIiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9tYWdpYy1saW5rL2R0by92ZXJpZnktbWFnaWMtbGluay5kdG8udHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgSXNOb3RFbXB0eSwgSXNTdHJpbmcsIE1heExlbmd0aCB9IGZyb20gJ2NsYXNzLXZhbGlkYXRvcic7XG5pbXBvcnQgeyBBcGlQcm9wZXJ0eSB9IGZyb20gJ0BuZXN0anMvc3dhZ2dlcic7XG5pbXBvcnQgeyBNQUdJQ19MSU5LX01BWF9UT0tFTl9MRU5HVEggfSBmcm9tICcuLi9jb25zdGFudHMvbWFnaWMtbGluay5jb25zdGFudHMnO1xuXG4vKipcbiAqIFZhbGlkYXRpb24gc3RheXMgbG9vc2Ugb24gcHVycG9zZTogYSB0b2tlbiB0aGF0IGlzIHRoZSB3cm9uZyBzaGFwZSBzaG91bGRcbiAqIGNvbWUgYmFjayBhcyBNQUdJQ19MSU5LX0lOVkFMSUQgbGlrZSBhbnkgb3RoZXIgdG9rZW4gdGhhdCBkb2VzIG5vdCByZXNvbHZlLFxuICogc28gdGhlIGNsaWVudCBoYXMgb25lIGVycm9yIGNvZGUgdG8gaGFuZGxlLlxuICovXG5leHBvcnQgY2xhc3MgVmVyaWZ5TWFnaWNMaW5rRHRvIHtcbiAgQEFwaVByb3BlcnR5KHtcbiAgICBkZXNjcmlwdGlvbjogJ1Rva2VuIGZyb20gdGhlIHF1ZXJ5IHN0cmluZyBvZiB0aGUgbWFpbGVkIGxpbmsnLFxuICAgIGV4YW1wbGU6ICdLM20xczBYaDJXYzlwUTh2N1J0WTZ1STVvUDRhUzNkRjJnSDFqSzBsWnhDJyxcbiAgICBtYXhMZW5ndGg6IE1BR0lDX0xJTktfTUFYX1RPS0VOX0xFTkdUSCxcbiAgfSlcbiAgQElzU3RyaW5nKClcbiAgQElzTm90RW1wdHkoeyBtZXNzYWdlOiAnVG9rZW4gaXMgcmVxdWlyZWQnIH0pXG4gIEBNYXhMZW5ndGgoTUFHSUNfTElOS19NQVhfVE9LRU5fTEVOR1RIKVxuICB0b2tlbiE6IHN0cmluZztcbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

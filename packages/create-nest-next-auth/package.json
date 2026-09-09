@@ -45,7 +45,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:combinations": "vitest run --config vitest.combinations.config.ts"
   },
   "devDependencies": {
     "@clack/prompts": "^1.7.0",

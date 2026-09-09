@@ -1,0 +1,6 @@
+2026-09-08T07:23:31.017822Z  WARN codex_skills::interface: ignoring interface.icon_small: icon path with '..' must resolve under plugin assets/
+2026-09-08T07:23:31.018756Z  WARN codex_skills::interface: ignoring interface.icon_large: icon path with '..' must resolve under plugin assets/
+2026-09-08T07:23:31.989672Z  WARN codex_skills::interface: ignoring interface.icon_small: icon path with '..' must resolve under plugin assets/
+2026-09-08T07:23:31.989688Z  WARN codex_skills::interface: ignoring interface.icon_large: icon path with '..' must resolve under plugin assets/
+2026-09-08T07:29:32.906348Z  WARN codex_mcp::rmcp_client: failed to initialize MCP client during shutdown: MCP startup failed: OAuth refresh credentials for server mobbin are missing an authorization server issuer; authorization required
+2026-09-08T07:29:32.906450Z  WARN codex_mcp::rmcp_client: failed to initialize MCP client during shutdown: MCP startup failed: OAuth refresh credentials for server flux are missing an authorization server issuer; authorization required

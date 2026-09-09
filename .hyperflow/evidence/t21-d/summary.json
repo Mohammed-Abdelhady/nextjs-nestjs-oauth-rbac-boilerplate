@@ -1,0 +1,28 @@
+{
+  "stats": {
+    "startTime": "2026-09-08T07:28:52.732Z",
+    "duration": 26987.695,
+    "expected": 44,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "counts": {
+    "en-desktop": {
+      "passed": 11
+    },
+    "en-mobile": {
+      "passed": 11
+    },
+    "ar-desktop": {
+      "passed": 11
+    },
+    "ar-mobile": {
+      "passed": 11
+    }
+  },
+  "audits": 44,
+  "page_or_unexpected_api_errors": 0,
+  "known_blocked_profile_requests": 48,
+  "screenshots": 16
+}

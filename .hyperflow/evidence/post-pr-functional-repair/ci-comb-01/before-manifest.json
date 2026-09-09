@@ -1,0 +1,138 @@
+{
+  "status": "frozen for independent recheck; implementation not self-accepted",
+  "captured_at": "2026-09-08T10:17:45.165765+00:00",
+  "candidate": "/private/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz",
+  "head": "3e84f52312196c03aaefc109ceca05c71bebc712",
+  "changed_paths": [
+    {
+      "path": "README.md",
+      "status": "modified",
+      "sha256": "097c8b0a76464d3c9c58737f0f16d494a7b14c354433fe3d5a13d587a3d39d9d"
+    },
+    {
+      "path": "backend/test/app.boot.e2e-spec.ts",
+      "status": "modified",
+      "sha256": "6c275b48ec95ef5894229f9e2166554a67888a7e6c41400463b38114041ac547"
+    },
+    {
+      "path": "backend/test/constants/oauth-boot-env.ts",
+      "status": "modified",
+      "sha256": "1f514610088ce82e339c358f205f2355d5cb624f12b9765ce005ae8059fdc731"
+    },
+    {
+      "path": "docker-compose.prod.yml",
+      "status": "modified",
+      "sha256": "20a7b3baeb1817497f916cacee41f8e8ba5a786234fe3726652d4198633d0466"
+    },
+    {
+      "path": "docker-compose.yml",
+      "status": "modified",
+      "sha256": "7a2cceaa492938b7b7cf5a07a3d77fb1a05fc3bbab13d281eefdef84a799a23f"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "status": "modified",
+      "sha256": "b5d83eb0f7d913bdc314b0a686b2bc544615ebe08a0a3746fc60c9757fc402ac"
+    },
+    {
+      "path": "frontend/e2e/authenticated-regressions.spec.ts",
+      "status": "modified",
+      "sha256": "2248d3b0dbf110b8e23cde4c058b025cbfcb0372b3b068b487f1ed443e277bfc"
+    },
+    {
+      "path": "frontend/e2e/role-pagination.spec.ts",
+      "status": "added",
+      "sha256": "80ed8604231ac0888242d3a6171d0ea50d8dfb88fe09778c08b27107ffa4a0c0"
+    },
+    {
+      "path": "frontend/src/app/[locale]/(dashboard)/admin/roles/page.tsx",
+      "status": "modified",
+      "sha256": "972c948db01aea5b54262fa3a302a9fec55460f585579af26d56515a37542876"
+    },
+    {
+      "path": "frontend/src/app/[locale]/(dashboard)/admin/users/page.tsx",
+      "status": "modified",
+      "sha256": "44a2df733d0821413eb8b2954b05a572d21fb175f8df7e4cbdcf4733da027e99"
+    },
+    {
+      "path": "frontend/src/i18n/messages/ar.json",
+      "status": "modified",
+      "sha256": "5cd36615a781dc0ea970973be12dca04cfa2d71caf46c32cc8dabc91e8fbbb36"
+    },
+    {
+      "path": "frontend/src/i18n/messages/en.json",
+      "status": "modified",
+      "sha256": "54ae5924df2bfaf8d9c302de1008257d2a2fe35c0001280ae4e2854063090d2c"
+    },
+    {
+      "path": "frontend/src/modules/users/components/RoleFilter.tsx",
+      "status": "added",
+      "sha256": "0e91c87d0a3dbd1487d97418ed7f4d9fb3b9bfe246f267572b83ba94e1f218b7"
+    },
+    {
+      "path": "frontend/src/modules/users/components/UserListToolbar.tsx",
+      "status": "modified",
+      "sha256": "47d444a8caf4ac4d5100b538ccd66cbb276ddc3e2a9b14f4fa8581d5308979ef"
+    },
+    {
+      "path": "package.json",
+      "status": "modified",
+      "sha256": "9d932715a1236e9b6e1271f07e257abd079b23e89b136102d86c7c2d3035dff3"
+    },
+    {
+      "path": "packages/create-nest-next-auth/src/scaffold/next-steps.ts",
+      "status": "modified",
+      "sha256": "9ea95c83a767a2d8fc06a4f9c523ed374a71f3f735cbfbab226bdadc130e8a43"
+    },
+    {
+      "path": "packages/create-nest-next-auth/test/combination-command.test.ts",
+      "status": "added",
+      "sha256": "d790584ceb024fbd4a9d6d7b3053e32807f22f4da7c407257d5754165c6c2848"
+    },
+    {
+      "path": "packages/create-nest-next-auth/test/combination-helpers.ts",
+      "status": "modified",
+      "sha256": "8bce69dfe56bb27b936e0e180e24e04d20a4328a298863e32bee08792743ef21"
+    },
+    {
+      "path": "packages/create-nest-next-auth/test/combinations.slow.test.ts",
+      "status": "modified",
+      "sha256": "37c41c72ceb9b4d1cd3580abfbd5cbe2d3c6ced46fa1b99f440c75d205a76053"
+    },
+    {
+      "path": "packages/create-nest-next-auth/test/e2e.test.ts",
+      "status": "modified",
+      "sha256": "77d92f9bac0971063f9db3da6b20f1a4214df55cf9b33c84b9fca8afd16474ab"
+    },
+    {
+      "path": "scripts/config-transforms.test.mjs",
+      "status": "added",
+      "sha256": "8e1c8e6998aca0ce54dda6b97b4e2b935632353c69a357daecb134987a8af1f8"
+    },
+    {
+      "path": "scripts/init.js",
+      "status": "modified",
+      "sha256": "cb5ff8e9f0b500e59349689a9974383bf78756d273455c6dc9830ab12d9feb60"
+    },
+    {
+      "path": "scripts/lib/config-transforms.js",
+      "status": "added",
+      "sha256": "d282040f79f77d8e43c76b401c033f710c46b351a4cf34d985d25917fc82077e"
+    },
+    {
+      "path": "scripts/setup-production.js",
+      "status": "modified",
+      "sha256": "cd60bb1c5ec8fa2c841c39d18f5e6b92102afab4678a6b02f5f449453307e812"
+    },
+    {
+      "path": "scripts/verify-docker.mjs",
+      "status": "modified",
+      "sha256": "f1545be73d9fb89b9f759149fe0af39da71648ad15f105f7aa95ff9e2f8b20e4"
+    }
+  ],
+  "fingerprint": "6077b9d7504b96bf2c8ba4342d115d055b2b73e76394e4bff7b10c3a683d0c53",
+  "fingerprint_algorithm": "SHA256 compact sorted-key JSON of changed_paths",
+  "source_preservation": "source-preservation.json",
+  "committed": false,
+  "pushed": false
+}

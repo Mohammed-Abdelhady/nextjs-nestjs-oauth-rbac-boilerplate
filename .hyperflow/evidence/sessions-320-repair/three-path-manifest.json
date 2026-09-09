@@ -1,0 +1,30 @@
+{
+  "captured_at": "2026-09-08T13:18:39.903089+00:00",
+  "base_head": "954b99a319d171d8dd488372fda6f4f530440dce",
+  "candidate": "/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz",
+  "source_frozen": true,
+  "fallback_scope": "codex-only",
+  "fingerprint_format": "sha256 of sorted path TAB sha256 NEWLINE",
+  "accepted_five_path_fingerprint": "221cdad95491ce949f4a7c6b005435c4894e2b8b3aa7ea71bd1318ff7d7ee16a",
+  "files": [
+    {
+      "path": "frontend/e2e/authenticated-regressions.spec.ts",
+      "sha256": "b825e0b20a1b5a0660bcf17a82fa8d6a848680be51b775d728a252c8f87eee08",
+      "before_sha256": "ea8135ddefa557c279e6db27e7442e8222038666a6fa3268f85c2ec32236d08f",
+      "before_snapshot": "/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/sessions-320-repair/before-1.txt"
+    },
+    {
+      "path": "frontend/src/app/[locale]/(dashboard)/sessions/page.tsx",
+      "sha256": "9ee99a227c362191b631d384f5b9152a0b7b21882df6feb9c5b9ec23332bb7ab",
+      "before_sha256": "e653bec7354e954b781e5b6906e55851657edb39979702c60ccc763fe965cba8",
+      "before_snapshot": "/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/sessions-320-repair/before-0.txt"
+    },
+    {
+      "path": "frontend/src/modules/sessions/components/RevokeAllSessionsButton.tsx",
+      "sha256": "f40baa8a10d10ee2bbbf05d910d40bbf916cf499892eecffa5ca236fe55acb75",
+      "before_sha256": "c8574928393b785a5b3e538a992c54c7e77b02e8cd07bf4ab0f50adb064d9540",
+      "before_snapshot": "/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/sessions-320-repair/before-2.txt"
+    }
+  ],
+  "fingerprint": "32940748ef11983edd7ea5f3110e6ac7792a6ba4611a3566a2cd927a42c09d3f"
+}

@@ -1,0 +1,60 @@
+f67ad23ceeaceae5adf42dcd01c908af
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.HealthController = void 0;
+const common_1 = require("@nestjs/common");
+const swagger_1 = require("@nestjs/swagger");
+const health_service_1 = require("./health.service");
+const public_decorator_1 = require("../auth/decorators/public.decorator");
+let HealthController = class HealthController {
+    healthService;
+    constructor(healthService) {
+        this.healthService = healthService;
+    }
+    getHealth(res) {
+        const health = this.healthService.getHealth();
+        if (health.status === 'unhealthy') {
+            res.status(common_1.HttpStatus.SERVICE_UNAVAILABLE);
+        }
+        return health;
+    }
+};
+exports.HealthController = HealthController;
+__decorate([
+    (0, public_decorator_1.Public)(),
+    (0, common_1.Get)(),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Health check',
+        description: 'Returns health status of the application and database connectivity.',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.OK,
+        description: 'Application is healthy',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.SERVICE_UNAVAILABLE,
+        description: 'Database is disconnected or application is unhealthy',
+    }),
+    __param(0, (0, common_1.Res)({ passthrough: true })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Object)
+], HealthController.prototype, "getHealth", null);
+exports.HealthController = HealthController = __decorate([
+    (0, swagger_1.ApiTags)('health'),
+    (0, common_1.Controller)('health'),
+    __metadata("design:paramtypes", [health_service_1.HealthService])
+], HealthController);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvaGVhbHRoL2hlYWx0aC5jb250cm9sbGVyLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7OztBQUFBLDJDQUFrRTtBQUNsRSw2Q0FBcUU7QUFFckUscURBQWlFO0FBQ2pFLDBFQUE2RDtBQUl0RCxJQUFNLGdCQUFnQixHQUF0QixNQUFNLGdCQUFnQjtJQUNFO0lBQTdCLFlBQTZCLGFBQTRCO1FBQTVCLGtCQUFhLEdBQWIsYUFBYSxDQUFlO0lBQUcsQ0FBQztJQWlCN0QsU0FBUyxDQUE2QixHQUFhO1FBQ2pELE1BQU0sTUFBTSxHQUFHLElBQUksQ0FBQyxhQUFhLENBQUMsU0FBUyxFQUFFLENBQUM7UUFFOUMsSUFBSSxNQUFNLENBQUMsTUFBTSxLQUFLLFdBQVcsRUFBRSxDQUFDO1lBQ2xDLEdBQUcsQ0FBQyxNQUFNLENBQUMsbUJBQVUsQ0FBQyxtQkFBbUIsQ0FBQyxDQUFDO1FBQzdDLENBQUM7UUFFRCxPQUFPLE1BQU0sQ0FBQztJQUNoQixDQUFDO0NBQ0YsQ0FBQTtBQTNCWSw0Q0FBZ0I7QUFrQjNCO0lBZkMsSUFBQSx5QkFBTSxHQUFFO0lBQ1IsSUFBQSxZQUFHLEdBQUU7SUFDTCxJQUFBLHNCQUFZLEVBQUM7UUFDWixPQUFPLEVBQUUsY0FBYztRQUN2QixXQUFXLEVBQ1QscUVBQXFFO0tBQ3hFLENBQUM7SUFDRCxJQUFBLHFCQUFXLEVBQUM7UUFDWCxNQUFNLEVBQUUsbUJBQVUsQ0FBQyxFQUFFO1FBQ3JCLFdBQVcsRUFBRSx3QkFBd0I7S0FDdEMsQ0FBQztJQUNELElBQUEscUJBQVcsRUFBQztRQUNYLE1BQU0sRUFBRSxtQkFBVSxDQUFDLG1CQUFtQjtRQUN0QyxXQUFXLEVBQUUsc0RBQXNEO0tBQ3BFLENBQUM7SUFDUyxXQUFBLElBQUEsWUFBRyxFQUFDLEVBQUUsV0FBVyxFQUFFLElBQUksRUFBRSxDQUFDLENBQUE7Ozs7aURBUXBDOzJCQTFCVSxnQkFBZ0I7SUFGNUIsSUFBQSxpQkFBTyxFQUFDLFFBQVEsQ0FBQztJQUNqQixJQUFBLG1CQUFVLEVBQUMsUUFBUSxDQUFDO3FDQUV5Qiw4QkFBYTtHQUQ5QyxnQkFBZ0IsQ0EyQjVCIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL2hlYWx0aC9oZWFsdGguY29udHJvbGxlci50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBDb250cm9sbGVyLCBHZXQsIEh0dHBTdGF0dXMsIFJlcyB9IGZyb20gJ0BuZXN0anMvY29tbW9uJztcbmltcG9ydCB7IEFwaVRhZ3MsIEFwaU9wZXJhdGlvbiwgQXBpUmVzcG9uc2UgfSBmcm9tICdAbmVzdGpzL3N3YWdnZXInO1xuaW1wb3J0IHsgUmVzcG9uc2UgfSBmcm9tICdleHByZXNzJztcbmltcG9ydCB7IEhlYWx0aFNlcnZpY2UsIEhlYWx0aFJlc3BvbnNlIH0gZnJvbSAnLi9oZWFsdGguc2VydmljZSc7XG5pbXBvcnQgeyBQdWJsaWMgfSBmcm9tICcuLi9hdXRoL2RlY29yYXRvcnMvcHVibGljLmRlY29yYXRvcic7XG5cbkBBcGlUYWdzKCdoZWFsdGgnKVxuQENvbnRyb2xsZXIoJ2hlYWx0aCcpXG5leHBvcnQgY2xhc3MgSGVhbHRoQ29udHJvbGxlciB7XG4gIGNvbnN0cnVjdG9yKHByaXZhdGUgcmVhZG9ubHkgaGVhbHRoU2VydmljZTogSGVhbHRoU2VydmljZSkge31cblxuICBAUHVibGljKClcbiAgQEdldCgpXG4gIEBBcGlPcGVyYXRpb24oe1xuICAgIHN1bW1hcnk6ICdIZWFsdGggY2hlY2snLFxuICAgIGRlc2NyaXB0aW9uOlxuICAgICAgJ1JldHVybnMgaGVhbHRoIHN0YXR1cyBvZiB0aGUgYXBwbGljYXRpb24gYW5kIGRhdGFiYXNlIGNvbm5lY3Rpdml0eS4nLFxuICB9KVxuICBAQXBpUmVzcG9uc2Uoe1xuICAgIHN0YXR1czogSHR0cFN0YXR1cy5PSyxcbiAgICBkZXNjcmlwdGlvbjogJ0FwcGxpY2F0aW9uIGlzIGhlYWx0aHknLFxuICB9KVxuICBAQXBpUmVzcG9uc2Uoe1xuICAgIHN0YXR1czogSHR0cFN0YXR1cy5TRVJWSUNFX1VOQVZBSUxBQkxFLFxuICAgIGRlc2NyaXB0aW9uOiAnRGF0YWJhc2UgaXMgZGlzY29ubmVjdGVkIG9yIGFwcGxpY2F0aW9uIGlzIHVuaGVhbHRoeScsXG4gIH0pXG4gIGdldEhlYWx0aChAUmVzKHsgcGFzc3Rocm91Z2g6IHRydWUgfSkgcmVzOiBSZXNwb25zZSk6IEhlYWx0aFJlc3BvbnNlIHtcbiAgICBjb25zdCBoZWFsdGggPSB0aGlzLmhlYWx0aFNlcnZpY2UuZ2V0SGVhbHRoKCk7XG5cbiAgICBpZiAoaGVhbHRoLnN0YXR1cyA9PT0gJ3VuaGVhbHRoeScpIHtcbiAgICAgIHJlcy5zdGF0dXMoSHR0cFN0YXR1cy5TRVJWSUNFX1VOQVZBSUxBQkxFKTtcbiAgICB9XG5cbiAgICByZXR1cm4gaGVhbHRoO1xuICB9XG59XG4iXSwidmVyc2lvbiI6M30=

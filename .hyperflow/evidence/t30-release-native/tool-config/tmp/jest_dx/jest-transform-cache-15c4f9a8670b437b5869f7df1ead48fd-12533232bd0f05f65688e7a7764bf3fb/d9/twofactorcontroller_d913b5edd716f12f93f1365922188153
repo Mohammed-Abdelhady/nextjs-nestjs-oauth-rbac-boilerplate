@@ -1,0 +1,177 @@
+619755bbf86862c56f3e6c3a13d22e3d
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TwoFactorController = void 0;
+const common_1 = require("@nestjs/common");
+const swagger_1 = require("@nestjs/swagger");
+const throttler_1 = require("@nestjs/throttler");
+const two_factor_service_1 = require("./two-factor.service");
+const two_factor_login_service_1 = require("./two-factor-login.service");
+const setup_two_factor_dto_1 = require("./dto/setup-two-factor.dto");
+const two_factor_code_dto_1 = require("./dto/two-factor-code.dto");
+const disable_two_factor_dto_1 = require("./dto/disable-two-factor.dto");
+const verify_two_factor_dto_1 = require("./dto/verify-two-factor.dto");
+const public_decorator_1 = require("../decorators/public.decorator");
+const current_user_decorator_1 = require("../decorators/current-user.decorator");
+const requires_feature_decorator_1 = require("../decorators/requires-feature.decorator");
+const auth_feature_enum_1 = require("../enums/auth-feature.enum");
+const throttle_1 = require("../../common/constants/throttle");
+/**
+ * TOTP second factor.
+ *
+ * Four of the routes manage the factor on an account that is already signed
+ * in. The fifth, verify, finishes a sign-in that was held for a code, so it
+ * runs without a session and reads the challenge cookie instead.
+ */
+let TwoFactorController = class TwoFactorController {
+    twoFactorService;
+    twoFactorLoginService;
+    constructor(twoFactorService, twoFactorLoginService) {
+        this.twoFactorService = twoFactorService;
+        this.twoFactorLoginService = twoFactorLoginService;
+    }
+    /**
+     * Start two-factor setup
+     * POST /api/auth/2fa/setup
+     */
+    async setup(userId, dto, request) {
+        return this.twoFactorService.setup(userId, dto, request.session);
+    }
+    /**
+     * Confirm the secret and turn the second factor on
+     * POST /api/auth/2fa/confirm
+     */
+    async confirm(userId, dto) {
+        return this.twoFactorService.confirm(userId, dto);
+    }
+    /**
+     * Turn the second factor off
+     * POST /api/auth/2fa/disable
+     */
+    async disable(userId, dto) {
+        return this.twoFactorService.disable(userId, dto);
+    }
+    /**
+     * Replace the recovery codes
+     * POST /api/auth/2fa/recovery-codes/regenerate
+     */
+    async regenerateRecoveryCodes(userId, dto) {
+        return this.twoFactorService.regenerateRecoveryCodes(userId, dto);
+    }
+    /**
+     * Finish a sign-in that was held for a code
+     * POST /api/auth/2fa/verify
+     */
+    async verify(dto, request, response) {
+        const result = await this.twoFactorLoginService.verify(dto, request, response);
+        return response.status(common_1.HttpStatus.OK).json(result);
+    }
+};
+exports.TwoFactorController = TwoFactorController;
+__decorate([
+    (0, common_1.Post)('setup'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiBearerAuth)('JWT-auth'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Start two-factor setup',
+        description: 'Stores an unconfirmed secret and returns the otpauth URL to render as a ' +
+            'QR code. Accounts with a password send it in the body; passwordless ' +
+            'accounts need a session younger than five minutes.',
+    }),
+    (0, swagger_1.ApiBody)({ type: setup_two_factor_dto_1.SetupTwoFactorDto }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, setup_two_factor_dto_1.SetupTwoFactorDto, Object]),
+    __metadata("design:returntype", Promise)
+], TwoFactorController.prototype, "setup", null);
+__decorate([
+    (0, common_1.Post)('confirm'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiBearerAuth)('JWT-auth'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Confirm two-factor setup',
+        description: 'Checks a first code against the pending secret, turns the second factor ' +
+            'on and returns the recovery codes. They are shown only here.',
+    }),
+    (0, swagger_1.ApiBody)({ type: two_factor_code_dto_1.TwoFactorCodeDto }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, two_factor_code_dto_1.TwoFactorCodeDto]),
+    __metadata("design:returntype", Promise)
+], TwoFactorController.prototype, "confirm", null);
+__decorate([
+    (0, common_1.Post)('disable'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiBearerAuth)('JWT-auth'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Turn two-factor authentication off',
+        description: 'Needs a code or a recovery code, plus the password when the account has ' +
+            'one. Clears the secret and every recovery code.',
+    }),
+    (0, swagger_1.ApiBody)({ type: disable_two_factor_dto_1.DisableTwoFactorDto }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, disable_two_factor_dto_1.DisableTwoFactorDto]),
+    __metadata("design:returntype", Promise)
+], TwoFactorController.prototype, "disable", null);
+__decorate([
+    (0, common_1.Post)('recovery-codes/regenerate'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiBearerAuth)('JWT-auth'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Replace the recovery codes',
+        description: 'Issues ten new recovery codes and drops the old batch, used or not.',
+    }),
+    (0, swagger_1.ApiBody)({ type: two_factor_code_dto_1.TwoFactorCodeDto }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, two_factor_code_dto_1.TwoFactorCodeDto]),
+    __metadata("design:returntype", Promise)
+], TwoFactorController.prototype, "regenerateRecoveryCodes", null);
+__decorate([
+    (0, public_decorator_1.Public)(),
+    (0, throttler_1.Throttle)(throttle_1.THROTTLE_TWO_FACTOR_VERIFY),
+    (0, common_1.Post)('verify'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Answer a two-factor challenge',
+        description: 'Reads the challenge cookie left by the sign-in, checks a code, a ' +
+            'recovery code or a passkey, then sets the session cookie and returns ' +
+            'the account. A passkey answer is fetched from ' +
+            'POST /auth/passkeys/login/options first and sent as passkeyResponse; it ' +
+            'has to belong to the challenged account. Five wrong answers end the ' +
+            'challenge.',
+    }),
+    (0, swagger_1.ApiBody)({ type: verify_two_factor_dto_1.VerifyTwoFactorDto }),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
+    __param(2, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [verify_two_factor_dto_1.VerifyTwoFactorDto, Object, Object]),
+    __metadata("design:returntype", Promise)
+], TwoFactorController.prototype, "verify", null);
+exports.TwoFactorController = TwoFactorController = __decorate([
+    (0, swagger_1.ApiTags)('auth'),
+    (0, common_1.Controller)('auth/2fa'),
+    (0, requires_feature_decorator_1.RequiresFeature)(auth_feature_enum_1.AuthFeature.TWO_FACTOR),
+    __metadata("design:paramtypes", [two_factor_service_1.TwoFactorService,
+        two_factor_login_service_1.TwoFactorLoginService])
+], TwoFactorController);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC90d28tZmFjdG9yL3R3by1mYWN0b3IuY29udHJvbGxlci50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7QUFBQSwyQ0FRd0I7QUFDeEIsNkNBQWdGO0FBQ2hGLGlEQUE2QztBQUU3Qyw2REFBd0Q7QUFDeEQseUVBQW1FO0FBQ25FLHFFQUErRDtBQUMvRCxtRUFBNkQ7QUFDN0QseUVBQW1FO0FBQ25FLHVFQUFpRTtBQUNqRSxxRUFBd0Q7QUFDeEQsaUZBQW1FO0FBQ25FLHlGQUEyRTtBQUMzRSxrRUFBeUQ7QUFFekQsOERBQTZFO0FBRTdFOzs7Ozs7R0FNRztBQUlJLElBQU0sbUJBQW1CLEdBQXpCLE1BQU0sbUJBQW1CO0lBRVg7SUFDQTtJQUZuQixZQUNtQixnQkFBa0MsRUFDbEMscUJBQTRDO1FBRDVDLHFCQUFnQixHQUFoQixnQkFBZ0IsQ0FBa0I7UUFDbEMsMEJBQXFCLEdBQXJCLHFCQUFxQixDQUF1QjtJQUM1RCxDQUFDO0lBRUo7OztPQUdHO0lBWUcsQUFBTixLQUFLLENBQUMsS0FBSyxDQUNVLE1BQWMsRUFDekIsR0FBc0IsRUFDdkIsT0FBd0I7UUFFL0IsT0FBTyxJQUFJLENBQUMsZ0JBQWdCLENBQUMsS0FBSyxDQUFDLE1BQU0sRUFBRSxHQUFHLEVBQUUsT0FBTyxDQUFDLE9BQU8sQ0FBQyxDQUFDO0lBQ25FLENBQUM7SUFFRDs7O09BR0c7SUFXRyxBQUFOLEtBQUssQ0FBQyxPQUFPLENBQ1EsTUFBYyxFQUN6QixHQUFxQjtRQUU3QixPQUFPLElBQUksQ0FBQyxnQkFBZ0IsQ0FBQyxPQUFPLENBQUMsTUFBTSxFQUFFLEdBQUcsQ0FBQyxDQUFDO0lBQ3BELENBQUM7SUFFRDs7O09BR0c7SUFXRyxBQUFOLEtBQUssQ0FBQyxPQUFPLENBQ1EsTUFBYyxFQUN6QixH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QkFBTyxFQUFDLEVBQUUsSUFBSSxFQUFFLHNDQUFnQixFQUFFLENBQUM7SUFFakMsV0FBQSxJQUFBLG9DQUFXLEVBQUMsSUFBSSxDQUFDLENBQUE7SUFDakIsV0FBQSxJQUFBLGFBQUksR0FBRSxDQUFBOzs2Q0FBTSxzQ0FBZ0I7O2tFQUc5QjtBQXFCSztJQWZMLElBQUEseUJBQU0sR0FBRTtJQUNSLElBQUEsb0JBQVEsRUFBQyxxQ0FBMEIsQ0FBQztJQUNwQyxJQUFBLGFBQUksRUFBQyxRQUFRLENBQUM7SUFDZCxJQUFBLGlCQUFRLEVBQUMsbUJBQVUsQ0FBQyxFQUFFLENBQUM7SUFDdkIsSUFBQSxzQkFBWSxFQUFDO1FBQ1osT0FBTyxFQUFFLCtCQUErQjtRQUN4QyxXQUFXLEVBQ1QsbUVBQW1FO1lBQ25FLHVFQUF1RTtZQUN2RSxnREFBZ0Q7WUFDaEQsMEVBQTBFO1lBQzFFLHNFQUFzRTtZQUN0RSxZQUFZO0tBQ2YsQ0FBQztJQUNELElBQUEsaUJBQU8sRUFBQyxFQUFFLElBQUksRUFBRSwwQ0FBa0IsRUFBRSxDQUFDO0lBRW5DLFdBQUEsSUFBQSxhQUFJLEdBQUUsQ0FBQTtJQUNOLFdBQUEsSUFBQSxZQUFHLEdBQUUsQ0FBQTtJQUNMLFdBQUEsSUFBQSxZQUFHLEdBQUUsQ0FBQTs7cUNBRk8sMENBQWtCOztpREFVaEM7OEJBekhVLG1CQUFtQjtJQUgvQixJQUFBLGlCQUFPLEVBQUMsTUFBTSxDQUFDO0lBQ2YsSUFBQSxtQkFBVSxFQUFDLFVBQVUsQ0FBQztJQUN0QixJQUFBLDRDQUFlLEVBQUMsK0JBQVcsQ0FBQyxVQUFVLENBQUM7cUNBR0QscUNBQWdCO1FBQ1gsZ0RBQXFCO0dBSHBELG1CQUFtQixDQTBIL0IiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC90d28tZmFjdG9yL3R3by1mYWN0b3IuY29udHJvbGxlci50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQge1xuICBCb2R5LFxuICBDb250cm9sbGVyLFxuICBIdHRwQ29kZSxcbiAgSHR0cFN0YXR1cyxcbiAgUG9zdCxcbiAgUmVxLFxuICBSZXMsXG59IGZyb20gJ0BuZXN0anMvY29tbW9uJztcbmltcG9ydCB7IEFwaUJlYXJlckF1dGgsIEFwaUJvZHksIEFwaU9wZXJhdGlvbiwgQXBpVGFncyB9IGZyb20gJ0BuZXN0anMvc3dhZ2dlcic7XG5pbXBvcnQgeyBUaHJvdHRsZSB9IGZyb20gJ0BuZXN0anMvdGhyb3R0bGVyJztcbmltcG9ydCB7IFJlcXVlc3QsIFJlc3BvbnNlIH0gZnJvbSAnZXhwcmVzcyc7XG5pbXBvcnQgeyBUd29GYWN0b3JTZXJ2aWNlIH0gZnJvbSAnLi90d28tZmFjdG9yLnNlcnZpY2UnO1xuaW1wb3J0IHsgVHdvRmFjdG9yTG9naW5TZXJ2aWNlIH0gZnJvbSAnLi90d28tZmFjdG9yLWxvZ2luLnNlcnZpY2UnO1xuaW1wb3J0IHsgU2V0dXBUd29GYWN0b3JEdG8gfSBmcm9tICcuL2R0by9zZXR1cC10d28tZmFjdG9yLmR0byc7XG5pbXBvcnQgeyBUd29GYWN0b3JDb2RlRHRvIH0gZnJvbSAnLi9kdG8vdHdvLWZhY3Rvci1jb2RlLmR0byc7XG5pbXBvcnQgeyBEaXNhYmxlVHdvRmFjdG9yRHRvIH0gZnJvbSAnLi9kdG8vZGlzYWJsZS10d28tZmFjdG9yLmR0byc7XG5pbXBvcnQgeyBWZXJpZnlUd29GYWN0b3JEdG8gfSBmcm9tICcuL2R0by92ZXJpZnktdHdvLWZhY3Rvci5kdG8nO1xuaW1wb3J0IHsgUHVibGljIH0gZnJvbSAnLi4vZGVjb3JhdG9ycy9wdWJsaWMuZGVjb3JhdG9yJztcbmltcG9ydCB7IEN1cnJlbnRVc2VyIH0gZnJvbSAnLi4vZGVjb3JhdG9ycy9jdXJyZW50LXVzZXIuZGVjb3JhdG9yJztcbmltcG9ydCB7IFJlcXVpcmVzRmVhdHVyZSB9IGZyb20gJy4uL2RlY29yYXRvcnMvcmVxdWlyZXMtZmVhdHVyZS5kZWNvcmF0b3InO1xuaW1wb3J0IHsgQXV0aEZlYXR1cmUgfSBmcm9tICcuLi9lbnVtcy9hdXRoLWZlYXR1cmUuZW51bSc7XG5pbXBvcnQgeyBSZXF1ZXN0V2l0aFVzZXIgfSBmcm9tICcuLi9ndWFyZHMvYXV0aC5ndWFyZCc7XG5pbXBvcnQgeyBUSFJPVFRMRV9UV09fRkFDVE9SX1ZFUklGWSB9IGZyb20gJy4uLy4uL2NvbW1vbi9jb25zdGFudHMvdGhyb3R0bGUnO1xuXG4vKipcbiAqIFRPVFAgc2Vjb25kIGZhY3Rvci5cbiAqXG4gKiBGb3VyIG9mIHRoZSByb3V0ZXMgbWFuYWdlIHRoZSBmYWN0b3Igb24gYW4gYWNjb3VudCB0aGF0IGlzIGFscmVhZHkgc2lnbmVkXG4gKiBpbi4gVGhlIGZpZnRoLCB2ZXJpZnksIGZpbmlzaGVzIGEgc2lnbi1pbiB0aGF0IHdhcyBoZWxkIGZvciBhIGNvZGUsIHNvIGl0XG4gKiBydW5zIHdpdGhvdXQgYSBzZXNzaW9uIGFuZCByZWFkcyB0aGUgY2hhbGxlbmdlIGNvb2tpZSBpbnN0ZWFkLlxuICovXG5AQXBpVGFncygnYXV0aCcpXG5AQ29udHJvbGxlcignYXV0aC8yZmEnKVxuQFJlcXVpcmVzRmVhdHVyZShBdXRoRmVhdHVyZS5UV09fRkFDVE9SKVxuZXhwb3J0IGNsYXNzIFR3b0ZhY3RvckNvbnRyb2xsZXIge1xuICBjb25zdHJ1Y3RvcihcbiAgICBwcml2YXRlIHJlYWRvbmx5IHR3b0ZhY3RvclNlcnZpY2U6IFR3b0ZhY3RvclNlcnZpY2UsXG4gICAgcHJpdmF0ZSByZWFkb25seSB0d29GYWN0b3JMb2dpblNlcnZpY2U6IFR3b0ZhY3RvckxvZ2luU2VydmljZSxcbiAgKSB7fVxuXG4gIC8qKlxuICAgKiBTdGFydCB0d28tZmFjdG9yIHNldHVwXG4gICAqIFBPU1QgL2FwaS9hdXRoLzJmYS9zZXR1cFxuICAgKi9cbiAgQFBvc3QoJ3NldHVwJylcbiAgQEh0dHBDb2RlKEh0dHBTdGF0dXMuT0spXG4gIEBBcGlCZWFyZXJBdXRoKCdKV1QtYXV0aCcpXG4gIEBBcGlPcGVyYXRpb24oe1xuICAgIHN1bW1hcnk6ICdTdGFydCB0d28tZmFjdG9yIHNldHVwJyxcbiAgICBkZXNjcmlwdGlvbjpcbiAgICAgICdTdG9yZXMgYW4gdW5jb25maXJtZWQgc2VjcmV0IGFuZCByZXR1cm5zIHRoZSBvdHBhdXRoIFVSTCB0byByZW5kZXIgYXMgYSAnICtcbiAgICAgICdRUiBjb2RlLiBBY2NvdW50cyB3aXRoIGEgcGFzc3dvcmQgc2VuZCBpdCBpbiB0aGUgYm9keTsgcGFzc3dvcmRsZXNzICcgK1xuICAgICAgJ2FjY291bnRzIG5lZWQgYSBzZXNzaW9uIHlvdW5nZXIgdGhhbiBmaXZlIG1pbnV0ZXMuJyxcbiAgfSlcbiAgQEFwaUJvZHkoeyB0eXBlOiBTZXR1cFR3b0ZhY3RvckR0byB9KVxuICBhc3luYyBzZXR1cChcbiAgICBAQ3VycmVudFVzZXIoJ2lkJykgdXNlcklkOiBzdHJpbmcsXG4gICAgQEJvZHkoKSBkdG86IFNldHVwVHdvRmFjdG9yRHRvLFxuICAgIEBSZXEoKSByZXF1ZXN0OiBSZXF1ZXN0V2l0aFVzZXIsXG4gICkge1xuICAgIHJldHVybiB0aGlzLnR3b0ZhY3RvclNlcnZpY2Uuc2V0dXAodXNlcklkLCBkdG8sIHJlcXVlc3Quc2Vzc2lvbik7XG4gIH1cblxuICAvKipcbiAgICogQ29uZmlybSB0aGUgc2VjcmV0IGFuZCB0dXJuIHRoZSBzZWNvbmQgZmFjdG9yIG9uXG4gICAqIFBPU1QgL2FwaS9hdXRoLzJmYS9jb25maXJtXG4gICAqL1xuICBAUG9zdCgnY29uZmlybScpXG4gIEBIdHRwQ29kZShIdHRwU3RhdHVzLk9LKVxuICBAQXBpQmVhcmVyQXV0aCgnSldULWF1dGgnKVxuICBAQXBpT3BlcmF0aW9uKHtcbiAgICBzdW1tYXJ5OiAnQ29uZmlybSB0d28tZmFjdG9yIHNldHVwJyxcbiAgICBkZXNjcmlwdGlvbjpcbiAgICAgICdDaGVja3MgYSBmaXJzdCBjb2RlIGFnYWluc3QgdGhlIHBlbmRpbmcgc2VjcmV0LCB0dXJucyB0aGUgc2Vjb25kIGZhY3RvciAnICtcbiAgICAgICdvbiBhbmQgcmV0dXJucyB0aGUgcmVjb3ZlcnkgY29kZXMuIFRoZXkgYXJlIHNob3duIG9ubHkgaGVyZS4nLFxuICB9KVxuICBAQXBpQm9keSh7IHR5cGU6IFR3b0ZhY3RvckNvZGVEdG8gfSlcbiAgYXN5bmMgY29uZmlybShcbiAgICBAQ3VycmVudFVzZXIoJ2lkJykgdXNlcklkOiBzdHJpbmcsXG4gICAgQEJvZHkoKSBkdG86IFR3b0ZhY3RvckNvZGVEdG8sXG4gICkge1xuICAgIHJldHVybiB0aGlzLnR3b0ZhY3RvclNlcnZpY2UuY29uZmlybSh1c2VySWQsIGR0byk7XG4gIH1cblxuICAvKipcbiAgICogVHVybiB0aGUgc2Vjb25kIGZhY3RvciBvZmZcbiAgICogUE9TVCAvYXBpL2F1dGgvMmZhL2Rpc2FibGVcbiAgICovXG4gIEBQb3N0KCdkaXNhYmxlJylcbiAgQEh0dHBDb2RlKEh0dHBTdGF0dXMuT0spXG4gIEBBcGlCZWFyZXJBdXRoKCdKV1QtYXV0aCcpXG4gIEBBcGlPcGVyYXRpb24oe1xuICAgIHN1bW1hcnk6ICdUdXJuIHR3by1mYWN0b3IgYXV0aGVudGljYXRpb24gb2ZmJyxcbiAgICBkZXNjcmlwdGlvbjpcbiAgICAgICdOZWVkcyBhIGNvZGUgb3IgYSByZWNvdmVyeSBjb2RlLCBwbHVzIHRoZSBwYXNzd29yZCB3aGVuIHRoZSBhY2NvdW50IGhhcyAnICtcbiAgICAgICdvbmUuIENsZWFycyB0aGUgc2VjcmV0IGFuZCBldmVyeSByZWNvdmVyeSBjb2RlLicsXG4gIH0pXG4gIEBBcGlCb2R5KHsgdHlwZTogRGlzYWJsZVR3b0ZhY3RvckR0byB9KVxuICBhc3luYyBkaXNhYmxlKFxuICAgIEBDdXJyZW50VXNlcignaWQnKSB1c2VySWQ6IHN0cmluZyxcbiAgICBAQm9keSgpIGR0bzogRGlzYWJsZVR3b0ZhY3RvckR0byxcbiAgKSB7XG4gICAgcmV0dXJuIHRoaXMudHdvRmFjdG9yU2VydmljZS5kaXNhYmxlKHVzZXJJZCwgZHRvKTtcbiAgfVxuXG4gIC8qKlxuICAgKiBSZXBsYWNlIHRoZSByZWNvdmVyeSBjb2Rlc1xuICAgKiBQT1NUIC9hcGkvYXV0aC8yZmEvcmVjb3ZlcnktY29kZXMvcmVnZW5lcmF0ZVxuICAgKi9cbiAgQFBvc3QoJ3JlY292ZXJ5LWNvZGVzL3JlZ2VuZXJhdGUnKVxuICBASHR0cENvZGUoSHR0cFN0YXR1cy5PSylcbiAgQEFwaUJlYXJlckF1dGgoJ0pXVC1hdXRoJylcbiAgQEFwaU9wZXJhdGlvbih7XG4gICAgc3VtbWFyeTogJ1JlcGxhY2UgdGhlIHJlY292ZXJ5IGNvZGVzJyxcbiAgICBkZXNjcmlwdGlvbjpcbiAgICAgICdJc3N1ZXMgdGVuIG5ldyByZWNvdmVyeSBjb2RlcyBhbmQgZHJvcHMgdGhlIG9sZCBiYXRjaCwgdXNlZCBvciBub3QuJyxcbiAgfSlcbiAgQEFwaUJvZHkoeyB0eXBlOiBUd29GYWN0b3JDb2RlRHRvIH0pXG4gIGFzeW5jIHJlZ2VuZXJhdGVSZWNvdmVyeUNvZGVzKFxuICAgIEBDdXJyZW50VXNlcignaWQnKSB1c2VySWQ6IHN0cmluZyxcbiAgICBAQm9keSgpIGR0bzogVHdvRmFjdG9yQ29kZUR0byxcbiAgKSB7XG4gICAgcmV0dXJuIHRoaXMudHdvRmFjdG9yU2VydmljZS5yZWdlbmVyYXRlUmVjb3ZlcnlDb2Rlcyh1c2VySWQsIGR0byk7XG4gIH1cblxuICAvKipcbiAgICogRmluaXNoIGEgc2lnbi1pbiB0aGF0IHdhcyBoZWxkIGZvciBhIGNvZGVcbiAgICogUE9TVCAvYXBpL2F1dGgvMmZhL3ZlcmlmeVxuICAgKi9cbiAgQFB1YmxpYygpXG4gIEBUaHJvdHRsZShUSFJPVFRMRV9UV09fRkFDVE9SX1ZFUklGWSlcbiAgQFBvc3QoJ3ZlcmlmeScpXG4gIEBIdHRwQ29kZShIdHRwU3RhdHVzLk9LKVxuICBAQXBpT3BlcmF0aW9uKHtcbiAgICBzdW1tYXJ5OiAnQW5zd2VyIGEgdHdvLWZhY3RvciBjaGFsbGVuZ2UnLFxuICAgIGRlc2NyaXB0aW9uOlxuICAgICAgJ1JlYWRzIHRoZSBjaGFsbGVuZ2UgY29va2llIGxlZnQgYnkgdGhlIHNpZ24taW4sIGNoZWNrcyBhIGNvZGUsIGEgJyArXG4gICAgICAncmVjb3ZlcnkgY29kZSBvciBhIHBhc3NrZXksIHRoZW4gc2V0cyB0aGUgc2Vzc2lvbiBjb29raWUgYW5kIHJldHVybnMgJyArXG4gICAgICAndGhlIGFjY291bnQuIEEgcGFzc2tleSBhbnN3ZXIgaXMgZmV0Y2hlZCBmcm9tICcgK1xuICAgICAgJ1BPU1QgL2F1dGgvcGFzc2tleXMvbG9naW4vb3B0aW9ucyBmaXJzdCBhbmQgc2VudCBhcyBwYXNza2V5UmVzcG9uc2U7IGl0ICcgK1xuICAgICAgJ2hhcyB0byBiZWxvbmcgdG8gdGhlIGNoYWxsZW5nZWQgYWNjb3VudC4gRml2ZSB3cm9uZyBhbnN3ZXJzIGVuZCB0aGUgJyArXG4gICAgICAnY2hhbGxlbmdlLicsXG4gIH0pXG4gIEBBcGlCb2R5KHsgdHlwZTogVmVyaWZ5VHdvRmFjdG9yRHRvIH0pXG4gIGFzeW5jIHZlcmlmeShcbiAgICBAQm9keSgpIGR0bzogVmVyaWZ5VHdvRmFjdG9yRHRvLFxuICAgIEBSZXEoKSByZXF1ZXN0OiBSZXF1ZXN0LFxuICAgIEBSZXMoKSByZXNwb25zZTogUmVzcG9uc2UsXG4gICkge1xuICAgIGNvbnN0IHJlc3VsdCA9IGF3YWl0IHRoaXMudHdvRmFjdG9yTG9naW5TZXJ2aWNlLnZlcmlmeShcbiAgICAgIGR0byxcbiAgICAgIHJlcXVlc3QsXG4gICAgICByZXNwb25zZSxcbiAgICApO1xuICAgIHJldHVybiByZXNwb25zZS5zdGF0dXMoSHR0cFN0YXR1cy5PSykuanNvbihyZXN1bHQpO1xuICB9XG59XG4iXSwidmVyc2lvbiI6M30=

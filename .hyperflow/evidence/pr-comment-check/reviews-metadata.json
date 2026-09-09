@@ -1,0 +1,28 @@
+[
+  {
+    "author_association": "NONE",
+    "commit_id": "3e84f52312196c03aaefc109ceca05c71bebc712",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#pullrequestreview-5139905332",
+    "id": 5139905332,
+    "node_id": "PRR_kwDODvzUJs8AAAABMly7NA",
+    "state": "COMMENTED",
+    "submitted_at": "2026-09-08T09:29:59Z",
+    "user": {
+      "login": "github-advanced-security[bot]",
+      "type": "Bot"
+    }
+  },
+  {
+    "author_association": "OWNER",
+    "commit_id": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#pullrequestreview-5140788941",
+    "id": 5140788941,
+    "node_id": "PRR_kwDODvzUJs8AAAABMmo2zQ",
+    "state": "COMMENTED",
+    "submitted_at": "2026-09-08T10:55:11Z",
+    "user": {
+      "login": "Mohammed-Abdelhady",
+      "type": "User"
+    }
+  }
+]

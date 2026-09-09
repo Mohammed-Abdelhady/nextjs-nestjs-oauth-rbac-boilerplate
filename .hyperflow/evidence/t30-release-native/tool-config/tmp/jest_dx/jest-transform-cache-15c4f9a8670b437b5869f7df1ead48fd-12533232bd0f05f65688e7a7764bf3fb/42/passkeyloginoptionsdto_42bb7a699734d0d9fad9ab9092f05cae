@@ -1,0 +1,35 @@
+06c3129d2dd5beb4b42d8c5dec766589
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PasskeyLoginOptionsDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
+const class_validator_1 = require("class-validator");
+/**
+ * Body of POST /auth/passkeys/login/options. The address is accepted so a
+ * client can keep one sign-in form, and ignored: the options come back the
+ * same whether or not it has an account, and whether or not it was sent.
+ */
+class PasskeyLoginOptionsDto {
+    email;
+}
+exports.PasskeyLoginOptionsDto = PasskeyLoginOptionsDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Ignored. Present so the client may post its sign-in form',
+        example: 'user@example.com',
+        required: false,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEmail)(),
+    __metadata("design:type", String)
+], PasskeyLoginOptionsDto.prototype, "email", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9wYXNza2V5cy9kdG8vcGFzc2tleS1sb2dpbi1vcHRpb25zLmR0by50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSw2Q0FBOEM7QUFDOUMscURBQXNEO0FBRXREOzs7O0dBSUc7QUFDSCxNQUFhLHNCQUFzQjtJQVFqQyxLQUFLLENBQVU7Q0FDaEI7QUFURCx3REFTQztBQURDO0lBUEMsSUFBQSxxQkFBVyxFQUFDO1FBQ1gsV0FBVyxFQUFFLDBEQUEwRDtRQUN2RSxPQUFPLEVBQUUsa0JBQWtCO1FBQzNCLFFBQVEsRUFBRSxLQUFLO0tBQ2hCLENBQUM7SUFDRCxJQUFBLDRCQUFVLEdBQUU7SUFDWixJQUFBLHlCQUFPLEdBQUU7O3FEQUNLIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL2F1dGgvcGFzc2tleXMvZHRvL3Bhc3NrZXktbG9naW4tb3B0aW9ucy5kdG8udHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgQXBpUHJvcGVydHkgfSBmcm9tICdAbmVzdGpzL3N3YWdnZXInO1xuaW1wb3J0IHsgSXNFbWFpbCwgSXNPcHRpb25hbCB9IGZyb20gJ2NsYXNzLXZhbGlkYXRvcic7XG5cbi8qKlxuICogQm9keSBvZiBQT1NUIC9hdXRoL3Bhc3NrZXlzL2xvZ2luL29wdGlvbnMuIFRoZSBhZGRyZXNzIGlzIGFjY2VwdGVkIHNvIGFcbiAqIGNsaWVudCBjYW4ga2VlcCBvbmUgc2lnbi1pbiBmb3JtLCBhbmQgaWdub3JlZDogdGhlIG9wdGlvbnMgY29tZSBiYWNrIHRoZVxuICogc2FtZSB3aGV0aGVyIG9yIG5vdCBpdCBoYXMgYW4gYWNjb3VudCwgYW5kIHdoZXRoZXIgb3Igbm90IGl0IHdhcyBzZW50LlxuICovXG5leHBvcnQgY2xhc3MgUGFzc2tleUxvZ2luT3B0aW9uc0R0byB7XG4gIEBBcGlQcm9wZXJ0eSh7XG4gICAgZGVzY3JpcHRpb246ICdJZ25vcmVkLiBQcmVzZW50IHNvIHRoZSBjbGllbnQgbWF5IHBvc3QgaXRzIHNpZ24taW4gZm9ybScsXG4gICAgZXhhbXBsZTogJ3VzZXJAZXhhbXBsZS5jb20nLFxuICAgIHJlcXVpcmVkOiBmYWxzZSxcbiAgfSlcbiAgQElzT3B0aW9uYWwoKVxuICBASXNFbWFpbCgpXG4gIGVtYWlsPzogc3RyaW5nO1xufVxuIl0sInZlcnNpb24iOjN9

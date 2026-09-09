@@ -1,0 +1,9 @@
+{
+  "baseRefName": "master",
+  "headRefName": "feat/production-hardening",
+  "headRefOid": "954b99a319d171d8dd488372fda6f4f530440dce",
+  "isDraft": true,
+  "number": 72,
+  "state": "OPEN",
+  "url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72"
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "conclusion": "",
+    "createdAt": "2026-09-08T10:41:07Z",
+    "databaseId": 34216745015,
+    "headSha": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+    "name": "CodeQL",
+    "status": "in_progress",
+    "url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34216745015"
+  },
+  {
+    "conclusion": "",
+    "createdAt": "2026-09-08T10:41:07Z",
+    "databaseId": 34216745039,
+    "headSha": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+    "name": "CI",
+    "status": "in_progress",
+    "url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34216745039"
+  }
+]

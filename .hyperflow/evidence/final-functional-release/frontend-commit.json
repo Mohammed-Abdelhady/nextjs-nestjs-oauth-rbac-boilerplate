@@ -1,0 +1,13 @@
+{
+  "exit": 0,
+  "seconds": 2.78,
+  "head": "614434d9562a05c88fd137f1d928174d8288176f",
+  "paths": [
+    "frontend/e2e/authenticated-regressions.spec.ts",
+    "frontend/src/app/[locale]/(dashboard)/layout.tsx",
+    "frontend/src/app/[locale]/(dashboard)/sessions/page.tsx",
+    "frontend/src/app/[locale]/layout.tsx",
+    "frontend/src/modules/sessions/components/RevokeAllSessionsButton.tsx"
+  ],
+  "hook_formatting": []
+}

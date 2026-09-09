@@ -1,0 +1,15 @@
+**CI-COMB-01: CLOSED.** No new actionable defect found in the two-file repair.
+
+Verified before and after inspection:
+
+- HEAD `3e84f52312196c03aaefc109ceca05c71bebc712`
+- Fingerprint `bac50560111ad528ae0d91d2209bb4e281911ab106e9803e2f7cff7bcddc645d`
+- All 25 file hashes match. Only the two authorized files differ from the prior capture. Reversing `repair.patch` in memory reconstructs their previously reviewed hashes exactly.
+
+`combination-helpers.ts:41–54` now retains failure stdout and stderr alongside the reason, removing Node’s appended stderr copy before joining them. Successful output, buffer limits, timeout, cancellation and non-Error fallback remain unchanged.
+
+`combination-command.test.ts:27–36` hex-encodes the child’s diagnostic and requires exactly one decoded output line. An echoed command cannot satisfy it. The stderr regression also requires exactly one diagnostic line; responsiveness, timeout and cancellation cases remain intact.
+
+Owner evidence records **CLI107/107**, including all five helper tests, **combinations9/9**, lint and types passing. The report also records diff-check PASS. These are owner runs; I executed no tests. Formatting costs remain linear in the bounded captured output, with no new I/O.
+
+Return to Astra for validation. Prior FR/GR closures remain unchanged. Hosted CI confirmation, Docker/runtime limitations and the CodeQL status-only gate remain unresolved. No release authorization or broader readiness claim.

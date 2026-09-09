@@ -1,0 +1,42 @@
+daba8e4ed5903dd428a19e27ad1739f2
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RequestIdMiddleware = void 0;
+const common_1 = require("@nestjs/common");
+const node_crypto_1 = require("node:crypto");
+const request_id_1 = require("../constants/request-id");
+/**
+ * Gives every request a correlation id.
+ *
+ * An incoming X-Request-Id is reused when it is short and made of id-safe
+ * characters, so a proxy can trace a request end to end. Anything else is
+ * replaced with a fresh UUID. The id goes on the request for the logger and the
+ * exception filter, and on the response header for the caller.
+ */
+let RequestIdMiddleware = class RequestIdMiddleware {
+    use(request, response, next) {
+        const requestId = this.resolveId(request.header(request_id_1.REQUEST_ID_HEADER));
+        request.requestId = requestId;
+        response.setHeader(request_id_1.REQUEST_ID_HEADER, requestId);
+        next();
+    }
+    resolveId(incoming) {
+        if (incoming &&
+            incoming.length <= request_id_1.REQUEST_ID_MAX_LENGTH &&
+            request_id_1.REQUEST_ID_PATTERN.test(incoming)) {
+            return incoming;
+        }
+        return (0, node_crypto_1.randomUUID)();
+    }
+};
+exports.RequestIdMiddleware = RequestIdMiddleware;
+exports.RequestIdMiddleware = RequestIdMiddleware = __decorate([
+    (0, common_1.Injectable)()
+], RequestIdMiddleware);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29tbW9uL21pZGRsZXdhcmUvcmVxdWVzdC1pZC5taWRkbGV3YXJlLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7OztBQUFBLDJDQUE0RDtBQUU1RCw2Q0FBeUM7QUFFekMsd0RBSWlDO0FBRWpDOzs7Ozs7O0dBT0c7QUFFSSxJQUFNLG1CQUFtQixHQUF6QixNQUFNLG1CQUFtQjtJQUM5QixHQUFHLENBQUMsT0FBc0IsRUFBRSxRQUFrQixFQUFFLElBQWtCO1FBQ2hFLE1BQU0sU0FBUyxHQUFHLElBQUksQ0FBQyxTQUFTLENBQUMsT0FBTyxDQUFDLE1BQU0sQ0FBQyw4QkFBaUIsQ0FBQyxDQUFDLENBQUM7UUFFcEUsT0FBTyxDQUFDLFNBQVMsR0FBRyxTQUFTLENBQUM7UUFDOUIsUUFBUSxDQUFDLFNBQVMsQ0FBQyw4QkFBaUIsRUFBRSxTQUFTLENBQUMsQ0FBQztRQUVqRCxJQUFJLEVBQUUsQ0FBQztJQUNULENBQUM7SUFFTyxTQUFTLENBQUMsUUFBNEI7UUFDNUMsSUFDRSxRQUFRO1lBQ1IsUUFBUSxDQUFDLE1BQU0sSUFBSSxrQ0FBcUI7WUFDeEMsK0JBQWtCLENBQUMsSUFBSSxDQUFDLFFBQVEsQ0FBQyxFQUNqQyxDQUFDO1lBQ0QsT0FBTyxRQUFRLENBQUM7UUFDbEIsQ0FBQztRQUVELE9BQU8sSUFBQSx3QkFBVSxHQUFFLENBQUM7SUFDdEIsQ0FBQztDQUNGLENBQUE7QUFyQlksa0RBQW1COzhCQUFuQixtQkFBbUI7SUFEL0IsSUFBQSxtQkFBVSxHQUFFO0dBQ0EsbUJBQW1CLENBcUIvQiIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy9jb21tb24vbWlkZGxld2FyZS9yZXF1ZXN0LWlkLm1pZGRsZXdhcmUudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgSW5qZWN0YWJsZSwgTmVzdE1pZGRsZXdhcmUgfSBmcm9tICdAbmVzdGpzL2NvbW1vbic7XG5pbXBvcnQgeyBSZXNwb25zZSwgTmV4dEZ1bmN0aW9uIH0gZnJvbSAnZXhwcmVzcyc7XG5pbXBvcnQgeyByYW5kb21VVUlEIH0gZnJvbSAnbm9kZTpjcnlwdG8nO1xuaW1wb3J0IHsgUmVxdWVzdFdpdGhJZCB9IGZyb20gJy4uL2ludGVyZmFjZXMvcmVxdWVzdC13aXRoLWlkLmludGVyZmFjZSc7XG5pbXBvcnQge1xuICBSRVFVRVNUX0lEX0hFQURFUixcbiAgUkVRVUVTVF9JRF9NQVhfTEVOR1RILFxuICBSRVFVRVNUX0lEX1BBVFRFUk4sXG59IGZyb20gJy4uL2NvbnN0YW50cy9yZXF1ZXN0LWlkJztcblxuLyoqXG4gKiBHaXZlcyBldmVyeSByZXF1ZXN0IGEgY29ycmVsYXRpb24gaWQuXG4gKlxuICogQW4gaW5jb21pbmcgWC1SZXF1ZXN0LUlkIGlzIHJldXNlZCB3aGVuIGl0IGlzIHNob3J0IGFuZCBtYWRlIG9mIGlkLXNhZmVcbiAqIGNoYXJhY3RlcnMsIHNvIGEgcHJveHkgY2FuIHRyYWNlIGEgcmVxdWVzdCBlbmQgdG8gZW5kLiBBbnl0aGluZyBlbHNlIGlzXG4gKiByZXBsYWNlZCB3aXRoIGEgZnJlc2ggVVVJRC4gVGhlIGlkIGdvZXMgb24gdGhlIHJlcXVlc3QgZm9yIHRoZSBsb2dnZXIgYW5kIHRoZVxuICogZXhjZXB0aW9uIGZpbHRlciwgYW5kIG9uIHRoZSByZXNwb25zZSBoZWFkZXIgZm9yIHRoZSBjYWxsZXIuXG4gKi9cbkBJbmplY3RhYmxlKClcbmV4cG9ydCBjbGFzcyBSZXF1ZXN0SWRNaWRkbGV3YXJlIGltcGxlbWVudHMgTmVzdE1pZGRsZXdhcmUge1xuICB1c2UocmVxdWVzdDogUmVxdWVzdFdpdGhJZCwgcmVzcG9uc2U6IFJlc3BvbnNlLCBuZXh0OiBOZXh0RnVuY3Rpb24pOiB2b2lkIHtcbiAgICBjb25zdCByZXF1ZXN0SWQgPSB0aGlzLnJlc29sdmVJZChyZXF1ZXN0LmhlYWRlcihSRVFVRVNUX0lEX0hFQURFUikpO1xuXG4gICAgcmVxdWVzdC5yZXF1ZXN0SWQgPSByZXF1ZXN0SWQ7XG4gICAgcmVzcG9uc2Uuc2V0SGVhZGVyKFJFUVVFU1RfSURfSEVBREVSLCByZXF1ZXN0SWQpO1xuXG4gICAgbmV4dCgpO1xuICB9XG5cbiAgcHJpdmF0ZSByZXNvbHZlSWQoaW5jb21pbmc6IHN0cmluZyB8IHVuZGVmaW5lZCk6IHN0cmluZyB7XG4gICAgaWYgKFxuICAgICAgaW5jb21pbmcgJiZcbiAgICAgIGluY29taW5nLmxlbmd0aCA8PSBSRVFVRVNUX0lEX01BWF9MRU5HVEggJiZcbiAgICAgIFJFUVVFU1RfSURfUEFUVEVSTi50ZXN0KGluY29taW5nKVxuICAgICkge1xuICAgICAgcmV0dXJuIGluY29taW5nO1xuICAgIH1cblxuICAgIHJldHVybiByYW5kb21VVUlEKCk7XG4gIH1cbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

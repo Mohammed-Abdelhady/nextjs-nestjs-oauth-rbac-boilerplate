@@ -1,0 +1,25 @@
+[
+  {
+    "path": "frontend/e2e/README.md",
+    "formatting_only_verified": true,
+    "source_sha256": "2e9860014ea12b283b69ab5fc2b798e73a680400ba963ca6ed090834b3daed62",
+    "candidate_sha256": "eeabc00e8a99c4b8fbb7b051ee9e15f3c7e4bf3de6830bfe91a41d9645c943ff"
+  },
+  {
+    "path": ".hyperflow/reports/production-hardening.md",
+    "formatting_only_verified": true,
+    "source_sha256": "8a138f002c6d5bf7a65f66d25375cdae0f5ad5ec3db4b63ed4417cf5f767b46f",
+    "candidate_sha256": "4d3d5965940c180f9ff9cb4e92f111e2faf515e940ca20c800f5644ab99deca7"
+  },
+  {
+    "path": ".hyperflow/reports/audit-status.md",
+    "formatting_only_verified": true,
+    "source_sha256": "9d32e4d19acbd351863bb887a0668ecdcabc159cf9cf74d6c026d906c644cbdc",
+    "candidate_sha256": "ca437f7c1377a8ca29abfff00460808e80323832c920e291a14344dbc1b60ff1"
+  },
+  {
+    "path": "backend/.env.example",
+    "formatting_only_verified": true,
+    "change": "one final newline removed"
+  }
+]

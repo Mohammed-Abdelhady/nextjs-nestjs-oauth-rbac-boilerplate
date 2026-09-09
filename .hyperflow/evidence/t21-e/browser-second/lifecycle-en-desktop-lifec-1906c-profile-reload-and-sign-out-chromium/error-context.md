@@ -1,0 +1,175 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+    - alert [ref=e2]
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+        - /url: '#main'
+    - generic [ref=e4]:
+        - complementary [ref=e5]:
+            - generic [ref=e6]:
+                - link "Auth App, go to dashboard" [ref=e8] [cursor=pointer]:
+                    - /url: /en/dashboard
+                    - text: Auth App
+                - navigation "Main navigation" [ref=e10]:
+                    - link "Dashboard" [ref=e12] [cursor=pointer]:
+                        - /url: /en/dashboard
+                        - img [ref=e13]
+                        - text: Dashboard
+                    - link "Settings" [ref=e19] [cursor=pointer]:
+                        - /url: /en/settings
+                        - img [ref=e20]
+                        - text: Settings
+                - paragraph [ref=e24]: © 2024 Auth App
+        - generic [ref=e25]:
+            - banner [ref=e26]:
+                - group "Account controls" [ref=e27]:
+                    - generic [ref=e28]:
+                        - generic [ref=e29]: Lifecycle User
+                        - generic [ref=e30]: (user)
+                    - generic [ref=e31]:
+                        - button "Switch to English" [ref=e32]: English
+                        - button "Switch to Arabic" [ref=e33]: العربية
+                    - button "Switch to light mode" [ref=e34]:
+                        - img
+                    - button "Logout" [ref=e35]:
+                        - img
+                        - generic [ref=e36]: Logout
+            - main [ref=e37]:
+                - generic [ref=e39]:
+                    - generic [ref=e40]:
+                        - heading "Settings" [level=1] [ref=e41]
+                        - paragraph [ref=e42]: Manage your account settings and preferences
+                    - region "Account & Security" [ref=e43]:
+                        - heading "Account & Security" [level=2] [ref=e44]
+                        - generic [ref=e45]:
+                            - generic [ref=e46]:
+                                - generic [ref=e47]:
+                                    - heading "Profile Information" [level=3] [ref=e48]
+                                    - paragraph [ref=e49]: Update your personal information.
+                                - generic [ref=e51]:
+                                    - generic [ref=e52]:
+                                        - text: Full Name
+                                        - textbox "Full Name" [ref=e53]:
+                                            - /placeholder: Jane Doe
+                                            - text: Lifecycle User
+                                    - generic [ref=e54]:
+                                        - text: Email Address
+                                        - textbox [disabled] [ref=e55]: lifecycle@example.test
+                                        - paragraph [ref=e56]: Email cannot be changed
+                                    - button "Save Changes" [ref=e57]:
+                                        - generic [ref=e58]: Save Changes
+                            - generic [ref=e59]:
+                                - generic [ref=e60]:
+                                    - heading "Change Password" [level=3] [ref=e61]
+                                    - paragraph [ref=e62]: Update your account password. You'll be logged out of other sessions.
+                                - generic [ref=e64]:
+                                    - generic [ref=e65]:
+                                        - text: Current Password
+                                        - generic [ref=e66]:
+                                            - textbox "Current Password" [ref=e67]:
+                                                - /placeholder: '********'
+                                            - button "Show password" [ref=e68]:
+                                                - img [ref=e69]
+                                    - generic [ref=e72]:
+                                        - text: New Password
+                                        - generic [ref=e73]:
+                                            - textbox "New Password" [ref=e74]:
+                                                - /placeholder: '********'
+                                            - button "Show password" [ref=e75]:
+                                                - img [ref=e76]
+                                    - generic [ref=e79]:
+                                        - paragraph [ref=e80]: Password requirements
+                                        - list [ref=e81]:
+                                            - listitem [ref=e82]:
+                                                - img [ref=e83]
+                                                - generic [ref=e85]: At least 8 characters
+                                                - generic [ref=e86]: (Not passed)
+                                            - listitem [ref=e87]:
+                                                - img [ref=e88]
+                                                - generic [ref=e90]: At least one uppercase letter
+                                                - generic [ref=e91]: (Not passed)
+                                            - listitem [ref=e92]:
+                                                - img [ref=e93]
+                                                - generic [ref=e95]: At least one lowercase letter
+                                                - generic [ref=e96]: (Not passed)
+                                            - listitem [ref=e97]:
+                                                - img [ref=e98]
+                                                - generic [ref=e100]: At least one number
+                                                - generic [ref=e101]: (Not passed)
+                                    - generic [ref=e102]:
+                                        - text: Confirm New Password
+                                        - generic [ref=e103]:
+                                            - textbox "Confirm New Password" [ref=e104]:
+                                                - /placeholder: '********'
+                                            - button "Show password" [ref=e105]:
+                                                - img [ref=e106]
+                                    - button "Update Password" [ref=e109]:
+                                        - generic [ref=e110]: Update Password
+                            - generic [ref=e111]:
+                                - generic [ref=e112]:
+                                    - generic [ref=e113]:
+                                        - heading "Two-step verification" [level=3] [ref=e114]
+                                        - generic [ref=e115]: 'Off'
+                                    - paragraph [ref=e116]: Ask for a code from an authenticator app at every sign-in.
+                                - button "Set up" [ref=e118]:
+                                    - img
+                                    - text: Set up
+                            - generic [ref=e119]:
+                                - generic [ref=e120]:
+                                    - generic [ref=e121]:
+                                        - heading "Passkeys" [level=3] [ref=e122]
+                                        - generic [ref=e123]: None
+                                    - paragraph [ref=e124]: Sign in with your fingerprint, face or screen lock instead of a password.
+                                - generic [ref=e125]:
+                                    - paragraph [ref=e126]: No passkeys yet. Add one to sign in without a password.
+                                    - button "Add a passkey" [ref=e128]:
+                                        - img
+                                        - text: Add a passkey
+                    - region "Connected Accounts & Sync" [ref=e129]:
+                        - heading "Connected Accounts & Sync" [level=2] [ref=e130]
+                        - generic [ref=e131]:
+                            - generic [ref=e132]:
+                                - generic [ref=e133]:
+                                    - heading "Linked Accounts" [level=3] [ref=e134]
+                                    - paragraph [ref=e135]: Manage your connected OAuth providers and set your primary account for profile synchronization
+                                - generic [ref=e136]:
+                                    - generic [ref=e137]:
+                                        - heading "Connected Accounts" [level=3] [ref=e138]
+                                        - generic [ref=e143]:
+                                            - generic [ref=e145]: E
+                                            - generic [ref=e146]:
+                                                - generic [ref=e147]:
+                                                    - heading "Email" [level=3] [ref=e148]
+                                                    - generic [ref=e149]:
+                                                        - img [ref=e150]
+                                                        - text: Primary
+                                                - paragraph [ref=e153]: This account is used for profile synchronization
+                                    - alert [ref=e154]:
+                                        - img [ref=e155]
+                                        - generic [ref=e157]: You must keep at least one authentication method linked to your account
+                                    - generic [ref=e158]:
+                                        - heading "Available Providers" [level=3] [ref=e159]
+                                        - button "Link Local consent fixture" [ref=e161]:
+                                            - img
+                                            - generic [ref=e162]: Link Local consent fixture
+                            - generic [ref=e163]:
+                                - generic [ref=e164]:
+                                    - heading "Profile Sync" [level=3] [ref=e165]
+                                    - paragraph [ref=e166]: Synchronize your profile information from your primary OAuth provider
+                                - generic [ref=e167]:
+                                    - generic [ref=e168]:
+                                        - generic [ref=e169]:
+                                            - generic [ref=e170]: Last synced
+                                            - generic [ref=e171]: Never
+                                        - generic [ref=e172]:
+                                            - generic [ref=e173]: Primary provider
+                                            - generic [ref=e174]: email
+                                    - generic [ref=e175]:
+                                        - img [ref=e176]
+                                        - paragraph [ref=e178]: Set an OAuth provider as your primary to enable profile synchronization
+                                    - button "Sync Profile" [disabled]:
+                                        - img
+                                        - generic: Sync Profile
+    - region "Notifications alt+T"
+```

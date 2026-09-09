@@ -1,0 +1,15 @@
+{
+  "head": "3e84f52312196c03aaefc109ceca05c71bebc712",
+  "fingerprint": "bac50560111ad528ae0d91d2209bb4e281911ab106e9803e2f7cff7bcddc645d",
+  "delta_paths": [
+    "packages/create-nest-next-auth/test/combination-command.test.ts",
+    "packages/create-nest-next-auth/test/combination-helpers.ts"
+  ],
+  "gates": "gates-final.json",
+  "candidate_frozen": true,
+  "committed": false,
+  "pushed": false,
+  "source_or_application_paths_modified": false,
+  "owned_runner_session": 75006,
+  "owned_runner_exit": 0
+}

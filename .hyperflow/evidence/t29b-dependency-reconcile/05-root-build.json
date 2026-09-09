@@ -1,0 +1,17 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "cwd": "/private/tmp/t29b-dependency-reconcile-ispf1d8i/checkout",
+  "exit": 1,
+  "started_at_utc": "2026-09-08T07:38:11.588137+00:00",
+  "finished_at_utc": "2026-09-08T07:38:35.193616+00:00",
+  "node": "v26.8.1",
+  "free_disk_bytes_after": 13230080000,
+  "synthetic_fixture_entries_after": [
+    "node-compile-cache",
+    "v8-compile-cache-501"
+  ]
+}

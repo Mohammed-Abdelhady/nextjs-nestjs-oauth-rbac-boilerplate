@@ -1,0 +1,10 @@
+{
+  "PATH": "/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/t21-e/node22/node-v22.18.0-darwin-arm64/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+  "TMPDIR": "/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-gates-k9fbrit6",
+  "XDG_CONFIG_HOME": "/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/t30-release-native/tool-config/xdg",
+  "NPM_CONFIG_USERCONFIG": "/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/t30-release-native/tool-config/npmrc",
+  "NPM_CONFIG_GLOBALCONFIG": "/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/t30-release-native/tool-config/global-npmrc",
+  "NPM_CONFIG_CACHE": "/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/t30-release-native/tool-config/npm-cache",
+  "NEXT_PUBLIC_API_URL": "http://127.0.0.1:5107",
+  "PLAYWRIGHT_CHROMIUM_CHANNEL": "chrome"
+}

@@ -6,15 +6,16 @@ jest.mock('./utils/totp.util', () => ({
   checkTotpDelta: jest.fn(),
 }));
 
+import { HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
+import { AppException } from '../../common/exceptions/app.exception';
 import { TwoFactorLoginService } from './two-factor-login.service';
+import { VerifyTwoFactorDto } from './dto/verify-two-factor.dto';
 import { TwoFactorChallengeService } from './services/two-factor-challenge.service';
 import { TwoFactorVerificationService } from './services/two-factor-verification.service';
 import { SignInService } from '../services/sign-in.service';
-import { AuthFeaturesService } from '../services/auth-features.service';
-import { PasskeyAssertionService } from '../passkeys/services/passkey-assertion.service';
-import { PasskeyCredentialDto } from '../passkeys/dto/passkey-credential.dto';
+import { SecondFactorVerifier } from './services/second-factor-verifiers';
 import { checkTotpDelta } from './utils/totp.util';
 import {
   createCrypto,
@@ -43,14 +44,10 @@ const USER_SUMMARY = {
   permissions: ['read'],
 };
 
-/** A credential body, standing in for what the browser would send. */
-const PASSKEY_RESPONSE = {
-  id: 'credential-id',
-  rawId: 'credential-id',
-  response: {},
-  clientExtensionResults: {},
-  type: 'public-key',
-} as PasskeyCredentialDto;
+/** Stands in for the credential a feature such as passkeys would carry. */
+const CREDENTIAL = {
+  credential: 'signed-blob',
+} as unknown as VerifyTwoFactorDto;
 
 interface Harness {
   service: TwoFactorLoginService;
@@ -61,14 +58,10 @@ interface Harness {
     clear: jest.Mock;
   };
   signInService: { issueSession: jest.Mock };
-  passkeyAssertions: { verify: jest.Mock };
+  verifier: { supports: jest.Mock; verify: jest.Mock };
 }
 
-function createHarness(
-  user: MockUser | null,
-  passkeyOwner: Types.ObjectId = USER_ID,
-  passkeysEnabled = true,
-): Harness {
+function createHarness(user: MockUser | null): Harness {
   const userModel = { findById: jest.fn().mockResolvedValue(user) };
 
   const challengeService = {
@@ -84,18 +77,12 @@ function createHarness(
     issueSession: jest.fn().mockResolvedValue(USER_SUMMARY),
   };
 
-  const passkeyAssertions = {
-    verify: jest.fn().mockResolvedValue({
-      passkey: { user: passkeyOwner },
-      userVerified: true,
-    }),
+  // One registered verifier, answering for the payloads that carry a
+  // credential instead of a code.
+  const verifier = {
+    supports: jest.fn((dto: Record<string, unknown>) => 'credential' in dto),
+    verify: jest.fn().mockResolvedValue(undefined),
   };
-
-  const authFeaturesService = new AuthFeaturesService({
-    get: jest.fn((key: string, fallback?: boolean) =>
-      key === 'passkeys.enabled' ? passkeysEnabled : fallback,
-    ),
-  } as unknown as ConstructorParameters<typeof AuthFeaturesService>[0]);
 
   return {
     service: new TwoFactorLoginService(
@@ -105,12 +92,11 @@ function createHarness(
       challengeService as unknown as TwoFactorChallengeService,
       new TwoFactorVerificationService(createCrypto()),
       signInService as unknown as SignInService,
-      authFeaturesService,
-      passkeyAssertions as unknown as PasskeyAssertionService,
+      [verifier as unknown as SecondFactorVerifier],
     ),
     challengeService,
     signInService,
-    passkeyAssertions,
+    verifier,
   };
 }
 
@@ -171,12 +157,12 @@ describe('TwoFactorLoginService', () => {
     expect(harness.signInService.issueSession).not.toHaveBeenCalled();
   });
 
-  it('should accept a passkey in place of a code', async () => {
+  it('should hand a credential to the verifier that claims it', async () => {
     const user = createEnabledUser(createCrypto());
     const harness = createHarness(user);
 
     const result = await harness.service.verify(
-      { passkeyResponse: PASSKEY_RESPONSE },
+      CREDENTIAL,
       MOCK_REQUEST,
       MOCK_RESPONSE,
     );
@@ -185,26 +171,27 @@ describe('TwoFactorLoginService', () => {
       requiresTwoFactor: false,
       user: USER_SUMMARY,
     });
-    expect(harness.passkeyAssertions.verify).toHaveBeenCalledWith(
-      PASSKEY_RESPONSE,
+    expect(harness.verifier.verify).toHaveBeenCalledWith(
+      CREDENTIAL,
+      user,
       MOCK_REQUEST,
       MOCK_RESPONSE,
     );
     expect(harness.challengeService.consume).toHaveBeenCalledWith(CHALLENGE_ID);
   });
 
-  it('should refuse a passkey registered to another account', async () => {
-    const harness = createHarness(
-      createEnabledUser(createCrypto()),
-      new Types.ObjectId('507f1f77bcf86cd799439099'),
+  it('should count a rejected credential against the challenge', async () => {
+    const harness = createHarness(createEnabledUser(createCrypto()));
+    harness.verifier.verify.mockRejectedValue(
+      new AppException(
+        ErrorCode.PASSKEY_VERIFICATION_FAILED,
+        'refused',
+        HttpStatus.UNAUTHORIZED,
+      ),
     );
 
     await expect(
-      harness.service.verify(
-        { passkeyResponse: PASSKEY_RESPONSE },
-        MOCK_REQUEST,
-        MOCK_RESPONSE,
-      ),
+      harness.service.verify(CREDENTIAL, MOCK_REQUEST, MOCK_RESPONSE),
     ).rejects.toMatchObject({
       code: ErrorCode.PASSKEY_VERIFICATION_FAILED,
       status: 401,
@@ -216,25 +203,18 @@ describe('TwoFactorLoginService', () => {
     expect(harness.signInService.issueSession).not.toHaveBeenCalled();
   });
 
-  it('should refuse a passkey while the method is off', async () => {
-    const harness = createHarness(
-      createEnabledUser(createCrypto()),
-      USER_ID,
-      false,
+  it('should read a code itself when no verifier claims the payload', async () => {
+    const harness = createHarness(createEnabledUser(createCrypto()));
+    delta.mockReturnValue(0);
+
+    await harness.service.verify(
+      { code: '123456' },
+      MOCK_REQUEST,
+      MOCK_RESPONSE,
     );
 
-    await expect(
-      harness.service.verify(
-        { passkeyResponse: PASSKEY_RESPONSE },
-        MOCK_REQUEST,
-        MOCK_RESPONSE,
-      ),
-    ).rejects.toMatchObject({
-      code: ErrorCode.FEATURE_DISABLED,
-      status: 404,
-    });
-
-    expect(harness.passkeyAssertions.verify).not.toHaveBeenCalled();
+    expect(harness.verifier.verify).not.toHaveBeenCalled();
+    expect(harness.signInService.issueSession).toHaveBeenCalled();
   });
 
   it('should refuse a challenge whose account is gone', async () => {

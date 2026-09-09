@@ -1,0 +1,513 @@
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -152,6 +152,17 @@
+           retention-days: 3
+           if-no-files-found: ignore
+ 
++      - name: Retain synthetic overflow failure diagnostics
++        if: failure()
++        uses: actions/upload-artifact@v4
++        with:
++          name: integration-overflow-diagnostics
++          path: |
++            output/playwright/authenticated/**/overflow-geometry.json
++            output/playwright/authenticated/**/overflow-failure.png
++          retention-days: 3
++          if-no-files-found: ignore
++
+   docker:
+     name: docker
+     runs-on: ubuntu-latest
+--- a/frontend/e2e/authenticated-regressions.spec.ts
++++ b/frontend/e2e/authenticated-regressions.spec.ts
+@@ -1,3 +1,4 @@
++import { writeFile } from 'node:fs/promises';
+ import { test, expect } from './fixtures/authenticated';
+ import { settleAnimations } from './utils/accessibility';
+ 
+@@ -98,9 +99,75 @@
+       await expect(page.getByTestId(/^session-card-timeline-/)).toHaveCount(2);
+       if (mobile) await expect(page.getByTestId('mobile-sidebar')).toBeHidden();
+       await settleAnimations(page);
+-      await expect
+-        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+-        .toBe(true);
++      try {
++        await expect
++          .poll(() =>
++            page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
++          )
++          .toBe(true);
++      } catch (error) {
++        // Capture layout evidence only; never replace the original overflow failure.
++        try {
++          const geometry = await page.evaluate(() => {
++            const walker = document.createTreeWalker(
++              document.documentElement,
++              NodeFilter.SHOW_ELEMENT,
++            );
++            let current: Node | null = walker.currentNode;
++            let scanned = 0;
++            const overflowing = [];
++            let matching = 0;
++            while (current && scanned < 3000) {
++              const element = current as Element;
++              current = walker.nextNode();
++              scanned++;
++              const rect = element.getBoundingClientRect();
++              if (!rect.width || !rect.height || (rect.left >= 0 && rect.right <= innerWidth))
++                continue;
++              matching++;
++              if (overflowing.length === 20) continue;
++              const style = getComputedStyle(element);
++              overflowing.push({
++                tag: element.tagName,
++                testId: element.getAttribute('data-testid')?.slice(0, 120) ?? null,
++                rect: {
++                  left: rect.left,
++                  right: rect.right,
++                  width: rect.width,
++                  height: rect.height,
++                },
++                styles: {
++                  display: style.display,
++                  position: style.position,
++                  direction: style.direction,
++                  overflowX: style.overflowX,
++                  visibility: style.visibility,
++                  transform: style.transform.slice(0, 120),
++                  width: style.width,
++                  minWidth: style.minWidth,
++                },
++              });
++            }
++            return {
++              viewportWidth: innerWidth,
++              documentWidth: document.documentElement.scrollWidth,
++              direction: document.documentElement.dir,
++              scanned,
++              truncated: current !== null,
++              matchingWithinScan: matching,
++              overflowing,
++            };
++          });
++          await writeFile(testInfo.outputPath('overflow-geometry.json'), JSON.stringify(geometry));
++          await page.screenshot({
++            path: testInfo.outputPath('overflow-failure.png'),
++            timeout: 5000,
++          });
++        } catch {
++          console.error('Overflow diagnostics could not be captured; original assertion retained.');
++        }
++        throw error;
++      }
+       await testInfo.attach('arabic-session', {
+         body: await page.screenshot({ path: testInfo.outputPath('page.png'), fullPage: true }),
+         contentType: 'image/png',
+--- a/scripts/config-transforms.test.mjs
++++ b/scripts/config-transforms.test.mjs
+@@ -1,3 +1,8 @@
++import {
++  runHttpProbes,
++  httpProbeProgram,
++  validateProbeResults,
++} from './lib/docker-http-probes.mjs';
+ import { createRequire } from 'node:module';
+ import { fileURLToPath } from 'node:url';
+ import assert from 'node:assert/strict';
+@@ -8,7 +13,7 @@
+   configureFrontendPort,
+   configureNginxDomains,
+ } from './lib/config-transforms.js';
+-import { smokeModel } from './verify-docker.mjs';
++import { command, smokeModel } from './verify-docker.mjs';
+ 
+ const domains = {
+   mainDomain: 'example.test',
+@@ -140,3 +145,177 @@
+     });
+   }
+ }
++
++function probeResponse(url) {
++  if (url === 'http://backend:5000/health') {
++    return new Response(JSON.stringify({ status: 'healthy', timestamp: '2026-09-08T00:00:00Z' }));
++  }
++  if (url === 'http://nginx:8080/health') return new Response('{"status":"healthy"}');
++  if (url === 'http://frontend:3000/en/auth/login') return new Response('<html lang="en"><form>');
++  if (url === 'http://frontend:3000/ar/auth/login') return new Response('<html lang="ar"><form>');
++  if (url === 'http://backend:5000/api/auth/methods') {
++    return new Response('{"data":{"methods":{"password":true,"oauth":[]}}}');
++  }
++  throw new Error('unexpected probe target');
++}
++
++test('internal smoke network has no incompatible host publications', () => {
++  const original = {
++    services: Object.fromEntries(
++      ['mongodb', 'backend', 'frontend', 'nginx'].map((name) => [
++        name,
++        {
++          healthcheck: { test: ['CMD', 'synthetic'] },
++          environment: { PORT: '3000' },
++        },
++      ]),
++    ),
++  };
++  const model = smokeModel(original, '/synthetic');
++  assert.deepEqual(model.networks, { smoke: { internal: true } });
++  for (const service of Object.values(model.services)) {
++    assert.deepEqual(service.networks, ['smoke']);
++    assert.equal(service.ports, undefined);
++  }
++});
++
++test('fixed service DNS probes preserve all five HTTP contracts without exposing bodies', async () => {
++  const urls = [];
++  const result = await runHttpProbes(async (url, options) => {
++    urls.push(url);
++    assert.equal(options.redirect, 'manual');
++    assert.ok(options.signal instanceof AbortSignal);
++    return probeResponse(url);
++  });
++  assert.equal(urls.length, 5);
++  validateProbeResults(JSON.stringify(result));
++  assert.deepEqual(Object.keys(result), ['checked']);
++  const output = await command(
++    process.execPath,
++    [
++      '--input-type=module',
++      '-e',
++      `globalThis.fetch = ${probeResponse.toString()}; ${httpProbeProgram()}`,
++    ],
++    { env: {}, timeout: 5000 },
++  );
++  validateProbeResults(output);
++});
++
++for (const [name, response, reason] of [
++  [
++    'non200',
++    () => new Response('private detail', { status: 503 }),
++    'unexpected HTTP status or redirect',
++  ],
++  [
++    'redirect',
++    () => new Response('', { status: 302, headers: { location: '/other' } }),
++    'unexpected HTTP status or redirect',
++  ],
++  [
++    '200 redirect header',
++    () => new Response('{}', { headers: { location: '/other' } }),
++    'unexpected HTTP status or redirect',
++  ],
++  ['malformed JSON', () => new Response('private detail'), 'invalid JSON'],
++  [
++    'invalid health',
++    () => new Response('{"status":"healthy","timestamp":"invalid"}'),
++    'health response contract',
++  ],
++  ['null health', () => new Response('null'), 'health response contract'],
++  ['oversize', () => new Response('x'.repeat(129)), 'response too large'],
++]) {
++  test(`HTTP probe rejects ${name} with bounded named diagnostics`, async () => {
++    const result = await runHttpProbes(response, 1000, 128);
++    assert.deepEqual(result, { failure: 'backend-health', reason });
++    assert.throws(() => validateProbeResults(JSON.stringify(result)), /backend-health/);
++    assert.ok(!JSON.stringify(result).includes('private detail'));
++  });
++}
++
++for (const [name, suffix, body] of [
++  ['nginx shape', ':8080/health', '{"status":"healthy","extra":true}'],
++  ['English document', '/en/auth/login', '<html lang="ar"><form>'],
++  ['Arabic form', '/ar/auth/login', '<html lang="ar">'],
++  [
++    'enabled external method',
++    '/api/auth/methods',
++    '{"data":{"methods":{"password":true,"magicLink":true}}}',
++  ],
++  ['missing password', '/api/auth/methods', '{"data":{"methods":{"oauth":[]}}}'],
++  [
++    'unexpected OAuth provider',
++    '/api/auth/methods',
++    '{"data":{"methods":{"password":true,"oauth":["external"]}}}',
++  ],
++]) {
++  test(`HTTP probe rejects ${name} without dropping earlier checks`, async () => {
++    const result = await runHttpProbes(async (url) =>
++      url.endsWith(suffix) ? new Response(body) : probeResponse(url),
++    );
++    assert.ok(result.failure);
++    assert.throws(() => validateProbeResults(JSON.stringify(result)), /contract/);
++  });
++}
++
++test('request failures and timeouts retain only sanitized reasons', async () => {
++  assert.deepEqual(
++    await runHttpProbes(() => {
++      throw new Error('private details');
++    }),
++    {
++      failure: 'backend-health',
++      reason: 'request failed',
++    },
++  );
++  const keepAlive = setTimeout(() => {}, 1000);
++  try {
++    const result = await runHttpProbes(
++      (_url, { signal }) =>
++        new Promise((_resolve, reject) => {
++          signal.addEventListener('abort', () => reject(signal.reason), { once: true });
++        }),
++      20,
++    );
++    assert.deepEqual(result, { failure: 'backend-health', reason: 'request timed out' });
++  } finally {
++    clearTimeout(keepAlive);
++  }
++});
++
++test('result parser rejects incomplete, malformed and unknown diagnostic payloads', () => {
++  for (const output of [
++    '',
++    'null',
++    '{}',
++    '{"checked":[]}',
++    '{"failure":"private","reason":"private"}',
++  ]) {
++    assert.throws(() => validateProbeResults(output), /result/);
++  }
++});
++
++test('probe command preserves nonzero, timeout, cancellation and bounded output handling', async () => {
++  const options = { env: {}, timeout: 1000 };
++  await assert.rejects(command(process.execPath, ['-e', 'process.exit(3)'], options), /exited 3/);
++  await assert.rejects(
++    command(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], {
++      ...options,
++      timeout: 30,
++    }),
++    /timed out/,
++  );
++  await assert.rejects(
++    command(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], {
++      ...options,
++      signal: AbortSignal.timeout(30),
++    }),
++    /cancelled/,
++  );
++  await assert.rejects(
++    command(process.execPath, ['-e', 'process.stdout.write("x".repeat(1048577))'], options),
++    /output limit/,
++  );
++});
+--- /dev/null
++++ b/scripts/lib/docker-http-probes.mjs
+@@ -0,0 +1,112 @@
++import { isDeepStrictEqual } from 'node:util';
++
++// This function is serialized into the existing backend container; keep it self-contained.
++export async function runHttpProbes(
++  fetchResponse = fetch,
++  timeout = 10_000,
++  maxBytes = 1024 * 1024,
++) {
++  const targets = [
++    { name: 'backend-health', url: 'http://backend:5000/health' },
++    { name: 'nginx-health', url: 'http://nginx:8080/health' },
++    { name: 'frontend-en', url: 'http://frontend:3000/en/auth/login', locale: 'en' },
++    { name: 'frontend-ar', url: 'http://frontend:3000/ar/auth/login', locale: 'ar' },
++    { name: 'auth-methods', url: 'http://backend:5000/api/auth/methods' },
++  ];
++  const checked = [];
++  for (const target of targets) {
++    let response;
++    let body = '';
++    let size = 0;
++    const signal = AbortSignal.timeout(timeout);
++    try {
++      response = await fetchResponse(target.url, { redirect: 'manual', signal });
++      if (response.status !== 200 || response.headers.get('location')) {
++        await response.body?.cancel().catch(() => undefined);
++        return { failure: target.name, reason: 'unexpected HTTP status or redirect' };
++      }
++      const decoder = new TextDecoder();
++      for await (const chunk of response.body) {
++        size += chunk.length;
++        if (size > maxBytes) {
++          return { failure: target.name, reason: 'response too large' };
++        }
++        body += decoder.decode(chunk, { stream: true });
++      }
++      body += decoder.decode();
++    } catch {
++      return {
++        failure: target.name,
++        reason: signal.aborted ? 'request timed out' : 'request failed',
++      };
++    }
++    if (target.locale) {
++      if (!body.includes(`lang="${target.locale}"`) || !body.includes('<form')) {
++        return { failure: target.name, reason: 'login document contract' };
++      }
++    } else {
++      let value;
++      try {
++        value = JSON.parse(body);
++      } catch {
++        return { failure: target.name, reason: 'invalid JSON' };
++      }
++      if (target.name === 'backend-health') {
++        if (
++          !value ||
++          Object.keys(value).sort().join(',') !== 'status,timestamp' ||
++          value.status !== 'healthy' ||
++          !Number.isFinite(Date.parse(value.timestamp))
++        )
++          return { failure: target.name, reason: 'health response contract' };
++      } else if (target.name === 'nginx-health') {
++        if (!value || Object.keys(value).join(',') !== 'status' || value.status !== 'healthy') {
++          return { failure: target.name, reason: 'health response contract' };
++        }
++      } else {
++        const methods = value?.data?.methods;
++        if (
++          !methods ||
++          typeof methods.password !== 'boolean' ||
++          methods.magicLink ||
++          methods.twoFactor ||
++          methods.passkeys ||
++          (methods.oauth && (!Array.isArray(methods.oauth) || methods.oauth.length !== 0))
++        )
++          return { failure: target.name, reason: 'auth method contract' };
++      }
++    }
++    checked.push(target.name);
++  }
++  return { checked };
++}
++
++export function httpProbeProgram() {
++  return `const result = await (${runHttpProbes.toString()})(); process.stdout.write(JSON.stringify(result));`;
++}
++
++export function validateProbeResults(output) {
++  let result;
++  try {
++    result = JSON.parse(output);
++  } catch {
++    throw new Error('container HTTP probes: invalid result JSON');
++  }
++  const names = ['backend-health', 'nginx-health', 'frontend-en', 'frontend-ar', 'auth-methods'];
++  const reasons = [
++    'unexpected HTTP status or redirect',
++    'response too large',
++    'request timed out',
++    'request failed',
++    'login document contract',
++    'invalid JSON',
++    'health response contract',
++    'auth method contract',
++  ];
++  if (names.includes(result?.failure) && reasons.includes(result?.reason)) {
++    throw new Error(`${result.failure}: ${result.reason}`);
++  }
++  if (!isDeepStrictEqual(result, { checked: names })) {
++    throw new Error('container HTTP probe result contract');
++  }
++}
+--- a/scripts/verify-docker.mjs
++++ b/scripts/verify-docker.mjs
+@@ -1,4 +1,5 @@
+ import assert from 'node:assert/strict';
++import { httpProbeProgram, validateProbeResults } from './lib/docker-http-probes.mjs';
+ import { spawn } from 'node:child_process';
+ import { randomUUID } from 'node:crypto';
+ import { realpathSync } from 'node:fs';
+@@ -169,15 +170,6 @@
+     HOSTNAME: '0.0.0.0',
+     PORT: frontendPort,
+   };
+-  for (const [name, port] of [
+-    ['backend', 5000],
+-    ['frontend', 3000],
+-    ['nginx', 8080],
+-  ]) {
+-    services[name].ports = [
+-      { target: port, published: '0', host_ip: '127.0.0.1', protocol: 'tcp' },
+-    ];
+-  }
+   services.nginx.volumes = [
+     {
+       type: 'bind',
+@@ -193,23 +185,6 @@
+   const route = config.match(/location = \/health\s*\{[^{}]*'\{"status":"healthy"\}'[^{}]*\}/)?.[0];
+   assert(route, 'exact HTTP health route not found');
+   return `pid /tmp/nginx.pid;\nevents {}\nhttp { server { listen 8080; listen [::]:8080;\n${route}\nlocation / { return 301 https://$host$request_uri; }\n} }\n`;
+-}
+-
+-async function request(origin, path, signal) {
+-  const response = await fetch(`${origin}${path}`, {
+-    redirect: 'manual',
+-    signal: AbortSignal.any([signal, AbortSignal.timeout(10_000)]),
+-  });
+-  assert.equal(response.status, 200, `${path} status`);
+-  assert.equal(response.headers.get('location'), null, `${path} redirected`);
+-  const chunks = [];
+-  let size = 0;
+-  for await (const chunk of response.body) {
+-    size += chunk.length;
+-    assert(size <= MAX_OUTPUT, `${path} response too large`);
+-    chunks.push(chunk);
+-  }
+-  return Buffer.concat(chunks).toString('utf8');
+ }
+ 
+ async function verifyCheckout() {
+@@ -300,39 +275,12 @@
+       { timeout: 260_000 },
+     );
+     console.log(`startup completed in ${((performance.now() - started) / 1000).toFixed(1)}s`);
+-    phase = 'assertions';
+-    const origins = {};
+-    for (const [name, port] of [
+-      ['backend', 5000],
+-      ['frontend', 3000],
+-      ['nginx', 8080],
+-    ]) {
+-      const address = await compose(['port', name, String(port)]);
+-      assert(/^127\.0\.0\.1:\d+$/.test(address), `${name} must bind loopback`);
+-      origins[name] = `http://${address}`;
+-    }
+-    const health = JSON.parse(await request(origins.backend, '/health', controller.signal));
+-    assert.deepEqual(Object.keys(health).sort(), ['status', 'timestamp']);
+-    assert.equal(health.status, 'healthy');
+-    assert(Number.isFinite(Date.parse(health.timestamp)), 'health timestamp');
+-    assert.deepEqual(JSON.parse(await request(origins.nginx, '/health', controller.signal)), {
+-      status: 'healthy',
+-    });
+-    for (const locale of ['en', 'ar']) {
+-      const html = await request(origins.frontend, `/${locale}/auth/login`, controller.signal);
+-      assert(html.includes(`lang="${locale}"`), `${locale} login document language`);
+-      assert(html.includes('<form'), `${locale} login form`);
+-    }
+-    const methods = JSON.parse(
+-      await request(origins.backend, '/api/auth/methods', controller.signal),
+-    ).data?.methods;
+-    assert(methods && typeof methods.password === 'boolean', 'auth method response');
+-    for (const name of ['magicLink', 'twoFactor', 'passkeys'])
+-      assert(!methods[name], `${name} disabled`);
+-    assert(
+-      !methods.oauth || (Array.isArray(methods.oauth) && methods.oauth.length === 0),
+-      'external providers disabled',
+-    );
++    phase = 'container HTTP probes';
++    const results = await compose(
++      ['exec', '-T', 'backend', 'node', '--input-type=module', '-e', httpProbeProgram()],
++      { timeout: 65_000 },
++    );
++    validateProbeResults(results);
+     console.log('synthetic app and HTTP nginx checks passed; production TLS/certbot unverified');
+   } catch (error) {
+     process.exitCode ||= 1;

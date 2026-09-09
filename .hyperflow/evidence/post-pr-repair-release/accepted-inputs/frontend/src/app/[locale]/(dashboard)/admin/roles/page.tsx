@@ -1,0 +1,208 @@
+'use client';
+
+import { useState, useMemo, useCallback, Activity } from 'react';
+import { useTranslations } from 'next-intl';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { SearchBar, SplitView } from '@/components/design-system';
+import { PaginationControl } from '@/components/pagination';
+import { useListRolesQuery } from '@/modules/roles/api/rolesApi';
+import type { Role } from '@/modules/roles/types';
+import { RoleSidebarNav } from '@/modules/permissions/components/RoleSidebarNav';
+import { RoleDetailPanel } from '@/modules/permissions/components/RoleDetailPanel';
+import { RoleSplitViewSkeleton, RoleDialogs } from '@/modules/roles/components';
+import { RoutePermissionGuard, ROLE_PERMISSIONS } from '@/modules/permissions';
+import { Plus, Shield } from 'lucide-react';
+import { useDebounce } from '@/hooks/useDebounce';
+import { parseApiError } from '@/lib/apiError';
+
+export default function RolesPage() {
+  const t = useTranslations('roles');
+  const tCommon = useTranslations('common');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [roleToEdit, setRoleToEdit] = useState<Role | null>(null);
+
+  const debouncedSearch = useDebounce(searchTerm, 300);
+
+  const { data, currentData, isLoading, isFetching, isError, error, refetch } = useListRolesQuery({
+    page,
+    limit: 20,
+    search: debouncedSearch.trim() || undefined,
+  });
+
+  const roles = useMemo(() => data?.roles || [], [data?.roles]);
+  const totalPages = data?.totalPages || 1;
+  const totalCount = data?.total ?? roles.length;
+
+  const lastPage = Math.max(1, currentData?.totalPages ?? page);
+  if (!isFetching && !isError && page > lastPage) setPage(lastPage);
+
+  const effectiveSelectedRoleId = roles.some((role) => role.id === selectedRoleId)
+    ? selectedRoleId
+    : (roles[0]?.id ?? null);
+
+  const selectedRole = useMemo(
+    () => roles.find((r) => r.id === effectiveSelectedRoleId) || null,
+    [roles, effectiveSelectedRoleId],
+  );
+
+  const handleSelectRole = useCallback((roleId: string) => {
+    setSelectedRoleId(roleId);
+  }, []);
+
+  const handleEdit = useCallback((role: Role) => {
+    setRoleToEdit(role);
+    setEditDialogOpen(true);
+  }, []);
+
+  const handleDelete = useCallback((role: Role) => {
+    setRoleToEdit(role);
+    setDeleteDialogOpen(true);
+  }, []);
+
+  const handleSuccess = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
+  const isFiltered = Boolean(debouncedSearch.trim());
+
+  return (
+    <RoutePermissionGuard permission={ROLE_PERMISSIONS.LIST_ALL}>
+      <div className="container max-w-7xl py-8 px-4" data-testid="admin-roles-page">
+        {/* Header */}
+        <div className="my-8">
+          <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                {t('count', { count: totalCount })}
+              </p>
+            </div>
+            <Button onClick={() => setCreateDialogOpen(true)} data-testid="create-role-button">
+              <Plus className="me-2 h-4 w-4" aria-hidden="true" />
+              {t('createRole')}
+            </Button>
+          </div>
+
+          <SearchBar
+            placeholder={t('searchPlaceholder')}
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(1);
+            }}
+            onClear={() => {
+              setSearchTerm('');
+              setPage(1);
+            }}
+            showClear={searchTerm.length > 0}
+            data-testid="search-roles-input"
+          />
+        </div>
+
+        {/* State 1: Skeleton Loading */}
+        <Activity mode={isLoading ? 'visible' : 'hidden'}>
+          <RoleSplitViewSkeleton />
+        </Activity>
+
+        {/* State 2: Error */}
+        <Activity mode={!isLoading && isError ? 'visible' : 'hidden'}>
+          <Alert variant="destructive" data-testid="error-state">
+            <AlertDescription className="flex items-center justify-between">
+              <span>
+                {tCommon('loading')} {error ? parseApiError(error).message : tCommon('retry')}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetch()}
+                data-testid="retry-roles-button"
+              >
+                {tCommon('retry')}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        </Activity>
+
+        {/* State 3: Empty */}
+        <Activity mode={!isLoading && !isError && roles.length === 0 ? 'visible' : 'hidden'}>
+          <div
+            className="flex flex-col items-center justify-center py-16 text-center"
+            data-testid="empty-state"
+          >
+            <Shield className="h-10 w-10 text-muted-foreground mb-3" aria-hidden="true" />
+            <h2 className="text-lg font-semibold">{isFiltered ? t('noRoles') : t('noRolesYet')}</h2>
+            <p className="text-sm text-muted-foreground max-w-sm mt-1 mb-4">
+              {isFiltered ? t('noRolesHint') : t('noRolesYetHint')}
+            </p>
+            {isFiltered ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSearchTerm('');
+                  setPage(1);
+                }}
+                data-testid="clear-role-search-button"
+              >
+                {tCommon('clearSearch')}
+              </Button>
+            ) : (
+              <Button
+                onClick={() => setCreateDialogOpen(true)}
+                data-testid="create-first-role-button"
+              >
+                <Plus className="me-2 h-4 w-4" aria-hidden="true" />
+                {t('createRole')}
+              </Button>
+            )}
+          </div>
+        </Activity>
+
+        {/* State 4: Data */}
+        <Activity mode={!isLoading && !isError && roles.length > 0 ? 'visible' : 'hidden'}>
+          <div className="space-y-6">
+            <SplitView
+              sidebar={
+                <RoleSidebarNav
+                  roles={roles}
+                  selectedRoleId={effectiveSelectedRoleId}
+                  onSelectRole={handleSelectRole}
+                />
+              }
+              content={
+                <RoleDetailPanel role={selectedRole} onEdit={handleEdit} onDelete={handleDelete} />
+              }
+              sidebarWidth="280px"
+              stickySidebar
+            />
+
+            <PaginationControl
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              isLoading={isLoading || isFetching}
+            />
+          </div>
+        </Activity>
+
+        {/* Dialogs */}
+        <RoleDialogs
+          createOpen={createDialogOpen}
+          onCreateOpenChange={setCreateDialogOpen}
+          editOpen={editDialogOpen}
+          onEditOpenChange={setEditDialogOpen}
+          deleteOpen={deleteDialogOpen}
+          onDeleteOpenChange={setDeleteDialogOpen}
+          roleToEdit={roleToEdit}
+          onSuccess={handleSuccess}
+        />
+      </div>
+    </RoutePermissionGuard>
+  );
+}

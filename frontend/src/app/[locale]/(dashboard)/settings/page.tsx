@@ -1,5 +1,6 @@
-import { LinkedAccounts, ProfileSyncStatus, UpdateProfileCard } from '@/modules/account';
-import { ChangePasswordCard } from '@/modules/auth/methods/password';
+import { UpdateProfileCard } from '@/modules/account';
+import { LinkedAccounts, ProfileSyncStatus } from '@/modules/account'; // feature:oauth-core
+import { ChangePasswordCard } from '@/modules/auth/methods/password'; // feature:email-password
 import { PasskeysCard } from '@/modules/passkeys'; // feature:passkeys
 import { TwoFactorCard } from '@/modules/two-factor'; // feature:totp
 import type { Metadata } from 'next';
@@ -49,7 +50,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
           </h2>
           <div className="grid gap-6 md:grid-cols-2">
             <UpdateProfileCard />
-            <ChangePasswordCard />
+            <ChangePasswordCard /> {/* feature:email-password */}
             {/* feature:totp:start */}
             <TwoFactorCard />
             {/* feature:totp:end */}
@@ -59,6 +60,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
           </div>
         </section>
 
+        {/* feature:oauth-core:start */}
         <section aria-labelledby="settings-integrations-group" className="space-y-4">
           <h2
             id="settings-integrations-group"
@@ -71,6 +73,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
             <ProfileSyncStatus />
           </div>
         </section>
+        {/* feature:oauth-core:end */}
       </div>
     </div>
   );

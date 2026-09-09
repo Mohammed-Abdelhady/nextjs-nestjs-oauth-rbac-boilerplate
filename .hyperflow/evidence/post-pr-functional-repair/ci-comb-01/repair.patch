@@ -1,0 +1,46 @@
+--- a/packages/create-nest-next-auth/test/combination-helpers.ts
++++ b/packages/create-nest-next-auth/test/combination-helpers.ts
+@@ -39,7 +39,20 @@
+     });
+     return { ok: true, output: `${stdout}${stderr}` };
+   } catch (error) {
+-    return { ok: false, output: error instanceof Error ? error.message : String(error) };
++    if (!(error instanceof Error)) return { ok: false, output: String(error) };
++    const { stdout = '', stderr = '' } = error as Error & { stdout?: string; stderr?: string };
++    // execFile already appends stderr to its message; retain each captured stream once.
++    const reason =
++      stderr && error.message.endsWith(stderr)
++        ? error.message.slice(0, -stderr.length)
++        : error.message;
++    return {
++      ok: false,
++      output: [reason, stdout, stderr]
++        .map((part) => part.trimEnd())
++        .filter(Boolean)
++        .join('\n'),
++    };
+   }
+ }
+ 
+--- a/packages/create-nest-next-auth/test/combination-command.test.ts
++++ b/packages/create-nest-next-auth/test/combination-command.test.ts
+@@ -22,7 +22,18 @@
+       "console.error('fixture failure'); process.exitCode = 7",
+     ]);
+     expect(result.ok).toBe(false);
+-    expect(result.output).toContain('fixture failure');
++    expect(result.output.split('\n').filter((line) => line === 'fixture failure')).toHaveLength(1);
++  });
++  it('retains stdout-only compiler diagnostics on a nonzero exit', async () => {
++    const diagnostic = 'src/example.ts(1,1): error TS2322: Type mismatch';
++    const encoded = Buffer.from(diagnostic).toString('hex');
++    const result = await runTool(process.execPath, [
++      '-e',
++      `console.log(Buffer.from('${encoded}', 'hex').toString()); process.exitCode = 2`,
++    ]);
++    expect(result.ok).toBe(false);
++    expect(result.output).toContain('Command failed:');
++    expect(result.output.split('\n').filter((line) => line === diagnostic)).toHaveLength(1);
+   });
+   it('terminates a timed out child', async () => {
+     const result = await runTool(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], {

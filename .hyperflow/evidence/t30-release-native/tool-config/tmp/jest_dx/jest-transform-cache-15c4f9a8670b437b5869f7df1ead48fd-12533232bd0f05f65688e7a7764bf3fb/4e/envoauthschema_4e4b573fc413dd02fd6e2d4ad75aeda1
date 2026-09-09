@@ -1,0 +1,330 @@
+428ca92de32d7d6042a4e7ece9839a59
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.OAuthEnvironmentVariables = void 0;
+require("reflect-metadata");
+const class_validator_1 = require("class-validator");
+const oauth_constants_1 = require("../auth/oauth/oauth.constants"); // feature:oauth-core
+/** Base class of EnvironmentVariables. class-validator reads inherited decorators. */
+class OAuthEnvironmentVariables {
+    // feature:oauth-core:end
+    OAUTH_STATE_SECRET;
+    OAUTH_CALLBACK_BASE_URL;
+    OAUTH_GOOGLE_CLIENT_ID;
+    OAUTH_GOOGLE_CLIENT_SECRET;
+    OAUTH_GOOGLE_CALLBACK_URL;
+    OAUTH_FACEBOOK_CLIENT_ID;
+    OAUTH_FACEBOOK_CLIENT_SECRET;
+    OAUTH_FACEBOOK_CALLBACK_URL;
+    OAUTH_GITHUB_CLIENT_ID;
+    OAUTH_GITHUB_CLIENT_SECRET;
+    OAUTH_GITHUB_CALLBACK_URL;
+    OAUTH_MICROSOFT_CLIENT_ID;
+    OAUTH_MICROSOFT_CLIENT_SECRET;
+    OAUTH_MICROSOFT_CALLBACK_URL;
+    OAUTH_MICROSOFT_TENANT;
+    OAUTH_APPLE_CLIENT_ID;
+    OAUTH_APPLE_CALLBACK_URL;
+    OAUTH_APPLE_TEAM_ID;
+    OAUTH_APPLE_KEY_ID;
+    OAUTH_APPLE_PRIVATE_KEY;
+    OAUTH_DISCORD_CLIENT_ID;
+    OAUTH_DISCORD_CLIENT_SECRET;
+    OAUTH_DISCORD_CALLBACK_URL;
+    OAUTH_LINKEDIN_CLIENT_ID;
+    OAUTH_LINKEDIN_CLIENT_SECRET;
+    OAUTH_LINKEDIN_CALLBACK_URL;
+    OAUTH_GITLAB_CLIENT_ID;
+    OAUTH_GITLAB_CLIENT_SECRET;
+    OAUTH_GITLAB_CALLBACK_URL;
+    OAUTH_GITLAB_BASE_URL;
+    OAUTH_X_CLIENT_ID;
+    OAUTH_X_CLIENT_SECRET;
+    OAUTH_X_CALLBACK_URL;
+    OAUTH_SLACK_CLIENT_ID;
+    OAUTH_SLACK_CLIENT_SECRET;
+    OAUTH_SLACK_CALLBACK_URL;
+    OAUTH_TWITCH_CLIENT_ID;
+    OAUTH_TWITCH_CLIENT_SECRET;
+    OAUTH_TWITCH_CALLBACK_URL;
+    OAUTH_OIDC_CLIENT_ID;
+    OAUTH_OIDC_CLIENT_SECRET;
+    OAUTH_OIDC_CALLBACK_URL;
+    OAUTH_OIDC_ISSUER;
+    OAUTH_OIDC_PROVIDER_ID;
+    OAUTH_OIDC_DISPLAY_NAME;
+    OAUTH_OIDC_SCOPES;
+    OAUTH_OIDC_AUTHORIZATION_URL;
+    OAUTH_OIDC_TOKEN_URL;
+    OAUTH_OIDC_USERINFO_URL;
+    OAUTH_OIDC_JWKS_URL;
+}
+exports.OAuthEnvironmentVariables = OAuthEnvironmentVariables;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)()
+    // feature:oauth-core:start
+    ,
+    (0, class_validator_1.MinLength)(oauth_constants_1.OAUTH_STATE_SECRET_MIN_LENGTH, {
+        message: `OAUTH_STATE_SECRET must be at least ${oauth_constants_1.OAUTH_STATE_SECRET_MIN_LENGTH} characters`,
+    })
+    // feature:oauth-core:end
+    ,
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_STATE_SECRET", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsUrl)({ require_protocol: true, require_tld: false }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_CALLBACK_BASE_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_GOOGLE_CLIENT_ID", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_GOOGLE_CLIENT_SECRET", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_GOOGLE_CALLBACK_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_FACEBOOK_CLIENT_ID", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_FACEBOOK_CLIENT_SECRET", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_FACEBOOK_CALLBACK_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_GITHUB_CLIENT_ID", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_GITHUB_CLIENT_SECRET", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_GITHUB_CALLBACK_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_MICROSOFT_CLIENT_ID", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_MICROSOFT_CLIENT_SECRET", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_MICROSOFT_CALLBACK_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_MICROSOFT_TENANT", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_APPLE_CLIENT_ID", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_APPLE_CALLBACK_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_APPLE_TEAM_ID", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_APPLE_KEY_ID", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_APPLE_PRIVATE_KEY", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_DISCORD_CLIENT_ID", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_DISCORD_CLIENT_SECRET", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_DISCORD_CALLBACK_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_LINKEDIN_CLIENT_ID", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_LINKEDIN_CLIENT_SECRET", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_LINKEDIN_CALLBACK_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_GITLAB_CLIENT_ID", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_GITLAB_CLIENT_SECRET", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_GITLAB_CALLBACK_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_GITLAB_BASE_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_X_CLIENT_ID", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_X_CLIENT_SECRET", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_X_CALLBACK_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_SLACK_CLIENT_ID", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_SLACK_CLIENT_SECRET", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_SLACK_CALLBACK_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_TWITCH_CLIENT_ID", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_TWITCH_CLIENT_SECRET", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_TWITCH_CALLBACK_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_OIDC_CLIENT_ID", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_OIDC_CLIENT_SECRET", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_OIDC_CALLBACK_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_OIDC_ISSUER", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_OIDC_PROVIDER_ID", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_OIDC_DISPLAY_NAME", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_OIDC_SCOPES", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_OIDC_AUTHORIZATION_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_OIDC_TOKEN_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_OIDC_USERINFO_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], OAuthEnvironmentVariables.prototype, "OAUTH_OIDC_JWKS_URL", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29uZmlnL2Vudi5vYXV0aC5zY2hlbWEudHMiLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7O0FBQUEsNEJBQTBCO0FBQzFCLHFEQU15QjtBQUN6QixtRUFBOEUsQ0FBQyxxQkFBcUI7QUFpRnBHLHNGQUFzRjtBQUN0RixNQUFhLHlCQUF5QjtJQVFwQyxBQURBLHlCQUF5QjtJQUN6QixrQkFBa0IsQ0FBVTtJQUs1Qix1QkFBdUIsQ0FBVTtJQUlqQyxzQkFBc0IsQ0FBVTtJQUloQywwQkFBMEIsQ0FBVTtJQUlwQyx5QkFBeUIsQ0FBVTtJQUluQyx3QkFBd0IsQ0FBVTtJQUlsQyw0QkFBNEIsQ0FBVTtJQUl0QywyQkFBMkIsQ0FBVTtJQUlyQyxzQkFBc0IsQ0FBVTtJQUloQywwQkFBMEIsQ0FBVTtJQUlwQyx5QkFBeUIsQ0FBVTtJQUluQyx5QkFBeUIsQ0FBVTtJQUluQyw2QkFBNkIsQ0FBVTtJQUl2Qyw0QkFBNEIsQ0FBVTtJQUl0QyxzQkFBc0IsQ0FBVTtJQUloQyxxQkFBcUIsQ0FBVTtJQUkvQix3QkFBd0IsQ0FBVTtJQUlsQyxtQkFBbUIsQ0FBVTtJQUk3QixrQkFBa0IsQ0FBVTtJQUk1Qix1QkFBdUIsQ0FBVTtJQUlqQyx1QkFBdUIsQ0FBVTtJQUlqQywyQkFBMkIsQ0FBVTtJQUlyQywwQkFBMEIsQ0FBVTtJQUlwQyx3QkFBd0IsQ0FBVTtJQUlsQyw0QkFBNEIsQ0FBVTtJQUl0QywyQkFBMkIsQ0FBVTtJQUlyQyxzQkFBc0IsQ0FBVTtJQUloQywwQkFBMEIsQ0FBVTtJQUlwQyx5QkFBeUIsQ0FBVTtJQUluQyxxQkFBcUIsQ0FBVTtJQUkvQixpQkFBaUIsQ0FBVTtJQUkzQixxQkFBcUIsQ0FBVTtJQUkvQixvQkFBb0IsQ0FBVTtJQUk5QixxQkFBcUIsQ0FBVTtJQUkvQix5QkFBeUIsQ0FB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O3VFQUNpQjtBQUk5QjtJQUZDLElBQUEsMEJBQVEsR0FBRTtJQUNWLElBQUEsNEJBQVUsR0FBRTs7MkVBQ3FCO0FBSWxDO0lBRkMsSUFBQSwwQkFBUSxHQUFFO0lBQ1YsSUFBQSw0QkFBVSxHQUFFOzswRUFDb0I7QUFJakM7SUFGQyxJQUFBLDBCQUFRLEdBQUU7SUFDVixJQUFBLDRCQUFVLEdBQUU7O29FQUNjO0FBSTNCO0lBRkMsSUFBQSwwQkFBUSxHQUFFO0lBQ1YsSUFBQSw0QkFBVSxHQUFFOzt5RUFDbUI7QUFJaEM7SUFGQyxJQUFBLDBCQUFRLEdBQUU7SUFDVixJQUFBLDRCQUFVLEdBQUU7OzBFQUNvQjtBQUlqQztJQUZDLElBQUEsMEJBQVEsR0FBRTtJQUNWLElBQUEsNEJBQVUsR0FBRTs7b0VBQ2M7QUFJM0I7SUFGQyxJQUFBLDBCQUFRLEdBQUU7SUFDVixJQUFBLDRCQUFVLEdBQUU7OytFQUN5QjtBQUl0QztJQUZDLElBQUEsMEJBQVEsR0FBRTtJQUNWLElBQUEsNEJBQVUsR0FBRTs7dUVBQ2lCO0FBSTlCO0lBRkMsSUFBQSwwQkFBUSxHQUFFO0lBQ1YsSUFBQSw0QkFBVSxHQUFFOzswRUFDb0I7QUFJakM7SUFGQyxJQUFBLDBCQUFRLEdBQUU7SUFDVixJQUFBLDRCQUFVLEdBQUU7O3NFQUNnQiIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy9jb25maWcvZW52Lm9hdXRoLnNjaGVtYS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgJ3JlZmxlY3QtbWV0YWRhdGEnO1xuaW1wb3J0IHtcbiAgSXNOb3RFbXB0eSxcbiAgSXNPcHRpb25hbCxcbiAgSXNTdHJpbmcsXG4gIElzVXJsLFxuICBNaW5MZW5ndGgsIC8vIGZlYXR1cmU6b2F1dGgtY29yZVxufSBmcm9tICdjbGFzcy12YWxpZGF0b3InO1xuaW1wb3J0IHsgT0FVVEhfU1RBVEVfU0VDUkVUX01JTl9MRU5HVEggfSBmcm9tICcuLi9hdXRoL29hdXRoL29hdXRoLmNvbnN0YW50cyc7IC8vIGZlYXR1cmU6b2F1dGgtY29yZVxuXG4vKipcbiAqIE9BdXRoIHBhcnQgb2YgdGhlIGVudmlyb25tZW50IGNvbnRyYWN0LiBFdmVyeSBwcm92aWRlciB2YXJpYWJsZSBpcyBvcHRpb25hbDpcbiAqIGEgcHJvdmlkZXIgdHVybnMgaXRzZWxmIG9uIG9uY2UgaXRzIG93biB2YXJpYWJsZXMgYXJlIHByZXNlbnQsIHNvIGFcbiAqIGRlcGxveW1lbnQgY2FuIHNoaXAgd2l0aCBub25lIG9mIHRoZW0gc2V0LlxuICovXG5leHBvcnQgaW50ZXJmYWNlIE9BdXRoRW52aXJvbm1lbnRDb25maWcge1xuICBPQVVUSF9TVEFURV9TRUNSRVQ6IHN0cmluZztcbiAgT0FVVEhfQ0FMTEJBQ0tfQkFTRV9VUkw/OiBzdHJpbmc7XG5cbiAgT0FVVEhfR09PR0xFX0NMSUVOVF9JRD86IHN0cmluZztcbiAgT0FVVEhfR09PR0xFX0NMSUVOVF9TRUNSRVQ/OiBzdHJpbmc7XG4gIE9BVVRIX0dPT0dMRV9DQUxMQkFDS19VUkw/OiBzdHJpbmc7XG5cbiAgT0FVVEhfRkFDRUJPT0tfQ0xJRU5UX0lEPzogc3RyaW5nO1xuICBPQVVUSF9GQUNFQk9PS19DTElFTlRfU0VDUkVUPzogc3RyaW5nO1xuICBPQVVUSF9GQUNFQk9PS19DQUxMQkFDS19VUkw/OiBzdHJpbmc7XG5cbiAgT0FVVEhfR0lUSFVCX0NMSUVOVF9JRD86IHN0cmluZztcbiAgT0FVVEhfR0lUSFVCX0NMSUVOVF9TRUNSRVQ/OiBzdHJpbmc7XG4gIE9BVVRIX0dJVEhVQl9DQUxMQkFDS19VUkw/OiBzdHJpbmc7XG5cbiAgT0FVVEhfTUlDUk9TT0ZUX0NMSUVOVF9JRD86IHN0cmluZztcbiAgT0FVVEhfTUlDUk9TT0ZUX0NMSUVOVF9TRUNSRVQ/OiBzdHJpbmc7XG4gIE9BVVRIX01JQ1JPU09GVF9DQUxMQkFDS19VUkw/OiBzdHJpbmc7XG4gIC8qKiBFbnRyYSBJRCB0ZW5hbnQgc2VnbWVudCBvZiB0aGUgYXV0aG9yaXplIGFuZCB0b2tlbiBVUkxzLiBEZWZhdWx0cyB0byBgY29tbW9uYC4gKi9cbiAgT0FVVEhfTUlDUk9TT0ZUX1RFTkFOVD86IHN0cmluZztcblxuICAvKiogQXBwbGUgU2VydmljZXMgSUQuIEFwcGxlIGhhcyBubyBzdGF0aWMgY2xpZW50IHNlY3JldDsgaXQgaXMgc2lnbmVkIHBlciByZXF1ZXN0LiAqL1xuICBPQVVUSF9BUFBMRV9DTElFTlRfSUQ/OiBzdHJpbmc7XG4gIE9BVVRIX0FQUExFX0NBTExCQUNLX1VSTD86IHN0cmluZztcbiAgT0FVVEhfQVBQTEVfVEVBTV9JRD86IHN0cmluZztcbiAgT0FVVEhfQVBQTEVfS0VZX0lEPzogc3RyaW5nO1xuICAvKiogQ29udGVudHMgb2YgdGhlIC5wOCBzaWduLWluIGtleSwgd2l0aCBuZXdsaW5lcyB3cml0dGVuIGFzIFxcbi4gKi9cbiAgT0FVVEhfQVBQTEVfUFJJVkFURV9LRVk/OiBzdHJpbmc7XG5cbiAgT0FVVEhfRElTQ09SRF9DTElFTlRfSUQ/OiBzdHJpbmc7XG4gIE9BVVRIX0RJU0NPUkRfQ0xJRU5UX1NFQ1JFVD86IHN0cmluZztcbiAgT0FVVEhfRElTQ09SRF9DQUxMQkFDS19VUkw/OiBzdHJpbmc7XG5cbiAgT0FVVEhfTElOS0VESU5fQ0xJRU5UX0lEPzogc3RyaW5nO1xuICBPQVVUSF9MSU5LRURJTl9DTElFTlRfU0VDUkVUPzogc3RyaW5nO1xuICBPQVVUSF9MSU5LRURJTl9DQUxMQkFDS19VUkw/OiBzdHJpbmc7XG5cbiAgT0FVVEhfR0lUTEFCX0NMSUVOVF9JRD86IHN0cmluZztcbiAgT0FVVEhfR0lUTEFCX0NMSUVOVF9TRUNSRVQ/OiBzdHJpbmc7XG4gIE9BVVRIX0dJVExBQl9DQUxMQkFDS19VUkw/OiBzdHJpbmc7XG4gIC8qKiBSb290IG9mIHRoZSBHaXRMYWIgaW5zdGFuY2UuIERlZmF1bHRzIHRvIGh0dHBzOi8vZ2l0bGFiLmNvbS4gKi9cbiAgT0FVVEhfR0lUTEFCX0JBU0VfVVJMPzogc3RyaW5nO1xuXG4gIE9BVVRIX1hfQ0xJRU5UX0lEPzogc3RyaW5nO1xuICBPQVVUSF9YX0NMSUVOVF9TRUNSRVQ/OiBzdHJpbmc7XG4gIE9BVVRIX1hfQ0FMTEJBQ0tfVVJMPzogc3RyaW5nO1xuXG4gIE9BVVRIX1NMQUNLX0NMSUVOVF9JRD86IHN0cmluZztcbiAgT0FVVEhfU0xBQ0tfQ0xJRU5UX1NFQ1JFVD86IHN0cmluZztcbiAgT0FVVEhfU0xBQ0tfQ0FMTEJBQ0tfVVJMPzogc3RyaW5nO1xuXG4gIE9BVVRIX1RXSVRDSF9DTElFTlRfSUQ/OiBzdHJpbmc7XG4gIE9BVVRIX1RXSVRDSF9DTElFTlRfU0VDUkVUPzogc3RyaW5nO1xuICBPQVVUSF9UV0lUQ0hfQ0FMTEJBQ0tfVVJMPzogc3RyaW5nO1xuXG4gIE9BVVRIX09JRENfQ0xJRU5UX0lEPzogc3RyaW5nO1xuICBPQVVUSF9PSURDX0NMSUVOVF9TRUNSRVQ/OiBzdHJpbmc7XG4gIE9BVVRIX09JRENfQ0FMTEJBQ0tfVVJMPzogc3RyaW5nO1xuICAvKiogSXNzdWVyIHRoZSBkaXNjb3ZlcnkgZG9jdW1lbnQgaXMgcmVhZCBmcm9tIGFuZCBpZF90b2tlbnMgYXJlIGNoZWNrZWQgYWdhaW5zdC4gKi9cbiAgT0FVVEhfT0lEQ19JU1NVRVI/OiBzdHJpbmc7XG4gIC8qKiBSb3V0ZSBzZWdtZW50IGFuZCBzdG9yZWQgcHJvdmlkZXIgbmFtZS4gRGVmYXVsdHMgdG8gYG9pZGNgLiAqL1xuICBPQVVUSF9PSURDX1BST1ZJREVSX0lEPzogc3RyaW5nO1xuICAvKiogTmFtZSBzaG93biBpbiB0aGUgc2lnbi1pbiBsaXN0LiBEZWZhdWx0cyB0byBgU2luZ2xlIHNpZ24tb25gLiAqL1xuICBPQVVUSF9PSURDX0RJU1BMQVlfTkFNRT86IHN0cmluZztcbiAgLyoqIFNwYWNlIHNlcGFyYXRlZCBzY29wZXMuIERlZmF1bHRzIHRvIGBvcGVuaWQgcHJvZmlsZSBlbWFpbGAuICovXG4gIE9BVVRIX09JRENfU0NPUEVTPzogc3RyaW5nO1xuICAvKiogRW5kcG9pbnQgb3ZlcnJpZGVzLCBmb3IgYW4gaXNzdWVyIHRoYXQgcHVibGlzaGVzIG5vIGRpc2NvdmVyeSBkb2N1bWVudC4gKi9cbiAgT0FVVEhfT0lEQ19BVVRIT1JJWkFUSU9OX1VSTD86IHN0cmluZztcbiAgT0FVVEhfT0lEQ19UT0tFTl9VUkw/OiBzdHJpbmc7XG4gIE9BVVRIX09JRENfVVNFUklORk9fVVJMPzogc3RyaW5nO1xuICBPQVVUSF9PSURDX0pXS1NfVVJMPzogc3RyaW5nO1xufVxuXG4vKiogQmFzZSBjbGFzcyBvZiBFbnZpcm9ubWVudFZhcmlhYmxlcy4gY2xhc3MtdmFsaWRhdG9yIHJlYWRzIGluaGVyaXRlZCBkZWNvcmF0b3JzLiAqL1xuZXhwb3J0IGNsYXNzIE9BdXRoRW52aXJvbm1lbnRWYXJpYWJsZXMge1xuICBASXNTdHJpbmcoKVxuICBASXNOb3RFbXB0eSgpXG4gIC8vIGZlYXR1cmU6b2F1dGgtY29yZTpzdGFydFxuICBATWluTGVuZ3RoKE9BVVRIX1NUQVRFX1NFQ1JFVF9NSU5fTEVOR1RILCB7XG4gICAgbWVzc2FnZTogYE9BVVRIX1NUQVRFX1NFQ1JFVCBtdXN0IGJlIGF0IGxlYXN0ICR7T0FVVEhfU1RBVEVfU0VDUkVUX01JTl9MRU5HVEh9IGNoYXJhY3RlcnNgLFxuICB9KVxuICAvLyBmZWF0dXJlOm9hdXRoLWNvcmU6ZW5kXG4gIE9BVVRIX1NUQVRFX1NFQ1JFVCE6IHN0cmluZztcblxuICBASXNTdHJpbmcoKVxuICBASXNVcmwoeyByZXF1aXJlX3Byb3RvY29sOiB0cnVlLCByZXF1aXJlX3RsZDogZmFsc2UgfSlcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9DQUxMQkFDS19CQVNFX1VSTD86IHN0cmluZztcblxuICBASXNTdHJpbmcoKVxuICBASXNPcHRpb25hbCgpXG4gIE9BVVRIX0dPT0dMRV9DTElFTlRfSUQ/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9HT09HTEVfQ0xJRU5UX1NFQ1JFVD86IHN0cmluZztcblxuICBASXNTdHJpbmcoKVxuICBASXNPcHRpb25hbCgpXG4gIE9BVVRIX0dPT0dMRV9DQUxMQkFDS19VUkw/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9GQUNFQk9PS19DTElFTlRfSUQ/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9GQUNFQk9PS19DTElFTlRfU0VDUkVUPzogc3RyaW5nO1xuXG4gIEBJc1N0cmluZygpXG4gIEBJc09wdGlvbmFsKClcbiAgT0FVVEhfRkFDRUJPT0tfQ0FMTEJBQ0tfVVJMPzogc3RyaW5nO1xuXG4gIEBJc1N0cmluZygpXG4gIEBJc09wdGlvbmFsKClcbiAgT0FVVEhfR0lUSFVCX0NMSUVOVF9JRD86IHN0cmluZztcblxuICBASXNTdHJpbmcoKVxuICBASXNPcHRpb25hbCgpXG4gIE9BVVRIX0dJVEhVQl9DTElFTlRfU0VDUkVUPzogc3RyaW5nO1xuXG4gIEBJc1N0cmluZygpXG4gIEBJc09wdGlvbmFsKClcbiAgT0FVVEhfR0lUSFVCX0NBTExCQUNLX1VSTD86IHN0cmluZztcblxuICBASXNTdHJpbmcoKVxuICBASXNPcHRpb25hbCgpXG4gIE9BVVRIX01JQ1JPU09GVF9DTElFTlRfSUQ/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9NSUNST1NPRlRfQ0xJRU5UX1NFQ1JFVD86IHN0cmluZztcblxuICBASXNTdHJpbmcoKVxuICBASXNPcHRpb25hbCgpXG4gIE9BVVRIX01JQ1JPU09GVF9DQUxMQkFDS19VUkw/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9NSUNST1NPRlRfVEVOQU5UPzogc3RyaW5nO1xuXG4gIEBJc1N0cmluZygpXG4gIEBJc09wdGlvbmFsKClcbiAgT0FVVEhfQVBQTEVfQ0xJRU5UX0lEPzogc3RyaW5nO1xuXG4gIEBJc1N0cmluZygpXG4gIEBJc09wdGlvbmFsKClcbiAgT0FVVEhfQVBQTEVfQ0FMTEJBQ0tfVVJMPzogc3RyaW5nO1xuXG4gIEBJc1N0cmluZygpXG4gIEBJc09wdGlvbmFsKClcbiAgT0FVVEhfQVBQTEVfVEVBTV9JRD86IHN0cmluZztcblxuICBASXNTdHJpbmcoKVxuICBASXNPcHRpb25hbCgpXG4gIE9BVVRIX0FQUExFX0tFWV9JRD86IHN0cmluZztcblxuICBASXNTdHJpbmcoKVxuICBASXNPcHRpb25hbCgpXG4gIE9BVVRIX0FQUExFX1BSSVZBVEVfS0VZPzogc3RyaW5nO1xuXG4gIEBJc1N0cmluZygpXG4gIEBJc09wdGlvbmFsKClcbiAgT0FVVEhfRElTQ09SRF9DTElFTlRfSUQ/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9ESVNDT1JEX0NMSUVOVF9TRUNSRVQ/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9ESVNDT1JEX0NBTExCQUNLX1VSTD86IHN0cmluZztcblxuICBASXNTdHJpbmcoKVxuICBASXNPcHRpb25hbCgpXG4gIE9BVVRIX0xJTktFRElOX0NMSUVOVF9JRD86IHN0cmluZztcblxuICBASXNTdHJpbmcoKVxuICBASXNPcHRpb25hbCgpXG4gIE9BVVRIX0xJTktFRElOX0NMSUVOVF9TRUNSRVQ/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9MSU5LRURJTl9DQUxMQkFDS19VUkw/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9HSVRMQUJfQ0xJRU5UX0lEPzogc3RyaW5nO1xuXG4gIEBJc1N0cmluZygpXG4gIEBJc09wdGlvbmFsKClcbiAgT0FVVEhfR0lUTEFCX0NMSUVOVF9TRUNSRVQ/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9HSVRMQUJfQ0FMTEJBQ0tfVVJMPzogc3RyaW5nO1xuXG4gIEBJc1N0cmluZygpXG4gIEBJc09wdGlvbmFsKClcbiAgT0FVVEhfR0lUTEFCX0JBU0VfVVJMPzogc3RyaW5nO1xuXG4gIEBJc1N0cmluZygpXG4gIEBJc09wdGlvbmFsKClcbiAgT0FVVEhfWF9DTElFTlRfSUQ/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9YX0NMSUVOVF9TRUNSRVQ/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9YX0NBTExCQUNLX1VSTD86IHN0cmluZztcblxuICBASXNTdHJpbmcoKVxuICBASXNPcHRpb25hbCgpXG4gIE9BVVRIX1NMQUNLX0NMSUVOVF9JRD86IHN0cmluZztcblxuICBASXNTdHJpbmcoKVxuICBASXNPcHRpb25hbCgpXG4gIE9BVVRIX1NMQUNLX0NMSUVOVF9TRUNSRVQ/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9TTEFDS19DQUxMQkFDS19VUkw/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9UV0lUQ0hfQ0xJRU5UX0lEPzogc3RyaW5nO1xuXG4gIEBJc1N0cmluZygpXG4gIEBJc09wdGlvbmFsKClcbiAgT0FVVEhfVFdJVENIX0NMSUVOVF9TRUNSRVQ/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9UV0lUQ0hfQ0FMTEJBQ0tfVVJMPzogc3RyaW5nO1xuXG4gIEBJc1N0cmluZygpXG4gIEBJc09wdGlvbmFsKClcbiAgT0FVVEhfT0lEQ19DTElFTlRfSUQ/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9PSURDX0NMSUVOVF9TRUNSRVQ/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9PSURDX0NBTExCQUNLX1VSTD86IHN0cmluZztcblxuICBASXNTdHJpbmcoKVxuICBASXNPcHRpb25hbCgpXG4gIE9BVVRIX09JRENfSVNTVUVSPzogc3RyaW5nO1xuXG4gIEBJc1N0cmluZygpXG4gIEBJc09wdGlvbmFsKClcbiAgT0FVVEhfT0lEQ19QUk9WSURFUl9JRD86IHN0cmluZztcblxuICBASXNTdHJpbmcoKVxuICBASXNPcHRpb25hbCgpXG4gIE9BVVRIX09JRENfRElTUExBWV9OQU1FPzogc3RyaW5nO1xuXG4gIEBJc1N0cmluZygpXG4gIEBJc09wdGlvbmFsKClcbiAgT0FVVEhfT0lEQ19TQ09QRVM/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9PSURDX0FVVEhPUklaQVRJT05fVVJMPzogc3RyaW5nO1xuXG4gIEBJc1N0cmluZygpXG4gIEBJc09wdGlvbmFsKClcbiAgT0FVVEhfT0lEQ19UT0tFTl9VUkw/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBPQVVUSF9PSURDX1VTRVJJTkZPX1VSTD86IHN0cmluZztcblxuICBASXNTdHJpbmcoKVxuICBASXNPcHRpb25hbCgpXG4gIE9BVVRIX09JRENfSldLU19VUkw/OiBzdHJpbmc7XG59XG4iXSwidmVyc2lvbiI6M30=

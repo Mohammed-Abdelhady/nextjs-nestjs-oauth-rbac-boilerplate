@@ -12,6 +12,7 @@ import { Link } from '@/i18n/navigation';
 import { useCompleteSignIn } from '@/modules/auth/hooks/useCompleteSignIn';
 import { useLoginMutation } from '@/modules/auth/store/authApi';
 import { translateAuthError } from '@/modules/auth/utils/authHelpers';
+import { preventNavigationBlur } from '@/modules/auth/utils/preventNavigationBlur';
 import type { AuthMethodFormProps } from '../types';
 
 /**
@@ -106,6 +107,7 @@ export function PasswordSignInForm({ redirect }: AuthMethodFormProps) {
           className="no-underline hover:underline text-primary text-md text-end absolute end-0 mt-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
           data-testid="forgot-password-link"
           aria-label={t('forgotPassword')}
+          onMouseDown={preventNavigationBlur}
         >
           {t('forgotPassword')}
         </Link>

@@ -1,0 +1,222 @@
+--- a/frontend/e2e/authenticated-regressions.spec.ts
++++ b/frontend/e2e/authenticated-regressions.spec.ts
+@@ -236,3 +236,104 @@
+     });
+   }
+ }
++
++for (const locale of ['en', 'ar'] as const) {
++  test.describe(`${locale} 320px session actions`, () => {
++    test.use({
++      appLocale: locale,
++      returnPath: '/sessions',
++      viewport: { width: 320, height: 844 },
++      hasTouch: true,
++    });
++    test('keeps full actions reachable through refresh, cancel and confirmation', async ({
++      page,
++    }, testInfo) => {
++      const cards = page.getByTestId(/^session-card-timeline-/);
++      const identities = () =>
++        cards.evaluateAll((items) => items.map((item) => item.getAttribute('data-testid')).sort());
++      await expect(cards).toHaveCount(2);
++      const initial = await identities();
++      const current = await cards
++        .filter({ has: page.getByTestId('current-session-badge') })
++        .getAttribute('data-testid');
++      const refresh = page.getByTestId('refresh-sessions-button');
++      const revoke = page.getByTestId('logout-all-sessions-button');
++      await settleAnimations(page);
++      await expect
++        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
++        .toBe(true);
++      for (const button of [refresh, revoke]) {
++        await expect(button).toBeEnabled();
++        await button.click({ trial: true });
++        const rect = await button.boundingBox();
++        expect(rect).not.toBeNull();
++        expect(rect!.x).toBeGreaterThanOrEqual(0);
++        expect(rect!.x + rect!.width).toBeLessThanOrEqual(320);
++        expect(await button.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
++          true,
++        );
++      }
++      await page.screenshot({ path: testInfo.outputPath('two-sessions-320.png') });
++      await refresh.focus();
++      await page.keyboard.press('Tab');
++      await expect(revoke).toBeFocused();
++      await page.keyboard.press('Shift+Tab');
++      await expect(refresh).toBeFocused();
++      for (const activation of ['keyboard', 'touch'] as const) {
++        const response = page.waitForResponse(
++          (item) =>
++            new URL(item.url()).pathname === '/api/user/sessions' &&
++            item.request().method() === 'GET',
++        );
++        if (activation === 'keyboard') await page.keyboard.press('Enter');
++        else await refresh.tap();
++        expect((await response).status()).toBe(200);
++        await expect.poll(identities).toEqual(initial);
++      }
++      await revoke.focus();
++      await page.keyboard.press('Enter');
++      const dialog = page.getByTestId('revoke-all-confirm-dialog');
++      await expect(dialog).toBeVisible();
++      await expect(dialog).toBeInViewport({ ratio: 1 });
++      await page.getByTestId('cancel-logout-all').focus();
++      await page.keyboard.press('Enter');
++      await expect(dialog).toBeHidden();
++      expect(await identities()).toEqual(initial);
++      await expect(revoke).toBeFocused();
++
++      await page.keyboard.press('Enter');
++      await expect(dialog).toBeVisible();
++      await page.keyboard.press('Escape');
++      await expect(dialog).toBeHidden();
++      await expect(revoke).toBeFocused();
++      await expect.poll(identities).toEqual(initial);
++
++      await revoke.tap();
++      await expect(dialog).toBeVisible();
++      const revoked = page.waitForResponse(
++        (item) =>
++          new URL(item.url()).pathname === '/api/user/sessions/revoke-others' &&
++          item.request().method() === 'POST',
++      );
++      await page.getByTestId('confirm-logout-all').tap();
++      expect((await revoked).status()).toBe(200);
++      await expect(dialog).toBeHidden();
++      await expect.poll(identities).toEqual([current]);
++      await expect(page.getByTestId('current-session-badge')).toBeVisible();
++      await expect(revoke).toHaveCount(0);
++      await expect(refresh).toBeEnabled();
++      const refreshed = page.waitForResponse(
++        (item) =>
++          new URL(item.url()).pathname === '/api/user/sessions' &&
++          item.request().method() === 'GET',
++      );
++      await refresh.tap();
++      expect((await refreshed).status()).toBe(200);
++      await expect.poll(identities).toEqual([current]);
++      await expect
++        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
++        .toBe(true);
++      await page.screenshot({ path: testInfo.outputPath('one-session-320.png') });
++    });
++  });
++}
+--- a/frontend/src/app/[locale]/(dashboard)/sessions/page.tsx
++++ b/frontend/src/app/[locale]/(dashboard)/sessions/page.tsx
+@@ -53,7 +53,7 @@
+             <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+             <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{t('description')}</p>
+           </div>
+-          <div className="flex gap-2">
++          <div className="flex flex-wrap gap-2">
+             <Button
+               variant="outline"
+               size="sm"
+--- a/frontend/src/modules/sessions/components/RevokeAllSessionsButton.tsx
++++ b/frontend/src/modules/sessions/components/RevokeAllSessionsButton.tsx
+@@ -13,6 +13,7 @@
+   AlertDialogFooter,
+   AlertDialogHeader,
+   AlertDialogTitle,
++  AlertDialogTrigger,
+ } from '@/components/ui/alert-dialog';
+ import { useRevokeAllOtherSessionsMutation } from '../api/sessionsApi';
+ import { toast } from '@/lib/toast';
+@@ -71,52 +72,47 @@
+   }
+ 
+   return (
+-    <>
+-      <Button
+-        variant="destructive"
+-        size="sm"
+-        onClick={() => setOpen(true)}
+-        disabled={isLoading}
+-        className={className}
+-        data-testid="logout-all-sessions-button"
+-      >
+-        <LogOut className="h-4 w-4 me-2" />
+-        {t('logoutAllOther')}
+-      </Button>
+-
+-      {/* Co-located confirmation dialog */}
+-      <AlertDialog open={open} onOpenChange={setOpen}>
+-        <AlertDialogContent data-testid="revoke-all-confirm-dialog">
+-          <AlertDialogHeader>
+-            <AlertDialogTitle>{t('logoutAllConfirmTitle')}</AlertDialogTitle>
+-            <AlertDialogDescription>
+-              {t('logoutAllConfirmDescription', { count: otherSessionsCount })}
+-            </AlertDialogDescription>
+-          </AlertDialogHeader>
+-          <AlertDialogFooter>
+-            <AlertDialogCancel data-testid="cancel-logout-all">
+-              {tCommon('cancel')}
+-            </AlertDialogCancel>
+-            <AlertDialogAction
+-              onClick={handleRevoke}
+-              disabled={isLoading}
+-              aria-busy={isLoading}
+-              data-testid="confirm-logout-all"
+-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+-            >
+-              {isLoading ? (
+-                <>
+-                  <Loader2 className="h-4 w-4 me-2 motion-safe:animate-spin" aria-hidden="true" />
+-                  {t('loggingOut')}
+-                </>
+-              ) : (
+-                t('logoutAll')
+-              )}
+-            </AlertDialogAction>
+-          </AlertDialogFooter>
+-        </AlertDialogContent>
+-      </AlertDialog>
+-    </>
++    <AlertDialog open={open} onOpenChange={setOpen}>
++      <AlertDialogTrigger asChild>
++        <Button
++          variant="destructive"
++          size="sm"
++          disabled={isLoading}
++          className={className}
++          data-testid="logout-all-sessions-button"
++        >
++          <LogOut className="h-4 w-4 me-2" />
++          {t('logoutAllOther')}
++        </Button>
++      </AlertDialogTrigger>
++      <AlertDialogContent data-testid="revoke-all-confirm-dialog">
++        <AlertDialogHeader>
++          <AlertDialogTitle>{t('logoutAllConfirmTitle')}</AlertDialogTitle>
++          <AlertDialogDescription>
++            {t('logoutAllConfirmDescription', { count: otherSessionsCount })}
++          </AlertDialogDescription>
++        </AlertDialogHeader>
++        <AlertDialogFooter>
++          <AlertDialogCancel data-testid="cancel-logout-all">{tCommon('cancel')}</AlertDialogCancel>
++          <AlertDialogAction
++            onClick={handleRevoke}
++            disabled={isLoading}
++            aria-busy={isLoading}
++            data-testid="confirm-logout-all"
++            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
++          >
++            {isLoading ? (
++              <>
++                <Loader2 className="h-4 w-4 me-2 motion-safe:animate-spin" aria-hidden="true" />
++                {t('loggingOut')}
++              </>
++            ) : (
++              t('logoutAll')
++            )}
++          </AlertDialogAction>
++        </AlertDialogFooter>
++      </AlertDialogContent>
++    </AlertDialog>
+   );
+ }
+ 

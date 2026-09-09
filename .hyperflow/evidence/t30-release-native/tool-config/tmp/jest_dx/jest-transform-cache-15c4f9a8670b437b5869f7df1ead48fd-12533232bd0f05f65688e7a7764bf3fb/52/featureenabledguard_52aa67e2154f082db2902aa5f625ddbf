@@ -1,0 +1,44 @@
+960a5b1e2e45256b2007fb38033c7b17
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.FeatureEnabledGuard = void 0;
+const common_1 = require("@nestjs/common");
+const core_1 = require("@nestjs/core");
+const requires_feature_decorator_1 = require("../decorators/requires-feature.decorator");
+const auth_features_service_1 = require("../services/auth-features.service");
+/**
+ * Closes the routes of a sign-in method the deployment turned off. Applied by
+ * `@RequiresFeature()`; routes without that metadata pass through.
+ */
+let FeatureEnabledGuard = class FeatureEnabledGuard {
+    reflector;
+    authFeaturesService;
+    constructor(reflector, authFeaturesService) {
+        this.reflector = reflector;
+        this.authFeaturesService = authFeaturesService;
+    }
+    canActivate(context) {
+        const feature = this.reflector.getAllAndOverride(requires_feature_decorator_1.AUTH_FEATURE_KEY, [context.getHandler(), context.getClass()]);
+        if (!feature) {
+            return true;
+        }
+        this.authFeaturesService.assertEnabled(feature);
+        return true;
+    }
+};
+exports.FeatureEnabledGuard = FeatureEnabledGuard;
+exports.FeatureEnabledGuard = FeatureEnabledGuard = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [core_1.Reflector,
+        auth_features_service_1.AuthFeaturesService])
+], FeatureEnabledGuard);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9ndWFyZHMvZmVhdHVyZS1lbmFibGVkLmd1YXJkLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLDJDQUEyRTtBQUMzRSx1Q0FBeUM7QUFDekMseUZBQTRFO0FBRTVFLDZFQUF3RTtBQUV4RTs7O0dBR0c7QUFFSSxJQUFNLG1CQUFtQixHQUF6QixNQUFNLG1CQUFtQjtJQUVYO0lBQ0E7SUFGbkIsWUFDbUIsU0FBb0IsRUFDcEIsbUJBQXdDO1FBRHhDLGNBQVMsR0FBVCxTQUFTLENBQVc7UUFDcEIsd0JBQW1CLEdBQW5CLG1CQUFtQixDQUFxQjtJQUN4RCxDQUFDO0lBRUosV0FBVyxDQUFDLE9BQXlCO1FBQ25DLE1BQU0sT0FBTyxHQUFHLElBQUksQ0FBQyxTQUFTLENBQUMsaUJBQWlCLENBQzlDLDZDQUFnQixFQUNoQixDQUFDLE9BQU8sQ0FBQyxVQUFVLEVBQUUsRUFBRSxPQUFPLENBQUMsUUFBUSxFQUFFLENBQUMsQ0FDM0MsQ0FBQztRQUVGLElBQUksQ0FBQyxPQUFPLEVBQUUsQ0FBQztZQUNiLE9BQU8sSUFBSSxDQUFDO1FBQ2QsQ0FBQztRQUVELElBQUksQ0FBQyxtQkFBbUIsQ0FBQyxhQUFhLENBQUMsT0FBTyxDQUFDLENBQUM7UUFDaEQsT0FBTyxJQUFJLENBQUM7SUFDZCxDQUFDO0NBQ0YsQ0FBQTtBQW5CWSxrREFBbUI7OEJBQW5CLG1CQUFtQjtJQUQvQixJQUFBLG1CQUFVLEdBQUU7cUNBR21CLGdCQUFTO1FBQ0MsMkNBQW1CO0dBSGhELG1CQUFtQixDQW1CL0IiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9ndWFyZHMvZmVhdHVyZS1lbmFibGVkLmd1YXJkLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IENhbkFjdGl2YXRlLCBFeGVjdXRpb25Db250ZXh0LCBJbmplY3RhYmxlIH0gZnJvbSAnQG5lc3Rqcy9jb21tb24nO1xuaW1wb3J0IHsgUmVmbGVjdG9yIH0gZnJvbSAnQG5lc3Rqcy9jb3JlJztcbmltcG9ydCB7IEFVVEhfRkVBVFVSRV9LRVkgfSBmcm9tICcuLi9kZWNvcmF0b3JzL3JlcXVpcmVzLWZlYXR1cmUuZGVjb3JhdG9yJztcbmltcG9ydCB7IEF1dGhGZWF0dXJlIH0gZnJvbSAnLi4vZW51bXMvYXV0aC1mZWF0dXJlLmVudW0nO1xuaW1wb3J0IHsgQXV0aEZlYXR1cmVzU2VydmljZSB9IGZyb20gJy4uL3NlcnZpY2VzL2F1dGgtZmVhdHVyZXMuc2VydmljZSc7XG5cbi8qKlxuICogQ2xvc2VzIHRoZSByb3V0ZXMgb2YgYSBzaWduLWluIG1ldGhvZCB0aGUgZGVwbG95bWVudCB0dXJuZWQgb2ZmLiBBcHBsaWVkIGJ5XG4gKiBgQFJlcXVpcmVzRmVhdHVyZSgpYDsgcm91dGVzIHdpdGhvdXQgdGhhdCBtZXRhZGF0YSBwYXNzIHRocm91Z2guXG4gKi9cbkBJbmplY3RhYmxlKClcbmV4cG9ydCBjbGFzcyBGZWF0dXJlRW5hYmxlZEd1YXJkIGltcGxlbWVudHMgQ2FuQWN0aXZhdGUge1xuICBjb25zdHJ1Y3RvcihcbiAgICBwcml2YXRlIHJlYWRvbmx5IHJlZmxlY3RvcjogUmVmbGVjdG9yLFxuICAgIHByaXZhdGUgcmVhZG9ubHkgYXV0aEZlYXR1cmVzU2VydmljZTogQXV0aEZlYXR1cmVzU2VydmljZSxcbiAgKSB7fVxuXG4gIGNhbkFjdGl2YXRlKGNvbnRleHQ6IEV4ZWN1dGlvbkNvbnRleHQpOiBib29sZWFuIHtcbiAgICBjb25zdCBmZWF0dXJlID0gdGhpcy5yZWZsZWN0b3IuZ2V0QWxsQW5kT3ZlcnJpZGU8QXV0aEZlYXR1cmUgfCB1bmRlZmluZWQ+KFxuICAgICAgQVVUSF9GRUFUVVJFX0tFWSxcbiAgICAgIFtjb250ZXh0LmdldEhhbmRsZXIoKSwgY29udGV4dC5nZXRDbGFzcygpXSxcbiAgICApO1xuXG4gICAgaWYgKCFmZWF0dXJlKSB7XG4gICAgICByZXR1cm4gdHJ1ZTtcbiAgICB9XG5cbiAgICB0aGlzLmF1dGhGZWF0dXJlc1NlcnZpY2UuYXNzZXJ0RW5hYmxlZChmZWF0dXJlKTtcbiAgICByZXR1cm4gdHJ1ZTtcbiAgfVxufVxuIl0sInZlcnNpb24iOjN9

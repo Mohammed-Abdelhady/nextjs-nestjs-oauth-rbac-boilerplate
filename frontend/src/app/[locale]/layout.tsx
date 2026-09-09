@@ -1,6 +1,6 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations } from 'next-intl/server';
-import { DirectionProvider } from '@/components/providers';
+import { AuthProvider, DirectionProvider } from '@/components/providers';
 import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
 import { getTextDirection } from '@/i18n/direction';
 import { cn } from '@/lib/utils';
@@ -34,7 +34,7 @@ export default async function LocaleLayout({
         >
           {t('skipToContent')}
         </a>
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </DirectionProvider>
     </NextIntlClientProvider>
   );

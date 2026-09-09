@@ -1,0 +1,80 @@
+551a5d6706ddc29bf42c2c83baf6ca5d
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.HashService = void 0;
+const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
+const bcrypt = __importStar(require("bcrypt"));
+let HashService = class HashService {
+    configService;
+    rounds;
+    constructor(configService) {
+        this.configService = configService;
+        this.rounds = this.configService.get('bcrypt.rounds', 10);
+    }
+    /**
+     * Hash a plain text string using bcrypt
+     * @param plainText - The plain text to hash
+     * @returns Promise resolving to the hashed string
+     */
+    async hash(plainText) {
+        return bcrypt.hash(plainText, this.rounds);
+    }
+    /**
+     * Compare a plain text string against a hash
+     * @param plainText - The plain text to compare
+     * @param hash - The hash to compare against
+     * @returns Promise resolving to true if match, false otherwise
+     */
+    async compare(plainText, hash) {
+        return bcrypt.compare(plainText, hash);
+    }
+};
+exports.HashService = HashService;
+exports.HashService = HashService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [config_1.ConfigService])
+], HashService);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29tbW9uL3NlcnZpY2VzL2hhc2guc2VydmljZS50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7QUFBQSwyQ0FBNEM7QUFDNUMsMkNBQStDO0FBQy9DLCtDQUFpQztBQUcxQixJQUFNLFdBQVcsR0FBakIsTUFBTSxXQUFXO0lBR087SUFGWixNQUFNLENBQVM7SUFFaEMsWUFBNkIsYUFBNEI7UUFBNUIsa0JBQWEsR0FBYixhQUFhLENBQWU7UUFDdkQsSUFBSSxDQUFDLE1BQU0sR0FBRyxJQUFJLENBQUMsYUFBYSxDQUFDLEdBQUcsQ0FBUyxlQUFlLEVBQUUsRUFBRSxDQUFDLENBQUM7SUFDcEUsQ0FBQztJQUVEOzs7O09BSUc7SUFDSCxLQUFLLENBQUMsSUFBSSxDQUFDLFNBQWlCO1FBQzFCLE9BQU8sTUFBTSxDQUFDLElBQUksQ0FBQyxTQUFTLEVBQUUsSUFBSSxDQUFDLE1BQU0sQ0FBQyxDQUFDO0lBQzdDLENBQUM7SUFFRDs7Ozs7T0FLRztJQUNILEtBQUssQ0FBQyxPQUFPLENBQUMsU0FBaUIsRUFBRSxJQUFZO1FBQzNDLE9BQU8sTUFBTSxDQUFDLE9BQU8sQ0FBQyxTQUFTLEVBQUUsSUFBSSxDQUFDLENBQUM7SUFDekMsQ0FBQztDQUNGLENBQUE7QUF6Qlksa0NBQVc7c0JBQVgsV0FBVztJQUR2QixJQUFBLG1CQUFVLEdBQUU7cUNBSWlDLHNCQUFhO0dBSDlDLFdBQVcsQ0F5QnZCIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL2NvbW1vbi9zZXJ2aWNlcy9oYXNoLnNlcnZpY2UudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgSW5qZWN0YWJsZSB9IGZyb20gJ0BuZXN0anMvY29tbW9uJztcbmltcG9ydCB7IENvbmZpZ1NlcnZpY2UgfSBmcm9tICdAbmVzdGpzL2NvbmZpZyc7XG5pbXBvcnQgKiBhcyBiY3J5cHQgZnJvbSAnYmNyeXB0JztcblxuQEluamVjdGFibGUoKVxuZXhwb3J0IGNsYXNzIEhhc2hTZXJ2aWNlIHtcbiAgcHJpdmF0ZSByZWFkb25seSByb3VuZHM6IG51bWJlcjtcblxuICBjb25zdHJ1Y3Rvcihwcml2YXRlIHJlYWRvbmx5IGNvbmZpZ1NlcnZpY2U6IENvbmZpZ1NlcnZpY2UpIHtcbiAgICB0aGlzLnJvdW5kcyA9IHRoaXMuY29uZmlnU2VydmljZS5nZXQ8bnVtYmVyPignYmNyeXB0LnJvdW5kcycsIDEwKTtcbiAgfVxuXG4gIC8qKlxuICAgKiBIYXNoIGEgcGxhaW4gdGV4dCBzdHJpbmcgdXNpbmcgYmNyeXB0XG4gICAqIEBwYXJhbSBwbGFpblRleHQgLSBUaGUgcGxhaW4gdGV4dCB0byBoYXNoXG4gICAqIEByZXR1cm5zIFByb21pc2UgcmVzb2x2aW5nIHRvIHRoZSBoYXNoZWQgc3RyaW5nXG4gICAqL1xuICBhc3luYyBoYXNoKHBsYWluVGV4dDogc3RyaW5nKTogUHJvbWlzZTxzdHJpbmc+IHtcbiAgICByZXR1cm4gYmNyeXB0Lmhhc2gocGxhaW5UZXh0LCB0aGlzLnJvdW5kcyk7XG4gIH1cblxuICAvKipcbiAgICogQ29tcGFyZSBhIHBsYWluIHRleHQgc3RyaW5nIGFnYWluc3QgYSBoYXNoXG4gICAqIEBwYXJhbSBwbGFpblRleHQgLSBUaGUgcGxhaW4gdGV4dCB0byBjb21wYXJlXG4gICAqIEBwYXJhbSBoYXNoIC0gVGhlIGhhc2ggdG8gY29tcGFyZSBhZ2FpbnN0XG4gICAqIEByZXR1cm5zIFByb21pc2UgcmVzb2x2aW5nIHRvIHRydWUgaWYgbWF0Y2gsIGZhbHNlIG90aGVyd2lzZVxuICAgKi9cbiAgYXN5bmMgY29tcGFyZShwbGFpblRleHQ6IHN0cmluZywgaGFzaDogc3RyaW5nKTogUHJvbWlzZTxib29sZWFuPiB7XG4gICAgcmV0dXJuIGJjcnlwdC5jb21wYXJlKHBsYWluVGV4dCwgaGFzaCk7XG4gIH1cbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

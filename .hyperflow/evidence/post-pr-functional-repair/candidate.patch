@@ -1,0 +1,900 @@
+diff --git a/README.md b/README.md
+index ed7e2a3..dd5cf9b 100644
+--- a/README.md
++++ b/README.md
+@@ -33,7 +33,7 @@ To scaffold a project with only the authentication methods you want:
+ npx create-nest-next-auth my-app
+ ```
+ 
+-The CLI prompts for the sign-in methods to keep. It removes unused strategy files, controller endpoints, frontend UI modules, environment variables, and setup docs. See [packages/create-nest-next-auth/README.md](./packages/create-nest-next-auth/README.md) for CLI options and flags.
++The CLI prompts for the sign-in methods to keep. It removes unused strategy files, controller endpoints, frontend UI modules, environment variables, and setup docs. See [CLI options and flags](https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/blob/master/packages/create-nest-next-auth/README.md).
+ 
+ ## Choose your auth methods
+ 
+@@ -78,12 +78,11 @@ docker compose --env-file .env.docker up --build
+ ### Start manually
+ 
+ ```bash
+-# Run both workspaces concurrently
+-npm run dev
++# In one terminal, start the backend:
++npm run start:dev -w backend
+ 
+-# Or run backend and frontend in separate terminals:
+-cd backend && npm run start:dev
+-cd frontend && npm run dev
++# In another terminal, start the frontend:
++npm run dev -w frontend
+ ```
+ 
+ Endpoints:
+diff --git a/backend/test/app.boot.e2e-spec.ts b/backend/test/app.boot.e2e-spec.ts
+index 92fff77..67a0612 100644
+--- a/backend/test/app.boot.e2e-spec.ts
++++ b/backend/test/app.boot.e2e-spec.ts
+@@ -13,13 +13,8 @@ import {
+  * answer on its two unauthenticated routes. It catches provider graph breakage,
+  * such as a global guard whose dependencies do not resolve.
+  *
+- * Every OAuth provider is switched on with dummy credentials before the app
+- * boots, so a strategy that cannot be constructed or registered fails here.
+- *
+- * Runs against the MONGO_URI of the environment, like the other e2e suites. To
+- * run it without a database, install mongodb-memory-server
+- * (`npm i -D mongodb-memory-server -w backend`) and set process.env.MONGO_URI
+- * from `MongoMemoryServer.create()` in a beforeAll before bootE2eApp().
++ * Selected OAuth providers receive dummy configuration before boot. The shared
++ * fixture owns a disposable Mongo database and a nondelivering mail sink.
+  */
+ interface HealthBody {
+   status: string;
+@@ -109,7 +104,7 @@ describe('AppModule boot (e2e)', () => {
+       (provider) => provider.id,
+     );
+ 
+-    expect(listed).toEqual(expect.arrayContaining(OAUTH_BOOT_PROVIDER_IDS));
++    expect([...listed].sort()).toEqual([...OAUTH_BOOT_PROVIDER_IDS].sort());
+     for (const provider of (response.body as ProvidersBody).data.providers) {
+       expect(provider.displayName).toEqual(expect.any(String));
+     }
+diff --git a/backend/test/constants/oauth-boot-env.ts b/backend/test/constants/oauth-boot-env.ts
+index 397a6ba..7fe859d 100644
+--- a/backend/test/constants/oauth-boot-env.ts
++++ b/backend/test/constants/oauth-boot-env.ts
+@@ -44,18 +44,18 @@ export const OAUTH_BOOT_ENV: Record<string, string> = {
+ };
+ 
+ export const OAUTH_BOOT_PROVIDER_IDS = [
+-  'google',
+-  'github',
+-  'facebook',
+-  'microsoft',
+-  'apple',
+-  'discord',
+-  'linkedin',
+-  'gitlab',
+-  'x',
+-  'slack',
+-  'twitch',
+-  'oidc',
++  'google', // feature:google
++  'github', // feature:github
++  'facebook', // feature:facebook
++  'microsoft', // feature:microsoft
++  'apple', // feature:apple
++  'discord', // feature:discord
++  'linkedin', // feature:linkedin
++  'gitlab', // feature:gitlab
++  'x', // feature:x
++  'slack', // feature:slack
++  'twitch', // feature:twitch
++  'oidc', // feature:oidc
+ ];
+ 
+ /**
+diff --git a/docker-compose.prod.yml b/docker-compose.prod.yml
+index 508c4f1..e967ebc 100644
+--- a/docker-compose.prod.yml
++++ b/docker-compose.prod.yml
+@@ -80,10 +80,20 @@ services:
+         required: false
+     environment:
+       NODE_ENV: production
++      PORT: 3000
++      HOSTNAME: 0.0.0.0
+     depends_on:
+       - backend
+     healthcheck:
+-      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000']
++      test:
++        [
++          'CMD',
++          'wget',
++          '--no-verbose',
++          '--tries=1',
++          '--spider',
++          'http://127.0.0.1:3000/en/auth/login',
++        ]
+       interval: 30s
+       timeout: 10s
+       retries: 3
+diff --git a/docker-compose.yml b/docker-compose.yml
+index 3390041..58fc61c 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -73,11 +73,21 @@ services:
+         required: false
+     environment:
+       NODE_ENV: development
++      PORT: 3000
++      HOSTNAME: 0.0.0.0
+       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:5000}
+     depends_on:
+       - backend
+     healthcheck:
+-      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000']
++      test:
++        [
++          'CMD',
++          'wget',
++          '--no-verbose',
++          '--tries=1',
++          '--spider',
++          'http://127.0.0.1:3000/en/auth/login',
++        ]
+       interval: 30s
+       timeout: 10s
+       retries: 3
+diff --git a/docs/ARCHITECTURE.md b/docs/ARCHITECTURE.md
+index 9f25246..89c2fec 100644
+--- a/docs/ARCHITECTURE.md
++++ b/docs/ARCHITECTURE.md
+@@ -154,11 +154,17 @@ The response returns:
+ {
+   "success": true,
+   "data": {
+-    "emailPassword": true,
+-    "magicLink": true,
+-    "passkeys": true,
+-    "totp": true,
+-    "oauth": ["google", "github", "facebook"]
++    "methods": {
++      "password": true,
++      "magicLink": true,
++      "passkeys": true,
++      "twoFactor": true,
++      "oauth": [
++        { "id": "google", "displayName": "Google" },
++        { "id": "github", "displayName": "GitHub" },
++        { "id": "facebook", "displayName": "Facebook" }
++      ]
++    }
+   }
+ }
+ ```
+diff --git a/frontend/e2e/authenticated-regressions.spec.ts b/frontend/e2e/authenticated-regressions.spec.ts
+index fa585a8..5cdcf19 100644
+--- a/frontend/e2e/authenticated-regressions.spec.ts
++++ b/frontend/e2e/authenticated-regressions.spec.ts
+@@ -1,4 +1,5 @@
+ import { test, expect } from './fixtures/authenticated';
++import { settleAnimations } from './utils/accessibility';
+ 
+ const profile = (url: string) => url.endsWith('/api/user/profile');
+ 
+@@ -95,9 +96,11 @@ for (const mobile of [false, true]) {
+       await page.keyboard.press('Enter');
+       await expect(page).toHaveURL('http://127.0.0.1:3107/ar/sessions');
+       await expect(page.getByTestId(/^session-card-timeline-/)).toHaveCount(2);
+-      expect(
+-        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+-      ).toBe(true);
++      if (mobile) await expect(page.getByTestId('mobile-sidebar')).toBeHidden();
++      await settleAnimations(page);
++      await expect
++        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
++        .toBe(true);
+       await testInfo.attach('arabic-session', {
+         body: await page.screenshot({ path: testInfo.outputPath('page.png'), fullPage: true }),
+         contentType: 'image/png',
+diff --git a/frontend/src/app/[locale]/(dashboard)/admin/roles/page.tsx b/frontend/src/app/[locale]/(dashboard)/admin/roles/page.tsx
+index 472b1b0..58c9227 100644
+--- a/frontend/src/app/[locale]/(dashboard)/admin/roles/page.tsx
++++ b/frontend/src/app/[locale]/(dashboard)/admin/roles/page.tsx
+@@ -29,7 +29,7 @@ export default function RolesPage() {
+ 
+   const debouncedSearch = useDebounce(searchTerm, 300);
+ 
+-  const { data, isLoading, isFetching, isError, error, refetch } = useListRolesQuery({
++  const { data, currentData, isLoading, isFetching, isError, error, refetch } = useListRolesQuery({
+     page,
+     limit: 20,
+     search: debouncedSearch.trim() || undefined,
+@@ -39,7 +39,12 @@ export default function RolesPage() {
+   const totalPages = data?.totalPages || 1;
+   const totalCount = data?.total ?? roles.length;
+ 
+-  const effectiveSelectedRoleId = selectedRoleId || (roles.length > 0 ? roles[0].id : null);
++  const lastPage = Math.max(1, currentData?.totalPages ?? page);
++  if (!isFetching && !isError && page > lastPage) setPage(lastPage);
++
++  const effectiveSelectedRoleId = roles.some((role) => role.id === selectedRoleId)
++    ? selectedRoleId
++    : (roles[0]?.id ?? null);
+ 
+   const selectedRole = useMemo(
+     () => roles.find((r) => r.id === effectiveSelectedRoleId) || null,
+diff --git a/frontend/src/app/[locale]/(dashboard)/admin/users/page.tsx b/frontend/src/app/[locale]/(dashboard)/admin/users/page.tsx
+index 1153a5e..9ab6452 100644
+--- a/frontend/src/app/[locale]/(dashboard)/admin/users/page.tsx
++++ b/frontend/src/app/[locale]/(dashboard)/admin/users/page.tsx
+@@ -8,7 +8,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
+ import { LoadingRegion } from '@/components/layout/LoadingRegion';
+ import { PaginationControl } from '@/components/pagination';
+ import { useGetUsersQuery } from '@/modules/users/api/usersApi';
+-import { useListRolesQuery } from '@/modules/roles/api/rolesApi';
+ import { UserListSkeleton, UserListToolbar, UserGroupedList } from '@/modules/users/components';
+ import { CreateUserButton } from '@/modules/permissions/components/CreateUserButton';
+ import { USER_PERMISSIONS, PermissionGuard, RoutePermissionGuard } from '@/modules/permissions';
+@@ -41,9 +40,6 @@ export default function AdminUsersPage() {
+     return () => clearTimeout(timer);
+   }, []);
+ 
+-  const { data: rolesData } = useListRolesQuery(undefined);
+-  const roles = useMemo(() => rolesData?.roles?.map((r) => r.slug) || [], [rolesData?.roles]);
+-
+   const {
+     data: usersData,
+     isLoading,
+@@ -148,7 +144,6 @@ export default function AdminUsersPage() {
+             setRoleFilter(role);
+             setPage(1);
+           }}
+-          roles={roles}
+         />
+ 
+         {/* State 1: Skeleton Loading */}
+diff --git a/frontend/src/i18n/messages/ar.json b/frontend/src/i18n/messages/ar.json
+index 4250692..2bcb0fc 100644
+--- a/frontend/src/i18n/messages/ar.json
++++ b/frontend/src/i18n/messages/ar.json
+@@ -776,7 +776,10 @@
+     },
+     "list": {
+       "emptyGroup": "لا يوجد مستخدمون في هذه المجموعة"
+-    }
++    },
++    "roleFilterTitle": "التصفية حسب الدور",
++    "roleFilterHint": "ابحث عن الأدوار أو استعرضها، ثم اختر دورًا لتصفية المستخدمين.",
++    "roleFilterError": "تعذر تحميل الأدوار. يرجى المحاولة مرة أخرى."
+   },
+   "roles": {
+     "title": "الأدوار",
+diff --git a/frontend/src/i18n/messages/en.json b/frontend/src/i18n/messages/en.json
+index 75bdada..45ab0cb 100644
+--- a/frontend/src/i18n/messages/en.json
++++ b/frontend/src/i18n/messages/en.json
+@@ -776,7 +776,10 @@
+     },
+     "list": {
+       "emptyGroup": "No users in this group"
+-    }
++    },
++    "roleFilterTitle": "Filter by role",
++    "roleFilterHint": "Search or browse roles, then choose one to filter users.",
++    "roleFilterError": "Could not load roles. Please try again."
+   },
+   "roles": {
+     "title": "Roles",
+diff --git a/frontend/src/modules/users/components/UserListToolbar.tsx b/frontend/src/modules/users/components/UserListToolbar.tsx
+index 49733e0..2e576f5 100644
+--- a/frontend/src/modules/users/components/UserListToolbar.tsx
++++ b/frontend/src/modules/users/components/UserListToolbar.tsx
+@@ -1,13 +1,7 @@
+ 'use client';
+ 
+ import { useTranslations } from 'next-intl';
+-import {
+-  Select,
+-  SelectContent,
+-  SelectItem,
+-  SelectTrigger,
+-  SelectValue,
+-} from '@/components/ui/select';
++import { RoleFilter } from './RoleFilter';
+ import { SearchBar } from '@/components/design-system';
+ 
+ export interface UserListToolbarProps {
+@@ -16,7 +10,6 @@ export interface UserListToolbarProps {
+   onSearchClear: () => void;
+   roleFilter: string;
+   onRoleFilterChange: (role: string) => void;
+-  roles: string[];
+ }
+ 
+ export function UserListToolbar({
+@@ -25,7 +18,6 @@ export function UserListToolbar({
+   onSearchClear,
+   roleFilter,
+   onRoleFilterChange,
+-  roles,
+ }: UserListToolbarProps) {
+   const t = useTranslations('users');
+ 
+@@ -41,19 +33,7 @@ export function UserListToolbar({
+           data-testid="search-users-input"
+         />
+       </div>
+-      <Select value={roleFilter} onValueChange={onRoleFilterChange}>
+-        <SelectTrigger className="w-full sm:w-50" data-testid="role-filter">
+-          <SelectValue placeholder={t('allRoles')} />
+-        </SelectTrigger>
+-        <SelectContent>
+-          <SelectItem value="all">{t('allRoles')}</SelectItem>
+-          {roles.map((role) => (
+-            <SelectItem key={role} value={role}>
+-              {role.charAt(0).toUpperCase() + role.slice(1)}
+-            </SelectItem>
+-          ))}
+-        </SelectContent>
+-      </Select>
++      <RoleFilter value={roleFilter} onChange={onRoleFilterChange} />
+     </div>
+   );
+ }
+diff --git a/package.json b/package.json
+index d7df6e2..d413e8b 100644
+--- a/package.json
++++ b/package.json
+@@ -18,8 +18,9 @@
+     "lint:fix": "npm run lint:fix --workspaces --if-present",
+     "typecheck": "npm run typecheck --workspaces --if-present",
+     "build": "npm run build --workspaces --if-present",
+-    "test": "npm run test --workspaces --if-present",
+-    "check:contrast": "node scripts/check-contrast.mjs"
++    "test": "npm run test --workspaces --if-present && npm run test:config",
++    "check:contrast": "node scripts/check-contrast.mjs",
++    "test:config": "node --test scripts/config-transforms.test.mjs"
+   },
+   "devDependencies": {
+     "@commitlint/cli": "^18.6.1",
+diff --git a/packages/create-nest-next-auth/src/scaffold/next-steps.ts b/packages/create-nest-next-auth/src/scaffold/next-steps.ts
+index 3dda4d8..6e85b47 100644
+--- a/packages/create-nest-next-auth/src/scaffold/next-steps.ts
++++ b/packages/create-nest-next-auth/src/scaffold/next-steps.ts
+@@ -12,7 +12,7 @@ export function buildNextSteps(input: NextStepsInput): string[] {
+   steps.push(
+     'cp backend/.env.example backend/.env',
+     'cp .env.docker.example .env.docker',
+-    'docker compose up -d',
++    'docker compose --env-file .env.docker up -d',
+   );
+   return steps;
+ }
+diff --git a/packages/create-nest-next-auth/test/combination-helpers.ts b/packages/create-nest-next-auth/test/combination-helpers.ts
+index 013d704..f6dcd22 100644
+--- a/packages/create-nest-next-auth/test/combination-helpers.ts
++++ b/packages/create-nest-next-auth/test/combination-helpers.ts
+@@ -1,4 +1,5 @@
+-import { execFileSync, spawnSync } from 'node:child_process';
++import { execFile } from 'node:child_process';
++import { promisify } from 'node:util';
+ import { existsSync, mkdirSync, readFileSync, symlinkSync } from 'node:fs';
+ import { dirname, join } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+@@ -20,29 +21,55 @@ export interface CommandResult {
+   output: string;
+ }
+ 
+-/** Builds the CLI, which also refreshes template/ from the repository. */
+-export function buildCli(): CommandResult {
++const execute = promisify(execFile);
++
++export async function runTool(
++  executable: string,
++  args: string[],
++  options: { cwd?: string; timeout?: number; signal?: AbortSignal } = {},
++): Promise<CommandResult> {
+   try {
+-    execFileSync('npm', ['run', 'build'], {
+-      cwd: PACKAGE_DIR,
+-      timeout: BUILD_TIMEOUT,
++    const { stdout, stderr } = await execute(executable, args, {
++      cwd: options.cwd,
++      timeout: options.timeout ?? BUILD_TIMEOUT,
++      signal: options.signal,
++      maxBuffer: 8 * 1024 * 1024,
+       encoding: 'utf8',
+-      stdio: 'pipe',
+       env: { ...process.env, npm_config_update_notifier: 'false' },
+     });
+-    return { ok: true, output: '' };
++    return { ok: true, output: `${stdout}${stderr}` };
+   } catch (error) {
+-    return { ok: false, output: error instanceof Error ? error.message : String(error) };
++    if (!(error instanceof Error)) return { ok: false, output: String(error) };
++    const { stdout = '', stderr = '' } = error as Error & { stdout?: string; stderr?: string };
++    // execFile already appends stderr to its message; retain each captured stream once.
++    const reason =
++      stderr && error.message.endsWith(stderr)
++        ? error.message.slice(0, -stderr.length)
++        : error.message;
++    return {
++      ok: false,
++      output: [reason, stdout, stderr]
++        .map((part) => part.trimEnd())
++        .filter(Boolean)
++        .join('\n'),
++    };
+   }
+ }
+ 
+-export function scaffold(target: string, features: string[]): CommandResult {
+-  const result = spawnSync(
+-    process.execPath,
+-    [CLI, target, '--features', features.join(','), '--no-install', '--no-git'],
+-    { encoding: 'utf8', timeout: BUILD_TIMEOUT },
+-  );
+-  return { ok: result.status === 0, output: `${result.stdout ?? ''}${result.stderr ?? ''}` };
++/** Yield while child tools run so Vitest can process worker messages. */
++export function buildCli(): Promise<CommandResult> {
++  return runTool('npm', ['run', 'build'], { cwd: PACKAGE_DIR });
++}
++
++export function scaffold(target: string, features: string[]): Promise<CommandResult> {
++  return runTool(process.execPath, [
++    CLI,
++    target,
++    '--features',
++    features.join(','),
++    '--no-install',
++    '--no-git',
++  ]);
+ }
+ 
+ /**
+@@ -62,13 +89,8 @@ export function linkDependencies(project: string): void {
+   }
+ }
+ 
+-export function typecheck(project: string, workspace: string): CommandResult {
+-  const result = spawnSync(process.execPath, [TYPESCRIPT_BIN, '--noEmit', '-p', workspace], {
+-    cwd: project,
+-    encoding: 'utf8',
+-    timeout: BUILD_TIMEOUT,
+-  });
+-  return { ok: result.status === 0, output: `${result.stdout ?? ''}${result.stderr ?? ''}` };
++export function typecheck(project: string, workspace: string): Promise<CommandResult> {
++  return runTool(process.execPath, [TYPESCRIPT_BIN, '--noEmit', '-p', workspace], { cwd: project });
+ }
+ 
+ /** Where the full selection has to match the repository, marker lines aside. */
+diff --git a/packages/create-nest-next-auth/test/combinations.slow.test.ts b/packages/create-nest-next-auth/test/combinations.slow.test.ts
+index 34c942d..1cc570c 100644
+--- a/packages/create-nest-next-auth/test/combinations.slow.test.ts
++++ b/packages/create-nest-next-auth/test/combinations.slow.test.ts
+@@ -11,6 +11,7 @@ import {
+   compareWithRepository,
+   linkDependencies,
+   REPO_ROOT,
++  runTool,
+   scaffold,
+   typecheck,
+ } from './combination-helpers.js';
+@@ -64,7 +65,7 @@ function everything(): string[] {
+ beforeAll(async () => {
+   workspace = mkdtempSync(join(tmpdir(), 'cna-combinations-'));
+   manifest = await loadManifest(REPO_ROOT);
+-  built = buildCli();
++  built = await buildCli();
+ });
+ 
+ afterAll(() => {
+@@ -72,9 +73,9 @@ afterAll(() => {
+ });
+ 
+ /** Scaffolds one selection and returns where it landed. */
+-function generate(name: string, features: string[]): string {
++async function generate(name: string, features: string[]): Promise<string> {
+   const project = join(workspace, name.replace(/\W+/g, '-'));
+-  const result = scaffold(project, features);
++  const result = await scaffold(project, features);
+   expect(result.ok, result.output).toBe(true);
+   linkDependencies(project);
+   const availability = verifyFeatureAvailability(project, features);
+@@ -82,10 +83,10 @@ function generate(name: string, features: string[]): string {
+   return project;
+ }
+ 
+-function expectTypechecks(project: string): void {
+-  const backend = typecheck(project, 'backend');
++async function expectTypechecks(project: string): Promise<void> {
++  const backend = await typecheck(project, 'backend');
+   expect(backend.ok, backend.output).toBe(true);
+-  const frontend = typecheck(project, 'frontend');
++  const frontend = await typecheck(project, 'frontend');
+   expect(frontend.ok, frontend.output).toBe(true);
+ }
+ 
+@@ -94,14 +95,30 @@ describe('generated projects', () => {
+     expect(built.ok, built.output).toBe(true);
+   });
+ 
+-  it.each(COMBINATIONS)('typechecks with $name', ({ name, features }) => {
+-    expectTypechecks(generate(name, features));
++  it.each(COMBINATIONS)('typechecks with $name', async ({ name, features }) => {
++    const project = await generate(name, features);
++    await expectTypechecks(project);
++    if (features.includes('google') && features.length === 2) {
++      const api = await runTool(
++        process.execPath,
++        [
++          join(REPO_ROOT, 'node_modules/jest/bin/jest.js'),
++          '--config',
++          'test/jest-e2e.json',
++          '--runInBand',
++          '--runTestsByPath',
++          'test/app.boot.e2e-spec.ts',
++        ],
++        { cwd: join(project, 'backend') },
++      );
++      expect(api.ok, api.output).toBe(true);
++    }
+   });
+ 
+   it('typechecks with everything the manifest offers', async () => {
+     const features = everything();
+-    const project = generate('everything', features);
+-    expectTypechecks(project);
++    const project = await generate('everything', features);
++    await expectTypechecks(project);
+ 
+     // Retained application and API test files differ only by feature markers.
+     const differences = await compareWithRepository(project, features);
+diff --git a/packages/create-nest-next-auth/test/e2e.test.ts b/packages/create-nest-next-auth/test/e2e.test.ts
+index 3b67cc7..c735c7a 100644
+--- a/packages/create-nest-next-auth/test/e2e.test.ts
++++ b/packages/create-nest-next-auth/test/e2e.test.ts
+@@ -233,6 +233,26 @@ describe('the packed CLI', () => {
+     },
+   );
+ 
++  it.each(['full', 'test-scope-email-password'])(
++    'keeps root README relative links usable for %s',
++    (name) => {
++      const project = join(packed.workspace, name);
++      const readme = readFileSync(join(project, 'README.md'), 'utf8');
++      for (const match of readme.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
++        const target = match[1].split('#')[0];
++        if (!target || /^[a-z]+:/i.test(target)) continue;
++        expect(existsSync(join(project, target)), target).toBe(true);
++      }
++    },
++  );
++
++  it('prints the Compose environment-file command exactly', () => {
++    const result = scaffold(packed, 'next-steps', 'email-password');
++    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
++    expect(String(result.stdout)).toContain('docker compose --env-file .env.docker up -d');
++    expect(String(result.stdout)).not.toContain('docker compose up -d');
++  });
++
+   it('names the generated root package after the directory', () => {
+     const manifest: unknown = JSON.parse(
+       readFileSync(join(packed.workspace, 'full', 'package.json'), 'utf8'),
+@@ -253,6 +273,13 @@ describe('the packed CLI', () => {
+     expect(existsSync(join(project, 'docs/setup-github-oauth.md'))).toBe(false);
+     expect(existsSync(join(project, 'docs/setup-google-oauth.md'))).toBe(true);
+ 
++    const providerFixture = readFileSync(
++      join(project, 'backend/test/constants/oauth-boot-env.ts'),
++      'utf8',
++    );
++    const ids = providerFixture.split('export const OAUTH_BOOT_PROVIDER_IDS = [')[1].split('];')[0];
++    expect([...ids.matchAll(/'([^']+)'/g)].map((match) => match[1])).toEqual(['google']);
++
+     const env = readFileSync(join(project, 'backend/.env.example'), 'utf8');
+     expect(env).toContain('AUTH_FEATURES=oauth-core,email-password,google');
+     expect(env).toContain('OAUTH_GOOGLE_CLIENT_ID');
+diff --git a/scripts/init.js b/scripts/init.js
+index 958c529..3e011f2 100755
+--- a/scripts/init.js
++++ b/scripts/init.js
+@@ -1,4 +1,5 @@
+ #!/usr/bin/env node
++import { configureBackendPort, configureFrontendPort } from './lib/config-transforms.js';
+ 
+ /**
+  * Project Initialization Script
+@@ -66,7 +67,7 @@ async function collectBasicInfo(rl) {
+ async function collectEnvironmentConfig(rl, dbName) {
+   log.step('Environment Configuration');
+ 
+-  const frontendPort = await ask(rl, 'Frontend port', '3000');
++  const frontendPort = await ask(rl, 'Frontend host port (Docker container stays on 3000)', '3000');
+   const backendPort = await ask(rl, 'Backend port', '5001');
+   const mongoUri = await ask(rl, 'MongoDB URI', `mongodb://localhost:27017/${dbName}`);
+ 
+@@ -261,26 +262,10 @@ function updateDockerFiles(config) {
+       `MONGO_INITDB_DATABASE: ${config.dbName}`,
+     );
+ 
+-    // Update backend published port in dev compose
+-    content = content.replace(
+-      /(container_name:\s*[\S]*backend[\S]*[\s\S]*?ports:\s*\n\s*-\s*')\d+:\d+(')/,
+-      `$1${config.env.backendPort}:${config.env.backendPort}$2`,
+-    );
+-
+-    // Update backend exposed port in prod compose
+-    content = content.replace(
+-      /(container_name:\s*[\S]*backend[\S]*[\s\S]*?expose:\s*\n\s*-\s*')\d+(')/,
+-      `$1${config.env.backendPort}$2`,
+-    );
+-
+-    // Update backend healthcheck URL
+-    content = content.replace(
+-      /(http:\/\/localhost:)\d+(\/api\/health)/g,
+-      `$1${config.env.backendPort}$2`,
+-    );
+-
+-    // Update backend PORT environment variable in compose
+-    content = content.replace(/(PORT:\s*)\d+/g, `$1${config.env.backendPort}`);
++    if (file.endsWith('.yml')) {
++      content = configureBackendPort(content, config.env.backendPort);
++      content = configureFrontendPort(content, config.env.frontendPort);
++    }
+ 
+     // Update frontend NEXT_PUBLIC_API_URL in compose
+     content = content.replace(
+@@ -295,19 +280,10 @@ function updateDockerFiles(config) {
+       `NEXT_PUBLIC_API_URL=http://localhost:${config.env.backendPort}`,
+     );
+ 
+-    // Update frontend port in dev compose if modified
+-    content = content.replace(
+-      /(container_name:\s*[\S]*frontend[\S]*[\s\S]*?ports:\s*\n\s*-\s*')\d+:\d+(')/,
+-      `$1${config.env.frontendPort}:${config.env.frontendPort}$2`,
+-    );
+     content = content.replace(
+       /(CLIENT_URL:\s*\${CLIENT_URL:-http:\/\/localhost:)\d+(\})/g,
+       `$1${config.env.frontendPort}$2`,
+     );
+-    content = content.replace(
+-      /(container_name:\s*[\S]*frontend[\S]*[\s\S]*?healthcheck:[\s\S]*?http:\/\/localhost:)\d+/,
+-      `$1${config.env.frontendPort}`,
+-    );
+     content = content.replace(
+       /^CLIENT_URL=http:\/\/localhost:\d+/m,
+       `CLIENT_URL=http://localhost:${config.env.frontendPort}`,
+diff --git a/scripts/setup-production.js b/scripts/setup-production.js
+index 5061616..a36459b 100755
+--- a/scripts/setup-production.js
++++ b/scripts/setup-production.js
+@@ -10,6 +10,7 @@
+  */
+ 
+ import crypto from 'node:crypto';
++import { configureNginxDomains } from './lib/config-transforms.js';
+ import path from 'node:path';
+ import {
+   colors,
+@@ -292,124 +293,8 @@ function updateDockerCompose(config) {
+ // ═══════════════════════════════════════════════════════════════
+ // Update Nginx Configuration
+ // ═══════════════════════════════════════════════════════════════
+-function generateApiServerBlock(backendDomain) {
+-  return `    # API server (${backendDomain})
+-    server {
+-        listen 443 ssl http2;
+-        listen [::]:443 ssl http2;
+-        server_name ${backendDomain};
+-
+-        # SSL/TLS configuration
+-        ssl_certificate /etc/nginx/ssl/fullchain.pem;
+-        ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+-        ssl_trusted_certificate /etc/nginx/ssl/chain.pem;
+-
+-        # SSL protocols and ciphers
+-        ssl_protocols TLSv1.2 TLSv1.3;
+-        ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384';
+-        ssl_prefer_server_ciphers off;
+-
+-        # SSL session configuration
+-        ssl_session_timeout 1d;
+-        ssl_session_cache shared:SSL:50m;
+-        ssl_session_tickets off;
+-
+-        # OCSP stapling
+-        ssl_stapling on;
+-        ssl_stapling_verify on;
+-        resolver 8.8.8.8 8.8.4.4 valid=300s;
+-        resolver_timeout 5s;
+-
+-        # HSTS
+-        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+-
+-        # Proxy to backend upstream
+-        location / {
+-            limit_req zone=api burst=30 nodelay;
+-
+-            proxy_pass http://backend;
+-            proxy_http_version 1.1;
+-
+-            proxy_set_header Host $host;
+-            proxy_set_header X-Real-IP $remote_addr;
+-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+-            proxy_set_header X-Forwarded-Proto $scheme;
+-            proxy_set_header X-Forwarded-Host $host;
+-            proxy_set_header X-Forwarded-Port $server_port;
+-
+-            proxy_connect_timeout 60s;
+-            proxy_send_timeout 60s;
+-            proxy_read_timeout 60s;
+-
+-            proxy_buffering on;
+-            proxy_buffer_size 4k;
+-            proxy_buffers 8 4k;
+-            proxy_busy_buffers_size 8k;
+-
+-            proxy_set_header Upgrade $http_upgrade;
+-            proxy_set_header Connection "upgrade";
+-            proxy_redirect off;
+-        }
+-
+-        # Auth endpoints with stricter rate limiting
+-        location /api/auth/ {
+-            limit_req zone=auth burst=10 nodelay;
+-
+-            proxy_pass http://backend;
+-            proxy_http_version 1.1;
+-
+-            proxy_set_header Host $host;
+-            proxy_set_header X-Real-IP $remote_addr;
+-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+-            proxy_set_header X-Forwarded-Proto $scheme;
+-            proxy_set_header X-Forwarded-Host $host;
+-
+-            proxy_connect_timeout 60s;
+-            proxy_send_timeout 60s;
+-            proxy_read_timeout 60s;
+-
+-            proxy_buffering on;
+-            proxy_buffer_size 4k;
+-            proxy_buffers 8 4k;
+-
+-            proxy_redirect off;
+-        }
+-
+-        # Health check endpoint
+-        location /health {
+-            limit_req zone=general burst=10 nodelay;
+-
+-            proxy_pass http://backend/api/health;
+-            proxy_http_version 1.1;
+-            proxy_set_header Host $host;
+-            proxy_set_header X-Real-IP $remote_addr;
+-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+-            proxy_set_header X-Forwarded-Proto $scheme;
+-        }
+-
+-        # Deny access to hidden files
+-        location ~ /\\. {
+-            deny all;
+-            access_log off;
+-            log_not_found off;
+-        }
+-
+-        # Deny access to sensitive files
+-        location ~* \\.(env|log|git|svn|sql|bak|backup)$ {
+-            deny all;
+-            access_log off;
+-            log_not_found off;
+-        }
+-    }`;
+-}
+-
+ function updateNginxConfig(config) {
+   const configFiles = ['nginx/nginx.conf', 'nginx/production-nginx.conf'];
+-  const frontendDomains =
+-    config.domains.mainDomain === config.domains.frontendDomain
+-      ? config.domains.mainDomain
+-      : `${config.domains.mainDomain} ${config.domains.frontendDomain}`;
+-
+   for (const file of configFiles) {
+     const filePath = path.join(ROOT_DIR, file);
+ 
+@@ -422,27 +307,7 @@ function updateNginxConfig(config) {
+       log.info(`Backed up ${file}`);
+     }
+ 
+-    let content = readFile(filePath);
+-
+-    // Remove existing API server block to prevent duplicates
+-    content = content.replace(/\n\s*# API server\s*\([^\)]*\)[\s\S]*?# End API server\n/, '\n');
+-
+-    // Update server_name for the frontend HTTPS block
+-    content = content.replace(
+-      /(# HTTPS server[\s\S]*?server_name\s+)[^;]+;/,
+-      `$1${frontendDomains};`,
+-    );
+-
+-    // Insert API server block before config inclusions or end of http block
+-    const apiBlock = `\n${generateApiServerBlock(config.domains.backendDomain)}\n    # End API server\n`;
+-    if (content.includes('include /etc/nginx/conf.d/*.conf;')) {
+-      content = content.replace(
+-        'include /etc/nginx/conf.d/*.conf;',
+-        `${apiBlock}\n    include /etc/nginx/conf.d/*.conf;`,
+-      );
+-    } else {
+-      content = content.replace(/\n\}\s*$/, `\n${apiBlock}\n}\n`);
+-    }
++    const content = configureNginxDomains(readFile(filePath), config.domains);
+ 
+     writeFile(filePath, content);
+     log.success(`${file} updated`);
+diff --git a/scripts/verify-docker.mjs b/scripts/verify-docker.mjs
+index cabbf89..74a23e1 100644
+--- a/scripts/verify-docker.mjs
++++ b/scripts/verify-docker.mjs
+@@ -162,7 +162,13 @@ export function smokeModel(original, fixtureDirectory) {
+     PASSKEYS_ENABLED: 'false',
+     SWAGGER_ENABLED: 'false',
+   };
+-  services.frontend.environment = { NODE_ENV: 'production', HOSTNAME: '0.0.0.0', PORT: '3000' };
++  const frontendPort = String(original.services.frontend.environment?.PORT);
++  assert.equal(frontendPort, '3000', 'frontend PORT must match its listener and probe');
++  services.frontend.environment = {
++    NODE_ENV: 'production',
++    HOSTNAME: '0.0.0.0',
++    PORT: frontendPort,
++  };
+   for (const [name, port] of [
+     ['backend', 5000],
+     ['frontend', 3000],
+@@ -353,6 +359,46 @@ async function smoke(dockerHost) {
+             })),
+           ),
+         );
++        const frontend = await compose(['ps', '--quiet', 'frontend'], {
++          signal: undefined,
++          timeout: 10_000,
++        });
++        if (/^[a-f0-9]{12,64}$/.test(frontend)) {
++          const health = await docker(
++            [
++              'inspect',
++              '--format',
++              '{{.State.Health.Status}} {{.State.Health.FailingStreak}}{{range .State.Health.Log}} {{.ExitCode}}{{end}}',
++              frontend,
++            ],
++            { signal: undefined, timeout: 10_000 },
++          );
++          if (/^(healthy|unhealthy|starting)( \d+)+$/.test(health))
++            console.error(`frontend health status, failing streak, probe exit codes: ${health}`);
++          const listeners = await compose(
++            [
++              'exec',
++              '--no-TTY',
++              'frontend',
++              'node',
++              '--input-type=module',
++              '-e',
++              `
++            for (const host of ['127.0.0.1', '[::1]']) {
++              try {
++                const response = await fetch('http://' + host + ':3000/en/auth/login', { redirect: 'manual', signal: AbortSignal.timeout(5000) });
++                console.log(JSON.stringify({ host, status: response.status }));
++              } catch (error) {
++                const code = error.cause?.code;
++                console.log(JSON.stringify({ host, reason: ['ECONNREFUSED', 'ETIMEDOUT', 'ENETUNREACH'].includes(code) ? code : 'REQUEST_FAILED' }));
++              }
++            }
++          `,
++            ],
++            { signal: undefined, timeout: 15_000 },
++          );
++          console.error(listeners);
++        }
+       } catch {
+         console.error('container status unavailable');
+       }

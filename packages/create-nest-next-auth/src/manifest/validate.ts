@@ -1,6 +1,6 @@
 import type { Feature, FeatureKind, FeatureStatus, Manifest } from '../types.js';
 
-const KINDS: FeatureKind[] = ['credential', 'oauth', 'second-factor', 'passwordless'];
+const KINDS: FeatureKind[] = ['credential', 'oauth', 'second-factor', 'passwordless', 'hidden'];
 const STATUSES: FeatureStatus[] = ['available', 'planned'];
 const ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 

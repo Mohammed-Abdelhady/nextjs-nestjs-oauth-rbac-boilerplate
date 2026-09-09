@@ -1,0 +1,9 @@
+Ready for root planning: [readiness report](/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/t30-readiness/report.md).
+
+Includes required/optional work, exact proposed paths, CI/Docker changes, acceptance matrix, costs, cleanup and [scoped release inventory](/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/t30-readiness/release-inventory.json).
+
+Operational observations T30-OPS-01–04 cover disabled integration CI, Compose environment loading, nginx’s health-probe mismatch and artifact exclusions. None are closed findings.
+
+Eight inspected T21-C files changed during inspection. Their hashes and timing are recorded in [final-boundary.json](/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/t30-readiness/final-boundary.json); the active owner’s final evidence must supersede those observations.
+
+Artifact validation exited 0. No product/config changes, tests, installs, container startup or release actions ran. Real-provider coverage and certificate-backed production startup remain unverified. The rejected security review remains paused.

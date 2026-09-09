@@ -1,0 +1,11 @@
+{
+  "observed_at": "2026-09-08T12:04:21.761328+00:00",
+  "head": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+  "candidate_clean": true,
+  "source_edits_during_diagnosis": false,
+  "owned_application_processes_started": 0,
+  "active_tool_sessions": [],
+  "hosted_all_jobs_completed": true,
+  "docker_owned_fixture_cleanup_confirmed": true,
+  "next_action": "Root approval of bounded diagnostic/repair plan; no source edits before approval"
+}

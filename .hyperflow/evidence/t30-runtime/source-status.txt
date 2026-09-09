@@ -1,0 +1,116 @@
+ M .dockerignore
+ M .github/workflows/ci.yml
+ M .gitignore
+ M .hyperflow/tasks/production-hardening.md
+ M backend/src/app.module.ts
+ M backend/src/auth/auth-methods.controller.spec.ts
+ M backend/src/auth/auth-methods.controller.ts
+ M backend/src/auth/auth.module.ts
+ M backend/src/auth/dto/auth-methods-response.dto.ts
+ M backend/src/auth/guards/feature-enabled.guard.spec.ts
+ M backend/src/auth/oauth/oauth-redirect.service.ts
+ M backend/src/auth/oauth/oauth-registry.wiring.spec.ts
+ M backend/src/auth/passkeys/passkeys.module.ts
+ M backend/src/auth/passkeys/passkeys.wiring.spec.ts
+ M backend/src/auth/services/auth-features.service.ts
+ M backend/src/auth/services/sign-in.service.spec.ts
+ M backend/src/auth/services/sign-in.service.ts
+ M backend/src/auth/two-factor/constants/two-factor.constants.ts
+ M backend/src/auth/two-factor/dto/verify-two-factor.dto.ts
+ M backend/src/auth/two-factor/two-factor-login.service.spec.ts
+ M backend/src/auth/two-factor/two-factor-login.service.ts
+ M backend/src/auth/two-factor/two-factor.module.ts
+ M backend/src/config/env.oauth.schema.ts
+ M backend/src/user/dto/user-profile.dto.ts
+ M backend/src/user/schemas/user.schema.ts
+ M backend/src/user/services/user-profile.service.spec.ts
+ M backend/src/user/services/user-profile.service.ts
+ M backend/src/user/user.module.ts
+ M backend/test/app.boot.e2e-spec.ts
+ M backend/test/app.e2e-spec.ts
+ M backend/test/jest-e2e.json
+ M backend/test/permissions/admin-permission-routes.e2e-spec.ts
+ M backend/test/permissions/permission-enforcement.e2e-spec.ts
+ M backend/test/roles/role-access.e2e-spec.ts
+ M backend/test/roles/role-crud.e2e-spec.ts
+ M backend/test/types/e2e-responses.ts
+ M backend/test/utils/e2e-app.ts
+ M frontend/e2e/role-management.spec.ts
+ M frontend/e2e/session-management.spec.ts
+ M frontend/e2e/sidebar-navigation.spec.ts
+ M frontend/playwright.config.ts
+ M frontend/src/app/[locale]/(dashboard)/settings/page.tsx
+ M frontend/src/app/[locale]/layout.tsx
+ M frontend/src/app/layout.tsx
+ M frontend/src/lib/toast.ts
+ M frontend/src/modules/account/api/index.ts
+ M frontend/src/modules/account/components/index.ts
+ M frontend/src/modules/account/index.ts
+ M frontend/src/modules/account/types/account.types.ts
+ M frontend/src/modules/auth/api/authMethodsApi.ts
+ M frontend/src/modules/auth/components/LoginForm.tsx
+ M frontend/src/modules/auth/methods/__tests__/registry.test.ts
+ M frontend/src/modules/auth/methods/password/ForgotPasswordForm.tsx
+ M frontend/src/modules/auth/methods/password/PasswordSignInForm.tsx
+ M frontend/src/modules/auth/methods/password/RegisterForm.tsx
+ M frontend/src/modules/auth/methods/password/ResetPasswordForm.tsx
+ M frontend/src/modules/auth/methods/registry.ts
+ M frontend/src/modules/auth/pages/LoginPage.tsx
+ M frontend/src/modules/auth/store/authApi.ts
+ M frontend/src/modules/auth/types/auth.types.ts
+ D frontend/src/modules/oauth/components/OAuthDivider.tsx
+ M frontend/src/modules/oauth/components/index.ts
+ M frontend/src/modules/oauth/index.ts
+ M frontend/src/store/api/baseApi.ts
+ M frontend/src/store/middleware/errorInterceptor.ts
+ M frontend/src/store/store.ts
+ M nginx/nginx.conf
+ M packages/create-nest-next-auth/README.md
+ M packages/create-nest-next-auth/package.json
+ M packages/create-nest-next-auth/scripts/sync-template.mjs
+ M packages/create-nest-next-auth/src/constants/index.ts
+ M packages/create-nest-next-auth/src/manifest/validate.ts
+ M packages/create-nest-next-auth/src/prune/index.ts
+ M packages/create-nest-next-auth/src/prune/references.ts
+ M packages/create-nest-next-auth/src/report.ts
+ M packages/create-nest-next-auth/src/types.ts
+ M packages/create-nest-next-auth/test/e2e.test.ts
+ M packages/create-nest-next-auth/test/manifest.test.ts
+ M packages/create-nest-next-auth/tsconfig.json
+ M packages/create-nest-next-auth/vitest.config.ts
+ M template.manifest.json
+?? .hyperflow/briefs/
+?? .hyperflow/evidence/
+?? .hyperflow/runs/
+?? .hyperflow/tasks/resume-production-hardening.md
+?? backend/src/auth/constants/available-auth-features.ts
+?? backend/src/auth/passkeys/services/passkey-second-factor.verifier.spec.ts
+?? backend/src/auth/passkeys/services/passkey-second-factor.verifier.ts
+?? backend/src/auth/services/auth-features.service.spec.ts
+?? backend/src/auth/two-factor/services/second-factor-verifiers.ts
+?? backend/src/auth/two-factor/sign-in-second-factor.spec.ts
+?? backend/src/common/constants/client-paths.ts
+?? backend/test/utils/browser-server.ts
+?? backend/test/utils/permissions.ts
+?? frontend/e2e/README.md
+?? frontend/e2e/authenticated-regressions.spec.ts
+?? frontend/e2e/fixtures/
+?? frontend/e2e/frontend-only/
+?? frontend/e2e/utils/
+?? frontend/playwright.frontend.config.ts
+?? frontend/src/components/ui/LocalizedToastMessage.test.tsx
+?? frontend/src/components/ui/LocalizedToastMessage.tsx
+?? frontend/src/components/ui/auth-divider.tsx
+?? frontend/src/modules/auth/utils/preventNavigationBlur.ts
+?? frontend/src/store/authPersistence.test.ts
+?? frontend/src/store/authPersistence.ts
+?? frontend/src/store/middleware/errorInterceptor.test.ts
+?? nginx/.dockerignore
+?? packages/create-nest-next-auth/src/prune/markers.ts
+?? packages/create-nest-next-auth/test/combination-helpers.ts
+?? packages/create-nest-next-auth/test/combinations.slow.test.ts
+?? packages/create-nest-next-auth/test/feature-runtime.test.ts
+?? packages/create-nest-next-auth/test/feature-runtime.ts
+?? packages/create-nest-next-auth/test/markers.test.ts
+?? packages/create-nest-next-auth/vitest.combinations.config.ts
+?? scripts/verify-docker.mjs

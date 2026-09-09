@@ -1,0 +1,50 @@
+{
+  "node": "v26.8.1",
+  "results": [
+    {
+      "name": "workflow parses; guarded clean commands, sequential browser suites, three local images",
+      "status": "PASS"
+    },
+    {
+      "name": "Docker contexts exclude blocked/artifact names; HTTP route fixture excludes TLS",
+      "status": "PASS"
+    },
+    {
+      "name": "source-export filename classification",
+      "status": "PASS"
+    },
+    {
+      "name": "source export prunes artifacts and skips symlinks",
+      "status": "PASS"
+    },
+    {
+      "name": "actual new CLI regression callback passes with disposable sentinel repo; package build deferred",
+      "status": "PASS"
+    },
+    {
+      "name": "derived model excludes inherited settings, certbot, mounts and fixed ports; requires healthchecks",
+      "status": "PASS"
+    },
+    {
+      "name": "subprocess timeout, output bound and missing executable fail without hanging",
+      "status": "PASS"
+    },
+    {
+      "name": "fake Docker missing-image: nonzero status and expected owned cleanup/recovery",
+      "status": "PASS"
+    },
+    {
+      "name": "fake Docker startup-failure: nonzero status and expected owned cleanup/recovery",
+      "status": "PASS"
+    },
+    {
+      "name": "fake Docker cancel: nonzero status and expected owned cleanup/recovery",
+      "status": "PASS"
+    },
+    {
+      "name": "fake Docker cleanup-failure: nonzero status and expected owned cleanup/recovery",
+      "status": "PASS"
+    }
+  ],
+  "cleanup": "all lightweight fixtures removed; no Docker daemon or browser started"
+}

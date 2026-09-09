@@ -1,0 +1,33 @@
+0b1cdbedaf5fffbc1410094d2287b292
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RenamePasskeyDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
+const class_validator_1 = require("class-validator");
+const passkeys_constants_1 = require("../constants/passkeys.constants");
+/** Body of PATCH /auth/passkeys/:id. */
+class RenamePasskeyDto {
+    name;
+}
+exports.RenamePasskeyDto = RenamePasskeyDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'New label for the passkey',
+        example: 'iPhone',
+        maxLength: passkeys_constants_1.PASSKEY_NAME_MAX_LENGTH,
+    }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.MaxLength)(passkeys_constants_1.PASSKEY_NAME_MAX_LENGTH),
+    __metadata("design:type", String)
+], RenamePasskeyDto.prototype, "name", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9wYXNza2V5cy9kdG8vcmVuYW1lLXBhc3NrZXkuZHRvLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLDZDQUE4QztBQUM5QyxxREFBa0U7QUFDbEUsd0VBQTBFO0FBRTFFLHdDQUF3QztBQUN4QyxNQUFhLGdCQUFnQjtJQVMzQixJQUFJLENBQVU7Q0FDZjtBQVZELDRDQVVDO0FBREM7SUFSQyxJQUFBLHFCQUFXLEVBQUM7UUFDWCxXQUFXLEVBQUUsMkJBQTJCO1FBQ3hDLE9BQU8sRUFBRSxRQUFRO1FBQ2pCLFNBQVMsRUFBRSw0Q0FBdUI7S0FDbkMsQ0FBQztJQUNELElBQUEsMEJBQVEsR0FBRTtJQUNWLElBQUEsNEJBQVUsR0FBRTtJQUNaLElBQUEsMkJBQVMsRUFBQyw0Q0FBdUIsQ0FBQzs7OENBQ3JCIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL2F1dGgvcGFzc2tleXMvZHRvL3JlbmFtZS1wYXNza2V5LmR0by50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBBcGlQcm9wZXJ0eSB9IGZyb20gJ0BuZXN0anMvc3dhZ2dlcic7XG5pbXBvcnQgeyBJc05vdEVtcHR5LCBJc1N0cmluZywgTWF4TGVuZ3RoIH0gZnJvbSAnY2xhc3MtdmFsaWRhdG9yJztcbmltcG9ydCB7IFBBU1NLRVlfTkFNRV9NQVhfTEVOR1RIIH0gZnJvbSAnLi4vY29uc3RhbnRzL3Bhc3NrZXlzLmNvbnN0YW50cyc7XG5cbi8qKiBCb2R5IG9mIFBBVENIIC9hdXRoL3Bhc3NrZXlzLzppZC4gKi9cbmV4cG9ydCBjbGFzcyBSZW5hbWVQYXNza2V5RHRvIHtcbiAgQEFwaVByb3BlcnR5KHtcbiAgICBkZXNjcmlwdGlvbjogJ05ldyBsYWJlbCBmb3IgdGhlIHBhc3NrZXknLFxuICAgIGV4YW1wbGU6ICdpUGhvbmUnLFxuICAgIG1heExlbmd0aDogUEFTU0tFWV9OQU1FX01BWF9MRU5HVEgsXG4gIH0pXG4gIEBJc1N0cmluZygpXG4gIEBJc05vdEVtcHR5KClcbiAgQE1heExlbmd0aChQQVNTS0VZX05BTUVfTUFYX0xFTkdUSClcbiAgbmFtZSE6IHN0cmluZztcbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

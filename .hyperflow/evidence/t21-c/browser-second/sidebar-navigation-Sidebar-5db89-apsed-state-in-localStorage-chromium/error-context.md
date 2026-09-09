@@ -1,0 +1,59 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+    - alert [ref=e2]
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+        - /url: '#main'
+    - generic [ref=e4]:
+        - complementary [ref=e5]:
+            - generic [ref=e6]:
+                - link "Auth App, go to dashboard" [ref=e8] [cursor=pointer]:
+                    - /url: /en/dashboard
+                    - text: Auth App
+                - navigation "Main navigation" [ref=e10]:
+                    - link "Dashboard" [ref=e12] [cursor=pointer]:
+                        - /url: /en/dashboard
+                        - img [ref=e13]
+                        - text: Dashboard
+                    - link "Settings" [ref=e19] [cursor=pointer]:
+                        - /url: /en/settings
+                        - img [ref=e20]
+                        - text: Settings
+                    - button "Admin" [active] [ref=e24]:
+                        - generic [ref=e25]:
+                            - img [ref=e26]
+                            - generic [ref=e28]: Admin
+                        - img [ref=e29]
+                    - generic [ref=e31]:
+                        - button "Activity" [expanded] [ref=e32]:
+                            - generic [ref=e33]:
+                                - img [ref=e34]
+                                - generic [ref=e36]: Activity
+                            - img [ref=e37]
+                        - link "Sessions" [ref=e40] [cursor=pointer]:
+                            - /url: /en/sessions
+                            - img [ref=e41]
+                            - text: Sessions
+                - paragraph [ref=e44]: © 2024 Auth App
+        - generic [ref=e45]:
+            - banner [ref=e46]:
+                - group "Account controls" [ref=e47]:
+                    - generic [ref=e48]:
+                        - generic [ref=e49]: Seed Admin
+                        - generic [ref=e50]: (admin)
+                    - generic [ref=e51]:
+                        - button "Switch to English" [ref=e52]: English
+                        - button "Switch to Arabic" [ref=e53]: العربية
+                    - button "Switch to light mode" [ref=e54]:
+                        - img
+                    - button "Logout" [ref=e55]:
+                        - img
+                        - generic [ref=e56]: Logout
+            - main [ref=e57]:
+                - generic [ref=e59]:
+                    - heading "Dashboard" [level=1] [ref=e60]
+                    - paragraph [ref=e61]: Welcome to your dashboard. This page is under construction.
+                    - paragraph [ref=e63]: Dashboard features coming soon...
+    - region "Notifications alt+T"
+```

@@ -1,0 +1,68 @@
+4e3e4fdbc3783c23db833febe26e0197
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AuthMethodsController = void 0;
+const common_1 = require("@nestjs/common");
+const swagger_1 = require("@nestjs/swagger");
+const public_decorator_1 = require("./decorators/public.decorator");
+const auth_feature_enum_1 = require("./enums/auth-feature.enum");
+const auth_features_service_1 = require("./services/auth-features.service");
+const oauth_registry_service_1 = require("./oauth/oauth-registry.service"); // feature:oauth-core
+const api_response_dto_1 = require("../common/dto/api-response.dto");
+/**
+ * What this deployment accepts as a sign-in. Registered in AppModule, which is
+ * where both the auth configuration and the OAuth registry are in scope.
+ */
+let AuthMethodsController = class AuthMethodsController {
+    authFeaturesService;
+    oauthRegistry;
+    constructor(authFeaturesService, oauthRegistry) {
+        this.authFeaturesService = authFeaturesService;
+        this.oauthRegistry = oauthRegistry;
+    }
+    /**
+     * List enabled sign-in methods
+     * GET /api/auth/methods
+     */
+    getMethods() {
+        return api_response_dto_1.ApiResponse.success({
+            methods: {
+                password: this.authFeaturesService.isEnabled(auth_feature_enum_1.AuthFeature.PASSWORD),
+                magicLink: this.authFeaturesService.isEnabled(auth_feature_enum_1.AuthFeature.MAGIC_LINK), // feature:magic-link
+                twoFactor: this.authFeaturesService.isEnabled(auth_feature_enum_1.AuthFeature.TWO_FACTOR), // feature:totp
+                passkeys: this.authFeaturesService.isEnabled(auth_feature_enum_1.AuthFeature.PASSKEYS), // feature:passkeys
+                oauth: this.oauthRegistry.listEnabled(), // feature:oauth-core
+            },
+        });
+    }
+};
+exports.AuthMethodsController = AuthMethodsController;
+__decorate([
+    (0, public_decorator_1.Public)(),
+    (0, common_1.Get)('methods'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'List enabled sign-in methods',
+        description: 'Returns the password, magic link, two-factor and passkey switches ' +
+            'together with the OAuth providers that have credentials, so a client ' +
+            'renders only what works.',
+    }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", api_response_dto_1.ApiResponse)
+], AuthMethodsController.prototype, "getMethods", null);
+exports.AuthMethodsController = AuthMethodsController = __decorate([
+    (0, swagger_1.ApiTags)('auth'),
+    (0, common_1.Controller)('auth'),
+    __metadata("design:paramtypes", [auth_features_service_1.AuthFeaturesService,
+        oauth_registry_service_1.OAuthRegistryService])
+], AuthMethodsController);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9hdXRoLW1ldGhvZHMuY29udHJvbGxlci50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSwyQ0FBaUQ7QUFDakQsNkNBQXdEO0FBQ3hELG9FQUF1RDtBQUN2RCxpRUFBd0Q7QUFDeEQsNEVBQXVFO0FBRXZFLDJFQUFzRSxDQUFDLHFCQUFxQjtBQUM1RixxRUFBNkQ7QUFFN0Q7OztHQUdHO0FBR0ksSUFBTSxxQkFBcUIsR0FBM0IsTUFBTSxxQkFBcUI7SUFFYjtJQUNBO0lBRm5CLFlBQ21CLG1CQUF3QyxFQUN4QyxhQUFtQztRQURuQyx3QkFBbUIsR0FBbkIsbUJBQW1CLENBQXFCO1FBQ3hDLGtCQUFhLEdBQWIsYUFBYSxDQUFzQjtJQUNuRCxDQUFDO0lBRUo7OztPQUdHO0lBVUgsVUFBVTtRQUNSLE9BQU8sOEJBQVcsQ0FBQyxPQUFPLENBQUM7WUFDekIsT0FBTyxFQUFFO2dCQUNQLFFBQVEsRUFBRSxJQUFJLENBQUMsbUJBQW1CLENBQUMsU0FBUyxDQUFDLCtCQUFXLENBQUMsUUFBUSxDQUFDO2dCQUNsRSxTQUFTLEVBQUUsSUFBSSxDQUFDLG1CQUFtQixDQUFDLFNBQVMsQ0FBQywrQkFBVyxDQUFDLFVBQVUsQ0FBQyxFQUFFLHFCQUFxQjtnQkFDNUYsU0FBUyxFQUFFLElBQUksQ0FBQyxtQkFBbUIsQ0FBQyxTQUFTLENBQUMsK0JBQVcsQ0FBQyxVQUFVLENBQUMsRUFBRSxlQUFlO2dCQUN0RixRQUFRLEVBQUUsSUFBSSxDQUFDLG1CQUFtQixDQUFDLFNBQVMsQ0FBQywrQkFBVyxDQUFDLFFBQVEsQ0FBQyxFQUFFLG1CQUFtQjtnQkFDdkYsS0FBSyxFQUFFLElBQUksQ0FBQyxhQUFhLENBQUMsV0FBVyxFQUFFLEVBQUUscUJBQXFCO2FBQy9EO1NBQ0YsQ0FBQyxDQUFDO0lBQ0wsQ0FBQztDQUNGLENBQUE7QUE5Qlksc0RBQXFCO0FBbUJoQztJQVRDLElBQUEseUJBQU0sR0FBRTtJQUNSLElBQUEsWUFBRyxFQUFDLFNBQVMsQ0FBQztJQUNkLElBQUEsc0JBQVksRUFBQztRQUNaLE9BQU8sRUFBRSw4QkFBOEI7UUFDdkMsV0FBVyxFQUNULG9FQUFvRTtZQUNwRSx1RUFBdUU7WUFDdkUsMEJBQTBCO0tBQzdCLENBQUM7OztvQ0FDWSw4QkFBVzt1REFVeEI7Z0NBN0JVLHFCQUFxQjtJQUZqQyxJQUFBLGlCQUFPLEVBQUMsTUFBTSxDQUFDO0lBQ2YsSUFBQSxtQkFBVSxFQUFDLE1BQU0sQ0FBQztxQ0FHdUIsMkNBQW1CO1FBQ3pCLDZDQUFvQjtHQUgzQyxxQkFBcUIsQ0E4QmpDIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL2F1dGgvYXV0aC1tZXRob2RzLmNvbnRyb2xsZXIudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgQ29udHJvbGxlciwgR2V0IH0gZnJvbSAnQG5lc3Rqcy9jb21tb24nO1xuaW1wb3J0IHsgQXBpT3BlcmF0aW9uLCBBcGlUYWdzIH0gZnJvbSAnQG5lc3Rqcy9zd2FnZ2VyJztcbmltcG9ydCB7IFB1YmxpYyB9IGZyb20gJy4vZGVjb3JhdG9ycy9wdWJsaWMuZGVjb3JhdG9yJztcbmltcG9ydCB7IEF1dGhGZWF0dXJlIH0gZnJvbSAnLi9lbnVtcy9hdXRoLWZlYXR1cmUuZW51bSc7XG5pbXBvcnQgeyBBdXRoRmVhdHVyZXNTZXJ2aWNlIH0gZnJvbSAnLi9zZXJ2aWNlcy9hdXRoLWZlYXR1cmVzLnNlcnZpY2UnO1xuaW1wb3J0IHsgQXV0aE1ldGhvZHNSZXNwb25zZUR0byB9IGZyb20gJy4vZHRvL2F1dGgtbWV0aG9kcy1yZXNwb25zZS5kdG8nO1xuaW1wb3J0IHsgT0F1dGhSZWdpc3RyeVNlcnZpY2UgfSBmcm9tICcuL29hdXRoL29hdXRoLXJlZ2lzdHJ5LnNlcnZpY2UnOyAvLyBmZWF0dXJlOm9hdXRoLWNvcmVcbmltcG9ydCB7IEFwaVJlc3BvbnNlIH0gZnJvbSAnLi4vY29tbW9uL2R0by9hcGktcmVzcG9uc2UuZHRvJztcblxuLyoqXG4gKiBXaGF0IHRoaXMgZGVwbG95bWVudCBhY2NlcHRzIGFzIGEgc2lnbi1pbi4gUmVnaXN0ZXJlZCBpbiBBcHBNb2R1bGUsIHdoaWNoIGlzXG4gKiB3aGVyZSBib3RoIHRoZSBhdXRoIGNvbmZpZ3VyYXRpb24gYW5kIHRoZSBPQXV0aCByZWdpc3RyeSBhcmUgaW4gc2NvcGUuXG4gKi9cbkBBcGlUYWdzKCdhdXRoJylcbkBDb250cm9sbGVyKCdhdXRoJylcbmV4cG9ydCBjbGFzcyBBdXRoTWV0aG9kc0NvbnRyb2xsZXIge1xuICBjb25zdHJ1Y3RvcihcbiAgICBwcml2YXRlIHJlYWRvbmx5IGF1dGhGZWF0dXJlc1NlcnZpY2U6IEF1dGhGZWF0dXJlc1NlcnZpY2UsXG4gICAgcHJpdmF0ZSByZWFkb25seSBvYXV0aFJlZ2lzdHJ5OiBPQXV0aFJlZ2lzdHJ5U2VydmljZSwgLy8gZmVhdHVyZTpvYXV0aC1jb3JlXG4gICkge31cblxuICAvKipcbiAgICogTGlzdCBlbmFibGVkIHNpZ24taW4gbWV0aG9kc1xuICAgKiBHRVQgL2FwaS9hdXRoL21ldGhvZHNcbiAgICovXG4gIEBQdWJsaWMoKVxuICBAR2V0KCdtZXRob2RzJylcbiAgQEFwaU9wZXJhdGlvbih7XG4gICAgc3VtbWFyeTogJ0xpc3QgZW5hYmxlZCBzaWduLWluIG1ldGhvZHMnLFxuICAgIGRlc2NyaXB0aW9uOlxuICAgICAgJ1JldHVybnMgdGhlIHBhc3N3b3JkLCBtYWdpYyBsaW5rLCB0d28tZmFjdG9yIGFuZCBwYXNza2V5IHN3aXRjaGVzICcgK1xuICAgICAgJ3RvZ2V0aGVyIHdpdGggdGhlIE9BdXRoIHByb3ZpZGVycyB0aGF0IGhhdmUgY3JlZGVudGlhbHMsIHNvIGEgY2xpZW50ICcgK1xuICAgICAgJ3JlbmRlcnMgb25seSB3aGF0IHdvcmtzLicsXG4gIH0pXG4gIGdldE1ldGhvZHMoKTogQXBpUmVzcG9uc2U8QXV0aE1ldGhvZHNSZXNwb25zZUR0bz4ge1xuICAgIHJldHVybiBBcGlSZXNwb25zZS5zdWNjZXNzKHtcbiAgICAgIG1ldGhvZHM6IHtcbiAgICAgICAgcGFzc3dvcmQ6IHRoaXMuYXV0aEZlYXR1cmVzU2VydmljZS5pc0VuYWJsZWQoQXV0aEZlYXR1cmUuUEFTU1dPUkQpLFxuICAgICAgICBtYWdpY0xpbms6IHRoaXMuYXV0aEZlYXR1cmVzU2VydmljZS5pc0VuYWJsZWQoQXV0aEZlYXR1cmUuTUFHSUNfTElOSyksIC8vIGZlYXR1cmU6bWFnaWMtbGlua1xuICAgICAgICB0d29GYWN0b3I6IHRoaXMuYXV0aEZlYXR1cmVzU2VydmljZS5pc0VuYWJsZWQoQXV0aEZlYXR1cmUuVFdPX0ZBQ1RPUiksIC8vIGZlYXR1cmU6dG90cFxuICAgICAgICBwYXNza2V5czogdGhpcy5hdXRoRmVhdHVyZXNTZXJ2aWNlLmlzRW5hYmxlZChBdXRoRmVhdHVyZS5QQVNTS0VZUyksIC8vIGZlYXR1cmU6cGFzc2tleXNcbiAgICAgICAgb2F1dGg6IHRoaXMub2F1dGhSZWdpc3RyeS5saXN0RW5hYmxlZCgpLCAvLyBmZWF0dXJlOm9hdXRoLWNvcmVcbiAgICAgIH0sXG4gICAgfSk7XG4gIH1cbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

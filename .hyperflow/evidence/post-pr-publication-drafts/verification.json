@@ -1,0 +1,38 @@
+{
+  "status": "drafts only; pending actual independent recheck and hosted CI",
+  "audit_rows_exact": 137,
+  "ids_unique": 137,
+  "ids_titles_task_dispositions_unchanged": true,
+  "disposition_counts": {
+    "blocked by existing review control": 22,
+    "needs independent re-review": 102,
+    "unmapped needs evidence": 10,
+    "verified within named test scope": 3
+  },
+  "links": [
+    {
+      "file": "production-hardening.md",
+      "target": "audit-status.md"
+    },
+    {
+      "file": "audit-status.md",
+      "target": "production-hardening.md"
+    },
+    {
+      "file": "pr-body.md",
+      "target": ".hyperflow/reports/production-hardening.md"
+    },
+    {
+      "file": "pr-body.md",
+      "target": ".hyperflow/reports/audit-status.md"
+    }
+  ],
+  "candidate_frozen_hashes_match": true,
+  "candidate_head_unchanged": true,
+  "no_private_paths_or_local_evidence_links": true,
+  "files": {
+    "pr-body.md": "79655516aff0bec60a415cb369ec520b88fc2af89c1985ba700ec42cc7c02617",
+    "production-hardening.md": "476cdea0741987539b776610b1d6759f9af81af1112295552110b0c18bcdb03e",
+    "audit-status.md": "b253b46e85fef735f40d8a1a871ff9437c05a793df9af0c31b79fd75b77a7b2a"
+  }
+}

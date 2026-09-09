@@ -92,8 +92,11 @@ export function UpdateProfileCard() {
             />
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium">{t('email')}</Label>
+              <Label htmlFor="profile-email" className="text-sm font-medium">
+                {t('email')}
+              </Label>
               <Input
+                id="profile-email"
                 value={user?.email || ''}
                 disabled
                 className="bg-muted"

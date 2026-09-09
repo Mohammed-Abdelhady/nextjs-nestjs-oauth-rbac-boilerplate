@@ -1,0 +1,7 @@
+2026-09-08T07:57:42.864776Z  WARN codex_skills::interface: ignoring interface.icon_small: icon path with '..' must resolve under plugin assets/
+2026-09-08T07:57:42.864797Z  WARN codex_skills::interface: ignoring interface.icon_large: icon path with '..' must resolve under plugin assets/
+2026-09-08T07:57:43.754617Z  WARN codex_skills::interface: ignoring interface.icon_small: icon path with '..' must resolve under plugin assets/
+2026-09-08T07:57:43.754633Z  WARN codex_skills::interface: ignoring interface.icon_large: icon path with '..' must resolve under plugin assets/
+2026-09-08T08:11:13.332886Z  WARN codex_sandboxing::violation: recorded sandbox violation: resource=filesystem backend=seatbelt reason=operation_not_permitted path=unknown
+2026-09-08T08:13:52.611874Z  WARN codex_mcp::rmcp_client: failed to initialize MCP client during shutdown: MCP startup failed: OAuth refresh credentials for server flux are missing an authorization server issuer; authorization required
+2026-09-08T08:13:52.612765Z  WARN codex_mcp::rmcp_client: failed to initialize MCP client during shutdown: MCP startup failed: OAuth refresh credentials for server mobbin are missing an authorization server issuer; authorization required

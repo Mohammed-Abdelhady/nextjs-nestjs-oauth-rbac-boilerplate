@@ -1,0 +1,153 @@
+{
+  "realDocker": false,
+  "noListen": true,
+  "node": "v26.8.1",
+  "results": [
+    {
+      "name": "filtered frontend context: before TS2307 reproduced; after config diagnostics and source imports clear",
+      "status": "PASS"
+    },
+    {
+      "name": "workflow parses; guarded clean commands, sequential browser suites, three local images",
+      "status": "PASS"
+    },
+    {
+      "name": "Docker contexts exclude blocked/artifact names; HTTP route fixture excludes TLS",
+      "status": "PASS"
+    },
+    {
+      "name": "source-export filename classification",
+      "status": "PASS"
+    },
+    {
+      "name": "source export prunes artifacts and skips symlinks",
+      "status": "PASS"
+    },
+    {
+      "name": "actual new CLI regression callback passes with disposable sentinel repo; package build deferred",
+      "status": "PASS"
+    },
+    {
+      "name": "derived model excludes inherited settings, certbot, mounts and fixed ports; requires healthchecks",
+      "status": "PASS"
+    },
+    {
+      "name": "subprocess timeout, output bound and missing executable fail without hanging",
+      "status": "PASS"
+    },
+    {
+      "name": "fake helper residual-malformed-container: port discovery, expected exit and cleanup contract",
+      "status": "PASS"
+    },
+    {
+      "name": "fake helper residual-malformed-network: port discovery, expected exit and cleanup contract",
+      "status": "PASS"
+    },
+    {
+      "name": "fake helper residual-malformed-volume: port discovery, expected exit and cleanup contract",
+      "status": "PASS"
+    },
+    {
+      "name": "fake helper malformed-port-0: port discovery, expected exit and cleanup contract",
+      "status": "PASS"
+    },
+    {
+      "name": "fake helper malformed-port-1: port discovery, expected exit and cleanup contract",
+      "status": "PASS"
+    },
+    {
+      "name": "fake helper malformed-port-2: port discovery, expected exit and cleanup contract",
+      "status": "PASS"
+    },
+    {
+      "name": "fake helper malformed-port-3: port discovery, expected exit and cleanup contract",
+      "status": "PASS"
+    },
+    {
+      "name": "fake helper malformed-port-4: port discovery, expected exit and cleanup contract",
+      "status": "PASS"
+    },
+    {
+      "name": "synthetic HTTP success",
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "name": "synthetic HTTP health-status",
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "name": "synthetic HTTP health-redirect",
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "name": "synthetic HTTP health-json",
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "name": "synthetic HTTP health-extra-field",
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "name": "synthetic HTTP health-oversize",
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "name": "synthetic HTTP frontend-language",
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "name": "synthetic HTTP enabled-provider",
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "name": "synthetic HTTP http-sigint",
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "name": "synthetic HTTP http-sigterm",
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "name": "synthetic HTTP residual-container",
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "name": "synthetic HTTP residual-network",
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "name": "synthetic HTTP residual-volume",
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "name": "fake Docker missing-image: nonzero status and expected owned cleanup/recovery",
+      "status": "PASS"
+    },
+    {
+      "name": "fake Docker startup-failure: nonzero status and expected owned cleanup/recovery",
+      "status": "PASS"
+    },
+    {
+      "name": "fake Docker cancel: nonzero status and expected owned cleanup/recovery",
+      "status": "PASS"
+    },
+    {
+      "name": "fake Docker cleanup-failure: nonzero status and expected owned cleanup/recovery",
+      "status": "PASS"
+    }
+  ],
+  "cleanup": "all lightweight fixtures removed; no listener started in --no-listen mode; no Docker daemon or browser started"
+}

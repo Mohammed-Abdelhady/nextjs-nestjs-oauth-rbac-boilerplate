@@ -10,6 +10,7 @@ import { PasskeyConfigService } from './services/passkey-config.service';
 import { PasskeyLoginService } from './services/passkey-login.service';
 import { PasskeyManagementService } from './services/passkey-management.service';
 import { PasskeyRegistrationService } from './services/passkey-registration.service';
+import { PasskeySecondFactorVerifier } from './services/passkey-second-factor.verifier';
 import { WebAuthnAdapter } from './services/webauthn.adapter';
 import { Passkey, PasskeySchema } from './schemas/passkey.schema';
 import { User, UserSchema } from '../../user/schemas/user.schema';
@@ -19,7 +20,7 @@ import { User, UserSchema } from '../../user/schemas/user.schema';
  * come from AuthModule, so this module can be dropped without touching the
  * rest of auth.
  *
- * PasskeyAssertionService is exported for TwoFactorModule, which accepts a
+ * PasskeySecondFactorVerifier is exported for TwoFactorModule, which accepts a
  * passkey as an answer to a two-factor challenge. Nothing here imports
  * TwoFactorModule, which is what keeps that one-way.
  */
@@ -41,7 +42,12 @@ import { User, UserSchema } from '../../user/schemas/user.schema';
     PasskeyAssertionService,
     PasskeyLoginService,
     PasskeyManagementService,
+    PasskeySecondFactorVerifier,
   ],
-  exports: [PasskeyAssertionService, PasskeyManagementService],
+  exports: [
+    PasskeyAssertionService,
+    PasskeyManagementService,
+    PasskeySecondFactorVerifier,
+  ],
 })
 export class PasskeysModule {}

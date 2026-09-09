@@ -19,7 +19,8 @@ import { IconLinkButton } from '@/components/ui/icon-link-button';
 import { useCallback, useMemo } from 'react';
 import { toast } from '@/lib/toast';
 import { parseApiError } from '@/lib/apiError';
-import { OAuthButtons, OAuthDivider } from '@/modules/oauth';
+import { AuthDivider } from '@/components/ui/auth-divider';
+import { OAuthButtons } from '@/modules/oauth'; // feature:oauth-core
 import { useAuthMethods } from '@/modules/auth/hooks/useAuthMethods';
 
 /**
@@ -71,7 +72,7 @@ export function RegisterForm() {
   const router = useRouter();
   const [register, { isLoading }] = useRegisterMutation();
   const { methods } = useAuthMethods();
-  const hasOAuth = (methods?.oauth.length ?? 0) > 0;
+  const hasOAuth = (methods?.oauth.length ?? 0) > 0; // feature:oauth-core
 
   // Memoize schema creation when translation function changes
   const registerSchema = useMemo(() => createRegisterSchema(t), [t]);
@@ -151,15 +152,17 @@ export function RegisterForm() {
           </IconLinkButton>
         </div>
 
+        {/* feature:oauth-core:start */}
         {/* OAuth buttons, only where the backend has providers configured */}
         {hasOAuth && (
           <>
             <div className="my-6">
               <OAuthButtons />
             </div>
-            <OAuthDivider />
+            <AuthDivider />
           </>
         )}
+        {/* feature:oauth-core:end */}
 
         {/* Registration Form */}
         <FormProvider {...form}>
@@ -180,6 +183,7 @@ export function RegisterForm() {
             {/* Name Input */}
             <FormInput
               name="name"
+              data-testid="register-name-input"
               type="text"
               label={t('name')}
               placeholder={t('namePlaceholder')}
@@ -191,6 +195,7 @@ export function RegisterForm() {
             {/* Email Input */}
             <FormInput
               name="email"
+              data-testid="register-email-input"
               type="email"
               label={t('email')}
               placeholder="name@example.com"
@@ -202,6 +207,7 @@ export function RegisterForm() {
             {/* Password Input */}
             <FormPassword
               name="password"
+              data-testid="register-password-input"
               label={t('password')}
               placeholder="••••••••"
               autoComplete="new-password"

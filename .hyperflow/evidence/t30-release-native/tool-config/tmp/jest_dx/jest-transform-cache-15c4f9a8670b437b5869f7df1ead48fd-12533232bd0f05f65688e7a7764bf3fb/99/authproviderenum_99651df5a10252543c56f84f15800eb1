@@ -1,0 +1,20 @@
+c71e693358fc031d21bc310177124549
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AuthProvider = void 0;
+/**
+ * Authentication provider enum.
+ * Tracks how users originally registered and which authentication methods are available.
+ */
+var AuthProvider;
+(function (AuthProvider) {
+    /** Email/password registration */
+    AuthProvider["EMAIL"] = "email";
+    /** Google OAuth registration */
+    AuthProvider["GOOGLE"] = "google";
+    /** GitHub OAuth registration */
+    AuthProvider["GITHUB"] = "github";
+    /** Facebook OAuth registration */
+    AuthProvider["FACEBOOK"] = "facebook";
+})(AuthProvider || (exports.AuthProvider = AuthProvider = {}));
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvdXNlci9lbnVtcy9hdXRoLXByb3ZpZGVyLmVudW0udHMiLCJtYXBwaW5ncyI6Ijs7O0FBQUE7OztHQUdHO0FBQ0gsSUFBWSxZQVNYO0FBVEQsV0FBWSxZQUFZO0lBQ3RCLGtDQUFrQztJQUNsQywrQkFBZSxDQUFBO0lBQ2YsZ0NBQWdDO0lBQ2hDLGlDQUFpQixDQUFBO0lBQ2pCLGdDQUFnQztJQUNoQyxpQ0FBaUIsQ0FBQTtJQUNqQixrQ0FBa0M7SUFDbEMscUNBQXFCLENBQUE7QUFDdkIsQ0FBQyxFQVRXLFlBQVksNEJBQVosWUFBWSxRQVN2QiIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy91c2VyL2VudW1zL2F1dGgtcHJvdmlkZXIuZW51bS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyIvKipcbiAqIEF1dGhlbnRpY2F0aW9uIHByb3ZpZGVyIGVudW0uXG4gKiBUcmFja3MgaG93IHVzZXJzIG9yaWdpbmFsbHkgcmVnaXN0ZXJlZCBhbmQgd2hpY2ggYXV0aGVudGljYXRpb24gbWV0aG9kcyBhcmUgYXZhaWxhYmxlLlxuICovXG5leHBvcnQgZW51bSBBdXRoUHJvdmlkZXIge1xuICAvKiogRW1haWwvcGFzc3dvcmQgcmVnaXN0cmF0aW9uICovXG4gIEVNQUlMID0gJ2VtYWlsJyxcbiAgLyoqIEdvb2dsZSBPQXV0aCByZWdpc3RyYXRpb24gKi9cbiAgR09PR0xFID0gJ2dvb2dsZScsXG4gIC8qKiBHaXRIdWIgT0F1dGggcmVnaXN0cmF0aW9uICovXG4gIEdJVEhVQiA9ICdnaXRodWInLFxuICAvKiogRmFjZWJvb2sgT0F1dGggcmVnaXN0cmF0aW9uICovXG4gIEZBQ0VCT09LID0gJ2ZhY2Vib29rJyxcbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

@@ -1,0 +1,67 @@
+6d08e7e6ad561eb94ae7c8dd4c84d5eb
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.VerifyTwoFactorDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
+const class_transformer_1 = require("class-transformer"); // feature:passkeys
+const class_validator_1 = require("class-validator");
+const passkey_credential_dto_1 = require("../../passkeys/dto/passkey-credential.dto"); // feature:passkeys
+/**
+ * How a held sign-in is answered: a code from the authenticator app, one of
+ * the ten recovery codes handed out at setup, which works once, or a
+ * credential one of the registered second factor verifiers accepts.
+ */
+class VerifyTwoFactorDto {
+    code;
+    recoveryCode;
+    // feature:passkeys:start
+    passkeyResponse;
+}
+exports.VerifyTwoFactorDto = VerifyTwoFactorDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Six digit code from the authenticator app',
+        example: '123456',
+        required: false,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(/^\d{6}$/, { message: 'code must be six digits' }),
+    __metadata("design:type", String)
+], VerifyTwoFactorDto.prototype, "code", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'One of the recovery codes from setup',
+        example: 'K3M7QRTVWX',
+        required: false,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(/^[A-Za-z2-7\s-]{10,24}$/, {
+        message: 'recoveryCode must be ten base32 characters',
+    }),
+    __metadata("design:type", String)
+], VerifyTwoFactorDto.prototype, "recoveryCode", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Credential from navigator.credentials.get(), fetched with the options ' +
+            'from POST /auth/passkeys/login/options while the challenge cookie is set',
+        type: passkey_credential_dto_1.PasskeyCredentialDto,
+        required: false,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsObject)(),
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => passkey_credential_dto_1.PasskeyCredentialDto),
+    __metadata("design:type", passkey_credential_dto_1.PasskeyCredentialDto)
+], VerifyTwoFactorDto.prototype, "passkeyResponse", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC90d28tZmFjdG9yL2R0by92ZXJpZnktdHdvLWZhY3Rvci5kdG8udHMiLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7O0FBQUEsNkNBQThDO0FBQzlDLHlEQUF5QyxDQUFDLG1CQUFtQjtBQUM3RCxxREFNeUI7QUFDekIsc0ZBQWlGLENBQUMsbUJBQW1CO0FBRXJHOzs7O0dBSUc7QUFDSCxNQUFhLGtCQUFrQjtJQVM3QixJQUFJLENBQVU7SUFZZCxZQUFZLENBQVU7SUFFdEIseUJBQXlCO0lBWXpCLGVBQWUsQ0FBd0I7Q0FFeEM7QUFyQ0QsZ0RBcUNDO0FBNUJDO0lBUkMsSUFBQSxxQkFBVyxFQUFDO1FBQ1gsV0FBVyxFQUFFLDJDQUEyQztRQUN4RCxPQUFPLEVBQUUsUUFBUTtRQUNqQixRQUFRLEVBQUUsS0FBSztLQUNoQixDQUFDO0lBQ0QsSUFBQSw0QkFBVSxHQUFFO0lBQ1osSUFBQSwwQkFBUSxHQUFFO0lBQ1YsSUFBQSx5QkFBTyxFQUFDLFNBQVMsRUFBRSxFQUFFLE9BQU8sRUFBRSx5QkFBeUIsRUFBRSxDQUFDOztnREFDN0M7QUFZZDtJQVZDLElBQUEscUJBQVcsRUFBQztRQUNYLFdBQVcsRUFBRSxzQ0FBc0M7UUFDbkQsT0FBTyxFQUFFLFlBQVk7UUFDckIsUUFBUSxFQUFFLEtBQUs7S0FDaEIsQ0FBQztJQUNELElBQUEsNEJBQVUsR0FBRTtJQUNaLElBQUEsMEJBQVEsR0FBRTtJQUNWLElBQUEseUJBQU8sRUFBQyx5QkFBeUIsRUFBRTtRQUNsQyxPQUFPLEVBQUUsNENBQTRDO0tBQ3RELENBQUM7O3dEQUNvQjtBQWN0QjtJQVhDLElBQUEscUJBQVcsRUFBQztRQUNYLFdBQVcsRUFDVCx3RUFBd0U7WUFDeEUsMEVBQTBFO1FBQzVFLElBQUksRUFBRSw2Q0FBb0I7UUFDMUIsUUFBUSxFQUFFLEtBQUs7S0FDaEIsQ0FBQztJQUNELElBQUEsNEJBQVUsR0FBRTtJQUNaLElBQUEsMEJBQVEsR0FBRTtJQUNWLElBQUEsZ0NBQWMsR0FBRTtJQUNoQixJQUFBLHdCQUFJLEVBQUMsR0FBRyxFQUFFLENBQUMsNkNBQW9CLENBQUM7OEJBQ2YsNkNBQW9COzJEQUFDIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL2F1dGgvdHdvLWZhY3Rvci9kdG8vdmVyaWZ5LXR3by1mYWN0b3IuZHRvLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IEFwaVByb3BlcnR5IH0gZnJvbSAnQG5lc3Rqcy9zd2FnZ2VyJztcbmltcG9ydCB7IFR5cGUgfSBmcm9tICdjbGFzcy10cmFuc2Zvcm1lcic7IC8vIGZlYXR1cmU6cGFzc2tleXNcbmltcG9ydCB7XG4gIElzT2JqZWN0LCAvLyBmZWF0dXJlOnBhc3NrZXlzXG4gIElzT3B0aW9uYWwsXG4gIElzU3RyaW5nLFxuICBNYXRjaGVzLFxuICBWYWxpZGF0ZU5lc3RlZCwgLy8gZmVhdHVyZTpwYXNza2V5c1xufSBmcm9tICdjbGFzcy12YWxpZGF0b3InO1xuaW1wb3J0IHsgUGFzc2tleUNyZWRlbnRpYWxEdG8gfSBmcm9tICcuLi8uLi9wYXNza2V5cy9kdG8vcGFzc2tleS1jcmVkZW50aWFsLmR0byc7IC8vIGZlYXR1cmU6cGFzc2tleXNcblxuLyoqXG4gKiBIb3cgYSBoZWxkIHNpZ24taW4gaXMgYW5zd2VyZWQ6IGEgY29kZSBmcm9tIHRoZSBhdXRoZW50aWNhdG9yIGFwcCwgb25lIG9mXG4gKiB0aGUgdGVuIHJlY292ZXJ5IGNvZGVzIGhhbmRlZCBvdXQgYXQgc2V0dXAsIHdoaWNoIHdvcmtzIG9uY2UsIG9yIGFcbiAqIGNyZWRlbnRpYWwgb25lIG9mIHRoZSByZWdpc3RlcmVkIHNlY29uZCBmYWN0b3IgdmVyaWZpZXJzIGFjY2VwdHMuXG4gKi9cbmV4cG9ydCBjbGFzcyBWZXJpZnlUd29GYWN0b3JEdG8ge1xuICBAQXBpUHJvcGVydHkoe1xuICAgIGRlc2NyaXB0aW9uOiAnU2l4IGRpZ2l0IGNvZGUgZnJvbSB0aGUgYXV0aGVudGljYXRvciBhcHAnLFxuICAgIGV4YW1wbGU6ICcxMjM0NTYnLFxuICAgIHJlcXVpcmVkOiBmYWxzZSxcbiAgfSlcbiAgQElzT3B0aW9uYWwoKVxuICBASXNTdHJpbmcoKVxuICBATWF0Y2hlcygvXlxcZHs2fSQvLCB7IG1lc3NhZ2U6ICdjb2RlIG11c3QgYmUgc2l4IGRpZ2l0cycgfSlcbiAgY29kZT86IHN0cmluZztcblxuICBAQXBpUHJvcGVydHkoe1xuICAgIGRlc2NyaXB0aW9uOiAnT25lIG9mIHRoZSByZWNvdmVyeSBjb2RlcyBmcm9tIHNldHVwJyxcbiAgICBleGFtcGxlOiAnSzNNN1FSVFZXWCcsXG4gICAgcmVxdWlyZWQ6IGZhbHNlLFxuICB9KVxuICBASXNPcHRpb25hbCgpXG4gIEBJc1N0cmluZygpXG4gIEBNYXRjaGVzKC9eW0EtWmEtejItN1xccy1dezEwLDI0fSQvLCB7XG4gICAgbWVzc2FnZTogJ3JlY292ZXJ5Q29kZSBtdXN0IGJlIHRlbiBiYXNlMzIgY2hhcmFjdGVycycsXG4gIH0pXG4gIHJlY292ZXJ5Q29kZT86IHN0cmluZztcblxuICAvLyBmZWF0dXJlOnBhc3NrZXlzOnN0YXJ0XG4gIEBBcGlQcm9wZXJ0eSh7XG4gICAgZGVzY3JpcHRpb246XG4gICAgICAnQ3JlZGVudGlhbCBmcm9tIG5hdmlnYXRvci5jcmVkZW50aWFscy5nZXQoKSwgZmV0Y2hlZCB3aXRoIHRoZSBvcHRpb25zICcgK1xuICAgICAgJ2Zyb20gUE9TVCAvYXV0aC9wYXNza2V5cy9sb2dpbi9vcHRpb25zIHdoaWxlIHRoZSBjaGFsbGVuZ2UgY29va2llIGlzIHNldCcsXG4gICAgdHlwZTogUGFzc2tleUNyZWRlbnRpYWxEdG8sXG4gICAgcmVxdWlyZWQ6IGZhbHNlLFxuICB9KVxuICBASXNPcHRpb25hbCgpXG4gIEBJc09iamVjdCgpXG4gIEBWYWxpZGF0ZU5lc3RlZCgpXG4gIEBUeXBlKCgpID0+IFBhc3NrZXlDcmVkZW50aWFsRHRvKVxuICBwYXNza2V5UmVzcG9uc2U/OiBQYXNza2V5Q3JlZGVudGlhbER0bztcbiAgLy8gZmVhdHVyZTpwYXNza2V5czplbmRcbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

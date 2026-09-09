@@ -1,0 +1,9 @@
+Commander failure traced to the earlier snapshot omitting CLI-local dependencies. The CLI correctly resolves 15.0.0; root resolves transitive 4.1.1. No source or lockfile changes were needed.
+
+- CLI suite: exit 0, 96 tests passed.
+- Combinations: exit 0, nine tests passed across seven selections, including availability and parity checks.
+- Root build: exit 1. Backend and CLI build; frontend cannot fetch Google Fonts.
+
+[Full evidence report](.hyperflow/evidence/t29b-dependency-reconcile/report.md) includes importer resolutions, logs, fingerprint, setup failures and cleanup. The owned snapshot was removed. Results apply to the captured revision; later backend changes remain unverified.
+
+Ready for root evidence validation. Full production verification remains blocked.

@@ -1,0 +1,34 @@
+{
+  "status": "artifact consistency checks passed; source release remains pending",
+  "checked_at": "2026-09-08T09:10:21.567136+00:00",
+  "exit": 0,
+  "assertions": [
+    "JSON parses",
+    "Exact new/mod/deleted lists are disjoint",
+    "130 current paths and802 projected operations each occur in exactly one commit group",
+    "Projection metadata matches final allowlist",
+    "No legacy .hyperflow path is in the projected product delta",
+    "Commit messages use allowed scopes",
+    "Plan links resolve",
+    "Plan uses an independent Git export and does not require writes to the original read-only .git"
+  ],
+  "source_head_unchanged": true,
+  "staged_paths": [],
+  "source_paths_changed_since_capture": [],
+  "source_paths_added_since_capture": [],
+  "source_paths_removed_since_capture": [],
+  "written_paths": [
+    ".hyperflow/evidence/t30-integration/manifest.json",
+    ".hyperflow/evidence/t30-integration/projection-metadata.json",
+    ".hyperflow/evidence/t30-integration/plan.md",
+    ".hyperflow/evidence/t30-integration/verification.json"
+  ],
+  "application_tests_run": false,
+  "hooks_run": false,
+  "integration_run": false,
+  "artifact_sha256": {
+    "manifest.json": "a75101de2ea6f96ffd3d3bde3767abdbb411c4f318c4d4e17621278152fc2010",
+    "projection-metadata.json": "bc85e55d1bf1203865ce8c53436be156917498e76aa3709a7466f6a93eefaacc",
+    "plan.md": "a45587511b4886a094466162a3de49ee0bbd264c1165925dcde779d54995f442"
+  }
+}

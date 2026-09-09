@@ -1,0 +1,86 @@
+{
+  "runtime": "v22.18.0",
+  "npm": "10.9.3",
+  "commands": [
+    {
+      "command": "npm run lint",
+      "log": "lint-final.log",
+      "exit": 0,
+      "result": "all workspace lint"
+    },
+    {
+      "command": "npm run typecheck",
+      "log": "types-final.log",
+      "exit": 0,
+      "result": "all workspace typechecks"
+    },
+    {
+      "command": "npm run build",
+      "log": "build-final.log",
+      "exit": 0,
+      "result": "backend, frontend production, CLI"
+    },
+    {
+      "command": "npm run test",
+      "log": "test-final.log",
+      "exit": 0,
+      "result": "backend708; frontend123; CLI106; configuration18"
+    },
+    {
+      "command": "npm run test:combinations -w create-nest-next-auth",
+      "log": "combinations-final.log",
+      "exit": 0,
+      "result": "9 assertions; seven generated selections"
+    },
+    {
+      "command": "npm run test:e2e -w backend -- --runInBand",
+      "log": "api-final.log",
+      "exit": 0,
+      "result": "72 tests; six suites"
+    },
+    {
+      "command": "npm run test:e2e -w frontend -- --reporter=list,json",
+      "log": "browser-final.log",
+      "exit": 0,
+      "result": "72 passed; zero skipped/flaky/unexpected"
+    },
+    {
+      "command": "npm run test:e2e:frontend -w frontend -- --reporter=list,json",
+      "log": "anonymous-final.log",
+      "exit": 1,
+      "result": "runner invocation mistake: no such package script; no tests executed"
+    },
+    {
+      "command": "npm run test:e2e -w frontend -- --config=playwright.frontend.config.ts --reporter=list,json",
+      "log": "anonymous-corrected.log",
+      "exit": 0,
+      "result": "44 passed; zero skipped/flaky/unexpected"
+    }
+  ],
+  "browser_stats": {
+    "browser-final.json": {
+      "startTime": "2026-09-08T10:12:24.650Z",
+      "duration": 108856.145,
+      "expected": 72,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "anonymous-corrected.json": {
+      "startTime": "2026-09-08T10:15:39.717Z",
+      "duration": 27460.683,
+      "expected": 44,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "pagination-browser-initial.json": {
+      "startTime": "2026-09-08T10:07:54.753Z",
+      "duration": 14924.758,
+      "expected": 4,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    }
+  }
+}

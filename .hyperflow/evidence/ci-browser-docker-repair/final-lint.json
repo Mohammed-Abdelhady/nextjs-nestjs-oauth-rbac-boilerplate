@@ -1,0 +1,10 @@
+{
+  "name": "final-lint",
+  "command": [
+    "npm",
+    "run",
+    "lint"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 11.77
+}

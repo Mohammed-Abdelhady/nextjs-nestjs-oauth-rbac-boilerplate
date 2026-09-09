@@ -1,0 +1,13 @@
+[
+  {
+    "command": [
+      "node",
+      "node_modules/prettier/bin/prettier.cjs",
+      "--write",
+      "packages/create-nest-next-auth/test/combination-helpers.ts",
+      "packages/create-nest-next-auth/test/combination-command.test.ts"
+    ],
+    "name": "format",
+    "exit": 2
+  }
+]

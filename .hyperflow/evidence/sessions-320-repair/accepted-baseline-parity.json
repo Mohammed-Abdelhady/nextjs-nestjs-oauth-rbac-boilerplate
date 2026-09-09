@@ -1,0 +1,6 @@
+{
+  "frontend/src/app/[locale]/(dashboard)/layout.tsx": true,
+  "frontend/src/app/[locale]/layout.tsx": true,
+  "scripts/config-transforms.test.mjs": true,
+  "scripts/lib/docker-http-probes.mjs": true
+}

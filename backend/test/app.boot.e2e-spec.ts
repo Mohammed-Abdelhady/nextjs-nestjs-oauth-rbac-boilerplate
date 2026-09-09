@@ -1,10 +1,12 @@
 import request from 'supertest';
 import type { Response } from 'supertest';
 import { bootE2eApp, type E2eApp } from './utils/e2e-app';
+// feature:oauth-core:start
 import {
   OAUTH_BOOT_PROVIDER_IDS,
   applyOAuthBootEnv,
 } from './constants/oauth-boot-env';
+// feature:oauth-core:end
 
 /**
  * Smoke test for the wiring itself: the whole AppModule has to compile and
@@ -24,49 +26,55 @@ interface HealthBody {
   timestamp: string;
 }
 
+// feature:oauth-core:start
 interface ProvidersBody {
   success: boolean;
   data: {
     providers: { id: string; displayName: string }[];
   };
 }
+// feature:oauth-core:end
 
 interface MethodsBody {
   success: boolean;
   data: {
     methods: {
       password: boolean;
-      magicLink: boolean;
-      twoFactor: boolean;
-      passkeys: boolean;
-      oauth: { id: string; displayName: string }[];
+      magicLink: boolean; // feature:magic-link
+      twoFactor: boolean; // feature:totp
+      passkeys: boolean; // feature:passkeys
+      oauth: { id: string; displayName: string }[]; // feature:oauth-core
     };
   };
 }
 
+// feature:passkeys:start
 interface OptionsBody {
   data: {
     challenge: string;
     allowCredentials: unknown[];
   };
 }
+// feature:passkeys:end
 
+// feature:magic-link,totp,passkeys:start
 interface ErrorBody {
   error: { code: string };
 }
+// feature:magic-link,totp,passkeys:end
 
 describe('AppModule boot (e2e)', () => {
   let e2e: E2eApp;
-  let restoreEnv: () => void;
+  let restoreEnv: () => void; // feature:oauth-core
 
   beforeAll(async () => {
-    restoreEnv = applyOAuthBootEnv();
+    restoreEnv = applyOAuthBootEnv(); // feature:oauth-core
     e2e = await bootE2eApp();
   });
 
   afterAll(async () => {
-    await e2e.app.close();
-    restoreEnv();
+    await e2e?.close();
+    restoreEnv(); // feature:oauth-core
   });
 
   it('should answer the health check', async () => {
@@ -79,6 +87,7 @@ describe('AppModule boot (e2e)', () => {
     expect(typeof body.timestamp).toBe('string');
   });
 
+  // feature:oauth-core:start
   it('should list OAuth providers without a session', async () => {
     const response: Response = await request(e2e.httpServer)
       .get('/api/auth/oauth/providers')
@@ -88,7 +97,9 @@ describe('AppModule boot (e2e)', () => {
     expect(body.success).toBe(true);
     expect(Array.isArray(body.data.providers)).toBe(true);
   });
+  // feature:oauth-core:end
 
+  // feature:oauth-core:start
   it('should list every registered provider once its variables are set', async () => {
     const response: Response = await request(e2e.httpServer)
       .get('/api/auth/oauth/providers')
@@ -103,6 +114,7 @@ describe('AppModule boot (e2e)', () => {
       expect(provider.displayName).toEqual(expect.any(String));
     }
   });
+  // feature:oauth-core:end
 
   it('should list the enabled sign-in methods without a session', async () => {
     const response: Response = await request(e2e.httpServer)
@@ -112,12 +124,13 @@ describe('AppModule boot (e2e)', () => {
     const body = response.body as MethodsBody;
     expect(body.success).toBe(true);
     expect(typeof body.data.methods.password).toBe('boolean');
-    expect(typeof body.data.methods.magicLink).toBe('boolean');
-    expect(typeof body.data.methods.twoFactor).toBe('boolean');
-    expect(typeof body.data.methods.passkeys).toBe('boolean');
-    expect(Array.isArray(body.data.methods.oauth)).toBe(true);
+    expect(typeof body.data.methods.magicLink).toBe('boolean'); // feature:magic-link
+    expect(typeof body.data.methods.twoFactor).toBe('boolean'); // feature:totp
+    expect(typeof body.data.methods.passkeys).toBe('boolean'); // feature:passkeys
+    expect(Array.isArray(body.data.methods.oauth)).toBe(true); // feature:oauth-core
   });
 
+  // feature:magic-link:start
   it('should hide the magic link route while the method is off', async () => {
     const methods: Response = await request(e2e.httpServer)
       .get('/api/auth/methods')
@@ -135,7 +148,9 @@ describe('AppModule boot (e2e)', () => {
 
     expect((response.body as ErrorBody).error.code).toBe('FEATURE_DISABLED');
   });
+  // feature:magic-link:end
 
+  // feature:magic-link:start
   it('should refuse an unknown verify token without a session', async () => {
     const methods: Response = await request(e2e.httpServer)
       .get('/api/auth/methods')
@@ -151,7 +166,9 @@ describe('AppModule boot (e2e)', () => {
       magicLinkOn ? 'MAGIC_LINK_INVALID' : 'FEATURE_DISABLED',
     );
   });
+  // feature:magic-link:end
 
+  // feature:totp:start
   it('should answer the two-factor verify route without a session', async () => {
     const methods: Response = await request(e2e.httpServer)
       .get('/api/auth/methods')
@@ -169,7 +186,9 @@ describe('AppModule boot (e2e)', () => {
       twoFactorOn ? 'TWO_FACTOR_CHALLENGE_INVALID' : 'FEATURE_DISABLED',
     );
   });
+  // feature:totp:end
 
+  // feature:totp:start
   it('should keep the two-factor setup route behind a session', async () => {
     // The session guard is global and runs before the feature guard, so this
     // answers the same way whether or not the feature is on.
@@ -180,7 +199,9 @@ describe('AppModule boot (e2e)', () => {
 
     expect((response.body as ErrorBody).error.code).toBe('SESSION_REQUIRED');
   });
+  // feature:totp:end
 
+  // feature:passkeys:start
   it('should hand out passkey sign-in options without a session', async () => {
     const methods: Response = await request(e2e.httpServer)
       .get('/api/auth/methods')
@@ -206,7 +227,9 @@ describe('AppModule boot (e2e)', () => {
       expect.arrayContaining([expect.stringContaining('pk_challenge=')]),
     );
   });
+  // feature:passkeys:end
 
+  // feature:passkeys:start
   it('should answer the passkey verify route without a session', async () => {
     const methods: Response = await request(e2e.httpServer)
       .get('/api/auth/methods')
@@ -232,7 +255,9 @@ describe('AppModule boot (e2e)', () => {
       passkeysOn ? 'PASSKEY_CHALLENGE_INVALID' : 'FEATURE_DISABLED',
     );
   });
+  // feature:passkeys:end
 
+  // feature:passkeys:start
   it('should keep the passkey list behind a session', async () => {
     // The session guard is global and runs before the feature guard, so this
     // answers the same way whether or not the method is on.
@@ -242,6 +267,7 @@ describe('AppModule boot (e2e)', () => {
 
     expect((response.body as ErrorBody).error.code).toBe('SESSION_REQUIRED');
   });
+  // feature:passkeys:end
 
   it('should return a request id header', async () => {
     const response: Response = await request(e2e.httpServer).get('/health');

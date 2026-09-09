@@ -1,0 +1,125 @@
+{
+  "fingerprint": "c6288fb6d87a65e410b4edbe8c23fdac5eb94714f2d4c63ff3a9af4bdbd6db13",
+  "owned_paths": [
+    {
+      "path": "backend/test/utils/browser-server.ts",
+      "sha256": "9c0b642bdd36331f15fbdcba9db03ede0aa1cf3f0441f017859ad87eca27e6b6"
+    },
+    {
+      "path": "backend/test/utils/e2e-app.ts",
+      "sha256": "54992b6572f89f3d6e28a39ecca07b1a54510e6962665220a4bebb1630b3a2d1"
+    },
+    {
+      "path": "backend/test/utils/local-oauth.ts",
+      "sha256": "b866e1425178633efe9c5505a6a0bfb5f9fa999ae58fb32b44f7e7a4b640f77d"
+    },
+    {
+      "path": "frontend/README.md",
+      "sha256": "7deb6461bdf1d7bc7371eff51d8758cf0d0820b29ded071dc34cf3c74028e2f3"
+    },
+    {
+      "path": "frontend/e2e/README.md",
+      "sha256": "2e9860014ea12b283b69ab5fc2b798e73a680400ba963ca6ed090834b3daed62"
+    },
+    {
+      "path": "frontend/e2e/administration.spec.ts",
+      "sha256": "79e43d3df2c6c4ba08e2627b6367d44f218266fae4e5864f9f29b771cdf93c46"
+    },
+    {
+      "path": "frontend/e2e/fixtures/authenticated.ts",
+      "sha256": "9a5f25a30768ce469ca32394f703dd82ca1e7d8bdce21bc39d806d4fd19cab30"
+    },
+    {
+      "path": "frontend/e2e/lifecycle.spec.ts",
+      "sha256": "b6b24739984abe2f6eb8c267c01e2a2eae08e46fb67749a05a0899bc29c6c17d"
+    },
+    {
+      "path": "frontend/e2e/local-provider.spec.ts",
+      "sha256": "c2826e3e0f195c8084173df83571608c827d54c487297b3df36436c6d1d240a2"
+    },
+    {
+      "path": "frontend/e2e/network-fallback.spec.ts",
+      "sha256": "5f06004fa4ac22901d9297035a796c455937e708c3f660b6c7d85ab26e3f5c38"
+    },
+    {
+      "path": "frontend/e2e/utils/accessibility.ts",
+      "sha256": "f7c03f12a5a37b936079ec692ce3a1d759c89f6e4207509e528c46720e756bec"
+    },
+    {
+      "path": "frontend/package.json",
+      "sha256": "5369f3ba73c833870a5a4bd1c02264fa1100512453daf24d0f2d0523553ac822"
+    },
+    {
+      "path": "frontend/src/components/providers/DirectionProvider.tsx",
+      "sha256": "644790146c98bc61cd9d52e5048913a301de0bfd1c7673f8bcc5b308bb704c5b"
+    },
+    {
+      "path": "frontend/src/components/ui/LocalizedToastMessage.test.tsx",
+      "sha256": "0acef14eb28e526542db44043b9aeea06c5d8555342f6698bd556b4d87a3657b"
+    },
+    {
+      "path": "frontend/src/components/ui/LocalizedToastMessage.tsx",
+      "sha256": "51da210427d9b4def5c90b476d576c9a3462a6fcae500c81902d22abf6450219"
+    },
+    {
+      "path": "frontend/src/lib/toast.ts",
+      "sha256": "08e4cdc67df73eaa138fd74cd2d8994524f311781509c9590ab96f60d989ca2b"
+    },
+    {
+      "path": "frontend/src/modules/account/components/UpdateProfileCard.tsx",
+      "sha256": "1c162b2b4b0374cdcf007e830310e52e156e97e1aa0c20e2a63276bb5b03eab6"
+    },
+    {
+      "path": "frontend/src/modules/auth/components/ActivationForm.tsx",
+      "sha256": "aed03fd8ad6f45a2eb87c2b814be8664b28d045c2392741f46cf7e4eef4c4639"
+    },
+    {
+      "path": "frontend/src/modules/sessions/components/SessionCardTimeline.tsx",
+      "sha256": "f2427fb5a3555223309f8f67f42a6f81d89c7775427e5f9ae5788732cb83c8a5"
+    },
+    {
+      "path": "frontend/src/modules/users/api/usersApi.test.ts",
+      "sha256": "0568c5e63e7920d4370c328216ed394e8ae0d47d4188daa0fd488c951f26da17"
+    },
+    {
+      "path": "frontend/src/modules/users/api/usersApi.ts",
+      "sha256": "cb2931fc151bcd95ebb742853e12e6cf6d67e275a100785345c6ef1b8e7ee6d0"
+    },
+    {
+      "path": "frontend/src/store/middleware/errorInterceptor.test.ts",
+      "sha256": "47631044428c3fc8ec6b918317cd760dc8f4ede9495b9ff1bf5c88ea064a0c20"
+    },
+    {
+      "path": "frontend/src/store/middleware/errorInterceptor.ts",
+      "sha256": "5b0a5f1a97927b2641a49d5581da77fa7bec3994f5f64f9e1276aafc76b23157"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "8ddf47c773487b88af471e027660bf9af04a25e0854793e6bd900651d96e7551"
+    },
+    {
+      "path": "packages/create-nest-next-auth/README.md",
+      "sha256": "a812092e10ca2b56af56978507d0ed9a69926e62ba33d5ae2fa5aa062920716b"
+    },
+    {
+      "path": "packages/create-nest-next-auth/src/scaffold/package-json.ts",
+      "sha256": "daceac74d0557d90a2aeb1abdf824524a821ef42e314f716cb39d8e87d05719b"
+    },
+    {
+      "path": "packages/create-nest-next-auth/test/combination-helpers.ts",
+      "sha256": "d3f65e8318db7c677ea2fd9e9a09250335a405d343541eecd7bf97a0b4bc32fc"
+    },
+    {
+      "path": "packages/create-nest-next-auth/test/combinations.slow.test.ts",
+      "sha256": "cbebfec2d9ddf61ed7c6e99015abfd53fa785a79aaf9e65d8a5cbdc2152dda62"
+    },
+    {
+      "path": "packages/create-nest-next-auth/test/e2e.test.ts",
+      "sha256": "800427e56fb319b3666daabafe9d855a0d7822b15968809f225a25456a6782b4"
+    },
+    {
+      "path": "template.manifest.json",
+      "sha256": "bac323945e48cfd1fde15e0608d0fe79e25feeca916df0c654d5fef700929d5b"
+    }
+  ]
+}

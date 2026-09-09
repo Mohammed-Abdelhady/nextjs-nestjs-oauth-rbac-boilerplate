@@ -1,0 +1,15 @@
+{
+  "at": "2026-09-08T12:35:35.845224+00:00",
+  "head": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+  "remote_head": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+  "fingerprint": "848666e146c79f11292447b80c0290239fb794fc91a10e5a03725b82812a9a0c",
+  "paths": [
+    ".github/workflows/ci.yml",
+    "frontend/e2e/authenticated-regressions.spec.ts",
+    "scripts/config-transforms.test.mjs",
+    "scripts/lib/docker-http-probes.mjs",
+    "scripts/lib/failure-diagnostics.mjs",
+    "scripts/verify-docker.mjs"
+  ],
+  "status": " M .github/workflows/ci.yml\n M frontend/e2e/authenticated-regressions.spec.ts\n M scripts/config-transforms.test.mjs\n M scripts/verify-docker.mjs\n?? scripts/lib/docker-http-probes.mjs\n?? scripts/lib/failure-diagnostics.mjs\n"
+}

@@ -1,0 +1,39 @@
+[
+  {
+    "gate": "combinations",
+    "command": [
+      "npm",
+      "run",
+      "test:combinations",
+      "-w",
+      "packages/create-nest-next-auth"
+    ],
+    "exit": 0,
+    "seconds": 46.74
+  },
+  {
+    "gate": "pack",
+    "command": [
+      "npm",
+      "pack",
+      "-w",
+      "packages/create-nest-next-auth",
+      "--pack-destination",
+      "/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/t30-release-native"
+    ],
+    "exit": 0,
+    "seconds": 0.8
+  },
+  {
+    "gate": "publish-dry-run",
+    "command": [
+      "npm",
+      "publish",
+      "--dry-run",
+      "-w",
+      "packages/create-nest-next-auth"
+    ],
+    "exit": 0,
+    "seconds": 0.81
+  }
+]

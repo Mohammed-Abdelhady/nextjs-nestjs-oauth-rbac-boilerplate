@@ -1,4 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger, // feature:totp
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Response } from 'express';
@@ -6,13 +9,13 @@ import { UserDocument } from '../../user/schemas/user.schema';
 import { Role, RoleDocument } from '../../role/schemas/role.schema';
 import { SessionService } from './session.service';
 import { SessionCookieService } from './session-cookie.service';
-import { AuthFeaturesService } from './auth-features.service';
-import { AuthFeature } from '../enums/auth-feature.enum';
+import { AuthFeaturesService } from './auth-features.service'; // feature:totp
+import { AuthFeature } from '../enums/auth-feature.enum'; // feature:totp
 import {
   AuthenticatedUserSummary,
   toAuthenticatedUser,
 } from '../utils/authenticated-user.util';
-import { TwoFactorChallengeService } from '../two-factor/services/two-factor-challenge.service';
+import { TwoFactorChallengeService } from '../two-factor/services/two-factor-challenge.service'; // feature:totp
 
 /**
  * Either the sign-in finished and the caller has a session, or a second factor
@@ -29,14 +32,14 @@ export type SignInOutcome =
  */
 @Injectable()
 export class SignInService {
-  private readonly logger = new Logger(SignInService.name);
+  private readonly logger = new Logger(SignInService.name); // feature:totp
 
   constructor(
     @InjectModel(Role.name) private readonly roleModel: Model<RoleDocument>,
     private readonly sessionService: SessionService,
     private readonly sessionCookieService: SessionCookieService,
-    private readonly authFeaturesService: AuthFeaturesService,
-    private readonly challengeService: TwoFactorChallengeService,
+    private readonly authFeaturesService: AuthFeaturesService, // feature:totp
+    private readonly challengeService: TwoFactorChallengeService, // feature:totp
   ) {}
 
   /**
@@ -48,11 +51,13 @@ export class SignInService {
     user: UserDocument,
     response: Response,
   ): Promise<SignInOutcome> {
+    // feature:totp:start
     if (this.owesSecondFactor(user)) {
       await this.challengeService.issue(user._id, response);
       this.logger.log('Sign-in held for a second factor');
       return { requiresTwoFactor: true };
     }
+    // feature:totp:end
 
     return {
       requiresTwoFactor: false,
@@ -80,6 +85,7 @@ export class SignInService {
     return toAuthenticatedUser(user, this.roleModel);
   }
 
+  // feature:totp:start
   /**
    * A deployment that turned two-factor off signs everyone in directly. The
    * verify route is closed there, so a challenge would strand the account.
@@ -90,4 +96,5 @@ export class SignInService {
       this.authFeaturesService.isEnabled(AuthFeature.TWO_FACTOR)
     );
   }
+  // feature:totp:end
 }

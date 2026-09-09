@@ -1,0 +1,30 @@
+bc66296863ec2ae54572645f17f2b45b
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TwoFactorCodeDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
+const class_validator_1 = require("class-validator");
+/** A six digit code from the authenticator app. */
+class TwoFactorCodeDto {
+    code;
+}
+exports.TwoFactorCodeDto = TwoFactorCodeDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Six digit code from the authenticator app',
+        example: '123456',
+    }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(/^\d{6}$/, { message: 'code must be six digits' }),
+    __metadata("design:type", String)
+], TwoFactorCodeDto.prototype, "code", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC90d28tZmFjdG9yL2R0by90d28tZmFjdG9yLWNvZGUuZHRvLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLDZDQUE4QztBQUM5QyxxREFBb0Q7QUFFcEQsbURBQW1EO0FBQ25ELE1BQWEsZ0JBQWdCO0lBTzNCLElBQUksQ0FBVTtDQUNmO0FBUkQsNENBUUM7QUFEQztJQU5DLElBQUEscUJBQVcsRUFBQztRQUNYLFdBQVcsRUFBRSwyQ0FBMkM7UUFDeEQsT0FBTyxFQUFFLFFBQVE7S0FDbEIsQ0FBQztJQUNELElBQUEsMEJBQVEsR0FBRTtJQUNWLElBQUEseUJBQU8sRUFBQyxTQUFTLEVBQUUsRUFBRSxPQUFPLEVBQUUseUJBQXlCLEVBQUUsQ0FBQzs7OENBQzdDIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL2F1dGgvdHdvLWZhY3Rvci9kdG8vdHdvLWZhY3Rvci1jb2RlLmR0by50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBBcGlQcm9wZXJ0eSB9IGZyb20gJ0BuZXN0anMvc3dhZ2dlcic7XG5pbXBvcnQgeyBJc1N0cmluZywgTWF0Y2hlcyB9IGZyb20gJ2NsYXNzLXZhbGlkYXRvcic7XG5cbi8qKiBBIHNpeCBkaWdpdCBjb2RlIGZyb20gdGhlIGF1dGhlbnRpY2F0b3IgYXBwLiAqL1xuZXhwb3J0IGNsYXNzIFR3b0ZhY3RvckNvZGVEdG8ge1xuICBAQXBpUHJvcGVydHkoe1xuICAgIGRlc2NyaXB0aW9uOiAnU2l4IGRpZ2l0IGNvZGUgZnJvbSB0aGUgYXV0aGVudGljYXRvciBhcHAnLFxuICAgIGV4YW1wbGU6ICcxMjM0NTYnLFxuICB9KVxuICBASXNTdHJpbmcoKVxuICBATWF0Y2hlcygvXlxcZHs2fSQvLCB7IG1lc3NhZ2U6ICdjb2RlIG11c3QgYmUgc2l4IGRpZ2l0cycgfSlcbiAgY29kZSE6IHN0cmluZztcbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

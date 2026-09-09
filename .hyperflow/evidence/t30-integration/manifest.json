@@ -1,0 +1,3997 @@
+{
+  "schema_version": 1,
+  "status": "ready-for-root-validation",
+  "integration_authorized": false,
+  "captured_at": "2026-09-08T09:06:07.127520+00:00",
+  "source_branch": "feat/production-hardening",
+  "source_head": "68cefb61f450b94c195a8d6cf325ac5e26c15349",
+  "hosted_base_last_verified": "f1d2282d70cf728567fa9877e15176f0ff3705c8",
+  "remote_metadata_source": "Root brief and checkpoint. No remote contact in this assignment.",
+  "remote_feature_branch_last_verified_exists": false,
+  "pr_last_verified_exists": false,
+  "recommended_history_policy": "Start a separate integration branch at hosted master and project the permitted final files. Preserve source branch and all 46 local commits. Do not make the legacy audit/coordination commits ancestors of the published branch. Root must authorize this history choice.",
+  "proposed_local_branch": "integration/production-hardening",
+  "proposed_remote_branch": "feat/production-hardening",
+  "proposed_pr_base": "master",
+  "proposed_pr_state": "draft",
+  "path_allowlist": {
+    "baseline": "68cefb61f450b94c195a8d6cf325ac5e26c15349",
+    "new": [
+      "backend/src/auth/constants/available-auth-features.ts",
+      "backend/src/auth/passkeys/services/passkey-second-factor.verifier.spec.ts",
+      "backend/src/auth/passkeys/services/passkey-second-factor.verifier.ts",
+      "backend/src/auth/services/auth-features.service.spec.ts",
+      "backend/src/auth/two-factor/services/second-factor-verifiers.ts",
+      "backend/src/auth/two-factor/sign-in-second-factor.spec.ts",
+      "backend/src/common/constants/client-paths.ts",
+      "backend/test/utils/browser-server.ts",
+      "backend/test/utils/local-oauth.ts",
+      "backend/test/utils/permissions.ts",
+      "frontend/e2e/README.md",
+      "frontend/e2e/administration.spec.ts",
+      "frontend/e2e/authenticated-regressions.spec.ts",
+      "frontend/e2e/fixtures/authenticated.ts",
+      "frontend/e2e/frontend-only/anonymous-auth.spec.ts",
+      "frontend/e2e/frontend-only/fixtures.ts",
+      "frontend/e2e/lifecycle.spec.ts",
+      "frontend/e2e/local-provider.spec.ts",
+      "frontend/e2e/network-fallback.spec.ts",
+      "frontend/e2e/utils/accessibility.ts",
+      "frontend/e2e/utils/auth-actions.ts",
+      "frontend/e2e/utils/selectors.ts",
+      "frontend/e2e/utils/serve-frontend.mjs",
+      "frontend/playwright.frontend.config.ts",
+      "frontend/src/components/ui/LocalizedToastMessage.test.tsx",
+      "frontend/src/components/ui/LocalizedToastMessage.tsx",
+      "frontend/src/components/ui/auth-divider.tsx",
+      "frontend/src/modules/auth/utils/preventNavigationBlur.ts",
+      "frontend/src/modules/users/api/usersApi.test.ts",
+      "frontend/src/store/authPersistence.test.ts",
+      "frontend/src/store/authPersistence.ts",
+      "frontend/src/store/middleware/errorInterceptor.test.ts",
+      "nginx/.dockerignore",
+      "packages/create-nest-next-auth/src/prune/markers.ts",
+      "packages/create-nest-next-auth/test/combination-helpers.ts",
+      "packages/create-nest-next-auth/test/combinations.slow.test.ts",
+      "packages/create-nest-next-auth/test/feature-runtime.test.ts",
+      "packages/create-nest-next-auth/test/feature-runtime.ts",
+      "packages/create-nest-next-auth/test/markers.test.ts",
+      "packages/create-nest-next-auth/vitest.combinations.config.ts",
+      "scripts/verify-docker.mjs"
+    ],
+    "mod": [
+      ".dockerignore",
+      ".github/workflows/ci.yml",
+      ".gitignore",
+      "backend/src/app.module.ts",
+      "backend/src/auth/auth-methods.controller.spec.ts",
+      "backend/src/auth/auth-methods.controller.ts",
+      "backend/src/auth/auth.module.ts",
+      "backend/src/auth/dto/auth-methods-response.dto.ts",
+      "backend/src/auth/guards/feature-enabled.guard.spec.ts",
+      "backend/src/auth/oauth/oauth-redirect.service.ts",
+      "backend/src/auth/oauth/oauth-registry.wiring.spec.ts",
+      "backend/src/auth/passkeys/passkeys.module.ts",
+      "backend/src/auth/passkeys/passkeys.wiring.spec.ts",
+      "backend/src/auth/services/auth-features.service.ts",
+      "backend/src/auth/services/sign-in.service.spec.ts",
+      "backend/src/auth/services/sign-in.service.ts",
+      "backend/src/auth/two-factor/constants/two-factor.constants.ts",
+      "backend/src/auth/two-factor/dto/verify-two-factor.dto.ts",
+      "backend/src/auth/two-factor/two-factor-login.service.spec.ts",
+      "backend/src/auth/two-factor/two-factor-login.service.ts",
+      "backend/src/auth/two-factor/two-factor.module.ts",
+      "backend/src/config/env.oauth.schema.ts",
+      "backend/src/user/dto/user-profile.dto.ts",
+      "backend/src/user/schemas/user.schema.ts",
+      "backend/src/user/services/user-profile.service.spec.ts",
+      "backend/src/user/services/user-profile.service.ts",
+      "backend/src/user/user.module.ts",
+      "backend/test/app.boot.e2e-spec.ts",
+      "backend/test/app.e2e-spec.ts",
+      "backend/test/jest-e2e.json",
+      "backend/test/permissions/admin-permission-routes.e2e-spec.ts",
+      "backend/test/permissions/permission-enforcement.e2e-spec.ts",
+      "backend/test/roles/role-access.e2e-spec.ts",
+      "backend/test/roles/role-crud.e2e-spec.ts",
+      "backend/test/types/e2e-responses.ts",
+      "backend/test/utils/e2e-app.ts",
+      "frontend/README.md",
+      "frontend/e2e/role-management.spec.ts",
+      "frontend/e2e/session-management.spec.ts",
+      "frontend/e2e/sidebar-navigation.spec.ts",
+      "frontend/package.json",
+      "frontend/playwright.config.ts",
+      "frontend/src/app/[locale]/(dashboard)/settings/page.tsx",
+      "frontend/src/app/[locale]/layout.tsx",
+      "frontend/src/app/layout.tsx",
+      "frontend/src/components/providers/DirectionProvider.tsx",
+      "frontend/src/lib/toast.ts",
+      "frontend/src/modules/account/api/index.ts",
+      "frontend/src/modules/account/components/UpdateProfileCard.tsx",
+      "frontend/src/modules/account/components/index.ts",
+      "frontend/src/modules/account/index.ts",
+      "frontend/src/modules/account/types/account.types.ts",
+      "frontend/src/modules/auth/api/authMethodsApi.ts",
+      "frontend/src/modules/auth/components/ActivationForm.tsx",
+      "frontend/src/modules/auth/components/LoginForm.tsx",
+      "frontend/src/modules/auth/methods/__tests__/registry.test.ts",
+      "frontend/src/modules/auth/methods/password/ForgotPasswordForm.tsx",
+      "frontend/src/modules/auth/methods/password/PasswordSignInForm.tsx",
+      "frontend/src/modules/auth/methods/password/RegisterForm.tsx",
+      "frontend/src/modules/auth/methods/password/ResetPasswordForm.tsx",
+      "frontend/src/modules/auth/methods/registry.ts",
+      "frontend/src/modules/auth/pages/LoginPage.tsx",
+      "frontend/src/modules/auth/store/authApi.ts",
+      "frontend/src/modules/auth/types/auth.types.ts",
+      "frontend/src/modules/oauth/components/index.ts",
+      "frontend/src/modules/oauth/index.ts",
+      "frontend/src/modules/sessions/components/SessionCardTimeline.tsx",
+      "frontend/src/modules/users/api/usersApi.ts",
+      "frontend/src/store/api/baseApi.ts",
+      "frontend/src/store/middleware/errorInterceptor.ts",
+      "frontend/src/store/store.ts",
+      "nginx/nginx.conf",
+      "package-lock.json",
+      "packages/create-nest-next-auth/README.md",
+      "packages/create-nest-next-auth/package.json",
+      "packages/create-nest-next-auth/scripts/sync-template.mjs",
+      "packages/create-nest-next-auth/src/constants/index.ts",
+      "packages/create-nest-next-auth/src/manifest/validate.ts",
+      "packages/create-nest-next-auth/src/prune/index.ts",
+      "packages/create-nest-next-auth/src/prune/references.ts",
+      "packages/create-nest-next-auth/src/report.ts",
+      "packages/create-nest-next-auth/src/scaffold/package-json.ts",
+      "packages/create-nest-next-auth/src/types.ts",
+      "packages/create-nest-next-auth/test/e2e.test.ts",
+      "packages/create-nest-next-auth/test/manifest.test.ts",
+      "packages/create-nest-next-auth/tsconfig.json",
+      "packages/create-nest-next-auth/vitest.config.ts",
+      "template.manifest.json"
+    ],
+    "deleted": [
+      "frontend/src/modules/oauth/components/OAuthDivider.tsx"
+    ],
+    "note": "Exact current uncommitted candidates only; not staging authority. New repair scope and documentation publication still require final reconciliation."
+  },
+  "projected_pr_allowlist": {
+    "baseline": "f1d2282d70cf728567fa9877e15176f0ff3705c8",
+    "new": [
+      ".dockerignore",
+      ".github/dependabot.yml",
+      ".github/pull_request_template.md",
+      ".github/workflows/ci.yml",
+      ".github/workflows/codeql.yml",
+      ".github/workflows/publish-cli.yml",
+      ".husky/pre-push",
+      ".nvmrc",
+      "backend/migrations/20260119000001-add-linked-providers.js",
+      "backend/migrations/20260903000001-session-token-hash.js",
+      "backend/migrations/20260904000001-add-default-permissions-to-users.js",
+      "backend/migrations/20260904000002-linked-accounts.js",
+      "backend/migrations/20260904000003-backfill-email-primary-provider.js",
+      "backend/src/admin/admin-permissions.controller.ts",
+      "backend/src/admin/admin-users.controller.ts",
+      "backend/src/admin/constants/admin-user.constants.ts",
+      "backend/src/admin/dto/list-users-query.dto.spec.ts",
+      "backend/src/admin/mappers/admin-user.mapper.ts",
+      "backend/src/admin/services/admin-email-change.service.spec.ts",
+      "backend/src/admin/services/admin-email-change.service.ts",
+      "backend/src/admin/services/admin-permissions.service.spec.ts",
+      "backend/src/admin/services/admin-permissions.service.ts",
+      "backend/src/admin/services/admin-user-access.service.ts",
+      "backend/src/admin/services/admin-user-queries.service.spec.ts",
+      "backend/src/admin/services/admin-user-queries.service.ts",
+      "backend/src/admin/services/admin-users.service.create.spec.ts",
+      "backend/src/admin/services/admin-users.service.spec.ts",
+      "backend/src/admin/services/admin-users.service.ts",
+      "backend/src/admin/utils/user-filter.util.ts",
+      "backend/src/auth/auth-methods.controller.spec.ts",
+      "backend/src/auth/auth-methods.controller.ts",
+      "backend/src/auth/auth.service.harness-spec.ts",
+      "backend/src/auth/auth.service.login.spec.ts",
+      "backend/src/auth/auth.service.spec.ts",
+      "backend/src/auth/constants/auth-messages.ts",
+      "backend/src/auth/constants/available-auth-features.ts",
+      "backend/src/auth/decorators/requires-feature.decorator.ts",
+      "backend/src/auth/dto/auth-methods-response.dto.ts",
+      "backend/src/auth/enums/auth-feature.enum.ts",
+      "backend/src/auth/guards/auth.guard.spec.ts",
+      "backend/src/auth/guards/feature-enabled.guard.spec.ts",
+      "backend/src/auth/guards/feature-enabled.guard.ts",
+      "backend/src/auth/magic-link/constants/magic-link.constants.ts",
+      "backend/src/auth/magic-link/dto/magic-link-request-response.dto.ts",
+      "backend/src/auth/magic-link/dto/request-magic-link.dto.ts",
+      "backend/src/auth/magic-link/dto/verify-magic-link.dto.ts",
+      "backend/src/auth/magic-link/magic-link.controller.spec.ts",
+      "backend/src/auth/magic-link/magic-link.controller.ts",
+      "backend/src/auth/magic-link/magic-link.harness-spec.ts",
+      "backend/src/auth/magic-link/magic-link.module.ts",
+      "backend/src/auth/magic-link/magic-link.service.spec.ts",
+      "backend/src/auth/magic-link/magic-link.service.ts",
+      "backend/src/auth/magic-link/magic-link.wiring.spec.ts",
+      "backend/src/auth/magic-link/schemas/pending-magic-link.schema.ts",
+      "backend/src/auth/magic-link/utils/magic-link-token.util.ts",
+      "backend/src/auth/oauth/base-oauth.strategy.ts",
+      "backend/src/auth/oauth/oauth-provider.interface.ts",
+      "backend/src/auth/oauth/oauth-redirect.service.ts",
+      "backend/src/auth/oauth/oauth-registry.service.spec.ts",
+      "backend/src/auth/oauth/oauth-registry.service.ts",
+      "backend/src/auth/oauth/oauth-registry.wiring.spec.ts",
+      "backend/src/auth/oauth/oauth-state.service.spec.ts",
+      "backend/src/auth/oauth/oauth-state.service.ts",
+      "backend/src/auth/oauth/oauth.constants.ts",
+      "backend/src/auth/oauth/oauth.controller.ts",
+      "backend/src/auth/oauth/oauth.module.ts",
+      "backend/src/auth/oauth/oauth.service.ts",
+      "backend/src/auth/oauth/strategies/apple-oauth.strategy.spec.ts",
+      "backend/src/auth/oauth/strategies/apple-oauth.strategy.ts",
+      "backend/src/auth/oauth/strategies/discord-oauth.strategy.spec.ts",
+      "backend/src/auth/oauth/strategies/discord-oauth.strategy.ts",
+      "backend/src/auth/oauth/strategies/facebook-oauth.strategy.ts",
+      "backend/src/auth/oauth/strategies/github-oauth.strategy.ts",
+      "backend/src/auth/oauth/strategies/gitlab-oauth.strategy.spec.ts",
+      "backend/src/auth/oauth/strategies/gitlab-oauth.strategy.ts",
+      "backend/src/auth/oauth/strategies/google-oauth.strategy.ts",
+      "backend/src/auth/oauth/strategies/linkedin-oauth.strategy.spec.ts",
+      "backend/src/auth/oauth/strategies/linkedin-oauth.strategy.ts",
+      "backend/src/auth/oauth/strategies/microsoft-oauth.strategy.spec.ts",
+      "backend/src/auth/oauth/strategies/microsoft-oauth.strategy.ts",
+      "backend/src/auth/oauth/strategies/oauth-strategy.harness-spec.ts",
+      "backend/src/auth/oauth/strategies/oidc-oauth.harness-spec.ts",
+      "backend/src/auth/oauth/strategies/oidc-oauth.login.spec.ts",
+      "backend/src/auth/oauth/strategies/oidc-oauth.strategy.spec.ts",
+      "backend/src/auth/oauth/strategies/oidc-oauth.strategy.ts",
+      "backend/src/auth/oauth/strategies/slack-oauth.strategy.spec.ts",
+      "backend/src/auth/oauth/strategies/slack-oauth.strategy.ts",
+      "backend/src/auth/oauth/strategies/twitch-oauth.strategy.spec.ts",
+      "backend/src/auth/oauth/strategies/twitch-oauth.strategy.ts",
+      "backend/src/auth/oauth/strategies/x-oauth.strategy.spec.ts",
+      "backend/src/auth/oauth/strategies/x-oauth.strategy.ts",
+      "backend/src/auth/oauth/utils/apple-client-secret.util.spec.ts",
+      "backend/src/auth/oauth/utils/apple-client-secret.util.ts",
+      "backend/src/auth/oauth/utils/apple-user-payload.util.spec.ts",
+      "backend/src/auth/oauth/utils/apple-user-payload.util.ts",
+      "backend/src/auth/oauth/utils/callback-params.util.spec.ts",
+      "backend/src/auth/oauth/utils/callback-params.util.ts",
+      "backend/src/auth/oauth/utils/id-token.util.ts",
+      "backend/src/auth/oauth/utils/oidc-discovery.util.spec.ts",
+      "backend/src/auth/oauth/utils/oidc-discovery.util.ts",
+      "backend/src/auth/oauth/utils/oidc-settings.util.ts",
+      "backend/src/auth/oauth/utils/redirect.util.ts",
+      "backend/src/auth/oauth/validators/is-registered-provider.validator.ts",
+      "backend/src/auth/passkeys/constants/passkeys.constants.ts",
+      "backend/src/auth/passkeys/dto/passkey-credential.dto.ts",
+      "backend/src/auth/passkeys/dto/passkey-login-options.dto.ts",
+      "backend/src/auth/passkeys/dto/passkey-summary.dto.ts",
+      "backend/src/auth/passkeys/dto/rename-passkey.dto.ts",
+      "backend/src/auth/passkeys/dto/verify-passkey-login.dto.ts",
+      "backend/src/auth/passkeys/dto/verify-passkey-registration.dto.ts",
+      "backend/src/auth/passkeys/passkey-login.controller.ts",
+      "backend/src/auth/passkeys/passkeys.controller.ts",
+      "backend/src/auth/passkeys/passkeys.harness-spec.ts",
+      "backend/src/auth/passkeys/passkeys.module.ts",
+      "backend/src/auth/passkeys/passkeys.wiring.spec.ts",
+      "backend/src/auth/passkeys/schemas/passkey.schema.ts",
+      "backend/src/auth/passkeys/services/passkey-assertion.service.spec.ts",
+      "backend/src/auth/passkeys/services/passkey-assertion.service.ts",
+      "backend/src/auth/passkeys/services/passkey-challenge.service.spec.ts",
+      "backend/src/auth/passkeys/services/passkey-challenge.service.ts",
+      "backend/src/auth/passkeys/services/passkey-config.service.ts",
+      "backend/src/auth/passkeys/services/passkey-login.service.spec.ts",
+      "backend/src/auth/passkeys/services/passkey-login.service.ts",
+      "backend/src/auth/passkeys/services/passkey-management.service.spec.ts",
+      "backend/src/auth/passkeys/services/passkey-management.service.ts",
+      "backend/src/auth/passkeys/services/passkey-registration.service.spec.ts",
+      "backend/src/auth/passkeys/services/passkey-registration.service.ts",
+      "backend/src/auth/passkeys/services/passkey-second-factor.verifier.spec.ts",
+      "backend/src/auth/passkeys/services/passkey-second-factor.verifier.ts",
+      "backend/src/auth/passkeys/services/webauthn.adapter.spec.ts",
+      "backend/src/auth/passkeys/services/webauthn.adapter.ts",
+      "backend/src/auth/passkeys/utils/passkey-summary.util.ts",
+      "backend/src/auth/passkeys/utils/signed-cookie.util.ts",
+      "backend/src/auth/services/auth-features.service.spec.ts",
+      "backend/src/auth/services/auth-features.service.ts",
+      "backend/src/auth/services/auth-mail.service.ts",
+      "backend/src/auth/services/password-reset-code.service.spec.ts",
+      "backend/src/auth/services/password-reset-code.service.ts",
+      "backend/src/auth/services/session-cookie.service.spec.ts",
+      "backend/src/auth/services/session-cookie.service.ts",
+      "backend/src/auth/services/session.service.spec.ts",
+      "backend/src/auth/services/sign-in.service.spec.ts",
+      "backend/src/auth/services/sign-in.service.ts",
+      "backend/src/auth/services/verification-code.service.spec.ts",
+      "backend/src/auth/services/verification-code.service.ts",
+      "backend/src/auth/two-factor/constants/two-factor.constants.ts",
+      "backend/src/auth/two-factor/dto/disable-two-factor.dto.ts",
+      "backend/src/auth/two-factor/dto/recovery-codes-response.dto.ts",
+      "backend/src/auth/two-factor/dto/setup-two-factor.dto.ts",
+      "backend/src/auth/two-factor/dto/two-factor-code.dto.ts",
+      "backend/src/auth/two-factor/dto/two-factor-setup-response.dto.ts",
+      "backend/src/auth/two-factor/dto/verify-two-factor.dto.ts",
+      "backend/src/auth/two-factor/schemas/two-factor-challenge.schema.ts",
+      "backend/src/auth/two-factor/services/second-factor-verifiers.ts",
+      "backend/src/auth/two-factor/services/totp-secret-crypto.service.spec.ts",
+      "backend/src/auth/two-factor/services/totp-secret-crypto.service.ts",
+      "backend/src/auth/two-factor/services/two-factor-challenge.service.spec.ts",
+      "backend/src/auth/two-factor/services/two-factor-challenge.service.ts",
+      "backend/src/auth/two-factor/services/two-factor-reauth.service.ts",
+      "backend/src/auth/two-factor/services/two-factor-verification.harness-spec.ts",
+      "backend/src/auth/two-factor/services/two-factor-verification.service.spec.ts",
+      "backend/src/auth/two-factor/services/two-factor-verification.service.ts",
+      "backend/src/auth/two-factor/sign-in-second-factor.spec.ts",
+      "backend/src/auth/two-factor/two-factor-login.service.spec.ts",
+      "backend/src/auth/two-factor/two-factor-login.service.ts",
+      "backend/src/auth/two-factor/two-factor.controller.ts",
+      "backend/src/auth/two-factor/two-factor.harness-spec.ts",
+      "backend/src/auth/two-factor/two-factor.module.ts",
+      "backend/src/auth/two-factor/two-factor.service.spec.ts",
+      "backend/src/auth/two-factor/two-factor.service.ts",
+      "backend/src/auth/two-factor/two-factor.wiring.spec.ts",
+      "backend/src/auth/two-factor/utils/recovery-code.util.spec.ts",
+      "backend/src/auth/two-factor/utils/recovery-code.util.ts",
+      "backend/src/auth/two-factor/utils/totp.util.spec.ts",
+      "backend/src/auth/two-factor/utils/totp.util.ts",
+      "backend/src/auth/utils/activation.util.spec.ts",
+      "backend/src/auth/utils/activation.util.ts",
+      "backend/src/auth/utils/authenticated-user.util.ts",
+      "backend/src/auth/utils/permissions.util.ts",
+      "backend/src/auth/utils/verification-code.util.spec.ts",
+      "backend/src/auth/utils/verification-code.util.ts",
+      "backend/src/common/constants/app.ts",
+      "backend/src/common/constants/client-paths.ts",
+      "backend/src/common/constants/http-status.ts",
+      "backend/src/common/constants/name.ts",
+      "backend/src/common/constants/oauth-providers.ts",
+      "backend/src/common/constants/request-id.ts",
+      "backend/src/common/constants/roles.ts",
+      "backend/src/common/constants/session.ts",
+      "backend/src/common/constants/throttle.ts",
+      "backend/src/common/filters/global-exception-mapping.spec.ts",
+      "backend/src/common/guards/permission.guard.spec.ts",
+      "backend/src/common/guards/roles.guard.spec.ts",
+      "backend/src/common/interceptors/request-logging.interceptor.spec.ts",
+      "backend/src/common/interceptors/request-logging.interceptor.ts",
+      "backend/src/common/interfaces/request-with-id.interface.ts",
+      "backend/src/common/middleware/request-id.middleware.spec.ts",
+      "backend/src/common/middleware/request-id.middleware.ts",
+      "backend/src/common/pipes/parse-object-id.pipe.spec.ts",
+      "backend/src/common/pipes/parse-object-id.pipe.ts",
+      "backend/src/common/services/hash.service.spec.ts",
+      "backend/src/common/utils/escape-html.spec.ts",
+      "backend/src/common/utils/escape-html.ts",
+      "backend/src/common/utils/escape-regex.spec.ts",
+      "backend/src/common/utils/escape-regex.ts",
+      "backend/src/common/utils/mongo-error.util.ts",
+      "backend/src/common/utils/parse-user-agent.spec.ts",
+      "backend/src/common/utils/parse-user-agent.ts",
+      "backend/src/common/utils/transform.spec.ts",
+      "backend/src/common/utils/transform.ts",
+      "backend/src/config/env.oauth.schema.ts",
+      "backend/src/config/env.schema.ts",
+      "backend/src/config/env.validation.spec.ts",
+      "backend/src/config/oauth.config.ts",
+      "backend/src/health/health.service.spec.ts",
+      "backend/src/mail/mail.service.spec.ts",
+      "backend/src/role/role.service.spec.ts",
+      "backend/src/role/services/role-hierarchy.service.spec.ts",
+      "backend/src/role/services/role-hierarchy.service.ts",
+      "backend/src/role/utils/role.util.ts",
+      "backend/src/user/constants/user.constants.ts",
+      "backend/src/user/dto/add-permission.dto.spec.ts",
+      "backend/src/user/schemas/two-factor.schema.ts",
+      "backend/src/user/services/account-linking.harness-spec.ts",
+      "backend/src/user/services/account-linking.queries.spec.ts",
+      "backend/src/user/services/account-linking.service.spec.ts",
+      "backend/src/user/services/profile-sync.service.spec.ts",
+      "backend/src/user/services/user-permissions.service.spec.ts",
+      "backend/src/user/services/user-permissions.service.ts",
+      "backend/src/user/services/user-profile.service.spec.ts",
+      "backend/src/user/services/user-profile.service.ts",
+      "backend/src/user/services/user-sessions.service.spec.ts",
+      "backend/src/user/services/user-sessions.service.ts",
+      "backend/src/user/user-profile.controller.ts",
+      "backend/src/user/user-providers.controller.ts",
+      "backend/src/user/user-sessions.controller.ts",
+      "backend/src/user/utils/user-lookup.util.ts",
+      "backend/test/app.boot.e2e-spec.ts",
+      "backend/test/constants/oauth-boot-env.ts",
+      "backend/test/constants/seed-users.ts",
+      "backend/test/permissions/admin-permission-routes.e2e-spec.ts",
+      "backend/test/permissions/permission-enforcement.e2e-spec.ts",
+      "backend/test/roles/role-access.e2e-spec.ts",
+      "backend/test/roles/role-crud.e2e-spec.ts",
+      "backend/test/types/e2e-responses.ts",
+      "backend/test/utils/browser-server.ts",
+      "backend/test/utils/e2e-app.ts",
+      "backend/test/utils/local-oauth.ts",
+      "backend/test/utils/permissions.ts",
+      "docs/ARCHITECTURE.md",
+      "docs/setup-apple-oauth.md",
+      "docs/setup-discord-oauth.md",
+      "docs/setup-gitlab-oauth.md",
+      "docs/setup-linkedin-oauth.md",
+      "docs/setup-magic-link.md",
+      "docs/setup-microsoft-oauth.md",
+      "docs/setup-oidc-oauth.md",
+      "docs/setup-passkeys.md",
+      "docs/setup-slack-oauth.md",
+      "docs/setup-twitch-oauth.md",
+      "docs/setup-two-factor.md",
+      "docs/setup-x-oauth.md",
+      "frontend/e2e/README.md",
+      "frontend/e2e/administration.spec.ts",
+      "frontend/e2e/authenticated-regressions.spec.ts",
+      "frontend/e2e/fixtures/authenticated.ts",
+      "frontend/e2e/frontend-only/anonymous-auth.spec.ts",
+      "frontend/e2e/frontend-only/fixtures.ts",
+      "frontend/e2e/lifecycle.spec.ts",
+      "frontend/e2e/local-provider.spec.ts",
+      "frontend/e2e/network-fallback.spec.ts",
+      "frontend/e2e/utils/accessibility.ts",
+      "frontend/e2e/utils/auth-actions.ts",
+      "frontend/e2e/utils/selectors.ts",
+      "frontend/e2e/utils/serve-frontend.mjs",
+      "frontend/playwright.frontend.config.ts",
+      "frontend/scripts/check-rtl.mjs",
+      "frontend/src/app/[locale]/(auth)/auth/2fa/page.tsx",
+      "frontend/src/app/[locale]/(auth)/auth/magic-link/verify/page.tsx",
+      "frontend/src/app/[locale]/(auth)/layout.tsx",
+      "frontend/src/app/[locale]/(dashboard)/admin/roles/layout.tsx",
+      "frontend/src/app/[locale]/(dashboard)/admin/users/layout.tsx",
+      "frontend/src/app/[locale]/(dashboard)/sessions/layout.tsx",
+      "frontend/src/app/tokens.css",
+      "frontend/src/components/forms/FieldError.tsx",
+      "frontend/src/components/forms/FormRootError.tsx",
+      "frontend/src/components/forms/PasswordRules.tsx",
+      "frontend/src/components/forms/PasswordVisibilityToggle.tsx",
+      "frontend/src/components/forms/SubmitButton.tsx",
+      "frontend/src/components/layout/LoadingRegion.tsx",
+      "frontend/src/components/navigation/MobileNavSheet.tsx",
+      "frontend/src/components/navigation/SidebarBrand.tsx",
+      "frontend/src/components/navigation/SidebarPanel.tsx",
+      "frontend/src/components/navigation/navConfig.ts",
+      "frontend/src/components/pagination/PaginationControl.tsx",
+      "frontend/src/components/pagination/index.ts",
+      "frontend/src/components/providers/DirectionProvider.tsx",
+      "frontend/src/components/ui/LocalizedToastMessage.test.tsx",
+      "frontend/src/components/ui/LocalizedToastMessage.tsx",
+      "frontend/src/components/ui/auth-divider.tsx",
+      "frontend/src/components/ui/sheet.tsx",
+      "frontend/src/components/ui/tooltip.tsx",
+      "frontend/src/constants/api.ts",
+      "frontend/src/constants/app.ts",
+      "frontend/src/constants/focusStyles.ts",
+      "frontend/src/i18n/__tests__/messages.test.ts",
+      "frontend/src/i18n/direction.ts",
+      "frontend/src/i18n/navigation.ts",
+      "frontend/src/lib/apiErrorHelpers.ts",
+      "frontend/src/lib/config/security-headers.test.ts",
+      "frontend/src/lib/config/security-headers.ts",
+      "frontend/src/lib/qr/__tests__/qr.test.ts",
+      "frontend/src/lib/qr/__tests__/roundTrip.test.ts",
+      "frontend/src/lib/qr/encode.ts",
+      "frontend/src/lib/qr/format.ts",
+      "frontend/src/lib/qr/galois.ts",
+      "frontend/src/lib/qr/index.ts",
+      "frontend/src/lib/qr/mask.ts",
+      "frontend/src/lib/qr/patterns.ts",
+      "frontend/src/lib/qr/render.ts",
+      "frontend/src/lib/qr/tables.ts",
+      "frontend/src/lib/validations/__tests__/passwordRules.test.ts",
+      "frontend/src/lib/validations/passwordRules.ts",
+      "frontend/src/lib/validations/string/identity.ts",
+      "frontend/src/lib/validations/string/patterns.ts",
+      "frontend/src/lib/validations/string/text.ts",
+      "frontend/src/modules/auth/api/authMethodsApi.ts",
+      "frontend/src/modules/auth/api/index.ts",
+      "frontend/src/modules/auth/components/AuthMethodsGate.tsx",
+      "frontend/src/modules/auth/constants/authMethods.ts",
+      "frontend/src/modules/auth/hooks/useAuthMethods.ts",
+      "frontend/src/modules/auth/hooks/useCompleteSignIn.ts",
+      "frontend/src/modules/auth/hooks/useCooldown.ts",
+      "frontend/src/modules/auth/hooks/useFeatureDisabled.ts",
+      "frontend/src/modules/auth/methods/__tests__/registry.test.ts",
+      "frontend/src/modules/auth/methods/magic-link/MagicLinkRequestForm.tsx",
+      "frontend/src/modules/auth/methods/magic-link/MagicLinkVerifyPanel.tsx",
+      "frontend/src/modules/auth/methods/magic-link/index.ts",
+      "frontend/src/modules/auth/methods/magic-link/magicLinkApi.ts",
+      "frontend/src/modules/auth/methods/magic-link/magicLinkMethod.ts",
+      "frontend/src/modules/auth/methods/password/ChangePasswordCard.tsx",
+      "frontend/src/modules/auth/methods/password/ForgotPasswordForm.tsx",
+      "frontend/src/modules/auth/methods/password/ForgotPasswordPage.tsx",
+      "frontend/src/modules/auth/methods/password/PasswordSignInForm.tsx",
+      "frontend/src/modules/auth/methods/password/RegisterForm.tsx",
+      "frontend/src/modules/auth/methods/password/RegisterPage.tsx",
+      "frontend/src/modules/auth/methods/password/ResetPasswordForm.tsx",
+      "frontend/src/modules/auth/methods/password/ResetPasswordPage.tsx",
+      "frontend/src/modules/auth/methods/password/index.ts",
+      "frontend/src/modules/auth/methods/password/passwordMethod.ts",
+      "frontend/src/modules/auth/methods/registry.ts",
+      "frontend/src/modules/auth/methods/types.ts",
+      "frontend/src/modules/auth/utils/__tests__/authHelpers.test.ts",
+      "frontend/src/modules/auth/utils/__tests__/digitFilter.test.ts",
+      "frontend/src/modules/auth/utils/__tests__/errorCodeMessage.test.ts",
+      "frontend/src/modules/auth/utils/activationSchema.ts",
+      "frontend/src/modules/auth/utils/digitFilter.ts",
+      "frontend/src/modules/auth/utils/errorCodeMessage.ts",
+      "frontend/src/modules/auth/utils/featureDisabled.ts",
+      "frontend/src/modules/auth/utils/preventNavigationBlur.ts",
+      "frontend/src/modules/auth/utils/signInRouting.ts",
+      "frontend/src/modules/oauth/components/OAuthCallbackPanel.tsx",
+      "frontend/src/modules/oauth/components/OAuthProviderIcon.tsx",
+      "frontend/src/modules/oauth/constants/index.ts",
+      "frontend/src/modules/oauth/constants/providers.ts",
+      "frontend/src/modules/oauth/constants/routes.ts",
+      "frontend/src/modules/oauth/utils/oauthUrl.ts",
+      "frontend/src/modules/oauth/utils/providerNames.ts",
+      "frontend/src/modules/passkeys/api/index.ts",
+      "frontend/src/modules/passkeys/api/passkeysApi.ts",
+      "frontend/src/modules/passkeys/components/PasskeyChallengeButton.tsx",
+      "frontend/src/modules/passkeys/components/PasskeyDeleteDialog.tsx",
+      "frontend/src/modules/passkeys/components/PasskeyList.tsx",
+      "frontend/src/modules/passkeys/components/PasskeyNameDialog.tsx",
+      "frontend/src/modules/passkeys/components/PasskeyPrompt.tsx",
+      "frontend/src/modules/passkeys/components/PasskeyRow.tsx",
+      "frontend/src/modules/passkeys/components/PasskeySignInButton.tsx",
+      "frontend/src/modules/passkeys/components/PasskeysCard.tsx",
+      "frontend/src/modules/passkeys/constants/index.ts",
+      "frontend/src/modules/passkeys/hooks/index.ts",
+      "frontend/src/modules/passkeys/hooks/useDialogTarget.ts",
+      "frontend/src/modules/passkeys/hooks/usePasskeySignIn.ts",
+      "frontend/src/modules/passkeys/hooks/usePasskeySupport.ts",
+      "frontend/src/modules/passkeys/hooks/useRegisterPasskey.ts",
+      "frontend/src/modules/passkeys/index.ts",
+      "frontend/src/modules/passkeys/methods/passkeysMethod.ts",
+      "frontend/src/modules/passkeys/types/index.ts",
+      "frontend/src/modules/passkeys/utils/__tests__/deviceLabel.test.ts",
+      "frontend/src/modules/passkeys/utils/__tests__/webauthnErrors.test.ts",
+      "frontend/src/modules/passkeys/utils/deviceLabel.ts",
+      "frontend/src/modules/passkeys/utils/webauthn.ts",
+      "frontend/src/modules/passkeys/utils/webauthnErrors.ts",
+      "frontend/src/modules/permissions/components/EditRoleForm.tsx",
+      "frontend/src/modules/permissions/components/PermissionGroupGrid.tsx",
+      "frontend/src/modules/permissions/components/SearchPermissionGrid.tsx",
+      "frontend/src/modules/permissions/components/SearchPermissionTabs.tsx",
+      "frontend/src/modules/permissions/components/UserActionConfirmDialog.tsx",
+      "frontend/src/modules/permissions/components/UserPermissionsSummary.tsx",
+      "frontend/src/modules/permissions/hooks/usePermissionLabel.ts",
+      "frontend/src/modules/permissions/utils/__tests__/createUserValidation.test.ts",
+      "frontend/src/modules/permissions/utils/createUserValidation.ts",
+      "frontend/src/modules/roles/components/RoleDialogs.tsx",
+      "frontend/src/modules/roles/components/RoleSplitViewSkeleton.tsx",
+      "frontend/src/modules/sessions/components/SessionTimelineSkeleton.tsx",
+      "frontend/src/modules/sessions/components/index.ts",
+      "frontend/src/modules/two-factor/api/index.ts",
+      "frontend/src/modules/two-factor/api/twoFactorApi.ts",
+      "frontend/src/modules/two-factor/components/CodeField.tsx",
+      "frontend/src/modules/two-factor/components/QrCode.tsx",
+      "frontend/src/modules/two-factor/components/RecoveryCodeList.tsx",
+      "frontend/src/modules/two-factor/components/RegenerateCodesDialog.tsx",
+      "frontend/src/modules/two-factor/components/TwoFactorAnswerFields.tsx",
+      "frontend/src/modules/two-factor/components/TwoFactorCard.tsx",
+      "frontend/src/modules/two-factor/components/TwoFactorChallengePanel.tsx",
+      "frontend/src/modules/two-factor/components/TwoFactorDisableDialog.tsx",
+      "frontend/src/modules/two-factor/components/TwoFactorSetupDialog.tsx",
+      "frontend/src/modules/two-factor/components/steps/ConfirmStep.tsx",
+      "frontend/src/modules/two-factor/components/steps/ReauthStep.tsx",
+      "frontend/src/modules/two-factor/components/steps/RecoveryCodesStep.tsx",
+      "frontend/src/modules/two-factor/components/steps/ScanStep.tsx",
+      "frontend/src/modules/two-factor/constants/index.ts",
+      "frontend/src/modules/two-factor/hooks/useTwoFactorSetup.ts",
+      "frontend/src/modules/two-factor/index.ts",
+      "frontend/src/modules/two-factor/types/index.ts",
+      "frontend/src/modules/two-factor/utils/answerSchema.ts",
+      "frontend/src/modules/two-factor/utils/clipboard.ts",
+      "frontend/src/modules/users/api/usersApi.test.ts",
+      "frontend/src/modules/users/components/UserGroupedList.tsx",
+      "frontend/src/modules/users/components/UserListSkeleton.tsx",
+      "frontend/src/modules/users/components/UserListToolbar.tsx",
+      "frontend/src/store/authPersistence.test.ts",
+      "frontend/src/store/authPersistence.ts",
+      "frontend/src/store/middleware/errorInterceptor.test.ts",
+      "frontend/src/types/apiError.types.ts",
+      "frontend/vitest.config.ts",
+      "nginx/.dockerignore",
+      "nginx/snippets/security-headers.conf",
+      "packages/create-nest-next-auth/README.md",
+      "packages/create-nest-next-auth/eslint.config.mjs",
+      "packages/create-nest-next-auth/package.json",
+      "packages/create-nest-next-auth/scripts/sync-template.mjs",
+      "packages/create-nest-next-auth/src/cli.ts",
+      "packages/create-nest-next-auth/src/constants/index.ts",
+      "packages/create-nest-next-auth/src/flags/options.ts",
+      "packages/create-nest-next-auth/src/index.ts",
+      "packages/create-nest-next-auth/src/manifest/load.ts",
+      "packages/create-nest-next-auth/src/manifest/select.ts",
+      "packages/create-nest-next-auth/src/manifest/validate.ts",
+      "packages/create-nest-next-auth/src/paths.ts",
+      "packages/create-nest-next-auth/src/prompts/index.ts",
+      "packages/create-nest-next-auth/src/prune/docs.ts",
+      "packages/create-nest-next-auth/src/prune/env.ts",
+      "packages/create-nest-next-auth/src/prune/files.ts",
+      "packages/create-nest-next-auth/src/prune/index.ts",
+      "packages/create-nest-next-auth/src/prune/markers.ts",
+      "packages/create-nest-next-auth/src/prune/references.ts",
+      "packages/create-nest-next-auth/src/report.ts",
+      "packages/create-nest-next-auth/src/scaffold/copy.ts",
+      "packages/create-nest-next-auth/src/scaffold/git.ts",
+      "packages/create-nest-next-auth/src/scaffold/install.ts",
+      "packages/create-nest-next-auth/src/scaffold/next-steps.ts",
+      "packages/create-nest-next-auth/src/scaffold/package-json.ts",
+      "packages/create-nest-next-auth/src/types.ts",
+      "packages/create-nest-next-auth/src/utils/exec.ts",
+      "packages/create-nest-next-auth/src/utils/fs.ts",
+      "packages/create-nest-next-auth/src/utils/glob.ts",
+      "packages/create-nest-next-auth/src/utils/project-name.ts",
+      "packages/create-nest-next-auth/test/combination-helpers.ts",
+      "packages/create-nest-next-auth/test/combinations.slow.test.ts",
+      "packages/create-nest-next-auth/test/e2e.test.ts",
+      "packages/create-nest-next-auth/test/feature-runtime.test.ts",
+      "packages/create-nest-next-auth/test/feature-runtime.ts",
+      "packages/create-nest-next-auth/test/fixture.ts",
+      "packages/create-nest-next-auth/test/flags.test.ts",
+      "packages/create-nest-next-auth/test/manifest.test.ts",
+      "packages/create-nest-next-auth/test/markers.test.ts",
+      "packages/create-nest-next-auth/test/project-name.test.ts",
+      "packages/create-nest-next-auth/test/prune.test.ts",
+      "packages/create-nest-next-auth/tsconfig.json",
+      "packages/create-nest-next-auth/tsdown.config.ts",
+      "packages/create-nest-next-auth/vitest.combinations.config.ts",
+      "packages/create-nest-next-auth/vitest.config.ts",
+      "scripts/check-contrast.mjs",
+      "scripts/verify-docker.mjs",
+      "template.manifest.json"
+    ],
+    "mod": [
+      ".env.docker.example",
+      ".gitignore",
+      ".lintstagedrc.cjs",
+      "README.md",
+      "backend/.env.example",
+      "backend/Dockerfile",
+      "backend/README.md",
+      "backend/docs/authentication-flow.md",
+      "backend/docs/oauth-authentication.md",
+      "backend/docs/postman/FULL-MERN-AUTH-Boilerplate-API.postman_collection.json",
+      "backend/docs/postman/README.md",
+      "backend/docs/postman/dev.json",
+      "backend/docs/postman/production.json",
+      "backend/docs/postman/staging.json",
+      "backend/docs/user-roles-permissions.md",
+      "backend/migrate-mongo-config.js",
+      "backend/migrations/20260118000001-initial-indexes.js",
+      "backend/package.json",
+      "backend/src/admin/admin.module.ts",
+      "backend/src/admin/dto/admin-user-response.dto.ts",
+      "backend/src/admin/dto/create-user.dto.ts",
+      "backend/src/admin/dto/list-users-query.dto.ts",
+      "backend/src/admin/dto/update-user-role.dto.ts",
+      "backend/src/admin/dto/update-user.dto.ts",
+      "backend/src/app.controller.ts",
+      "backend/src/app.module.ts",
+      "backend/src/auth/auth.controller.ts",
+      "backend/src/auth/auth.module.ts",
+      "backend/src/auth/auth.service.ts",
+      "backend/src/auth/dto/forgot-password-response.dto.ts",
+      "backend/src/auth/dto/login-response.dto.ts",
+      "backend/src/auth/dto/register-response.dto.ts",
+      "backend/src/auth/dto/register.dto.ts",
+      "backend/src/auth/dto/resend-activation-response.dto.ts",
+      "backend/src/auth/guards/auth.guard.ts",
+      "backend/src/auth/schemas/pending-registration.schema.ts",
+      "backend/src/auth/services/session.service.ts",
+      "backend/src/common/decorators/roles.decorator.ts",
+      "backend/src/common/dto/api-response.dto.ts",
+      "backend/src/common/enums/error-code.enum.ts",
+      "backend/src/common/filters/global-exception.filter.spec.ts",
+      "backend/src/common/filters/global-exception.filter.ts",
+      "backend/src/common/guards/permission.guard.ts",
+      "backend/src/common/guards/roles.guard.ts",
+      "backend/src/common/index.ts",
+      "backend/src/common/utils/role-hierarchy.spec.ts",
+      "backend/src/common/utils/role-hierarchy.ts",
+      "backend/src/config/configuration.ts",
+      "backend/src/config/env.validation.ts",
+      "backend/src/database/database.module.ts",
+      "backend/src/database/seeds/index.ts",
+      "backend/src/database/seeds/role.seed.ts",
+      "backend/src/database/seeds/seed.service.ts",
+      "backend/src/database/seeds/user.seed.ts",
+      "backend/src/health/health.controller.spec.ts",
+      "backend/src/health/health.controller.ts",
+      "backend/src/health/health.service.ts",
+      "backend/src/mail/interfaces/mail-options.interface.ts",
+      "backend/src/mail/mail.service.ts",
+      "backend/src/main.ts",
+      "backend/src/role/dto/list-roles-query.dto.ts",
+      "backend/src/role/dto/role-response.dto.ts",
+      "backend/src/role/role.controller.ts",
+      "backend/src/role/role.module.ts",
+      "backend/src/role/role.service.ts",
+      "backend/src/role/schemas/role.schema.ts",
+      "backend/src/session/interfaces/session.interface.ts",
+      "backend/src/session/schemas/session.schema.ts",
+      "backend/src/user/dto/account-linking.dto.ts",
+      "backend/src/user/dto/add-permission.dto.ts",
+      "backend/src/user/dto/update-profile.dto.ts",
+      "backend/src/user/dto/user-profile.dto.ts",
+      "backend/src/user/interfaces/user.interface.ts",
+      "backend/src/user/schemas/user.schema.ts",
+      "backend/src/user/services/account-linking.service.ts",
+      "backend/src/user/services/profile-sync.service.ts",
+      "backend/src/user/user.module.ts",
+      "backend/test/app.e2e-spec.ts",
+      "backend/test/jest-e2e.json",
+      "docker-compose.prod.yml",
+      "docker-compose.yml",
+      "docs/DATABASE_SCHEMA.md",
+      "docs/MIGRATION-GUIDE.md",
+      "docs/PRODUCTION-SETUP.md",
+      "docs/RBAC-SYSTEM.md",
+      "docs/README.md",
+      "docs/deployment.md",
+      "docs/setup-facebook-oauth.md",
+      "docs/setup-github-oauth.md",
+      "docs/setup-google-oauth.md",
+      "frontend/Dockerfile",
+      "frontend/README.md",
+      "frontend/e2e/role-management.spec.ts",
+      "frontend/e2e/session-management.spec.ts",
+      "frontend/e2e/sidebar-navigation.spec.ts",
+      "frontend/next.config.ts",
+      "frontend/package.json",
+      "frontend/playwright.config.ts",
+      "frontend/src/app/[locale]/(auth)/auth/forgot-password/page.tsx",
+      "frontend/src/app/[locale]/(auth)/auth/oauth/callback/page.tsx",
+      "frontend/src/app/[locale]/(auth)/auth/oauth/error/page.tsx",
+      "frontend/src/app/[locale]/(auth)/auth/register/page.tsx",
+      "frontend/src/app/[locale]/(auth)/auth/reset-password/page.tsx",
+      "frontend/src/app/[locale]/(dashboard)/admin/dashboard/page.tsx",
+      "frontend/src/app/[locale]/(dashboard)/admin/permissions-demo/page.tsx",
+      "frontend/src/app/[locale]/(dashboard)/admin/roles/page.tsx",
+      "frontend/src/app/[locale]/(dashboard)/admin/users/page.tsx",
+      "frontend/src/app/[locale]/(dashboard)/dashboard/page.tsx",
+      "frontend/src/app/[locale]/(dashboard)/layout.tsx",
+      "frontend/src/app/[locale]/(dashboard)/manager/dashboard/page.tsx",
+      "frontend/src/app/[locale]/(dashboard)/sessions/page.tsx",
+      "frontend/src/app/[locale]/(dashboard)/settings/page.tsx",
+      "frontend/src/app/[locale]/(dashboard)/support/dashboard/page.tsx",
+      "frontend/src/app/[locale]/(errors)/403/page.tsx",
+      "frontend/src/app/[locale]/error.tsx",
+      "frontend/src/app/[locale]/layout.tsx",
+      "frontend/src/app/[locale]/not-found.tsx",
+      "frontend/src/app/[locale]/page.tsx",
+      "frontend/src/app/globals.css",
+      "frontend/src/app/layout.tsx",
+      "frontend/src/components/LanguageSwitcher.tsx",
+      "frontend/src/components/ThemeSwitcher.tsx",
+      "frontend/src/components/design-system/SearchBar.tsx",
+      "frontend/src/components/design-system/SectionHeader.tsx",
+      "frontend/src/components/design-system/StatusBadge.tsx",
+      "frontend/src/components/design-system/index.ts",
+      "frontend/src/components/design-system/layout/SplitView.tsx",
+      "frontend/src/components/design-system/layout/TimelineList.tsx",
+      "frontend/src/components/forms/FormCheckbox.tsx",
+      "frontend/src/components/forms/FormInput.tsx",
+      "frontend/src/components/forms/FormPassword.tsx",
+      "frontend/src/components/forms/FormSelect.tsx",
+      "frontend/src/components/forms/index.ts",
+      "frontend/src/components/layout/ErrorPageLayout.tsx",
+      "frontend/src/components/navigation/DashboardNav.tsx",
+      "frontend/src/components/providers/ActivationGuard.tsx",
+      "frontend/src/components/providers/AuthGuard.tsx",
+      "frontend/src/components/providers/ReduxProvider.tsx",
+      "frontend/src/components/providers/ThemeProvider.tsx",
+      "frontend/src/components/providers/index.ts",
+      "frontend/src/components/ui/alert-dialog.tsx",
+      "frontend/src/components/ui/alert.tsx",
+      "frontend/src/components/ui/badge.tsx",
+      "frontend/src/components/ui/checkbox.tsx",
+      "frontend/src/components/ui/dialog.tsx",
+      "frontend/src/components/ui/dropdown-menu.tsx",
+      "frontend/src/components/ui/icon-link-button.tsx",
+      "frontend/src/components/ui/select.tsx",
+      "frontend/src/components/ui/switch.tsx",
+      "frontend/src/constants/errorCodes.ts",
+      "frontend/src/hooks/useFormWithValidation.ts",
+      "frontend/src/i18n/messages/ar.json",
+      "frontend/src/i18n/messages/en.json",
+      "frontend/src/lib/__tests__/parseUserAgent.test.ts",
+      "frontend/src/lib/apiError.ts",
+      "frontend/src/lib/config/form-styles.ts",
+      "frontend/src/lib/formatters.ts",
+      "frontend/src/lib/parseUserAgent.ts",
+      "frontend/src/lib/toast.ts",
+      "frontend/src/lib/validations/array/index.ts",
+      "frontend/src/lib/validations/boolean/index.ts",
+      "frontend/src/lib/validations/changePassword.ts",
+      "frontend/src/lib/validations/composed/index.ts",
+      "frontend/src/lib/validations/date/index.ts",
+      "frontend/src/lib/validations/file/index.ts",
+      "frontend/src/lib/validations/number/index.ts",
+      "frontend/src/lib/validations/string/index.ts",
+      "frontend/src/lib/validations/utils.ts",
+      "frontend/src/modules/account/api/accountLinkingApi.ts",
+      "frontend/src/modules/account/api/index.ts",
+      "frontend/src/modules/account/components/LinkProviderButton.tsx",
+      "frontend/src/modules/account/components/LinkedAccountCard.tsx",
+      "frontend/src/modules/account/components/LinkedAccounts.tsx",
+      "frontend/src/modules/account/components/ProfileSyncStatus.tsx",
+      "frontend/src/modules/account/components/UpdateProfileCard.tsx",
+      "frontend/src/modules/account/components/index.ts",
+      "frontend/src/modules/account/index.ts",
+      "frontend/src/modules/account/types/account.types.ts",
+      "frontend/src/modules/auth/components/ActivationForm.tsx",
+      "frontend/src/modules/auth/components/AuthLayout.tsx",
+      "frontend/src/modules/auth/components/LoginForm.tsx",
+      "frontend/src/modules/auth/components/LogoutButton.tsx",
+      "frontend/src/modules/auth/components/WelcomeModal.tsx",
+      "frontend/src/modules/auth/components/index.ts",
+      "frontend/src/modules/auth/hooks/index.ts",
+      "frontend/src/modules/auth/hooks/useAuthValidation.ts",
+      "frontend/src/modules/auth/pages/ActivationPage.tsx",
+      "frontend/src/modules/auth/pages/LoginPage.tsx",
+      "frontend/src/modules/auth/pages/index.ts",
+      "frontend/src/modules/auth/store/authApi.ts",
+      "frontend/src/modules/auth/store/authSlice.ts",
+      "frontend/src/modules/auth/types/auth.types.ts",
+      "frontend/src/modules/auth/utils/authHelpers.ts",
+      "frontend/src/modules/auth/utils/index.ts",
+      "frontend/src/modules/oauth/api/oauthApi.ts",
+      "frontend/src/modules/oauth/components/OAuthButton.tsx",
+      "frontend/src/modules/oauth/components/OAuthButtons.tsx",
+      "frontend/src/modules/oauth/components/index.ts",
+      "frontend/src/modules/oauth/index.ts",
+      "frontend/src/modules/oauth/types/oauth.types.ts",
+      "frontend/src/modules/oauth/utils/index.ts",
+      "frontend/src/modules/permissions/api/rolesApi.ts",
+      "frontend/src/modules/permissions/components/CreateRoleDialog.tsx",
+      "frontend/src/modules/permissions/components/CreateUserButton.tsx",
+      "frontend/src/modules/permissions/components/CreateUserDialog.tsx",
+      "frontend/src/modules/permissions/components/DeleteRoleDialog.tsx",
+      "frontend/src/modules/permissions/components/EditRoleDialog.tsx",
+      "frontend/src/modules/permissions/components/EditUserDialog.tsx",
+      "frontend/src/modules/permissions/components/PermissionNode.tsx",
+      "frontend/src/modules/permissions/components/PermissionSearchDialog.tsx",
+      "frontend/src/modules/permissions/components/PermissionSelector.tsx",
+      "frontend/src/modules/permissions/components/PermissionTreeView.tsx",
+      "frontend/src/modules/permissions/components/RoleDetailPanel.tsx",
+      "frontend/src/modules/permissions/components/RoleSidebarNav.tsx",
+      "frontend/src/modules/permissions/components/RoutePermissionGuard.tsx",
+      "frontend/src/modules/permissions/components/UserActionsMenu.tsx",
+      "frontend/src/modules/permissions/components/UserCard.tsx",
+      "frontend/src/modules/permissions/components/UserListSection.tsx",
+      "frontend/src/modules/permissions/components/UserPermissionsDialog.tsx",
+      "frontend/src/modules/permissions/components/UserRoleSelector.tsx",
+      "frontend/src/modules/permissions/constants/permissions.ts",
+      "frontend/src/modules/permissions/hooks/useUserActions.ts",
+      "frontend/src/modules/permissions/index.ts",
+      "frontend/src/modules/roles/api/rolesApi.ts",
+      "frontend/src/modules/roles/components/index.ts",
+      "frontend/src/modules/roles/index.ts",
+      "frontend/src/modules/sessions/components/DeviceIcon.tsx",
+      "frontend/src/modules/sessions/components/RevokeAllSessionsButton.tsx",
+      "frontend/src/modules/sessions/components/SessionCardTimeline.tsx",
+      "frontend/src/modules/sessions/index.ts",
+      "frontend/src/modules/users/api/usersApi.ts",
+      "frontend/src/modules/users/components/index.ts",
+      "frontend/src/modules/users/index.ts",
+      "frontend/src/modules/users/types/user.types.ts",
+      "frontend/src/store/api/baseApi.ts",
+      "frontend/src/store/api/userApi.ts",
+      "frontend/src/store/middleware/errorInterceptor.ts",
+      "frontend/src/store/store.ts",
+      "nginx/Dockerfile",
+      "nginx/README.md",
+      "nginx/nginx.conf",
+      "nginx/production-nginx.conf",
+      "nginx/ssl-setup.sh",
+      "openspec/project.md",
+      "package-lock.json",
+      "package.json",
+      "scripts/init.js",
+      "scripts/lib/cli-utils.js",
+      "scripts/setup-production.js"
+    ],
+    "deleted": [
+      "backend/migrations/20260119000001_add_linked_providers.js",
+      "backend/src/admin/admin.controller.ts",
+      "backend/src/admin/admin.service.spec.ts",
+      "backend/src/admin/admin.service.ts",
+      "backend/src/auth/decorators/verified.decorator.ts",
+      "backend/src/auth/dto/oauth-callback.dto.ts",
+      "backend/src/auth/guards/verified.guard.ts",
+      "backend/src/auth/oauth.controller.spec.ts",
+      "backend/src/auth/oauth.controller.ts",
+      "backend/src/auth/services/oauth.service.spec.ts",
+      "backend/src/auth/services/oauth.service.ts",
+      "backend/src/auth/strategies/base-oauth.strategy.ts",
+      "backend/src/auth/strategies/facebook-oauth.strategy.spec.ts",
+      "backend/src/auth/strategies/facebook-oauth.strategy.ts",
+      "backend/src/auth/strategies/github-oauth.strategy.spec.ts",
+      "backend/src/auth/strategies/github-oauth.strategy.ts",
+      "backend/src/auth/strategies/google-oauth.strategy.spec.ts",
+      "backend/src/auth/strategies/google-oauth.strategy.ts",
+      "backend/src/auth/strategies/oauth.strategy.interface.ts",
+      "backend/src/database/migrations/add-permissions-to-users.migration.ts",
+      "backend/src/database/migrations/migration.controller.ts",
+      "backend/src/database/migrations/migration.module.ts",
+      "backend/src/permission/constants/default-permissions.ts",
+      "backend/src/permission/interfaces/permission.interface.ts",
+      "backend/src/permission/permission.module.ts",
+      "backend/src/permission/schemas/permission.schema.ts",
+      "backend/src/user/user.controller.ts",
+      "backend/src/user/user.service.spec.ts",
+      "backend/src/user/user.service.ts",
+      "backend/test/permissions.e2e-spec.ts",
+      "backend/test/roles.e2e-spec.ts",
+      "frontend/src/app/[locale]/(auth)/auth/oauth/callback/[provider]/page.tsx",
+      "frontend/src/components/Header.tsx",
+      "frontend/src/components/design-system/Card.tsx",
+      "frontend/src/components/design-system/FloatingActionZone.tsx",
+      "frontend/src/components/design-system/layout/GroupedGrid.tsx",
+      "frontend/src/components/forms/FormRadio.tsx",
+      "frontend/src/components/forms/FormSwitch.tsx",
+      "frontend/src/components/forms/FormTextarea.tsx",
+      "frontend/src/components/forms/examples/GenericFormExample.tsx",
+      "frontend/src/components/providers/RoleGuard.tsx",
+      "frontend/src/examples/README.md",
+      "frontend/src/examples/ReferenceButton.tsx",
+      "frontend/src/examples/ReferenceForm.tsx",
+      "frontend/src/examples/ReferenceMutation.tsx",
+      "frontend/src/hooks/use-toast.ts",
+      "frontend/src/hooks/useApiError.ts",
+      "frontend/src/hooks/useConfirmDialog.ts",
+      "frontend/src/hooks/useMutationWithToast.ts",
+      "frontend/src/lib/utils/form-errors.ts",
+      "frontend/src/modules/account/components/ChangePasswordCard.tsx",
+      "frontend/src/modules/auth/components/ForgotPasswordForm.tsx",
+      "frontend/src/modules/auth/components/RegisterForm.tsx",
+      "frontend/src/modules/auth/components/ResetPasswordForm.tsx",
+      "frontend/src/modules/auth/pages/ForgotPasswordPage.tsx",
+      "frontend/src/modules/auth/pages/RegisterPage.tsx",
+      "frontend/src/modules/auth/pages/ResetPasswordPage.tsx",
+      "frontend/src/modules/auth/store/profileSyncApi.ts",
+      "frontend/src/modules/auth/utils/oauthHelpers.ts",
+      "frontend/src/modules/auth/utils/storage.ts",
+      "frontend/src/modules/oauth/components/OAuthDivider.tsx",
+      "frontend/src/modules/oauth/utils/oauthHelpers.ts",
+      "frontend/src/modules/permissions/components/CreateRoleButton.tsx",
+      "frontend/src/modules/permissions/components/PermissionsList.tsx",
+      "frontend/src/modules/permissions/components/RoleFormDialog.tsx",
+      "frontend/src/modules/permissions/components/UserPermissionsBadge.tsx",
+      "frontend/src/modules/sessions/components/SessionCard.tsx",
+      "frontend/src/store/slices/toastSlice.ts"
+    ],
+    "conditional_new_documents": [
+      ".hyperflow/reports/production-hardening.md",
+      ".hyperflow/reports/audit-disposition.md"
+    ],
+    "note": "Exact proposed final delta from hosted base. Includes the original interrupted patch and historical product changes. Excludes all legacy .hyperflow files. This moving capture cannot be integrated before a final owner freeze."
+  },
+  "counts": {
+    "current_candidate_paths": 130,
+    "current_by_operation": {
+      "mod": 88,
+      "deleted": 1,
+      "new": 41
+    },
+    "projected_pr_paths_before_curated_docs": 802,
+    "projected_by_operation": {
+      "new": 485,
+      "mod": 249,
+      "deleted": 68
+    },
+    "historical_task_commits": 46
+  },
+  "commit_groups": [
+    {
+      "id": "tooling",
+      "message": "chore(root): update workspace and production verification tooling",
+      "projected_paths": {
+        "new": [
+          ".dockerignore",
+          ".github/dependabot.yml",
+          ".github/workflows/ci.yml",
+          ".github/workflows/codeql.yml",
+          ".github/workflows/publish-cli.yml",
+          ".husky/pre-push",
+          ".nvmrc",
+          "nginx/.dockerignore",
+          "nginx/snippets/security-headers.conf",
+          "scripts/check-contrast.mjs",
+          "scripts/verify-docker.mjs"
+        ],
+        "mod": [
+          ".env.docker.example",
+          ".gitignore",
+          ".lintstagedrc.cjs",
+          "docker-compose.prod.yml",
+          "docker-compose.yml",
+          "nginx/Dockerfile",
+          "nginx/nginx.conf",
+          "nginx/production-nginx.conf",
+          "nginx/ssl-setup.sh",
+          "package-lock.json",
+          "package.json",
+          "scripts/init.js",
+          "scripts/lib/cli-utils.js",
+          "scripts/setup-production.js"
+        ],
+        "deleted": []
+      },
+      "current_uncommitted_paths": {
+        "new": [
+          "nginx/.dockerignore",
+          "scripts/verify-docker.mjs"
+        ],
+        "mod": [
+          ".dockerignore",
+          ".github/workflows/ci.yml",
+          ".gitignore",
+          "nginx/nginx.conf",
+          "package-lock.json"
+        ],
+        "deleted": []
+      }
+    },
+    {
+      "id": "backend",
+      "message": "feat(backend): extend authentication and permission handling",
+      "projected_paths": {
+        "new": [
+          "backend/migrations/20260119000001-add-linked-providers.js",
+          "backend/migrations/20260903000001-session-token-hash.js",
+          "backend/migrations/20260904000001-add-default-permissions-to-users.js",
+          "backend/migrations/20260904000002-linked-accounts.js",
+          "backend/migrations/20260904000003-backfill-email-primary-provider.js",
+          "backend/src/admin/admin-permissions.controller.ts",
+          "backend/src/admin/admin-users.controller.ts",
+          "backend/src/admin/constants/admin-user.constants.ts",
+          "backend/src/admin/dto/list-users-query.dto.spec.ts",
+          "backend/src/admin/mappers/admin-user.mapper.ts",
+          "backend/src/admin/services/admin-email-change.service.spec.ts",
+          "backend/src/admin/services/admin-email-change.service.ts",
+          "backend/src/admin/services/admin-permissions.service.spec.ts",
+          "backend/src/admin/services/admin-permissions.service.ts",
+          "backend/src/admin/services/admin-user-access.service.ts",
+          "backend/src/admin/services/admin-user-queries.service.spec.ts",
+          "backend/src/admin/services/admin-user-queries.service.ts",
+          "backend/src/admin/services/admin-users.service.create.spec.ts",
+          "backend/src/admin/services/admin-users.service.spec.ts",
+          "backend/src/admin/services/admin-users.service.ts",
+          "backend/src/admin/utils/user-filter.util.ts",
+          "backend/src/auth/auth-methods.controller.spec.ts",
+          "backend/src/auth/auth-methods.controller.ts",
+          "backend/src/auth/auth.service.harness-spec.ts",
+          "backend/src/auth/auth.service.login.spec.ts",
+          "backend/src/auth/auth.service.spec.ts",
+          "backend/src/auth/constants/auth-messages.ts",
+          "backend/src/auth/constants/available-auth-features.ts",
+          "backend/src/auth/decorators/requires-feature.decorator.ts",
+          "backend/src/auth/dto/auth-methods-response.dto.ts",
+          "backend/src/auth/enums/auth-feature.enum.ts",
+          "backend/src/auth/guards/auth.guard.spec.ts",
+          "backend/src/auth/guards/feature-enabled.guard.spec.ts",
+          "backend/src/auth/guards/feature-enabled.guard.ts",
+          "backend/src/auth/magic-link/constants/magic-link.constants.ts",
+          "backend/src/auth/magic-link/dto/magic-link-request-response.dto.ts",
+          "backend/src/auth/magic-link/dto/request-magic-link.dto.ts",
+          "backend/src/auth/magic-link/dto/verify-magic-link.dto.ts",
+          "backend/src/auth/magic-link/magic-link.controller.spec.ts",
+          "backend/src/auth/magic-link/magic-link.controller.ts",
+          "backend/src/auth/magic-link/magic-link.harness-spec.ts",
+          "backend/src/auth/magic-link/magic-link.module.ts",
+          "backend/src/auth/magic-link/magic-link.service.spec.ts",
+          "backend/src/auth/magic-link/magic-link.service.ts",
+          "backend/src/auth/magic-link/magic-link.wiring.spec.ts",
+          "backend/src/auth/magic-link/schemas/pending-magic-link.schema.ts",
+          "backend/src/auth/magic-link/utils/magic-link-token.util.ts",
+          "backend/src/auth/oauth/base-oauth.strategy.ts",
+          "backend/src/auth/oauth/oauth-provider.interface.ts",
+          "backend/src/auth/oauth/oauth-redirect.service.ts",
+          "backend/src/auth/oauth/oauth-registry.service.spec.ts",
+          "backend/src/auth/oauth/oauth-registry.service.ts",
+          "backend/src/auth/oauth/oauth-registry.wiring.spec.ts",
+          "backend/src/auth/oauth/oauth-state.service.spec.ts",
+          "backend/src/auth/oauth/oauth-state.service.ts",
+          "backend/src/auth/oauth/oauth.constants.ts",
+          "backend/src/auth/oauth/oauth.controller.ts",
+          "backend/src/auth/oauth/oauth.module.ts",
+          "backend/src/auth/oauth/oauth.service.ts",
+          "backend/src/auth/oauth/strategies/apple-oauth.strategy.spec.ts",
+          "backend/src/auth/oauth/strategies/apple-oauth.strategy.ts",
+          "backend/src/auth/oauth/strategies/discord-oauth.strategy.spec.ts",
+          "backend/src/auth/oauth/strategies/discord-oauth.strategy.ts",
+          "backend/src/auth/oauth/strategies/facebook-oauth.strategy.ts",
+          "backend/src/auth/oauth/strategies/github-oauth.strategy.ts",
+          "backend/src/auth/oauth/strategies/gitlab-oauth.strategy.spec.ts",
+          "backend/src/auth/oauth/strategies/gitlab-oauth.strategy.ts",
+          "backend/src/auth/oauth/strategies/google-oauth.strategy.ts",
+          "backend/src/auth/oauth/strategies/linkedin-oauth.strategy.spec.ts",
+          "backend/src/auth/oauth/strategies/linkedin-oauth.strategy.ts",
+          "backend/src/auth/oauth/strategies/microsoft-oauth.strategy.spec.ts",
+          "backend/src/auth/oauth/strategies/microsoft-oauth.strategy.ts",
+          "backend/src/auth/oauth/strategies/oauth-strategy.harness-spec.ts",
+          "backend/src/auth/oauth/strategies/oidc-oauth.harness-spec.ts",
+          "backend/src/auth/oauth/strategies/oidc-oauth.login.spec.ts",
+          "backend/src/auth/oauth/strategies/oidc-oauth.strategy.spec.ts",
+          "backend/src/auth/oauth/strategies/oidc-oauth.strategy.ts",
+          "backend/src/auth/oauth/strategies/slack-oauth.strategy.spec.ts",
+          "backend/src/auth/oauth/strategies/slack-oauth.strategy.ts",
+          "backend/src/auth/oauth/strategies/twitch-oauth.strategy.spec.ts",
+          "backend/src/auth/oauth/strategies/twitch-oauth.strategy.ts",
+          "backend/src/auth/oauth/strategies/x-oauth.strategy.spec.ts",
+          "backend/src/auth/oauth/strategies/x-oauth.strategy.ts",
+          "backend/src/auth/oauth/utils/apple-client-secret.util.spec.ts",
+          "backend/src/auth/oauth/utils/apple-client-secret.util.ts",
+          "backend/src/auth/oauth/utils/apple-user-payload.util.spec.ts",
+          "backend/src/auth/oauth/utils/apple-user-payload.util.ts",
+          "backend/src/auth/oauth/utils/callback-params.util.spec.ts",
+          "backend/src/auth/oauth/utils/callback-params.util.ts",
+          "backend/src/auth/oauth/utils/id-token.util.ts",
+          "backend/src/auth/oauth/utils/oidc-discovery.util.spec.ts",
+          "backend/src/auth/oauth/utils/oidc-discovery.util.ts",
+          "backend/src/auth/oauth/utils/oidc-settings.util.ts",
+          "backend/src/auth/oauth/utils/redirect.util.ts",
+          "backend/src/auth/oauth/validators/is-registered-provider.validator.ts",
+          "backend/src/auth/passkeys/constants/passkeys.constants.ts",
+          "backend/src/auth/passkeys/dto/passkey-credential.dto.ts",
+          "backend/src/auth/passkeys/dto/passkey-login-options.dto.ts",
+          "backend/src/auth/passkeys/dto/passkey-summary.dto.ts",
+          "backend/src/auth/passkeys/dto/rename-passkey.dto.ts",
+          "backend/src/auth/passkeys/dto/verify-passkey-login.dto.ts",
+          "backend/src/auth/passkeys/dto/verify-passkey-registration.dto.ts",
+          "backend/src/auth/passkeys/passkey-login.controller.ts",
+          "backend/src/auth/passkeys/passkeys.controller.ts",
+          "backend/src/auth/passkeys/passkeys.harness-spec.ts",
+          "backend/src/auth/passkeys/passkeys.module.ts",
+          "backend/src/auth/passkeys/passkeys.wiring.spec.ts",
+          "backend/src/auth/passkeys/schemas/passkey.schema.ts",
+          "backend/src/auth/passkeys/services/passkey-assertion.service.spec.ts",
+          "backend/src/auth/passkeys/services/passkey-assertion.service.ts",
+          "backend/src/auth/passkeys/services/passkey-challenge.service.spec.ts",
+          "backend/src/auth/passkeys/services/passkey-challenge.service.ts",
+          "backend/src/auth/passkeys/services/passkey-config.service.ts",
+          "backend/src/auth/passkeys/services/passkey-login.service.spec.ts",
+          "backend/src/auth/passkeys/services/passkey-login.service.ts",
+          "backend/src/auth/passkeys/services/passkey-management.service.spec.ts",
+          "backend/src/auth/passkeys/services/passkey-management.service.ts",
+          "backend/src/auth/passkeys/services/passkey-registration.service.spec.ts",
+          "backend/src/auth/passkeys/services/passkey-registration.service.ts",
+          "backend/src/auth/passkeys/services/passkey-second-factor.verifier.spec.ts",
+          "backend/src/auth/passkeys/services/passkey-second-factor.verifier.ts",
+          "backend/src/auth/passkeys/services/webauthn.adapter.spec.ts",
+          "backend/src/auth/passkeys/services/webauthn.adapter.ts",
+          "backend/src/auth/passkeys/utils/passkey-summary.util.ts",
+          "backend/src/auth/passkeys/utils/signed-cookie.util.ts",
+          "backend/src/auth/services/auth-features.service.spec.ts",
+          "backend/src/auth/services/auth-features.service.ts",
+          "backend/src/auth/services/auth-mail.service.ts",
+          "backend/src/auth/services/password-reset-code.service.spec.ts",
+          "backend/src/auth/services/password-reset-code.service.ts",
+          "backend/src/auth/services/session-cookie.service.spec.ts",
+          "backend/src/auth/services/session-cookie.service.ts",
+          "backend/src/auth/services/session.service.spec.ts",
+          "backend/src/auth/services/sign-in.service.spec.ts",
+          "backend/src/auth/services/sign-in.service.ts",
+          "backend/src/auth/services/verification-code.service.spec.ts",
+          "backend/src/auth/services/verification-code.service.ts",
+          "backend/src/auth/two-factor/constants/two-factor.constants.ts",
+          "backend/src/auth/two-factor/dto/disable-two-factor.dto.ts",
+          "backend/src/auth/two-factor/dto/recovery-codes-response.dto.ts",
+          "backend/src/auth/two-factor/dto/setup-two-factor.dto.ts",
+          "backend/src/auth/two-factor/dto/two-factor-code.dto.ts",
+          "backend/src/auth/two-factor/dto/two-factor-setup-response.dto.ts",
+          "backend/src/auth/two-factor/dto/verify-two-factor.dto.ts",
+          "backend/src/auth/two-factor/schemas/two-factor-challenge.schema.ts",
+          "backend/src/auth/two-factor/services/second-factor-verifiers.ts",
+          "backend/src/auth/two-factor/services/totp-secret-crypto.service.spec.ts",
+          "backend/src/auth/two-factor/services/totp-secret-crypto.service.ts",
+          "backend/src/auth/two-factor/services/two-factor-challenge.service.spec.ts",
+          "backend/src/auth/two-factor/services/two-factor-challenge.service.ts",
+          "backend/src/auth/two-factor/services/two-factor-reauth.service.ts",
+          "backend/src/auth/two-factor/services/two-factor-verification.harness-spec.ts",
+          "backend/src/auth/two-factor/services/two-factor-verification.service.spec.ts",
+          "backend/src/auth/two-factor/services/two-factor-verification.service.ts",
+          "backend/src/auth/two-factor/sign-in-second-factor.spec.ts",
+          "backend/src/auth/two-factor/two-factor-login.service.spec.ts",
+          "backend/src/auth/two-factor/two-factor-login.service.ts",
+          "backend/src/auth/two-factor/two-factor.controller.ts",
+          "backend/src/auth/two-factor/two-factor.harness-spec.ts",
+          "backend/src/auth/two-factor/two-factor.module.ts",
+          "backend/src/auth/two-factor/two-factor.service.spec.ts",
+          "backend/src/auth/two-factor/two-factor.service.ts",
+          "backend/src/auth/two-factor/two-factor.wiring.spec.ts",
+          "backend/src/auth/two-factor/utils/recovery-code.util.spec.ts",
+          "backend/src/auth/two-factor/utils/recovery-code.util.ts",
+          "backend/src/auth/two-factor/utils/totp.util.spec.ts",
+          "backend/src/auth/two-factor/utils/totp.util.ts",
+          "backend/src/auth/utils/activation.util.spec.ts",
+          "backend/src/auth/utils/activation.util.ts",
+          "backend/src/auth/utils/authenticated-user.util.ts",
+          "backend/src/auth/utils/permissions.util.ts",
+          "backend/src/auth/utils/verification-code.util.spec.ts",
+          "backend/src/auth/utils/verification-code.util.ts",
+          "backend/src/common/constants/app.ts",
+          "backend/src/common/constants/client-paths.ts",
+          "backend/src/common/constants/http-status.ts",
+          "backend/src/common/constants/name.ts",
+          "backend/src/common/constants/oauth-providers.ts",
+          "backend/src/common/constants/request-id.ts",
+          "backend/src/common/constants/roles.ts",
+          "backend/src/common/constants/session.ts",
+          "backend/src/common/constants/throttle.ts",
+          "backend/src/common/filters/global-exception-mapping.spec.ts",
+          "backend/src/common/guards/permission.guard.spec.ts",
+          "backend/src/common/guards/roles.guard.spec.ts",
+          "backend/src/common/interceptors/request-logging.interceptor.spec.ts",
+          "backend/src/common/interceptors/request-logging.interceptor.ts",
+          "backend/src/common/interfaces/request-with-id.interface.ts",
+          "backend/src/common/middleware/request-id.middleware.spec.ts",
+          "backend/src/common/middleware/request-id.middleware.ts",
+          "backend/src/common/pipes/parse-object-id.pipe.spec.ts",
+          "backend/src/common/pipes/parse-object-id.pipe.ts",
+          "backend/src/common/services/hash.service.spec.ts",
+          "backend/src/common/utils/escape-html.spec.ts",
+          "backend/src/common/utils/escape-html.ts",
+          "backend/src/common/utils/escape-regex.spec.ts",
+          "backend/src/common/utils/escape-regex.ts",
+          "backend/src/common/utils/mongo-error.util.ts",
+          "backend/src/common/utils/parse-user-agent.spec.ts",
+          "backend/src/common/utils/parse-user-agent.ts",
+          "backend/src/common/utils/transform.spec.ts",
+          "backend/src/common/utils/transform.ts",
+          "backend/src/config/env.oauth.schema.ts",
+          "backend/src/config/env.schema.ts",
+          "backend/src/config/env.validation.spec.ts",
+          "backend/src/config/oauth.config.ts",
+          "backend/src/health/health.service.spec.ts",
+          "backend/src/mail/mail.service.spec.ts",
+          "backend/src/role/role.service.spec.ts",
+          "backend/src/role/services/role-hierarchy.service.spec.ts",
+          "backend/src/role/services/role-hierarchy.service.ts",
+          "backend/src/role/utils/role.util.ts",
+          "backend/src/user/constants/user.constants.ts",
+          "backend/src/user/dto/add-permission.dto.spec.ts",
+          "backend/src/user/schemas/two-factor.schema.ts",
+          "backend/src/user/services/account-linking.harness-spec.ts",
+          "backend/src/user/services/account-linking.queries.spec.ts",
+          "backend/src/user/services/account-linking.service.spec.ts",
+          "backend/src/user/services/profile-sync.service.spec.ts",
+          "backend/src/user/services/user-permissions.service.spec.ts",
+          "backend/src/user/services/user-permissions.service.ts",
+          "backend/src/user/services/user-profile.service.spec.ts",
+          "backend/src/user/services/user-profile.service.ts",
+          "backend/src/user/services/user-sessions.service.spec.ts",
+          "backend/src/user/services/user-sessions.service.ts",
+          "backend/src/user/user-profile.controller.ts",
+          "backend/src/user/user-providers.controller.ts",
+          "backend/src/user/user-sessions.controller.ts",
+          "backend/src/user/utils/user-lookup.util.ts",
+          "backend/test/app.boot.e2e-spec.ts",
+          "backend/test/constants/oauth-boot-env.ts",
+          "backend/test/constants/seed-users.ts",
+          "backend/test/permissions/admin-permission-routes.e2e-spec.ts",
+          "backend/test/permissions/permission-enforcement.e2e-spec.ts",
+          "backend/test/roles/role-access.e2e-spec.ts",
+          "backend/test/roles/role-crud.e2e-spec.ts",
+          "backend/test/types/e2e-responses.ts",
+          "backend/test/utils/browser-server.ts",
+          "backend/test/utils/e2e-app.ts",
+          "backend/test/utils/local-oauth.ts",
+          "backend/test/utils/permissions.ts"
+        ],
+        "mod": [
+          "backend/.env.example",
+          "backend/Dockerfile",
+          "backend/README.md",
+          "backend/docs/authentication-flow.md",
+          "backend/docs/oauth-authentication.md",
+          "backend/docs/postman/FULL-MERN-AUTH-Boilerplate-API.postman_collection.json",
+          "backend/docs/postman/README.md",
+          "backend/docs/postman/dev.json",
+          "backend/docs/postman/production.json",
+          "backend/docs/postman/staging.json",
+          "backend/docs/user-roles-permissions.md",
+          "backend/migrate-mongo-config.js",
+          "backend/migrations/20260118000001-initial-indexes.js",
+          "backend/package.json",
+          "backend/src/admin/admin.module.ts",
+          "backend/src/admin/dto/admin-user-response.dto.ts",
+          "backend/src/admin/dto/create-user.dto.ts",
+          "backend/src/admin/dto/list-users-query.dto.ts",
+          "backend/src/admin/dto/update-user-role.dto.ts",
+          "backend/src/admin/dto/update-user.dto.ts",
+          "backend/src/app.controller.ts",
+          "backend/src/app.module.ts",
+          "backend/src/auth/auth.controller.ts",
+          "backend/src/auth/auth.module.ts",
+          "backend/src/auth/auth.service.ts",
+          "backend/src/auth/dto/forgot-password-response.dto.ts",
+          "backend/src/auth/dto/login-response.dto.ts",
+          "backend/src/auth/dto/register-response.dto.ts",
+          "backend/src/auth/dto/register.dto.ts",
+          "backend/src/auth/dto/resend-activation-response.dto.ts",
+          "backend/src/auth/guards/auth.guard.ts",
+          "backend/src/auth/schemas/pending-registration.schema.ts",
+          "backend/src/auth/services/session.service.ts",
+          "backend/src/common/decorators/roles.decorator.ts",
+          "backend/src/common/dto/api-response.dto.ts",
+          "backend/src/common/enums/error-code.enum.ts",
+          "backend/src/common/filters/global-exception.filter.spec.ts",
+          "backend/src/common/filters/global-exception.filter.ts",
+          "backend/src/common/guards/permission.guard.ts",
+          "backend/src/common/guards/roles.guard.ts",
+          "backend/src/common/index.ts",
+          "backend/src/common/utils/role-hierarchy.spec.ts",
+          "backend/src/common/utils/role-hierarchy.ts",
+          "backend/src/config/configuration.ts",
+          "backend/src/config/env.validation.ts",
+          "backend/src/database/database.module.ts",
+          "backend/src/database/seeds/index.ts",
+          "backend/src/database/seeds/role.seed.ts",
+          "backend/src/database/seeds/seed.service.ts",
+          "backend/src/database/seeds/user.seed.ts",
+          "backend/src/health/health.controller.spec.ts",
+          "backend/src/health/health.controller.ts",
+          "backend/src/health/health.service.ts",
+          "backend/src/mail/interfaces/mail-options.interface.ts",
+          "backend/src/mail/mail.service.ts",
+          "backend/src/main.ts",
+          "backend/src/role/dto/list-roles-query.dto.ts",
+          "backend/src/role/dto/role-response.dto.ts",
+          "backend/src/role/role.controller.ts",
+          "backend/src/role/role.module.ts",
+          "backend/src/role/role.service.ts",
+          "backend/src/role/schemas/role.schema.ts",
+          "backend/src/session/interfaces/session.interface.ts",
+          "backend/src/session/schemas/session.schema.ts",
+          "backend/src/user/dto/account-linking.dto.ts",
+          "backend/src/user/dto/add-permission.dto.ts",
+          "backend/src/user/dto/update-profile.dto.ts",
+          "backend/src/user/dto/user-profile.dto.ts",
+          "backend/src/user/interfaces/user.interface.ts",
+          "backend/src/user/schemas/user.schema.ts",
+          "backend/src/user/services/account-linking.service.ts",
+          "backend/src/user/services/profile-sync.service.ts",
+          "backend/src/user/user.module.ts",
+          "backend/test/app.e2e-spec.ts",
+          "backend/test/jest-e2e.json"
+        ],
+        "deleted": [
+          "backend/migrations/20260119000001_add_linked_providers.js",
+          "backend/src/admin/admin.controller.ts",
+          "backend/src/admin/admin.service.spec.ts",
+          "backend/src/admin/admin.service.ts",
+          "backend/src/auth/decorators/verified.decorator.ts",
+          "backend/src/auth/dto/oauth-callback.dto.ts",
+          "backend/src/auth/guards/verified.guard.ts",
+          "backend/src/auth/oauth.controller.spec.ts",
+          "backend/src/auth/oauth.controller.ts",
+          "backend/src/auth/services/oauth.service.spec.ts",
+          "backend/src/auth/services/oauth.service.ts",
+          "backend/src/auth/strategies/base-oauth.strategy.ts",
+          "backend/src/auth/strategies/facebook-oauth.strategy.spec.ts",
+          "backend/src/auth/strategies/facebook-oauth.strategy.ts",
+          "backend/src/auth/strategies/github-oauth.strategy.spec.ts",
+          "backend/src/auth/strategies/github-oauth.strategy.ts",
+          "backend/src/auth/strategies/google-oauth.strategy.spec.ts",
+          "backend/src/auth/strategies/google-oauth.strategy.ts",
+          "backend/src/auth/strategies/oauth.strategy.interface.ts",
+          "backend/src/database/migrations/add-permissions-to-users.migration.ts",
+          "backend/src/database/migrations/migration.controller.ts",
+          "backend/src/database/migrations/migration.module.ts",
+          "backend/src/permission/constants/default-permissions.ts",
+          "backend/src/permission/interfaces/permission.interface.ts",
+          "backend/src/permission/permission.module.ts",
+          "backend/src/permission/schemas/permission.schema.ts",
+          "backend/src/user/user.controller.ts",
+          "backend/src/user/user.service.spec.ts",
+          "backend/src/user/user.service.ts",
+          "backend/test/permissions.e2e-spec.ts",
+          "backend/test/roles.e2e-spec.ts"
+        ]
+      },
+      "current_uncommitted_paths": {
+        "new": [
+          "backend/src/auth/constants/available-auth-features.ts",
+          "backend/src/auth/passkeys/services/passkey-second-factor.verifier.spec.ts",
+          "backend/src/auth/passkeys/services/passkey-second-factor.verifier.ts",
+          "backend/src/auth/services/auth-features.service.spec.ts",
+          "backend/src/auth/two-factor/services/second-factor-verifiers.ts",
+          "backend/src/auth/two-factor/sign-in-second-factor.spec.ts",
+          "backend/src/common/constants/client-paths.ts",
+          "backend/test/utils/browser-server.ts",
+          "backend/test/utils/local-oauth.ts",
+          "backend/test/utils/permissions.ts"
+        ],
+        "mod": [
+          "backend/src/app.module.ts",
+          "backend/src/auth/auth-methods.controller.spec.ts",
+          "backend/src/auth/auth-methods.controller.ts",
+          "backend/src/auth/auth.module.ts",
+          "backend/src/auth/dto/auth-methods-response.dto.ts",
+          "backend/src/auth/guards/feature-enabled.guard.spec.ts",
+          "backend/src/auth/oauth/oauth-redirect.service.ts",
+          "backend/src/auth/oauth/oauth-registry.wiring.spec.ts",
+          "backend/src/auth/passkeys/passkeys.module.ts",
+          "backend/src/auth/passkeys/passkeys.wiring.spec.ts",
+          "backend/src/auth/services/auth-features.service.ts",
+          "backend/src/auth/services/sign-in.service.spec.ts",
+          "backend/src/auth/services/sign-in.service.ts",
+          "backend/src/auth/two-factor/constants/two-factor.constants.ts",
+          "backend/src/auth/two-factor/dto/verify-two-factor.dto.ts",
+          "backend/src/auth/two-factor/two-factor-login.service.spec.ts",
+          "backend/src/auth/two-factor/two-factor-login.service.ts",
+          "backend/src/auth/two-factor/two-factor.module.ts",
+          "backend/src/config/env.oauth.schema.ts",
+          "backend/src/user/dto/user-profile.dto.ts",
+          "backend/src/user/schemas/user.schema.ts",
+          "backend/src/user/services/user-profile.service.spec.ts",
+          "backend/src/user/services/user-profile.service.ts",
+          "backend/src/user/user.module.ts",
+          "backend/test/app.boot.e2e-spec.ts",
+          "backend/test/app.e2e-spec.ts",
+          "backend/test/jest-e2e.json",
+          "backend/test/permissions/admin-permission-routes.e2e-spec.ts",
+          "backend/test/permissions/permission-enforcement.e2e-spec.ts",
+          "backend/test/roles/role-access.e2e-spec.ts",
+          "backend/test/roles/role-crud.e2e-spec.ts",
+          "backend/test/types/e2e-responses.ts",
+          "backend/test/utils/e2e-app.ts"
+        ],
+        "deleted": []
+      }
+    },
+    {
+      "id": "frontend",
+      "message": "fix(frontend): complete localized authentication and account journeys",
+      "projected_paths": {
+        "new": [
+          "frontend/e2e/README.md",
+          "frontend/e2e/administration.spec.ts",
+          "frontend/e2e/authenticated-regressions.spec.ts",
+          "frontend/e2e/fixtures/authenticated.ts",
+          "frontend/e2e/frontend-only/anonymous-auth.spec.ts",
+          "frontend/e2e/frontend-only/fixtures.ts",
+          "frontend/e2e/lifecycle.spec.ts",
+          "frontend/e2e/local-provider.spec.ts",
+          "frontend/e2e/network-fallback.spec.ts",
+          "frontend/e2e/utils/accessibility.ts",
+          "frontend/e2e/utils/auth-actions.ts",
+          "frontend/e2e/utils/selectors.ts",
+          "frontend/e2e/utils/serve-frontend.mjs",
+          "frontend/playwright.frontend.config.ts",
+          "frontend/scripts/check-rtl.mjs",
+          "frontend/src/app/[locale]/(auth)/auth/2fa/page.tsx",
+          "frontend/src/app/[locale]/(auth)/auth/magic-link/verify/page.tsx",
+          "frontend/src/app/[locale]/(auth)/layout.tsx",
+          "frontend/src/app/[locale]/(dashboard)/admin/roles/layout.tsx",
+          "frontend/src/app/[locale]/(dashboard)/admin/users/layout.tsx",
+          "frontend/src/app/[locale]/(dashboard)/sessions/layout.tsx",
+          "frontend/src/app/tokens.css",
+          "frontend/src/components/forms/FieldError.tsx",
+          "frontend/src/components/forms/FormRootError.tsx",
+          "frontend/src/components/forms/PasswordRules.tsx",
+          "frontend/src/components/forms/PasswordVisibilityToggle.tsx",
+          "frontend/src/components/forms/SubmitButton.tsx",
+          "frontend/src/components/layout/LoadingRegion.tsx",
+          "frontend/src/components/navigation/MobileNavSheet.tsx",
+          "frontend/src/components/navigation/SidebarBrand.tsx",
+          "frontend/src/components/navigation/SidebarPanel.tsx",
+          "frontend/src/components/navigation/navConfig.ts",
+          "frontend/src/components/pagination/PaginationControl.tsx",
+          "frontend/src/components/pagination/index.ts",
+          "frontend/src/components/providers/DirectionProvider.tsx",
+          "frontend/src/components/ui/LocalizedToastMessage.test.tsx",
+          "frontend/src/components/ui/LocalizedToastMessage.tsx",
+          "frontend/src/components/ui/auth-divider.tsx",
+          "frontend/src/components/ui/sheet.tsx",
+          "frontend/src/components/ui/tooltip.tsx",
+          "frontend/src/constants/api.ts",
+          "frontend/src/constants/app.ts",
+          "frontend/src/constants/focusStyles.ts",
+          "frontend/src/i18n/__tests__/messages.test.ts",
+          "frontend/src/i18n/direction.ts",
+          "frontend/src/i18n/navigation.ts",
+          "frontend/src/lib/apiErrorHelpers.ts",
+          "frontend/src/lib/config/security-headers.test.ts",
+          "frontend/src/lib/config/security-headers.ts",
+          "frontend/src/lib/qr/__tests__/qr.test.ts",
+          "frontend/src/lib/qr/__tests__/roundTrip.test.ts",
+          "frontend/src/lib/qr/encode.ts",
+          "frontend/src/lib/qr/format.ts",
+          "frontend/src/lib/qr/galois.ts",
+          "frontend/src/lib/qr/index.ts",
+          "frontend/src/lib/qr/mask.ts",
+          "frontend/src/lib/qr/patterns.ts",
+          "frontend/src/lib/qr/render.ts",
+          "frontend/src/lib/qr/tables.ts",
+          "frontend/src/lib/validations/__tests__/passwordRules.test.ts",
+          "frontend/src/lib/validations/passwordRules.ts",
+          "frontend/src/lib/validations/string/identity.ts",
+          "frontend/src/lib/validations/string/patterns.ts",
+          "frontend/src/lib/validations/string/text.ts",
+          "frontend/src/modules/auth/api/authMethodsApi.ts",
+          "frontend/src/modules/auth/api/index.ts",
+          "frontend/src/modules/auth/components/AuthMethodsGate.tsx",
+          "frontend/src/modules/auth/constants/authMethods.ts",
+          "frontend/src/modules/auth/hooks/useAuthMethods.ts",
+          "frontend/src/modules/auth/hooks/useCompleteSignIn.ts",
+          "frontend/src/modules/auth/hooks/useCooldown.ts",
+          "frontend/src/modules/auth/hooks/useFeatureDisabled.ts",
+          "frontend/src/modules/auth/methods/__tests__/registry.test.ts",
+          "frontend/src/modules/auth/methods/magic-link/MagicLinkRequestForm.tsx",
+          "frontend/src/modules/auth/methods/magic-link/MagicLinkVerifyPanel.tsx",
+          "frontend/src/modules/auth/methods/magic-link/index.ts",
+          "frontend/src/modules/auth/methods/magic-link/magicLinkApi.ts",
+          "frontend/src/modules/auth/methods/magic-link/magicLinkMethod.ts",
+          "frontend/src/modules/auth/methods/password/ChangePasswordCard.tsx",
+          "frontend/src/modules/auth/methods/password/ForgotPasswordForm.tsx",
+          "frontend/src/modules/auth/methods/password/ForgotPasswordPage.tsx",
+          "frontend/src/modules/auth/methods/password/PasswordSignInForm.tsx",
+          "frontend/src/modules/auth/methods/password/RegisterForm.tsx",
+          "frontend/src/modules/auth/methods/password/RegisterPage.tsx",
+          "frontend/src/modules/auth/methods/password/ResetPasswordForm.tsx",
+          "frontend/src/modules/auth/methods/password/ResetPasswordPage.tsx",
+          "frontend/src/modules/auth/methods/password/index.ts",
+          "frontend/src/modules/auth/methods/password/passwordMethod.ts",
+          "frontend/src/modules/auth/methods/registry.ts",
+          "frontend/src/modules/auth/methods/types.ts",
+          "frontend/src/modules/auth/utils/__tests__/authHelpers.test.ts",
+          "frontend/src/modules/auth/utils/__tests__/digitFilter.test.ts",
+          "frontend/src/modules/auth/utils/__tests__/errorCodeMessage.test.ts",
+          "frontend/src/modules/auth/utils/activationSchema.ts",
+          "frontend/src/modules/auth/utils/digitFilter.ts",
+          "frontend/src/modules/auth/utils/errorCodeMessage.ts",
+          "frontend/src/modules/auth/utils/featureDisabled.ts",
+          "frontend/src/modules/auth/utils/preventNavigationBlur.ts",
+          "frontend/src/modules/auth/utils/signInRouting.ts",
+          "frontend/src/modules/oauth/components/OAuthCallbackPanel.tsx",
+          "frontend/src/modules/oauth/components/OAuthProviderIcon.tsx",
+          "frontend/src/modules/oauth/constants/index.ts",
+          "frontend/src/modules/oauth/constants/providers.ts",
+          "frontend/src/modules/oauth/constants/routes.ts",
+          "frontend/src/modules/oauth/utils/oauthUrl.ts",
+          "frontend/src/modules/oauth/utils/providerNames.ts",
+          "frontend/src/modules/passkeys/api/index.ts",
+          "frontend/src/modules/passkeys/api/passkeysApi.ts",
+          "frontend/src/modules/passkeys/components/PasskeyChallengeButton.tsx",
+          "frontend/src/modules/passkeys/components/PasskeyDeleteDialog.tsx",
+          "frontend/src/modules/passkeys/components/PasskeyList.tsx",
+          "frontend/src/modules/passkeys/components/PasskeyNameDialog.tsx",
+          "frontend/src/modules/passkeys/components/PasskeyPrompt.tsx",
+          "frontend/src/modules/passkeys/components/PasskeyRow.tsx",
+          "frontend/src/modules/passkeys/components/PasskeySignInButton.tsx",
+          "frontend/src/modules/passkeys/components/PasskeysCard.tsx",
+          "frontend/src/modules/passkeys/constants/index.ts",
+          "frontend/src/modules/passkeys/hooks/index.ts",
+          "frontend/src/modules/passkeys/hooks/useDialogTarget.ts",
+          "frontend/src/modules/passkeys/hooks/usePasskeySignIn.ts",
+          "frontend/src/modules/passkeys/hooks/usePasskeySupport.ts",
+          "frontend/src/modules/passkeys/hooks/useRegisterPasskey.ts",
+          "frontend/src/modules/passkeys/index.ts",
+          "frontend/src/modules/passkeys/methods/passkeysMethod.ts",
+          "frontend/src/modules/passkeys/types/index.ts",
+          "frontend/src/modules/passkeys/utils/__tests__/deviceLabel.test.ts",
+          "frontend/src/modules/passkeys/utils/__tests__/webauthnErrors.test.ts",
+          "frontend/src/modules/passkeys/utils/deviceLabel.ts",
+          "frontend/src/modules/passkeys/utils/webauthn.ts",
+          "frontend/src/modules/passkeys/utils/webauthnErrors.ts",
+          "frontend/src/modules/permissions/components/EditRoleForm.tsx",
+          "frontend/src/modules/permissions/components/PermissionGroupGrid.tsx",
+          "frontend/src/modules/permissions/components/SearchPermissionGrid.tsx",
+          "frontend/src/modules/permissions/components/SearchPermissionTabs.tsx",
+          "frontend/src/modules/permissions/components/UserActionConfirmDialog.tsx",
+          "frontend/src/modules/permissions/components/UserPermissionsSummary.tsx",
+          "frontend/src/modules/permissions/hooks/usePermissionLabel.ts",
+          "frontend/src/modules/permissions/utils/__tests__/createUserValidation.test.ts",
+          "frontend/src/modules/permissions/utils/createUserValidation.ts",
+          "frontend/src/modules/roles/components/RoleDialogs.tsx",
+          "frontend/src/modules/roles/components/RoleSplitViewSkeleton.tsx",
+          "frontend/src/modules/sessions/components/SessionTimelineSkeleton.tsx",
+          "frontend/src/modules/sessions/components/index.ts",
+          "frontend/src/modules/two-factor/api/index.ts",
+          "frontend/src/modules/two-factor/api/twoFactorApi.ts",
+          "frontend/src/modules/two-factor/components/CodeField.tsx",
+          "frontend/src/modules/two-factor/components/QrCode.tsx",
+          "frontend/src/modules/two-factor/components/RecoveryCodeList.tsx",
+          "frontend/src/modules/two-factor/components/RegenerateCodesDialog.tsx",
+          "frontend/src/modules/two-factor/components/TwoFactorAnswerFields.tsx",
+          "frontend/src/modules/two-factor/components/TwoFactorCard.tsx",
+          "frontend/src/modules/two-factor/components/TwoFactorChallengePanel.tsx",
+          "frontend/src/modules/two-factor/components/TwoFactorDisableDialog.tsx",
+          "frontend/src/modules/two-factor/components/TwoFactorSetupDialog.tsx",
+          "frontend/src/modules/two-factor/components/steps/ConfirmStep.tsx",
+          "frontend/src/modules/two-factor/components/steps/ReauthStep.tsx",
+          "frontend/src/modules/two-factor/components/steps/RecoveryCodesStep.tsx",
+          "frontend/src/modules/two-factor/components/steps/ScanStep.tsx",
+          "frontend/src/modules/two-factor/constants/index.ts",
+          "frontend/src/modules/two-factor/hooks/useTwoFactorSetup.ts",
+          "frontend/src/modules/two-factor/index.ts",
+          "frontend/src/modules/two-factor/types/index.ts",
+          "frontend/src/modules/two-factor/utils/answerSchema.ts",
+          "frontend/src/modules/two-factor/utils/clipboard.ts",
+          "frontend/src/modules/users/api/usersApi.test.ts",
+          "frontend/src/modules/users/components/UserGroupedList.tsx",
+          "frontend/src/modules/users/components/UserListSkeleton.tsx",
+          "frontend/src/modules/users/components/UserListToolbar.tsx",
+          "frontend/src/store/authPersistence.test.ts",
+          "frontend/src/store/authPersistence.ts",
+          "frontend/src/store/middleware/errorInterceptor.test.ts",
+          "frontend/src/types/apiError.types.ts",
+          "frontend/vitest.config.ts"
+        ],
+        "mod": [
+          "frontend/Dockerfile",
+          "frontend/README.md",
+          "frontend/e2e/role-management.spec.ts",
+          "frontend/e2e/session-management.spec.ts",
+          "frontend/e2e/sidebar-navigation.spec.ts",
+          "frontend/next.config.ts",
+          "frontend/package.json",
+          "frontend/playwright.config.ts",
+          "frontend/src/app/[locale]/(auth)/auth/forgot-password/page.tsx",
+          "frontend/src/app/[locale]/(auth)/auth/oauth/callback/page.tsx",
+          "frontend/src/app/[locale]/(auth)/auth/oauth/error/page.tsx",
+          "frontend/src/app/[locale]/(auth)/auth/register/page.tsx",
+          "frontend/src/app/[locale]/(auth)/auth/reset-password/page.tsx",
+          "frontend/src/app/[locale]/(dashboard)/admin/dashboard/page.tsx",
+          "frontend/src/app/[locale]/(dashboard)/admin/permissions-demo/page.tsx",
+          "frontend/src/app/[locale]/(dashboard)/admin/roles/page.tsx",
+          "frontend/src/app/[locale]/(dashboard)/admin/users/page.tsx",
+          "frontend/src/app/[locale]/(dashboard)/dashboard/page.tsx",
+          "frontend/src/app/[locale]/(dashboard)/layout.tsx",
+          "frontend/src/app/[locale]/(dashboard)/manager/dashboard/page.tsx",
+          "frontend/src/app/[locale]/(dashboard)/sessions/page.tsx",
+          "frontend/src/app/[locale]/(dashboard)/settings/page.tsx",
+          "frontend/src/app/[locale]/(dashboard)/support/dashboard/page.tsx",
+          "frontend/src/app/[locale]/(errors)/403/page.tsx",
+          "frontend/src/app/[locale]/error.tsx",
+          "frontend/src/app/[locale]/layout.tsx",
+          "frontend/src/app/[locale]/not-found.tsx",
+          "frontend/src/app/[locale]/page.tsx",
+          "frontend/src/app/globals.css",
+          "frontend/src/app/layout.tsx",
+          "frontend/src/components/LanguageSwitcher.tsx",
+          "frontend/src/components/ThemeSwitcher.tsx",
+          "frontend/src/components/design-system/SearchBar.tsx",
+          "frontend/src/components/design-system/SectionHeader.tsx",
+          "frontend/src/components/design-system/StatusBadge.tsx",
+          "frontend/src/components/design-system/index.ts",
+          "frontend/src/components/design-system/layout/SplitView.tsx",
+          "frontend/src/components/design-system/layout/TimelineList.tsx",
+          "frontend/src/components/forms/FormCheckbox.tsx",
+          "frontend/src/components/forms/FormInput.tsx",
+          "frontend/src/components/forms/FormPassword.tsx",
+          "frontend/src/components/forms/FormSelect.tsx",
+          "frontend/src/components/forms/index.ts",
+          "frontend/src/components/layout/ErrorPageLayout.tsx",
+          "frontend/src/components/navigation/DashboardNav.tsx",
+          "frontend/src/components/providers/ActivationGuard.tsx",
+          "frontend/src/components/providers/AuthGuard.tsx",
+          "frontend/src/components/providers/ReduxProvider.tsx",
+          "frontend/src/components/providers/ThemeProvider.tsx",
+          "frontend/src/components/providers/index.ts",
+          "frontend/src/components/ui/alert-dialog.tsx",
+          "frontend/src/components/ui/alert.tsx",
+          "frontend/src/components/ui/badge.tsx",
+          "frontend/src/components/ui/checkbox.tsx",
+          "frontend/src/components/ui/dialog.tsx",
+          "frontend/src/components/ui/dropdown-menu.tsx",
+          "frontend/src/components/ui/icon-link-button.tsx",
+          "frontend/src/components/ui/select.tsx",
+          "frontend/src/components/ui/switch.tsx",
+          "frontend/src/constants/errorCodes.ts",
+          "frontend/src/hooks/useFormWithValidation.ts",
+          "frontend/src/i18n/messages/ar.json",
+          "frontend/src/i18n/messages/en.json",
+          "frontend/src/lib/__tests__/parseUserAgent.test.ts",
+          "frontend/src/lib/apiError.ts",
+          "frontend/src/lib/config/form-styles.ts",
+          "frontend/src/lib/formatters.ts",
+          "frontend/src/lib/parseUserAgent.ts",
+          "frontend/src/lib/toast.ts",
+          "frontend/src/lib/validations/array/index.ts",
+          "frontend/src/lib/validations/boolean/index.ts",
+          "frontend/src/lib/validations/changePassword.ts",
+          "frontend/src/lib/validations/composed/index.ts",
+          "frontend/src/lib/validations/date/index.ts",
+          "frontend/src/lib/validations/file/index.ts",
+          "frontend/src/lib/validations/number/index.ts",
+          "frontend/src/lib/validations/string/index.ts",
+          "frontend/src/lib/validations/utils.ts",
+          "frontend/src/modules/account/api/accountLinkingApi.ts",
+          "frontend/src/modules/account/api/index.ts",
+          "frontend/src/modules/account/components/LinkProviderButton.tsx",
+          "frontend/src/modules/account/components/LinkedAccountCard.tsx",
+          "frontend/src/modules/account/components/LinkedAccounts.tsx",
+          "frontend/src/modules/account/components/ProfileSyncStatus.tsx",
+          "frontend/src/modules/account/components/UpdateProfileCard.tsx",
+          "frontend/src/modules/account/components/index.ts",
+          "frontend/src/modules/account/index.ts",
+          "frontend/src/modules/account/types/account.types.ts",
+          "frontend/src/modules/auth/components/ActivationForm.tsx",
+          "frontend/src/modules/auth/components/AuthLayout.tsx",
+          "frontend/src/modules/auth/components/LoginForm.tsx",
+          "frontend/src/modules/auth/components/LogoutButton.tsx",
+          "frontend/src/modules/auth/components/WelcomeModal.tsx",
+          "frontend/src/modules/auth/components/index.ts",
+          "frontend/src/modules/auth/hooks/index.ts",
+          "frontend/src/modules/auth/hooks/useAuthValidation.ts",
+          "frontend/src/modules/auth/pages/ActivationPage.tsx",
+          "frontend/src/modules/auth/pages/LoginPage.tsx",
+          "frontend/src/modules/auth/pages/index.ts",
+          "frontend/src/modules/auth/store/authApi.ts",
+          "frontend/src/modules/auth/store/authSlice.ts",
+          "frontend/src/modules/auth/types/auth.types.ts",
+          "frontend/src/modules/auth/utils/authHelpers.ts",
+          "frontend/src/modules/auth/utils/index.ts",
+          "frontend/src/modules/oauth/api/oauthApi.ts",
+          "frontend/src/modules/oauth/components/OAuthButton.tsx",
+          "frontend/src/modules/oauth/components/OAuthButtons.tsx",
+          "frontend/src/modules/oauth/components/index.ts",
+          "frontend/src/modules/oauth/index.ts",
+          "frontend/src/modules/oauth/types/oauth.types.ts",
+          "frontend/src/modules/oauth/utils/index.ts",
+          "frontend/src/modules/permissions/api/rolesApi.ts",
+          "frontend/src/modules/permissions/components/CreateRoleDialog.tsx",
+          "frontend/src/modules/permissions/components/CreateUserButton.tsx",
+          "frontend/src/modules/permissions/components/CreateUserDialog.tsx",
+          "frontend/src/modules/permissions/components/DeleteRoleDialog.tsx",
+          "frontend/src/modules/permissions/components/EditRoleDialog.tsx",
+          "frontend/src/modules/permissions/components/EditUserDialog.tsx",
+          "frontend/src/modules/permissions/components/PermissionNode.tsx",
+          "frontend/src/modules/permissions/components/PermissionSearchDialog.tsx",
+          "frontend/src/modules/permissions/components/PermissionSelector.tsx",
+          "frontend/src/modules/permissions/components/PermissionTreeView.tsx",
+          "frontend/src/modules/permissions/components/RoleDetailPanel.tsx",
+          "frontend/src/modules/permissions/components/RoleSidebarNav.tsx",
+          "frontend/src/modules/permissions/components/RoutePermissionGuard.tsx",
+          "frontend/src/modules/permissions/components/UserActionsMenu.tsx",
+          "frontend/src/modules/permissions/components/UserCard.tsx",
+          "frontend/src/modules/permissions/components/UserListSection.tsx",
+          "frontend/src/modules/permissions/components/UserPermissionsDialog.tsx",
+          "frontend/src/modules/permissions/components/UserRoleSelector.tsx",
+          "frontend/src/modules/permissions/constants/permissions.ts",
+          "frontend/src/modules/permissions/hooks/useUserActions.ts",
+          "frontend/src/modules/permissions/index.ts",
+          "frontend/src/modules/roles/api/rolesApi.ts",
+          "frontend/src/modules/roles/components/index.ts",
+          "frontend/src/modules/roles/index.ts",
+          "frontend/src/modules/sessions/components/DeviceIcon.tsx",
+          "frontend/src/modules/sessions/components/RevokeAllSessionsButton.tsx",
+          "frontend/src/modules/sessions/components/SessionCardTimeline.tsx",
+          "frontend/src/modules/sessions/index.ts",
+          "frontend/src/modules/users/api/usersApi.ts",
+          "frontend/src/modules/users/components/index.ts",
+          "frontend/src/modules/users/index.ts",
+          "frontend/src/modules/users/types/user.types.ts",
+          "frontend/src/store/api/baseApi.ts",
+          "frontend/src/store/api/userApi.ts",
+          "frontend/src/store/middleware/errorInterceptor.ts",
+          "frontend/src/store/store.ts"
+        ],
+        "deleted": [
+          "frontend/src/app/[locale]/(auth)/auth/oauth/callback/[provider]/page.tsx",
+          "frontend/src/components/Header.tsx",
+          "frontend/src/components/design-system/Card.tsx",
+          "frontend/src/components/design-system/FloatingActionZone.tsx",
+          "frontend/src/components/design-system/layout/GroupedGrid.tsx",
+          "frontend/src/components/forms/FormRadio.tsx",
+          "frontend/src/components/forms/FormSwitch.tsx",
+          "frontend/src/components/forms/FormTextarea.tsx",
+          "frontend/src/components/forms/examples/GenericFormExample.tsx",
+          "frontend/src/components/providers/RoleGuard.tsx",
+          "frontend/src/examples/README.md",
+          "frontend/src/examples/ReferenceButton.tsx",
+          "frontend/src/examples/ReferenceForm.tsx",
+          "frontend/src/examples/ReferenceMutation.tsx",
+          "frontend/src/hooks/use-toast.ts",
+          "frontend/src/hooks/useApiError.ts",
+          "frontend/src/hooks/useConfirmDialog.ts",
+          "frontend/src/hooks/useMutationWithToast.ts",
+          "frontend/src/lib/utils/form-errors.ts",
+          "frontend/src/modules/account/components/ChangePasswordCard.tsx",
+          "frontend/src/modules/auth/components/ForgotPasswordForm.tsx",
+          "frontend/src/modules/auth/components/RegisterForm.tsx",
+          "frontend/src/modules/auth/components/ResetPasswordForm.tsx",
+          "frontend/src/modules/auth/pages/ForgotPasswordPage.tsx",
+          "frontend/src/modules/auth/pages/RegisterPage.tsx",
+          "frontend/src/modules/auth/pages/ResetPasswordPage.tsx",
+          "frontend/src/modules/auth/store/profileSyncApi.ts",
+          "frontend/src/modules/auth/utils/oauthHelpers.ts",
+          "frontend/src/modules/auth/utils/storage.ts",
+          "frontend/src/modules/oauth/components/OAuthDivider.tsx",
+          "frontend/src/modules/oauth/utils/oauthHelpers.ts",
+          "frontend/src/modules/permissions/components/CreateRoleButton.tsx",
+          "frontend/src/modules/permissions/components/PermissionsList.tsx",
+          "frontend/src/modules/permissions/components/RoleFormDialog.tsx",
+          "frontend/src/modules/permissions/components/UserPermissionsBadge.tsx",
+          "frontend/src/modules/sessions/components/SessionCard.tsx",
+          "frontend/src/store/slices/toastSlice.ts"
+        ]
+      },
+      "current_uncommitted_paths": {
+        "new": [
+          "frontend/e2e/README.md",
+          "frontend/e2e/administration.spec.ts",
+          "frontend/e2e/authenticated-regressions.spec.ts",
+          "frontend/e2e/fixtures/authenticated.ts",
+          "frontend/e2e/frontend-only/anonymous-auth.spec.ts",
+          "frontend/e2e/frontend-only/fixtures.ts",
+          "frontend/e2e/lifecycle.spec.ts",
+          "frontend/e2e/local-provider.spec.ts",
+          "frontend/e2e/network-fallback.spec.ts",
+          "frontend/e2e/utils/accessibility.ts",
+          "frontend/e2e/utils/auth-actions.ts",
+          "frontend/e2e/utils/selectors.ts",
+          "frontend/e2e/utils/serve-frontend.mjs",
+          "frontend/playwright.frontend.config.ts",
+          "frontend/src/components/ui/LocalizedToastMessage.test.tsx",
+          "frontend/src/components/ui/LocalizedToastMessage.tsx",
+          "frontend/src/components/ui/auth-divider.tsx",
+          "frontend/src/modules/auth/utils/preventNavigationBlur.ts",
+          "frontend/src/modules/users/api/usersApi.test.ts",
+          "frontend/src/store/authPersistence.test.ts",
+          "frontend/src/store/authPersistence.ts",
+          "frontend/src/store/middleware/errorInterceptor.test.ts"
+        ],
+        "mod": [
+          "frontend/README.md",
+          "frontend/e2e/role-management.spec.ts",
+          "frontend/e2e/session-management.spec.ts",
+          "frontend/e2e/sidebar-navigation.spec.ts",
+          "frontend/package.json",
+          "frontend/playwright.config.ts",
+          "frontend/src/app/[locale]/(dashboard)/settings/page.tsx",
+          "frontend/src/app/[locale]/layout.tsx",
+          "frontend/src/app/layout.tsx",
+          "frontend/src/components/providers/DirectionProvider.tsx",
+          "frontend/src/lib/toast.ts",
+          "frontend/src/modules/account/api/index.ts",
+          "frontend/src/modules/account/components/UpdateProfileCard.tsx",
+          "frontend/src/modules/account/components/index.ts",
+          "frontend/src/modules/account/index.ts",
+          "frontend/src/modules/account/types/account.types.ts",
+          "frontend/src/modules/auth/api/authMethodsApi.ts",
+          "frontend/src/modules/auth/components/ActivationForm.tsx",
+          "frontend/src/modules/auth/components/LoginForm.tsx",
+          "frontend/src/modules/auth/methods/__tests__/registry.test.ts",
+          "frontend/src/modules/auth/methods/password/ForgotPasswordForm.tsx",
+          "frontend/src/modules/auth/methods/password/PasswordSignInForm.tsx",
+          "frontend/src/modules/auth/methods/password/RegisterForm.tsx",
+          "frontend/src/modules/auth/methods/password/ResetPasswordForm.tsx",
+          "frontend/src/modules/auth/methods/registry.ts",
+          "frontend/src/modules/auth/pages/LoginPage.tsx",
+          "frontend/src/modules/auth/store/authApi.ts",
+          "frontend/src/modules/auth/types/auth.types.ts",
+          "frontend/src/modules/oauth/components/index.ts",
+          "frontend/src/modules/oauth/index.ts",
+          "frontend/src/modules/sessions/components/SessionCardTimeline.tsx",
+          "frontend/src/modules/users/api/usersApi.ts",
+          "frontend/src/store/api/baseApi.ts",
+          "frontend/src/store/middleware/errorInterceptor.ts",
+          "frontend/src/store/store.ts"
+        ],
+        "deleted": [
+          "frontend/src/modules/oauth/components/OAuthDivider.tsx"
+        ]
+      }
+    },
+    {
+      "id": "generator",
+      "message": "feat(root): add configurable authentication project generation",
+      "projected_paths": {
+        "new": [
+          "packages/create-nest-next-auth/README.md",
+          "packages/create-nest-next-auth/eslint.config.mjs",
+          "packages/create-nest-next-auth/package.json",
+          "packages/create-nest-next-auth/scripts/sync-template.mjs",
+          "packages/create-nest-next-auth/src/cli.ts",
+          "packages/create-nest-next-auth/src/constants/index.ts",
+          "packages/create-nest-next-auth/src/flags/options.ts",
+          "packages/create-nest-next-auth/src/index.ts",
+          "packages/create-nest-next-auth/src/manifest/load.ts",
+          "packages/create-nest-next-auth/src/manifest/select.ts",
+          "packages/create-nest-next-auth/src/manifest/validate.ts",
+          "packages/create-nest-next-auth/src/paths.ts",
+          "packages/create-nest-next-auth/src/prompts/index.ts",
+          "packages/create-nest-next-auth/src/prune/docs.ts",
+          "packages/create-nest-next-auth/src/prune/env.ts",
+          "packages/create-nest-next-auth/src/prune/files.ts",
+          "packages/create-nest-next-auth/src/prune/index.ts",
+          "packages/create-nest-next-auth/src/prune/markers.ts",
+          "packages/create-nest-next-auth/src/prune/references.ts",
+          "packages/create-nest-next-auth/src/report.ts",
+          "packages/create-nest-next-auth/src/scaffold/copy.ts",
+          "packages/create-nest-next-auth/src/scaffold/git.ts",
+          "packages/create-nest-next-auth/src/scaffold/install.ts",
+          "packages/create-nest-next-auth/src/scaffold/next-steps.ts",
+          "packages/create-nest-next-auth/src/scaffold/package-json.ts",
+          "packages/create-nest-next-auth/src/types.ts",
+          "packages/create-nest-next-auth/src/utils/exec.ts",
+          "packages/create-nest-next-auth/src/utils/fs.ts",
+          "packages/create-nest-next-auth/src/utils/glob.ts",
+          "packages/create-nest-next-auth/src/utils/project-name.ts",
+          "packages/create-nest-next-auth/test/combination-helpers.ts",
+          "packages/create-nest-next-auth/test/combinations.slow.test.ts",
+          "packages/create-nest-next-auth/test/e2e.test.ts",
+          "packages/create-nest-next-auth/test/feature-runtime.test.ts",
+          "packages/create-nest-next-auth/test/feature-runtime.ts",
+          "packages/create-nest-next-auth/test/fixture.ts",
+          "packages/create-nest-next-auth/test/flags.test.ts",
+          "packages/create-nest-next-auth/test/manifest.test.ts",
+          "packages/create-nest-next-auth/test/markers.test.ts",
+          "packages/create-nest-next-auth/test/project-name.test.ts",
+          "packages/create-nest-next-auth/test/prune.test.ts",
+          "packages/create-nest-next-auth/tsconfig.json",
+          "packages/create-nest-next-auth/tsdown.config.ts",
+          "packages/create-nest-next-auth/vitest.combinations.config.ts",
+          "packages/create-nest-next-auth/vitest.config.ts",
+          "template.manifest.json"
+        ],
+        "mod": [],
+        "deleted": []
+      },
+      "current_uncommitted_paths": {
+        "new": [
+          "packages/create-nest-next-auth/src/prune/markers.ts",
+          "packages/create-nest-next-auth/test/combination-helpers.ts",
+          "packages/create-nest-next-auth/test/combinations.slow.test.ts",
+          "packages/create-nest-next-auth/test/feature-runtime.test.ts",
+          "packages/create-nest-next-auth/test/feature-runtime.ts",
+          "packages/create-nest-next-auth/test/markers.test.ts",
+          "packages/create-nest-next-auth/vitest.combinations.config.ts"
+        ],
+        "mod": [
+          "packages/create-nest-next-auth/README.md",
+          "packages/create-nest-next-auth/package.json",
+          "packages/create-nest-next-auth/scripts/sync-template.mjs",
+          "packages/create-nest-next-auth/src/constants/index.ts",
+          "packages/create-nest-next-auth/src/manifest/validate.ts",
+          "packages/create-nest-next-auth/src/prune/index.ts",
+          "packages/create-nest-next-auth/src/prune/references.ts",
+          "packages/create-nest-next-auth/src/report.ts",
+          "packages/create-nest-next-auth/src/scaffold/package-json.ts",
+          "packages/create-nest-next-auth/src/types.ts",
+          "packages/create-nest-next-auth/test/e2e.test.ts",
+          "packages/create-nest-next-auth/test/manifest.test.ts",
+          "packages/create-nest-next-auth/tsconfig.json",
+          "packages/create-nest-next-auth/vitest.config.ts",
+          "template.manifest.json"
+        ],
+        "deleted": []
+      }
+    },
+    {
+      "id": "docs",
+      "message": "docs(docs): document setup and verification limits",
+      "projected_paths": {
+        "new": [
+          ".github/pull_request_template.md",
+          "docs/ARCHITECTURE.md",
+          "docs/setup-apple-oauth.md",
+          "docs/setup-discord-oauth.md",
+          "docs/setup-gitlab-oauth.md",
+          "docs/setup-linkedin-oauth.md",
+          "docs/setup-magic-link.md",
+          "docs/setup-microsoft-oauth.md",
+          "docs/setup-oidc-oauth.md",
+          "docs/setup-passkeys.md",
+          "docs/setup-slack-oauth.md",
+          "docs/setup-twitch-oauth.md",
+          "docs/setup-two-factor.md",
+          "docs/setup-x-oauth.md"
+        ],
+        "mod": [
+          "README.md",
+          "docs/DATABASE_SCHEMA.md",
+          "docs/MIGRATION-GUIDE.md",
+          "docs/PRODUCTION-SETUP.md",
+          "docs/RBAC-SYSTEM.md",
+          "docs/README.md",
+          "docs/deployment.md",
+          "docs/setup-facebook-oauth.md",
+          "docs/setup-github-oauth.md",
+          "docs/setup-google-oauth.md",
+          "nginx/README.md",
+          "openspec/project.md"
+        ],
+        "deleted": []
+      },
+      "current_uncommitted_paths": {
+        "new": [],
+        "mod": [],
+        "deleted": []
+      },
+      "conditional_new_documents": [
+        ".hyperflow/reports/production-hardening.md",
+        ".hyperflow/reports/audit-disposition.md"
+      ]
+    }
+  ],
+  "group_policy": "Whole-file final content, no hunk reconstruction. Populate the complete final candidate tree before commits. Hooks run on each commit; final-stack gates remain required. Independent buildability of intermediate commits has not been established. Shared backend/frontend/template contracts stay intact in the candidate working tree.",
+  "current_path_provenance": [
+    {
+      "path": ".dockerignore",
+      "git_status": " M",
+      "owners": [
+        "T30 operational source and independent recheck"
+      ],
+      "sha256": "f7737b0371c9c43bab5a593e0b602bac5a2caa7594fe6e96b94fc4183bfdfeb6",
+      "git_blob": "7e515ed2f81930c0225ccd0038d975f554b4e627",
+      "mode": "100644"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T30 CI and task records",
+        "T30 operational source and independent recheck"
+      ],
+      "sha256": "c0e8121c3dab5daa2084fc3b03e3317091a9e9102d05a52cbee218dd66f00a91",
+      "git_blob": "5b79135536efda42f843cb0898a2d9cace3a7ff4",
+      "mode": "100644"
+    },
+    {
+      "path": ".gitignore",
+      "git_status": " M",
+      "owners": [
+        "T30 operational source and independent recheck"
+      ],
+      "sha256": "06f42527ce2a2b9dceecca5a824d13acc790f9cbacab118669d17d506856e844",
+      "git_blob": "3c710a4377fed091fc4d3f6c341551cbbe108332",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/app.module.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "e6f9170a13739c193b1830520e1ee3d2c7371be3f7dfbcb57366dc5c5c9f1f89",
+      "git_blob": "0ef4e34b8f982d6f496c7e912b701007e23d5a60",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/auth-methods.controller.spec.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "3d8959e179e90137a8bcee3fd2bf443c58341aca20214e87e5ad20f09fc9e449",
+      "git_blob": "c47df26ffed76b74d22f350718f92daf46b5b430",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/auth-methods.controller.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "15e6af2621a3a11d65e3660944685d05466560d192202e52950c81250d08e072",
+      "git_blob": "50e694107e306bfe336786cc7b9c4aff2dbb0405",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/auth.module.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "f40d4324618e2ea3b8ab57498577fe732e67d95dde8d3fc71dc16eb0343c1056",
+      "git_blob": "df8f50b47c6d73776eec2d23e2596f153e272911",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/dto/auth-methods-response.dto.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "432aa6026dfa659ddcda8d77b480a2124d5d64ef4cb495a6ab15668cc660ef05",
+      "git_blob": "59ba1f2e2bceabe588e5073c933470e21b423c4f",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/guards/feature-enabled.guard.spec.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "50cafc54a8326f7708c6c547decdd307cfcd62ede9e53dd4b5a8eeb14d7472c7",
+      "git_blob": "bf45d195c4458a6bf02e27a20c5a0f229d6f2740",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/oauth/oauth-redirect.service.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "2e6e121c67e83989fb9f366fb563d81e689f526ba2d76690a4978af72c284f41",
+      "git_blob": "748879910ba781dd06793ab0688c758b8f85d841",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/oauth/oauth-registry.wiring.spec.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "de64ae393dcaadbad4e2a99225611291689658b401e4a37457f67bb566da6efe",
+      "git_blob": "12db3c6b799f0e727eaa0e446a46432a46bb6f6f",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/passkeys/passkeys.module.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "f322fdd845657f702c680b044874726ab4a5feca912f608f37a6dbe74e195c43",
+      "git_blob": "e29d0d356932ccb130755cb6b08fc3a7da71c426",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/passkeys/passkeys.wiring.spec.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "36703d047e14affe25bcecfe1b8ca1f67348815b2fde395c247bab33adc02d2a",
+      "git_blob": "e117ccabcb2c83042ab67e36af2e6a1b319bca19",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/services/auth-features.service.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "0ea7d1892527fed3891be50cd93246d3eec6ac467cbe14e36339f1ed021604b4",
+      "git_blob": "a37f80ebdac106de7ef96642a42388fc440e4759",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/services/sign-in.service.spec.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "a5f059cc4afeef3fb0204afe972b2eed13de861fb2a29a0c40ca0727e4abe5dc",
+      "git_blob": "d4cffe2f27d190a83d1ae338e777881474d52e0f",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/services/sign-in.service.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "6a685340e658f7f0d9b7bdbb36936826bf7ed9978630d5420b4b79ad1bbce92d",
+      "git_blob": "15079471fcb0a74d4175f612e8b66f8b81cdaf9e",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/two-factor/constants/two-factor.constants.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "3ff481e688bd223c2d3eef0518c82d7c0a1cf5b00f59e8919396905ae870235a",
+      "git_blob": "dede155b1e7bef50724d915d53a432a9e77aa0f6",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/two-factor/dto/verify-two-factor.dto.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "07a926109c0ecf3c3745c8c75e5f1436981b1a2237284b2ae7428032fa2a1715",
+      "git_blob": "0e0cff91888e0c6b6bc94c7ed77036f8419bab80",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/two-factor/two-factor-login.service.spec.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "5853d698165b8b072b7312616fd83e361150aee4a6ddbc7141b9e2d58dd948bd",
+      "git_blob": "2ee5de05d3f172959ca37b7c85cb04b01e534585",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/two-factor/two-factor-login.service.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "b7ca439a1cf7ffe21f2d013e861adf3f678f7b56c6e175f6975a34f1ee9411f6",
+      "git_blob": "1c9eb94b7958ae3a0feca5e361ac9ab6df973328",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/two-factor/two-factor.module.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "0b1ee409dfebdbac7ce8db49d7934756151d2089895dbd65c95e2796825d6a0d",
+      "git_blob": "86e0bdf92bdca10a9c51b3b850e8cdcc0cad76ae",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/config/env.oauth.schema.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "ef002b48fbc29f8878a6feeb158624d8324b4d66a2ce803655da31abc391e28e",
+      "git_blob": "64e232096b0956cf1fc96885446f5ea3fbe17584",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/user/dto/user-profile.dto.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "b5043b9873d4e8775c808266b3aefa8eedf11477f2d581fc0317ac81cb0e4216",
+      "git_blob": "e6cd30b6171e8a528b6c439164df240d90656fa4",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/user/schemas/user.schema.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "4b24788b9d7534e09a5248d5e6b310106ed3be538447810ac96f967b6ed9e37a",
+      "git_blob": "4a9579339d76e099b807151306c2c4c63de55bfd",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/user/services/user-profile.service.spec.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "437f70adaba62ba268b6e9580e5e736c15f46059c987f3e1db89aa9de7ba81aa",
+      "git_blob": "58bad5a5365e33d5bc14e6330de1d624861b75ee",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/user/services/user-profile.service.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "93bb5b69a56539262ca91855b67a2edfc19427954a7c9fa40d13082342cddcf3",
+      "git_blob": "66c6c28559e271217dae66ea8516f40466fadc71",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/user/user.module.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "749bf3e7e40d2afa41bf1cc27d2b67cf03830909ab0320c4733ad1d7a43ba6a6",
+      "git_blob": "cc7289f9bb22dfb62a8c6c217fadc12eee0f2e96",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/test/app.boot.e2e-spec.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory"
+      ],
+      "sha256": "0e17a3c1bd0239fd313542d2609be5588f703236b9a1d524ed4e8db4392d5e7c",
+      "git_blob": "92fff777c1a5f03308d380c20f638aeb166fa53e",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/test/app.e2e-spec.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory"
+      ],
+      "sha256": "327123e45248e6551b05aacfa39d14af9213d41733099db50feb2a13a468eb95",
+      "git_blob": "6acabf5ce058fb9458c2020e596cbad5fe2df75c",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/test/jest-e2e.json",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory"
+      ],
+      "sha256": "ee156a3742475653200b0e52f336a72bfe0a726845f6469fad61a4d17c24cd3f",
+      "git_blob": "5bc3ab4fca50c443fbf625c9d91fe740d96ba50b",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/test/permissions/admin-permission-routes.e2e-spec.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory"
+      ],
+      "sha256": "9887e87a7da361b5860fa127effd4fae7e2614b2280eb81643852c40769b586d",
+      "git_blob": "c08f649e8a45908ead4a743696e69e8f06c476f7",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/test/permissions/permission-enforcement.e2e-spec.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory"
+      ],
+      "sha256": "203a4d5d4ca2b971a0afddd20e76da951f095a5f0f2eabee06f7422035cfb462",
+      "git_blob": "5ea51e745d8f15015c7ac09fcb2bf7eb9e857f1e",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/test/roles/role-access.e2e-spec.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory"
+      ],
+      "sha256": "927060b0d69af890f145b8e8ba5bb29c91946b99d08746391d970ba5de8fa332",
+      "git_blob": "add418c415e6c6ba2e8a364c8afd2e0771afc577",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/test/roles/role-crud.e2e-spec.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory"
+      ],
+      "sha256": "173245780f728de03b009a6ab2c6dfaeed8c63eadbd86c3ca4fc3a05c8748212",
+      "git_blob": "deb40c645e92ff38a7b130863b4f7e28b4386b74",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/test/types/e2e-responses.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory"
+      ],
+      "sha256": "728f915afbf31cb6cbe49cabd902c72de230e116e1590193fe1f738926e98ecb",
+      "git_blob": "4e1b97190facdb93181f7c13fbbef09acde49876",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/test/utils/e2e-app.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory",
+        "T21-E current source owner"
+      ],
+      "sha256": "54992b6572f89f3d6e28a39ecca07b1a54510e6962665220a4bebb1630b3a2d1",
+      "git_blob": "d05855403a7a6fab7bc2614b913533d2ab718227",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/README.md",
+      "git_status": " M",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "7deb6461bdf1d7bc7371eff51d8758cf0d0820b29ded071dc34cf3c74028e2f3",
+      "git_blob": "80e33d399ae0543007070d5242349e8f103828aa",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/e2e/role-management.spec.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory"
+      ],
+      "sha256": "b0e50abeda4fb7982dfba99d75a96ac51a748b5325fe49c8bf9eae081eadd9a2",
+      "git_blob": "4e95974aa509228b4609bd8b889cf6765dc0d76f",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/e2e/session-management.spec.ts",
+      "git_status": " M",
+      "owners": [
+        "T21-C final path inventory"
+      ],
+      "sha256": "aab2f87ba8255308f7928454c096b5e9babc2a89512b5c27e2f809a1155066b1",
+      "git_blob": "30ce47ba29d7de9d19756bb99eb84b4737984c72",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/e2e/sidebar-navigation.spec.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory"
+      ],
+      "sha256": "c1da2a4b91886291843e4d3ac0c61c2b9f0738c7bca449d17f981141b51575f9",
+      "git_blob": "ea385753bf7ed47bd4dca33a29cd3d4967bd57d7",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/package.json",
+      "git_status": " M",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "5369f3ba73c833870a5a4bd1c02264fa1100512453daf24d0f2d0523553ac822",
+      "git_blob": "cb484e08543228db25bb14ded8f29020dd641cf7",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/playwright.config.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory"
+      ],
+      "sha256": "d247b8c4970a3b849e625bf7f1f5552898e6663bf3d9f03090f0561c9fecfdaf",
+      "git_blob": "370cd19f7bb4b57606c142fde56fc67c1c0de7b5",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/app/[locale]/(dashboard)/settings/page.tsx",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "ef10ef73057d152dadf3ddc815ba227a885bea2f8f74cfd7722e3ff507aeed97",
+      "git_blob": "d72cbaa33fdd86900a73f58a8bfce79a02f50f51",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/app/[locale]/layout.tsx",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T21 anonymous interaction repair and tests"
+      ],
+      "sha256": "403938e3c3e42530190a28a05b5db6aa8fbf87d6f4cd8dc5c38912d248525ecf",
+      "git_blob": "24a0f0461885b6da90bd56cd0d2ff6079cda2070",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/app/layout.tsx",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T21 anonymous interaction repair and tests"
+      ],
+      "sha256": "1ffca1d739bbaaaff0a15811a8e906d80500a8c31e8fb086b304d05470c070cd",
+      "git_blob": "f8e0ae833db57e821305412a05542f150cd0891d",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/components/providers/DirectionProvider.tsx",
+      "git_status": " M",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "644790146c98bc61cd9d52e5048913a301de0bfd1c7673f8bcc5b308bb704c5b",
+      "git_blob": "588bd08a794fbaa9c2a01cfa3f4f0ac27b102b65",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/lib/toast.ts",
+      "git_status": " M",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "08e4cdc67df73eaa138fd74cd2d8994524f311781509c9590ab96f60d989ca2b",
+      "git_blob": "03c52d1d233d88b43e1f1c0633fd4b0d41a6f2b1",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/account/api/index.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "8533811fbedf608268ad165a8f0ab57e4287b27149c0f9518b3394d69f488520",
+      "git_blob": "7b66e7cdd0d6b4ad97fc7179663b9651949498c1",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/account/components/UpdateProfileCard.tsx",
+      "git_status": " M",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "1c162b2b4b0374cdcf007e830310e52e156e97e1aa0c20e2a63276bb5b03eab6",
+      "git_blob": "80ae157102f5bbf352d1e843f046e0be84d7fd0c",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/account/components/index.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "4fadbdd718f89703e9ad15d1a3a2596614e9a9f9cd2c9ba48dad497b204273f1",
+      "git_blob": "4065f94cf76faaa9dc4259a933344a4ad6585d2a",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/account/index.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "74d79fa1c056bdda47e7c87878e42eebfadd1d17b8b8378981e40f14287968c3",
+      "git_blob": "af42c75bf96943a62570f76e7558cb2cd0083382",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/account/types/account.types.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "d9227543e3946dca0a9ee1656971a7fa922e91b3be9a6cbc5516b0c90eaaa0aa",
+      "git_blob": "2bdfc07e7a3a15c759e3235d835d4e8a01e7b1e9",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/auth/api/authMethodsApi.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "d19f983ca8de06d3da55e1584e3d9b5eb71ecd5a3a332acfd55be6f69d508e60",
+      "git_blob": "cc550f2f90c3900c6e7339ca9a5787b1f1f46e87",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/auth/components/ActivationForm.tsx",
+      "git_status": " M",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "aed03fd8ad6f45a2eb87c2b814be8664b28d045c2392741f46cf7e4eef4c4639",
+      "git_blob": "4ab0e647fb2429ddfa2878bd7e6d13d0907cbb7d",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/auth/components/LoginForm.tsx",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "95221bc53a744099a358125ac8b9f677186c72b64c9c95900945d9c7c2a8ab9f",
+      "git_blob": "c48408624a6a135a81078a070ebc79050277b6a2",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/auth/methods/__tests__/registry.test.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "63a61f94a7e2693fb4ea9a51ff48082725730d754ab6b7d1950ff82fe76cffba",
+      "git_blob": "90c96fa0c3bb677e11ae19aad0424f6b9ebb9570",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/auth/methods/password/ForgotPasswordForm.tsx",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T21 anonymous interaction repair and tests"
+      ],
+      "sha256": "4589518eecb0f1492f747bb3ff77393765bbb88a0565e39883c27ee608334e9e",
+      "git_blob": "06926cac268e5ee5886b8cdc75478a26777d5642",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/auth/methods/password/PasswordSignInForm.tsx",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T21 anonymous interaction repair and tests"
+      ],
+      "sha256": "ecdb5aae55400ebffa3ec5fa189d506f9259525d4a68c58a712c93b00b11bbfd",
+      "git_blob": "2db48a60c9a384baf7cec42eb2420f57cf262592",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/auth/methods/password/RegisterForm.tsx",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "1283af479af5536c78943dea111abece9f3a35cc4bd54cdf721fb266fa5552c3",
+      "git_blob": "37e9b0c53e2bfc8d381c8ffcfb5227973f58f2a4",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/auth/methods/password/ResetPasswordForm.tsx",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T21 anonymous interaction repair and tests"
+      ],
+      "sha256": "9fd7787f705542b83e1b246ee0a2e5acdf6e38c04823f14e4b3766d47179c32e",
+      "git_blob": "40c8517ea06475ede8d0276f17d57fc896a1208c",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/auth/methods/registry.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "a1b6f71494252df6338679e2ee9d59d8a48a1410c4bf7080c91f15b997e5c534",
+      "git_blob": "2d255710fb89d7845b3bd43fcd6713dcbcdc959b",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/auth/pages/LoginPage.tsx",
+      "git_status": " M",
+      "owners": [
+        "T21-C final path inventory"
+      ],
+      "sha256": "ba94de8e470a8635ba29bdee9559728e8747565eca28006fe305b7309f1cbede",
+      "git_blob": "d21da3319b0b292fa4cd57be60edb718baf38d52",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/auth/store/authApi.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "5dec2dcc1f062d419d94d9e74fbdfd95ba9c5b6b239d34c3fab7b83df87d1ec5",
+      "git_blob": "1031ec4e061291f687b9c7f8d657111798bda287",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/auth/types/auth.types.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "690868b0f7e28a658cc3e372c4d9cf61a9d95f621679ccac89a52c2711cad1e7",
+      "git_blob": "e7984f56e2dd858e0c58d01c80e09e66399312ac",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/oauth/components/OAuthDivider.tsx",
+      "git_status": " D",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ]
+    },
+    {
+      "path": "frontend/src/modules/oauth/components/index.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "f986f49c79986f4e0de3206eb97ccd4b68d417bd3fb328d5b22e1d860fcd2efe",
+      "git_blob": "199bf321d56b4615e64f2dc9a92107ac243cda9b",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/oauth/index.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "aa79831d5310c7bb175fb5157629856176ed7b4ad49e3f2db096ed874ea5122d",
+      "git_blob": "f9a1bba8eb9346773c9ce68ce58b9f68e24bc65f",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/sessions/components/SessionCardTimeline.tsx",
+      "git_status": " M",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "f2427fb5a3555223309f8f67f42a6f81d89c7775427e5f9ae5788732cb83c8a5",
+      "git_blob": "900e6291e29e0d3ded2e56a9c89ea36c5f9f35d4",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/users/api/usersApi.ts",
+      "git_status": " M",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "cb2931fc151bcd95ebb742853e12e6cf6d67e275a100785345c6ef1b8e7ee6d0",
+      "git_blob": "2ad260ba3fba6c3418a661fc8c4975299ada121d",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/store/api/baseApi.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "c0961a0094d66ad86562f06717d4653cc419431bb1a802998c93bbe971fc9f60",
+      "git_blob": "95ba395030aca7d2b8c1905aec966c3ec110c738",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/store/middleware/errorInterceptor.ts",
+      "git_status": " M",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "5b0a5f1a97927b2641a49d5581da77fa7bec3994f5f64f9e1276aafc76b23157",
+      "git_blob": "aced3c0fb43d94d979122ca11040994130387dac",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/store/store.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory"
+      ],
+      "sha256": "3f26d44c7643fe5ae12281739186343e9c140dfd832aec8b8c3502e17abf921c",
+      "git_blob": "b357fa18b19507e9849d4f4079c3bb796eeb0c3b",
+      "mode": "100644"
+    },
+    {
+      "path": "nginx/nginx.conf",
+      "git_status": " M",
+      "owners": [
+        "T30 operational source and independent recheck"
+      ],
+      "sha256": "5f7b28c9c9fd6ff5a9af6bc326225e28b9e34061f16fc3276bdc9e3baf7d7beb",
+      "git_blob": "67d45f4d1601a49f64761e43eb6f0a6372a9e194",
+      "mode": "100644"
+    },
+    {
+      "path": "package-lock.json",
+      "git_status": " M",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "8ddf47c773487b88af471e027660bf9af04a25e0854793e6bd900651d96e7551",
+      "git_blob": "fab17aa9c878c5f95c8405f95c63c6042b64807b",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/README.md",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability",
+        "T21-E current source owner"
+      ],
+      "sha256": "a812092e10ca2b56af56978507d0ed9a69926e62ba33d5ae2fa5aa062920716b",
+      "git_blob": "be00d59089ce730569a5c5305d463418b5c22b0f",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/package.json",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "9a103222b9ea99d1a8a69498478d0b8330ffe44a209e817d032905a62369a9b7",
+      "git_blob": "615ca6bb090ee0a5d867ecd53a5eb00949d47907",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/scripts/sync-template.mjs",
+      "git_status": " M",
+      "owners": [
+        "T30 operational source and independent recheck"
+      ],
+      "sha256": "e1c621e0000ac2838e6cb92ffb03d0d8ef6633b892beeab73f615838eda43d5b",
+      "git_blob": "79667d4b1c0bb49913abfd1998ea08af925e06c8",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/src/constants/index.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "fbb85110c215ac88a6fb1c26ab7b99f71b12f199bb1d0d69707aefd622748dcd",
+      "git_blob": "5e87fea292b046c5efe50c51fa39c0f73cd6c02e",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/src/manifest/validate.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "b10a7a94e3c5dbf47374b527f4fb6a37c0f749856daae1ebe1ae6a54008826ea",
+      "git_blob": "9ff26cc91e15194856f954d92d889e738c88a0b1",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/src/prune/index.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "3a926d9ab34bbc8bcbf399528e33b6426f590088bea02490f71b6a5acda2d56f",
+      "git_blob": "38f5c30bb151e07de8c6a108d2baf1384a69f471",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/src/prune/references.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "b75efd10b3f7e9262676763c883d57faa20b9c09ba246ab694b7acbfcee20158",
+      "git_blob": "2decacf9eea3b55a957da6edef69845ed4da2585",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/src/report.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "abcbc7a98c3e75e81314e1c07d9488bd74e717caaea98bd06db7b1721a8c3e38",
+      "git_blob": "24f73cc43e9148c99fdd9e60377b0fdbb3632a60",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/src/scaffold/package-json.ts",
+      "git_status": " M",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "daceac74d0557d90a2aeb1abdf824524a821ef42e314f716cb39d8e87d05719b",
+      "git_blob": "4543307facbc88d26af1efb35c9fb85144133ffa",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/src/types.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "fcf7ed85f06e31e097a3be45e8b97c7deeb2fc18983e98f36f56535655219c03",
+      "git_blob": "b67602757ffb404a5682abbec3a0617df716a204",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/test/e2e.test.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability",
+        "T21-E current source owner",
+        "T30 operational source and independent recheck"
+      ],
+      "sha256": "800427e56fb319b3666daabafe9d855a0d7822b15968809f225a25456a6782b4",
+      "git_blob": "3b67cc7a43f785c09bddaa9f5f8ce7d77be2c955",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/test/manifest.test.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "cdc0e14fe7cc04415e81518a6d7d8361761f01b430b536e61ce9b65a98b30c58",
+      "git_blob": "3a9176edb874dda6f02ec603650ffc09a94d2b6e",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/tsconfig.json",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "03e156f7d35244e7ad3efca4bfbdf6d8c1e7afdc15d267d9d4911c5f58d9dfcb",
+      "git_blob": "dcd8521f456c8edd5de62b3241d0612654567f5e",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/vitest.config.ts",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "e418281b3d61ffcf91869426ce960920f8f623079422911880805bdd4f96e8a5",
+      "git_blob": "301aa2bc36b531d0bece85ab2aa03e931ad9856f",
+      "mode": "100644"
+    },
+    {
+      "path": "template.manifest.json",
+      "git_status": " M",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability",
+        "T21-E current source owner"
+      ],
+      "sha256": "bac323945e48cfd1fde15e0608d0fe79e25feeca916df0c654d5fef700929d5b",
+      "git_blob": "c90541b49a322d33b872627bac4509f3add005f2",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/constants/available-auth-features.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "87042b95ca44c486a822a4b7fc12f453b7449a7421a1b1d3426eb3b385d00f00",
+      "git_blob": "4efcd7bafa6d14094f85867d7a693e70531d858f",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/passkeys/services/passkey-second-factor.verifier.spec.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "f64eaa496f005b6ab84fe9c15dc098f57493e58a9ea4b847cda1cd65a24c8de7",
+      "git_blob": "b255e652f5478fb3ae780868f422eaea9b5be736",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/passkeys/services/passkey-second-factor.verifier.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "325318615142f6b7ac23799ab182834c482be24ff76ff52be4955ba7beba53f7",
+      "git_blob": "8c433756a6606a2e5f66b49dcd46a17ee88f6ec1",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/services/auth-features.service.spec.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "3e1a803f96b9843552f61fe5df22ebd74955a3664f6112f5d5ee42b8a7c21f02",
+      "git_blob": "a397394e0612fd06f34d2d825445d0d6712f3183",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/two-factor/services/second-factor-verifiers.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "85e43791f50d7bd7347034ff8229216a9dd5cce3449a9d0e5113844ad02a77ee",
+      "git_blob": "b859c440c5130d676dc43ddaf9b9d767d953c9d8",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/auth/two-factor/sign-in-second-factor.spec.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "1c5ea062b48f6b37c2ec52f53169cabbdc01d747af457c92f9cc3635a64843c3",
+      "git_blob": "7ea947006852daa76e2e970f3d59847cfdeeedf9",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/src/common/constants/client-paths.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "8c69323043f531de3e128ecdfd22c8586fc02aa22d2fdc8b97d8275b0b63e3a9",
+      "git_blob": "9babdca4d3186e9b66d35b500ef9c5e61fa498cd",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/test/utils/browser-server.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory",
+        "T21-E current source owner"
+      ],
+      "sha256": "9c0b642bdd36331f15fbdcba9db03ede0aa1cf3f0441f017859ad87eca27e6b6",
+      "git_blob": "b0441ef20a72b834bb795513206fca7520cebd7e",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/test/utils/local-oauth.ts",
+      "git_status": "??",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "b866e1425178633efe9c5505a6a0bfb5f9fa999ae58fb32b44f7e7a4b640f77d",
+      "git_blob": "d6edd044d96a67c1967e2dc84c2849cc1c805eca",
+      "mode": "100644"
+    },
+    {
+      "path": "backend/test/utils/permissions.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory"
+      ],
+      "sha256": "eca1b8920fcc858b5687566be1f171c1831b9fec48012598a00f1c4575584eba",
+      "git_blob": "269686ced3c1bc970ac76de6207befdbbf2abe12",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/e2e/README.md",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory",
+        "T21-E current source owner"
+      ],
+      "sha256": "2e9860014ea12b283b69ab5fc2b798e73a680400ba963ca6ed090834b3daed62",
+      "git_blob": "97a4c56d52e5132dcc4b97d26460fd139396907b",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/e2e/administration.spec.ts",
+      "git_status": "??",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "79e43d3df2c6c4ba08e2627b6367d44f218266fae4e5864f9f29b771cdf93c46",
+      "git_blob": "8037ce7981fd0c8ed6afb91b6c6a9eddb73d7b23",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/e2e/authenticated-regressions.spec.ts",
+      "git_status": "??",
+      "owners": [
+        "T21-C final path inventory"
+      ],
+      "sha256": "451d50e3a4668f2498921270f1cb20688943dec0b3c7adf8bb46455d447e8772",
+      "git_blob": "fa585a8723cb8413ba25f5d1b4b13785bca3fcae",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/e2e/fixtures/authenticated.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory",
+        "T21-E current source owner"
+      ],
+      "sha256": "9a5f25a30768ce469ca32394f703dd82ca1e7d8bdce21bc39d806d4fd19cab30",
+      "git_blob": "cc80642a2becfc65a01d33392770c6c4f596cf5d",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/e2e/frontend-only/anonymous-auth.spec.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T21 anonymous interaction repair and tests"
+      ],
+      "sha256": "963e80c214115c2f9ed49206acc1e0eca390e4e5b58f81702bc8ede524d78159",
+      "git_blob": "0a069f54422138000fe5944421b16101950f2b86",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/e2e/frontend-only/fixtures.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T21 anonymous interaction repair and tests"
+      ],
+      "sha256": "650428168ad6e3b596e5f9198fa2c5abf9e3f1806b64a36637b1ebe009574afd",
+      "git_blob": "4211be9bf9320bbc318199f7413c7ec75c352b1e",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/e2e/lifecycle.spec.ts",
+      "git_status": "??",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "b6b24739984abe2f6eb8c267c01e2a2eae08e46fb67749a05a0899bc29c6c17d",
+      "git_blob": "46006f17b640d7ab725d9188932e09b0d9e2138f",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/e2e/local-provider.spec.ts",
+      "git_status": "??",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "c2826e3e0f195c8084173df83571608c827d54c487297b3df36436c6d1d240a2",
+      "git_blob": "d3e73e008efcb8fde9201ef2edb38df70c96fdaf",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/e2e/network-fallback.spec.ts",
+      "git_status": "??",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "5f06004fa4ac22901d9297035a796c455937e708c3f660b6c7d85ab26e3f5c38",
+      "git_blob": "f7fcf49083063d655fb719e0896a46800d70744c",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/e2e/utils/accessibility.ts",
+      "git_status": "??",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "f7c03f12a5a37b936079ec692ce3a1d759c89f6e4207509e528c46720e756bec",
+      "git_blob": "72c9c623fd596c5c6262ff2e2e9296b69378eb34",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/e2e/utils/auth-actions.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T21 anonymous interaction repair and tests"
+      ],
+      "sha256": "be5809fca5575002c46d0acc89af6ad177e57b2c317edaff119d295e434430ae",
+      "git_blob": "5e6c804099ec00c271af904ce685651aa06e9c58",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/e2e/utils/selectors.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T21 anonymous interaction repair and tests"
+      ],
+      "sha256": "1d6f0297fe0af2de94f8add40c8082b0907747b3bc9283157c9b707cdffd0ae9",
+      "git_blob": "fbec1308beb72c48a888c5250674006d3eab08a8",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/e2e/utils/serve-frontend.mjs",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T21 anonymous interaction repair and tests"
+      ],
+      "sha256": "f81afa58f4a36361706fb180e58651765ccb7c9466389346dc412d49d75e86fc",
+      "git_blob": "62ed23501c822b74675b7021e4b9105c26d36813",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/playwright.frontend.config.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T21 anonymous interaction repair and tests"
+      ],
+      "sha256": "a9fd3262d4f08757a9577840584124b72d2110fce782db5c4c51230669339d1a",
+      "git_blob": "ac98ff52a8b9c3412cca20882461b1604a1dc109",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/components/ui/LocalizedToastMessage.test.tsx",
+      "git_status": "??",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "0acef14eb28e526542db44043b9aeea06c5d8555342f6698bd556b4d87a3657b",
+      "git_blob": "ebc2acf424f15d03f71c4773fa45678806e495fa",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/components/ui/LocalizedToastMessage.tsx",
+      "git_status": "??",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "51da210427d9b4def5c90b476d576c9a3462a6fcae500c81902d22abf6450219",
+      "git_blob": "f5e87e0270aa7d7ddc6c7901dcbf24ddc4dd7ce4",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/components/ui/auth-divider.tsx",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "3de530ec4693c1eb30a9308e1cb5b2e1eb3785798e27c5092b1dd99aea978638",
+      "git_blob": "5f272a42c167460278a53a0e6ebe8ffa324387cc",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/auth/utils/preventNavigationBlur.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T21 anonymous interaction repair and tests"
+      ],
+      "sha256": "38ac2fd99d566203340c60782cab293ff94567afd5d1d6cfd35e14a362d6db3b",
+      "git_blob": "440aaedae542e77d3ef553cf0b0ca184210ef5b4",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/modules/users/api/usersApi.test.ts",
+      "git_status": "??",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "0568c5e63e7920d4370c328216ed394e8ae0d47d4188daa0fd488c951f26da17",
+      "git_blob": "04846bc65df17ad78ce3f1ae44cca8bbcb1ea49e",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/store/authPersistence.test.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory"
+      ],
+      "sha256": "471f72b0397e02564104fb49da9727b4a5a6a30c9a3a8b3d5e88d7a1aa7e2687",
+      "git_blob": "6cad2928259ebfcce03bfa166c259d8b2547473b",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/store/authPersistence.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T21 authenticated fixtures and final repairs",
+        "T21-C final path inventory"
+      ],
+      "sha256": "429b67287ac356b2cf058eb6d5309dc7b25930c7667d5e65d5dc0123e2ef1550",
+      "git_blob": "18966dc575e426281b84a970e3ba6b49b79a5566",
+      "mode": "100644"
+    },
+    {
+      "path": "frontend/src/store/middleware/errorInterceptor.test.ts",
+      "git_status": "??",
+      "owners": [
+        "T21-E current source owner"
+      ],
+      "sha256": "47631044428c3fc8ec6b918317cd760dc8f4ede9495b9ff1bf5c88ea064a0c20",
+      "git_blob": "311989dcad976bdef117ebff469226f272b43510",
+      "mode": "100644"
+    },
+    {
+      "path": "nginx/.dockerignore",
+      "git_status": "??",
+      "owners": [
+        "T30 operational source and independent recheck"
+      ],
+      "sha256": "63d96f409343b309868e853db096d4f0741997f1503c37db045d1b82c79d5bf5",
+      "git_blob": "3fd3f41868360e6d4317a0b0675c75e7a83e04b9",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/src/prune/markers.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "6b9cfe993c5b6ef2784212b86d7c3243ab751efeaec795e803d75ebfc54b707e",
+      "git_blob": "80ee373287dac0c475034f3ee5c546ae9424fcc3",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/test/combination-helpers.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability",
+        "T21-E current source owner"
+      ],
+      "sha256": "d3f65e8318db7c677ea2fd9e9a09250335a405d343541eecd7bf97a0b4bc32fc",
+      "git_blob": "013d7043a210be1c155017592242c3881607d42f",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/test/combinations.slow.test.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability",
+        "T21-E current source owner"
+      ],
+      "sha256": "cbebfec2d9ddf61ed7c6e99015abfd53fa785a79aaf9e65d8a5cbdc2152dda62",
+      "git_blob": "34c942d62d26c44b336ec7903f7e579e7626ae8b",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/test/feature-runtime.test.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "1714faae95de737e72114137c7ecea4af6b9190e00a9a85a13b375f4f0fa6e51",
+      "git_blob": "575c026be7df61c08157c52ea451949d4e5ef4f8",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/test/feature-runtime.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "3710c8e0ea1bc0b5e688cc8f00a323734ff93262616253741a16cfad472ae77c",
+      "git_blob": "c1c8d52d14064f2cdd9e15a30d174898d40b99cc",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/test/markers.test.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "052af88409b17382aad9c2e7e79bbcc609e28de053b3c2e89efe6fcd0fb579a5",
+      "git_blob": "b5b5f25c47e95af4590188e44662f6db3356c1c6",
+      "mode": "100644"
+    },
+    {
+      "path": "packages/create-nest-next-auth/vitest.combinations.config.ts",
+      "git_status": "??",
+      "owners": [
+        "Prior inventory: T29b generation and compiled availability"
+      ],
+      "sha256": "dc819421ed9887ac38c2de837b68d15a7b036120090f8353ecd97e0dfa6c11f3",
+      "git_blob": "0bebe9911b99f48617aeba36b33c7299e52066bc",
+      "mode": "100644"
+    },
+    {
+      "path": "scripts/verify-docker.mjs",
+      "git_status": "??",
+      "owners": [
+        "T30 operational source and independent recheck"
+      ],
+      "sha256": "4abf2cc9fdf3cee8ba2e0131d31b5535e45b210bb444a1d8cc126a3e98703324",
+      "git_blob": "cabbf89d14f99bf8058291bf35890558100449ee",
+      "mode": "100644"
+    }
+  ],
+  "source_movement": {
+    "active_owner": "Native final-gate and T30-CLI-002 repair owner",
+    "prior_owner_hash_comparison": [
+      {
+        "owner": "T21-E",
+        "count": 30,
+        "mismatches": []
+      },
+      {
+        "owner": "T30 operational",
+        "count": 8,
+        "mismatches": [
+          "packages/create-nest-next-auth/test/e2e.test.ts"
+        ]
+      }
+    ],
+    "provisional_new_scope_paths": [],
+    "shared_whole_files": [
+      ".github/workflows/ci.yml",
+      "backend/test/app.boot.e2e-spec.ts",
+      "backend/test/app.e2e-spec.ts",
+      "backend/test/jest-e2e.json",
+      "backend/test/permissions/admin-permission-routes.e2e-spec.ts",
+      "backend/test/permissions/permission-enforcement.e2e-spec.ts",
+      "backend/test/roles/role-access.e2e-spec.ts",
+      "backend/test/roles/role-crud.e2e-spec.ts",
+      "backend/test/types/e2e-responses.ts",
+      "backend/test/utils/browser-server.ts",
+      "backend/test/utils/e2e-app.ts",
+      "backend/test/utils/permissions.ts",
+      "frontend/e2e/README.md",
+      "frontend/e2e/fixtures/authenticated.ts",
+      "frontend/e2e/role-management.spec.ts",
+      "frontend/e2e/sidebar-navigation.spec.ts",
+      "frontend/playwright.config.ts",
+      "frontend/src/store/authPersistence.test.ts",
+      "frontend/src/store/authPersistence.ts",
+      "frontend/src/store/store.ts",
+      "packages/create-nest-next-auth/README.md",
+      "packages/create-nest-next-auth/test/combination-helpers.ts",
+      "packages/create-nest-next-auth/test/combinations.slow.test.ts",
+      "packages/create-nest-next-auth/test/e2e.test.ts",
+      "template.manifest.json"
+    ],
+    "source_frozen": false,
+    "note": "Source moved during preparation after the initial 128-path inventory. The current T21-E inventory now contains30 paths and all30 match at capture. The prior operational capture matches7 of8; packages/create-nest-next-auth/test/e2e.test.ts is now also owned by the native T30-CLI-002 repair. Final repair gates and snapshot release remain pending. Any subsequent changed path/hash requires refresh.",
+    "inherited_provenance": "The prior release inventory establishes inherited T29b grouping. Original hunk authorship and substantive correctness were not re-investigated.",
+    "overlapping_repair_paths": [
+      "packages/create-nest-next-auth/test/e2e.test.ts"
+    ],
+    "new_since_initial_capture": [
+      "frontend/README.md",
+      "packages/create-nest-next-auth/src/scaffold/package-json.ts"
+    ]
+  },
+  "preserved_unrelated": {
+    "tracked_changes": [
+      ".hyperflow/tasks/production-hardening.md"
+    ],
+    "root_checkpoint": [
+      ".hyperflow/tasks/resume-production-hardening.md"
+    ],
+    "coordination_and_artifact_groups": [
+      {
+        "path_or_prefix": ".hyperflow/briefs/t29b-dependency-reconcile.md",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/briefs/t29b-final-gates.md",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/briefs/t30-audit-ledger.md",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/briefs/t30-integration-prepare.md",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/briefs/t30-operational-implementation.md",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/briefs/t30-operational-recheck.md",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/briefs/t30-operational-repair.md",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/briefs/t30-operational-review.md",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/briefs/t30-release-readiness.md",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/briefs/t30-runtime-verification.md",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t21-a.md",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t21-b",
+        "status_entries_at_capture": 158
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t21-b.md",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t21-c",
+        "status_entries_at_capture": 63
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t21-c.md",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t21-d",
+        "status_entries_at_capture": 41
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t21-d.md",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t21-e",
+        "status_entries_at_capture": 5703
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t21-e.md",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t29b",
+        "status_entries_at_capture": 3
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t29b-dependency-reconcile",
+        "status_entries_at_capture": 27
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t29b-final-gates",
+        "status_entries_at_capture": 4
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t30",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t30-operational",
+        "status_entries_at_capture": 5
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t30-operational-recheck.txt",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t30-operational-repair",
+        "status_entries_at_capture": 15
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t30-operational-review.txt",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t30-readiness",
+        "status_entries_at_capture": 4
+      },
+      {
+        "path_or_prefix": ".hyperflow/evidence/t30-runtime",
+        "status_entries_at_capture": 5
+      },
+      {
+        "path_or_prefix": ".hyperflow/runs/t29b-dependency-reconcile-astra-20260908",
+        "status_entries_at_capture": 5
+      },
+      {
+        "path_or_prefix": ".hyperflow/runs/t29b-final-gates-terra-20260908",
+        "status_entries_at_capture": 5
+      },
+      {
+        "path_or_prefix": ".hyperflow/runs/t30-audit-ledger-terra-20260908",
+        "status_entries_at_capture": 5
+      },
+      {
+        "path_or_prefix": ".hyperflow/runs/t30-integration-prepare-astra-20260908",
+        "status_entries_at_capture": 4
+      },
+      {
+        "path_or_prefix": ".hyperflow/runs/t30-operational-astra-20260908",
+        "status_entries_at_capture": 5
+      },
+      {
+        "path_or_prefix": ".hyperflow/runs/t30-operational-repair-astra-20260908",
+        "status_entries_at_capture": 5
+      },
+      {
+        "path_or_prefix": ".hyperflow/runs/t30-readiness-astra-20260908",
+        "status_entries_at_capture": 5
+      },
+      {
+        "path_or_prefix": ".hyperflow/runs/t30-runtime-astra-20260908",
+        "status_entries_at_capture": 5
+      },
+      {
+        "path_or_prefix": ".hyperflow/tasks/production-hardening.md",
+        "status_entries_at_capture": 1
+      },
+      {
+        "path_or_prefix": ".hyperflow/tasks/resume-production-hardening.md",
+        "status_entries_at_capture": 1
+      }
+    ],
+    "preparation_artifacts": ".hyperflow/evidence/t30-integration/",
+    "policy": "Leave coordination, handoffs, caches, runtimes and raw evidence in place. Never stage .hyperflow recursively. Ignored real environment and credentials were not opened or copied."
+  },
+  "publication": {
+    "planned_curated_docs": [
+      {
+        "path": ".hyperflow/reports/production-hardening.md",
+        "content": "Scope, immutable source digest, final runtime versions and gate table with command, exit and counts. Separate current, historical and blocked evidence. State draft PR limits.",
+        "links": "Relative links to audit-disposition.md and committed commands/config/test files only."
+      },
+      {
+        "path": ".hyperflow/reports/audit-disposition.md",
+        "content": "137 original IDs with approved disposition and evidence anchor. Reuse accepted inventory only, never infer closure from commits or reproduce paused review candidates. Missing evidence remains unverified.",
+        "links": "Every relative file and heading target must exist in the candidate tree."
+      }
+    ],
+    "ledger_source": ".hyperflow/evidence/t30/audit-matrix.md",
+    "ledger_policy": "Local input only, unchanged in this assignment. Update stale Node22 facts from the final owner report in a separate curated publication step.",
+    "existing_public_document_candidates": [
+      ".github/pull_request_template.md",
+      "README.md",
+      "backend/README.md",
+      "backend/docs/authentication-flow.md",
+      "backend/docs/oauth-authentication.md",
+      "backend/docs/postman/README.md",
+      "backend/docs/user-roles-permissions.md",
+      "docs/ARCHITECTURE.md",
+      "docs/DATABASE_SCHEMA.md",
+      "docs/MIGRATION-GUIDE.md",
+      "docs/PRODUCTION-SETUP.md",
+      "docs/RBAC-SYSTEM.md",
+      "docs/README.md",
+      "docs/deployment.md",
+      "docs/setup-apple-oauth.md",
+      "docs/setup-discord-oauth.md",
+      "docs/setup-facebook-oauth.md",
+      "docs/setup-github-oauth.md",
+      "docs/setup-gitlab-oauth.md",
+      "docs/setup-google-oauth.md",
+      "docs/setup-linkedin-oauth.md",
+      "docs/setup-magic-link.md",
+      "docs/setup-microsoft-oauth.md",
+      "docs/setup-oidc-oauth.md",
+      "docs/setup-passkeys.md",
+      "docs/setup-slack-oauth.md",
+      "docs/setup-twitch-oauth.md",
+      "docs/setup-two-factor.md",
+      "docs/setup-x-oauth.md",
+      "frontend/README.md",
+      "frontend/e2e/README.md",
+      "frontend/src/examples/README.md",
+      "nginx/README.md",
+      "openspec/project.md",
+      "packages/create-nest-next-auth/README.md"
+    ],
+    "existing_docs_suitability": "Filename inventory only. Publication-only checks for private metadata and broken links remain required; no substantive source/security review is authorized by this plan.",
+    "exclude_from_committed_docs": [
+      "raw local evidence links",
+      "logs",
+      "screenshots and traces",
+      "identity/session/mail dumps",
+      "private absolute paths",
+      "model names",
+      "process/session metadata"
+    ],
+    "legacy_history_metadata": [
+      {
+        "path": ".hyperflow/audits/2026-09-03-0130-full-repo.md",
+        "present_in_head": true,
+        "present_in_hosted_base": false,
+        "disposition": "Exclude from new tree and its ancestry. Filename indicates local audit/design/task material; content suitability not certified."
+      },
+      {
+        "path": ".hyperflow/design/system.md",
+        "present_in_head": true,
+        "present_in_hosted_base": false,
+        "disposition": "Exclude from new tree and its ancestry. Filename indicates local audit/design/task material; content suitability not certified."
+      },
+      {
+        "path": ".hyperflow/tasks/production-hardening.md",
+        "present_in_head": true,
+        "present_in_hosted_base": false,
+        "disposition": "Exclude from new tree and its ancestry. Filename indicates local audit/design/task material; content suitability not certified."
+      }
+    ],
+    "approved_environment_examples": [
+      ".env.docker.example",
+      "backend/.env.example",
+      "frontend/.env.example"
+    ],
+    "other_sensitive_filename_history_matches": [],
+    "history_limit": "Reachable-local-ref filename inventory found the approved examples and legacy .hyperflow files in inspected sensitive-name categories. This is not a content secret scan. A follow-up deletion cannot remove earlier blobs from a push.",
+    "legacy_document_retention_alternative": "Do not retain original audit/task/design documents wholesale. A later curation assignment may extract approved public material into the two planned reports. Publishing the old commits or original documents requires separate root resolution; this manifest does not grant it."
+  },
+  "hook_plan": {
+    "effective_core_hooksPath": ".husky/_",
+    "tracked_scripts_and_config": [
+      ".husky/pre-commit",
+      ".husky/commit-msg",
+      ".husky/pre-push",
+      ".lintstagedrc.cjs",
+      "commitlint.config.cjs",
+      "package.json"
+    ],
+    "pre_commit": "Existing pattern checks and npx lint-staged. Formatting/eslint fixes, workspace types and related tests can run and mutate staged files. Reconcile any mutation against allowed paths and final source evidence.",
+    "commit_message": "Existing commitlint. Allowed scopes: backend, frontend, root, docs, husky, lint-staged. Proposed groups use supported scopes.",
+    "pre_push": "Actual Git pre-push executes npm run lint && npm run typecheck && npm run test; it must pass.",
+    "runtime_isolation": "Owned filtered export with its own Git directory, verified Node22 and released fresh workspace dependencies only. Explicit child environment omits HOME, inherited NODE_OPTIONS, ENV, BASH_ENV, service/provider values and bypass settings. Supply fresh XDG_CONFIG_HOME, empty owned npm user/global config and owned cache/temp paths. Do not copy shell/Husky init, user npm or credential directories. Keep HOME absent rather than repurposing it.",
+    "dispatchers": "In the fresh export, use the existing installed Husky lifecycle to generate .husky/_ and select that genuine hook path in the new repository. Verify dispatcher/executable modes and tracked-hook/config byte parity. prepare tolerates failure, so exit0 alone is insufficient. Do not modify the original repository config or disable/replace hook behavior.",
+    "identity_transport": "Later integration owner must establish the existing approved identity, signing requirements and authenticated transport without credential/config dumps or blocked file loading. If that cannot be done, stop for root resolution.",
+    "failure_policy": "Hook failures block the operation. No HUSKY=0, --no-verify, forced push, fake commands, unchecked hook edits or restored real user environment."
+  },
+  "known_gates_at_capture": [
+    {
+      "gate": "root-build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit": 0,
+      "seconds": 16.28
+    },
+    {
+      "gate": "root-lint",
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "exit": 0,
+      "seconds": 13.79
+    },
+    {
+      "gate": "root-types",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit": 0,
+      "seconds": 6.85
+    },
+    {
+      "gate": "backend-unit",
+      "command": [
+        "npm",
+        "test",
+        "-w",
+        "backend",
+        "--",
+        "--runInBand"
+      ],
+      "exit": 0,
+      "seconds": 10.24
+    },
+    {
+      "gate": "frontend-unit",
+      "command": [
+        "npm",
+        "test",
+        "-w",
+        "frontend"
+      ],
+      "exit": 0,
+      "seconds": 2.18
+    },
+    {
+      "gate": "backend-e2e",
+      "command": [
+        "npm",
+        "run",
+        "test:e2e",
+        "-w",
+        "backend",
+        "--",
+        "--runInBand"
+      ],
+      "exit": 0,
+      "seconds": 10.46
+    },
+    {
+      "gate": "cli-unit",
+      "command": [
+        "npm",
+        "test",
+        "-w",
+        "packages/create-nest-next-auth"
+      ],
+      "exit": 1,
+      "seconds": 15.55
+    },
+    {
+      "gate": "anonymous-browser",
+      "command": [
+        "node",
+        "node_modules/@playwright/test/cli.js",
+        "test",
+        "--config",
+        "frontend/playwright.frontend.config.ts"
+      ],
+      "exit": 0,
+      "seconds": 27.88
+    },
+    {
+      "gate": "application-browser",
+      "command": [
+        "node",
+        "node_modules/@playwright/test/cli.js",
+        "test",
+        "--config",
+        "frontend/playwright.config.ts"
+      ],
+      "exit": 0,
+      "seconds": 105.3
+    },
+    {
+      "gate": "root-build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit": 0,
+      "seconds": 13.55
+    },
+    {
+      "gate": "root-lint",
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "exit": 0,
+      "seconds": 13.56
+    },
+    {
+      "gate": "root-types",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit": 0,
+      "seconds": 4.32
+    },
+    {
+      "gate": "backend-e2e",
+      "command": [
+        "npm",
+        "run",
+        "test:e2e",
+        "-w",
+        "backend",
+        "--",
+        "--runInBand"
+      ],
+      "exit": 0,
+      "seconds": 8.83
+    },
+    {
+      "gate": "cli-unit",
+      "command": [
+        "npm",
+        "test",
+        "-w",
+        "packages/create-nest-next-auth"
+      ],
+      "exit": 0,
+      "seconds": 14.96
+    },
+    {
+      "gate": "cli-combinations",
+      "command": [
+        "npm",
+        "run",
+        "test:combinations",
+        "-w",
+        "packages/create-nest-next-auth"
+      ],
+      "exit": 0,
+      "seconds": 47.34
+    },
+    {
+      "gate": "npm-pack",
+      "command": [
+        "npm",
+        "pack",
+        "-w",
+        "packages/create-nest-next-auth",
+        "--pack-destination",
+        "/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/t21-e/node22"
+      ],
+      "exit": 0,
+      "seconds": 0.93
+    },
+    {
+      "gate": "npm-publish-dry-run",
+      "command": [
+        "npm",
+        "publish",
+        "--dry-run",
+        "-w",
+        "packages/create-nest-next-auth"
+      ],
+      "exit": 0,
+      "seconds": 0.83
+    }
+  ],
+  "checkpoint_updates": "Root now reports Node22 anonymous44/44 and application68/68 PASS. CLI97 ran95PASS2FAIL; T30-CLI-002 is confirmed and native targeted repair is active. Do not use older browser or CLI failure counts as final results.",
+  "blockers": [
+    {
+      "id": "INT-01",
+      "kind": "authorization",
+      "detail": "Exact history policy, paths, branch/ref and gates need a separate bounded integration authorization."
+    },
+    {
+      "id": "INT-02",
+      "kind": "gate and ownership",
+      "detail": "T30-CLI-002 repair, final CLI/combinations/pack/dry-run evidence, exact owner inventory and released safe snapshot/runtime/dependency paths are pending. Source is moving."
+    },
+    {
+      "id": "INT-03",
+      "kind": "publication",
+      "detail": "Original HEAD contains legacy local audit/design/task history. Proposed base projection needs root approval. Curated docs and relative-link checks are pending."
+    },
+    {
+      "id": "INT-04",
+      "kind": "control",
+      "detail": "Independent security review was rejected by an explicit safety control. Review and dependent repairs remain paused; no retries, reassignment or candidate investigation. Draft PR must disclose incomplete review."
+    },
+    {
+      "id": "INT-05",
+      "kind": "runtime limit",
+      "detail": "Docker socket and helper HTTP listener access were denied and cannot be retried. Production Docker/TLS remain unverified. Returned operational evidence has20lightchecks PASS and13listenercases BLOCKED."
+    },
+    {
+      "id": "INT-06",
+      "kind": "operational gate",
+      "detail": "Genuine hooks, isolated Git identity/authentication and current remote/base checks have not run in a candidate worktree."
+    }
+  ],
+  "finding_handling": {
+    "repairs_performed": [],
+    "findings_closed": [],
+    "T30-OP-001": "Root reports independent recheck and closure. This assignment compared owner hashes only.",
+    "T30-CLI-002": "Active native repair, not investigated or closed here.",
+    "audit_closure": "Not inferred from commits or the accepted137-ID inventory."
+  },
+  "checks_performed": [
+    {
+      "command": "git status --porcelain=v1 -z -uall",
+      "exit": 0,
+      "result": "No staged paths. Exact current operations classified."
+    },
+    {
+      "command": "git rev-parse HEAD; git branch --show-current; git ls-tree -rz <base-or-HEAD>",
+      "exit": 0,
+      "result": "Branch and revision match brief; metadata captured."
+    },
+    {
+      "command": "git config --show-origin --get core.hooksPath",
+      "exit": 0,
+      "result": "Repository selects .husky/_."
+    },
+    {
+      "command": "git config --show-origin --get core.sshCommand; git config --show-origin --get commit.gpgsign",
+      "exit": 1,
+      "result": "Optional keys unset; not a signing/authentication certification."
+    },
+    {
+      "command": "git log --format=%h %s <base>..HEAD; git log --all --format= --name-only",
+      "exit": 0,
+      "result": "46 feature commits; filename-only history inventory."
+    },
+    {
+      "command": "Read required inventories, checkpoint, tracked hooks and configuration",
+      "exit": 0,
+      "result": "Relevant source read. Initial .lintstagedrc.json read exited1 because absent; actual .lintstagedrc.cjs subsequently read."
+    },
+    {
+      "command": "SHA256 compare current T21-E30 and operational8 owner entries",
+      "exit": 0,
+      "result": [
+        {
+          "owner": "T21-E",
+          "count": 30,
+          "mismatches": []
+        },
+        {
+          "owner": "T30 operational",
+          "count": 8,
+          "mismatches": [
+            "packages/create-nest-next-auth/test/e2e.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "command": "Initial manifest construction ownership assertion",
+      "exit": 1,
+      "result": "Stopped before artifact content write on two newly changed paths. Reconciled to active T30-CLI-002 scope provisionally; retained moving-source blocker."
+    },
+    {
+      "command": "rg memory registry for task keywords",
+      "exit": 1,
+      "result": "No relevant entry; no memory-derived project conclusions."
+    }
+  ],
+  "workflow_continuity": {
+    "fallback_scope": "codex-only",
+    "trigger": "Historical Sept5 Antigravity T18 failures in root checkpoint",
+    "antigravity_retry": "Forbidden in resumed chain",
+    "astra_attempt": 1,
+    "service_failures": 0,
+    "targeted_repairs_used": 0,
+    "historical_terra_error": "Snapshot setup only, not provider/model exhaustion."
+  },
+  "next_action": "Root validates this proposal and resolves branch history. Native owner completes repair/gates and releases final safe snapshot. Refresh exact manifest and curate docs before a separately authorized integration assignment.",
+  "integration_mechanism": {
+    "preferred": "Independent filtered export with its own Git directory under a later authorized writable path. Import only the verified hosted-base commit and its ancestors from the local read-only source repository, then create final scoped commits from the permitted projection.",
+    "reason": "Current permissions mark the original .git read-only. git worktree add would write its worktree registry and therefore is not the default permitted mechanism.",
+    "proposed_initial_commands": [
+      "git init -b integration/production-hardening <owned-export>",
+      "git -C <owned-export> fetch --no-tags <local-source-repository> f1d2282d70cf728567fa9877e15176f0ff3705c8",
+      "git -C <owned-export> update-ref refs/heads/integration/production-hardening FETCH_HEAD",
+      "git -C <owned-export> read-tree f1d2282d70cf728567fa9877e15176f0ff3705c8"
+    ],
+    "conditions": "Use a clean child environment and a fresh export directory, inspect imported base filename metadata before checkout/materialization, verify imported SHA, do not copy source config/hooks/refs, and install unchanged genuine tracked hooks in the candidate. No commands executed here. Local object import is not an external fetch.",
+    "alternative": "A linked worktree is optional only if a later execution assignment has permission to write the original Git worktree registry. Do not escalate or bypass read-only controls."
+  }
+}

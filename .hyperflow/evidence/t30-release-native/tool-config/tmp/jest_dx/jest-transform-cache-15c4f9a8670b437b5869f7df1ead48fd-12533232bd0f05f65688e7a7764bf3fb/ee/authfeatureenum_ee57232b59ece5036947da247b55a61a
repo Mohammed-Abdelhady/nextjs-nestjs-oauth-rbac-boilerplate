@@ -1,0 +1,20 @@
+5a5a3682772dd71c744b297780dd2a58
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AuthFeature = void 0;
+/**
+ * Authentication features a deployment can turn on or off. The values double
+ * as the keys of the discovery endpoint payload.
+ */
+var AuthFeature;
+(function (AuthFeature) {
+    /** Register, login, forgot password and reset password. */
+    AuthFeature["PASSWORD"] = "password";
+    /** One-time sign-in links mailed to an address. */
+    AuthFeature["MAGIC_LINK"] = "magicLink";
+    /** TOTP second factor, on top of whichever method signed the user in. */
+    AuthFeature["TWO_FACTOR"] = "twoFactor";
+    /** WebAuthn credentials, used to sign in and as a second factor. */
+    AuthFeature["PASSKEYS"] = "passkeys";
+})(AuthFeature || (exports.AuthFeature = AuthFeature = {}));
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9lbnVtcy9hdXRoLWZlYXR1cmUuZW51bS50cyIsIm1hcHBpbmdzIjoiOzs7QUFBQTs7O0dBR0c7QUFDSCxJQUFZLFdBU1g7QUFURCxXQUFZLFdBQVc7SUFDckIsMkRBQTJEO0lBQzNELG9DQUFxQixDQUFBO0lBQ3JCLG1EQUFtRDtJQUNuRCx1Q0FBd0IsQ0FBQTtJQUN4Qix5RUFBeUU7SUFDekUsdUNBQXdCLENBQUE7SUFDeEIsb0VBQW9FO0lBQ3BFLG9DQUFxQixDQUFBO0FBQ3ZCLENBQUMsRUFUVyxXQUFXLDJCQUFYLFdBQVcsUUFTdEIiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9lbnVtcy9hdXRoLWZlYXR1cmUuZW51bS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyIvKipcbiAqIEF1dGhlbnRpY2F0aW9uIGZlYXR1cmVzIGEgZGVwbG95bWVudCBjYW4gdHVybiBvbiBvciBvZmYuIFRoZSB2YWx1ZXMgZG91YmxlXG4gKiBhcyB0aGUga2V5cyBvZiB0aGUgZGlzY292ZXJ5IGVuZHBvaW50IHBheWxvYWQuXG4gKi9cbmV4cG9ydCBlbnVtIEF1dGhGZWF0dXJlIHtcbiAgLyoqIFJlZ2lzdGVyLCBsb2dpbiwgZm9yZ290IHBhc3N3b3JkIGFuZCByZXNldCBwYXNzd29yZC4gKi9cbiAgUEFTU1dPUkQgPSAncGFzc3dvcmQnLFxuICAvKiogT25lLXRpbWUgc2lnbi1pbiBsaW5rcyBtYWlsZWQgdG8gYW4gYWRkcmVzcy4gKi9cbiAgTUFHSUNfTElOSyA9ICdtYWdpY0xpbmsnLFxuICAvKiogVE9UUCBzZWNvbmQgZmFjdG9yLCBvbiB0b3Agb2Ygd2hpY2hldmVyIG1ldGhvZCBzaWduZWQgdGhlIHVzZXIgaW4uICovXG4gIFRXT19GQUNUT1IgPSAndHdvRmFjdG9yJyxcbiAgLyoqIFdlYkF1dGhuIGNyZWRlbnRpYWxzLCB1c2VkIHRvIHNpZ24gaW4gYW5kIGFzIGEgc2Vjb25kIGZhY3Rvci4gKi9cbiAgUEFTU0tFWVMgPSAncGFzc2tleXMnLFxufVxuIl0sInZlcnNpb24iOjN9

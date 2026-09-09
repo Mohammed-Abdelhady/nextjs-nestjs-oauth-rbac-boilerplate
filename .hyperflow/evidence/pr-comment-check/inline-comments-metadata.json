@@ -1,0 +1,282 @@
+[
+  {
+    "commit_id": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+    "created_at": "2026-09-08T10:55:11Z",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131003",
+    "id": 3957131003,
+    "in_reply_to_id": null,
+    "line": 113,
+    "node_id": "PRRC_kwDODvzUJs7r3Qb7",
+    "original_commit_id": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+    "original_line": 113,
+    "path": "backend/src/auth/services/password-reset-code.service.ts",
+    "pull_request_review_id": 5140788941,
+    "side": "RIGHT",
+    "subject_type": "line",
+    "updated_at": "2026-09-08T10:55:12Z",
+    "user": {
+      "login": "Mohammed-Abdelhady",
+      "type": "User"
+    }
+  },
+  {
+    "commit_id": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+    "created_at": "2026-09-08T10:55:11Z",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131013",
+    "id": 3957131013,
+    "in_reply_to_id": null,
+    "line": 70,
+    "node_id": "PRRC_kwDODvzUJs7r3QcF",
+    "original_commit_id": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+    "original_line": 70,
+    "path": "backend/src/auth/two-factor/two-factor-login.service.ts",
+    "pull_request_review_id": 5140788941,
+    "side": "RIGHT",
+    "subject_type": "line",
+    "updated_at": "2026-09-08T10:55:12Z",
+    "user": {
+      "login": "Mohammed-Abdelhady",
+      "type": "User"
+    }
+  },
+  {
+    "commit_id": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+    "created_at": "2026-09-08T10:55:11Z",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131023",
+    "id": 3957131023,
+    "in_reply_to_id": null,
+    "line": 97,
+    "node_id": "PRRC_kwDODvzUJs7r3QcP",
+    "original_commit_id": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+    "original_line": 97,
+    "path": "backend/src/auth/passkeys/services/passkey-challenge.service.ts",
+    "pull_request_review_id": 5140788941,
+    "side": "RIGHT",
+    "subject_type": "line",
+    "updated_at": "2026-09-08T10:55:12Z",
+    "user": {
+      "login": "Mohammed-Abdelhady",
+      "type": "User"
+    }
+  },
+  {
+    "commit_id": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+    "created_at": "2026-09-08T10:55:11Z",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131027",
+    "id": 3957131027,
+    "in_reply_to_id": null,
+    "line": 102,
+    "node_id": "PRRC_kwDODvzUJs7r3QcT",
+    "original_commit_id": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+    "original_line": 102,
+    "path": "backend/migrations/20260904000001-add-default-permissions-to-users.js",
+    "pull_request_review_id": 5140788941,
+    "side": "RIGHT",
+    "subject_type": "line",
+    "updated_at": "2026-09-08T10:55:12Z",
+    "user": {
+      "login": "Mohammed-Abdelhady",
+      "type": "User"
+    }
+  },
+  {
+    "commit_id": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+    "created_at": "2026-09-08T10:55:11Z",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131034",
+    "id": 3957131034,
+    "in_reply_to_id": null,
+    "line": 172,
+    "node_id": "PRRC_kwDODvzUJs7r3Qca",
+    "original_commit_id": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+    "original_line": 172,
+    "path": "backend/migrations/20260904000002-linked-accounts.js",
+    "pull_request_review_id": 5140788941,
+    "side": "RIGHT",
+    "subject_type": "line",
+    "updated_at": "2026-09-08T10:55:12Z",
+    "user": {
+      "login": "Mohammed-Abdelhady",
+      "type": "User"
+    }
+  },
+  {
+    "commit_id": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+    "created_at": "2026-09-08T10:55:11Z",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131041",
+    "id": 3957131041,
+    "in_reply_to_id": null,
+    "line": 339,
+    "node_id": "PRRC_kwDODvzUJs7r3Qch",
+    "original_commit_id": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+    "original_line": 339,
+    "path": "scripts/setup-production.js",
+    "pull_request_review_id": 5140788941,
+    "side": "RIGHT",
+    "subject_type": "line",
+    "updated_at": "2026-09-08T10:55:12Z",
+    "user": {
+      "login": "Mohammed-Abdelhady",
+      "type": "User"
+    }
+  },
+  {
+    "commit_id": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+    "created_at": "2026-09-08T10:55:11Z",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131046",
+    "id": 3957131046,
+    "in_reply_to_id": null,
+    "line": 86,
+    "node_id": "PRRC_kwDODvzUJs7r3Qcm",
+    "original_commit_id": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+    "original_line": 86,
+    "path": "backend/src/database/seeds/user.seed.ts",
+    "pull_request_review_id": 5140788941,
+    "side": "RIGHT",
+    "subject_type": "line",
+    "updated_at": "2026-09-08T10:55:12Z",
+    "user": {
+      "login": "Mohammed-Abdelhady",
+      "type": "User"
+    }
+  },
+  {
+    "commit_id": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+    "created_at": "2026-09-08T10:55:11Z",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131052",
+    "id": 3957131052,
+    "in_reply_to_id": null,
+    "line": 454,
+    "node_id": "PRRC_kwDODvzUJs7r3Qcs",
+    "original_commit_id": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+    "original_line": 454,
+    "path": "scripts/init.js",
+    "pull_request_review_id": 5140788941,
+    "side": "RIGHT",
+    "subject_type": "line",
+    "updated_at": "2026-09-08T10:55:12Z",
+    "user": {
+      "login": "Mohammed-Abdelhady",
+      "type": "User"
+    }
+  },
+  {
+    "commit_id": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+    "created_at": "2026-09-08T10:55:11Z",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131055",
+    "id": 3957131055,
+    "in_reply_to_id": null,
+    "line": 42,
+    "node_id": "PRRC_kwDODvzUJs7r3Qcv",
+    "original_commit_id": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+    "original_line": 42,
+    "path": "frontend/package.json",
+    "pull_request_review_id": 5140788941,
+    "side": "RIGHT",
+    "subject_type": "line",
+    "updated_at": "2026-09-08T10:55:12Z",
+    "user": {
+      "login": "Mohammed-Abdelhady",
+      "type": "User"
+    }
+  },
+  {
+    "commit_id": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+    "created_at": "2026-09-08T10:55:11Z",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131062",
+    "id": 3957131062,
+    "in_reply_to_id": null,
+    "line": null,
+    "node_id": "PRRC_kwDODvzUJs7r3Qc2",
+    "original_commit_id": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+    "original_line": 102,
+    "path": "frontend/e2e/authenticated-regressions.spec.ts",
+    "pull_request_review_id": 5140788941,
+    "side": "RIGHT",
+    "subject_type": "line",
+    "updated_at": "2026-09-08T10:55:12Z",
+    "user": {
+      "login": "Mohammed-Abdelhady",
+      "type": "User"
+    }
+  },
+  {
+    "commit_id": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+    "created_at": "2026-09-08T10:55:11Z",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131069",
+    "id": 3957131069,
+    "in_reply_to_id": null,
+    "line": 131,
+    "node_id": "PRRC_kwDODvzUJs7r3Qc9",
+    "original_commit_id": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+    "original_line": 130,
+    "path": "scripts/verify-docker.mjs",
+    "pull_request_review_id": 5140788941,
+    "side": "RIGHT",
+    "subject_type": "line",
+    "updated_at": "2026-09-08T10:55:12Z",
+    "user": {
+      "login": "Mohammed-Abdelhady",
+      "type": "User"
+    }
+  },
+  {
+    "commit_id": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+    "created_at": "2026-09-08T10:55:11Z",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131073",
+    "id": 3957131073,
+    "in_reply_to_id": null,
+    "line": 13,
+    "node_id": "PRRC_kwDODvzUJs7r3QdB",
+    "original_commit_id": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+    "original_line": 13,
+    "path": "scripts/setup-production.js",
+    "pull_request_review_id": 5140788941,
+    "side": "RIGHT",
+    "subject_type": "line",
+    "updated_at": "2026-09-08T10:55:12Z",
+    "user": {
+      "login": "Mohammed-Abdelhady",
+      "type": "User"
+    }
+  },
+  {
+    "commit_id": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+    "created_at": "2026-09-08T10:55:11Z",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131076",
+    "id": 3957131076,
+    "in_reply_to_id": null,
+    "line": 24,
+    "node_id": "PRRC_kwDODvzUJs7r3QdE",
+    "original_commit_id": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+    "original_line": 24,
+    "path": "openspec/project.md",
+    "pull_request_review_id": 5140788941,
+    "side": "RIGHT",
+    "subject_type": "line",
+    "updated_at": "2026-09-08T10:55:12Z",
+    "user": {
+      "login": "Mohammed-Abdelhady",
+      "type": "User"
+    }
+  },
+  {
+    "commit_id": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+    "created_at": "2026-09-08T10:55:11Z",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72#discussion_r3957131084",
+    "id": 3957131084,
+    "in_reply_to_id": null,
+    "line": 105,
+    "node_id": "PRRC_kwDODvzUJs7r3QdM",
+    "original_commit_id": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+    "original_line": 105,
+    "path": "backend/src/auth/oauth/base-oauth.strategy.ts",
+    "pull_request_review_id": 5140788941,
+    "side": "RIGHT",
+    "subject_type": "line",
+    "updated_at": "2026-09-08T10:55:12Z",
+    "user": {
+      "login": "Mohammed-Abdelhady",
+      "type": "User"
+    }
+  }
+]

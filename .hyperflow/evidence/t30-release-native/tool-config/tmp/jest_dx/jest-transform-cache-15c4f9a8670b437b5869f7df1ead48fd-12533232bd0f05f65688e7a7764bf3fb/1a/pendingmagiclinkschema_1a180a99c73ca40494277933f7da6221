@@ -1,0 +1,71 @@
+b0dd5182f5809852f3afb7916967b7ff
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PendingMagicLinkSchema = exports.PendingMagicLink = void 0;
+const mongoose_1 = require("@nestjs/mongoose");
+const magic_link_constants_1 = require("../constants/magic-link.constants");
+/**
+ * One mailed sign-in link. Only the sha256 of the token is stored, so the
+ * database never holds anything that can be mailed or replayed.
+ */
+let PendingMagicLink = class PendingMagicLink {
+    email;
+    /** sha256 of the token, hex encoded. */
+    tokenHash;
+    /**
+     * When the link stops working. The TTL index removes the record an hour
+     * after that, which keeps it available to the hourly request count.
+     */
+    expiresAt;
+    /** Set once, by the request that spends the link. */
+    consumedAt;
+    requestIp;
+    userAgent;
+    // Timestamp fields (automatically managed by Mongoose with timestamps: true)
+    createdAt;
+    updatedAt;
+};
+exports.PendingMagicLink = PendingMagicLink;
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, lowercase: true, trim: true }),
+    __metadata("design:type", String)
+], PendingMagicLink.prototype, "email", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, unique: true }),
+    __metadata("design:type", String)
+], PendingMagicLink.prototype, "tokenHash", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        required: true,
+        index: { expireAfterSeconds: magic_link_constants_1.MAGIC_LINK_RETENTION_SECONDS },
+    }),
+    __metadata("design:type", Date)
+], PendingMagicLink.prototype, "expiresAt", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Date, default: null }),
+    __metadata("design:type", Object)
+], PendingMagicLink.prototype, "consumedAt", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], PendingMagicLink.prototype, "requestIp", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], PendingMagicLink.prototype, "userAgent", void 0);
+exports.PendingMagicLink = PendingMagicLink = __decorate([
+    (0, mongoose_1.Schema)({ timestamps: true })
+], PendingMagicLink);
+exports.PendingMagicLinkSchema = mongoose_1.SchemaFactory.createForClass(PendingMagicLink);
+// Serves the per-address hourly count.
+exports.PendingMagicLinkSchema.index({ email: 1, createdAt: -1 });
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9tYWdpYy1saW5rL3NjaGVtYXMvcGVuZGluZy1tYWdpYy1saW5rLnNjaGVtYS50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSwrQ0FBK0Q7QUFFL0QsNEVBQWlGO0FBRWpGOzs7R0FHRztBQUVJLElBQU0sZ0JBQWdCLEdBQXRCLE1BQU0sZ0JBQWdCO0lBRTNCLEtBQUssQ0FBVTtJQUVmLHdDQUF3QztJQUV4QyxTQUFTLENBQVU7SUFFbkI7OztPQUdHO0lBS0gsU0FBUyxDQUFRO0lBRWpCLHFEQUFxRDtJQUVyRCxVQUFVLENBQWU7SUFHekIsU0FBUyxDQUFVO0lBR25CLFNBQVMsQ0FBVTtJQUVuQiw2RUFBNkU7SUFDN0UsU0FBUyxDQUFRO0lBQ2pCLFNBQVMsQ0FBUTtDQUNsQixDQUFBO0FBL0JZLDRDQUFnQjtBQUUzQjtJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsUUFBUSxFQUFFLElBQUksRUFBRSxTQUFTLEVBQUUsSUFBSSxFQUFFLElBQUksRUFBRSxJQUFJLEVBQUUsQ0FBQzs7K0NBQ3ZDO0FBSWY7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLFFBQVEsRUFBRSxJQUFJLEVBQUUsTUFBTSxFQUFFLElBQUksRUFBRSxDQUFDOzttREFDcEI7QUFVbkI7SUFKQyxJQUFBLGVBQUksRUFBQztRQUNKLFFBQVEsRUFBRSxJQUFJO1FBQ2QsS0FBSyxFQUFFLEVBQUUsa0JBQWtCLEVBQUUsbURBQTRCLEVBQUU7S0FDNUQsQ0FBQzs4QkFDVSxJQUFJO21EQUFDO0FBSWpCO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxJQUFJLEVBQUUsSUFBSSxFQUFFLE9BQU8sRUFBRSxJQUFJLEVBQUUsQ0FBQzs7b0RBQ1g7QUFHekI7SUFEQyxJQUFBLGVBQUksR0FBRTs7bURBQ1k7QUFHbkI7SUFEQyxJQUFBLGVBQUksR0FBRTs7bURBQ1k7MkJBMUJSLGdCQUFnQjtJQUQ1QixJQUFBLGlCQUFNLEVBQUMsRUFBRSxVQUFVLEVBQUUsSUFBSSxFQUFFLENBQUM7R0FDaEIsZ0JBQWdCLENBK0I1QjtBQUlZLFFBQUEsc0JBQXNCLEdBQ2pDLHdCQUFhLENBQUMsY0FBYyxDQUFDLGdCQUFnQixDQUFDLENBQUM7QUFFakQsdUNBQXVDO0FBQ3ZDLDhCQUFzQixDQUFDLEtBQUssQ0FBQyxFQUFFLEtBQUssRUFBRSxDQUFDLEVBQUUsU0FBUyxFQUFFLENBQUMsQ0FBQyxFQUFFLENBQUMsQ0FBQyIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy9hdXRoL21hZ2ljLWxpbmsvc2NoZW1hcy9wZW5kaW5nLW1hZ2ljLWxpbmsuc2NoZW1hLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IFByb3AsIFNjaGVtYSwgU2NoZW1hRmFjdG9yeSB9IGZyb20gJ0BuZXN0anMvbW9uZ29vc2UnO1xuaW1wb3J0IHsgSHlkcmF0ZWREb2N1bWVudCwgU2NoZW1hIGFzIE1vbmdvb3NlU2NoZW1hIH0gZnJvbSAnbW9uZ29vc2UnO1xuaW1wb3J0IHsgTUFHSUNfTElOS19SRVRFTlRJT05fU0VDT05EUyB9IGZyb20gJy4uL2NvbnN0YW50cy9tYWdpYy1saW5rLmNvbnN0YW50cyc7XG5cbi8qKlxuICogT25lIG1haWxlZCBzaWduLWluIGxpbmsuIE9ubHkgdGhlIHNoYTI1NiBvZiB0aGUgdG9rZW4gaXMgc3RvcmVkLCBzbyB0aGVcbiAqIGRhdGFiYXNlIG5ldmVyIGhvbGRzIGFueXRoaW5nIHRoYXQgY2FuIGJlIG1haWxlZCBvciByZXBsYXllZC5cbiAqL1xuQFNjaGVtYSh7IHRpbWVzdGFtcHM6IHRydWUgfSlcbmV4cG9ydCBjbGFzcyBQZW5kaW5nTWFnaWNMaW5rIHtcbiAgQFByb3AoeyByZXF1aXJlZDogdHJ1ZSwgbG93ZXJjYXNlOiB0cnVlLCB0cmltOiB0cnVlIH0pXG4gIGVtYWlsITogc3RyaW5nO1xuXG4gIC8qKiBzaGEyNTYgb2YgdGhlIHRva2VuLCBoZXggZW5jb2RlZC4gKi9cbiAgQFByb3AoeyByZXF1aXJlZDogdHJ1ZSwgdW5pcXVlOiB0cnVlIH0pXG4gIHRva2VuSGFzaCE6IHN0cmluZztcblxuICAvKipcbiAgICogV2hlbiB0aGUgbGluayBzdG9wcyB3b3JraW5nLiBUaGUgVFRMIGluZGV4IHJlbW92ZXMgdGhlIHJlY29yZCBhbiBob3VyXG4gICAqIGFmdGVyIHRoYXQsIHdoaWNoIGtlZXBzIGl0IGF2YWlsYWJsZSB0byB0aGUgaG91cmx5IHJlcXVlc3QgY291bnQuXG4gICAqL1xuICBAUHJvcCh7XG4gICAgcmVxdWlyZWQ6IHRydWUsXG4gICAgaW5kZXg6IHsgZXhwaXJlQWZ0ZXJTZWNvbmRzOiBNQUdJQ19MSU5LX1JFVEVOVElPTl9TRUNPTkRTIH0sXG4gIH0pXG4gIGV4cGlyZXNBdCE6IERhdGU7XG5cbiAgLyoqIFNldCBvbmNlLCBieSB0aGUgcmVxdWVzdCB0aGF0IHNwZW5kcyB0aGUgbGluay4gKi9cbiAgQFByb3AoeyB0eXBlOiBEYXRlLCBkZWZhdWx0OiBudWxsIH0pXG4gIGNvbnN1bWVkQXQhOiBEYXRlIHwgbnVsbDtcblxuICBAUHJvcCgpXG4gIHJlcXVlc3RJcD86IHN0cmluZztcblxuICBAUHJvcCgpXG4gIHVzZXJBZ2VudD86IHN0cmluZztcblxuICAvLyBUaW1lc3RhbXAgZmllbGRzIChhdXRvbWF0aWNhbGx5IG1hbmFnZWQgYnkgTW9uZ29vc2Ugd2l0aCB0aW1lc3RhbXBzOiB0cnVlKVxuICBjcmVhdGVkQXQhOiBEYXRlO1xuICB1cGRhdGVkQXQhOiBEYXRlO1xufVxuXG5leHBvcnQgdHlwZSBQZW5kaW5nTWFnaWNMaW5rRG9jdW1lbnQgPSBIeWRyYXRlZERvY3VtZW50PFBlbmRpbmdNYWdpY0xpbms+O1xuXG5leHBvcnQgY29uc3QgUGVuZGluZ01hZ2ljTGlua1NjaGVtYTogTW9uZ29vc2VTY2hlbWE8UGVuZGluZ01hZ2ljTGluaz4gPVxuICBTY2hlbWFGYWN0b3J5LmNyZWF0ZUZvckNsYXNzKFBlbmRpbmdNYWdpY0xpbmspO1xuXG4vLyBTZXJ2ZXMgdGhlIHBlci1hZGRyZXNzIGhvdXJseSBjb3VudC5cblBlbmRpbmdNYWdpY0xpbmtTY2hlbWEuaW5kZXgoeyBlbWFpbDogMSwgY3JlYXRlZEF0OiAtMSB9KTtcbiJdLCJ2ZXJzaW9uIjozfQ==

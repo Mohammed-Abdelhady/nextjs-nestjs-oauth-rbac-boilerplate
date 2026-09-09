@@ -201,6 +201,7 @@ export function ActivationForm() {
             {/* Code Input */}
             <FormInput
               name="code"
+              data-testid="activate-code-input"
               type="text"
               inputMode="numeric"
               label={t('code')}

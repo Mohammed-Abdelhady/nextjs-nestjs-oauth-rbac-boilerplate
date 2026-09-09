@@ -1,0 +1,13 @@
+T29b final CLI verification is blocked at the first required gate.
+
+- Source: `68cefb6` on `feat/production-hardening`
+- Package gate: `npm test -w packages/create-nest-next-auth` exit 1
+- Result: 86 passed, 10 failed across 7 files
+- Failure: `commander` resolves to 4.1.1, but `src/flags/options.ts:24` calls unavailable `.argument(...)`.
+- Packed CLI tests ran and failed. They did not skip after the build failure.
+- Combinations gate and root production build were not run because gate 1 failed.
+- No source edits, commits, pushes, or deployments.
+
+Evidence: [report.md](/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/t29b-final-gates/report.md), [test log](/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/t29b-final-gates/01-cli-package-suite.log), [snapshot record](/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/t29b-final-gates/snapshot-capture.txt).
+
+The filtered snapshot contained only the three approved example templates. It and all generated `cna-e2e-*` fixtures were removed successfully.

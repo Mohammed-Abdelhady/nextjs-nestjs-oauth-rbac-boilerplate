@@ -1,0 +1,9 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "test:config"
+  ],
+  "exit": 0,
+  "seconds": 1.95
+}

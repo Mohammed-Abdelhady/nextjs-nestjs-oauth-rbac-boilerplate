@@ -1,0 +1,33 @@
+352cf1b17db67a26c85ce41bed99002d
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RequestMagicLinkDto = void 0;
+const class_validator_1 = require("class-validator");
+const class_transformer_1 = require("class-transformer");
+const swagger_1 = require("@nestjs/swagger");
+class RequestMagicLinkDto {
+    email;
+}
+exports.RequestMagicLinkDto = RequestMagicLinkDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Address the sign-in link is mailed to',
+        example: 'user@example.com',
+        maxLength: 255,
+    }),
+    (0, class_validator_1.IsEmail)({}, { message: 'Invalid email format' }),
+    (0, class_validator_1.MaxLength)(255, { message: 'Email must not exceed 255 characters' }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'Email is required' }),
+    (0, class_transformer_1.Transform)(({ value }) => value?.toLowerCase()?.trim()),
+    __metadata("design:type", String)
+], RequestMagicLinkDto.prototype, "email", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9tYWdpYy1saW5rL2R0by9yZXF1ZXN0LW1hZ2ljLWxpbmsuZHRvLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLHFEQUFpRTtBQUNqRSx5REFBOEM7QUFDOUMsNkNBQThDO0FBRTlDLE1BQWEsbUJBQW1CO0lBVTlCLEtBQUssQ0FBVTtDQUNoQjtBQVhELGtEQVdDO0FBREM7SUFUQyxJQUFBLHFCQUFXLEVBQUM7UUFDWCxXQUFXLEVBQUUsdUNBQXVDO1FBQ3BELE9BQU8sRUFBRSxrQkFBa0I7UUFDM0IsU0FBUyxFQUFFLEdBQUc7S0FDZixDQUFDO0lBQ0QsSUFBQSx5QkFBTyxFQUFDLEVBQUUsRUFBRSxFQUFFLE9BQU8sRUFBRSxzQkFBc0IsRUFBRSxDQUFDO0lBQ2hELElBQUEsMkJBQVMsRUFBQyxHQUFHLEVBQUUsRUFBRSxPQUFPLEVBQUUsc0NBQXNDLEVBQUUsQ0FBQztJQUNuRSxJQUFBLDRCQUFVLEVBQUMsRUFBRSxPQUFPLEVBQUUsbUJBQW1CLEVBQUUsQ0FBQztJQUM1QyxJQUFBLDZCQUFTLEVBQUMsQ0FBQyxFQUFFLEtBQUssRUFBcUIsRUFBRSxFQUFFLENBQUMsS0FBSyxFQUFFLFdBQVcsRUFBRSxFQUFFLElBQUksRUFBRSxDQUFDOztrREFDM0QiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9tYWdpYy1saW5rL2R0by9yZXF1ZXN0LW1hZ2ljLWxpbmsuZHRvLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IElzRW1haWwsIElzTm90RW1wdHksIE1heExlbmd0aCB9IGZyb20gJ2NsYXNzLXZhbGlkYXRvcic7XG5pbXBvcnQgeyBUcmFuc2Zvcm0gfSBmcm9tICdjbGFzcy10cmFuc2Zvcm1lcic7XG5pbXBvcnQgeyBBcGlQcm9wZXJ0eSB9IGZyb20gJ0BuZXN0anMvc3dhZ2dlcic7XG5cbmV4cG9ydCBjbGFzcyBSZXF1ZXN0TWFnaWNMaW5rRHRvIHtcbiAgQEFwaVByb3BlcnR5KHtcbiAgICBkZXNjcmlwdGlvbjogJ0FkZHJlc3MgdGhlIHNpZ24taW4gbGluayBpcyBtYWlsZWQgdG8nLFxuICAgIGV4YW1wbGU6ICd1c2VyQGV4YW1wbGUuY29tJyxcbiAgICBtYXhMZW5ndGg6IDI1NSxcbiAgfSlcbiAgQElzRW1haWwoe30sIHsgbWVzc2FnZTogJ0ludmFsaWQgZW1haWwgZm9ybWF0JyB9KVxuICBATWF4TGVuZ3RoKDI1NSwgeyBtZXNzYWdlOiAnRW1haWwgbXVzdCBub3QgZXhjZWVkIDI1NSBjaGFyYWN0ZXJzJyB9KVxuICBASXNOb3RFbXB0eSh7IG1lc3NhZ2U6ICdFbWFpbCBpcyByZXF1aXJlZCcgfSlcbiAgQFRyYW5zZm9ybSgoeyB2YWx1ZSB9OiB7IHZhbHVlOiBzdHJpbmcgfSkgPT4gdmFsdWU/LnRvTG93ZXJDYXNlKCk/LnRyaW0oKSlcbiAgZW1haWwhOiBzdHJpbmc7XG59XG4iXSwidmVyc2lvbiI6M30=

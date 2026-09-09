@@ -1,0 +1,43 @@
+{
+  "capturedAt": "2026-09-08T08:35:55.509Z",
+  "ownedParent": "/tmp/t30-light-hOf2TO",
+  "parentAbsent": true,
+  "ownedProbeChildren": [
+    {
+      "pid": 78232,
+      "state": "ESRCH"
+    },
+    {
+      "pid": 78245,
+      "state": "ESRCH"
+    },
+    {
+      "pid": 78257,
+      "state": "ESRCH"
+    },
+    {
+      "pid": 78270,
+      "state": "ESRCH"
+    },
+    {
+      "pid": 78283,
+      "state": "ESRCH"
+    },
+    {
+      "pid": 78298,
+      "state": "ESRCH"
+    },
+    {
+      "pid": 78311,
+      "state": "ESRCH"
+    },
+    {
+      "pid": 78326,
+      "state": "ESRCH"
+    }
+  ],
+  "remainingLightweightParentNames": [],
+  "listenersStartedInFinalRun": 0,
+  "realDocker": false,
+  "dockerDaemonCommands": 0
+}

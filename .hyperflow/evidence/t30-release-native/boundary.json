@@ -1,0 +1,11 @@
+{
+  "state": "stopped after verified draft PR creation; source frozen",
+  "pr": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72",
+  "head": "3e84f52312196c03aaefc109ceca05c71bebc712",
+  "candidate": "/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz",
+  "source_projection_sha256": "eb0f89f1d04fc1802c434694a63ce91671a825772290c60e21a9fd1618b8080e",
+  "owned_processes_running": false,
+  "candidate_clean": true,
+  "independent_review_pending": true,
+  "fallback_scope": "codex-only"
+}

@@ -12,6 +12,7 @@ import { useCallback, useMemo } from 'react';
 import { toast } from '@/lib/toast';
 import { Link, useRouter } from '@/i18n/navigation';
 import { parseApiError } from '@/lib/apiError';
+import { preventNavigationBlur } from '@/modules/auth/utils/preventNavigationBlur';
 
 /**
  * Forgot password form validation schema
@@ -127,6 +128,7 @@ export function ForgotPasswordForm() {
             {/* Email Input */}
             <FormInput
               name="email"
+              data-testid="forgot-password-email-input"
               type="email"
               label={t('email')}
               placeholder="name@example.com"
@@ -146,6 +148,7 @@ export function ForgotPasswordForm() {
                 href="/auth/login"
                 className="text-sm font-semibold text-primary hover:underline transition-colors"
                 data-testid="back-to-login-link"
+                onMouseDown={preventNavigationBlur}
               >
                 {t('backToLogin')}
               </Link>

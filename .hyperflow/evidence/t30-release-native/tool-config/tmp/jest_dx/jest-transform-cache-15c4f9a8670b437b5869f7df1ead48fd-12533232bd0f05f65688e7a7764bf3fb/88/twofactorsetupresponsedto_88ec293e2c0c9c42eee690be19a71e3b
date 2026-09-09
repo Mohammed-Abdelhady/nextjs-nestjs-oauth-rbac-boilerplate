@@ -1,0 +1,46 @@
+05bc5734770a4fbc7bd55b2d08c14fbf
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TwoFactorSetupResponseDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
+const api_response_dto_1 = require("../../../common/dto/api-response.dto");
+/**
+ * What setup hands back. The QR code is left to the client: rendering it here
+ * would mean carrying an image library for something a browser draws from the
+ * URL on its own.
+ */
+class TwoFactorSetupResponseDto {
+    otpauthUrl;
+    secret;
+    static success(otpauthUrl, secret) {
+        const dto = new TwoFactorSetupResponseDto();
+        dto.otpauthUrl = otpauthUrl;
+        dto.secret = secret;
+        return api_response_dto_1.ApiResponse.success(dto, 'Scan the code, then confirm it');
+    }
+}
+exports.TwoFactorSetupResponseDto = TwoFactorSetupResponseDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'URL to render as a QR code for the authenticator app',
+        example: 'otpauth://totp/Auth%20Boilerplate:user%40example.com?secret=NYITGE7DZ7KUSQJFKLHJL2LZ6Z5IDTV7&issuer=Auth%20Boilerplate',
+    }),
+    __metadata("design:type", String)
+], TwoFactorSetupResponseDto.prototype, "otpauthUrl", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'The same secret in base32, for entering by hand',
+        example: 'NYITGE7DZ7KUSQJFKLHJL2LZ6Z5IDTV7',
+    }),
+    __metadata("design:type", String)
+], TwoFactorSetupResponseDto.prototype, "secret", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC90d28tZmFjdG9yL2R0by90d28tZmFjdG9yLXNldHVwLXJlc3BvbnNlLmR0by50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSw2Q0FBOEM7QUFDOUMsMkVBQW1FO0FBRW5FOzs7O0dBSUc7QUFDSCxNQUFhLHlCQUF5QjtJQU1wQyxVQUFVLENBQVU7SUFNcEIsTUFBTSxDQUFVO0lBRWhCLE1BQU0sQ0FBQyxPQUFPLENBQ1osVUFBa0IsRUFDbEIsTUFBYztRQUVkLE1BQU0sR0FBRyxHQUFHLElBQUkseUJBQXlCLEVBQUUsQ0FBQztRQUM1QyxHQUFHLENBQUMsVUFBVSxHQUFHLFVBQVUsQ0FBQztRQUM1QixHQUFHLENBQUMsTUFBTSxHQUFHLE1BQU0sQ0FBQztRQUNwQixPQUFPLDhCQUFXLENBQUMsT0FBTyxDQUFDLEdBQUcsRUFBRSxnQ0FBZ0MsQ0FBQyxDQUFDO0lBQ3BFLENBQUM7Q0FDRjtBQXZCRCw4REF1QkM7QUFqQkM7SUFMQyxJQUFBLHFCQUFXLEVBQUM7UUFDWCxXQUFXLEVBQUUsc0RBQXNEO1FBQ25FLE9BQU8sRUFDTCx3SEFBd0g7S0FDM0gsQ0FBQzs7NkRBQ2tCO0FBTXBCO0lBSkMsSUFBQSxxQkFBVyxFQUFDO1FBQ1gsV0FBVyxFQUFFLGlEQUFpRDtRQUM5RCxPQUFPLEVBQUUsa0NBQWtDO0tBQzVDLENBQUM7O3lEQUNjIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL2F1dGgvdHdvLWZhY3Rvci9kdG8vdHdvLWZhY3Rvci1zZXR1cC1yZXNwb25zZS5kdG8udHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgQXBpUHJvcGVydHkgfSBmcm9tICdAbmVzdGpzL3N3YWdnZXInO1xuaW1wb3J0IHsgQXBpUmVzcG9uc2UgfSBmcm9tICcuLi8uLi8uLi9jb21tb24vZHRvL2FwaS1yZXNwb25zZS5kdG8nO1xuXG4vKipcbiAqIFdoYXQgc2V0dXAgaGFuZHMgYmFjay4gVGhlIFFSIGNvZGUgaXMgbGVmdCB0byB0aGUgY2xpZW50OiByZW5kZXJpbmcgaXQgaGVyZVxuICogd291bGQgbWVhbiBjYXJyeWluZyBhbiBpbWFnZSBsaWJyYXJ5IGZvciBzb21ldGhpbmcgYSBicm93c2VyIGRyYXdzIGZyb20gdGhlXG4gKiBVUkwgb24gaXRzIG93bi5cbiAqL1xuZXhwb3J0IGNsYXNzIFR3b0ZhY3RvclNldHVwUmVzcG9uc2VEdG8ge1xuICBAQXBpUHJvcGVydHkoe1xuICAgIGRlc2NyaXB0aW9uOiAnVVJMIHRvIHJlbmRlciBhcyBhIFFSIGNvZGUgZm9yIHRoZSBhdXRoZW50aWNhdG9yIGFwcCcsXG4gICAgZXhhbXBsZTpcbiAgICAgICdvdHBhdXRoOi8vdG90cC9BdXRoJTIwQm9pbGVycGxhdGU6dXNlciU0MGV4YW1wbGUuY29tP3NlY3JldD1OWUlUR0U3RFo3S1VTUUpGS0xISkwyTFo2WjVJRFRWNyZpc3N1ZXI9QXV0aCUyMEJvaWxlcnBsYXRlJyxcbiAgfSlcbiAgb3RwYXV0aFVybCE6IHN0cmluZztcblxuICBAQXBpUHJvcGVydHkoe1xuICAgIGRlc2NyaXB0aW9uOiAnVGhlIHNhbWUgc2VjcmV0IGluIGJhc2UzMiwgZm9yIGVudGVyaW5nIGJ5IGhhbmQnLFxuICAgIGV4YW1wbGU6ICdOWUlUR0U3RFo3S1VTUUpGS0xISkwyTFo2WjVJRFRWNycsXG4gIH0pXG4gIHNlY3JldCE6IHN0cmluZztcblxuICBzdGF0aWMgc3VjY2VzcyhcbiAgICBvdHBhdXRoVXJsOiBzdHJpbmcsXG4gICAgc2VjcmV0OiBzdHJpbmcsXG4gICk6IEFwaVJlc3BvbnNlPFR3b0ZhY3RvclNldHVwUmVzcG9uc2VEdG8+IHtcbiAgICBjb25zdCBkdG8gPSBuZXcgVHdvRmFjdG9yU2V0dXBSZXNwb25zZUR0bygpO1xuICAgIGR0by5vdHBhdXRoVXJsID0gb3RwYXV0aFVybDtcbiAgICBkdG8uc2VjcmV0ID0gc2VjcmV0O1xuICAgIHJldHVybiBBcGlSZXNwb25zZS5zdWNjZXNzKGR0bywgJ1NjYW4gdGhlIGNvZGUsIHRoZW4gY29uZmlybSBpdCcpO1xuICB9XG59XG4iXSwidmVyc2lvbiI6M30=

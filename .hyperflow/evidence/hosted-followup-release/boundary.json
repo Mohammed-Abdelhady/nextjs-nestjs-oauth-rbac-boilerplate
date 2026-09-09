@@ -1,0 +1,36 @@
+{
+  "observedAt": "2026-09-08T12:47:40.803993+00:00",
+  "head": "954b99a319d171d8dd488372fda6f4f530440dce",
+  "remote": "954b99a319d171d8dd488372fda6f4f530440dce",
+  "candidateClean": true,
+  "pr": {
+    "headRefOid": "954b99a319d171d8dd488372fda6f4f530440dce",
+    "isDraft": true,
+    "state": "OPEN",
+    "url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72"
+  },
+  "functionalRun": 34227059854,
+  "functionalConclusion": "failure",
+  "quality": "success",
+  "combinations": "success",
+  "api": {
+    "passed": 72,
+    "total": 72
+  },
+  "anonymous": {
+    "passed": 44,
+    "total": 44
+  },
+  "authenticated": {
+    "passed": 71,
+    "total": 72
+  },
+  "docker": "frontend-en login document contract failure; four healthy; owned fixture removed",
+  "codeqlSummary": {
+    "high": 30,
+    "medium": 1,
+    "detailsInspected": false
+  },
+  "ownedProcesses": [],
+  "fallback_scope": "codex-only"
+}

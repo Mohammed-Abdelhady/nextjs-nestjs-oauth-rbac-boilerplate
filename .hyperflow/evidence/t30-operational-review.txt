@@ -1,0 +1,74 @@
+NEEDS_FIX for the bounded operational scope. One demonstrated source defect. Returned to Astra for validation; this review does not authorize release.
+
+Capture validation passed. SHA-256 of `JSON.stringify(capture.files)` equals `4e305e34367d0ee3c5aa938ed3a8cdcdbfa3b9dc2770c2006feae973f46df711`. All eight current file hashes matched their recorded hashes, including at review completion. Base revision and current HEAD are `68cefb61f450b94c195a8d6cf325ac5e26c15349`.
+
+**T30-OP-001 · High · Frontend Docker context removes a required TypeScript module**
+
+Location: [.dockerignore:30](/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.dockerignore:30).
+
+Trigger: build the frontend production image using the newly filtered context.
+
+Expected: the context contains everything required by the frontend build’s TypeScript checks.
+
+Observed, with static proof and an isolated compiler reproduction:
+
+1. The new `**/e2e` rule removes `frontend/e2e`.
+2. It retains [playwright.frontend.config.ts:2](/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/frontend/playwright.frontend.config.ts:2), which imports `AnonymousOptions` from `./e2e/frontend-only/fixtures`.
+3. [tsconfig.json:27](/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/frontend/tsconfig.json:27) includes `**/*.ts` and excludes only `node_modules`. The retained config therefore participates in typechecking.
+4. The frontend Dockerfile runs `npm run build --workspace frontend`, which invokes `next build`. Its configuration does not disable TypeScript build errors.
+
+An in-memory TypeScript compiler host containing the exact retained import, with the excluded module absent, produced:
+
+```text
+TS2307: Cannot find module './e2e/frontend-only/fixtures'
+or its corresponding type declarations.
+```
+
+The reproduction used Node `v26.8.1` and TypeScript `5.9.3`, performed no writes, and did not read the fixture. This demonstrates the missing-module error; it is not a completed Docker build.
+
+The retained Playwright config hashes to `a9fd3262d4f08757a9577840584124b72d2110fce782db5c4c51230669339d1a`, matching the earlier runtime capture. This finding does not depend on concurrent fixture edits.
+
+Impact: the frontend production image build cannot pass its configured typecheck. The new CI Docker job stops before smoke verification. Generated projects carrying these files inherit the mismatch.
+
+Correction direction: make the filtered build context and TypeScript inputs consistent. Preserve required source dependencies, or exclude the corresponding test configuration from production compilation. Verify the resulting filtered context, then complete the production image build in an authorized runtime.
+
+| Reviewed path | Coverage |
+| --- | --- |
+| `.github/workflows/ci.yml` | Command ordering, declared scripts, repository guards, sequential browser suites, image targets/tags, count reporting |
+| `.dockerignore` | Build-context compatibility; T30-OP-001 |
+| `nginx/.dockerignore` | Required Dockerfile copy inputs remain available |
+| `nginx/nginx.conf` | New exact HTTP health location precedes the catch-all redirect |
+| `.gitignore` | Added runtime-artifact patterns |
+| `scripts/verify-docker.mjs` | Export traversal, derived topology, readiness, subprocess bounds, cancellation, diagnostics and cleanup |
+| `packages/create-nest-next-auth/scripts/sync-template.mjs` | Artifact exclusion, retained operational files, symlink omission and entry-point behavior |
+| `packages/create-nest-next-auth/test/e2e.test.ts` | Operational exclusion regression and build/pack lifecycle; auth assertions excluded |
+
+Direct contracts checked included the four package manifests, three Dockerfiles, production Compose configuration, frontend TypeScript/Next/Playwright configurations, backend build configurations, and CLI Vitest configurations. Maintainer-only CI jobs have repository guards; their named scripts and the frontend Playwright dependency are declared. Fresh dependency resolution remains unverified.
+
+The reported 11 lightweight checks correspond to these actual runner paths:
+
+| Checks | Actual coverage |
+| --- | --- |
+| 1 | YAML parsing, selected ordering/guard assertions and three image-load flags |
+| 2 | Literal ignore-rule presence and HTTP route extraction |
+| 3 | Filename classification |
+| 4 | Small source export and symlink omission |
+| 5 | Extracted exclusion-test callback; bypasses the packed suite’s build hook |
+| 6 | Model construction using dummy `CMD true` healthchecks, plus missing-healthcheck rejection |
+| 7 | Subprocess timeout, stdout limit and missing executable |
+| 8–11 | Fake missing-image, startup-failure, SIGTERM cancellation and cleanup-failure paths |
+
+These are existing reported passes, not eleven newly executed tests. I inspected the runner and results without rerunning its evidence-writing entry point.
+
+Material missing evidence remains separate from the demonstrated defect:
+
+- All four fake-Docker scenarios stop before port discovery and HTTP assertions. Successful startup, malformed port output, response failures and request cancellation are untested there.
+- The dummy model does not verify actual Compose normalization, inherited dependency conditions or real healthcheck commands.
+- Fake resource-list commands return empty output. Successful teardown followed by residual project resources is not exercised.
+- SIGINT and cancellation during export or HTTP requests lack equivalent coverage.
+- No lightweight check compiles the filtered frontend context, which allowed T30-OP-001 to pass unnoticed.
+- Supported Node 22 installation, packed/generated-project gates, real image builds, daemon readiness and teardown remain unverified. The runtime report records environment blockers, not product test failures. Production TLS remains deferred.
+
+Traversal remains proportional to visited entries and copied bytes, with directory metadata retained along recursion. The smoke model has four services and fixed probes. No performance improvement is claimed or measured, and no additional algorithmic defect was established.
+
+Independent checks completed here: capture/hash reconciliation, both script syntax checks, scoped diff whitespace check, and the in-memory missing-module reproduction. No source or evidence files changed. No Docker, network, install, browser or full-build command ran. The paused security review remains outside this review and unclosed.

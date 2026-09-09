@@ -1,0 +1,31 @@
+c271356f22e000e2889bcbeae30bcd9e
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ParseObjectIdPipe = void 0;
+const common_1 = require("@nestjs/common");
+const app_exception_1 = require("../exceptions/app.exception");
+const error_code_enum_1 = require("../enums/error-code.enum");
+const OBJECT_ID_REGEX = /^[0-9a-fA-F]{24}$/;
+/**
+ * Validates that a route parameter is a 24-character hexadecimal string.
+ * Throws an AppException with code INVALID_INPUT and status 400 when validation fails.
+ */
+let ParseObjectIdPipe = class ParseObjectIdPipe {
+    transform(value) {
+        if (typeof value !== 'string' || !OBJECT_ID_REGEX.test(value)) {
+            throw new app_exception_1.AppException(error_code_enum_1.ErrorCode.INVALID_INPUT, 'Invalid identifier format', common_1.HttpStatus.BAD_REQUEST);
+        }
+        return value;
+    }
+};
+exports.ParseObjectIdPipe = ParseObjectIdPipe;
+exports.ParseObjectIdPipe = ParseObjectIdPipe = __decorate([
+    (0, common_1.Injectable)()
+], ParseObjectIdPipe);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29tbW9uL3BpcGVzL3BhcnNlLW9iamVjdC1pZC5waXBlLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7OztBQUFBLDJDQUF1RTtBQUN2RSwrREFBMkQ7QUFDM0QsOERBQXFEO0FBRXJELE1BQU0sZUFBZSxHQUFHLG1CQUFtQixDQUFDO0FBRTVDOzs7R0FHRztBQUVJLElBQU0saUJBQWlCLEdBQXZCLE1BQU0saUJBQWlCO0lBQzVCLFNBQVMsQ0FBQyxLQUFhO1FBQ3JCLElBQUksT0FBTyxLQUFLLEtBQUssUUFBUSxJQUFJLENBQUMsZUFBZSxDQUFDLElBQUksQ0FBQyxLQUFLLENBQUMsRUFBRSxDQUFDO1lBQzlELE1BQU0sSUFBSSw0QkFBWSxDQUNwQiwyQkFBUyxDQUFDLGFBQWEsRUFDdkIsMkJBQTJCLEVBQzNCLG1CQUFVLENBQUMsV0FBVyxDQUN2QixDQUFDO1FBQ0osQ0FBQztRQUNELE9BQU8sS0FBSyxDQUFDO0lBQ2YsQ0FBQztDQUNGLENBQUE7QUFYWSw4Q0FBaUI7NEJBQWpCLGlCQUFpQjtJQUQ3QixJQUFBLG1CQUFVLEdBQUU7R0FDQSxpQkFBaUIsQ0FXN0IiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29tbW9uL3BpcGVzL3BhcnNlLW9iamVjdC1pZC5waXBlLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IFBpcGVUcmFuc2Zvcm0sIEluamVjdGFibGUsIEh0dHBTdGF0dXMgfSBmcm9tICdAbmVzdGpzL2NvbW1vbic7XG5pbXBvcnQgeyBBcHBFeGNlcHRpb24gfSBmcm9tICcuLi9leGNlcHRpb25zL2FwcC5leGNlcHRpb24nO1xuaW1wb3J0IHsgRXJyb3JDb2RlIH0gZnJvbSAnLi4vZW51bXMvZXJyb3ItY29kZS5lbnVtJztcblxuY29uc3QgT0JKRUNUX0lEX1JFR0VYID0gL15bMC05YS1mQS1GXXsyNH0kLztcblxuLyoqXG4gKiBWYWxpZGF0ZXMgdGhhdCBhIHJvdXRlIHBhcmFtZXRlciBpcyBhIDI0LWNoYXJhY3RlciBoZXhhZGVjaW1hbCBzdHJpbmcuXG4gKiBUaHJvd3MgYW4gQXBwRXhjZXB0aW9uIHdpdGggY29kZSBJTlZBTElEX0lOUFVUIGFuZCBzdGF0dXMgNDAwIHdoZW4gdmFsaWRhdGlvbiBmYWlscy5cbiAqL1xuQEluamVjdGFibGUoKVxuZXhwb3J0IGNsYXNzIFBhcnNlT2JqZWN0SWRQaXBlIGltcGxlbWVudHMgUGlwZVRyYW5zZm9ybTxzdHJpbmcsIHN0cmluZz4ge1xuICB0cmFuc2Zvcm0odmFsdWU6IHN0cmluZyk6IHN0cmluZyB7XG4gICAgaWYgKHR5cGVvZiB2YWx1ZSAhPT0gJ3N0cmluZycgfHwgIU9CSkVDVF9JRF9SRUdFWC50ZXN0KHZhbHVlKSkge1xuICAgICAgdGhyb3cgbmV3IEFwcEV4Y2VwdGlvbihcbiAgICAgICAgRXJyb3JDb2RlLklOVkFMSURfSU5QVVQsXG4gICAgICAgICdJbnZhbGlkIGlkZW50aWZpZXIgZm9ybWF0JyxcbiAgICAgICAgSHR0cFN0YXR1cy5CQURfUkVRVUVTVCxcbiAgICAgICk7XG4gICAgfVxuICAgIHJldHVybiB2YWx1ZTtcbiAgfVxufVxuIl0sInZlcnNpb24iOjN9

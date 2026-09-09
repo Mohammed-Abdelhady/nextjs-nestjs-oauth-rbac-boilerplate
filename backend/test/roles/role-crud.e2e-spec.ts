@@ -1,3 +1,4 @@
+import type { ApiBody } from '../types/e2e-responses';
 import request from 'supertest';
 import type { Response } from 'supertest';
 import {
@@ -22,19 +23,20 @@ describe('Role CRUD (e2e)', () => {
   });
 
   afterAll(async () => {
-    await e2e.app.close();
+    await e2e?.close();
   });
 
   describe('GET /api/roles', () => {
     it('should return all roles for admin with wildcard permission', async () => {
       const response: Response = await adminAgent.get('/api/roles').expect(200);
 
-      const roles = response.body as RoleResponse[];
+      const roles = (response.body as ApiBody<{ roles: RoleResponse[] }>).data
+        .roles;
       expect(Array.isArray(roles)).toBe(true);
       expect(roles.length).toBeGreaterThan(0);
 
       const [role] = roles;
-      expect(role).toHaveProperty('_id');
+      expect(role).toHaveProperty('id');
       expect(role).toHaveProperty('name');
       expect(role).toHaveProperty('slug');
       expect(role).toHaveProperty('permissions');
@@ -57,7 +59,7 @@ describe('Role CRUD (e2e)', () => {
         .get('/api/roles/admin')
         .expect(200);
 
-      const role = response.body as RoleResponse;
+      const role = (response.body as ApiBody<RoleResponse>).data;
       expect(role.slug).toBe('admin');
       expect(role.name).toBe('Admin');
       expect(Array.isArray(role.permissions)).toBe(true);
@@ -85,7 +87,7 @@ describe('Role CRUD (e2e)', () => {
         .send(newRole)
         .expect(201);
 
-      const role = response.body as RoleResponse;
+      const role = (response.body as ApiBody<RoleResponse>).data;
       expect(role.name).toBe(newRole.name);
       expect(role.slug).toBe('test-role');
       expect(role.description).toBe(newRole.description);
@@ -138,7 +140,7 @@ describe('Role CRUD (e2e)', () => {
         .send(updates)
         .expect(200);
 
-      const role = response.body as RoleResponse;
+      const role = (response.body as ApiBody<RoleResponse>).data;
       expect(role.description).toBe(updates.description);
       expect(role.permissions).toEqual(updates.permissions);
     });
@@ -151,7 +153,7 @@ describe('Role CRUD (e2e)', () => {
         .send(updates)
         .expect(200);
 
-      expect((response.body as RoleResponse).description).toBe(
+      expect((response.body as ApiBody<RoleResponse>).data.description).toBe(
         updates.description,
       );
     });
@@ -160,7 +162,7 @@ describe('Role CRUD (e2e)', () => {
       await adminAgent
         .patch('/api/roles/user')
         .send({ name: 'Renamed User' })
-        .expect(400);
+        .expect(403);
     });
 
     it('should return 404 for non-existent role', async () => {
@@ -180,11 +182,11 @@ describe('Role CRUD (e2e)', () => {
 
   describe('DELETE /api/roles/:slug', () => {
     it('should prevent deletion of protected roles', async () => {
-      await adminAgent.delete('/api/roles/user').expect(400);
+      await adminAgent.delete('/api/roles/user').expect(403);
     });
 
     it('should delete non-protected custom roles', async () => {
-      await adminAgent.delete('/api/roles/test-role').expect(200);
+      await adminAgent.delete('/api/roles/test-role').expect(204);
 
       await adminAgent.get('/api/roles/test-role').expect(404);
     });

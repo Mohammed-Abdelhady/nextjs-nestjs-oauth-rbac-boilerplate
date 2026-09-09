@@ -1,0 +1,47 @@
+**Return to Astra: FR001–FR003 and GR001–GR007 are CLOSED for their bounded repair criteria. CI-COMB NEEDS_FIX; CI-BROWSER and CI-DOCKER NEEDS_EVIDENCE.**
+
+The frozen candidate matched before and after inspection:
+
+- HEAD: `3e84f52312196c03aaefc109ceca05c71bebc712`
+- Base/merge-base: `f1d2282d70cf728567fa9877e15176f0ff3705c8`
+- Fingerprint: `6077b9d7504b96bf2c8ba4342d115d055b2b73e76394e4bff7b10c3a683d0c53`
+- Exactly 20 modified and five added paths; every file hash matched.
+- Actual tracked diff equals the supplied `candidate.patch`.
+
+All locations below refer to that candidate. Evidence filenames refer to the original checkout’s `.hyperflow/evidence/post-pr-functional-repair/`.
+
+| ID | Disposition | Evidence and limits |
+| --- | --- | --- |
+| FR001 | CLOSED | Roles `page.tsx:32–50` clamps against current-query totals and recovers visible selection. `role-pagination.spec.ts:21–51` checks deletion from 21 to 20 results, restored detail, empty search and first-page recovery in both locales. All four new browser cases passed. |
+| FR002 | CLOSED | `RoleFilter.tsx:30–49,87–125` provides bounded search, pagination and retry. Users `page.tsx:47–55` passes the selected slug to the users query. `role-pagination.spec.ts:54–132` verifies a role absent from page one, the actual filtered user, retained selection after failure, and All Roles recovery in English and Arabic. |
+| FR003 | CLOSED | `docs/ARCHITECTURE.md:153` now supplies `data.methods`, the required field names and provider objects. `config-transforms.test.mjs:89–125` checks against the actual response type and includes a rejecting obsolete-shape case. |
+| GR001 | CLOSED | Both Compose frontend services explicitly declare port 3000 and IPv4 binding. Their probes target `127.0.0.1:3000/en/auth/login`. `verify-docker.mjs:165–173` rejects a missing or incorrect declared port instead of replacing it silently. Configuration tests support closure; Docker runtime remains under CI-DOCKER. |
+| GR002 | CLOSED | `next-steps.ts:12–17` prints `docker compose --env-file .env.docker up -d`. Packed CLI regression at `e2e.test.ts:250` checks the exact command and rejects the old form. |
+| GR003 | CLOSED | `config-transforms.js:113–122` targets the current 8443 frontend host and replaces the generated API block. Its API listener uses 8443 and `/health`. Tests cover both maintained templates, repeated application and changed domains. Live nginx/TLS routing remains unverified. |
+| GR004 | CLOSED | `config-transforms.js:125–150` limits backend changes to its service and updates `/health`; frontend host publication preserves internal port 3000. Tests cover both Compose files, boundary/custom ports and repeated transformations. |
+| GR005 | CLOSED | Provider IDs now carry feature markers; the boot assertion requires exact set equality. Packed Google-only output is checked, and `combinations.slow.test.ts:98–121` awaits the generated project’s ordinary boot suite. Owner combinations passed 9/9, including full-selection parity. This assesses fixture compatibility only. |
+| GR006 | CLOSED | `README.md:78–86` uses existing backend and frontend workspace scripts. `config-transforms.test.mjs:76–86` verifies both against their manifests. |
+| GR007 | CLOSED | `README.md:36` uses the repository documentation URL. Packed full/pruned README link tests verify remaining relative targets. The report explicitly leaves that upstream URL’s availability dependent on merge; no live-link verification occurred. |
+| CI-COMB | NEEDS_FIX | Sequentially awaited subprocesses address worker starvation, and local combinations passed without the hosted RPC error. The helper introduces CI-COMB-01 below. Hosted confirmation also remains pending. |
+| CI-BROWSER | NEEDS_EVIDENCE | The synchronization change is reasonable and preserves the strict width predicate. A repaired hosted run is still needed to close the hosted failure. |
+| CI-DOCKER | NEEDS_EVIDENCE | Configuration corrections and bounded diagnostics are supported by source inspection. The existing hosted evidence establishes an unhealthy frontend, not a unique cause or successful repair. |
+
+**CI-COMB-01 · P2 · Failed compiler diagnostics are discarded**
+
+Location: `packages/create-nest-next-auth/test/combination-helpers.ts:41–42,79–80`; regression coverage at `combination-command.test.ts:19–25`.
+
+Trigger: A generated backend or frontend typecheck emits diagnostics to stdout and exits nonzero.
+
+Expected: The failed combination assertion retains the compiler diagnostics, including file locations and error messages. Observed from source: `runTool` returns only `error.message`, discarding the rejected error’s `stdout`. Node’s inspected `execFile` implementation constructs its failure message from the command and stderr. The installed TypeScript source writes diagnostics through `system.write` to `process.stdout`. The previous helper retained both streams.
+
+Impact: The gate still fails, but its output loses the information needed to identify the compilation defect. The new failure test writes only to stderr, so it does not catch this regression.
+
+Correction direction: Preserve bounded stdout and stderr on failure, alongside the failure reason. Add a stdout-only nonzero regression. This finding is demonstrated by source tracing; I did not execute a failing compiler reproduction.
+
+For CI-BROWSER, `authenticated-regressions.spec.ts:99–104` waits for the mobile sidebar to become hidden, awaits finite animations, then polls the unchanged `scrollWidth <= innerWidth` predicate. It adds no sleep, skip or width tolerance. Persistent settled overflow still fails. The unchanged local baseline and CPU-throttled passes support treating synchronization as plausible, but they do not prove the original hosted failure’s cause. Closure needs the hosted rerun, without further assertion weakening.
+
+The repairs remain proportionate. Role rendering and selection scan at most 20 returned roles; server pagination/count costs remain unchanged. Template transformations use a fixed number of text passes and whole-string allocations. Async execution changes responsiveness, not compiler complexity or measured speed. Its timeout/cancellation tests cover cooperative direct children, not arbitrary descendant cleanup.
+
+I inspected owner logs and browser JSON supporting lint/types/build, backend708, frontend123, CLI106, config18, combinations9, API72 and browser116 passes. Browser JSON records zero skipped, unexpected or flaky results; both role-picker axe attachments contain zero violations. These are owner executions, not reviewer runs.
+
+No implementation, tests, services, network or release actions were performed. The excluded security investigation and CodeQL details remain untouched; CodeQL31 remains an unresolved status-only gate. Astra owns validation and acceptance. This is neither whole-PR readiness nor release authorization.

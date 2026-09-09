@@ -1,0 +1,34 @@
+c8bccb3d2f8260bc92d82c9d32af6da1
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RecoveryCodesResponseDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
+const api_response_dto_1 = require("../../../common/dto/api-response.dto");
+/** The one time the recovery codes are readable. Only hashes are kept. */
+class RecoveryCodesResponseDto {
+    recoveryCodes;
+    static success(recoveryCodes, message) {
+        const dto = new RecoveryCodesResponseDto();
+        dto.recoveryCodes = recoveryCodes;
+        return api_response_dto_1.ApiResponse.success(dto, message);
+    }
+}
+exports.RecoveryCodesResponseDto = RecoveryCodesResponseDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Recovery codes, shown once and never again',
+        example: ['K3M7QRTVWX', 'A2B4C6D8EF'],
+        type: [String],
+    }),
+    __metadata("design:type", Array)
+], RecoveryCodesResponseDto.prototype, "recoveryCodes", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC90d28tZmFjdG9yL2R0by9yZWNvdmVyeS1jb2Rlcy1yZXNwb25zZS5kdG8udHMiLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7O0FBQUEsNkNBQThDO0FBQzlDLDJFQUFtRTtBQUVuRSwwRUFBMEU7QUFDMUUsTUFBYSx3QkFBd0I7SUFNbkMsYUFBYSxDQUFZO0lBRXpCLE1BQU0sQ0FBQyxPQUFPLENBQ1osYUFBdUIsRUFDdkIsT0FBZTtRQUVmLE1BQU0sR0FBRyxHQUFHLElBQUksd0JBQXdCLEVBQUUsQ0FBQztRQUMzQyxHQUFHLENBQUMsYUFBYSxHQUFHLGFBQWEsQ0FBQztRQUNsQyxPQUFPLDhCQUFXLENBQUMsT0FBTyxDQUFDLEdBQUcsRUFBRSxPQUFPLENBQUMsQ0FBQztJQUMzQyxDQUFDO0NBQ0Y7QUFoQkQsNERBZ0JDO0FBVkM7SUFMQyxJQUFBLHFCQUFXLEVBQUM7UUFDWCxXQUFXLEVBQUUsNENBQTRDO1FBQ3pELE9BQU8sRUFBRSxDQUFDLFlBQVksRUFBRSxZQUFZLENBQUM7UUFDckMsSUFBSSxFQUFFLENBQUMsTUFBTSxDQUFDO0tBQ2YsQ0FBQzs7K0RBQ3VCIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL2F1dGgvdHdvLWZhY3Rvci9kdG8vcmVjb3ZlcnktY29kZXMtcmVzcG9uc2UuZHRvLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IEFwaVByb3BlcnR5IH0gZnJvbSAnQG5lc3Rqcy9zd2FnZ2VyJztcbmltcG9ydCB7IEFwaVJlc3BvbnNlIH0gZnJvbSAnLi4vLi4vLi4vY29tbW9uL2R0by9hcGktcmVzcG9uc2UuZHRvJztcblxuLyoqIFRoZSBvbmUgdGltZSB0aGUgcmVjb3ZlcnkgY29kZXMgYXJlIHJlYWRhYmxlLiBPbmx5IGhhc2hlcyBhcmUga2VwdC4gKi9cbmV4cG9ydCBjbGFzcyBSZWNvdmVyeUNvZGVzUmVzcG9uc2VEdG8ge1xuICBAQXBpUHJvcGVydHkoe1xuICAgIGRlc2NyaXB0aW9uOiAnUmVjb3ZlcnkgY29kZXMsIHNob3duIG9uY2UgYW5kIG5ldmVyIGFnYWluJyxcbiAgICBleGFtcGxlOiBbJ0szTTdRUlRWV1gnLCAnQTJCNEM2RDhFRiddLFxuICAgIHR5cGU6IFtTdHJpbmddLFxuICB9KVxuICByZWNvdmVyeUNvZGVzITogc3RyaW5nW107XG5cbiAgc3RhdGljIHN1Y2Nlc3MoXG4gICAgcmVjb3ZlcnlDb2Rlczogc3RyaW5nW10sXG4gICAgbWVzc2FnZTogc3RyaW5nLFxuICApOiBBcGlSZXNwb25zZTxSZWNvdmVyeUNvZGVzUmVzcG9uc2VEdG8+IHtcbiAgICBjb25zdCBkdG8gPSBuZXcgUmVjb3ZlcnlDb2Rlc1Jlc3BvbnNlRHRvKCk7XG4gICAgZHRvLnJlY292ZXJ5Q29kZXMgPSByZWNvdmVyeUNvZGVzO1xuICAgIHJldHVybiBBcGlSZXNwb25zZS5zdWNjZXNzKGR0bywgbWVzc2FnZSk7XG4gIH1cbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

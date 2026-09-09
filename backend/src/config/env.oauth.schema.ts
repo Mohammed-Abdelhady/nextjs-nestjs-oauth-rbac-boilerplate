@@ -4,9 +4,9 @@ import {
   IsOptional,
   IsString,
   IsUrl,
-  MinLength,
+  MinLength, // feature:oauth-core
 } from 'class-validator';
-import { OAUTH_STATE_SECRET_MIN_LENGTH } from '../auth/oauth/oauth.constants';
+import { OAUTH_STATE_SECRET_MIN_LENGTH } from '../auth/oauth/oauth.constants'; // feature:oauth-core
 
 /**
  * OAuth part of the environment contract. Every provider variable is optional:
@@ -91,9 +91,11 @@ export interface OAuthEnvironmentConfig {
 export class OAuthEnvironmentVariables {
   @IsString()
   @IsNotEmpty()
+  // feature:oauth-core:start
   @MinLength(OAUTH_STATE_SECRET_MIN_LENGTH, {
     message: `OAUTH_STATE_SECRET must be at least ${OAUTH_STATE_SECRET_MIN_LENGTH} characters`,
   })
+  // feature:oauth-core:end
   OAUTH_STATE_SECRET!: string;
 
   @IsString()

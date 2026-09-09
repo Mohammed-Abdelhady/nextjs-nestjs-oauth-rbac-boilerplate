@@ -1,0 +1,45 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+    - alert [ref=e2]: Login to your account | Auth Boilerplate
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+        - /url: '#main'
+    - generic [ref=e4]:
+        - banner [ref=e5]:
+            - generic [ref=e6]:
+                - button "Switch to English" [ref=e7]: English
+                - button "Switch to Arabic" [ref=e8]: العربية
+            - button "Switch to light mode" [ref=e9]:
+                - img
+        - main [ref=e10]:
+            - region "Login to your account" [ref=e14]:
+                - heading "Login to your account" [level=1] [ref=e15]
+                - generic [ref=e16]:
+                    - link "Sign up" [ref=e18] [cursor=pointer]:
+                        - /url: /en/auth/register
+                        - img [ref=e19]
+                        - generic [ref=e22]: Sign up
+                    - form "Login to your account" [ref=e23]:
+                        - generic [ref=e24]:
+                            - text: Email address
+                            - textbox "Email address" [ref=e25]:
+                                - /placeholder: name@example.com
+                            - paragraph [ref=e26]: Email is required
+                        - generic [ref=e27]:
+                            - text: Password
+                            - textbox "Password" [ref=e29]:
+                                - /placeholder: ••••••••
+                        - button "Sign in" [ref=e30]:
+                            - img
+                            - generic [ref=e31]: Sign in
+                        - link "Forgot password?" [active] [ref=e32] [cursor=pointer]:
+                            - /url: /en/auth/forgot-password
+    - region "Notifications alt+T":
+        - list:
+            - listitem [ref=e35]:
+                - img [ref=e37]
+                - generic [ref=e39]:
+                    - generic [ref=e40]: toast.error.networkError
+                    - generic [ref=e41]: Failed to GET getCurrentUser
+```

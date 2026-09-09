@@ -1,0 +1,34 @@
+{
+  "snapshot_changed_paths": [],
+  "source_changed_paths": [
+    "backend/test/app.boot.e2e-spec.ts",
+    "backend/test/app.e2e-spec.ts",
+    "backend/test/jest-e2e.json",
+    "backend/test/permissions/admin-permission-routes.e2e-spec.ts",
+    "backend/test/permissions/permission-enforcement.e2e-spec.ts",
+    "backend/test/roles/role-access.e2e-spec.ts",
+    "backend/test/roles/role-crud.e2e-spec.ts",
+    "backend/test/utils/e2e-app.ts"
+  ],
+  "built_artifacts": {
+    "backend/dist/main.js": {
+      "bytes": 4116,
+      "sha256": "52fab48de19ea057faa38238ff1cdfa67e6c7689f30f2a903da060f512541d79"
+    },
+    "packages/create-nest-next-auth/dist/index.js": {
+      "bytes": 178644,
+      "sha256": "c2eb4ba026dfc2c32df00d22b872c7e5af937be3051352186b26759c1aa23fb3"
+    }
+  },
+  "environment_filename_inventory": [
+    ".env.docker.example",
+    "frontend/.env.example",
+    "backend/.env.example",
+    "packages/create-nest-next-auth/template/.env.docker.example",
+    "packages/create-nest-next-auth/template/frontend/.env.example",
+    "packages/create-nest-next-auth/template/backend/.env.example"
+  ],
+  "credential_suffix_filename_inventory": [],
+  "cli_bin_symlink_resolves": true,
+  "evidence_python_syntax": "pass"
+}

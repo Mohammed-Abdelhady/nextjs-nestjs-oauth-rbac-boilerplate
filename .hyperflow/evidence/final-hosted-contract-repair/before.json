@@ -1,0 +1,7 @@
+{
+  "frontend/src/app/[locale]/(dashboard)/layout.tsx": "461878c8c9cb5abfb8c8a43048954b99073f71a5",
+  "frontend/src/app/[locale]/layout.tsx": "24a0f0461885b6da90bd56cd0d2ff6079cda2070",
+  "frontend/e2e/authenticated-regressions.spec.ts": "dd280cbac7659754a517ae20a5ebeedb925021eb",
+  "scripts/lib/docker-http-probes.mjs": "1e655f1f9fc0f76d14826f76963aff08f14d7a55",
+  "scripts/config-transforms.test.mjs": "9d8357b683a554440f0d0d1518ecd4d5985b6f8e"
+}

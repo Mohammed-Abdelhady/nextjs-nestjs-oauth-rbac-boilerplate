@@ -1,0 +1,47 @@
+e6410854ce53756503b61ef1f2abb2c0
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.VerifyPasskeyRegistrationDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
+const class_transformer_1 = require("class-transformer");
+const class_validator_1 = require("class-validator");
+const passkey_credential_dto_1 = require("./passkey-credential.dto");
+const passkeys_constants_1 = require("../constants/passkeys.constants");
+/** Body of POST /auth/passkeys/register/verify. */
+class VerifyPasskeyRegistrationDto {
+    response;
+    name;
+}
+exports.VerifyPasskeyRegistrationDto = VerifyPasskeyRegistrationDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Credential returned by navigator.credentials.create()',
+        type: passkey_credential_dto_1.PasskeyCredentialDto,
+    }),
+    (0, class_validator_1.IsObject)(),
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => passkey_credential_dto_1.PasskeyCredentialDto),
+    __metadata("design:type", passkey_credential_dto_1.PasskeyCredentialDto)
+], VerifyPasskeyRegistrationDto.prototype, "response", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Label for the passkey, shown in account settings',
+        example: 'MacBook Touch ID',
+        required: false,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(1),
+    (0, class_validator_1.MaxLength)(passkeys_constants_1.PASSKEY_NAME_MAX_LENGTH),
+    __metadata("design:type", String)
+], VerifyPasskeyRegistrationDto.prototype, "name", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9wYXNza2V5cy9kdG8vdmVyaWZ5LXBhc3NrZXktcmVnaXN0cmF0aW9uLmR0by50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSw2Q0FBOEM7QUFDOUMseURBQXlDO0FBQ3pDLHFEQU95QjtBQUN6QixxRUFBZ0U7QUFDaEUsd0VBQTBFO0FBRTFFLG1EQUFtRDtBQUNuRCxNQUFhLDRCQUE0QjtJQVF2QyxRQUFRLENBQXdCO0lBV2hDLElBQUksQ0FBVTtDQUNmO0FBcEJELG9FQW9CQztBQVpDO0lBUEMsSUFBQSxxQkFBVyxFQUFDO1FBQ1gsV0FBVyxFQUFFLHVEQUF1RDtRQUNwRSxJQUFJLEVBQUUsNkNBQW9CO0tBQzNCLENBQUM7SUFDRCxJQUFBLDBCQUFRLEdBQUU7SUFDVixJQUFBLGdDQUFjLEdBQUU7SUFDaEIsSUFBQSx3QkFBSSxFQUFDLEdBQUcsRUFBRSxDQUFDLDZDQUFvQixDQUFDOzhCQUN0Qiw2Q0FBb0I7OERBQUM7QUFXaEM7SUFUQyxJQUFBLHFCQUFXLEVBQUM7UUFDWCxXQUFXLEVBQUUsa0RBQWtEO1FBQy9ELE9BQU8sRUFBRSxrQkFBa0I7UUFDM0IsUUFBUSxFQUFFLEtBQUs7S0FDaEIsQ0FBQztJQUNELElBQUEsNEJBQVUsR0FBRTtJQUNaLElBQUEsMEJBQVEsR0FBRTtJQUNWLElBQUEsMkJBQVMsRUFBQyxDQUFDLENBQUM7SUFDWixJQUFBLDJCQUFTLEVBQUMsNENBQXVCLENBQUM7OzBEQUNyQiIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy9hdXRoL3Bhc3NrZXlzL2R0by92ZXJpZnktcGFzc2tleS1yZWdpc3RyYXRpb24uZHRvLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IEFwaVByb3BlcnR5IH0gZnJvbSAnQG5lc3Rqcy9zd2FnZ2VyJztcbmltcG9ydCB7IFR5cGUgfSBmcm9tICdjbGFzcy10cmFuc2Zvcm1lcic7XG5pbXBvcnQge1xuICBJc09iamVjdCxcbiAgSXNPcHRpb25hbCxcbiAgSXNTdHJpbmcsXG4gIE1heExlbmd0aCxcbiAgTWluTGVuZ3RoLFxuICBWYWxpZGF0ZU5lc3RlZCxcbn0gZnJvbSAnY2xhc3MtdmFsaWRhdG9yJztcbmltcG9ydCB7IFBhc3NrZXlDcmVkZW50aWFsRHRvIH0gZnJvbSAnLi9wYXNza2V5LWNyZWRlbnRpYWwuZHRvJztcbmltcG9ydCB7IFBBU1NLRVlfTkFNRV9NQVhfTEVOR1RIIH0gZnJvbSAnLi4vY29uc3RhbnRzL3Bhc3NrZXlzLmNvbnN0YW50cyc7XG5cbi8qKiBCb2R5IG9mIFBPU1QgL2F1dGgvcGFzc2tleXMvcmVnaXN0ZXIvdmVyaWZ5LiAqL1xuZXhwb3J0IGNsYXNzIFZlcmlmeVBhc3NrZXlSZWdpc3RyYXRpb25EdG8ge1xuICBAQXBpUHJvcGVydHkoe1xuICAgIGRlc2NyaXB0aW9uOiAnQ3JlZGVudGlhbCByZXR1cm5lZCBieSBuYXZpZ2F0b3IuY3JlZGVudGlhbHMuY3JlYXRlKCknLFxuICAgIHR5cGU6IFBhc3NrZXlDcmVkZW50aWFsRHRvLFxuICB9KVxuICBASXNPYmplY3QoKVxuICBAVmFsaWRhdGVOZXN0ZWQoKVxuICBAVHlwZSgoKSA9PiBQYXNza2V5Q3JlZGVudGlhbER0bylcbiAgcmVzcG9uc2UhOiBQYXNza2V5Q3JlZGVudGlhbER0bztcblxuICBAQXBpUHJvcGVydHkoe1xuICAgIGRlc2NyaXB0aW9uOiAnTGFiZWwgZm9yIHRoZSBwYXNza2V5LCBzaG93biBpbiBhY2NvdW50IHNldHRpbmdzJyxcbiAgICBleGFtcGxlOiAnTWFjQm9vayBUb3VjaCBJRCcsXG4gICAgcmVxdWlyZWQ6IGZhbHNlLFxuICB9KVxuICBASXNPcHRpb25hbCgpXG4gIEBJc1N0cmluZygpXG4gIEBNaW5MZW5ndGgoMSlcbiAgQE1heExlbmd0aChQQVNTS0VZX05BTUVfTUFYX0xFTkdUSClcbiAgbmFtZT86IHN0cmluZztcbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

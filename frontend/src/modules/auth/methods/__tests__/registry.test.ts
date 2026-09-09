@@ -21,39 +21,60 @@ describe('enabledAuthMethods', () => {
     expect(idsFor(methods())).toEqual([]);
   });
 
+  // feature:email-password:start
   it('renders only the password form when only passwords are on', () => {
     expect(idsFor(methods({ password: true }))).toEqual([AUTH_METHOD_ID.PASSWORD]);
   });
+  // feature:email-password:end
 
+  // feature:magic-link:start
   it('renders only the magic link form when only links are on', () => {
     expect(idsFor(methods({ magicLink: true }))).toEqual([AUTH_METHOD_ID.MAGIC_LINK]);
   });
+  // feature:magic-link:end
 
+  // feature:passkeys:start
   it('renders only the passkey button when only passkeys are on', () => {
     expect(idsFor(methods({ passkeys: true }))).toEqual([AUTH_METHOD_ID.PASSKEYS]);
   });
+  // feature:passkeys:end
 
+  // feature:email-password:start
+  // feature:magic-link:start
   it('puts the password form above the magic link form', () => {
     expect(idsFor(methods({ password: true, magicLink: true }))).toEqual([
       AUTH_METHOD_ID.PASSWORD,
       AUTH_METHOD_ID.MAGIC_LINK,
     ]);
   });
+  // feature:magic-link:end
+  // feature:email-password:end
 
+  // feature:passkeys:start
+  // feature:magic-link:start
   it('opens on the passkey button where passwords are off', () => {
     expect(idsFor(methods({ passkeys: true, magicLink: true }))).toEqual([
       AUTH_METHOD_ID.PASSKEYS,
       AUTH_METHOD_ID.MAGIC_LINK,
     ]);
   });
+  // feature:magic-link:end
+  // feature:passkeys:end
 
+  // feature:email-password:start
+  // feature:passkeys:start
   it('keeps the password form first where passwords are on', () => {
     expect(idsFor(methods({ password: true, passkeys: true }))).toEqual([
       AUTH_METHOD_ID.PASSWORD,
       AUTH_METHOD_ID.PASSKEYS,
     ]);
   });
+  // feature:passkeys:end
+  // feature:email-password:end
 
+  // feature:email-password:start
+  // feature:passkeys:start
+  // feature:magic-link:start
   it('orders all three password, passkey, magic link', () => {
     expect(idsFor(methods({ password: true, passkeys: true, magicLink: true }))).toEqual([
       AUTH_METHOD_ID.PASSWORD,
@@ -61,6 +82,9 @@ describe('enabledAuthMethods', () => {
       AUTH_METHOD_ID.MAGIC_LINK,
     ]);
   });
+  // feature:magic-link:end
+  // feature:passkeys:end
+  // feature:email-password:end
 
   it('ignores OAuth and the second factor, which the page renders itself', () => {
     const oauthOnly = methods({ oauth: [{ id: 'google', displayName: 'Google' }] });

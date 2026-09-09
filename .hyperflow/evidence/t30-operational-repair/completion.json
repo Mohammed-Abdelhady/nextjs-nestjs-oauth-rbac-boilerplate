@@ -1,0 +1,14 @@
+{
+  "completedAt": "2026-09-08T08:38:27.789Z",
+  "sourceCaptureUnchanged": true,
+  "regressionCaptureUnchanged": true,
+  "lightweight": {
+    "pass": 20,
+    "blocked": 13
+  },
+  "staticChecksPassed": 10,
+  "ownedParentAbsent": true,
+  "sourceWritesStopped": true,
+  "readyForIndependentRecheck": true,
+  "accepted": false
+}

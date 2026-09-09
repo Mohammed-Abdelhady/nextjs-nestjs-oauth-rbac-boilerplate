@@ -18,6 +18,7 @@ import { KeyRound } from 'lucide-react';
 import { useCallback, useMemo, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import { Link, useRouter } from '@/i18n/navigation';
+import { preventNavigationBlur } from '@/modules/auth/utils/preventNavigationBlur';
 import { parseApiError } from '@/lib/apiError';
 import { filterDigits } from '@/modules/auth/utils/digitFilter';
 
@@ -188,6 +189,7 @@ export function ResetPasswordForm() {
             {/* Email Input (readonly, pre-filled) */}
             <FormInput
               name="email"
+              data-testid="reset-password-email-input"
               type="email"
               label={t('email')}
               placeholder="name@example.com"
@@ -200,6 +202,7 @@ export function ResetPasswordForm() {
             {/* Code Input */}
             <FormInput
               name="code"
+              data-testid="reset-password-code-input"
               type="text"
               inputMode="numeric"
               label={t('code')}
@@ -215,6 +218,7 @@ export function ResetPasswordForm() {
             {/* New Password Input */}
             <FormPassword
               name="password"
+              data-testid="reset-password-password-input"
               label={t('password')}
               placeholder="••••••••"
               autoComplete="new-password"
@@ -227,6 +231,7 @@ export function ResetPasswordForm() {
             {/* Confirm Password Input */}
             <FormPassword
               name="confirmPassword"
+              data-testid="reset-password-confirmPassword-input"
               label={t('confirmPassword')}
               placeholder="••••••••"
               autoComplete="new-password"
@@ -245,6 +250,7 @@ export function ResetPasswordForm() {
                 href="/auth/login"
                 className="text-sm font-semibold text-primary hover:underline transition-colors"
                 data-testid="back-to-login-link"
+                onMouseDown={preventNavigationBlur}
               >
                 {t('backToLogin')}
               </Link>

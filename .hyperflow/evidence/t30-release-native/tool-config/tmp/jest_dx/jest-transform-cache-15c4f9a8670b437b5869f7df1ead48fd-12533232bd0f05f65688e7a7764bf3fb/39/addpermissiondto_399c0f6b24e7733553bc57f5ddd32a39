@@ -1,0 +1,40 @@
+634bebb298b4e65dc37ee2fa9def8e9b
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AddPermissionDto = void 0;
+const class_validator_1 = require("class-validator");
+const swagger_1 = require("@nestjs/swagger");
+const permissions_1 = require("../../common/constants/permissions");
+/**
+ * DTO for adding a permission to a user.
+ * The wildcard is a role-level grant and is refused here.
+ */
+class AddPermissionDto {
+    permission;
+}
+exports.AddPermissionDto = AddPermissionDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Permission to add (format: resource:action[:scope])',
+        example: 'users:read:all',
+    }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.Matches)(permissions_1.PERMISSION_REGEX, {
+        message: 'Permission must be in the format resource:action[:scope]',
+    }),
+    (0, class_validator_1.NotEquals)(permissions_1.WILDCARD_PERMISSION, {
+        message: 'The wildcard permission cannot be granted to a single user',
+    }),
+    __metadata("design:type", String)
+], AddPermissionDto.prototype, "permission", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvdXNlci9kdG8vYWRkLXBlcm1pc3Npb24uZHRvLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLHFEQUEyRTtBQUMzRSw2Q0FBOEM7QUFDOUMsb0VBRzRDO0FBRTVDOzs7R0FHRztBQUNILE1BQWEsZ0JBQWdCO0lBYTNCLFVBQVUsQ0FBVTtDQUNyQjtBQWRELDRDQWNDO0FBREM7SUFaQyxJQUFBLHFCQUFXLEVBQUM7UUFDWCxXQUFXLEVBQUUscURBQXFEO1FBQ2xFLE9BQU8sRUFBRSxnQkFBZ0I7S0FDMUIsQ0FBQztJQUNELElBQUEsMEJBQVEsR0FBRTtJQUNWLElBQUEsNEJBQVUsR0FBRTtJQUNaLElBQUEseUJBQU8sRUFBQyw4QkFBZ0IsRUFBRTtRQUN6QixPQUFPLEVBQUUsMERBQTBEO0tBQ3BFLENBQUM7SUFDRCxJQUFBLDJCQUFTLEVBQUMsaUNBQW1CLEVBQUU7UUFDOUIsT0FBTyxFQUFFLDREQUE0RDtLQUN0RSxDQUFDOztvREFDa0IiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvdXNlci9kdG8vYWRkLXBlcm1pc3Npb24uZHRvLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IElzTm90RW1wdHksIElzU3RyaW5nLCBNYXRjaGVzLCBOb3RFcXVhbHMgfSBmcm9tICdjbGFzcy12YWxpZGF0b3InO1xuaW1wb3J0IHsgQXBpUHJvcGVydHkgfSBmcm9tICdAbmVzdGpzL3N3YWdnZXInO1xuaW1wb3J0IHtcbiAgUEVSTUlTU0lPTl9SRUdFWCxcbiAgV0lMRENBUkRfUEVSTUlTU0lPTixcbn0gZnJvbSAnLi4vLi4vY29tbW9uL2NvbnN0YW50cy9wZXJtaXNzaW9ucyc7XG5cbi8qKlxuICogRFRPIGZvciBhZGRpbmcgYSBwZXJtaXNzaW9uIHRvIGEgdXNlci5cbiAqIFRoZSB3aWxkY2FyZCBpcyBhIHJvbGUtbGV2ZWwgZ3JhbnQgYW5kIGlzIHJlZnVzZWQgaGVyZS5cbiAqL1xuZXhwb3J0IGNsYXNzIEFkZFBlcm1pc3Npb25EdG8ge1xuICBAQXBpUHJvcGVydHkoe1xuICAgIGRlc2NyaXB0aW9uOiAnUGVybWlzc2lvbiB0byBhZGQgKGZvcm1hdDogcmVzb3VyY2U6YWN0aW9uWzpzY29wZV0pJyxcbiAgICBleGFtcGxlOiAndXNlcnM6cmVhZDphbGwnLFxuICB9KVxuICBASXNTdHJpbmcoKVxuICBASXNOb3RFbXB0eSgpXG4gIEBNYXRjaGVzKFBFUk1JU1NJT05fUkVHRVgsIHtcbiAgICBtZXNzYWdlOiAnUGVybWlzc2lvbiBtdXN0IGJlIGluIHRoZSBmb3JtYXQgcmVzb3VyY2U6YWN0aW9uWzpzY29wZV0nLFxuICB9KVxuICBATm90RXF1YWxzKFdJTERDQVJEX1BFUk1JU1NJT04sIHtcbiAgICBtZXNzYWdlOiAnVGhlIHdpbGRjYXJkIHBlcm1pc3Npb24gY2Fubm90IGJlIGdyYW50ZWQgdG8gYSBzaW5nbGUgdXNlcicsXG4gIH0pXG4gIHBlcm1pc3Npb24hOiBzdHJpbmc7XG59XG4iXSwidmVyc2lvbiI6M30=

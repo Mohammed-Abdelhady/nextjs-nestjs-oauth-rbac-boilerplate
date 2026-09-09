@@ -1,0 +1,217 @@
+# Page snapshot
+
+```yaml
+- generic:
+    - alert
+    - link:
+        - /url: '#main'
+        - text: Skip to main content
+    - generic:
+        - complementary:
+            - generic:
+                - generic:
+                    - link:
+                        - /url: /en/dashboard
+                        - text: Auth App
+                - generic:
+                    - navigation:
+                        - generic:
+                            - link:
+                                - /url: /en/dashboard
+                                - img
+                                - text: Dashboard
+                        - generic:
+                            - link:
+                                - /url: /en/settings
+                                - img
+                                - text: Settings
+                        - generic:
+                            - button [expanded]:
+                                - generic:
+                                    - img
+                                    - generic: Admin
+                                - img
+                            - generic:
+                                - link:
+                                    - /url: /en/admin/users
+                                    - img
+                                    - text: Users
+                                - link:
+                                    - /url: /en/admin/roles
+                                    - img
+                                    - text: Roles
+                                - link:
+                                    - /url: /en/admin/permissions-demo
+                                    - img
+                                    - text: Permissions Demo
+                        - generic:
+                            - button [expanded]:
+                                - generic:
+                                    - img
+                                    - generic: Activity
+                                - img
+                            - generic:
+                                - link:
+                                    - /url: /en/sessions
+                                    - img
+                                    - text: Sessions
+                - generic:
+                    - paragraph: © 2024 Auth App
+        - generic:
+            - banner:
+                - group:
+                    - generic:
+                        - generic: Seed Admin
+                        - generic: (admin)
+                    - generic:
+                        - button: English
+                        - button: العربية
+                    - button:
+                        - img
+                    - button:
+                        - img
+                        - generic: Logout
+            - main:
+                - generic:
+                    - generic:
+                        - generic:
+                            - generic:
+                                - heading [level=1]: Users
+                                - paragraph: 5 users registered
+                            - generic:
+                                - button:
+                                    - img
+                                    - text: Refresh
+                                - button:
+                                    - img
+                                    - text: Add User
+                    - generic:
+                        - generic:
+                            - generic:
+                                - img
+                                - textbox:
+                                    - /placeholder: Search by name or email...
+                        - combobox:
+                            - generic: All Roles
+                            - img
+                    - generic:
+                        - generic:
+                            - generic:
+                                - generic:
+                                    - heading [level=2]:
+                                        - button [expanded]:
+                                            - img
+                                            - generic:
+                                                - text: Verified Users
+                                                - generic: (5)
+                            - generic:
+                                - generic:
+                                    - article:
+                                        - generic:
+                                            - generic:
+                                                - generic: CU
+                                            - generic:
+                                                - heading [level=3]: Created User
+                                                - paragraph: created@example.test
+                                            - generic:
+                                                - generic: Verified
+                                        - generic:
+                                            - generic:
+                                                - generic: 'Role: user'
+                                            - generic:
+                                                - button [expanded]:
+                                                    - generic: Actions
+                                                    - img
+                                        - generic:
+                                            - generic: Joined Sep 2026
+                                - generic:
+                                    - article:
+                                        - generic:
+                                            - generic:
+                                                - generic: SS
+                                            - generic:
+                                                - heading [level=3]: Seed Support
+                                                - paragraph: support@seed.local
+                                            - generic:
+                                                - generic: Verified
+                                        - generic:
+                                            - generic:
+                                                - combobox:
+                                                    - generic:
+                                                        - generic:
+                                                            - img
+                                                            - img
+                                                            - generic: Support
+                                                    - img
+                                            - generic:
+                                                - button:
+                                                    - generic: Actions
+                                                    - img
+                                        - generic:
+                                            - generic: Joined Sep 2026
+                                - generic:
+                                    - article:
+                                        - generic:
+                                            - generic:
+                                                - generic: SM
+                                            - generic:
+                                                - heading [level=3]: Seed Manager
+                                                - paragraph: manager@seed.local
+                                            - generic:
+                                                - generic: Verified
+                                        - generic:
+                                            - generic:
+                                                - combobox:
+                                                    - generic:
+                                                        - generic:
+                                                            - img
+                                                            - img
+                                                            - generic: Manager
+                                                    - img
+                                            - generic:
+                                                - button:
+                                                    - generic: Actions
+                                                    - img
+                                        - generic:
+                                            - generic: Joined Sep 2026
+                                - generic:
+                                    - article:
+                                        - generic:
+                                            - generic:
+                                                - generic: SA
+                                            - generic:
+                                                - heading [level=3]: Seed Admin
+                                                - paragraph: admin@seed.local
+                                            - generic:
+                                                - generic: Verified
+                                        - generic:
+                                            - generic:
+                                                - generic: 'Role: admin'
+                                        - generic:
+                                            - generic: Joined Sep 2026
+                                - generic:
+                                    - article:
+                                        - generic:
+                                            - generic:
+                                                - generic: SU
+                                            - generic:
+                                                - heading [level=3]: Seed User
+                                                - paragraph: user@seed.local
+                                            - generic:
+                                                - generic: Verified
+                                        - generic:
+                                            - generic:
+                                                - generic: 'Role: user'
+                                            - generic:
+                                                - button:
+                                                    - generic: Actions
+                                                    - img
+                                        - generic:
+                                            - generic: Joined Sep 2026
+                    - generic: Showing 5 of 5 users
+    - region "Notifications alt+T"
+    - menu "Actions" [active] [ref=e1]:
+        - menuitem "Deactivate User" [ref=e2]:
+            - img
+            - generic [ref=e3]: Deactivate User
+```

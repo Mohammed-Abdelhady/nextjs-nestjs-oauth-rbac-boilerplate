@@ -1,0 +1,68 @@
+2388f4d541e373d0e520775b35cab0da
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports._getWebCryptoInternals = exports.MissingWebCrypto = void 0;
+exports.getWebCrypto = getWebCrypto;
+let webCrypto = undefined;
+/**
+ * Try to get an instance of the Crypto API from the current runtime. Should support Node,
+ * as well as others, like Deno, that implement Web APIs.
+ */
+function getWebCrypto() {
+    /**
+     * Hello there! If you came here wondering why this method is asynchronous when use of
+     * `globalThis.crypto` is not, it's to minimize a bunch of refactor related to making this
+     * synchronous. For example, `generateRegistrationOptions()` and `generateAuthenticationOptions()`
+     * become synchronous if we make this synchronous (since nothing else in that method is async)
+     * which represents a breaking API change in this library's core API.
+     *
+     * TODO: If it's after February 2025 when you read this then consider whether it still makes sense
+     * to keep this method asynchronous.
+     */
+    const toResolve = new Promise((resolve, reject) => {
+        if (webCrypto) {
+            return resolve(webCrypto);
+        }
+        /**
+         * Naively attempt to access Crypto as a global object, which popular ESM-centric run-times
+         * support (and Node v20+)
+         */
+        const _globalThisCrypto = exports._getWebCryptoInternals.stubThisGlobalThisCrypto();
+        if (_globalThisCrypto) {
+            /**
+             * In Deno v2.7.x, TypeScript 5.9 defines `Crypto.getRandomValues()` as the following type:
+             *
+             * `getRandomValues<T extends ArrayBufferView>(array: T): T;`
+             *
+             * However in earlier versions of TypeScript, `Crypto.getRandomValues()` is defined as such:
+             *
+             * `getRandomValues<T extends ArrayBufferView | null>(array: T): T;`
+             *
+             * Casting to `as unknown as Crypto` here (using this project's `Crypto` types extracted from
+             * DOM types in an older, minimum-supported-Deno version of TypeScript) helps bridge the gap.
+             */
+            webCrypto = _globalThisCrypto;
+            return resolve(webCrypto);
+        }
+        // We tried to access it both in Node and globally, so bail out
+        return reject(new MissingWebCrypto());
+    });
+    return toResolve;
+}
+class MissingWebCrypto extends Error {
+    constructor() {
+        const message = 'An instance of the Crypto API could not be located';
+        super(message);
+        this.name = 'MissingWebCrypto';
+    }
+}
+exports.MissingWebCrypto = MissingWebCrypto;
+// Make it possible to stub return values during testing
+exports._getWebCryptoInternals = {
+    stubThisGlobalThisCrypto: () => globalThis.crypto,
+    // Make it possible to reset the `webCrypto` at the top of the file
+    setCachedCrypto: (newCrypto) => {
+        webCrypto = newCrypto;
+    },
+};
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovbm9kZV9tb2R1bGVzL0BzaW1wbGV3ZWJhdXRobi9zZXJ2ZXIvc2NyaXB0L2hlbHBlcnMvaXNvL2lzb0NyeXB0by9nZXRXZWJDcnlwdG8uanMiLCJtYXBwaW5ncyI6IkFBQUEsWUFBWSxDQUFDO0FBQ2IsTUFBTSxDQUFDLGNBQWMsQ0FBQyxPQUFPLEVBQUUsWUFBWSxFQUFFLEVBQUUsS0FBSyxFQUFFLElBQUksRUFBRSxDQUFDLENBQUM7QUFDOUQsT0FBTyxDQUFDLHNCQUFzQixHQUFHLE9BQU8sQ0FBQyxnQkFBZ0IsR0FBRyxLQUFLLENBQUMsQ0FBQztBQUNuRSxPQUFPLENBQUMsWUFBWSxHQUFHLFlBQVksQ0FBQztBQUNwQyxJQUFJLFNBQVMsR0FBRyxTQUFTLENBQUM7QUFDMUI7OztHQUdHO0FBQ0gsU0FBUyxZQUFZO0lBQ2pCOzs7Ozs7Ozs7T0FTRztJQUNILE1BQU0sU0FBUyxHQUFHLElBQUksT0FBTyxDQUFDLENBQUMsT0FBTyxFQUFFLE1BQU0sRUFBRSxFQUFFO1FBQzlDLElBQUksU0FBUyxFQUFFLENBQUM7WUFDWixPQUFPLE9BQU8sQ0FBQyxTQUFTLENBQUMsQ0FBQztRQUM5QixDQUFDO1FBQ0Q7OztXQUdHO1FBQ0gsTUFBTSxpQkFBaUIsR0FBRyxPQUFPLENBQUMsc0JBQXNCLENBQUMsd0JBQXdCLEVBQUUsQ0FBQztRQUNwRixJQUFJLGlCQUFpQixFQUFFLENBQUM7WUFDcEI7Ozs7Ozs7Ozs7O2VBV0c7WUFDSCxTQUFTLEdBQUcsaUJBQWlCLENBQUM7WUFDOUIsT0FBTyxPQUFPLENBQUMsU0FBUyxDQUFDLENBQUM7UUFDOUIsQ0FBQztRQUNELCtEQUErRDtRQUMvRCxPQUFPLE1BQU0sQ0FBQyxJQUFJLGdCQUFnQixFQUFFLENBQUMsQ0FBQztJQUMxQyxDQUFDLENBQUMsQ0FBQztJQUNILE9BQU8sU0FBUyxDQUFDO0FBQ3JCLENBQUM7QUFDRCxNQUFNLGdCQUFpQixTQUFRLEtBQUs7SUFDaEM7UUFDSSxNQUFNLE9BQU8sR0FBRyxvREFBb0QsQ0FBQztRQUNyRSxLQUFLLENBQUMsT0FBTyxDQUFDLENBQUM7UUFDZixJQUFJLENBQUMsSUFBSSxHQUFHLGtCQUFrQixDQUFDO0lBQ25DLENBQUM7Q0FDSjtBQUNELE9BQU8sQ0FBQyxnQkFBZ0IsR0FBRyxnQkFBZ0IsQ0FBQztBQUM1Qyx3REFBd0Q7QUFDeEQsT0FBTyxDQUFDLHNCQUFzQixHQUFHO0lBQzdCLHdCQUF3QixFQUFFLEdBQUcsRUFBRSxDQUFDLFVBQVUsQ0FBQyxNQUFNO0lBQ2pELG1FQUFtRTtJQUNuRSxlQUFlLEVBQUUsQ0FBQyxTQUFTLEVBQUUsRUFBRTtRQUMzQixTQUFTLEdBQUcsU0FBUyxDQUFDO0lBQzFCLENBQUM7Q0FDSixDQUFDIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L25vZGVfbW9kdWxlcy9Ac2ltcGxld2ViYXV0aG4vc2VydmVyL3NjcmlwdC9oZWxwZXJzL2lzby9pc29DcnlwdG8vZ2V0V2ViQ3J5cHRvLmpzIl0sInNvdXJjZXNDb250ZW50IjpbIlwidXNlIHN0cmljdFwiO1xuT2JqZWN0LmRlZmluZVByb3BlcnR5KGV4cG9ydHMsIFwiX19lc01vZHVsZVwiLCB7IHZhbHVlOiB0cnVlIH0pO1xuZXhwb3J0cy5fZ2V0V2ViQ3J5cHRvSW50ZXJuYWxzID0gZXhwb3J0cy5NaXNzaW5nV2ViQ3J5cHRvID0gdm9pZCAwO1xuZXhwb3J0cy5nZXRXZWJDcnlwdG8gPSBnZXRXZWJDcnlwdG87XG5sZXQgd2ViQ3J5cHRvID0gdW5kZWZpbmVkO1xuLyoqXG4gKiBUcnkgdG8gZ2V0IGFuIGluc3RhbmNlIG9mIHRoZSBDcnlwdG8gQVBJIGZyb20gdGhlIGN1cnJlbnQgcnVudGltZS4gU2hvdWxkIHN1cHBvcnQgTm9kZSxcbiAqIGFzIHdlbGwgYXMgb3RoZXJzLCBsaWtlIERlbm8sIHRoYXQgaW1wbGVtZW50IFdlYiBBUElzLlxuICovXG5mdW5jdGlvbiBnZXRXZWJDcnlwdG8oKSB7XG4gICAgLyoqXG4gICAgICogSGVsbG8gdGhlcmUhIElmIHlvdSBjYW1lIGhlcmUgd29uZGVyaW5nIHdoeSB0aGlzIG1ldGhvZCBpcyBhc3luY2hyb25vdXMgd2hlbiB1c2Ugb2ZcbiAgICAgKiBgZ2xvYmFsVGhpcy5jcnlwdG9gIGlzIG5vdCwgaXQncyB0byBtaW5pbWl6ZSBhIGJ1bmNoIG9mIHJlZmFjdG9yIHJlbGF0ZWQgdG8gbWFraW5nIHRoaXNcbiAgICAgKiBzeW5jaHJvbm91cy4gRm9yIGV4YW1wbGUsIGBnZW5lcmF0ZVJlZ2lzdHJhdGlvbk9wdGlvbnMoKWAgYW5kIGBnZW5lcmF0ZUF1dGhlbnRpY2F0aW9uT3B0aW9ucygpYFxuICAgICAqIGJlY29tZSBzeW5jaHJvbm91cyBpZiB3ZSBtYWtlIHRoaXMgc3luY2hyb25vdXMgKHNpbmNlIG5vdGhpbmcgZWxzZSBpbiB0aGF0IG1ldGhvZCBpcyBhc3luYylcbiAgICAgKiB3aGljaCByZXByZXNlbnRzIGEgYnJlYWtpbmcgQVBJIGNoYW5nZSBpbiB0aGlzIGxpYnJhcnkncyBjb3JlIEFQSS5cbiAgICAgKlxuICAgICAqIFRPRE86IElmIGl0J3MgYWZ0ZXIgRmVicnVhcnkgMjAyNSB3aGVuIHlvdSByZWFkIHRoaXMgdGhlbiBjb25zaWRlciB3aGV0aGVyIGl0IHN0aWxsIG1ha2VzIHNlbnNlXG4gICAgICogdG8ga2VlcCB0aGlzIG1ldGhvZCBhc3luY2hyb25vdXMuXG4gICAgICovXG4gICAgY29uc3QgdG9SZXNvbHZlID0gbmV3IFByb21pc2UoKHJlc29sdmUsIHJlamVjdCkgPT4ge1xuICAgICAgICBpZiAod2ViQ3J5cHRvKSB7XG4gICAgICAgICAgICByZXR1cm4gcmVzb2x2ZSh3ZWJDcnlwdG8pO1xuICAgICAgICB9XG4gICAgICAgIC8qKlxuICAgICAgICAgKiBOYWl2ZWx5IGF0dGVtcHQgdG8gYWNjZXNzIENyeXB0byBhcyBhIGdsb2JhbCBvYmplY3QsIHdoaWNoIHBvcHVsYXIgRVNNLWNlbnRyaWMgcnVuLXRpbWVzXG4gICAgICAgICAqIHN1cHBvcnQgKGFuZCBOb2RlIHYyMCspXG4gICAgICAgICAqL1xuICAgICAgICBjb25zdCBfZ2xvYmFsVGhpc0NyeXB0byA9IGV4cG9ydHMuX2dldFdlYkNyeXB0b0ludGVybmFscy5zdHViVGhpc0dsb2JhbFRoaXNDcnlwdG8oKTtcbiAgICAgICAgaWYgKF9nbG9iYWxUaGlzQ3J5cHRvKSB7XG4gICAgICAgICAgICAvKipcbiAgICAgICAgICAgICAqIEluIERlbm8gdjIuNy54LCBUeXBlU2NyaXB0IDUuOSBkZWZpbmVzIGBDcnlwdG8uZ2V0UmFuZG9tVmFsdWVzKClgIGFzIHRoZSBmb2xsb3dpbmcgdHlwZTpcbiAgICAgICAgICAgICAqXG4gICAgICAgICAgICAgKiBgZ2V0UmFuZG9tVmFsdWVzPFQgZXh0ZW5kcyBBcnJheUJ1ZmZlclZpZXc+KGFycmF5OiBUKTogVDtgXG4gICAgICAgICAgICAgKlxuICAgICAgICAgICAgICogSG93ZXZlciBpbiBlYXJsaWVyIHZlcnNpb25zIG9mIFR5cGVTY3JpcHQsIGBDcnlwdG8uZ2V0UmFuZG9tVmFsdWVzKClgIGlzIGRlZmluZWQgYXMgc3VjaDpcbiAgICAgICAgICAgICAqXG4gICAgICAgICAgICAgKiBgZ2V0UmFuZG9tVmFsdWVzPFQgZXh0ZW5kcyBBcnJheUJ1ZmZlclZpZXcgfCBudWxsPihhcnJheTogVCk6IFQ7YFxuICAgICAgICAgICAgICpcbiAgICAgICAgICAgICAqIENhc3RpbmcgdG8gYGFzIHVua25vd24gYXMgQ3J5cHRvYCBoZXJlICh1c2luZyB0aGlzIHByb2plY3QncyBgQ3J5cHRvYCB0eXBlcyBleHRyYWN0ZWQgZnJvbVxuICAgICAgICAgICAgICogRE9NIHR5cGVzIGluIGFuIG9sZGVyLCBtaW5pbXVtLXN1cHBvcnRlZC1EZW5vIHZlcnNpb24gb2YgVHlwZVNjcmlwdCkgaGVscHMgYnJpZGdlIHRoZSBnYXAuXG4gICAgICAgICAgICAgKi9cbiAgICAgICAgICAgIHdlYkNyeXB0byA9IF9nbG9iYWxUaGlzQ3J5cHRvO1xuICAgICAgICAgICAgcmV0dXJuIHJlc29sdmUod2ViQ3J5cHRvKTtcbiAgICAgICAgfVxuICAgICAgICAvLyBXZSB0cmllZCB0byBhY2Nlc3MgaXQgYm90aCBpbiBOb2RlIGFuZCBnbG9iYWxseSwgc28gYmFpbCBvdXRcbiAgICAgICAgcmV0dXJuIHJlamVjdChuZXcgTWlzc2luZ1dlYkNyeXB0bygpKTtcbiAgICB9KTtcbiAgICByZXR1cm4gdG9SZXNvbHZlO1xufVxuY2xhc3MgTWlzc2luZ1dlYkNyeXB0byBleHRlbmRzIEVycm9yIHtcbiAgICBjb25zdHJ1Y3RvcigpIHtcbiAgICAgICAgY29uc3QgbWVzc2FnZSA9ICdBbiBpbnN0YW5jZSBvZiB0aGUgQ3J5cHRvIEFQSSBjb3VsZCBub3QgYmUgbG9jYXRlZCc7XG4gICAgICAgIHN1cGVyKG1lc3NhZ2UpO1xuICAgICAgICB0aGlzLm5hbWUgPSAnTWlzc2luZ1dlYkNyeXB0byc7XG4gICAgfVxufVxuZXhwb3J0cy5NaXNzaW5nV2ViQ3J5cHRvID0gTWlzc2luZ1dlYkNyeXB0bztcbi8vIE1ha2UgaXQgcG9zc2libGUgdG8gc3R1YiByZXR1cm4gdmFsdWVzIGR1cmluZyB0ZXN0aW5nXG5leHBvcnRzLl9nZXRXZWJDcnlwdG9JbnRlcm5hbHMgPSB7XG4gICAgc3R1YlRoaXNHbG9iYWxUaGlzQ3J5cHRvOiAoKSA9PiBnbG9iYWxUaGlzLmNyeXB0byxcbiAgICAvLyBNYWtlIGl0IHBvc3NpYmxlIHRvIHJlc2V0IHRoZSBgd2ViQ3J5cHRvYCBhdCB0aGUgdG9wIG9mIHRoZSBmaWxlXG4gICAgc2V0Q2FjaGVkQ3J5cHRvOiAobmV3Q3J5cHRvKSA9PiB7XG4gICAgICAgIHdlYkNyeXB0byA9IG5ld0NyeXB0bztcbiAgICB9LFxufTtcbiJdLCJ2ZXJzaW9uIjozfQ==

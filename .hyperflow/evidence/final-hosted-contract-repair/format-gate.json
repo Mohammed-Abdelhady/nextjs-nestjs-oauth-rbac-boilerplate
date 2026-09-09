@@ -1,0 +1,16 @@
+{
+  "command": [
+    "npm",
+    "exec",
+    "--",
+    "prettier",
+    "--write",
+    "frontend/src/app/[locale]/(dashboard)/layout.tsx",
+    "frontend/src/app/[locale]/layout.tsx",
+    "frontend/e2e/authenticated-regressions.spec.ts",
+    "scripts/lib/docker-http-probes.mjs",
+    "scripts/config-transforms.test.mjs"
+  ],
+  "exit": 0,
+  "seconds": 0.35
+}

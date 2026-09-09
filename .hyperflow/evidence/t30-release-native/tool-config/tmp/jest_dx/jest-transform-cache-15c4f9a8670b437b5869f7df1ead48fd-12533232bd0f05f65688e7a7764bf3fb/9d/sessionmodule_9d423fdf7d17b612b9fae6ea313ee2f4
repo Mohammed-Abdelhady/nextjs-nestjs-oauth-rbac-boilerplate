@@ -1,0 +1,25 @@
+b6d437bfecfddc0aebeb5664e0948b2a
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SessionModule = void 0;
+const common_1 = require("@nestjs/common");
+const mongoose_1 = require("@nestjs/mongoose");
+const session_schema_1 = require("./schemas/session.schema");
+let SessionModule = class SessionModule {
+};
+exports.SessionModule = SessionModule;
+exports.SessionModule = SessionModule = __decorate([
+    (0, common_1.Module)({
+        imports: [
+            mongoose_1.MongooseModule.forFeature([{ name: session_schema_1.Session.name, schema: session_schema_1.SessionSchema }]),
+        ],
+        exports: [mongoose_1.MongooseModule],
+    })
+], SessionModule);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvc2Vzc2lvbi9zZXNzaW9uLm1vZHVsZS50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7QUFBQSwyQ0FBd0M7QUFDeEMsK0NBQWtEO0FBQ2xELDZEQUFrRTtBQVEzRCxJQUFNLGFBQWEsR0FBbkIsTUFBTSxhQUFhO0NBQUcsQ0FBQTtBQUFoQixzQ0FBYTt3QkFBYixhQUFhO0lBTnpCLElBQUEsZUFBTSxFQUFDO1FBQ04sT0FBTyxFQUFFO1lBQ1AseUJBQWMsQ0FBQyxVQUFVLENBQUMsQ0FBQyxFQUFFLElBQUksRUFBRSx3QkFBTyxDQUFDLElBQUksRUFBRSxNQUFNLEVBQUUsOEJBQWEsRUFBRSxDQUFDLENBQUM7U0FDM0U7UUFDRCxPQUFPLEVBQUUsQ0FBQyx5QkFBYyxDQUFDO0tBQzFCLENBQUM7R0FDVyxhQUFhLENBQUciLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvc2Vzc2lvbi9zZXNzaW9uLm1vZHVsZS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBNb2R1bGUgfSBmcm9tICdAbmVzdGpzL2NvbW1vbic7XG5pbXBvcnQgeyBNb25nb29zZU1vZHVsZSB9IGZyb20gJ0BuZXN0anMvbW9uZ29vc2UnO1xuaW1wb3J0IHsgU2Vzc2lvbiwgU2Vzc2lvblNjaGVtYSB9IGZyb20gJy4vc2NoZW1hcy9zZXNzaW9uLnNjaGVtYSc7XG5cbkBNb2R1bGUoe1xuICBpbXBvcnRzOiBbXG4gICAgTW9uZ29vc2VNb2R1bGUuZm9yRmVhdHVyZShbeyBuYW1lOiBTZXNzaW9uLm5hbWUsIHNjaGVtYTogU2Vzc2lvblNjaGVtYSB9XSksXG4gIF0sXG4gIGV4cG9ydHM6IFtNb25nb29zZU1vZHVsZV0sXG59KVxuZXhwb3J0IGNsYXNzIFNlc3Npb25Nb2R1bGUge31cbiJdLCJ2ZXJzaW9uIjozfQ==

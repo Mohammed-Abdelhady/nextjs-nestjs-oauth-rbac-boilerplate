@@ -1,0 +1,8 @@
+{
+  "complete": true,
+  "hooks_path": ".husky/_",
+  "dispatchers_executable": true,
+  "dependency_links_contained": 90,
+  "canonicalization_correction": "compare resolved candidate and resolved targets",
+  "original_git_unchanged": true
+}

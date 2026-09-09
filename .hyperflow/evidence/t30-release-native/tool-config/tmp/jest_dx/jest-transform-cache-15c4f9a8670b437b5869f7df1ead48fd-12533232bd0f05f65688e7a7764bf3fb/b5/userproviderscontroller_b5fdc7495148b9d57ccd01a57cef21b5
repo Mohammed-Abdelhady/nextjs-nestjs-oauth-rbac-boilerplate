@@ -1,0 +1,187 @@
+65037433e8ac21eedb4d162ae48ff8ec
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.UserProvidersController = void 0;
+const common_1 = require("@nestjs/common");
+const swagger_1 = require("@nestjs/swagger");
+const user_profile_service_1 = require("./services/user-profile.service");
+const current_user_decorator_1 = require("../auth/decorators/current-user.decorator");
+const account_linking_dto_1 = require("./dto/account-linking.dto");
+const api_response_dto_1 = require("../common/dto/api-response.dto");
+const account_linking_service_1 = require("./services/account-linking.service");
+const profile_sync_service_1 = require("./services/profile-sync.service");
+const app_exception_1 = require("../common/exceptions/app.exception");
+const error_code_enum_1 = require("../common/enums/error-code.enum");
+/**
+ * Controller for OAuth provider linking and profile synchronization.
+ * All endpoints require authentication.
+ */
+let UserProvidersController = class UserProvidersController {
+    userProfileService;
+    accountLinkingService;
+    profileSyncService;
+    constructor(userProfileService, accountLinkingService, profileSyncService) {
+        this.userProfileService = userProfileService;
+        this.accountLinkingService = accountLinkingService;
+        this.profileSyncService = profileSyncService;
+    }
+    /**
+     * Get all linked providers for current user.
+     *
+     * @example GET /user/linked-providers
+     */
+    async getLinkedProviders(userId) {
+        const providers = await this.accountLinkingService.getLinkedProviders(userId);
+        const primaryProvider = await this.userProfileService.getPrimaryProvider(userId);
+        return api_response_dto_1.ApiResponse.success({ providers, primaryProvider });
+    }
+    /**
+     * Removed: linking now runs through the backend OAuth callback.
+     *
+     * @deprecated Use GET /api/auth/oauth/{provider}/start
+     */
+    linkProvider() {
+        throw new app_exception_1.AppException(error_code_enum_1.ErrorCode.OAUTH_STATE_INVALID, 'Client side provider linking was removed because it cannot validate state.', common_1.HttpStatus.GONE);
+    }
+    /**
+     * Unlink an OAuth provider from current user's account.
+     *
+     * @example DELETE /user/unlink-provider/:provider
+     */
+    async unlinkProvider(userId, provider) {
+        await this.accountLinkingService.unlinkProvider(userId, provider);
+        return this.userProfileService.getProfile(userId);
+    }
+    /**
+     * Set primary provider for profile synchronization.
+     *
+     * @example POST /user/set-primary-provider
+     */
+    async setPrimaryProvider(userId, dto) {
+        // Set primary provider
+        await this.accountLinkingService.setPrimaryProvider(userId, dto.provider);
+        // Return updated user profile
+        return this.userProfileService.getProfile(userId);
+    }
+    /**
+     * Get profile sync status for current user.
+     *
+     * @example GET /user/sync-status
+     */
+    async getSyncStatus(userId) {
+        const status = await this.profileSyncService.getSyncStatus(userId);
+        return api_response_dto_1.ApiResponse.success(status);
+    }
+    /**
+     * Initiate manual profile sync from primary provider.
+     * Requires user to re-authenticate with OAuth.
+     *
+     * @example POST /user/sync-profile
+     */
+    async initiateProfileSync(userId) {
+        const syncInstructions = await this.profileSyncService.initiateManualSync(userId);
+        return api_response_dto_1.ApiResponse.success(syncInstructions);
+    }
+};
+exports.UserProvidersController = UserProvidersController;
+__decorate([
+    (0, common_1.Get)('linked-providers'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get linked providers',
+        description: 'Returns a list of all OAuth providers linked to the authenticated user account.',
+    }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UserProvidersController.prototype, "getLinkedProviders", null);
+__decorate([
+    (0, common_1.Post)('link-provider'),
+    (0, swagger_1.ApiOperation)({
+        deprecated: true,
+        summary: 'Removed client side provider linking',
+        description: 'Always returns 410 Gone. The client side code exchange cannot validate OAuth state.',
+    }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], UserProvidersController.prototype, "linkProvider", null);
+__decorate([
+    (0, common_1.Delete)('unlink-provider/:provider'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Unlink OAuth provider',
+        description: 'Unlinks an OAuth provider from the authenticated user account. ' +
+            'Cannot unlink the last authentication method.',
+    }),
+    (0, swagger_1.ApiParam)({
+        name: 'provider',
+        description: 'Registered OAuth provider id to unlink',
+        example: 'github',
+    }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(1, (0, common_1.Param)('provider')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], UserProvidersController.prototype, "unlinkProvider", null);
+__decorate([
+    (0, common_1.Post)('set-primary-provider'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Set primary provider',
+        description: 'Sets an OAuth provider as the primary provider for automatic profile synchronization. ' +
+            'The provider must already be linked to the account.',
+    }),
+    (0, swagger_1.ApiBody)({ type: account_linking_dto_1.SetPrimaryProviderDto }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, account_linking_dto_1.SetPrimaryProviderDto]),
+    __metadata("design:returntype", Promise)
+], UserProvidersController.prototype, "setPrimaryProvider", null);
+__decorate([
+    (0, common_1.Get)('sync-status'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get profile sync status',
+        description: 'Returns profile synchronization status including last sync timestamp and primary provider.',
+    }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UserProvidersController.prototype, "getSyncStatus", null);
+__decorate([
+    (0, common_1.Post)('sync-profile'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Initiate profile sync',
+        description: 'Initiates manual profile synchronization from the primary OAuth provider. ' +
+            'Returns instructions to re-authenticate with OAuth for fresh profile data.',
+    }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UserProvidersController.prototype, "initiateProfileSync", null);
+exports.UserProvidersController = UserProvidersController = __decorate([
+    (0, swagger_1.ApiTags)('user'),
+    (0, swagger_1.ApiBearerAuth)('JWT-auth'),
+    (0, common_1.Controller)('user'),
+    __metadata("design:paramtypes", [user_profile_service_1.UserProfileService,
+        account_linking_service_1.AccountLinkingService,
+        profile_sync_service_1.ProfileSyncService])
+], UserProvidersController);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvdXNlci91c2VyLXByb3ZpZGVycy5jb250cm9sbGVyLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7OztBQUFBLDJDQVN3QjtBQUN4Qiw2Q0FNeUI7QUFDekIsMEVBQXFFO0FBQ3JFLHNGQUF3RTtBQUV4RSxtRUFHbUM7QUFDbkMscUVBQTZEO0FBQzdELGdGQUEyRTtBQUMzRSwwRUFBcUU7QUFDckUsc0VBQWtFO0FBQ2xFLHFFQUE0RDtBQUU1RDs7O0dBR0c7QUFJSSxJQUFNLHVCQUF1QixHQUE3QixNQUFNLHVCQUF1QjtJQUVmO0lBQ0E7SUFDQTtJQUhuQixZQUNtQixrQkFBc0MsRUFDdEMscUJBQTRDLEVBQzVDLGtCQUFzQztRQUZ0Qyx1QkFBa0IsR0FBbEIsa0JBQWtCLENBQW9CO1FBQ3RDLDBCQUFxQixHQUFyQixxQkFBcUIsQ0FBdUI7UUFDNUMsdUJBQWtCLEdBQWxCLGtCQUFrQixDQUFvQjtJQUN0RCxDQUFDO0lBRUo7Ozs7T0FJRztJQU9HLEFBQU4sS0FBSyxDQUFDLGtCQUFrQixDQUNILE1BQWM7UUFFakMsTUFBTSxTQUFTLEdBQ2IsTUFBTSxJQUFJLENBQUMscUJBQXFCLENBQUMsa0JBQWtCLENBQUMsTUFBTSxDQUFDLENBQUM7UUFFOUQsTUFBTSxlQUFlLEdBQ25CLE1BQU0sSUFBSSxDQUFDLGtCQUFrQixDQUFDLGtCQUFrQixDQUFDLE1BQU0sQ0FBQyxDQUFDO1FBRTNELE9BQU8sOEJBQVcsQ0FBQyxPQUFPLENBQUMsRUFBRSxTQUFTLEVBQUUsZUFBZSxFQUFFLENBQUMsQ0FBQztJQUM3RCxDQUFDO0lBRUQ7Ozs7T0FJRztJQVFILFlBQVk7UUFDVixNQUFNLElBQUksNEJBQVksQ0FDcEIsMkJBQVMsQ0FBQyxtQkFBbUIsRUFDN0IsNEVBQTRFLEVBQzVFLG1CQUFVLENB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QUFBLElBQUEsYUFBSSxHQUFFLENBQUE7OzZDQUFNLDJDQUFxQjs7aUVBT25DO0FBYUs7SUFOTCxJQUFBLFlBQUcsRUFBQyxhQUFhLENBQUM7SUFDbEIsSUFBQSxzQkFBWSxFQUFDO1FBQ1osT0FBTyxFQUFFLHlCQUF5QjtRQUNsQyxXQUFXLEVBQ1QsNEZBQTRGO0tBQy9GLENBQUM7SUFDbUIsV0FBQSxJQUFBLG9DQUFXLEVBQUMsSUFBSSxDQUFDLENBQUE7Ozs7NERBVXJDO0FBZ0JLO0lBUkwsSUFBQSxhQUFJLEVBQUMsY0FBYyxDQUFDO0lBQ3BCLElBQUEsaUJBQVEsRUFBQyxtQkFBVSxDQUFDLEVBQUUsQ0FBQztJQUN2QixJQUFBLHNCQUFZLEVBQUM7UUFDWixPQUFPLEVBQUUsdUJBQXVCO1FBQ2hDLFdBQVcsRUFDVCw0RUFBNEU7WUFDNUUsNEVBQTRFO0tBQy9FLENBQUM7SUFDeUIsV0FBQSxJQUFBLG9DQUFXLEVBQUMsSUFBSSxDQUFDLENBQUE7Ozs7a0VBVTNDO2tDQXJKVSx1QkFBdUI7SUFIbkMsSUFBQSxpQkFBTyxFQUFDLE1BQU0sQ0FBQztJQUNmLElBQUEsdUJBQWEsRUFBQyxVQUFVLENBQUM7SUFDekIsSUFBQSxtQkFBVSxFQUFDLE1BQU0sQ0FBQztxQ0FHc0IseUNBQWtCO1FBQ2YsK0NBQXFCO1FBQ3hCLHlDQUFrQjtHQUo5Qyx1QkFBdUIsQ0FzSm5DIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL3VzZXIvdXNlci1wcm92aWRlcnMuY29udHJvbGxlci50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQge1xuICBDb250cm9sbGVyLFxuICBHZXQsXG4gIFBvc3QsXG4gIERlbGV0ZSxcbiAgUGFyYW0sXG4gIEJvZHksXG4gIEh0dHBDb2RlLFxuICBIdHRwU3RhdHVzLFxufSBmcm9tICdAbmVzdGpzL2NvbW1vbic7XG5pbXBvcnQge1xuICBBcGlUYWdzLFxuICBBcGlPcGVyYXRpb24sXG4gIEFwaUJvZHksXG4gIEFwaVBhcmFtLFxuICBBcGlCZWFyZXJBdXRoLFxufSBmcm9tICdAbmVzdGpzL3N3YWdnZXInO1xuaW1wb3J0IHsgVXNlclByb2ZpbGVTZXJ2aWNlIH0gZnJvbSAnLi9zZXJ2aWNlcy91c2VyLXByb2ZpbGUuc2VydmljZSc7XG5pbXBvcnQgeyBDdXJyZW50VXNlciB9IGZyb20gJy4uL2F1dGgvZGVjb3JhdG9ycy9jdXJyZW50LXVzZXIuZGVjb3JhdG9yJztcbmltcG9ydCB7IFVzZXJQcm9maWxlRHRvIH0gZnJvbSAnLi9kdG8vdXNlci1wcm9maWxlLmR0byc7XG5pbXBvcnQge1xuICBTZXRQcmltYXJ5UHJvdmlkZXJEdG8sXG4gIExpbmtlZFByb3ZpZGVyc1Jlc3BvbnNlRHRvLFxufSBmcm9tICcuL2R0by9hY2NvdW50LWxpbmtpbmcuZHRvJztcbmltcG9ydCB7IEFwaVJlc3BvbnNlIH0gZnJvbSAnLi4vY29tbW9uL2R0by9hcGktcmVzcG9uc2UuZHRvJztcbmltcG9ydCB7IEFjY291bnRMaW5raW5nU2VydmljZSB9IGZyb20gJy4vc2VydmljZXMvYWNjb3VudC1saW5raW5nLnNlcnZpY2UnO1xuaW1wb3J0IHsgUHJvZmlsZVN5bmNTZXJ2aWNlIH0gZnJvbSAnLi9zZXJ2aWNlcy9wcm9maWxlLXN5bmMuc2VydmljZSc7XG5pbXBvcnQgeyBBcHBFeGNlcHRpb24gfSBmcm9tICcuLi9jb21tb24vZXhjZXB0aW9ucy9hcHAuZXhjZXB0aW9uJztcbmltcG9ydCB7IEVycm9yQ29kZSB9IGZyb20gJy4uL2NvbW1vbi9lbnVtcy9lcnJvci1jb2RlLmVudW0nO1xuXG4vKipcbiAqIENvbnRyb2xsZXIgZm9yIE9BdXRoIHByb3ZpZGVyIGxpbmtpbmcgYW5kIHByb2ZpbGUgc3luY2hyb25pemF0aW9uLlxuICogQWxsIGVuZHBvaW50cyByZXF1aXJlIGF1dGhlbnRpY2F0aW9uLlxuICovXG5AQXBpVGFncygndXNlcicpXG5AQXBpQmVhcmVyQXV0aCgnSldULWF1dGgnKVxuQENvbnRyb2xsZXIoJ3VzZXInKVxuZXhwb3J0IGNsYXNzIFVzZXJQcm92aWRlcnNDb250cm9sbGVyIHtcbiAgY29uc3RydWN0b3IoXG4gICAgcHJpdmF0ZSByZWFkb25seSB1c2VyUHJvZmlsZVNlcnZpY2U6IFVzZXJQcm9maWxlU2VydmljZSxcbiAgICBwcml2YXRlIHJlYWRvbmx5IGFjY291bnRMaW5raW5nU2VydmljZTogQWNjb3VudExpbmtpbmdTZXJ2aWNlLFxuICAgIHByaXZhdGUgcmVhZG9ubHkgcHJvZmlsZVN5bmNTZXJ2aWNlOiBQcm9maWxlU3luY1NlcnZpY2UsXG4gICkge31cblxuICAvKipcbiAgICogR2V0IGFsbCBsaW5rZWQgcHJvdmlkZXJzIGZvciBjdXJyZW50IHVzZXIuXG4gICAqXG4gICAqIEBleGFtcGxlIEdFVCAvdXNlci9saW5rZWQtcHJvdmlkZXJzXG4gICAqL1xuICBAR2V0KCdsaW5rZWQtcHJvdmlkZXJzJylcbiAgQEFwaU9wZXJhdGlvbih7XG4gICAgc3VtbWFyeTogJ0dldCBsaW5rZWQgcHJvdmlkZXJzJyxcbiAgICBkZXNjcmlwdGlvbjpcbiAgICAgICdSZXR1cm5zIGEgbGlzdCBvZiBhbGwgT0F1dGggcHJvdmlkZXJzIGxpbmtlZCB0byB0aGUgYXV0aGVudGljYXRlZCB1c2VyIGFjY291bnQuJyxcbiAgfSlcbiAgYXN5bmMgZ2V0TGlua2VkUHJvdmlkZXJzKFxuICAgIEBDdXJyZW50VXNlcignaWQnKSB1c2VySWQ6IHN0cmluZyxcbiAgKTogUHJvbWlzZTxBcGlSZXNwb25zZTxMaW5rZWRQcm92aWRlcnNSZXNwb25zZUR0bz4+IHtcbiAgICBjb25zdCBwcm92aWRlcnMgPVxuICAgICAgYXdhaXQgdGhpcy5hY2NvdW50TGlua2luZ1NlcnZpY2UuZ2V0TGlua2VkUHJvdmlkZXJzKHVzZXJJZCk7XG5cbiAgICBjb25zdCBwcmltYXJ5UHJvdmlkZXIgPVxuICAgICAgYXdhaXQgdGhpcy51c2VyUHJvZmlsZVNlcnZpY2UuZ2V0UHJpbWFyeVByb3ZpZGVyKHVzZXJJZCk7XG5cbiAgICByZXR1cm4gQXBpUmVzcG9uc2Uuc3VjY2Vzcyh7IHByb3ZpZGVycywgcHJpbWFyeVByb3ZpZGVyIH0pO1xuICB9XG5cbiAgLyoqXG4gICAqIFJlbW92ZWQ6IGxpbmtpbmcgbm93IHJ1bnMgdGhyb3VnaCB0aGUgYmFja2VuZCBPQXV0aCBjYWxsYmFjay5cbiAgICpcbiAgICogQGRlcHJlY2F0ZWQgVXNlIEdFVCAvYXBpL2F1dGgvb2F1dGgve3Byb3ZpZGVyfS9zdGFydFxuICAgKi9cbiAgQFBvc3QoJ2xpbmstcHJvdmlkZXInKVxuICBAQXBpT3BlcmF0aW9uKHtcbiAgICBkZXByZWNhdGVkOiB0cnVlLFxuICAgIHN1bW1hcnk6ICdSZW1vdmVkIGNsaWVudCBzaWRlIHByb3ZpZGVyIGxpbmtpbmcnLFxuICAgIGRlc2NyaXB0aW9uOlxuICAgICAgJ0Fsd2F5cyByZXR1cm5zIDQxMCBHb25lLiBUaGUgY2xpZW50IHNpZGUgY29kZSBleGNoYW5nZSBjYW5ub3QgdmFsaWRhdGUgT0F1dGggc3RhdGUuJyxcbiAgfSlcbiAgbGlua1Byb3ZpZGVyKCk6IG5ldmVyIHtcbiAgICB0aHJvdyBuZXcgQXBwRXhjZXB0aW9uKFxuICAgICAgRXJyb3JDb2RlLk9BVVRIX1NUQVRFX0lOVkFMSUQsXG4gICAgICAnQ2xpZW50IHNpZGUgcHJvdmlkZXIgbGlua2luZyB3YXMgcmVtb3ZlZCBiZWNhdXNlIGl0IGNhbm5vdCB2YWxpZGF0ZSBzdGF0ZS4nLFxuICAgICAgSHR0cFN0YXR1cy5HT05FLFxuICAgICk7XG4gIH1cblxuICAvKipcbiAgICogVW5saW5rIGFuIE9BdXRoIHByb3ZpZGVyIGZyb20gY3VycmVudCB1c2VyJ3MgYWNjb3VudC5cbiAgICpcbiAgICogQGV4YW1wbGUgREVMRVRFIC91c2VyL3VubGluay1wcm92aWRlci86cHJvdmlkZXJcbiAgICovXG4gIEBEZWxldGUoJ3VubGluay1wcm92aWRlci86cHJvdmlkZXInKVxuICBASHR0cENvZGUoSHR0cFN0YXR1cy5PSylcbiAgQEFwaU9wZXJhdGlvbih7XG4gICAgc3VtbWFyeTogJ1VubGluayBPQXV0aCBwcm92aWRlcicsXG4gICAgZGVzY3JpcHRpb246XG4gICAgICAnVW5saW5rcyBhbiBPQXV0aCBwcm92aWRlciBmcm9tIHRoZSBhdXRoZW50aWNhdGVkIHVzZXIgYWNjb3VudC4gJyArXG4gICAgICAnQ2Fubm90IHVubGluayB0aGUgbGFzdCBhdXRoZW50aWNhdGlvbiBtZXRob2QuJyxcbiAgfSlcbiAgQEFwaVBhcmFtKHtcbiAgICBuYW1lOiAncHJvdmlkZXInLFxuICAgIGRlc2NyaXB0aW9uOiAnUmVnaXN0ZXJlZCBPQXV0aCBwcm92aWRlciBpZCB0byB1bmxpbmsnLFxuICAgIGV4YW1wbGU6ICdnaXRodWInLFxuICB9KVxuICBhc3luYyB1bmxpbmtQcm92aWRlcihcbiAgICBAQ3VycmVudFVzZXIoJ2lkJykgdXNlcklkOiBzdHJpbmcsXG4gICAgQFBhcmFtKCdwcm92aWRlcicpIHByb3ZpZGVyOiBzdHJpbmcsXG4gICk6IFByb21pc2U8QXBpUmVzcG9uc2U8VXNlclByb2ZpbGVEdG8+PiB7XG4gICAgYXdhaXQgdGhpcy5hY2NvdW50TGlua2luZ1NlcnZpY2UudW5saW5rUHJvdmlkZXIodXNlcklkLCBwcm92aWRlcik7XG5cbiAgICByZXR1cm4gdGhpcy51c2VyUHJvZmlsZVNlcnZpY2UuZ2V0UHJvZmlsZSh1c2VySWQpO1xuICB9XG5cbiAgLyoqXG4gICAqIFNldCBwcmltYXJ5IHByb3ZpZGVyIGZvciBwcm9maWxlIHN5bmNocm9uaXphdGlvbi5cbiAgICpcbiAgICogQGV4YW1wbGUgUE9TVCAvdXNlci9zZXQtcHJpbWFyeS1wcm92aWRlclxuICAgKi9cbiAgQFBvc3QoJ3NldC1wcmltYXJ5LXByb3ZpZGVyJylcbiAgQEh0dHBDb2RlKEh0dHBTdGF0dXMuT0spXG4gIEBBcGlPcGVyYXRpb24oe1xuICAgIHN1bW1hcnk6ICdTZXQgcHJpbWFyeSBwcm92aWRlcicsXG4gICAgZGVzY3JpcHRpb246XG4gICAgICAnU2V0cyBhbiBPQXV0aCBwcm92aWRlciBhcyB0aGUgcHJpbWFyeSBwcm92aWRlciBmb3IgYXV0b21hdGljIHByb2ZpbGUgc3luY2hyb25pemF0aW9uLiAnICtcbiAgICAgICdUaGUgcHJvdmlkZXIgbXVzdCBhbHJlYWR5IGJlIGxpbmtlZCB0byB0aGUgYWNjb3VudC4nLFxuICB9KVxuICBAQXBpQm9keSh7IHR5cGU6IFNldFByaW1hcnlQcm92aWRlckR0byB9KVxuICBhc3luYyBzZXRQcmltYXJ5UHJvdmlkZXIoXG4gICAgQEN1cnJlbnRVc2VyKCdpZCcpIHVzZXJJZDogc3RyaW5nLFxuICAgIEBCb2R5KCkgZHRvOiBTZXRQcmltYXJ5UHJvdmlkZXJEdG8sXG4gICk6IFByb21pc2U8QXBpUmVzcG9uc2U8VXNlclByb2ZpbGVEdG8+PiB7XG4gICAgLy8gU2V0IHByaW1hcnkgcHJvdmlkZXJcbiAgICBhd2FpdCB0aGlzLmFjY291bnRMaW5raW5nU2VydmljZS5zZXRQcmltYXJ5UHJvdmlkZXIodXNlcklkLCBkdG8ucHJvdmlkZXIpO1xuXG4gICAgLy8gUmV0dXJuIHVwZGF0ZWQgdXNlciBwcm9maWxlXG4gICAgcmV0dXJuIHRoaXMudXNlclByb2ZpbGVTZXJ2aWNlLmdldFByb2ZpbGUodXNlcklkKTtcbiAgfVxuXG4gIC8qKlxuICAgKiBHZXQgcHJvZmlsZSBzeW5jIHN0YXR1cyBmb3IgY3VycmVudCB1c2VyLlxuICAgKlxuICAgKiBAZXhhbXBsZSBHRVQgL3VzZXIvc3luYy1zdGF0dXNcbiAgICovXG4gIEBHZXQoJ3N5bmMtc3RhdHVzJylcbiAgQEFwaU9wZXJhdGlvbih7XG4gICAgc3VtbWFyeTogJ0dldCBwcm9maWxlIHN5bmMgc3RhdHVzJyxcbiAgICBkZXNjcmlwdGlvbjpcbiAgICAgICdSZXR1cm5zIHByb2ZpbGUgc3luY2hyb25pemF0aW9uIHN0YXR1cyBpbmNsdWRpbmcgbGFzdCBzeW5jIHRpbWVzdGFtcCBhbmQgcHJpbWFyeSBwcm92aWRlci4nLFxuICB9KVxuICBhc3luYyBnZXRTeW5jU3RhdHVzKEBDdXJyZW50VXNlcignaWQnKSB1c2VySWQ6IHN0cmluZyk6IFByb21pc2U8XG4gICAgQXBpUmVzcG9uc2U8e1xuICAgICAgbGFzdFN5bmNlZEF0PzogRGF0ZTtcbiAgICAgIGxhc3RTeW5jZWRQcm92aWRlcj86IHN0cmluZztcbiAgICAgIHByaW1hcnlQcm92aWRlcj86IHN0cmluZztcbiAgICAgIGNhblN5bmM6IGJvb2xlYW47XG4gICAgfT5cbiAgPiB7XG4gICAgY29uc3Qgc3RhdHVzID0gYXdhaXQgdGhpcy5wcm9maWxlU3luY1NlcnZpY2UuZ2V0U3luY1N0YXR1cyh1c2VySWQpO1xuICAgIHJldHVybiBBcGlSZXNwb25zZS5zdWNjZXNzKHN0YXR1cyk7XG4gIH1cblxuICAvKipcbiAgICogSW5pdGlhdGUgbWFudWFsIHByb2ZpbGUgc3luYyBmcm9tIHByaW1hcnkgcHJvdmlkZXIuXG4gICAqIFJlcXVpcmVzIHVzZXIgdG8gcmUtYXV0aGVudGljYXRlIHdpdGggT0F1dGguXG4gICAqXG4gICAqIEBleGFtcGxlIFBPU1QgL3VzZXIvc3luYy1wcm9maWxlXG4gICAqL1xuICBAUG9zdCgnc3luYy1wcm9maWxlJylcbiAgQEh0dHBDb2RlKEh0dHBTdGF0dXMuT0spXG4gIEBBcGlPcGVyYXRpb24oe1xuICAgIHN1bW1hcnk6ICdJbml0aWF0ZSBwcm9maWxlIHN5bmMnLFxuICAgIGRlc2NyaXB0aW9uOlxuICAgICAgJ0luaXRpYXRlcyBtYW51YWwgcHJvZmlsZSBzeW5jaHJvbml6YXRpb24gZnJvbSB0aGUgcHJpbWFyeSBPQXV0aCBwcm92aWRlci4gJyArXG4gICAgICAnUmV0dXJucyBpbnN0cnVjdGlvbnMgdG8gcmUtYXV0aGVudGljYXRlIHdpdGggT0F1dGggZm9yIGZyZXNoIHByb2ZpbGUgZGF0YS4nLFxuICB9KVxuICBhc3luYyBpbml0aWF0ZVByb2ZpbGVTeW5jKEBDdXJyZW50VXNlcignaWQnKSB1c2VySWQ6IHN0cmluZyk6IFByb21pc2U8XG4gICAgQXBpUmVzcG9uc2U8e1xuICAgICAgcmVxdWlyZXNPQXV0aDogYm9vbGVhbjtcbiAgICAgIHByb3ZpZGVyOiBzdHJpbmc7XG4gICAgICBtZXNzYWdlOiBzdHJpbmc7XG4gICAgfT5cbiAgPiB7XG4gICAgY29uc3Qgc3luY0luc3RydWN0aW9ucyA9XG4gICAgICBhd2FpdCB0aGlzLnByb2ZpbGVTeW5jU2VydmljZS5pbml0aWF0ZU1hbnVhbFN5bmModXNlcklkKTtcbiAgICByZXR1cm4gQXBpUmVzcG9uc2Uuc3VjY2VzcyhzeW5jSW5zdHJ1Y3Rpb25zKTtcbiAgfVxufVxuIl0sInZlcnNpb24iOjN9

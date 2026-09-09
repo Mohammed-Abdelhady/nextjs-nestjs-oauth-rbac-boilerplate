@@ -1,6 +1,8 @@
 'use client';
 
 import { Direction } from 'radix-ui';
+import { useEffect } from 'react';
+import { useLocale } from 'next-intl';
 import { Toaster } from '@/components/ui/sonner';
 import type { TextDirection } from '@/i18n/direction';
 
@@ -23,6 +25,13 @@ export function DirectionProvider({
   dir: TextDirection;
   children: React.ReactNode;
 }) {
+  const locale = useLocale();
+  useEffect(() => {
+    // The root layout survives client navigation between locale segments.
+    document.documentElement.lang = locale;
+    document.documentElement.dir = dir;
+  }, [locale, dir]);
+
   return (
     <Direction.DirectionProvider dir={dir}>
       {children}

@@ -1,0 +1,16 @@
+{
+  "anonymous": {
+    "executed": 44,
+    "passed": 44,
+    "failed": 0,
+    "skipped": 0,
+    "flaky": 0
+  },
+  "authenticated": {
+    "executed": 72,
+    "passed": 71,
+    "failed": 1,
+    "skipped": 0,
+    "flaky": 0
+  }
+}

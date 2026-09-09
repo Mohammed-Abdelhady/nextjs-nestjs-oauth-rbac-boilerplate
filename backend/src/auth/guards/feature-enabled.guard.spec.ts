@@ -1,3 +1,4 @@
+// feature:totp:start
 // The two-factor controller pulls in the otplib adapter; this spec only reads
 // the feature metadata off the class.
 jest.mock('../two-factor/utils/totp.util', () => ({
@@ -5,6 +6,7 @@ jest.mock('../two-factor/utils/totp.util', () => ({
   buildOtpauthUrl: jest.fn(),
   checkTotpDelta: jest.fn(),
 }));
+// feature:totp:end
 
 import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -13,10 +15,10 @@ import { AuthFeaturesService } from '../services/auth-features.service';
 import { AuthFeature } from '../enums/auth-feature.enum';
 import { AUTH_FEATURE_KEY } from '../decorators/requires-feature.decorator';
 import { AuthController } from '../auth.controller';
-import { MagicLinkController } from '../magic-link/magic-link.controller';
-import { TwoFactorController } from '../two-factor/two-factor.controller';
-import { PasskeysController } from '../passkeys/passkeys.controller';
-import { PasskeyLoginController } from '../passkeys/passkey-login.controller';
+import { MagicLinkController } from '../magic-link/magic-link.controller'; // feature:magic-link
+import { TwoFactorController } from '../two-factor/two-factor.controller'; // feature:totp
+import { PasskeysController } from '../passkeys/passkeys.controller'; // feature:passkeys
+import { PasskeyLoginController } from '../passkeys/passkey-login.controller'; // feature:passkeys
 import { ErrorCode } from '../../common/enums/error-code.enum';
 
 class UngatedController {
@@ -81,6 +83,7 @@ describe('FeatureEnabledGuard', () => {
     expect(guard.canActivate(contextFor(UngatedController))).toBe(true);
   });
 
+  // feature:magic-link:start
   it('should let the magic link routes through when the method is on', () => {
     const { guard } = createGuard({
       [AuthFeature.PASSWORD]: true,
@@ -103,6 +106,7 @@ describe('FeatureEnabledGuard', () => {
       }) as Error,
     );
   });
+  // feature:magic-link:end
 
   it('should answer 404 FEATURE_DISABLED for login when passwords are off', () => {
     const { guard } = createGuard({
@@ -122,12 +126,15 @@ describe('FeatureEnabledGuard', () => {
     );
   });
 
+  // feature:totp:start
   it('should let the two-factor routes through when the feature is on', () => {
     const { guard } = createGuard({ [AuthFeature.TWO_FACTOR]: true });
 
     expect(guard.canActivate(contextFor(TwoFactorController))).toBe(true);
   });
+  // feature:totp:end
 
+  // feature:passkeys:start
   it.each([
     ['management', PasskeysController],
     ['sign-in', PasskeyLoginController],
@@ -156,7 +163,9 @@ describe('FeatureEnabledGuard', () => {
       );
     },
   );
+  // feature:passkeys:end
 
+  // feature:totp:start
   it('should answer 404 FEATURE_DISABLED for the two-factor routes when the feature is off', () => {
     const { guard } = createGuard({ [AuthFeature.TWO_FACTOR]: false });
 
@@ -167,6 +176,7 @@ describe('FeatureEnabledGuard', () => {
       }) as Error,
     );
   });
+  // feature:totp:end
 });
 
 describe('password route gating', () => {
@@ -196,9 +206,11 @@ describe('password route gating', () => {
     },
   );
 
+  // feature:magic-link:start
   it('should tie the whole magic link controller to the magic link method', () => {
     expect(reflector.get(AUTH_FEATURE_KEY, MagicLinkController)).toBe(
       AuthFeature.MAGIC_LINK,
     );
   });
+  // feature:magic-link:end
 });

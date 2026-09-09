@@ -1,0 +1,64 @@
+2bcd339fbba473a25f50a9227a547c09
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AuthFeaturesService = void 0;
+const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
+const auth_feature_enum_1 = require("../enums/auth-feature.enum");
+const available_auth_features_1 = require("../constants/available-auth-features");
+const app_exception_1 = require("../../common/exceptions/app.exception");
+const error_code_enum_1 = require("../../common/enums/error-code.enum");
+/** Configuration key holding the switch for each feature. */
+const FEATURE_CONFIG_KEYS = {
+    [auth_feature_enum_1.AuthFeature.PASSWORD]: 'auth.passwordEnabled',
+    [auth_feature_enum_1.AuthFeature.MAGIC_LINK]: 'magicLink.enabled',
+    [auth_feature_enum_1.AuthFeature.TWO_FACTOR]: 'twoFactor.enabled',
+    [auth_feature_enum_1.AuthFeature.PASSKEYS]: 'passkeys.enabled',
+};
+/** Used when the key is absent, which happens in tests with a partial config. */
+const FEATURE_FALLBACKS = {
+    [auth_feature_enum_1.AuthFeature.PASSWORD]: true,
+    [auth_feature_enum_1.AuthFeature.MAGIC_LINK]: false,
+    [auth_feature_enum_1.AuthFeature.TWO_FACTOR]: true,
+    [auth_feature_enum_1.AuthFeature.PASSKEYS]: true,
+};
+/**
+ * Single answer to "is this feature on?", read by the guard that closes the
+ * routes and by the discovery endpoint that lists them.
+ */
+let AuthFeaturesService = class AuthFeaturesService {
+    configService;
+    constructor(configService) {
+        this.configService = configService;
+    }
+    isEnabled(feature) {
+        if (!available_auth_features_1.AVAILABLE_AUTH_FEATURES.has(feature))
+            return false;
+        return this.configService.get(FEATURE_CONFIG_KEYS[feature], FEATURE_FALLBACKS[feature]);
+    }
+    /**
+     * @throws AppException FEATURE_DISABLED with a 404, so a deployment that
+     * turned the method off looks like one that never had the route
+     */
+    assertEnabled(feature) {
+        if (this.isEnabled(feature)) {
+            return;
+        }
+        throw new app_exception_1.AppException(error_code_enum_1.ErrorCode.FEATURE_DISABLED, 'This sign-in method is not available', common_1.HttpStatus.NOT_FOUND, { feature });
+    }
+};
+exports.AuthFeaturesService = AuthFeaturesService;
+exports.AuthFeaturesService = AuthFeaturesService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [config_1.ConfigService])
+], AuthFeaturesService);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9zZXJ2aWNlcy9hdXRoLWZlYXR1cmVzLnNlcnZpY2UudHMiLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7O0FBQUEsMkNBQXdEO0FBQ3hELDJDQUErQztBQUMvQyxrRUFBeUQ7QUFDekQsa0ZBQStFO0FBQy9FLHlFQUFxRTtBQUNyRSx3RUFBK0Q7QUFFL0QsNkRBQTZEO0FBQzdELE1BQU0sbUJBQW1CLEdBQWdDO0lBQ3ZELENBQUMsK0JBQVcsQ0FBQyxRQUFRLENBQUMsRUFBRSxzQkFBc0I7SUFDOUMsQ0FBQywrQkFBVyxDQUFDLFVBQVUsQ0FBQyxFQUFFLG1CQUFtQjtJQUM3QyxDQUFDLCtCQUFXLENBQUMsVUFBVSxDQUFDLEVBQUUsbUJBQW1CO0lBQzdDLENBQUMsK0JBQVcsQ0FBQyxRQUFRLENBQUMsRUFBRSxrQkFBa0I7Q0FDM0MsQ0FBQztBQUVGLGlGQUFpRjtBQUNqRixNQUFNLGlCQUFpQixHQUFpQztJQUN0RCxDQUFDLCtCQUFXLENBQUMsUUFBUSxDQUFDLEVBQUUsSUFBSTtJQUM1QixDQUFDLCtCQUFXLENBQUMsVUFBVSxDQUFDLEVBQUUsS0FBSztJQUMvQixDQUFDLCtCQUFXLENBQUMsVUFBVSxDQUFDLEVBQUUsSUFBSTtJQUM5QixDQUFDLCtCQUFXLENBQUMsUUFBUSxDQUFDLEVBQUUsSUFBSTtDQUM3QixDQUFDO0FBRUY7OztHQUdHO0FBRUksSUFBTSxtQkFBbUIsR0FBekIsTUFBTSxtQkFBbUI7SUFDRDtJQUE3QixZQUE2QixhQUE0QjtRQUE1QixrQkFBYSxHQUFiLGFBQWEsQ0FBZTtJQUFHLENBQUM7SUFFN0QsU0FBUyxDQUFDLE9BQW9CO1FBQzVCLElBQUksQ0FBQyxpREFBdUIsQ0FBQyxHQUFHLENBQUMsT0FBTyxDQUFDO1lBQUUsT0FBTyxLQUFLLENBQUM7UUFFeEQsT0FBTyxJQUFJLENBQUMsYUFBYSxDQUFDLEdBQUcsQ0FDM0IsbUJBQW1CLENBQUMsT0FBTyxDQUFDLEVBQzVCLGlCQUFpQixDQUFDLE9BQU8sQ0FBQyxDQUMzQixDQUFDO0lBQ0osQ0FBQztJQUVEOzs7T0FHRztJQUNILGFBQWEsQ0FBQyxPQUFvQjtRQUNoQyxJQUFJLElBQUksQ0FBQyxTQUFTLENBQUMsT0FBTyxDQUFDLEVBQUUsQ0FBQztZQUM1QixPQUFPO1FBQ1QsQ0FBQztRQUVELE1BQU0sSUFBSSw0QkFBWSxDQUNwQiwyQkFBUyxDQUFDLGdCQUFnQixFQUMxQixzQ0FBc0MsRUFDdEMsbUJBQVUsQ0FBQyxTQUFTLEVBQ3BCLEVBQUUsT0FBTyxFQUFFLENBQ1osQ0FBQztJQUNKLENBQUM7Q0FDRixDQUFBO0FBNUJZLGtEQUFtQjs4QkFBbkIsbUJBQW1CO0lBRC9CLElBQUEsbUJBQVUsR0FBRTtxQ0FFaUMsc0JBQWE7R0FEOUMsbUJBQW1CLENBNEIvQiIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy9hdXRoL3NlcnZpY2VzL2F1dGgtZmVhdHVyZXMuc2VydmljZS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBIdHRwU3RhdHVzLCBJbmplY3RhYmxlIH0gZnJvbSAnQG5lc3Rqcy9jb21tb24nO1xuaW1wb3J0IHsgQ29uZmlnU2VydmljZSB9IGZyb20gJ0BuZXN0anMvY29uZmlnJztcbmltcG9ydCB7IEF1dGhGZWF0dXJlIH0gZnJvbSAnLi4vZW51bXMvYXV0aC1mZWF0dXJlLmVudW0nO1xuaW1wb3J0IHsgQVZBSUxBQkxFX0FVVEhfRkVBVFVSRVMgfSBmcm9tICcuLi9jb25zdGFudHMvYXZhaWxhYmxlLWF1dGgtZmVhdHVyZXMnO1xuaW1wb3J0IHsgQXBwRXhjZXB0aW9uIH0gZnJvbSAnLi4vLi4vY29tbW9uL2V4Y2VwdGlvbnMvYXBwLmV4Y2VwdGlvbic7XG5pbXBvcnQgeyBFcnJvckNvZGUgfSBmcm9tICcuLi8uLi9jb21tb24vZW51bXMvZXJyb3ItY29kZS5lbnVtJztcblxuLyoqIENvbmZpZ3VyYXRpb24ga2V5IGhvbGRpbmcgdGhlIHN3aXRjaCBmb3IgZWFjaCBmZWF0dXJlLiAqL1xuY29uc3QgRkVBVFVSRV9DT05GSUdfS0VZUzogUmVjb3JkPEF1dGhGZWF0dXJlLCBzdHJpbmc+ID0ge1xuICBbQXV0aEZlYXR1cmUuUEFTU1dPUkRdOiAnYXV0aC5wYXNzd29yZEVuYWJsZWQnLFxuICBbQXV0aEZlYXR1cmUuTUFHSUNfTElOS106ICdtYWdpY0xpbmsuZW5hYmxlZCcsXG4gIFtBdXRoRmVhdHVyZS5UV09fRkFDVE9SXTogJ3R3b0ZhY3Rvci5lbmFibGVkJyxcbiAgW0F1dGhGZWF0dXJlLlBBU1NLRVlTXTogJ3Bhc3NrZXlzLmVuYWJsZWQnLFxufTtcblxuLyoqIFVzZWQgd2hlbiB0aGUga2V5IGlzIGFic2VudCwgd2hpY2ggaGFwcGVucyBpbiB0ZXN0cyB3aXRoIGEgcGFydGlhbCBjb25maWcuICovXG5jb25zdCBGRUFUVVJFX0ZBTExCQUNLUzogUmVjb3JkPEF1dGhGZWF0dXJlLCBib29sZWFuPiA9IHtcbiAgW0F1dGhGZWF0dXJlLlBBU1NXT1JEXTogdHJ1ZSxcbiAgW0F1dGhGZWF0dXJlLk1BR0lDX0xJTktdOiBmYWxzZSxcbiAgW0F1dGhGZWF0dXJlLlRXT19GQUNUT1JdOiB0cnVlLFxuICBbQXV0aEZlYXR1cmUuUEFTU0tFWVNdOiB0cnVlLFxufTtcblxuLyoqXG4gKiBTaW5nbGUgYW5zd2VyIHRvIFwiaXMgdGhpcyBmZWF0dXJlIG9uP1wiLCByZWFkIGJ5IHRoZSBndWFyZCB0aGF0IGNsb3NlcyB0aGVcbiAqIHJvdXRlcyBhbmQgYnkgdGhlIGRpc2NvdmVyeSBlbmRwb2ludCB0aGF0IGxpc3RzIHRoZW0uXG4gKi9cbkBJbmplY3RhYmxlKClcbmV4cG9ydCBjbGFzcyBBdXRoRmVhdHVyZXNTZXJ2aWNlIHtcbiAgY29uc3RydWN0b3IocHJpdmF0ZSByZWFkb25seSBjb25maWdTZXJ2aWNlOiBDb25maWdTZXJ2aWNlKSB7fVxuXG4gIGlzRW5hYmxlZChmZWF0dXJlOiBBdXRoRmVhdHVyZSk6IGJvb2xlYW4ge1xuICAgIGlmICghQVZBSUxBQkxFX0FVVEhfRkVBVFVSRVMuaGFzKGZlYXR1cmUpKSByZXR1cm4gZmFsc2U7XG5cbiAgICByZXR1cm4gdGhpcy5jb25maWdTZXJ2aWNlLmdldDxib29sZWFuPihcbiAgICAgIEZFQVRVUkVfQ09ORklHX0tFWVNbZmVhdHVyZV0sXG4gICAgICBGRUFUVVJFX0ZBTExCQUNLU1tmZWF0dXJlXSxcbiAgICApO1xuICB9XG5cbiAgLyoqXG4gICAqIEB0aHJvd3MgQXBwRXhjZXB0aW9uIEZFQVRVUkVfRElTQUJMRUQgd2l0aCBhIDQwNCwgc28gYSBkZXBsb3ltZW50IHRoYXRcbiAgICogdHVybmVkIHRoZSBtZXRob2Qgb2ZmIGxvb2tzIGxpa2Ugb25lIHRoYXQgbmV2ZXIgaGFkIHRoZSByb3V0ZVxuICAgKi9cbiAgYXNzZXJ0RW5hYmxlZChmZWF0dXJlOiBBdXRoRmVhdHVyZSk6IHZvaWQge1xuICAgIGlmICh0aGlzLmlzRW5hYmxlZChmZWF0dXJlKSkge1xuICAgICAgcmV0dXJuO1xuICAgIH1cblxuICAgIHRocm93IG5ldyBBcHBFeGNlcHRpb24oXG4gICAgICBFcnJvckNvZGUuRkVBVFVSRV9ESVNBQkxFRCxcbiAgICAgICdUaGlzIHNpZ24taW4gbWV0aG9kIGlzIG5vdCBhdmFpbGFibGUnLFxuICAgICAgSHR0cFN0YXR1cy5OT1RfRk9VTkQsXG4gICAgICB7IGZlYXR1cmUgfSxcbiAgICApO1xuICB9XG59XG4iXSwidmVyc2lvbiI6M30=

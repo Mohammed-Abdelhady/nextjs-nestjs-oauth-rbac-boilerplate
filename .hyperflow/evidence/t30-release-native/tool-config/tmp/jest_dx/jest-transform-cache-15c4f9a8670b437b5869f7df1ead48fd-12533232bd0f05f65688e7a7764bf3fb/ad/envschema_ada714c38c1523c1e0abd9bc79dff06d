@@ -1,0 +1,296 @@
+6576de21a180d75eb5692e8d53f51858
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.EnvironmentVariables = void 0;
+exports.transformBoolean = transformBoolean;
+exports.transformOptionalString = transformOptionalString;
+require("reflect-metadata");
+const class_transformer_1 = require("class-transformer");
+const class_validator_1 = require("class-validator");
+const env_oauth_schema_1 = require("./env.oauth.schema");
+function transformBoolean(defaultValue) {
+    return ({ value }) => {
+        if (value === undefined || value === null || value === '') {
+            return defaultValue;
+        }
+        if (value === 'true' || value === true) {
+            return true;
+        }
+        if (value === 'false' || value === false) {
+            return false;
+        }
+        return value;
+    };
+}
+/**
+ * Treat a key that is present but blank as unset. A `.env` copied from an
+ * example often keeps the line with nothing after the `=`.
+ */
+function transformOptionalString({ value, }) {
+    return value === '' ? undefined : value;
+}
+class EnvironmentVariables extends env_oauth_schema_1.OAuthEnvironmentVariables {
+    NODE_ENV = 'development';
+    PORT = 3000;
+    MONGO_URI;
+    CLIENT_URL = 'http://localhost:3000';
+    API_URL;
+    THROTTLE_TTL = 60;
+    THROTTLE_LIMIT = 60;
+    SMTP_HOST;
+    SMTP_PORT;
+    SMTP_SECURE;
+    SMTP_USER;
+    SMTP_PASS;
+    EMAIL_FROM;
+    BCRYPT_ROUNDS = 10;
+    SESSION_COOKIE_NAME;
+    SESSION_COOKIE_MAX_AGE = 604800000;
+    ACTIVATION_CODE_EXPIRES_IN = 900000;
+    ACTIVATION_MAX_ATTEMPTS = 5;
+    AUTH_PASSWORD_ENABLED = true;
+    /**
+     * Left unset, magic links follow SMTP: on when a host and a sender address
+     * are configured, off otherwise. configuration.ts resolves that default.
+     */
+    MAGIC_LINK_ENABLED;
+    MAGIC_LINK_EXPIRES_IN = 900000;
+    MAGIC_LINK_MAX_PER_HOUR = 5;
+    TWO_FACTOR_ENABLED = true;
+    /**
+     * Optional at boot on purpose. A deployment that never turns two-factor on
+     * should not have to hold a key, so the missing key is reported by the first
+     * request that needs it rather than by a failed start.
+     */
+    TOTP_ENCRYPTION_KEY;
+    PASSKEYS_ENABLED = true;
+    /**
+     * Domain the credentials are bound to. Left unset it follows the hostname of
+     * CLIENT_URL, which is right whenever the client and the passkey prompt share
+     * a domain. A credential registered under one RP id cannot be used under
+     * another, so changing this invalidates every stored passkey.
+     */
+    WEBAUTHN_RP_ID;
+    /** Name the browser shows in the passkey prompt. */
+    WEBAUTHN_RP_NAME;
+    /** Origin the browser must be on. Defaults to the origin of CLIENT_URL. */
+    WEBAUTHN_ORIGIN;
+    SWAGGER_ENABLED = false;
+    PROFILE_SYNC_ENABLED = true;
+    PROFILE_SYNC_FIELDS = 'name,picture';
+}
+exports.EnvironmentVariables = EnvironmentVariables;
+__decorate([
+    (0, class_validator_1.IsEnum)(['development', 'production', 'test']),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "NODE_ENV", void 0);
+__decorate([
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1000),
+    (0, class_validator_1.Max)(65535),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], EnvironmentVariables.prototype, "PORT", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.Matches)(/^mongodb(\+srv)?:\/\/.+$/, {
+        message: 'MONGO_URI must be a valid MongoDB connection string starting with mongodb:// or mongodb+srv://',
+    }),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "MONGO_URI", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsUrl)({ require_protocol: true, require_tld: false }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "CLIENT_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsUrl)({ require_protocol: true, require_tld: false }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "API_URL", void 0);
+__decorate([
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.Max)(3600),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], EnvironmentVariables.prototype, "THROTTLE_TTL", void 0);
+__decorate([
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.Max)(1000),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], EnvironmentVariables.prototype, "THROTTLE_LIMIT", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "SMTP_HOST", void 0);
+__decorate([
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.Max)(65535),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], EnvironmentVariables.prototype, "SMTP_PORT", void 0);
+__decorate([
+    (0, class_transformer_1.Transform)(transformBoolean()),
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], EnvironmentVariables.prototype, "SMTP_SECURE", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "SMTP_USER", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "SMTP_PASS", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "EMAIL_FROM", void 0);
+__decorate([
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(4),
+    (0, class_validator_1.Max)(12),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], EnvironmentVariables.prototype, "BCRYPT_ROUNDS", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "SESSION_COOKIE_NAME", void 0);
+__decorate([
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1000),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], EnvironmentVariables.prototype, "SESSION_COOKIE_MAX_AGE", void 0);
+__decorate([
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(60000),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], EnvironmentVariables.prototype, "ACTIVATION_CODE_EXPIRES_IN", void 0);
+__decorate([
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.Max)(10),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], EnvironmentVariables.prototype, "ACTIVATION_MAX_ATTEMPTS", void 0);
+__decorate([
+    (0, class_transformer_1.Transform)(transformBoolean(true)),
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], EnvironmentVariables.prototype, "AUTH_PASSWORD_ENABLED", void 0);
+__decorate([
+    (0, class_transformer_1.Transform)(transformBoolean()),
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], EnvironmentVariables.prototype, "MAGIC_LINK_ENABLED", void 0);
+__decorate([
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(60000),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], EnvironmentVariables.prototype, "MAGIC_LINK_EXPIRES_IN", void 0);
+__decorate([
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.Max)(50),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], EnvironmentVariables.prototype, "MAGIC_LINK_MAX_PER_HOUR", void 0);
+__decorate([
+    (0, class_transformer_1.Transform)(transformBoolean(true)),
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], EnvironmentVariables.prototype, "TWO_FACTOR_ENABLED", void 0);
+__decorate([
+    (0, class_transformer_1.Transform)(transformOptionalString),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.Matches)(/^[A-Za-z0-9+/]{43}=$/, {
+        message: 'TOTP_ENCRYPTION_KEY must be 32 bytes in base64, as produced by `openssl rand -base64 32`',
+    }),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "TOTP_ENCRYPTION_KEY", void 0);
+__decorate([
+    (0, class_transformer_1.Transform)(transformBoolean(true)),
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], EnvironmentVariables.prototype, "PASSKEYS_ENABLED", void 0);
+__decorate([
+    (0, class_transformer_1.Transform)(transformOptionalString),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "WEBAUTHN_RP_ID", void 0);
+__decorate([
+    (0, class_transformer_1.Transform)(transformOptionalString),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "WEBAUTHN_RP_NAME", void 0);
+__decorate([
+    (0, class_transformer_1.Transform)(transformOptionalString),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsUrl)({ require_protocol: true, require_tld: false }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "WEBAUTHN_ORIGIN", void 0);
+__decorate([
+    (0, class_transformer_1.Transform)(transformBoolean(false)),
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], EnvironmentVariables.prototype, "SWAGGER_ENABLED", void 0);
+__decorate([
+    (0, class_transformer_1.Transform)(transformBoolean(true)),
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], EnvironmentVariables.prototype, "PROFILE_SYNC_ENABLED", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "PROFILE_SYNC_FIELDS", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29uZmlnL2Vudi5zY2hlbWEudHMiLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7O0FBOERBLDRDQWVDO0FBTUQsMERBTUM7QUF6RkQsNEJBQTBCO0FBQzFCLHlEQUFvRDtBQUNwRCxxREFXeUI7QUFDekIseURBRzRCO0FBNkM1QixTQUFnQixnQkFBZ0IsQ0FDOUIsWUFBc0I7SUFFdEIsT0FBTyxDQUFDLEVBQUUsS0FBSyxFQUFzQixFQUFXLEVBQUU7UUFDaEQsSUFBSSxLQUFLLEtBQUssU0FBUyxJQUFJLEtBQUssS0FBSyxJQUFJLElBQUksS0FBSyxLQUFLLEVBQUUsRUFBRSxDQUFDO1lBQzFELE9BQU8sWUFBWSxDQUFDO1FBQ3RCLENBQUM7UUFDRCxJQUFJLEtBQUssS0FBSyxNQUFNLElBQUksS0FBSyxLQUFLLElBQUksRUFBRSxDQUFDO1lBQ3ZDLE9BQU8sSUFBSSxDQUFDO1FBQ2QsQ0FBQztRQUNELElBQUksS0FBSyxLQUFLLE9BQU8sSUFBSSxLQUFLLEtBQUssS0FBSyxFQUFFLENBQUM7WUFDekMsT0FBTyxLQUFLLENBQUM7UUFDZixDQUFDO1FBQ0QsT0FBTyxLQUFLLENBQUM7SUFDZixDQUFDLENBQUM7QUFDSixDQUFDO0FBRUQ7OztHQUdHO0FBQ0gsU0FBZ0IsdUJBQXVCLENBQUMsRUFDdEMsS0FBSyxHQUdOO0lBQ0MsT0FBTyxLQUFLLEtBQUssRUFBRSxDQUFDLENBQUMsQ0FBQyxTQUFTLENBQUMsQ0FBQyxDQUFDLEtBQUssQ0FBQztBQUMxQyxDQUFDO0FBRUQsTUFBYSxvQkFBcUIsU0FBUSw0Q0FBeUI7SUFHakUsUUFBUSxHQUEwQyxhQUFhLENBQUM7SUFPaEUsSUFBSSxHQUFXLElBQUksQ0FBQztJQVFwQixTQUFTLENBQVU7SUFNbkIsVUFBVSxHQUFXLHVCQUF1QixDQUFDO0lB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QUEsNkJBQVMsRUFBQyxnQkFBZ0IsQ0FBQyxJQUFJLENBQUMsQ0FBQztJQUNqQyxJQUFBLDJCQUFTLEdBQUU7SUFDWCxJQUFBLDRCQUFVLEdBQUU7OzhEQUNvQjtBQVdqQztJQUhDLElBQUEsNkJBQVMsRUFBQyx1QkFBdUIsQ0FBQztJQUNsQyxJQUFBLDBCQUFRLEdBQUU7SUFDVixJQUFBLDRCQUFVLEdBQUU7OzREQUNXO0FBTXhCO0lBSEMsSUFBQSw2QkFBUyxFQUFDLHVCQUF1QixDQUFDO0lBQ2xDLElBQUEsMEJBQVEsR0FBRTtJQUNWLElBQUEsNEJBQVUsR0FBRTs7OERBQ2E7QUFPMUI7SUFKQyxJQUFBLDZCQUFTLEVBQUMsdUJBQXVCLENBQUM7SUFDbEMsSUFBQSwwQkFBUSxHQUFFO0lBQ1YsSUFBQSx1QkFBSyxFQUFDLEVBQUUsZ0JBQWdCLEVBQUUsSUFBSSxFQUFFLFdBQVcsRUFBRSxLQUFLLEVBQUUsQ0FBQztJQUNyRCxJQUFBLDRCQUFVLEdBQUU7OzZEQUNZO0FBS3pCO0lBSEMsSUFBQSw2QkFBUyxFQUFDLGdCQUFnQixDQUFDLEtBQUssQ0FBQyxDQUFDO0lBQ2xDLElBQUEsMkJBQVMsR0FBRTtJQUNYLElBQUEsNEJBQVUsR0FBRTs7NkRBQ29CO0FBS2pDO0lBSEMsSUFBQSw2QkFBUyxFQUFDLGdCQUFnQixDQUFDLElBQUksQ0FBQyxDQUFDO0lBQ2pDLElBQUEsMkJBQVMsR0FBRTtJQUNYLElBQUEsNEJBQVUsR0FBRTs7a0VBQ3dCO0FBSXJDO0lBRkMsSUFBQSwwQkFBUSxHQUFFO0lBQ1YsSUFBQSw0QkFBVSxHQUFFOztpRUFDZ0MiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29uZmlnL2Vudi5zY2hlbWEudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0ICdyZWZsZWN0LW1ldGFkYXRhJztcbmltcG9ydCB7IFRyYW5zZm9ybSwgVHlwZSB9IGZyb20gJ2NsYXNzLXRyYW5zZm9ybWVyJztcbmltcG9ydCB7XG4gIElzQm9vbGVhbixcbiAgSXNFbnVtLFxuICBJc0ludCxcbiAgSXNOb3RFbXB0eSxcbiAgSXNPcHRpb25hbCxcbiAgSXNTdHJpbmcsXG4gIElzVXJsLFxuICBNYXRjaGVzLFxuICBNYXgsXG4gIE1pbixcbn0gZnJvbSAnY2xhc3MtdmFsaWRhdG9yJztcbmltcG9ydCB7XG4gIE9BdXRoRW52aXJvbm1lbnRDb25maWcsXG4gIE9BdXRoRW52aXJvbm1lbnRWYXJpYWJsZXMsXG59IGZyb20gJy4vZW52Lm9hdXRoLnNjaGVtYSc7XG5cbmV4cG9ydCBpbnRlcmZhY2UgRW52aXJvbm1lbnRDb25maWcgZXh0ZW5kcyBPQXV0aEVudmlyb25tZW50Q29uZmlnIHtcbiAgTk9ERV9FTlY6ICdkZXZlbG9wbWVudCcgfCAncHJvZHVjdGlvbicgfCAndGVzdCc7XG4gIFBPUlQ6IG51bWJlcjtcbiAgTU9OR09fVVJJOiBzdHJpbmc7XG4gIENMSUVOVF9VUkw6IHN0cmluZztcbiAgQVBJX1VSTD86IHN0cmluZztcbiAgVEhST1RUTEVfVFRMOiBudW1iZXI7XG4gIFRIUk9UVExFX0xJTUlUOiBudW1iZXI7XG5cbiAgU01UUF9IT1NUPzogc3RyaW5nO1xuICBTTVRQX1BPUlQ/OiBudW1iZXI7XG4gIFNNVFBfU0VDVVJFPzogYm9vbGVhbjtcbiAgU01UUF9VU0VSPzogc3RyaW5nO1xuICBTTVRQX1BBU1M/OiBzdHJpbmc7XG4gIEVNQUlMX0ZST00/OiBzdHJpbmc7XG5cbiAgQkNSWVBUX1JPVU5EUz86IG51bWJlcjtcblxuICBTRVNTSU9OX0NPT0tJRV9OQU1FPzogc3RyaW5nO1xuICBTRVNTSU9OX0NPT0tJRV9NQVhfQUdFPzogbnVtYmVyO1xuXG4gIEFDVElWQVRJT05fQ09ERV9FWFBJUkVTX0lOPzogbnVtYmVyO1xuICBBQ1RJVkFUSU9OX01BWF9BVFRFTVBUUz86IG51bWJlcjtcblxuICBBVVRIX1BBU1NXT1JEX0VOQUJMRUQ/OiBib29sZWFuO1xuXG4gIE1BR0lDX0xJTktfRU5BQkxFRD86IGJvb2xlYW47XG4gIE1BR0lDX0xJTktfRVhQSVJFU19JTj86IG51bWJlcjtcbiAgTUFHSUNfTElOS19NQVhfUEVSX0hPVVI/OiBudW1iZXI7XG5cbiAgVFdPX0ZBQ1RPUl9FTkFCTEVEPzogYm9vbGVhbjtcbiAgVE9UUF9FTkNSWVBUSU9OX0tFWT86IHN0cmluZztcblxuICBQQVNTS0VZU19FTkFCTEVEPzogYm9vbGVhbjtcbiAgV0VCQVVUSE5fUlBfSUQ/OiBzdHJpbmc7XG4gIFdFQkFVVEhOX1JQX05BTUU/OiBzdHJpbmc7XG4gIFdFQkFVVEhOX09SSUdJTj86IHN0cmluZztcblxuICBTV0FHR0VSX0VOQUJMRUQ/OiBib29sZWFuO1xuICBQUk9GSUxFX1NZTkNfRU5BQkxFRD86IGJvb2xlYW47XG4gIFBST0ZJTEVfU1lOQ19GSUVMRFM/OiBzdHJpbmc7XG59XG5cbmV4cG9ydCBmdW5jdGlvbiB0cmFuc2Zvcm1Cb29sZWFuKFxuICBkZWZhdWx0VmFsdWU/OiBib29sZWFuLFxuKTogKHBhcmFtczogeyB2YWx1ZTogdW5rbm93biB9KSA9PiB1bmtub3duIHtcbiAgcmV0dXJuICh7IHZhbHVlIH06IHsgdmFsdWU6IHVua25vd24gfSk6IHVua25vd24gPT4ge1xuICAgIGlmICh2YWx1ZSA9PT0gdW5kZWZpbmVkIHx8IHZhbHVlID09PSBudWxsIHx8IHZhbHVlID09PSAnJykge1xuICAgICAgcmV0dXJuIGRlZmF1bHRWYWx1ZTtcbiAgICB9XG4gICAgaWYgKHZhbHVlID09PSAndHJ1ZScgfHwgdmFsdWUgPT09IHRydWUpIHtcbiAgICAgIHJldHVybiB0cnVlO1xuICAgIH1cbiAgICBpZiAodmFsdWUgPT09ICdmYWxzZScgfHwgdmFsdWUgPT09IGZhbHNlKSB7XG4gICAgICByZXR1cm4gZmFsc2U7XG4gICAgfVxuICAgIHJldHVybiB2YWx1ZTtcbiAgfTtcbn1cblxuLyoqXG4gKiBUcmVhdCBhIGtleSB0aGF0IGlzIHByZXNlbnQgYnV0IGJsYW5rIGFzIHVuc2V0LiBBIGAuZW52YCBjb3BpZWQgZnJvbSBhblxuICogZXhhbXBsZSBvZnRlbiBrZWVwcyB0aGUgbGluZSB3aXRoIG5vdGhpbmcgYWZ0ZXIgdGhlIGA9YC5cbiAqL1xuZXhwb3J0IGZ1bmN0aW9uIHRyYW5zZm9ybU9wdGlvbmFsU3RyaW5nKHtcbiAgdmFsdWUsXG59OiB7XG4gIHZhbHVlOiB1bmtub3duO1xufSk6IHVua25vd24ge1xuICByZXR1cm4gdmFsdWUgPT09ICcnID8gdW5kZWZpbmVkIDogdmFsdWU7XG59XG5cbmV4cG9ydCBjbGFzcyBFbnZpcm9ubWVudFZhcmlhYmxlcyBleHRlbmRzIE9BdXRoRW52aXJvbm1lbnRWYXJpYWJsZXMge1xuICBASXNFbnVtKFsnZGV2ZWxvcG1lbnQnLCAncHJvZHVjdGlvbicsICd0ZXN0J10pXG4gIEBJc09wdGlvbmFsKClcbiAgTk9ERV9FTlY6ICdkZXZlbG9wbWVudCcgfCAncHJvZHVjdGlvbicgfCAndGVzdCcgPSAnZGV2ZWxvcG1lbnQnO1xuXG4gIEBUeXBlKCgpID0+IE51bWJlcilcbiAgQElzSW50KClcbiAgQE1pbigxMDAwKVxuICBATWF4KDY1NTM1KVxuICBASXNPcHRpb25hbCgpXG4gIFBPUlQ6IG51bWJlciA9IDMwMDA7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzTm90RW1wdHkoKVxuICBATWF0Y2hlcygvXm1vbmdvZGIoXFwrc3J2KT86XFwvXFwvLiskLywge1xuICAgIG1lc3NhZ2U6XG4gICAgICAnTU9OR09fVVJJIG11c3QgYmUgYSB2YWxpZCBNb25nb0RCIGNvbm5lY3Rpb24gc3RyaW5nIHN0YXJ0aW5nIHdpdGggbW9uZ29kYjovLyBvciBtb25nb2RiK3NydjovLycsXG4gIH0pXG4gIE1PTkdPX1VSSSE6IHN0cmluZztcblxuICBASXNTdHJpbmcoKVxuICBASXNOb3RFbXB0eSgpXG4gIEBJc1VybCh7IHJlcXVpcmVfcHJvdG9jb2w6IHRydWUsIHJlcXVpcmVfdGxkOiBmYWxzZSB9KVxuICBASXNPcHRpb25hbCgpXG4gIENMSUVOVF9VUkw6IHN0cmluZyA9ICdodHRwOi8vbG9jYWxob3N0OjMwMDAnO1xuXG4gIEBJc1N0cmluZygpXG4gIEBJc05vdEVtcHR5KClcbiAgQElzVXJsKHsgcmVxdWlyZV9wcm90b2NvbDogdHJ1ZSwgcmVxdWlyZV90bGQ6IGZhbHNlIH0pXG4gIEBJc09wdGlvbmFsKClcbiAgQVBJX1VSTD86IHN0cmluZztcblxuICBAVHlwZSgoKSA9PiBOdW1iZXIpXG4gIEBJc0ludCgpXG4gIEBNaW4oMSlcbiAgQE1heCgzNjAwKVxuICBASXNPcHRpb25hbCgpXG4gIFRIUk9UVExFX1RUTDogbnVtYmVyID0gNjA7XG5cbiAgQFR5cGUoKCkgPT4gTnVtYmVyKVxuICBASXNJbnQoKVxuICBATWluKDEpXG4gIEBNYXgoMTAwMClcbiAgQElzT3B0aW9uYWwoKVxuICBUSFJPVFRMRV9MSU1JVDogbnVtYmVyID0gNjA7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBTTVRQX0hPU1Q/OiBzdHJpbmc7XG5cbiAgQFR5cGUoKCkgPT4gTnVtYmVyKVxuICBASXNJbnQoKVxuICBATWluKDEpXG4gIEBNYXgoNjU1MzUpXG4gIEBJc09wdGlvbmFsKClcbiAgU01UUF9QT1JUPzogbnVtYmVyO1xuXG4gIEBUcmFuc2Zvcm0odHJhbnNmb3JtQm9vbGVhbigpKVxuICBASXNCb29sZWFuKClcbiAgQElzT3B0aW9uYWwoKVxuICBTTVRQX1NFQ1VSRT86IGJvb2xlYW47XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBTTVRQX1VTRVI/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBTTVRQX1BBU1M/OiBzdHJpbmc7XG5cbiAgQElzU3RyaW5nKClcbiAgQElzT3B0aW9uYWwoKVxuICBFTUFJTF9GUk9NPzogc3RyaW5nO1xuXG4gIEBUeXBlKCgpID0+IE51bWJlcilcbiAgQElzSW50KClcbiAgQE1pbig0KVxuICBATWF4KDEyKVxuICBASXNPcHRpb25hbCgpXG4gIEJDUllQVF9ST1VORFM6IG51bWJlciA9IDEwO1xuXG4gIEBJc1N0cmluZygpXG4gIEBJc09wdGlvbmFsKClcbiAgU0VTU0lPTl9DT09LSUVfTkFNRT86IHN0cmluZztcblxuICBAVHlwZSgoKSA9PiBOdW1iZXIpXG4gIEBJc0ludCgpXG4gIEBNaW4oMTAwMClcbiAgQElzT3B0aW9uYWwoKVxuICBTRVNTSU9OX0NPT0tJRV9NQVhfQUdFOiBudW1iZXIgPSA2MDQ4MDAwMDA7XG5cbiAgQFR5cGUoKCkgPT4gTnVtYmVyKVxuICBASXNJbnQoKVxuICBATWluKDYwMDAwKVxuICBASXNPcHRpb25hbCgpXG4gIEFDVElWQVRJT05fQ09ERV9FWFBJUkVTX0lOOiBudW1iZXIgPSA5MDAwMDA7XG5cbiAgQFR5cGUoKCkgPT4gTnVtYmVyKVxuICBASXNJbnQoKVxuICBATWluKDEpXG4gIEBNYXgoMTApXG4gIEBJc09wdGlvbmFsKClcbiAgQUNUSVZBVElPTl9NQVhfQVRURU1QVFM6IG51bWJlciA9IDU7XG5cbiAgQFRyYW5zZm9ybSh0cmFuc2Zvcm1Cb29sZWFuKHRydWUpKVxuICBASXNCb29sZWFuKClcbiAgQElzT3B0aW9uYWwoKVxuICBBVVRIX1BBU1NXT1JEX0VOQUJMRUQ6IGJvb2xlYW4gPSB0cnVlO1xuXG4gIC8qKlxuICAgKiBMZWZ0IHVuc2V0LCBtYWdpYyBsaW5rcyBmb2xsb3cgU01UUDogb24gd2hlbiBhIGhvc3QgYW5kIGEgc2VuZGVyIGFkZHJlc3NcbiAgICogYXJlIGNvbmZpZ3VyZWQsIG9mZiBvdGhlcndpc2UuIGNvbmZpZ3VyYXRpb24udHMgcmVzb2x2ZXMgdGhhdCBkZWZhdWx0LlxuICAgKi9cbiAgQFRyYW5zZm9ybSh0cmFuc2Zvcm1Cb29sZWFuKCkpXG4gIEBJc0Jvb2xlYW4oKVxuICBASXNPcHRpb25hbCgpXG4gIE1BR0lDX0xJTktfRU5BQkxFRD86IGJvb2xlYW47XG5cbiAgQFR5cGUoKCkgPT4gTnVtYmVyKVxuICBASXNJbnQoKVxuICBATWluKDYwMDAwKVxuICBASXNPcHRpb25hbCgpXG4gIE1BR0lDX0xJTktfRVhQSVJFU19JTjogbnVtYmVyID0gOTAwMDAwO1xuXG4gIEBUeXBlKCgpID0+IE51bWJlcilcbiAgQElzSW50KClcbiAgQE1pbigxKVxuICBATWF4KDUwKVxuICBASXNPcHRpb25hbCgpXG4gIE1BR0lDX0xJTktfTUFYX1BFUl9IT1VSOiBudW1iZXIgPSA1O1xuXG4gIEBUcmFuc2Zvcm0odHJhbnNmb3JtQm9vbGVhbih0cnVlKSlcbiAgQElzQm9vbGVhbigpXG4gIEBJc09wdGlvbmFsKClcbiAgVFdPX0ZBQ1RPUl9FTkFCTEVEOiBib29sZWFuID0gdHJ1ZTtcblxuICAvKipcbiAgICogT3B0aW9uYWwgYXQgYm9vdCBvbiBwdXJwb3NlLiBBIGRlcGxveW1lbnQgdGhhdCBuZXZlciB0dXJucyB0d28tZmFjdG9yIG9uXG4gICAqIHNob3VsZCBub3QgaGF2ZSB0byBob2xkIGEga2V5LCBzbyB0aGUgbWlzc2luZyBrZXkgaXMgcmVwb3J0ZWQgYnkgdGhlIGZpcnN0XG4gICAqIHJlcXVlc3QgdGhhdCBuZWVkcyBpdCByYXRoZXIgdGhhbiBieSBhIGZhaWxlZCBzdGFydC5cbiAgICovXG4gIEBUcmFuc2Zvcm0odHJhbnNmb3JtT3B0aW9uYWxTdHJpbmcpXG4gIEBJc1N0cmluZygpXG4gIEBJc09wdGlvbmFsKClcbiAgQE1hdGNoZXMoL15bQS1aYS16MC05Ky9dezQzfT0kLywge1xuICAgIG1lc3NhZ2U6XG4gICAgICAnVE9UUF9FTkNSWVBUSU9OX0tFWSBtdXN0IGJlIDMyIGJ5dGVzIGluIGJhc2U2NCwgYXMgcHJvZHVjZWQgYnkgYG9wZW5zc2wgcmFuZCAtYmFzZTY0IDMyYCcsXG4gIH0pXG4gIFRPVFBfRU5DUllQVElPTl9LRVk/OiBzdHJpbmc7XG5cbiAgQFRyYW5zZm9ybSh0cmFuc2Zvcm1Cb29sZWFuKHRydWUpKVxuICBASXNCb29sZWFuKClcbiAgQElzT3B0aW9uYWwoKVxuICBQQVNTS0VZU19FTkFCTEVEOiBib29sZWFuID0gdHJ1ZTtcblxuICAvKipcbiAgICogRG9tYWluIHRoZSBjcmVkZW50aWFscyBhcmUgYm91bmQgdG8uIExlZnQgdW5zZXQgaXQgZm9sbG93cyB0aGUgaG9zdG5hbWUgb2ZcbiAgICogQ0xJRU5UX1VSTCwgd2hpY2ggaXMgcmlnaHQgd2hlbmV2ZXIgdGhlIGNsaWVudCBhbmQgdGhlIHBhc3NrZXkgcHJvbXB0IHNoYXJlXG4gICAqIGEgZG9tYWluLiBBIGNyZWRlbnRpYWwgcmVnaXN0ZXJlZCB1bmRlciBvbmUgUlAgaWQgY2Fubm90IGJlIHVzZWQgdW5kZXJcbiAgICogYW5vdGhlciwgc28gY2hhbmdpbmcgdGhpcyBpbnZhbGlkYXRlcyBldmVyeSBzdG9yZWQgcGFzc2tleS5cbiAgICovXG4gIEBUcmFuc2Zvcm0odHJhbnNmb3JtT3B0aW9uYWxTdHJpbmcpXG4gIEBJc1N0cmluZygpXG4gIEBJc09wdGlvbmFsKClcbiAgV0VCQVVUSE5fUlBfSUQ/OiBzdHJpbmc7XG5cbiAgLyoqIE5hbWUgdGhlIGJyb3dzZXIgc2hvd3MgaW4gdGhlIHBhc3NrZXkgcHJvbXB0LiAqL1xuICBAVHJhbnNmb3JtKHRyYW5zZm9ybU9wdGlvbmFsU3RyaW5nKVxuICBASXNTdHJpbmcoKVxuICBASXNPcHRpb25hbCgpXG4gIFdFQkFVVEhOX1JQX05BTUU/OiBzdHJpbmc7XG5cbiAgLyoqIE9yaWdpbiB0aGUgYnJvd3NlciBtdXN0IGJlIG9uLiBEZWZhdWx0cyB0byB0aGUgb3JpZ2luIG9mIENMSUVOVF9VUkwuICovXG4gIEBUcmFuc2Zvcm0odHJhbnNmb3JtT3B0aW9uYWxTdHJpbmcpXG4gIEBJc1N0cmluZygpXG4gIEBJc1VybCh7IHJlcXVpcmVfcHJvdG9jb2w6IHRydWUsIHJlcXVpcmVfdGxkOiBmYWxzZSB9KVxuICBASXNPcHRpb25hbCgpXG4gIFdFQkFVVEhOX09SSUdJTj86IHN0cmluZztcblxuICBAVHJhbnNmb3JtKHRyYW5zZm9ybUJvb2xlYW4oZmFsc2UpKVxuICBASXNCb29sZWFuKClcbiAgQElzT3B0aW9uYWwoKVxuICBTV0FHR0VSX0VOQUJMRUQ6IGJvb2xlYW4gPSBmYWxzZTtcblxuICBAVHJhbnNmb3JtKHRyYW5zZm9ybUJvb2xlYW4odHJ1ZSkpXG4gIEBJc0Jvb2xlYW4oKVxuICBASXNPcHRpb25hbCgpXG4gIFBST0ZJTEVfU1lOQ19FTkFCTEVEOiBib29sZWFuID0gdHJ1ZTtcblxuICBASXNTdHJpbmcoKVxuICBASXNPcHRpb25hbCgpXG4gIFBST0ZJTEVfU1lOQ19GSUVMRFM6IHN0cmluZyA9ICduYW1lLHBpY3R1cmUnO1xufVxuIl0sInZlcnNpb24iOjN9

@@ -1,0 +1,108 @@
+a8d5d77235476eb67762ac82a53387db
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SessionSchema = exports.Session = exports.DeviceInfo = void 0;
+const mongoose_1 = require("@nestjs/mongoose");
+const mongoose_2 = require("mongoose");
+/**
+ * Parsed device information from user agent
+ */
+class DeviceInfo {
+    type;
+    browser; // e.g., "Chrome 120.0"
+    os; // e.g., "Windows 10"
+    name; // Human-readable: "Chrome on Windows"
+}
+exports.DeviceInfo = DeviceInfo;
+__decorate([
+    (0, mongoose_1.Prop)({
+        type: String,
+        enum: ['mobile', 'tablet', 'desktop', 'unknown'],
+        default: 'unknown',
+    }),
+    __metadata("design:type", String)
+], DeviceInfo.prototype, "type", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], DeviceInfo.prototype, "browser", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], DeviceInfo.prototype, "os", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], DeviceInfo.prototype, "name", void 0);
+/**
+ * Session schema for managing user authentication sessions
+ */
+let Session = class Session {
+    user;
+    tokenHash;
+    userAgent;
+    device;
+    ip;
+    deviceName; // Optional custom device name
+    isValid;
+    lastUsedAt;
+    expiresAt;
+    // Timestamp fields (automatically managed by Mongoose with timestamps: true)
+    createdAt;
+    updatedAt;
+};
+exports.Session = Session;
+__decorate([
+    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'User', required: true }),
+    __metadata("design:type", mongoose_2.Types.ObjectId)
+], Session.prototype, "user", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, unique: true }),
+    __metadata("design:type", String)
+], Session.prototype, "tokenHash", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], Session.prototype, "userAgent", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: DeviceInfo }),
+    __metadata("design:type", DeviceInfo)
+], Session.prototype, "device", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], Session.prototype, "ip", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], Session.prototype, "deviceName", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: true }),
+    __metadata("design:type", Boolean)
+], Session.prototype, "isValid", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", Date)
+], Session.prototype, "lastUsedAt", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", Date)
+], Session.prototype, "expiresAt", void 0);
+exports.Session = Session = __decorate([
+    (0, mongoose_1.Schema)({ timestamps: true })
+], Session);
+exports.SessionSchema = mongoose_1.SchemaFactory.createForClass(Session);
+// Indexes
+exports.SessionSchema.index({ user: 1 });
+exports.SessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+exports.SessionSchema.index({ user: 1, lastUsedAt: -1 });
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvc2Vzc2lvbi9zY2hlbWFzL3Nlc3Npb24uc2NoZW1hLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLCtDQUErRDtBQUMvRCx1Q0FBNkU7QUFFN0U7O0dBRUc7QUFDSCxNQUFhLFVBQVU7SUFNckIsSUFBSSxDQUErQztJQUduRCxPQUFPLENBQVUsQ0FBQyx1QkFBdUI7SUFHekMsRUFBRSxDQUFVLENBQUMscUJBQXFCO0lBR2xDLElBQUksQ0FBVSxDQUFDLHNDQUFzQztDQUN0RDtBQWhCRCxnQ0FnQkM7QUFWQztJQUxDLElBQUEsZUFBSSxFQUFDO1FBQ0osSUFBSSxFQUFFLE1BQU07UUFDWixJQUFJLEVBQUUsQ0FBQyxRQUFRLEVBQUUsUUFBUSxFQUFFLFNBQVMsRUFBRSxTQUFTLENBQUM7UUFDaEQsT0FBTyxFQUFFLFNBQVM7S0FDbkIsQ0FBQzs7d0NBQ2lEO0FBR25EO0lBREMsSUFBQSxlQUFJLEdBQUU7OzJDQUNVO0FBR2pCO0lBREMsSUFBQSxlQUFJLEdBQUU7O3NDQUNLO0FBR1o7SUFEQyxJQUFBLGVBQUksR0FBRTs7d0NBQ087QUFHaEI7O0dBRUc7QUFFSSxJQUFNLE9BQU8sR0FBYixNQUFNLE9BQU87SUFFbEIsSUFBSSxDQUFrQjtJQUd0QixTQUFTLENBQVU7SUFHbkIsU0FBUyxDQUFVO0lBR25CLE1BQU0sQ0FBYztJQUdwQixFQUFFLENBQVU7SUFHWixVQUFVLENBQVUsQ0FBQyw4QkFBOEI7SUFHbkQsT0FBTyxDQUFXO0lBR2xCLFVBQVUsQ0FBUTtJQUdsQixTQUFTLENBQVE7SUFFakIsNkVBQTZFO0lBQzdFLFNBQVMsQ0FBUTtJQUNqQixTQUFTLENBQVE7Q0FDbEIsQ0FBQTtBQS9CWSwwQkFBTztBQUVsQjtJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsSUFBSSxFQUFFLGdCQUFLLENBQUMsUUFBUSxFQUFFLEdBQUcsRUFBRSxNQUFNLEVBQUUsUUFBUSxFQUFFLElBQUksRUFBRSxDQUFDOzhCQUNyRCxnQkFBSyxDQUFDLFFBQVE7cUNBQUM7QUFHdEI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLFFBQVEsRUFBRSxJQUFJLEVBQUUsTUFBTSxFQUFFLElBQUksRUFBRSxDQUFDOzswQ0FDcEI7QUFHbkI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLFFBQVEsRUFBRSxJQUFJLEVBQUUsQ0FBQzs7MENBQ047QUFHbkI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLElBQUksRUFBRSxVQUFVLEVBQUUsQ0FBQzs4QkFDbEIsVUFBVTt1Q0FBQztBQUdwQjtJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsUUFBUSxFQUFFLElBQUksRUFBRSxDQUFDOzttQ0FDYjtBQUdaO0lBREMsSUFBQSxlQUFJLEdBQUU7OzJDQUNhO0FBR3BCO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxPQUFPLEVBQUUsSUFBSSxFQUFFLENBQUM7O3dDQUNOO0FBR2xCO0lBREMsSUFBQSxlQUFJLEdBQUU7OEJBQ00sSUFBSTsyQ0FBQztBQUdsQjtJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsUUFBUSxFQUFFLElBQUksRUFBRSxDQUFDOzhCQUNiLElBQUk7MENBQUM7a0JBMUJOLE9BQU87SUFEbkIsSUFBQSxpQkFBTSxFQUFDLEVBQUUsVUFBVSxFQUFFLElBQUksRUFBRSxDQUFDO0dBQ2hCLE9BQU8sQ0ErQm5CO0FBU1ksUUFBQSxhQUFhLEdBQ3hCLHdCQUFhLENBQUMsY0FBYyxDQUFDLE9BQU8sQ0FBQyxDQUFDO0FBRXhDLFVBQVU7QUFDVixxQkFBYSxDQUFDLEtBQUssQ0FBQyxFQUFFLElBQUksRUFBRSxDQUFDLEVBQUUsQ0FBQyxDQUFDO0FBQ2pDLHFCQUFhLENBQUMsS0FBSyxDQUFDLEVBQUUsU0FBUyxFQUFFLENBQUMsRUFBRSxFQUFFLEVBQUUsa0JBQWtCLEVBQUUsQ0FBQyxFQUFFLENBQUMsQ0FBQztBQUNqRSxxQkFBYSxDQUFDLEtBQUssQ0FBQyxFQUFFLElBQUksRUFBRSxDQUFDLEVBQUUsVUFBVSxFQUFFLENBQUMsQ0FBQyxFQUFFLENBQUMsQ0FBQyIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy9zZXNzaW9uL3NjaGVtYXMvc2Vzc2lvbi5zY2hlbWEudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgUHJvcCwgU2NoZW1hLCBTY2hlbWFGYWN0b3J5IH0gZnJvbSAnQG5lc3Rqcy9tb25nb29zZSc7XG5pbXBvcnQgeyBIeWRyYXRlZERvY3VtZW50LCBTY2hlbWEgYXMgTW9uZ29vc2VTY2hlbWEsIFR5cGVzIH0gZnJvbSAnbW9uZ29vc2UnO1xuXG4vKipcbiAqIFBhcnNlZCBkZXZpY2UgaW5mb3JtYXRpb24gZnJvbSB1c2VyIGFnZW50XG4gKi9cbmV4cG9ydCBjbGFzcyBEZXZpY2VJbmZvIHtcbiAgQFByb3Aoe1xuICAgIHR5cGU6IFN0cmluZyxcbiAgICBlbnVtOiBbJ21vYmlsZScsICd0YWJsZXQnLCAnZGVza3RvcCcsICd1bmtub3duJ10sXG4gICAgZGVmYXVsdDogJ3Vua25vd24nLFxuICB9KVxuICB0eXBlITogJ21vYmlsZScgfCAndGFibGV0JyB8ICdkZXNrdG9wJyB8ICd1bmtub3duJztcblxuICBAUHJvcCgpXG4gIGJyb3dzZXI/OiBzdHJpbmc7IC8vIGUuZy4sIFwiQ2hyb21lIDEyMC4wXCJcblxuICBAUHJvcCgpXG4gIG9zPzogc3RyaW5nOyAvLyBlLmcuLCBcIldpbmRvd3MgMTBcIlxuXG4gIEBQcm9wKClcbiAgbmFtZT86IHN0cmluZzsgLy8gSHVtYW4tcmVhZGFibGU6IFwiQ2hyb21lIG9uIFdpbmRvd3NcIlxufVxuXG4vKipcbiAqIFNlc3Npb24gc2NoZW1hIGZvciBtYW5hZ2luZyB1c2VyIGF1dGhlbnRpY2F0aW9uIHNlc3Npb25zXG4gKi9cbkBTY2hlbWEoeyB0aW1lc3RhbXBzOiB0cnVlIH0pXG5leHBvcnQgY2xhc3MgU2Vzc2lvbiB7XG4gIEBQcm9wKHsgdHlwZTogVHlwZXMuT2JqZWN0SWQsIHJlZjogJ1VzZXInLCByZXF1aXJlZDogdHJ1ZSB9KVxuICB1c2VyITogVHlwZXMuT2JqZWN0SWQ7XG5cbiAgQFByb3AoeyByZXF1aXJlZDogdHJ1ZSwgdW5pcXVlOiB0cnVlIH0pXG4gIHRva2VuSGFzaCE6IHN0cmluZztcblxuICBAUHJvcCh7IHJlcXVpcmVkOiB0cnVlIH0pXG4gIHVzZXJBZ2VudCE6IHN0cmluZztcblxuICBAUHJvcCh7IHR5cGU6IERldmljZUluZm8gfSlcbiAgZGV2aWNlPzogRGV2aWNlSW5mbztcblxuICBAUHJvcCh7IHJlcXVpcmVkOiB0cnVlIH0pXG4gIGlwITogc3RyaW5nO1xuXG4gIEBQcm9wKClcbiAgZGV2aWNlTmFtZT86IHN0cmluZzsgLy8gT3B0aW9uYWwgY3VzdG9tIGRldmljZSBuYW1lXG5cbiAgQFByb3AoeyBkZWZhdWx0OiB0cnVlIH0pXG4gIGlzVmFsaWQhOiBib29sZWFuO1xuXG4gIEBQcm9wKClcbiAgbGFzdFVzZWRBdD86IERhdGU7XG5cbiAgQFByb3AoeyByZXF1aXJlZDogdHJ1ZSB9KVxuICBleHBpcmVzQXQhOiBEYXRlO1xuXG4gIC8vIFRpbWVzdGFtcCBmaWVsZHMgKGF1dG9tYXRpY2FsbHkgbWFuYWdlZCBieSBNb25nb29zZSB3aXRoIHRpbWVzdGFtcHM6IHRydWUpXG4gIGNyZWF0ZWRBdCE6IERhdGU7XG4gIHVwZGF0ZWRBdCE6IERhdGU7XG59XG5cbmV4cG9ydCB0eXBlIFNlc3Npb25Eb2N1bWVudCA9IEh5ZHJhdGVkRG9jdW1lbnQ8U2Vzc2lvbj47XG5cbmV4cG9ydCBpbnRlcmZhY2UgTGVhblNlc3Npb24gZXh0ZW5kcyBPbWl0PFNlc3Npb24sICd1c2VyJz4ge1xuICBfaWQ6IFR5cGVzLk9iamVjdElkO1xuICB1c2VyOiBUeXBlcy5PYmplY3RJZCB8IFJlY29yZDxzdHJpbmcsIHVua25vd24+O1xufVxuXG5leHBvcnQgY29uc3QgU2Vzc2lvblNjaGVtYTogTW9uZ29vc2VTY2hlbWE8U2Vzc2lvbj4gPVxuICBTY2hlbWFGYWN0b3J5LmNyZWF0ZUZvckNsYXNzKFNlc3Npb24pO1xuXG4vLyBJbmRleGVzXG5TZXNzaW9uU2NoZW1hLmluZGV4KHsgdXNlcjogMSB9KTtcblNlc3Npb25TY2hlbWEuaW5kZXgoeyBleHBpcmVzQXQ6IDEgfSwgeyBleHBpcmVBZnRlclNlY29uZHM6IDAgfSk7XG5TZXNzaW9uU2NoZW1hLmluZGV4KHsgdXNlcjogMSwgbGFzdFVzZWRBdDogLTEgfSk7XG4iXSwidmVyc2lvbiI6M30=

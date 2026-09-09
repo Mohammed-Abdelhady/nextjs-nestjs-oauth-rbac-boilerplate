@@ -1,0 +1,69 @@
+324e0022617cb9ddd923d8248c5078b8
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.UserModule = void 0;
+const common_1 = require("@nestjs/common");
+const mongoose_1 = require("@nestjs/mongoose");
+const user_profile_controller_1 = require("./user-profile.controller");
+const user_sessions_controller_1 = require("./user-sessions.controller");
+const user_providers_controller_1 = require("./user-providers.controller"); // feature:oauth-core
+const user_profile_service_1 = require("./services/user-profile.service");
+const user_sessions_service_1 = require("./services/user-sessions.service");
+const user_permissions_service_1 = require("./services/user-permissions.service");
+const user_schema_1 = require("./schemas/user.schema");
+const session_schema_1 = require("../session/schemas/session.schema");
+const role_schema_1 = require("../role/schemas/role.schema");
+// feature:passkeys:start
+const passkey_schema_1 = require("../auth/passkeys/schemas/passkey.schema");
+// feature:passkeys:end
+const session_service_1 = require("../auth/services/session.service");
+const account_linking_service_1 = require("./services/account-linking.service"); // feature:oauth-core
+const profile_sync_service_1 = require("./services/profile-sync.service"); // feature:oauth-core
+const auth_module_1 = require("../auth/auth.module");
+let UserModule = class UserModule {
+};
+exports.UserModule = UserModule;
+exports.UserModule = UserModule = __decorate([
+    (0, common_1.Module)({
+        imports: [
+            mongoose_1.MongooseModule.forFeature([
+                { name: user_schema_1.User.name, schema: user_schema_1.UserSchema },
+                { name: session_schema_1.Session.name, schema: session_schema_1.SessionSchema },
+                { name: role_schema_1.Role.name, schema: role_schema_1.RoleSchema },
+                // feature:passkeys:start
+                // The profile reports how many passkeys the account holds.
+                { name: passkey_schema_1.Passkey.name, schema: passkey_schema_1.PasskeySchema },
+                // feature:passkeys:end
+            ]),
+            (0, common_1.forwardRef)(() => auth_module_1.AuthModule),
+        ],
+        controllers: [
+            user_profile_controller_1.UserProfileController,
+            user_sessions_controller_1.UserSessionsController,
+            user_providers_controller_1.UserProvidersController, // feature:oauth-core
+        ],
+        providers: [
+            user_profile_service_1.UserProfileService,
+            user_sessions_service_1.UserSessionsService,
+            user_permissions_service_1.UserPermissionsService,
+            session_service_1.SessionService,
+            account_linking_service_1.AccountLinkingService, // feature:oauth-core
+            profile_sync_service_1.ProfileSyncService, // feature:oauth-core
+        ],
+        exports: [
+            mongoose_1.MongooseModule,
+            user_profile_service_1.UserProfileService,
+            user_sessions_service_1.UserSessionsService,
+            user_permissions_service_1.UserPermissionsService,
+            account_linking_service_1.AccountLinkingService, // feature:oauth-core
+            profile_sync_service_1.ProfileSyncService, // feature:oauth-core
+        ],
+    })
+], UserModule);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvdXNlci91c2VyLm1vZHVsZS50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7QUFBQSwyQ0FBb0Q7QUFDcEQsK0NBQWtEO0FBQ2xELHVFQUFrRTtBQUNsRSx5RUFBb0U7QUFDcEUsMkVBQXNFLENBQUMscUJBQXFCO0FBQzVGLDBFQUFxRTtBQUNyRSw0RUFBdUU7QUFDdkUsa0ZBQTZFO0FBQzdFLHVEQUF5RDtBQUN6RCxzRUFBMkU7QUFDM0UsNkRBQStEO0FBQy9ELHlCQUF5QjtBQUN6Qiw0RUFHaUQ7QUFDakQsdUJBQXVCO0FBQ3ZCLHNFQUFrRTtBQUNsRSxnRkFBMkUsQ0FBQyxxQkFBcUI7QUFDakcsMEVBQXFFLENBQUMscUJBQXFCO0FBQzNGLHFEQUFpRDtBQXFDMUMsSUFBTSxVQUFVLEdBQWhCLE1BQU0sVUFBVTtDQUFHLENBQUE7QUFBYixnQ0FBVTtxQkFBVixVQUFVO0lBbkN0QixJQUFBLGVBQU0sRUFBQztRQUNOLE9BQU8sRUFBRTtZQUNQLHlCQUFjLENBQUMsVUFBVSxDQUFDO2dCQUN4QixFQUFFLElBQUksRUFBRSxrQkFBSSxDQUFDLElBQUksRUFBRSxNQUFNLEVBQUUsd0JBQVUsRUFBRTtnQkFDdkMsRUFBRSxJQUFJLEVBQUUsd0JBQU8sQ0FBQyxJQUFJLEVBQUUsTUFBTSxFQUFFLDhCQUFhLEVBQUU7Z0JBQzdDLEVBQUUsSUFBSSxFQUFFLGtCQUFJLENBQUMsSUFBSSxFQUFFLE1BQU0sRUFBRSx3QkFBVSxFQUFFO2dCQUN2Qyx5QkFBeUI7Z0JBQ3pCLDJEQUEyRDtnQkFDM0QsRUFBRSxJQUFJLEVBQUUsd0JBQU8sQ0FBQyxJQUFJLEVBQUUsTUFBTSxFQUFFLDhCQUFhLEVBQUU7Z0JBQzdDLHVCQUF1QjthQUN4QixDQUFDO1lBQ0YsSUFBQSxtQkFBVSxFQUFDLEdBQUcsRUFBRSxDQUFDLHdCQUFVLENBQUM7U0FDN0I7UUFDRCxXQUFXLEVBQUU7WUFDWCwrQ0FBcUI7WUFDckIsaURBQXNCO1lBQ3RCLG1EQUF1QixFQUFFLHFCQUFxQjtTQUMvQztRQUNELFNBQVMsRUFBRTtZQUNULHlDQUFrQjtZQUNsQiwyQ0FBbUI7WUFDbkIsaURBQXNCO1lBQ3RCLGdDQUFjO1lBQ2QsK0NBQXFCLEVBQUUscUJBQXFCO1lBQzVDLHlDQUFrQixFQUFFLHFCQUFxQjtTQUMxQztRQUNELE9BQU8sRUFBRTtZQUNQLHlCQUFjO1lBQ2QseUNBQWtCO1lBQ2xCLDJDQUFtQjtZQUNuQixpREFBc0I7WUFDdEIsK0NBQXFCLEVBQUUscUJBQXFCO1lBQzVDLHlDQUFrQixFQUFFLHFCQUFxQjtTQUMxQztLQUNGLENBQUM7R0FDVyxVQUFVLENBQUciLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvdXNlci91c2VyLm1vZHVsZS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBNb2R1bGUsIGZvcndhcmRSZWYgfSBmcm9tICdAbmVzdGpzL2NvbW1vbic7XG5pbXBvcnQgeyBNb25nb29zZU1vZHVsZSB9IGZyb20gJ0BuZXN0anMvbW9uZ29vc2UnO1xuaW1wb3J0IHsgVXNlclByb2ZpbGVDb250cm9sbGVyIH0gZnJvbSAnLi91c2VyLXByb2ZpbGUuY29udHJvbGxlcic7XG5pbXBvcnQgeyBVc2VyU2Vzc2lvbnNDb250cm9sbGVyIH0gZnJvbSAnLi91c2VyLXNlc3Npb25zLmNvbnRyb2xsZXInO1xuaW1wb3J0IHsgVXNlclByb3ZpZGVyc0NvbnRyb2xsZXIgfSBmcm9tICcuL3VzZXItcHJvdmlkZXJzLmNvbnRyb2xsZXInOyAvLyBmZWF0dXJlOm9hdXRoLWNvcmVcbmltcG9ydCB7IFVzZXJQcm9maWxlU2VydmljZSB9IGZyb20gJy4vc2VydmljZXMvdXNlci1wcm9maWxlLnNlcnZpY2UnO1xuaW1wb3J0IHsgVXNlclNlc3Npb25zU2VydmljZSB9IGZyb20gJy4vc2VydmljZXMvdXNlci1zZXNzaW9ucy5zZXJ2aWNlJztcbmltcG9ydCB7IFVzZXJQZXJtaXNzaW9uc1NlcnZpY2UgfSBmcm9tICcuL3NlcnZpY2VzL3VzZXItcGVybWlzc2lvbnMuc2VydmljZSc7XG5pbXBvcnQgeyBVc2VyLCBVc2VyU2NoZW1hIH0gZnJvbSAnLi9zY2hlbWFzL3VzZXIuc2NoZW1hJztcbmltcG9ydCB7IFNlc3Npb24sIFNlc3Npb25TY2hlbWEgfSBmcm9tICcuLi9zZXNzaW9uL3NjaGVtYXMvc2Vzc2lvbi5zY2hlbWEnO1xuaW1wb3J0IHsgUm9sZSwgUm9sZVNjaGVtYSB9IGZyb20gJy4uL3JvbGUvc2NoZW1hcy9yb2xlLnNjaGVtYSc7XG4vLyBmZWF0dXJlOnBhc3NrZXlzOnN0YXJ0XG5pbXBvcnQge1xuICBQYXNza2V5LFxuICBQYXNza2V5U2NoZW1hLFxufSBmcm9tICcuLi9hdXRoL3Bhc3NrZXlzL3NjaGVtYXMvcGFzc2tleS5zY2hlbWEnO1xuLy8gZmVhdHVyZTpwYXNza2V5czplbmRcbmltcG9ydCB7IFNlc3Npb25TZXJ2aWNlIH0gZnJvbSAnLi4vYXV0aC9zZXJ2aWNlcy9zZXNzaW9uLnNlcnZpY2UnO1xuaW1wb3J0IHsgQWNjb3VudExpbmtpbmdTZXJ2aWNlIH0gZnJvbSAnLi9zZXJ2aWNlcy9hY2NvdW50LWxpbmtpbmcuc2VydmljZSc7IC8vIGZlYXR1cmU6b2F1dGgtY29yZVxuaW1wb3J0IHsgUHJvZmlsZVN5bmNTZXJ2aWNlIH0gZnJvbSAnLi9zZXJ2aWNlcy9wcm9maWxlLXN5bmMuc2VydmljZSc7IC8vIGZlYXR1cmU6b2F1dGgtY29yZVxuaW1wb3J0IHsgQXV0aE1vZHVsZSB9IGZyb20gJy4uL2F1dGgvYXV0aC5tb2R1bGUnO1xuXG5ATW9kdWxlKHtcbiAgaW1wb3J0czogW1xuICAgIE1vbmdvb3NlTW9kdWxlLmZvckZlYXR1cmUoW1xuICAgICAgeyBuYW1lOiBVc2VyLm5hbWUsIHNjaGVtYTogVXNlclNjaGVtYSB9LFxuICAgICAgeyBuYW1lOiBTZXNzaW9uLm5hbWUsIHNjaGVtYTogU2Vzc2lvblNjaGVtYSB9LFxuICAgICAgeyBuYW1lOiBSb2xlLm5hbWUsIHNjaGVtYTogUm9sZVNjaGVtYSB9LFxuICAgICAgLy8gZmVhdHVyZTpwYXNza2V5czpzdGFydFxuICAgICAgLy8gVGhlIHByb2ZpbGUgcmVwb3J0cyBob3cgbWFueSBwYXNza2V5cyB0aGUgYWNjb3VudCBob2xkcy5cbiAgICAgIHsgbmFtZTogUGFzc2tleS5uYW1lLCBzY2hlbWE6IFBhc3NrZXlTY2hlbWEgfSxcbiAgICAgIC8vIGZlYXR1cmU6cGFzc2tleXM6ZW5kXG4gICAgXSksXG4gICAgZm9yd2FyZFJlZigoKSA9PiBBdXRoTW9kdWxlKSxcbiAgXSxcbiAgY29udHJvbGxlcnM6IFtcbiAgICBVc2VyUHJvZmlsZUNvbnRyb2xsZXIsXG4gICAgVXNlclNlc3Npb25zQ29udHJvbGxlcixcbiAgICBVc2VyUHJvdmlkZXJzQ29udHJvbGxlciwgLy8gZmVhdHVyZTpvYXV0aC1jb3JlXG4gIF0sXG4gIHByb3ZpZGVyczogW1xuICAgIFVzZXJQcm9maWxlU2VydmljZSxcbiAgICBVc2VyU2Vzc2lvbnNTZXJ2aWNlLFxuICAgIFVzZXJQZXJtaXNzaW9uc1NlcnZpY2UsXG4gICAgU2Vzc2lvblNlcnZpY2UsXG4gICAgQWNjb3VudExpbmtpbmdTZXJ2aWNlLCAvLyBmZWF0dXJlOm9hdXRoLWNvcmVcbiAgICBQcm9maWxlU3luY1NlcnZpY2UsIC8vIGZlYXR1cmU6b2F1dGgtY29yZVxuICBdLFxuICBleHBvcnRzOiBbXG4gICAgTW9uZ29vc2VNb2R1bGUsXG4gICAgVXNlclByb2ZpbGVTZXJ2aWNlLFxuICAgIFVzZXJTZXNzaW9uc1NlcnZpY2UsXG4gICAgVXNlclBlcm1pc3Npb25zU2VydmljZSxcbiAgICBBY2NvdW50TGlua2luZ1NlcnZpY2UsIC8vIGZlYXR1cmU6b2F1dGgtY29yZVxuICAgIFByb2ZpbGVTeW5jU2VydmljZSwgLy8gZmVhdHVyZTpvYXV0aC1jb3JlXG4gIF0sXG59KVxuZXhwb3J0IGNsYXNzIFVzZXJNb2R1bGUge31cbiJdLCJ2ZXJzaW9uIjozfQ==

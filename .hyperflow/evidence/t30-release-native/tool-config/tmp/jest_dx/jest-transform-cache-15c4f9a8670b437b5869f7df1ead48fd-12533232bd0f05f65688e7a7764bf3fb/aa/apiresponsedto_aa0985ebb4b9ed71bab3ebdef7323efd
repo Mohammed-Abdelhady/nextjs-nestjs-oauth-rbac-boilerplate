@@ -1,0 +1,246 @@
+e9264239d7c741dc739ce0fbcc422d4a
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var ErrorResponse_1;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CommonErrorResponses = exports.ErrorResponse = exports.ErrorDetails = exports.ApiResponse = void 0;
+const error_code_enum_1 = require("../enums/error-code.enum");
+const swagger_1 = require("@nestjs/swagger");
+/**
+ * Standard success response wrapper.
+ * All successful API responses should use this format.
+ */
+class ApiResponse {
+    success = true;
+    data;
+    message;
+    constructor(data, message) {
+        this.data = data;
+        this.message = message;
+    }
+    /**
+     * Factory method to create a success response.
+     * @param data The response data
+     * @param message Optional human-readable message
+     * @returns ApiResponse instance
+     */
+    static success(data, message) {
+        return new ApiResponse(data, message);
+    }
+}
+exports.ApiResponse = ApiResponse;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Indicates if the request was successful',
+        example: true,
+    }),
+    __metadata("design:type", Object)
+], ApiResponse.prototype, "success", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Response data payload',
+    }),
+    __metadata("design:type", Object)
+], ApiResponse.prototype, "data", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Optional human-readable message',
+        example: 'Operation completed successfully',
+        required: false,
+    }),
+    __metadata("design:type", String)
+], ApiResponse.prototype, "message", void 0);
+/**
+ * Error details structure for Swagger documentation.
+ */
+class ErrorDetails {
+    code;
+    message;
+    details;
+}
+exports.ErrorDetails = ErrorDetails;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Machine-readable error code for frontend i18n',
+        example: 'INVALID_CREDENTIALS',
+        enum: Object.values(error_code_enum_1.ErrorCode),
+    }),
+    __metadata("design:type", String)
+], ErrorDetails.prototype, "code", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Human-readable error message',
+        example: 'Invalid email or password',
+    }),
+    __metadata("design:type", String)
+], ErrorDetails.prototype, "message", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Optional additional context (e.g., field errors, retry info)',
+        example: { remainingAttempts: 3 },
+        required: false,
+        type: Object,
+        additionalProperties: true,
+    }),
+    __metadata("design:type", Object)
+], ErrorDetails.prototype, "details", void 0);
+/**
+ * Standard error response structure.
+ * All error API responses should use this format.
+ *
+ * Frontend can use the error.code for i18n translation lookup.
+ */
+let ErrorResponse = ErrorResponse_1 = class ErrorResponse {
+    success = false;
+    error;
+    requestId;
+    constructor(code, message, details) {
+        this.error = {
+            code,
+            message,
+            details,
+        };
+    }
+    /**
+     * Factory method to create an error response.
+     * @param code The error code
+     * @param message Human-readable error message
+     * @param details Optional additional context
+     * @returns ErrorResponse instance
+     */
+    static error(code, message, details) {
+        return new ErrorResponse_1(code, message, details);
+    }
+};
+exports.ErrorResponse = ErrorResponse;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Indicates if the request was successful',
+        example: false,
+    }),
+    __metadata("design:type", Object)
+], ErrorResponse.prototype, "success", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Error details including code and message',
+        type: ErrorDetails,
+    }),
+    __metadata("design:type", ErrorDetails)
+], ErrorResponse.prototype, "error", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Correlation id of the request, matching the X-Request-Id response header',
+        example: '3f1c1f0a-0f2c-4a3e-9b1e-2f5a6c7d8e90',
+        required: false,
+    }),
+    __metadata("design:type", String)
+], ErrorResponse.prototype, "requestId", void 0);
+exports.ErrorResponse = ErrorResponse = ErrorResponse_1 = __decorate([
+    (0, swagger_1.ApiExtraModels)(ErrorDetails),
+    __metadata("design:paramtypes", [String, String, Object])
+], ErrorResponse);
+/**
+ * Common error responses for Swagger documentation.
+ * Use these with @ApiResponse decorator for consistent documentation.
+ */
+exports.CommonErrorResponses = {
+    /** 400 Bad Request - Validation errors */
+    VALIDATION_ERROR: {
+        status: 400,
+        description: 'Validation failed',
+        schema: {
+            example: {
+                success: false,
+                error: {
+                    code: 'VALIDATION_ERROR',
+                    message: 'Validation failed',
+                    details: {
+                        errors: [
+                            { field: 'email', messages: ['email must be a valid email'] },
+                        ],
+                    },
+                },
+            },
+        },
+    },
+    /** 401 Unauthorized - Authentication required */
+    UNAUTHORIZED: {
+        status: 401,
+        description: 'Authentication required',
+        schema: {
+            example: {
+                success: false,
+                error: {
+                    code: 'SESSION_REQUIRED',
+                    message: 'Please log in to continue',
+                },
+            },
+        },
+    },
+    /** 403 Forbidden - Insufficient permissions */
+    FORBIDDEN: {
+        status: 403,
+        description: 'Insufficient permissions',
+        schema: {
+            example: {
+                success: false,
+                error: {
+                    code: 'FORBIDDEN',
+                    message: "You don't have permission to perform this action",
+                },
+            },
+        },
+    },
+    /** 404 Not Found - Resource not found */
+    NOT_FOUND: {
+        status: 404,
+        description: 'Resource not found',
+        schema: {
+            example: {
+                success: false,
+                error: {
+                    code: 'NOT_FOUND',
+                    message: 'The requested resource was not found',
+                },
+            },
+        },
+    },
+    /** 429 Too Many Requests - Rate limit exceeded */
+    RATE_LIMIT: {
+        status: 429,
+        description: 'Rate limit exceeded',
+        schema: {
+            example: {
+                success: false,
+                error: {
+                    code: 'RATE_LIMIT_EXCEEDED',
+                    message: 'Too many requests. Please wait before trying again',
+                    details: { retryAfter: 60 },
+                },
+            },
+        },
+    },
+    /** 500 Internal Server Error */
+    INTERNAL_ERROR: {
+        status: 500,
+        description: 'Internal server error',
+        schema: {
+            example: {
+                success: false,
+                error: {
+                    code: 'INTERNAL_ERROR',
+                    message: 'Something went wrong. Please try again later',
+                },
+            },
+        },
+    },
+};
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29tbW9uL2R0by9hcGktcmVzcG9uc2UuZHRvLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7QUFBQSw4REFBcUQ7QUFDckQsNkNBQThEO0FBRTlEOzs7R0FHRztBQUNILE1BQWEsV0FBVztJQUt0QixPQUFPLEdBQUcsSUFBYSxDQUFDO0lBS3hCLElBQUksQ0FBSTtJQU9SLE9BQU8sQ0FBVTtJQUVqQixZQUFZLElBQU8sRUFBRSxPQUFnQjtRQUNuQyxJQUFJLENBQUMsSUFBSSxHQUFHLElBQUksQ0FBQztRQUNqQixJQUFJLENBQUMsT0FBTyxHQUFHLE9BQU8sQ0FBQztJQUN6QixDQUFDO0lBRUQ7Ozs7O09BS0c7SUFDSCxNQUFNLENBQUMsT0FBTyxDQUFJLElBQU8sRUFBRSxPQUFnQjtRQUN6QyxPQUFPLElBQUksV0FBVyxDQUFDLElBQUksRUFBRSxPQUFPLENBQUMsQ0FBQztJQUN4QyxDQUFDO0NBQ0Y7QUFqQ0Qsa0NBaUNDO0FBNUJDO0lBSkMsSUFBQSxxQkFBVyxFQUFDO1FBQ1gsV0FBVyxFQUFFLHlDQUF5QztRQUN0RCxPQUFPLEVBQUUsSUFBSTtLQUNkLENBQUM7OzRDQUNzQjtBQUt4QjtJQUhDLElBQUEscUJBQVcsRUFBQztRQUNYLFdBQVcsRUFBRSx1QkFBdUI7S0FDckMsQ0FBQzs7eUNBQ007QUFPUjtJQUxDLElBQUEscUJBQVcsRUFBQztRQUNYLFdBQVcsRUFBRSxpQ0FBaUM7UUFDOUMsT0FBTyxFQUFFLGtDQUFrQztRQUMzQyxRQUFRLEVBQUUsS0FBSztLQUNoQixDQUFDOzs0Q0FDZTtBQWtCbkI7O0dBRUc7QUFDSCxNQUFhLFlBQVk7SUFNdkIsSUFBSSxDQUFhO0lBTWpCLE9BQU8sQ0FBVTtJQVNqQixPQUFPLENBQTJCO0NBQ25DO0FBdEJELG9DQXNCQztBQWhCQztJ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T0FBTyxFQUFFLEtBQUs7Z0JBQ2QsS0FBSyxFQUFFO29CQUNMLElBQUksRUFBRSxXQUFXO29CQUNqQixPQUFPLEVBQUUsa0RBQWtEO2lCQUM1RDthQUNGO1NBQ0Y7S0FDRjtJQUNELHlDQUF5QztJQUN6QyxTQUFTLEVBQUU7UUFDVCxNQUFNLEVBQUUsR0FBRztRQUNYLFdBQVcsRUFBRSxvQkFBb0I7UUFDakMsTUFBTSxFQUFFO1lBQ04sT0FBTyxFQUFFO2dCQUNQLE9BQU8sRUFBRSxLQUFLO2dCQUNkLEtBQUssRUFBRTtvQkFDTCxJQUFJLEVBQUUsV0FBVztvQkFDakIsT0FBTyxFQUFFLHNDQUFzQztpQkFDaEQ7YUFDRjtTQUNGO0tBQ0Y7SUFDRCxrREFBa0Q7SUFDbEQsVUFBVSxFQUFFO1FBQ1YsTUFBTSxFQUFFLEdBQUc7UUFDWCxXQUFXLEVBQUUscUJBQXFCO1FBQ2xDLE1BQU0sRUFBRTtZQUNOLE9BQU8sRUFBRTtnQkFDUCxPQUFPLEVBQUUsS0FBSztnQkFDZCxLQUFLLEVBQUU7b0JBQ0wsSUFBSSxFQUFFLHFCQUFxQjtvQkFDM0IsT0FBTyxFQUFFLG9EQUFvRDtvQkFDN0QsT0FBTyxFQUFFLEVBQUUsVUFBVSxFQUFFLEVBQUUsRUFBRTtpQkFDNUI7YUFDRjtTQUNGO0tBQ0Y7SUFDRCxnQ0FBZ0M7SUFDaEMsY0FBYyxFQUFFO1FBQ2QsTUFBTSxFQUFFLEdBQUc7UUFDWCxXQUFXLEVBQUUsdUJBQXVCO1FBQ3BDLE1BQU0sRUFBRTtZQUNOLE9BQU8sRUFBRTtnQkFDUCxPQUFPLEVBQUUsS0FBSztnQkFDZCxLQUFLLEVBQUU7b0JBQ0wsSUFBSSxFQUFFLGdCQUFnQjtvQkFDdEIsT0FBTyxFQUFFLDhDQUE4QztpQkFDeEQ7YUFDRjtTQUNGO0tBQ0Y7Q0FDRixDQUFDIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL2NvbW1vbi9kdG8vYXBpLXJlc3BvbnNlLmR0by50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBFcnJvckNvZGUgfSBmcm9tICcuLi9lbnVtcy9lcnJvci1jb2RlLmVudW0nO1xuaW1wb3J0IHsgQXBpUHJvcGVydHksIEFwaUV4dHJhTW9kZWxzIH0gZnJvbSAnQG5lc3Rqcy9zd2FnZ2VyJztcblxuLyoqXG4gKiBTdGFuZGFyZCBzdWNjZXNzIHJlc3BvbnNlIHdyYXBwZXIuXG4gKiBBbGwgc3VjY2Vzc2Z1bCBBUEkgcmVzcG9uc2VzIHNob3VsZCB1c2UgdGhpcyBmb3JtYXQuXG4gKi9cbmV4cG9ydCBjbGFzcyBBcGlSZXNwb25zZTxUPiB7XG4gIEBBcGlQcm9wZXJ0eSh7XG4gICAgZGVzY3JpcHRpb246ICdJbmRpY2F0ZXMgaWYgdGhlIHJlcXVlc3Qgd2FzIHN1Y2Nlc3NmdWwnLFxuICAgIGV4YW1wbGU6IHRydWUsXG4gIH0pXG4gIHN1Y2Nlc3MgPSB0cnVlIGFzIGNvbnN0O1xuXG4gIEBBcGlQcm9wZXJ0eSh7XG4gICAgZGVzY3JpcHRpb246ICdSZXNwb25zZSBkYXRhIHBheWxvYWQnLFxuICB9KVxuICBkYXRhOiBUO1xuXG4gIEBBcGlQcm9wZXJ0eSh7XG4gICAgZGVzY3JpcHRpb246ICdPcHRpb25hbCBodW1hbi1yZWFkYWJsZSBtZXNzYWdlJyxcbiAgICBleGFtcGxlOiAnT3BlcmF0aW9uIGNvbXBsZXRlZCBzdWNjZXNzZnVsbHknLFxuICAgIHJlcXVpcmVkOiBmYWxzZSxcbiAgfSlcbiAgbWVzc2FnZT86IHN0cmluZztcblxuICBjb25zdHJ1Y3RvcihkYXRhOiBULCBtZXNzYWdlPzogc3RyaW5nKSB7XG4gICAgdGhpcy5kYXRhID0gZGF0YTtcbiAgICB0aGlzLm1lc3NhZ2UgPSBtZXNzYWdlO1xuICB9XG5cbiAgLyoqXG4gICAqIEZhY3RvcnkgbWV0aG9kIHRvIGNyZWF0ZSBhIHN1Y2Nlc3MgcmVzcG9uc2UuXG4gICAqIEBwYXJhbSBkYXRhIFRoZSByZXNwb25zZSBkYXRhXG4gICAqIEBwYXJhbSBtZXNzYWdlIE9wdGlvbmFsIGh1bWFuLXJlYWRhYmxlIG1lc3NhZ2VcbiAgICogQHJldHVybnMgQXBpUmVzcG9uc2UgaW5zdGFuY2VcbiAgICovXG4gIHN0YXRpYyBzdWNjZXNzPFQ+KGRhdGE6IFQsIG1lc3NhZ2U/OiBzdHJpbmcpOiBBcGlSZXNwb25zZTxUPiB7XG4gICAgcmV0dXJuIG5ldyBBcGlSZXNwb25zZShkYXRhLCBtZXNzYWdlKTtcbiAgfVxufVxuXG4vKipcbiAqIEVycm9yIGRldGFpbHMgc3RydWN0dXJlIGZvciBTd2FnZ2VyIGRvY3VtZW50YXRpb24uXG4gKi9cbmV4cG9ydCBjbGFzcyBFcnJvckRldGFpbHMge1xuICBAQXBpUHJvcGVydHkoe1xuICAgIGRlc2NyaXB0aW9uOiAnTWFjaGluZS1yZWFkYWJsZSBlcnJvciBjb2RlIGZvciBmcm9udGVuZCBpMThuJyxcbiAgICBleGFtcGxlOiAnSU5WQUxJRF9DUkVERU5USUFMUycsXG4gICAgZW51bTogT2JqZWN0LnZhbHVlcyhFcnJvckNvZGUpLFxuICB9KVxuICBjb2RlITogRXJyb3JDb2RlO1xuXG4gIEBBcGlQcm9wZXJ0eSh7XG4gICAgZGVzY3JpcHRpb246ICdIdW1hbi1yZWFkYWJsZSBlcnJvciBtZXNzYWdlJyxcbiAgICBleGFtcGxlOiAnSW52YWxpZCBlbWFpbCBvciBwYXNzd29yZCcsXG4gIH0pXG4gIG1lc3NhZ2UhOiBzdHJpbmc7XG5cbiAgQEFwaVByb3BlcnR5KHtcbiAgICBkZXNjcmlwdGlvbjogJ09wdGlvbmFsIGFkZGl0aW9uYWwgY29udGV4dCAoZS5nLiwgZmllbGQgZXJyb3JzLCByZXRyeSBpbmZvKScsXG4gICAgZXhhbXBsZTogeyByZW1haW5pbmdBdHRlbXB0czogMyB9LFxuICAgIHJlcXVpcmVkOiBmYWxzZSxcbiAgICB0eXBlOiBPYmplY3QsXG4gICAgYWRkaXRpb25hbFByb3BlcnRpZXM6IHRydWUsXG4gIH0pXG4gIGRldGFpbHM/OiBSZWNvcmQ8c3RyaW5nLCB1bmtub3duPjtcbn1cblxuLyoqXG4gKiBTdGFuZGFyZCBlcnJvciByZXNwb25zZSBzdHJ1Y3R1cmUuXG4gKiBBbGwgZXJyb3IgQVBJIHJlc3BvbnNlcyBzaG91bGQgdXNlIHRoaXMgZm9ybWF0LlxuICpcbiAqIEZyb250ZW5kIGNhbiB1c2UgdGhlIGVycm9yLmNvZGUgZm9yIGkxOG4gdHJhbnNsYXRpb24gbG9va3VwLlxuICovXG5AQXBpRXh0cmFNb2RlbHMoRXJyb3JEZXRhaWxzKVxuZXhwb3J0IGNsYXNzIEVycm9yUmVzcG9uc2Uge1xuICBAQXBpUHJvcGVydHkoe1xuICAgIGRlc2NyaXB0aW9uOiAnSW5kaWNhdGVzIGlmIHRoZSByZXF1ZXN0IHdhcyBzdWNjZXNzZnVsJyxcbiAgICBleGFtcGxlOiBmYWxzZSxcbiAgfSlcbiAgc3VjY2VzcyA9IGZhbHNlIGFzIGNvbnN0O1xuXG4gIEBBcGlQcm9wZXJ0eSh7XG4gICAgZGVzY3JpcHRpb246ICdFcnJvciBkZXRhaWxzIGluY2x1ZGluZyBjb2RlIGFuZCBtZXNzYWdlJyxcbiAgICB0eXBlOiBFcnJvckRldGFpbHMsXG4gIH0pXG4gIGVycm9yOiBFcnJvckRldGFpbHM7XG5cbiAgQEFwaVByb3BlcnR5KHtcbiAgICBkZXNjcmlwdGlvbjpcbiAgICAgICdDb3JyZWxhdGlvbiBpZCBvZiB0aGUgcmVxdWVzdCwgbWF0Y2hpbmcgdGhlIFgtUmVxdWVzdC1JZCByZXNwb25zZSBoZWFkZXInLFxuICAgIGV4YW1wbGU6ICczZjFjMWYwYS0wZjJjLTRhM2UtOWIxZS0yZjVhNmM3ZDhlOTAnLFxuICAgIHJlcXVpcmVkOiBmYWxzZSxcbiAgfSlcbiAgcmVxdWVzdElkPzogc3RyaW5nO1xuXG4gIGNvbnN0cnVjdG9yKFxuICAgIGNvZGU6IEVycm9yQ29kZSxcbiAgICBtZXNzYWdlOiBzdHJpbmcsXG4gICAgZGV0YWlscz86IFJlY29yZDxzdHJpbmcsIHVua25vd24+LFxuICApIHtcbiAgICB0aGlzLmVycm9yID0ge1xuICAgICAgY29kZSxcbiAgICAgIG1lc3NhZ2UsXG4gICAgICBkZXRhaWxzLFxuICAgIH07XG4gIH1cblxuICAvKipcbiAgICogRmFjdG9yeSBtZXRob2QgdG8gY3JlYXRlIGFuIGVycm9yIHJlc3BvbnNlLlxuICAgKiBAcGFyYW0gY29kZSBUaGUgZXJyb3IgY29kZVxuICAgKiBAcGFyYW0gbWVzc2FnZSBIdW1hbi1yZWFkYWJsZSBlcnJvciBtZXNzYWdlXG4gICAqIEBwYXJhbSBkZXRhaWxzIE9wdGlvbmFsIGFkZGl0aW9uYWwgY29udGV4dFxuICAgKiBAcmV0dXJucyBFcnJvclJlc3BvbnNlIGluc3RhbmNlXG4gICAqL1xuICBzdGF0aWMgZXJyb3IoXG4gICAgY29kZTogRXJyb3JDb2RlLFxuICAgIG1lc3NhZ2U6IHN0cmluZyxcbiAgICBkZXRhaWxzPzogUmVjb3JkPHN0cmluZywgdW5rbm93bj4sXG4gICk6IEVycm9yUmVzcG9uc2Uge1xuICAgIHJldHVybiBuZXcgRXJyb3JSZXNwb25zZShjb2RlLCBtZXNzYWdlLCBkZXRhaWxzKTtcbiAgfVxufVxuXG4vKipcbiAqIENvbW1vbiBlcnJvciByZXNwb25zZXMgZm9yIFN3YWdnZXIgZG9jdW1lbnRhdGlvbi5cbiAqIFVzZSB0aGVzZSB3aXRoIEBBcGlSZXNwb25zZSBkZWNvcmF0b3IgZm9yIGNvbnNpc3RlbnQgZG9jdW1lbnRhdGlvbi5cbiAqL1xuZXhwb3J0IGNvbnN0IENvbW1vbkVycm9yUmVzcG9uc2VzID0ge1xuICAvKiogNDAwIEJhZCBSZXF1ZXN0IC0gVmFsaWRhdGlvbiBlcnJvcnMgKi9cbiAgVkFMSURBVElPTl9FUlJPUjoge1xuICAgIHN0YXR1czogNDAwLFxuICAgIGRlc2NyaXB0aW9uOiAnVmFsaWRhdGlvbiBmYWlsZWQnLFxuICAgIHNjaGVtYToge1xuICAgICAgZXhhbXBsZToge1xuICAgICAgICBzdWNjZXNzOiBmYWxzZSxcbiAgICAgICAgZXJyb3I6IHtcbiAgICAgICAgICBjb2RlOiAnVkFMSURBVElPTl9FUlJPUicsXG4gICAgICAgICAgbWVzc2FnZTogJ1ZhbGlkYXRpb24gZmFpbGVkJyxcbiAgICAgICAgICBkZXRhaWxzOiB7XG4gICAgICAgICAgICBlcnJvcnM6IFtcbiAgICAgICAgICAgICAgeyBmaWVsZDogJ2VtYWlsJywgbWVzc2FnZXM6IFsnZW1haWwgbXVzdCBiZSBhIHZhbGlkIGVtYWlsJ10gfSxcbiAgICAgICAgICAgIF0sXG4gICAgICAgICAgfSxcbiAgICAgICAgfSxcbiAgICAgIH0sXG4gICAgfSxcbiAgfSxcbiAgLyoqIDQwMSBVbmF1dGhvcml6ZWQgLSBBdXRoZW50aWNhdGlvbiByZXF1aXJlZCAqL1xuICBVTkFVVEhPUklaRUQ6IHtcbiAgICBzdGF0dXM6IDQwMSxcbiAgICBkZXNjcmlwdGlvbjogJ0F1dGhlbnRpY2F0aW9uIHJlcXVpcmVkJyxcbiAgICBzY2hlbWE6IHtcbiAgICAgIGV4YW1wbGU6IHtcbiAgICAgICAgc3VjY2VzczogZmFsc2UsXG4gICAgICAgIGVycm9yOiB7XG4gICAgICAgICAgY29kZTogJ1NFU1NJT05fUkVRVUlSRUQnLFxuICAgICAgICAgIG1lc3NhZ2U6ICdQbGVhc2UgbG9nIGluIHRvIGNvbnRpbnVlJyxcbiAgICAgICAgfSxcbiAgICAgIH0sXG4gICAgfSxcbiAgfSxcbiAgLyoqIDQwMyBGb3JiaWRkZW4gLSBJbnN1ZmZpY2llbnQgcGVybWlzc2lvbnMgKi9cbiAgRk9SQklEREVOOiB7XG4gICAgc3RhdHVzOiA0MDMsXG4gICAgZGVzY3JpcHRpb246ICdJbnN1ZmZpY2llbnQgcGVybWlzc2lvbnMnLFxuICAgIHNjaGVtYToge1xuICAgICAgZXhhbXBsZToge1xuICAgICAgICBzdWNjZXNzOiBmYWxzZSxcbiAgICAgICAgZXJyb3I6IHtcbiAgICAgICAgICBjb2RlOiAnRk9SQklEREVOJyxcbiAgICAgICAgICBtZXNzYWdlOiBcIllvdSBkb24ndCBoYXZlIHBlcm1pc3Npb24gdG8gcGVyZm9ybSB0aGlzIGFjdGlvblwiLFxuICAgICAgICB9LFxuICAgICAgfSxcbiAgICB9LFxuICB9LFxuICAvKiogNDA0IE5vdCBGb3VuZCAtIFJlc291cmNlIG5vdCBmb3VuZCAqL1xuICBOT1RfRk9VTkQ6IHtcbiAgICBzdGF0dXM6IDQwNCxcbiAgICBkZXNjcmlwdGlvbjogJ1Jlc291cmNlIG5vdCBmb3VuZCcsXG4gICAgc2NoZW1hOiB7XG4gICAgICBleGFtcGxlOiB7XG4gICAgICAgIHN1Y2Nlc3M6IGZhbHNlLFxuICAgICAgICBlcnJvcjoge1xuICAgICAgICAgIGNvZGU6ICdOT1RfRk9VTkQnLFxuICAgICAgICAgIG1lc3NhZ2U6ICdUaGUgcmVxdWVzdGVkIHJlc291cmNlIHdhcyBub3QgZm91bmQnLFxuICAgICAgICB9LFxuICAgICAgfSxcbiAgICB9LFxuICB9LFxuICAvKiogNDI5IFRvbyBNYW55IFJlcXVlc3RzIC0gUmF0ZSBsaW1pdCBleGNlZWRlZCAqL1xuICBSQVRFX0xJTUlUOiB7XG4gICAgc3RhdHVzOiA0MjksXG4gICAgZGVzY3JpcHRpb246ICdSYXRlIGxpbWl0IGV4Y2VlZGVkJyxcbiAgICBzY2hlbWE6IHtcbiAgICAgIGV4YW1wbGU6IHtcbiAgICAgICAgc3VjY2VzczogZmFsc2UsXG4gICAgICAgIGVycm9yOiB7XG4gICAgICAgICAgY29kZTogJ1JBVEVfTElNSVRfRVhDRUVERUQnLFxuICAgICAgICAgIG1lc3NhZ2U6ICdUb28gbWFueSByZXF1ZXN0cy4gUGxlYXNlIHdhaXQgYmVmb3JlIHRyeWluZyBhZ2FpbicsXG4gICAgICAgICAgZGV0YWlsczogeyByZXRyeUFmdGVyOiA2MCB9LFxuICAgICAgICB9LFxuICAgICAgfSxcbiAgICB9LFxuICB9LFxuICAvKiogNTAwIEludGVybmFsIFNlcnZlciBFcnJvciAqL1xuICBJTlRFUk5BTF9FUlJPUjoge1xuICAgIHN0YXR1czogNTAwLFxuICAgIGRlc2NyaXB0aW9uOiAnSW50ZXJuYWwgc2VydmVyIGVycm9yJyxcbiAgICBzY2hlbWE6IHtcbiAgICAgIGV4YW1wbGU6IHtcbiAgICAgICAgc3VjY2VzczogZmFsc2UsXG4gICAgICAgIGVycm9yOiB7XG4gICAgICAgICAgY29kZTogJ0lOVEVSTkFMX0VSUk9SJyxcbiAgICAgICAgICBtZXNzYWdlOiAnU29tZXRoaW5nIHdlbnQgd3JvbmcuIFBsZWFzZSB0cnkgYWdhaW4gbGF0ZXInLFxuICAgICAgICB9LFxuICAgICAgfSxcbiAgICB9LFxuICB9LFxufTtcbiJdLCJ2ZXJzaW9uIjozfQ==

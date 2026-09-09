@@ -1,0 +1,13 @@
+{
+  "observed_at": "2026-09-08T10:44:26.747691+00:00",
+  "check_run_id": 102030586802,
+  "status": "completed",
+  "conclusion": "failure",
+  "summary_count_matches": [
+    "1 medium",
+    "30 high",
+    "30 high severity",
+    "31 new alerts"
+  ],
+  "scope": "check summary count metadata only; no annotations or alert details fetched"
+}

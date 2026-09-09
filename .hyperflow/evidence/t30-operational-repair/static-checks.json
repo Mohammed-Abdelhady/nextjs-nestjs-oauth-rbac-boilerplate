@@ -1,0 +1,48 @@
+[
+  {
+    "command": "node --check scripts/verify-docker.mjs",
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "command": "node --check .hyperflow/evidence/t30-operational/lightweight-checks.mjs",
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "command": "node --check .hyperflow/evidence/t30-operational-repair/filtered-context-check.mjs",
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "command": "node --check .hyperflow/evidence/t30-operational-repair/http-probe-checks.mjs",
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "command": "installed Prettier API check scripts/verify-docker.mjs",
+    "exit": 0
+  },
+  {
+    "command": "installed Prettier API check .hyperflow/evidence/t30-operational/lightweight-checks.mjs",
+    "exit": 0
+  },
+  {
+    "command": "installed Prettier API check .hyperflow/evidence/t30-operational-repair/filtered-context-check.mjs",
+    "exit": 0
+  },
+  {
+    "command": "installed Prettier API check .hyperflow/evidence/t30-operational-repair/http-probe-checks.mjs",
+    "exit": 0
+  },
+  {
+    "command": "git diff --check -- .dockerignore scripts/verify-docker.mjs",
+    "exit": 0,
+    "output": "git: warning: confstr() failed with code 5: couldn't get path of DARWIN_USER_TEMP_DIR; using /tmp instead\n"
+  },
+  {
+    "command": "env -i PATH=\"$PATH\" node scripts/verify-docker.mjs --check-checkout",
+    "exit": 0,
+    "output": "checkout filename guard passed\n"
+  }
+]

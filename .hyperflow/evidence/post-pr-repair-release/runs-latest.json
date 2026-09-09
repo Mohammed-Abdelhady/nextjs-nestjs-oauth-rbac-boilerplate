@@ -1,0 +1,51 @@
+{
+  "observed_at": "2026-09-08T10:43:28.377088+00:00",
+  "runs": [
+    {
+      "conclusion": "",
+      "jobs": [
+        {
+          "databaseId": 102030188022,
+          "name": "scaffold-combinations",
+          "status": "in_progress",
+          "conclusion": ""
+        },
+        {
+          "databaseId": 102030188166,
+          "name": "docker",
+          "status": "in_progress",
+          "conclusion": ""
+        },
+        {
+          "databaseId": 102030188193,
+          "name": "backend and browser integration",
+          "status": "in_progress",
+          "conclusion": ""
+        },
+        {
+          "databaseId": 102030188352,
+          "name": "quality",
+          "status": "in_progress",
+          "conclusion": ""
+        }
+      ],
+      "status": "in_progress",
+      "url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34216745039",
+      "run_id": 34216745039
+    },
+    {
+      "conclusion": "success",
+      "jobs": [
+        {
+          "databaseId": 102030187725,
+          "name": "analyze",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "status": "completed",
+      "url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34216745015",
+      "run_id": 34216745015
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "finishedAt": "2026-09-08T08:18:14.191Z",
+  "priorProcesses": [
+    {
+      "pid": 69183,
+      "state": "ESRCH"
+    },
+    {
+      "pid": 69184,
+      "state": "ESRCH"
+    }
+  ],
+  "sourceBoundary": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "unchanged": true
+    },
+    {
+      "path": ".dockerignore",
+      "unchanged": true
+    },
+    {
+      "path": "nginx/.dockerignore",
+      "unchanged": true
+    },
+    {
+      "path": "nginx/nginx.conf",
+      "unchanged": true
+    },
+    {
+      "path": ".gitignore",
+      "unchanged": true
+    },
+    {
+      "path": "scripts/verify-docker.mjs",
+      "unchanged": true
+    },
+    {
+      "path": "packages/create-nest-next-auth/scripts/sync-template.mjs",
+      "unchanged": true
+    },
+    {
+      "path": "packages/create-nest-next-auth/test/e2e.test.ts",
+      "unchanged": true
+    }
+  ],
+  "lockfile": {
+    "sha256": "76d787e9d2ae5671a3097b2f4e30305c019d0c0189db707c93eb1d061c9a436d",
+    "unchanged": true,
+    "installAttempted": false
+  },
+  "cleanup": {
+    "parent": "/private/tmp/t30-runtime-xRhe5I",
+    "removed": true,
+    "ownedProcessesRunning": 0,
+    "dockerResourcesCreated": 0,
+    "dependenciesInstalled": false
+  },
+  "diskBeforeCleanup": "Filesystem   1024-blocks      Used Available Capacity iused     ifree %iused  Mounted on\n/dev/disk3s5   482797652 424000000  12920000    98% 6609165 129379960    5%   /System/Volumes/Data\n",
+  "diskAfterCleanup": "Filesystem   1024-blocks      Used Available Capacity iused     ifree %iused  Mounted on\n/dev/disk3s5   482797652 424000000  12920000    98% 6608056 129441200    5%   /System/Volumes/Data\n"
+}

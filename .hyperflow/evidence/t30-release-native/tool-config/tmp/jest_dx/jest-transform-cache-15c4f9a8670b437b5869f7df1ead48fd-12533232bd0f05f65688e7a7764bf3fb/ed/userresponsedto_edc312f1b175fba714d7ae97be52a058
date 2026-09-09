@@ -1,0 +1,66 @@
+9f902510ef3651169ab718d7b8fee762
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.UserResponseDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
+/**
+ * Standardized user response DTO
+ * Used across auth and user modules for consistent API responses
+ */
+class UserResponseDto {
+    id;
+    email;
+    name;
+    role;
+    /**
+     * Create a UserResponseDto from a user document
+     * @param user - User document with _id, email, name, role
+     */
+    static fromDocument(user) {
+        const dto = new UserResponseDto();
+        dto.id = user._id.toString();
+        dto.email = user.email;
+        dto.name = user.name;
+        dto.role = user.role;
+        return dto;
+    }
+}
+exports.UserResponseDto = UserResponseDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'User ID',
+        example: '507f1f77bcf86cd799439011',
+    }),
+    __metadata("design:type", String)
+], UserResponseDto.prototype, "id", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'User email address',
+        example: 'user@example.com',
+    }),
+    __metadata("design:type", String)
+], UserResponseDto.prototype, "email", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'User full name',
+        example: 'John Doe',
+    }),
+    __metadata("design:type", String)
+], UserResponseDto.prototype, "name", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'User role (USER, SUPPORT, MANAGER, ADMIN)',
+        example: 'USER',
+    }),
+    __metadata("design:type", String)
+], UserResponseDto.prototype, "role", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29tbW9uL2R0by91c2VyLXJlc3BvbnNlLmR0by50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSw2Q0FBOEM7QUFFOUM7OztHQUdHO0FBQ0gsTUFBYSxlQUFlO0lBSzFCLEVBQUUsQ0FBVTtJQU1aLEtBQUssQ0FBVTtJQU1mLElBQUksQ0FBVTtJQU1kLElBQUksQ0FBVTtJQUVkOzs7T0FHRztJQUNILE1BQU0sQ0FBQyxZQUFZLENBQUMsSUFLbkI7UUFDQyxNQUFNLEdBQUcsR0FBRyxJQUFJLGVBQWUsRUFBRSxDQUFDO1FBQ2xDLEdBQUcsQ0FBQyxFQUFFLEdBQUcsSUFBSSxDQUFDLEdBQUcsQ0FBQyxRQUFRLEVBQUUsQ0FBQztRQUM3QixHQUFHLENBQUMsS0FBSyxHQUFHLElBQUksQ0FBQyxLQUFLLENBQUM7UUFDdkIsR0FBRyxDQUFDLElBQUksR0FBRyxJQUFJLENBQUMsSUFBSSxDQUFDO1FBQ3JCLEdBQUcsQ0FBQyxJQUFJLEdBQUcsSUFBSSxDQUFDLElBQUksQ0FBQztRQUNyQixPQUFPLEdBQUcsQ0FBQztJQUNiLENBQUM7Q0FDRjtBQTFDRCwwQ0EwQ0M7QUFyQ0M7SUFKQyxJQUFBLHFCQUFXLEVBQUM7UUFDWCxXQUFXLEVBQUUsU0FBUztRQUN0QixPQUFPLEVBQUUsMEJBQTBCO0tBQ3BDLENBQUM7OzJDQUNVO0FBTVo7SUFKQyxJQUFBLHFCQUFXLEVBQUM7UUFDWCxXQUFXLEVBQUUsb0JBQW9CO1FBQ2pDLE9BQU8sRUFBRSxrQkFBa0I7S0FDNUIsQ0FBQzs7OENBQ2E7QUFNZjtJQUpDLElBQUEscUJBQVcsRUFBQztRQUNYLFdBQVcsRUFBRSxnQkFBZ0I7UUFDN0IsT0FBTyxFQUFFLFVBQVU7S0FDcEIsQ0FBQzs7NkNBQ1k7QUFNZDtJQUpDLElBQUEscUJBQVcsRUFBQztRQUNYLFdBQVcsRUFBRSwyQ0FBMkM7UUFDeEQsT0FBTyxFQUFFLE1BQU07S0FDaEIsQ0FBQzs7NkNBQ1kiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29tbW9uL2R0by91c2VyLXJlc3BvbnNlLmR0by50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBBcGlQcm9wZXJ0eSB9IGZyb20gJ0BuZXN0anMvc3dhZ2dlcic7XG5cbi8qKlxuICogU3RhbmRhcmRpemVkIHVzZXIgcmVzcG9uc2UgRFRPXG4gKiBVc2VkIGFjcm9zcyBhdXRoIGFuZCB1c2VyIG1vZHVsZXMgZm9yIGNvbnNpc3RlbnQgQVBJIHJlc3BvbnNlc1xuICovXG5leHBvcnQgY2xhc3MgVXNlclJlc3BvbnNlRHRvIHtcbiAgQEFwaVByb3BlcnR5KHtcbiAgICBkZXNjcmlwdGlvbjogJ1VzZXIgSUQnLFxuICAgIGV4YW1wbGU6ICc1MDdmMWY3N2JjZjg2Y2Q3OTk0MzkwMTEnLFxuICB9KVxuICBpZCE6IHN0cmluZztcblxuICBAQXBpUHJvcGVydHkoe1xuICAgIGRlc2NyaXB0aW9uOiAnVXNlciBlbWFpbCBhZGRyZXNzJyxcbiAgICBleGFtcGxlOiAndXNlckBleGFtcGxlLmNvbScsXG4gIH0pXG4gIGVtYWlsITogc3RyaW5nO1xuXG4gIEBBcGlQcm9wZXJ0eSh7XG4gICAgZGVzY3JpcHRpb246ICdVc2VyIGZ1bGwgbmFtZScsXG4gICAgZXhhbXBsZTogJ0pvaG4gRG9lJyxcbiAgfSlcbiAgbmFtZSE6IHN0cmluZztcblxuICBAQXBpUHJvcGVydHkoe1xuICAgIGRlc2NyaXB0aW9uOiAnVXNlciByb2xlIChVU0VSLCBTVVBQT1JULCBNQU5BR0VSLCBBRE1JTiknLFxuICAgIGV4YW1wbGU6ICdVU0VSJyxcbiAgfSlcbiAgcm9sZSE6IHN0cmluZztcblxuICAvKipcbiAgICogQ3JlYXRlIGEgVXNlclJlc3BvbnNlRHRvIGZyb20gYSB1c2VyIGRvY3VtZW50XG4gICAqIEBwYXJhbSB1c2VyIC0gVXNlciBkb2N1bWVudCB3aXRoIF9pZCwgZW1haWwsIG5hbWUsIHJvbGVcbiAgICovXG4gIHN0YXRpYyBmcm9tRG9jdW1lbnQodXNlcjoge1xuICAgIF9pZDogeyB0b1N0cmluZygpOiBzdHJpbmcgfTtcbiAgICBlbWFpbDogc3RyaW5nO1xuICAgIG5hbWU6IHN0cmluZztcbiAgICByb2xlOiBzdHJpbmc7XG4gIH0pOiBVc2VyUmVzcG9uc2VEdG8ge1xuICAgIGNvbnN0IGR0byA9IG5ldyBVc2VyUmVzcG9uc2VEdG8oKTtcbiAgICBkdG8uaWQgPSB1c2VyLl9pZC50b1N0cmluZygpO1xuICAgIGR0by5lbWFpbCA9IHVzZXIuZW1haWw7XG4gICAgZHRvLm5hbWUgPSB1c2VyLm5hbWU7XG4gICAgZHRvLnJvbGUgPSB1c2VyLnJvbGU7XG4gICAgcmV0dXJuIGR0bztcbiAgfVxufVxuIl0sInZlcnNpb24iOjN9

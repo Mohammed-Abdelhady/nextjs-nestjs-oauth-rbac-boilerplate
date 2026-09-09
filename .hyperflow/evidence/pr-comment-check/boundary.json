@@ -1,0 +1,21 @@
+{
+  "head": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+  "issue_comments": 4,
+  "review_summaries": 2,
+  "inline_threads": 14,
+  "unresolved": 14,
+  "outdated": 1,
+  "nonsecurity_inline_bodies": 6,
+  "issue_bodies_read": 3,
+  "authentication_inline_bodies_unread": 5,
+  "review_summary_bodies_unread": 2,
+  "security_bot_issue_body_unread": 1,
+  "security_tooling_bodies_classified_then_excluded": 3,
+  "all_pages_complete": true,
+  "candidate_clean_and_hashes_unchanged": true,
+  "source_writes": 0,
+  "posted_replies": 0,
+  "threads_resolved": 0,
+  "services_started": 0,
+  "fallback_scope": "codex-only"
+}

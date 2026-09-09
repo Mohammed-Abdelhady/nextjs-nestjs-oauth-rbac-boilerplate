@@ -1,0 +1,10 @@
+source_revision=68cefb61f450b94c195a8d6cf325ac5e26c15349
+source_fingerprint=3eb34e18ad5f5e09f84db2f351de04d37f58174709ae1093b66cdf5468fb7472
+snapshot_fingerprint=4e15265679c544b45b847cd15d3261b5898d28f723d56197757537db857b91af
+allowlisted_templates=./.env.docker.example,./backend/.env.example,./frontend/.env.example
+source_size=342M
+snapshot_size=1.7G
+source_fingerprint_after=3eb34e18ad5f5e09f84db2f351de04d37f58174709ae1093b66cdf5468fb7472
+snapshot_node_modules_link_count=86
+snapshot_vitest_link=../vitest/vitest.mjs
+snapshot_workspace_links=backend=../backend;frontend=../frontend;create-nest-next-auth=../packages/create-nest-next-auth;

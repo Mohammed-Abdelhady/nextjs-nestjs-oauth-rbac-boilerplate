@@ -1,4 +1,10 @@
-export type FeatureKind = 'credential' | 'oauth' | 'second-factor' | 'passwordless';
+/** `hidden` features are never offered; another feature pulls them in. */
+export type FeatureKind =
+  | 'credential'
+  | 'oauth'
+  | 'second-factor'
+  | 'passwordless'
+  | 'hidden';
 
 export type FeatureStatus = 'available' | 'planned';
 
@@ -44,5 +50,8 @@ export interface PruneResult {
   deletedFiles: string[];
   strippedEnvVars: string[];
   removedDocLines: number;
+  /** Files a `feature:` marker was stripped from, or deleted lines out of. */
+  markedFiles: string[];
+  removedMarkedLines: number;
   dangling: DanglingReference[];
 }

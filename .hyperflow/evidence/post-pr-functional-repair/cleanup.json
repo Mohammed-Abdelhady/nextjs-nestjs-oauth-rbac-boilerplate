@@ -1,0 +1,17 @@
+{
+  "captured_at": "2026-09-08T10:18:22.759735+00:00",
+  "owned_exec_sessions_completed": [
+    6909,
+    45373
+  ],
+  "fixture_ports_without_listeners": [
+    3107,
+    5107,
+    5108
+  ],
+  "lsof_exit": 1,
+  "fixture_and_browser_runs_exited": true,
+  "candidate_runtime_dependencies_retained": true,
+  "docker_or_denied_helper_runtime_attempted": false,
+  "source_write_ownership_released": true
+}

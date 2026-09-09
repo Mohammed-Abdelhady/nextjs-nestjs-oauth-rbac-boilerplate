@@ -1,0 +1,45 @@
+{
+  "head": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+  "tree": "c8af1cd88c0c825043adbfb41c150828d3a35350",
+  "remote_head": "9e502f9ee0e36c8f9c164fc05a03161c689f374f",
+  "paths": [
+    {
+      "path": ".hyperflow/reports/audit-status.md",
+      "sha256": "bef2524118e091ded4111d0f149ab19e293b1335b25495b03583edac8891b227"
+    },
+    {
+      "path": ".hyperflow/reports/production-hardening.md",
+      "sha256": "406191ca0b84cea286269a77279865857bffc37c912192536d3ebf2b9f2125c4"
+    },
+    {
+      "path": "frontend/e2e/authenticated-regressions.spec.ts",
+      "sha256": "b825e0b20a1b5a0660bcf17a82fa8d6a848680be51b775d728a252c8f87eee08"
+    },
+    {
+      "path": "frontend/src/app/[locale]/(dashboard)/layout.tsx",
+      "sha256": "dddf4718f4970a27299c4cc81f1062d27fd08f3d2c95453f2c2bb27283e2e989"
+    },
+    {
+      "path": "frontend/src/app/[locale]/(dashboard)/sessions/page.tsx",
+      "sha256": "9ee99a227c362191b631d384f5b9152a0b7b21882df6feb9c5b9ec23332bb7ab"
+    },
+    {
+      "path": "frontend/src/app/[locale]/layout.tsx",
+      "sha256": "48b14c9070204c56606609eb0e560b32fb4f1bb1e3a7ce27092ac56dc08a5ce1"
+    },
+    {
+      "path": "frontend/src/modules/sessions/components/RevokeAllSessionsButton.tsx",
+      "sha256": "f40baa8a10d10ee2bbbf05d910d40bbf916cf499892eecffa5ca236fe55acb75"
+    },
+    {
+      "path": "scripts/config-transforms.test.mjs",
+      "sha256": "52508a8ddebb612641100a1f3d37c5f76503cb19bb7777d52ab3b2da413242e7"
+    },
+    {
+      "path": "scripts/lib/docker-http-probes.mjs",
+      "sha256": "719d0a3f5a901ab7682fdcc443c4e221ec0103820e956f7c40b730e58ededb3a"
+    }
+  ],
+  "candidate_clean": true,
+  "ledger_rows_exact": 137
+}

@@ -1,0 +1,16 @@
+[
+  {
+    "conclusion": "",
+    "databaseId": 34227060088,
+    "name": "CodeQL",
+    "status": "in_progress",
+    "url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34227060088"
+  },
+  {
+    "conclusion": "",
+    "databaseId": 34227059854,
+    "name": "CI",
+    "status": "in_progress",
+    "url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/actions/runs/34227059854"
+  }
+]

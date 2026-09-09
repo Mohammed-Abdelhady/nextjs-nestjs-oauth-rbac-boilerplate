@@ -2,6 +2,7 @@ import type { Manifest, PruneResult } from '../types.js';
 import { removeDocLinks } from './docs.js';
 import { type EnvRemovals, stripEnvFiles, writeFeatureFlag } from './env.js';
 import { deleteMatchingFiles } from './files.js';
+import { removeFeatureLines } from './markers.js';
 import { findDanglingReferences } from './references.js';
 
 /** Env vars only the removed features use, mapped to the words naming them. */
@@ -23,8 +24,8 @@ function removedEnvVars(manifest: Manifest, selected: Set<string>): EnvRemovals 
 }
 
 /**
- * Removes everything the unselected features own, then reports imports that
- * still point at deleted files.
+ * Removes everything the unselected features own, marked lines included, then
+ * reports imports that still point at deleted files.
  */
 export async function prune(
   root: string,
@@ -48,6 +49,10 @@ export async function prune(
     ...doomedDocs,
   ]);
 
+  // Runs for every selection, not only a partial one: the full project has to
+  // come out without marker comments too.
+  const markers = await removeFeatureLines(root, selectedIds, Object.keys(manifest.features));
+
   const docs = await removeDocLinks(root, doomedDocs);
   const strippedEnvVars = await stripEnvFiles(root, removedEnvVars(manifest, selected));
   await writeFeatureFlag(root, selectedIds);
@@ -59,6 +64,8 @@ export async function prune(
     deletedFiles,
     strippedEnvVars,
     removedDocLines: docs.removedLines,
+    markedFiles: markers.editedFiles,
+    removedMarkedLines: markers.removedLines,
     dangling,
   };
 }

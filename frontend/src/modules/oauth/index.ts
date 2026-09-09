@@ -1,11 +1,5 @@
 // Components
-export {
-  OAuthButton,
-  OAuthButtons,
-  OAuthCallbackPanel,
-  OAuthDivider,
-  OAuthProviderIcon,
-} from './components';
+export { OAuthButton, OAuthButtons, OAuthCallbackPanel, OAuthProviderIcon } from './components';
 
 // API hooks and API object
 export { useGetEnabledProvidersQuery, oauthApi } from './api';

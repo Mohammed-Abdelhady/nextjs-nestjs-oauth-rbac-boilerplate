@@ -1,0 +1,11 @@
+{
+  "original_nonsecret_files_unchanged": 847,
+  "original_sha256": "8b280bb0f91e365d280a06409309f3b5f109767a761f62111eb965be005b6b04",
+  "report_links_valid": 3,
+  "fixture_ports_free": [
+    3107,
+    5107,
+    5108
+  ],
+  "source_ownership_released": true
+}

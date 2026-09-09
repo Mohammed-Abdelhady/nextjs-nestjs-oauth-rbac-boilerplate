@@ -1,0 +1,5 @@
+{
+  "exit": 0,
+  "stdout": "{\"result\":{\"checked\":[\"backend-health\",\"nginx-health\",\"frontend-en\",\"frontend-ar\",\"auth-methods\"]},\"actual\":[{\"path\":\"/en/auth/login\",\"status\":200},{\"path\":\"/ar/auth/login\",\"status\":200}],\"otherEndpoints\":\"synthetic responses; no nginx runtime\"}\n",
+  "stderr": ""
+}

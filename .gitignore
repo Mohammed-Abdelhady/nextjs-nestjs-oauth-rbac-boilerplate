@@ -27,6 +27,13 @@ packages/create-nest-next-auth/template.manifest.json
 
 # Testing
 coverage/
+output/
+test-results/
+playwright-report/
+blob-report/
+.auth/
+.mongodb-binaries/
+mongodb-memory-server/
 
 # Logs
 *.log

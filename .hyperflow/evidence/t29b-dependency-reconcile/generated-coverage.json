@@ -1,0 +1,115 @@
+{
+  "selection_count": 7,
+  "typecheck_count": 14,
+  "combinations_test_count": 9,
+  "skipped": 0,
+  "selections": [
+    {
+      "requested_features": [
+        "email-password"
+      ],
+      "backend_typecheck": "pass",
+      "frontend_typecheck": "pass",
+      "compiled_feature_availability_both_flag_states": "pass",
+      "full_source_parity": "not applicable"
+    },
+    {
+      "requested_features": [
+        "magic-link"
+      ],
+      "backend_typecheck": "pass",
+      "frontend_typecheck": "pass",
+      "compiled_feature_availability_both_flag_states": "pass",
+      "full_source_parity": "not applicable"
+    },
+    {
+      "requested_features": [
+        "email-password",
+        "google"
+      ],
+      "backend_typecheck": "pass",
+      "frontend_typecheck": "pass",
+      "compiled_feature_availability_both_flag_states": "pass",
+      "full_source_parity": "not applicable"
+    },
+    {
+      "requested_features": [
+        "email-password",
+        "totp"
+      ],
+      "backend_typecheck": "pass",
+      "frontend_typecheck": "pass",
+      "compiled_feature_availability_both_flag_states": "pass",
+      "full_source_parity": "not applicable"
+    },
+    {
+      "requested_features": [
+        "passkeys"
+      ],
+      "backend_typecheck": "pass",
+      "frontend_typecheck": "pass",
+      "compiled_feature_availability_both_flag_states": "pass",
+      "full_source_parity": "not applicable"
+    },
+    {
+      "requested_features": [
+        "email-password",
+        "totp",
+        "passkeys",
+        "google",
+        "github",
+        "facebook",
+        "microsoft",
+        "apple",
+        "discord",
+        "linkedin",
+        "gitlab",
+        "x",
+        "slack",
+        "twitch",
+        "oidc"
+      ],
+      "backend_typecheck": "pass",
+      "frontend_typecheck": "pass",
+      "compiled_feature_availability_both_flag_states": "pass",
+      "full_source_parity": "not applicable"
+    },
+    {
+      "requested_features": [
+        "oauth-core",
+        "email-password",
+        "google",
+        "github",
+        "facebook",
+        "magic-link",
+        "totp",
+        "passkeys",
+        "microsoft",
+        "apple",
+        "discord",
+        "linkedin",
+        "gitlab",
+        "x",
+        "slack",
+        "twitch",
+        "oidc"
+      ],
+      "backend_typecheck": "pass",
+      "frontend_typecheck": "pass",
+      "compiled_feature_availability_both_flag_states": "pass",
+      "full_source_parity": "pass"
+    }
+  ],
+  "availability_unit_selections": 16,
+  "flags_per_selection": [
+    true,
+    false
+  ],
+  "methods_per_selection": 4,
+  "availability_behavior_checks": 128,
+  "full_selection_compared_directories": [
+    "backend/src",
+    "backend/test",
+    "frontend/src"
+  ]
+}

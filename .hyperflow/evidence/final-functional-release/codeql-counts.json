@@ -1,0 +1,15 @@
+[
+  {
+    "name": "CodeQL",
+    "status": "completed",
+    "conclusion": "failure",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/runs/102081120189",
+    "id": 102081120189,
+    "count_matches": [
+      "30 high",
+      "1 medium"
+    ],
+    "observed_at": "2026-09-08T13:31:04.250311+00:00",
+    "head": "9e502f9ee0e36c8f9c164fc05a03161c689f374f"
+  }
+]

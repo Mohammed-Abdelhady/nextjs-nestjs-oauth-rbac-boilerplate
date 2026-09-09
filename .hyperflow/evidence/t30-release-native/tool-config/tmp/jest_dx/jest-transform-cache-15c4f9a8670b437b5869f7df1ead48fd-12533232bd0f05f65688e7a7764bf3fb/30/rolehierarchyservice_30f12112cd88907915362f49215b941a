@@ -1,0 +1,88 @@
+b1b0068718ba6e19e1cfc2a3f7d65eab
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RoleHierarchyService = void 0;
+const common_1 = require("@nestjs/common");
+const mongoose_1 = require("@nestjs/mongoose");
+const mongoose_2 = require("mongoose");
+const role_schema_1 = require("../schemas/role.schema");
+const app_exception_1 = require("../../common/exceptions/app.exception");
+const error_code_enum_1 = require("../../common/enums/error-code.enum");
+const role_hierarchy_1 = require("../../common/utils/role-hierarchy");
+const role_util_1 = require("../utils/role.util");
+/**
+ * Reads role hierarchy levels from the roles collection.
+ * The hardcoded map in common/utils/role-hierarchy only seeds the system roles
+ * and serves as a fallback for documents written before the level field existed.
+ */
+let RoleHierarchyService = class RoleHierarchyService {
+    roleModel;
+    constructor(roleModel) {
+        this.roleModel = roleModel;
+    }
+    /**
+     * Level of a role slug.
+     *
+     * @param slug - Role slug to resolve
+     * @returns The stored level, or 0 when the slug has no role document
+     */
+    async getLevel(slug) {
+        const role = await this.findLevel(slug);
+        return role ? (0, role_util_1.resolveRoleLevel)(role) : role_hierarchy_1.UNKNOWN_ROLE_LEVEL;
+    }
+    /**
+     * Level of a role slug that must exist.
+     *
+     * @param slug - Role slug to resolve
+     * @throws AppException ROLE_NOT_FOUND when no role carries the slug
+     */
+    async getLevelOrFail(slug) {
+        const role = await this.findLevel(slug);
+        if (!role) {
+            throw new app_exception_1.AppException(error_code_enum_1.ErrorCode.ROLE_NOT_FOUND, `Role "${slug}" does not exist`, common_1.HttpStatus.NOT_FOUND);
+        }
+        return (0, role_util_1.resolveRoleLevel)(role);
+    }
+    /**
+     * Slugs of every role whose level is at or below the given level.
+     * Filtering happens in memory because older documents have no level field.
+     *
+     * @param level - Inclusive upper bound
+     */
+    async getSlugsAtOrBelow(level) {
+        const roles = await this.roleModel
+            .find()
+            .select('slug level')
+            .lean()
+            .exec();
+        return roles
+            .filter((role) => (0, role_util_1.resolveRoleLevel)(role) <= level)
+            .map((role) => role.slug);
+    }
+    async findLevel(slug) {
+        return this.roleModel
+            .findOne({ slug })
+            .select('slug level')
+            .lean()
+            .exec();
+    }
+};
+exports.RoleHierarchyService = RoleHierarchyService;
+exports.RoleHierarchyService = RoleHierarchyService = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, mongoose_1.InjectModel)(role_schema_1.Role.name)),
+    __metadata("design:paramtypes", [mongoose_2.Model])
+], RoleHierarchyService);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvcm9sZS9zZXJ2aWNlcy9yb2xlLWhpZXJhcmNoeS5zZXJ2aWNlLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7OztBQUFBLDJDQUF3RDtBQUN4RCwrQ0FBK0M7QUFDL0MsdUNBQWlDO0FBQ2pDLHdEQUE0RDtBQUM1RCx5RUFBcUU7QUFDckUsd0VBQStEO0FBQy9ELHNFQUF1RTtBQUN2RSxrREFBdUU7QUFJdkU7Ozs7R0FJRztBQUVJLElBQU0sb0JBQW9CLEdBQTFCLE1BQU0sb0JBQW9CO0lBRVk7SUFEM0MsWUFDMkMsU0FBOEI7UUFBOUIsY0FBUyxHQUFULFNBQVMsQ0FBcUI7SUFDdEUsQ0FBQztJQUVKOzs7OztPQUtHO0lBQ0gsS0FBSyxDQUFDLFFBQVEsQ0FBQyxJQUFZO1FBQ3pCLE1BQU0sSUFBSSxHQUFHLE1BQU0sSUFBSSxDQUFDLFNBQVMsQ0FBQyxJQUFJLENBQUMsQ0FBQztRQUN4QyxPQUFPLElBQUksQ0FBQyxDQUFDLENBQUMsSUFBQSw0QkFBZ0IsRUFBQyxJQUFJLENBQUMsQ0FBQyxDQUFDLENBQUMsbUNBQWtCLENBQUM7SUFDNUQsQ0FBQztJQUVEOzs7OztPQUtHO0lBQ0gsS0FBSyxDQUFDLGNBQWMsQ0FBQyxJQUFZO1FBQy9CLE1BQU0sSUFBSSxHQUFHLE1BQU0sSUFBSSxDQUFDLFNBQVMsQ0FBQyxJQUFJLENBQUMsQ0FBQztRQUV4QyxJQUFJLENBQUMsSUFBSSxFQUFFLENBQUM7WUFDVixNQUFNLElBQUksNEJBQVksQ0FDcEIsMkJBQVMsQ0FBQyxjQUFjLEVBQ3hCLFNBQVMsSUFBSSxrQkFBa0IsRUFDL0IsbUJBQVUsQ0FBQyxTQUFTLENBQ3JCLENBQUM7UUFDSixDQUFDO1FBRUQsT0FBTyxJQUFBLDRCQUFnQixFQUFDLElBQUksQ0FBQyxDQUFDO0lBQ2hDLENBQUM7SUFFRDs7Ozs7T0FLRztJQUNILEtBQUssQ0FBQyxpQkFBaUIsQ0FBQyxLQUFhO1FBQ25DLE1BQU0sS0FBSyxHQUFHLE1BQU0sSUFBSSxDQUFDLFNBQVM7YUFDL0IsSUFBSSxFQUFFO2FBQ04sTUFBTSxDQUFDLFlBQVksQ0FBQzthQUNwQixJQUFJLEVBQXlCO2FBQzdCLElBQUksRUFBRSxDQUFDO1FBRVYsT0FBTyxLQUFLO2FBQ1QsTUFBTSxDQUFDLENBQUMsSUFBSSxFQUFFLEVBQUUsQ0FBQyxJQUFBLDRCQUFnQixFQUFDLElBQUksQ0FBQyxJQUFJLEtBQUssQ0FBQzthQUNqRCxHQUFHLENBQUMsQ0FBQyxJQUFJLEVBQUUsRUFBRSxDQUFDLElBQUksQ0FBQyxJQUFJLENBQUMsQ0FBQztJQUM5QixDQUFDO0lBRU8sS0FBSyxDQUFDLFNBQVMsQ0FBQyxJQUFZO1FBQ2xDLE9BQU8sSUFBSSxDQUFDLFNBQVM7YUFDbEIsT0FBTyxDQUFDLEVBQUUsSUFBSSxFQUFFLENBQUM7YUFDakIsTUFBTSxDQUFDLFlBQVksQ0FBQzthQUNwQixJQUFJLEVBQThCO2FBQ2xDLElBQUksRUFBRSxDQUFDO0lBQ1osQ0FBQztDQUNGLENBQUE7QUE3RFksb0RBQW9COytCQUFwQixvQkFBb0I7SUFEaEMsSUFBQSxtQkFBVSxHQUFFO0lBR1IsV0FBQSxJQUFBLHNCQUFXLEVBQUMsa0JBQUksQ0FBQyxJQUFJLENBQUMsQ0FBQTtxQ0FBNkIsZ0JBQUs7R0FGaEQsb0JBQW9CLENBNkRoQyIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy9yb2xlL3NlcnZpY2VzL3JvbGUtaGllcmFyY2h5LnNlcnZpY2UudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgSHR0cFN0YXR1cywgSW5qZWN0YWJsZSB9IGZyb20gJ0BuZXN0anMvY29tbW9uJztcbmltcG9ydCB7IEluamVjdE1vZGVsIH0gZnJvbSAnQG5lc3Rqcy9tb25nb29zZSc7XG5pbXBvcnQgeyBNb2RlbCB9IGZyb20gJ21vbmdvb3NlJztcbmltcG9ydCB7IFJvbGUsIFJvbGVEb2N1bWVudCB9IGZyb20gJy4uL3NjaGVtYXMvcm9sZS5zY2hlbWEnO1xuaW1wb3J0IHsgQXBwRXhjZXB0aW9uIH0gZnJvbSAnLi4vLi4vY29tbW9uL2V4Y2VwdGlvbnMvYXBwLmV4Y2VwdGlvbic7XG5pbXBvcnQgeyBFcnJvckNvZGUgfSBmcm9tICcuLi8uLi9jb21tb24vZW51bXMvZXJyb3ItY29kZS5lbnVtJztcbmltcG9ydCB7IFVOS05PV05fUk9MRV9MRVZFTCB9IGZyb20gJy4uLy4uL2NvbW1vbi91dGlscy9yb2xlLWhpZXJhcmNoeSc7XG5pbXBvcnQgeyBSb2xlTGV2ZWxTb3VyY2UsIHJlc29sdmVSb2xlTGV2ZWwgfSBmcm9tICcuLi91dGlscy9yb2xlLnV0aWwnO1xuXG50eXBlIFJvbGVMZXZlbFByb2plY3Rpb24gPSBSb2xlTGV2ZWxTb3VyY2U7XG5cbi8qKlxuICogUmVhZHMgcm9sZSBoaWVyYXJjaHkgbGV2ZWxzIGZyb20gdGhlIHJvbGVzIGNvbGxlY3Rpb24uXG4gKiBUaGUgaGFyZGNvZGVkIG1hcCBpbiBjb21tb24vdXRpbHMvcm9sZS1oaWVyYXJjaHkgb25seSBzZWVkcyB0aGUgc3lzdGVtIHJvbGVzXG4gKiBhbmQgc2VydmVzIGFzIGEgZmFsbGJhY2sgZm9yIGRvY3VtZW50cyB3cml0dGVuIGJlZm9yZSB0aGUgbGV2ZWwgZmllbGQgZXhpc3RlZC5cbiAqL1xuQEluamVjdGFibGUoKVxuZXhwb3J0IGNsYXNzIFJvbGVIaWVyYXJjaHlTZXJ2aWNlIHtcbiAgY29uc3RydWN0b3IoXG4gICAgQEluamVjdE1vZGVsKFJvbGUubmFtZSkgcHJpdmF0ZSByZWFkb25seSByb2xlTW9kZWw6IE1vZGVsPFJvbGVEb2N1bWVudD4sXG4gICkge31cblxuICAvKipcbiAgICogTGV2ZWwgb2YgYSByb2xlIHNsdWcuXG4gICAqXG4gICAqIEBwYXJhbSBzbHVnIC0gUm9sZSBzbHVnIHRvIHJlc29sdmVcbiAgICogQHJldHVybnMgVGhlIHN0b3JlZCBsZXZlbCwgb3IgMCB3aGVuIHRoZSBzbHVnIGhhcyBubyByb2xlIGRvY3VtZW50XG4gICAqL1xuICBhc3luYyBnZXRMZXZlbChzbHVnOiBzdHJpbmcpOiBQcm9taXNlPG51bWJlcj4ge1xuICAgIGNvbnN0IHJvbGUgPSBhd2FpdCB0aGlzLmZpbmRMZXZlbChzbHVnKTtcbiAgICByZXR1cm4gcm9sZSA/IHJlc29sdmVSb2xlTGV2ZWwocm9sZSkgOiBVTktOT1dOX1JPTEVfTEVWRUw7XG4gIH1cblxuICAvKipcbiAgICogTGV2ZWwgb2YgYSByb2xlIHNsdWcgdGhhdCBtdXN0IGV4aXN0LlxuICAgKlxuICAgKiBAcGFyYW0gc2x1ZyAtIFJvbGUgc2x1ZyB0byByZXNvbHZlXG4gICAqIEB0aHJvd3MgQXBwRXhjZXB0aW9uIFJPTEVfTk9UX0ZPVU5EIHdoZW4gbm8gcm9sZSBjYXJyaWVzIHRoZSBzbHVnXG4gICAqL1xuICBhc3luYyBnZXRMZXZlbE9yRmFpbChzbHVnOiBzdHJpbmcpOiBQcm9taXNlPG51bWJlcj4ge1xuICAgIGNvbnN0IHJvbGUgPSBhd2FpdCB0aGlzLmZpbmRMZXZlbChzbHVnKTtcblxuICAgIGlmICghcm9sZSkge1xuICAgICAgdGhyb3cgbmV3IEFwcEV4Y2VwdGlvbihcbiAgICAgICAgRXJyb3JDb2RlLlJPTEVfTk9UX0ZPVU5ELFxuICAgICAgICBgUm9sZSBcIiR7c2x1Z31cIiBkb2VzIG5vdCBleGlzdGAsXG4gICAgICAgIEh0dHBTdGF0dXMuTk9UX0ZPVU5ELFxuICAgICAgKTtcbiAgICB9XG5cbiAgICByZXR1cm4gcmVzb2x2ZVJvbGVMZXZlbChyb2xlKTtcbiAgfVxuXG4gIC8qKlxuICAgKiBTbHVncyBvZiBldmVyeSByb2xlIHdob3NlIGxldmVsIGlzIGF0IG9yIGJlbG93IHRoZSBnaXZlbiBsZXZlbC5cbiAgICogRmlsdGVyaW5nIGhhcHBlbnMgaW4gbWVtb3J5IGJlY2F1c2Ugb2xkZXIgZG9jdW1lbnRzIGhhdmUgbm8gbGV2ZWwgZmllbGQuXG4gICAqXG4gICAqIEBwYXJhbSBsZXZlbCAtIEluY2x1c2l2ZSB1cHBlciBib3VuZFxuICAgKi9cbiAgYXN5bmMgZ2V0U2x1Z3NBdE9yQmVsb3cobGV2ZWw6IG51bWJlcik6IFByb21pc2U8c3RyaW5nW10+IHtcbiAgICBjb25zdCByb2xlcyA9IGF3YWl0IHRoaXMucm9sZU1vZGVsXG4gICAgICAuZmluZCgpXG4gICAgICAuc2VsZWN0KCdzbHVnIGxldmVsJylcbiAgICAgIC5sZWFuPFJvbGVMZXZlbFByb2plY3Rpb25bXT4oKVxuICAgICAgLmV4ZWMoKTtcblxuICAgIHJldHVybiByb2xlc1xuICAgICAgLmZpbHRlcigocm9sZSkgPT4gcmVzb2x2ZVJvbGVMZXZlbChyb2xlKSA8PSBsZXZlbClcbiAgICAgIC5tYXAoKHJvbGUpID0+IHJvbGUuc2x1Zyk7XG4gIH1cblxuICBwcml2YXRlIGFzeW5jIGZpbmRMZXZlbChzbHVnOiBzdHJpbmcpOiBQcm9taXNlPFJvbGVMZXZlbFByb2plY3Rpb24gfCBudWxsPiB7XG4gICAgcmV0dXJuIHRoaXMucm9sZU1vZGVsXG4gICAgICAuZmluZE9uZSh7IHNsdWcgfSlcbiAgICAgIC5zZWxlY3QoJ3NsdWcgbGV2ZWwnKVxuICAgICAgLmxlYW48Um9sZUxldmVsUHJvamVjdGlvbiB8IG51bGw+KClcbiAgICAgIC5leGVjKCk7XG4gIH1cbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

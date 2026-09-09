@@ -1,0 +1,18 @@
+{
+  "ports": {
+    "3107": "free",
+    "5107": "free",
+    "5108": "free"
+  },
+  "sessions_closed": [
+    66506,
+    60509,
+    17588,
+    29881,
+    31906,
+    78687,
+    58901
+  ],
+  "owned_services_remaining": false,
+  "candidate_retained": true
+}

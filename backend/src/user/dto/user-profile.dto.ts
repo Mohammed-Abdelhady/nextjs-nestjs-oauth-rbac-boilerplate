@@ -49,17 +49,21 @@ export class UserProfileDto {
   })
   isVerified!: boolean;
 
+  // feature:totp:start
   @ApiProperty({
     description: 'Whether sign-in on this account asks for a TOTP code',
     example: false,
   })
   twoFactorEnabled!: boolean;
+  // feature:totp:end
 
+  // feature:passkeys:start
   @ApiProperty({
     description: 'How many passkeys are registered on the account',
     example: 2,
   })
   passkeyCount!: number;
+  // feature:passkeys:end
 
   @ApiProperty({
     description: 'Avatar URL synced from the primary provider',

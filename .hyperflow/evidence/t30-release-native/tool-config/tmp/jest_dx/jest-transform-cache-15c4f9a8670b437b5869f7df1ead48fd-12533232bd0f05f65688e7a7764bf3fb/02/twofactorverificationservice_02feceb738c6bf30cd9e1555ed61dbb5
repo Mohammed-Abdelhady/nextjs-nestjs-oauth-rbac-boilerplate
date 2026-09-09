@@ -1,0 +1,97 @@
+26cd7a50330f724fc0794c3f3819760e
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var TwoFactorVerificationService_1;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TwoFactorVerificationService = void 0;
+const common_1 = require("@nestjs/common");
+const app_exception_1 = require("../../../common/exceptions/app.exception");
+const error_code_enum_1 = require("../../../common/enums/error-code.enum");
+const totp_secret_crypto_service_1 = require("./totp-secret-crypto.service");
+const totp_util_1 = require("../utils/totp.util");
+const recovery_code_util_1 = require("../utils/recovery-code.util");
+const two_factor_constants_1 = require("../constants/two-factor.constants");
+/**
+ * Checks a second factor and records that it was spent. Every route that asks
+ * for a code goes through here, so replay protection and single-use recovery
+ * codes hold everywhere and not only on the login path.
+ */
+let TwoFactorVerificationService = TwoFactorVerificationService_1 = class TwoFactorVerificationService {
+    cryptoService;
+    logger = new common_1.Logger(TwoFactorVerificationService_1.name);
+    constructor(cryptoService) {
+        this.cryptoService = cryptoService;
+    }
+    /**
+     * @throws AppException TWO_FACTOR_CODE_INVALID when neither field is filled
+     * in, or when the value in it does not match
+     */
+    async verifySecondFactor(user, input) {
+        if (input.code) {
+            await this.verifyTotpCode(user, input.code);
+            return;
+        }
+        if (input.recoveryCode) {
+            await this.verifyRecoveryCode(user, input.recoveryCode);
+            return;
+        }
+        throw this.invalidCode('neither a code nor a recovery code was sent');
+    }
+    /**
+     * Checks a code against the secret on the account, whether or not the second
+     * factor is confirmed yet, and marks the step as spent.
+     */
+    async verifyTotpCode(user, code) {
+        const secret = user.twoFactor?.secret;
+        if (!secret) {
+            throw this.invalidCode('account has no secret to check against');
+        }
+        const step = this.resolveStep(secret, code);
+        const lastUsedStep = user.twoFactor.lastUsedStep;
+        if (typeof lastUsedStep === 'number' && step <= lastUsedStep) {
+            throw this.invalidCode('code was already used');
+        }
+        user.twoFactor.lastUsedStep = step;
+        await user.save();
+    }
+    /** Spends one recovery code. A code that was already spent is refused. */
+    async verifyRecoveryCode(user, recoveryCode) {
+        const hash = (0, recovery_code_util_1.hashRecoveryCode)(recoveryCode);
+        const match = (user.twoFactor?.recoveryCodes ?? []).find((candidate) => candidate.usedAt === null && (0, recovery_code_util_1.recoveryHashEquals)(candidate.hash, hash));
+        if (!match) {
+            throw this.invalidCode('recovery code is unknown or already used');
+        }
+        match.usedAt = new Date();
+        user.markModified('twoFactor.recoveryCodes');
+        await user.save();
+    }
+    /**
+     * The absolute TOTP step the code belongs to, counted from the epoch. Steps
+     * only ever move forward, which is what makes a spent one detectable.
+     */
+    resolveStep(secret, code) {
+        const delta = (0, totp_util_1.checkTotpDelta)(code, this.cryptoService.decrypt(secret));
+        if (delta === null || delta === undefined) {
+            throw this.invalidCode('code does not match the secret');
+        }
+        return Math.floor(Date.now() / two_factor_constants_1.TOTP_STEP_MS) + delta;
+    }
+    invalidCode(reason) {
+        this.logger.warn(`Two-factor check failed: ${reason}`);
+        return new app_exception_1.AppException(error_code_enum_1.ErrorCode.TWO_FACTOR_CODE_INVALID, 'That code is not valid', common_1.HttpStatus.UNAUTHORIZED);
+    }
+};
+exports.TwoFactorVerificationService = TwoFactorVerificationService;
+exports.TwoFactorVerificationService = TwoFactorVerificationService = TwoFactorVerificationService_1 = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [totp_secret_crypto_service_1.TotpSecretCryptoService])
+], TwoFactorVerificationService);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC90d28tZmFjdG9yL3NlcnZpY2VzL3R3by1mYWN0b3ItdmVyaWZpY2F0aW9uLnNlcnZpY2UudHMiLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7OztBQUFBLDJDQUFnRTtBQUdoRSw0RUFBd0U7QUFDeEUsMkVBQWtFO0FBQ2xFLDZFQUF1RTtBQUN2RSxrREFBb0Q7QUFDcEQsb0VBR3FDO0FBQ3JDLDRFQUFpRTtBQVFqRTs7OztHQUlHO0FBRUksSUFBTSw0QkFBNEIsb0NBQWxDLE1BQU0sNEJBQTRCO0lBR1Y7SUFGWixNQUFNLEdBQUcsSUFBSSxlQUFNLENBQUMsOEJBQTRCLENBQUMsSUFBSSxDQUFDLENBQUM7SUFFeEUsWUFBNkIsYUFBc0M7UUFBdEMsa0JBQWEsR0FBYixhQUFhLENBQXlCO0lBQUcsQ0FBQztJQUV2RTs7O09BR0c7SUFDSCxLQUFLLENBQUMsa0JBQWtCLENBQ3RCLElBQWtCLEVBQ2xCLEtBQXdCO1FBRXhCLElBQUksS0FBSyxDQUFDLElBQUksRUFBRSxDQUFDO1lBQ2YsTUFBTSxJQUFJLENBQUMsY0FBYyxDQUFDLElBQUksRUFBRSxLQUFLLENBQUMsSUFBSSxDQUFDLENBQUM7WUFDNUMsT0FBTztRQUNULENBQUM7UUFFRCxJQUFJLEtBQUssQ0FBQyxZQUFZLEVBQUUsQ0FBQztZQUN2QixNQUFNLElBQUksQ0FBQyxrQkFBa0IsQ0FBQyxJQUFJLEVBQUUsS0FBSyxDQUFDLFlBQVksQ0FBQyxDQUFDO1lBQ3hELE9BQU87UUFDVCxDQUFDO1FBRUQsTUFBTSxJQUFJLENBQUMsV0FBVyxDQUFDLDZDQUE2QyxDQUFDLENBQUM7SUFDeEUsQ0FBQztJQUVEOzs7T0FHRztJQUNILEtBQUssQ0FBQyxjQUFjLENBQUMsSUFBa0IsRUFBRSxJQUFZO1FBQ25ELE1BQU0sTUFBTSxHQUFHLElBQUksQ0FBQyxTQUFTLEVBQUUsTUFBTSxDQUFDO1FBQ3RDLElBQUksQ0FBQyxNQUFNLEVBQUUsQ0FBQztZQUNaLE1BQU0sSUFBSSxDQUFDLFdBQVcsQ0FBQyx3Q0FBd0MsQ0FBQyxDQUFDO1FBQ25FLENBQUM7UUFFRCxNQUFNLElBQUksR0FBRyxJQUFJLENBQUMsV0FBVyxDQUFDLE1BQU0sRUFBRSxJQUFJLENBQUMsQ0FBQztRQUM1QyxNQUFNLFlBQVksR0FBRyxJQUFJLENBQUMsU0FBUyxDQUFDLFlBQVksQ0FBQztRQUVqRCxJQUFJLE9BQU8sWUFBWSxLQUFLLFFBQVEsSUFBSSxJQUFJLElBQUksWUFBWSxFQUFFLENBQUM7WUFDN0QsTUFBTSxJQUFJLENBQUMsV0FBVyxDQUFDLHVCQUF1QixDQUFDLENBQUM7UUFDbEQsQ0FBQztRQUVELElBQUksQ0FBQyxTQUFTLENBQUMsWUFBWSxHQUFHLElBQUksQ0FBQztRQUNuQyxNQUFNLElBQUksQ0FBQyxJQUFJLEVBQUUsQ0FBQztJQUNwQixDQUFDO0lBRUQsMEVBQTBFO0lBQzFFLEtBQUssQ0FBQyxrQkFBa0IsQ0FDdEIsSUFBa0IsRUFDbEIsWUFBb0I7UUFFcEIsTUFBTSxJQUFJLEdBQUcsSUFBQSxxQ0FBZ0IsRUFBQyxZQUFZLENBQUMsQ0FBQztRQUM1QyxNQUFNLEtBQUssR0FBRyxDQUFDLElBQUksQ0FBQyxTQUFTLEVBQUUsYUFBYSxJQUFJLEVBQUUsQ0FBQyxDQUFDLElBQUksQ0FDdEQsQ0FBQyxTQUFTLEVBQUUsRUFBRSxDQUNaLFNBQVMsQ0FBQyxNQUFNLEtBQUssSUFBSSxJQUFJLElBQUEsdUNBQWtCLEVBQUMsU0FBUyxDQUFDLElBQUksRUFBRSxJQUFJLENBQUMsQ0FDeEUsQ0FBQztRQUVGLElBQUksQ0FBQyxLQUFLLEVBQUUsQ0FBQztZQUNYLE1BQU0sSUFBSSxDQUFDLFdBQVcsQ0FBQywwQ0FBMEMsQ0FBQyxDQUFDO1FBQ3JFLENBQUM7UUFFRCxLQUFLLENBQUMsTUFBTSxHQUFHLElBQUksSUFBSSxFQUFFLENBQUM7UUFDMUIsSUFBSSxDQUFDLFlBQVksQ0FBQyx5QkFBeUIsQ0FBQyxDQUFDO1FBQzdDLE1BQU0sSUFBSSxDQUFDLElBQUksRUFBRSxDQUFDO0lBQ3BCLENBQUM7SUFFRDs7O09BR0c7SUFDSyxXQUFXLENBQUMsTUFBdUIsRUFBRSxJQUFZO1FBQ3ZELE1BQU0sS0FBSyxHQUFHLElBQUEsMEJBQWMsRUFBQyxJQUFJLEVBQUUsSUFBSSxDQUFDLGFBQWEsQ0FBQyxPQUFPLENBQUMsTUFBTSxDQUFDLENBQUMsQ0FBQztRQUV2RSxJQUFJLEtBQUssS0FBSyxJQUFJLElBQUksS0FBSyxLQUFLLFNBQVMsRUFBRSxDQUFDO1lBQzFDLE1BQU0sSUFBSSxDQUFDLFdBQVcsQ0FBQyxnQ0FBZ0MsQ0FBQyxDQUFDO1FBQzNELENBQUM7UUFFRCxPQUFPLElBQUksQ0FBQyxLQUFLLENBQUMsSUFBSSxDQUFDLEdBQUcsRUFBRSxHQUFHLG1DQUFZLENBQUMsR0FBRyxLQUFLLENBQUM7SUFDdkQsQ0FBQztJQUVPLFdBQVcsQ0FBQyxNQUFjO1FBQ2hDLElBQUksQ0FBQyxNQUFNLENBQUMsSUFBSSxDQUFDLDRCQUE0QixNQUFNLEVBQUUsQ0FBQyxDQUFDO1FBQ3ZELE9BQU8sSUFBSSw0QkFBWSxDQUNyQiwyQkFBUyxDQUFDLHVCQUF1QixFQUNqQyx3QkFBd0IsRUFDeEIsbUJBQVUsQ0FBQyxZQUFZLENBQ3hCLENBQUM7SUFDSixDQUFDO0NBQ0YsQ0FBQTtBQXpGWSxvRUFBNEI7dUNBQTVCLDRCQUE0QjtJQUR4QyxJQUFBLG1CQUFVLEdBQUU7cUNBSWlDLG9EQUF1QjtHQUh4RCw0QkFBNEIsQ0F5RnhDIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL2F1dGgvdHdvLWZhY3Rvci9zZXJ2aWNlcy90d28tZmFjdG9yLXZlcmlmaWNhdGlvbi5zZXJ2aWNlLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IEh0dHBTdGF0dXMsIEluamVjdGFibGUsIExvZ2dlciB9IGZyb20gJ0BuZXN0anMvY29tbW9uJztcbmltcG9ydCB7IFVzZXJEb2N1bWVudCB9IGZyb20gJy4uLy4uLy4uL3VzZXIvc2NoZW1hcy91c2VyLnNjaGVtYSc7XG5pbXBvcnQgeyBUd29GYWN0b3JTZWNyZXQgfSBmcm9tICcuLi8uLi8uLi91c2VyL3NjaGVtYXMvdHdvLWZhY3Rvci5zY2hlbWEnO1xuaW1wb3J0IHsgQXBwRXhjZXB0aW9uIH0gZnJvbSAnLi4vLi4vLi4vY29tbW9uL2V4Y2VwdGlvbnMvYXBwLmV4Y2VwdGlvbic7XG5pbXBvcnQgeyBFcnJvckNvZGUgfSBmcm9tICcuLi8uLi8uLi9jb21tb24vZW51bXMvZXJyb3ItY29kZS5lbnVtJztcbmltcG9ydCB7IFRvdHBTZWNyZXRDcnlwdG9TZXJ2aWNlIH0gZnJvbSAnLi90b3RwLXNlY3JldC1jcnlwdG8uc2VydmljZSc7XG5pbXBvcnQgeyBjaGVja1RvdHBEZWx0YSB9IGZyb20gJy4uL3V0aWxzL3RvdHAudXRpbCc7XG5pbXBvcnQge1xuICBoYXNoUmVjb3ZlcnlDb2RlLFxuICByZWNvdmVyeUhhc2hFcXVhbHMsXG59IGZyb20gJy4uL3V0aWxzL3JlY292ZXJ5LWNvZGUudXRpbCc7XG5pbXBvcnQgeyBUT1RQX1NURVBfTVMgfSBmcm9tICcuLi9jb25zdGFudHMvdHdvLWZhY3Rvci5jb25zdGFudHMnO1xuXG4vKiogV2hhdCBhIGNhbGxlciBtYXkgc2VuZCBhcyB0aGUgc2Vjb25kIGZhY3Rvci4gRXhhY3RseSBvbmUgaXMgdXNlZC4gKi9cbmV4cG9ydCBpbnRlcmZhY2UgU2Vjb25kRmFjdG9ySW5wdXQge1xuICBjb2RlPzogc3RyaW5nO1xuICByZWNvdmVyeUNvZGU/OiBzdHJpbmc7XG59XG5cbi8qKlxuICogQ2hlY2tzIGEgc2Vjb25kIGZhY3RvciBhbmQgcmVjb3JkcyB0aGF0IGl0IHdhcyBzcGVudC4gRXZlcnkgcm91dGUgdGhhdCBhc2tzXG4gKiBmb3IgYSBjb2RlIGdvZXMgdGhyb3VnaCBoZXJlLCBzbyByZXBsYXkgcHJvdGVjdGlvbiBhbmQgc2luZ2xlLXVzZSByZWNvdmVyeVxuICogY29kZXMgaG9sZCBldmVyeXdoZXJlIGFuZCBub3Qgb25seSBvbiB0aGUgbG9naW4gcGF0aC5cbiAqL1xuQEluamVjdGFibGUoKVxuZXhwb3J0IGNsYXNzIFR3b0ZhY3RvclZlcmlmaWNhdGlvblNlcnZpY2Uge1xuICBwcml2YXRlIHJlYWRvbmx5IGxvZ2dlciA9IG5ldyBMb2dnZXIoVHdvRmFjdG9yVmVyaWZpY2F0aW9uU2VydmljZS5uYW1lKTtcblxuICBjb25zdHJ1Y3Rvcihwcml2YXRlIHJlYWRvbmx5IGNyeXB0b1NlcnZpY2U6IFRvdHBTZWNyZXRDcnlwdG9TZXJ2aWNlKSB7fVxuXG4gIC8qKlxuICAgKiBAdGhyb3dzIEFwcEV4Y2VwdGlvbiBUV09fRkFDVE9SX0NPREVfSU5WQUxJRCB3aGVuIG5laXRoZXIgZmllbGQgaXMgZmlsbGVkXG4gICAqIGluLCBvciB3aGVuIHRoZSB2YWx1ZSBpbiBpdCBkb2VzIG5vdCBtYXRjaFxuICAgKi9cbiAgYXN5bmMgdmVyaWZ5U2Vjb25kRmFjdG9yKFxuICAgIHVzZXI6IFVzZXJEb2N1bWVudCxcbiAgICBpbnB1dDogU2Vjb25kRmFjdG9ySW5wdXQsXG4gICk6IFByb21pc2U8dm9pZD4ge1xuICAgIGlmIChpbnB1dC5jb2RlKSB7XG4gICAgICBhd2FpdCB0aGlzLnZlcmlmeVRvdHBDb2RlKHVzZXIsIGlucHV0LmNvZGUpO1xuICAgICAgcmV0dXJuO1xuICAgIH1cblxuICAgIGlmIChpbnB1dC5yZWNvdmVyeUNvZGUpIHtcbiAgICAgIGF3YWl0IHRoaXMudmVyaWZ5UmVjb3ZlcnlDb2RlKHVzZXIsIGlucHV0LnJlY292ZXJ5Q29kZSk7XG4gICAgICByZXR1cm47XG4gICAgfVxuXG4gICAgdGhyb3cgdGhpcy5pbnZhbGlkQ29kZSgnbmVpdGhlciBhIGNvZGUgbm9yIGEgcmVjb3ZlcnkgY29kZSB3YXMgc2VudCcpO1xuICB9XG5cbiAgLyoqXG4gICAqIENoZWNrcyBhIGNvZGUgYWdhaW5zdCB0aGUgc2VjcmV0IG9uIHRoZSBhY2NvdW50LCB3aGV0aGVyIG9yIG5vdCB0aGUgc2Vjb25kXG4gICAqIGZhY3RvciBpcyBjb25maXJtZWQgeWV0LCBhbmQgbWFya3MgdGhlIHN0ZXAgYXMgc3BlbnQuXG4gICAqL1xuICBhc3luYyB2ZXJpZnlUb3RwQ29kZSh1c2VyOiBVc2VyRG9jdW1lbnQsIGNvZGU6IHN0cmluZyk6IFByb21pc2U8dm9pZD4ge1xuICAgIGNvbnN0IHNlY3JldCA9IHVzZXIudHdvRmFjdG9yPy5zZWNyZXQ7XG4gICAgaWYgKCFzZWNyZXQpIHtcbiAgICAgIHRocm93IHRoaXMuaW52YWxpZENvZGUoJ2FjY291bnQgaGFzIG5vIHNlY3JldCB0byBjaGVjayBhZ2FpbnN0Jyk7XG4gICAgfVxuXG4gICAgY29uc3Qgc3RlcCA9IHRoaXMucmVzb2x2ZVN0ZXAoc2VjcmV0LCBjb2RlKTtcbiAgICBjb25zdCBsYXN0VXNlZFN0ZXAgPSB1c2VyLnR3b0ZhY3Rvci5sYXN0VXNlZFN0ZXA7XG5cbiAgICBpZiAodHlwZW9mIGxhc3RVc2VkU3RlcCA9PT0gJ251bWJlcicgJiYgc3RlcCA8PSBsYXN0VXNlZFN0ZXApIHtcbiAgICAgIHRocm93IHRoaXMuaW52YWxpZENvZGUoJ2NvZGUgd2FzIGFscmVhZHkgdXNlZCcpO1xuICAgIH1cblxuICAgIHVzZXIudHdvRmFjdG9yLmxhc3RVc2VkU3RlcCA9IHN0ZXA7XG4gICAgYXdhaXQgdXNlci5zYXZlKCk7XG4gIH1cblxuICAvKiogU3BlbmRzIG9uZSByZWNvdmVyeSBjb2RlLiBBIGNvZGUgdGhhdCB3YXMgYWxyZWFkeSBzcGVudCBpcyByZWZ1c2VkLiAqL1xuICBhc3luYyB2ZXJpZnlSZWNvdmVyeUNvZGUoXG4gICAgdXNlcjogVXNlckRvY3VtZW50LFxuICAgIHJlY292ZXJ5Q29kZTogc3RyaW5nLFxuICApOiBQcm9taXNlPHZvaWQ+IHtcbiAgICBjb25zdCBoYXNoID0gaGFzaFJlY292ZXJ5Q29kZShyZWNvdmVyeUNvZGUpO1xuICAgIGNvbnN0IG1hdGNoID0gKHVzZXIudHdvRmFjdG9yPy5yZWNvdmVyeUNvZGVzID8/IFtdKS5maW5kKFxuICAgICAgKGNhbmRpZGF0ZSkgPT5cbiAgICAgICAgY2FuZGlkYXRlLnVzZWRBdCA9PT0gbnVsbCAmJiByZWNvdmVyeUhhc2hFcXVhbHMoY2FuZGlkYXRlLmhhc2gsIGhhc2gpLFxuICAgICk7XG5cbiAgICBpZiAoIW1hdGNoKSB7XG4gICAgICB0aHJvdyB0aGlzLmludmFsaWRDb2RlKCdyZWNvdmVyeSBjb2RlIGlzIHVua25vd24gb3IgYWxyZWFkeSB1c2VkJyk7XG4gICAgfVxuXG4gICAgbWF0Y2gudXNlZEF0ID0gbmV3IERhdGUoKTtcbiAgICB1c2VyLm1hcmtNb2RpZmllZCgndHdvRmFjdG9yLnJlY292ZXJ5Q29kZXMnKTtcbiAgICBhd2FpdCB1c2VyLnNhdmUoKTtcbiAgfVxuXG4gIC8qKlxuICAgKiBUaGUgYWJzb2x1dGUgVE9UUCBzdGVwIHRoZSBjb2RlIGJlbG9uZ3MgdG8sIGNvdW50ZWQgZnJvbSB0aGUgZXBvY2guIFN0ZXBzXG4gICAqIG9ubHkgZXZlciBtb3ZlIGZvcndhcmQsIHdoaWNoIGlzIHdoYXQgbWFrZXMgYSBzcGVudCBvbmUgZGV0ZWN0YWJsZS5cbiAgICovXG4gIHByaXZhdGUgcmVzb2x2ZVN0ZXAoc2VjcmV0OiBUd29GYWN0b3JTZWNyZXQsIGNvZGU6IHN0cmluZyk6IG51bWJlciB7XG4gICAgY29uc3QgZGVsdGEgPSBjaGVja1RvdHBEZWx0YShjb2RlLCB0aGlzLmNyeXB0b1NlcnZpY2UuZGVjcnlwdChzZWNyZXQpKTtcblxuICAgIGlmIChkZWx0YSA9PT0gbnVsbCB8fCBkZWx0YSA9PT0gdW5kZWZpbmVkKSB7XG4gICAgICB0aHJvdyB0aGlzLmludmFsaWRDb2RlKCdjb2RlIGRvZXMgbm90IG1hdGNoIHRoZSBzZWNyZXQnKTtcbiAgICB9XG5cbiAgICByZXR1cm4gTWF0aC5mbG9vcihEYXRlLm5vdygpIC8gVE9UUF9TVEVQX01TKSArIGRlbHRhO1xuICB9XG5cbiAgcHJpdmF0ZSBpbnZhbGlkQ29kZShyZWFzb246IHN0cmluZyk6IEFwcEV4Y2VwdGlvbiB7XG4gICAgdGhpcy5sb2dnZXIud2FybihgVHdvLWZhY3RvciBjaGVjayBmYWlsZWQ6ICR7cmVhc29ufWApO1xuICAgIHJldHVybiBuZXcgQXBwRXhjZXB0aW9uKFxuICAgICAgRXJyb3JDb2RlLlRXT19GQUNUT1JfQ09ERV9JTlZBTElELFxuICAgICAgJ1RoYXQgY29kZSBpcyBub3QgdmFsaWQnLFxuICAgICAgSHR0cFN0YXR1cy5VTkFVVEhPUklaRUQsXG4gICAgKTtcbiAgfVxufVxuIl0sInZlcnNpb24iOjN9

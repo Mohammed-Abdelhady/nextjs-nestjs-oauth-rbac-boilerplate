@@ -1,0 +1,11 @@
+BLOCKED before candidate creation.
+
+- `git ls-remote` exited 128: could not resolve `github.com`.
+- `gh pr list` exited 1: could not connect to `api.github.com`.
+- Local reconciliation passed: all 30 final hashes and 802 projected operations match.
+
+No staging, commits, push or PR creation occurred. Original source/history, snapshot and runtime remain preserved. Curated-report handoff is still pending.
+
+Evidence: [report.md](/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/t30-release/report.md) and [boundary.json](/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/t30-release/boundary.json).
+
+Root must reconcile transport before release resumes.

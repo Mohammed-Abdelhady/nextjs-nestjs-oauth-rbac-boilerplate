@@ -1,0 +1,13 @@
+[
+  {
+    "conclusion": "failure",
+    "html_url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/runs/102064046308",
+    "id": 102064046308,
+    "status": "completed",
+    "count_matches": [
+      "30 high",
+      "1 medium"
+    ],
+    "observed_at": "2026-09-08T12:40:08.200169+00:00"
+  }
+]

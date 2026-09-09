@@ -1,0 +1,9 @@
+{
+  "links_checked": 115,
+  "issues": [],
+  "omitted_inventory_entry": "frontend/src/examples/README.md is an approved deletion",
+  "excluded_false_positives": {
+    "api_paths": "case-insensitive /Users/ pattern matched ordinary /users/ API documentation",
+    "technical_directory": ".claude is an explicitly excluded generated-artifact directory name, not model attribution"
+  }
+}

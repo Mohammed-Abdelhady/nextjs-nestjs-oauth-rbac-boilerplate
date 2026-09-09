@@ -1,0 +1,18 @@
+ccd49411ceba7e28485478129c8b8d1e
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ROLE_SLUG_MAX_LENGTH = exports.ROLE_SLUG_MESSAGE = exports.ROLE_SLUG_REGEX = void 0;
+/**
+ * Shape of a role slug: lowercase words joined by single hyphens.
+ * Matches what RoleService derives from a role name.
+ */
+exports.ROLE_SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+/**
+ * Validation message for a slug that does not match ROLE_SLUG_REGEX.
+ */
+exports.ROLE_SLUG_MESSAGE = 'Role must be a lowercase slug such as "support" or "content-editor"';
+/**
+ * Upper bound for a slug, derived from the 50 character role name limit.
+ */
+exports.ROLE_SLUG_MAX_LENGTH = 50;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29tbW9uL2NvbnN0YW50cy9yb2xlcy50cyIsIm1hcHBpbmdzIjoiOzs7QUFBQTs7O0dBR0c7QUFDVSxRQUFBLGVBQWUsR0FBRyw0QkFBNEIsQ0FBQztBQUU1RDs7R0FFRztBQUNVLFFBQUEsaUJBQWlCLEdBQzVCLHFFQUFxRSxDQUFDO0FBRXhFOztHQUVHO0FBQ1UsUUFBQSxvQkFBb0IsR0FBRyxFQUFFLENBQUMiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29tbW9uL2NvbnN0YW50cy9yb2xlcy50cyJdLCJzb3VyY2VzQ29udGVudCI6WyIvKipcbiAqIFNoYXBlIG9mIGEgcm9sZSBzbHVnOiBsb3dlcmNhc2Ugd29yZHMgam9pbmVkIGJ5IHNpbmdsZSBoeXBoZW5zLlxuICogTWF0Y2hlcyB3aGF0IFJvbGVTZXJ2aWNlIGRlcml2ZXMgZnJvbSBhIHJvbGUgbmFtZS5cbiAqL1xuZXhwb3J0IGNvbnN0IFJPTEVfU0xVR19SRUdFWCA9IC9eW2EtejAtOV0rKD86LVthLXowLTldKykqJC87XG5cbi8qKlxuICogVmFsaWRhdGlvbiBtZXNzYWdlIGZvciBhIHNsdWcgdGhhdCBkb2VzIG5vdCBtYXRjaCBST0xFX1NMVUdfUkVHRVguXG4gKi9cbmV4cG9ydCBjb25zdCBST0xFX1NMVUdfTUVTU0FHRSA9XG4gICdSb2xlIG11c3QgYmUgYSBsb3dlcmNhc2Ugc2x1ZyBzdWNoIGFzIFwic3VwcG9ydFwiIG9yIFwiY29udGVudC1lZGl0b3JcIic7XG5cbi8qKlxuICogVXBwZXIgYm91bmQgZm9yIGEgc2x1ZywgZGVyaXZlZCBmcm9tIHRoZSA1MCBjaGFyYWN0ZXIgcm9sZSBuYW1lIGxpbWl0LlxuICovXG5leHBvcnQgY29uc3QgUk9MRV9TTFVHX01BWF9MRU5HVEggPSA1MDtcbiJdLCJ2ZXJzaW9uIjozfQ==

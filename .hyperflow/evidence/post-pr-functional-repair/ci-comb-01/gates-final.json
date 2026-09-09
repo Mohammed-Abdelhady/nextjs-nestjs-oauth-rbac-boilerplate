@@ -1,0 +1,56 @@
+[
+  {
+    "command": [
+      "node",
+      "node_modules/prettier/bin/prettier.cjs",
+      "--write",
+      "packages/create-nest-next-auth/test/combination-helpers.ts",
+      "packages/create-nest-next-auth/test/combination-command.test.ts"
+    ],
+    "name": "format-final",
+    "exit": 0
+  },
+  {
+    "command": [
+      "npm",
+      "test",
+      "-w",
+      "create-nest-next-auth"
+    ],
+    "name": "cli",
+    "exit": 0
+  },
+  {
+    "command": [
+      "npm",
+      "run",
+      "test:combinations",
+      "-w",
+      "create-nest-next-auth"
+    ],
+    "name": "combinations",
+    "exit": 0
+  },
+  {
+    "command": [
+      "npm",
+      "run",
+      "lint",
+      "-w",
+      "create-nest-next-auth"
+    ],
+    "name": "lint",
+    "exit": 0
+  },
+  {
+    "command": [
+      "npm",
+      "run",
+      "typecheck",
+      "-w",
+      "create-nest-next-auth"
+    ],
+    "name": "types",
+    "exit": 0
+  }
+]

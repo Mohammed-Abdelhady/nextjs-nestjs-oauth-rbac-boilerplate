@@ -1,0 +1,35 @@
+{
+  "url": "https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/pull/72",
+  "draft": true,
+  "head": "3e84f52312196c03aaefc109ceca05c71bebc712",
+  "hosted_changed_files_with_renames": 795,
+  "expanded_paths": 804,
+  "exact_local_remote_path_parity": true,
+  "checks": [
+    {
+      "name": "quality",
+      "status": "IN_PROGRESS",
+      "conclusion": ""
+    },
+    {
+      "name": "analyze",
+      "status": "IN_PROGRESS",
+      "conclusion": ""
+    },
+    {
+      "name": "scaffold-combinations",
+      "status": "IN_PROGRESS",
+      "conclusion": ""
+    },
+    {
+      "name": "backend and browser integration",
+      "status": "IN_PROGRESS",
+      "conclusion": ""
+    },
+    {
+      "name": "docker",
+      "status": "IN_PROGRESS",
+      "conclusion": ""
+    }
+  ]
+}

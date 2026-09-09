@@ -1,0 +1,74 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+    - alert [ref=e2]
+    - link "تخطي إلى المحتوى الرئيسي" [ref=e3] [cursor=pointer]:
+        - /url: '#main'
+    - generic [ref=e4]:
+        - banner [ref=e5]:
+            - generic [ref=e6]:
+                - button "التبديل إلى الإنجليزية" [ref=e7]: English
+                - button "التبديل إلى العربية" [ref=e8]: العربية
+            - button "التبديل إلى الوضع الفاتح" [ref=e9]:
+                - img
+        - main [ref=e10]:
+            - region "إعادة تعيين كلمة المرور" [ref=e14]:
+                - heading "إعادة تعيين كلمة المرور" [level=1] [ref=e15]
+                - paragraph [ref=e16]: أدخل الرمز المكون من 6 أرقام المرسل إلى بريدك
+                - form "إعادة تعيين كلمة المرور" [ref=e18]:
+                    - generic [ref=e19]:
+                        - text: عنوان البريد الإلكتروني
+                        - textbox "عنوان البريد الإلكتروني" [ref=e20]:
+                            - /placeholder: name@example.com
+                            - text: reader@example.com
+                    - generic [ref=e21]:
+                        - text: رمز التحقق
+                        - textbox "رمز التحقق" [active] [ref=e22]:
+                            - /placeholder: '123456'
+                    - generic [ref=e23]:
+                        - text: كلمة المرور الجديدة
+                        - generic [ref=e24]:
+                            - textbox "كلمة المرور الجديدة" [ref=e25]:
+                                - /placeholder: ••••••••
+                            - button "إظهار كلمة المرور" [ref=e26]:
+                                - img [ref=e27]
+                    - generic [ref=e30]:
+                        - paragraph [ref=e31]: متطلبات كلمة المرور
+                        - list [ref=e32]:
+                            - listitem [ref=e33]:
+                                - img [ref=e34]
+                                - generic [ref=e36]: 8 أحرف على الأقل
+                                - generic [ref=e37]: (غير مكتمل)
+                            - listitem [ref=e38]:
+                                - img [ref=e39]
+                                - generic [ref=e41]: حرف كبير واحد على الأقل
+                                - generic [ref=e42]: (غير مكتمل)
+                            - listitem [ref=e43]:
+                                - img [ref=e44]
+                                - generic [ref=e46]: حرف صغير واحد على الأقل
+                                - generic [ref=e47]: (غير مكتمل)
+                            - listitem [ref=e48]:
+                                - img [ref=e49]
+                                - generic [ref=e51]: رقم واحد على الأقل
+                                - generic [ref=e52]: (غير مكتمل)
+                    - generic [ref=e53]:
+                        - text: تأكيد كلمة المرور
+                        - generic [ref=e54]:
+                            - textbox "تأكيد كلمة المرور" [ref=e55]:
+                                - /placeholder: ••••••••
+                            - button "إظهار كلمة المرور" [ref=e56]:
+                                - img [ref=e57]
+                    - button "إعادة تعيين كلمة المرور" [ref=e60]:
+                        - img
+                        - generic [ref=e61]: إعادة تعيين كلمة المرور
+                    - link "العودة لتسجيل الدخول" [ref=e63] [cursor=pointer]:
+                        - /url: /ar/auth/login
+    - region "Notifications alt+T":
+        - list:
+            - listitem [ref=e64]:
+                - img [ref=e66]
+                - generic [ref=e68]:
+                    - generic [ref=e69]: toast.error.networkError
+                    - generic [ref=e70]: Failed to GET getCurrentUser
+```

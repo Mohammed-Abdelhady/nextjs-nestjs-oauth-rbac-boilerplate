@@ -1,0 +1,12 @@
+{
+  "backend-final": "backend-final.log",
+  "backend-unit": "backend-unit.log",
+  "backend-lint": "backend-lint.log",
+  "backend-types": "backend-types.log",
+  "frontend-unit-final": "frontend-unit-final.log",
+  "frontend-lint-final": "frontend-lint-final.log",
+  "frontend-types-final": "frontend-types-final.log",
+  "frontend-build-final": "frontend-build-final.log",
+  "root-build": "root-build.log",
+  "browser-final": "browser-final.log"
+}

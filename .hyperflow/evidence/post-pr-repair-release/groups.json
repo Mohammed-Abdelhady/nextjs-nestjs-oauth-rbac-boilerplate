@@ -1,0 +1,54 @@
+[
+  {
+    "message": "fix(frontend): recover role pagination and expose complete role filters",
+    "paths": [
+      "frontend/e2e/authenticated-regressions.spec.ts",
+      "frontend/e2e/role-pagination.spec.ts",
+      "frontend/src/app/[locale]/(dashboard)/admin/roles/page.tsx",
+      "frontend/src/app/[locale]/(dashboard)/admin/users/page.tsx",
+      "frontend/src/i18n/messages/ar.json",
+      "frontend/src/i18n/messages/en.json",
+      "frontend/src/modules/users/components/RoleFilter.tsx",
+      "frontend/src/modules/users/components/UserListToolbar.tsx"
+    ]
+  },
+  {
+    "message": "fix(backend): prune generated provider boot fixtures",
+    "paths": [
+      "backend/test/app.boot.e2e-spec.ts",
+      "backend/test/constants/oauth-boot-env.ts"
+    ]
+  },
+  {
+    "message": "fix(root): align generated setup and container configuration",
+    "paths": [
+      "README.md",
+      "docker-compose.prod.yml",
+      "docker-compose.yml",
+      "docs/ARCHITECTURE.md",
+      "package.json",
+      "packages/create-nest-next-auth/src/scaffold/next-steps.ts",
+      "packages/create-nest-next-auth/test/e2e.test.ts",
+      "scripts/config-transforms.test.mjs",
+      "scripts/init.js",
+      "scripts/lib/config-transforms.js",
+      "scripts/setup-production.js",
+      "scripts/verify-docker.mjs"
+    ]
+  },
+  {
+    "message": "test(root): retain combination responsiveness and failure diagnostics",
+    "paths": [
+      "packages/create-nest-next-auth/test/combination-command.test.ts",
+      "packages/create-nest-next-auth/test/combination-helpers.ts",
+      "packages/create-nest-next-auth/test/combinations.slow.test.ts"
+    ]
+  },
+  {
+    "message": "docs(root): record reviewed repairs and pre-push verification",
+    "paths": [
+      ".hyperflow/reports/production-hardening.md",
+      ".hyperflow/reports/audit-status.md"
+    ]
+  }
+]

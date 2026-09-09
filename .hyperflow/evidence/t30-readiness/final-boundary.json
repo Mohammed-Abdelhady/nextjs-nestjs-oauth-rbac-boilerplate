@@ -1,0 +1,54 @@
+{
+  "captured_at": "2026-09-08T07:56:20.294055+00:00",
+  "head": "68cefb61f450b94c195a8d6cf325ac5e26c15349",
+  "changed_inspected_paths": [
+    {
+      "path": "backend/test/utils/e2e-app.ts",
+      "captured_sha256": "f101de8b1e3b27ce9c04841e62d359ef4f9a41cbf62eafb6d6580bb2ac63677a",
+      "final_sha256": "c6c40c0a5ea57ea620c111336835d6714793a1381a7533fd3a0ff76e7836bf91"
+    },
+    {
+      "path": "backend/test/utils/browser-server.ts",
+      "captured_sha256": "4bed34c885d8286e649bf980d3eda98eaeb21a351382ebbf28fcddafc9f81ea7",
+      "final_sha256": "1da84f3ef5b4023e97165abb638d2ef1adaf691384538f23ea13465de1057dea"
+    },
+    {
+      "path": "backend/test/jest-e2e.json",
+      "captured_sha256": "722da9797247edc33982e4ae7ae7ad20ef5c9375bc7710caef74f148e707ee07",
+      "final_sha256": "ee156a3742475653200b0e52f336a72bfe0a726845f6469fad61a4d17c24cd3f"
+    },
+    {
+      "path": "frontend/playwright.config.ts",
+      "captured_sha256": "44b3f91580acd6a81f85608d2e04f1dc93cc0a4733df385be51cf2b794339655",
+      "final_sha256": "d247b8c4970a3b849e625bf7f1f5552898e6663bf3d9f03090f0561c9fecfdaf"
+    },
+    {
+      "path": "frontend/e2e/fixtures/authenticated.ts",
+      "captured_sha256": "862aaaaf179b7129b40a3db09fb49a5981cca8e1f766e0c95d91b90a7e5b4abc",
+      "final_sha256": "ea6057bece5f41e49ae08b280d4d6df5557907cba4ece29e21d7b15fd91b54e3"
+    },
+    {
+      "path": "frontend/e2e/session-management.spec.ts",
+      "captured_sha256": "06c1437888a65af2389835a48201d6639e2f695f6f221b46ba5afe60a0c4ea93",
+      "final_sha256": "53cf184210e9acef06e69847216132391f56d91e4d1bcc900d410052476264d4"
+    },
+    {
+      "path": "frontend/e2e/role-management.spec.ts",
+      "captured_sha256": "ad222c6c45d5cc40b5aba70142b84681ce46081a4ded9216443be516ff8e9a4e",
+      "final_sha256": "64a637074628a8afa5d875f8e7075ca50dadf970caee70cac243870fe8ea959a"
+    },
+    {
+      "path": "frontend/e2e/sidebar-navigation.spec.ts",
+      "captured_sha256": "1879dcb901b00f87ace54358ac658462b22ab9ac873aea21bb035dc137f03ca8",
+      "final_sha256": "d39ed78c2fd7f6f9ad75821e5dbd04f652ebaa154114629559a6a810772f8683"
+    }
+  ],
+  "status_entries_added_or_changed": [
+    " M frontend/e2e/session-management.spec.ts",
+    "?? .hyperflow/evidence/t21-c/backend-fifth.json",
+    "?? .hyperflow/evidence/t21-c/reload-before/error-context.md",
+    "?? .hyperflow/evidence/t21-c/reload-before/test-failed-1.png",
+    "?? .hyperflow/evidence/t21-c/reload-before/trace.zip"
+  ],
+  "note": "Changes outside this evidence directory belong to other active work. Reconcile with owner before using the plan or staging."
+}

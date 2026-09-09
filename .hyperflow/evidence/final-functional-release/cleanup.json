@@ -1,0 +1,10 @@
+{
+  "ports": {
+    "3107": "free",
+    "5107": "free",
+    "5108": "free"
+  },
+  "owned_local_services_remaining": false,
+  "hosted_fixture_cleanup": "success log confirmed",
+  "candidate_and_runtime_retained": true
+}

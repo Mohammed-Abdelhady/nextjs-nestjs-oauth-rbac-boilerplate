@@ -1,0 +1,9 @@
+{
+  "notification": "toast.error.networkError\nFailed to GET getCurrentUser",
+  "errors": [
+    {
+      "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+      "url": "http://127.0.0.1:5107/api/user/profile"
+    }
+  ]
+}

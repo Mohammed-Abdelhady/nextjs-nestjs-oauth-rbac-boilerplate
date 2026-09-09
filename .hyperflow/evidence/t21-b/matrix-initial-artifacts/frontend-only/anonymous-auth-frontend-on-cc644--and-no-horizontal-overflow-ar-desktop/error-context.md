@@ -1,0 +1,44 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+    - alert [ref=e2]
+    - link "تخطي إلى المحتوى الرئيسي" [ref=e3] [cursor=pointer]:
+        - /url: '#main'
+    - generic [ref=e4]:
+        - banner [ref=e5]:
+            - generic [ref=e6]:
+                - button "التبديل إلى الإنجليزية" [ref=e7]: English
+                - button "التبديل إلى العربية" [ref=e8]: العربية
+            - button "التبديل إلى الوضع الفاتح" [ref=e9]:
+                - img
+        - main [ref=e10]:
+            - region "تسجيل الدخول إلى حسابك" [ref=e14]:
+                - heading "تسجيل الدخول إلى حسابك" [level=1] [ref=e15]
+                - generic [ref=e16]:
+                    - link "إنشاء حساب" [ref=e18] [cursor=pointer]:
+                        - /url: /ar/auth/register
+                        - img [ref=e19]
+                        - generic [ref=e22]: إنشاء حساب
+                    - form "تسجيل الدخول إلى حسابك" [ref=e23]:
+                        - generic [ref=e24]:
+                            - text: عنوان البريد الإلكتروني
+                            - textbox "عنوان البريد الإلكتروني" [active] [ref=e25]:
+                                - /placeholder: name@example.com
+                        - generic [ref=e26]:
+                            - text: كلمة المرور
+                            - textbox "كلمة المرور" [ref=e28]:
+                                - /placeholder: ••••••••
+                        - button "تسجيل الدخول" [ref=e29]:
+                            - img
+                            - generic [ref=e30]: تسجيل الدخول
+                        - link "نسيت كلمة المرور؟" [ref=e31] [cursor=pointer]:
+                            - /url: /ar/auth/forgot-password
+    - region "Notifications alt+T":
+        - list:
+            - listitem [ref=e34]:
+                - img [ref=e36]
+                - generic [ref=e38]:
+                    - generic [ref=e39]: toast.error.networkError
+                    - generic [ref=e40]: Failed to GET getCurrentUser
+```

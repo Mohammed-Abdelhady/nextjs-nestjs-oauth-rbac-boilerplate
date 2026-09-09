@@ -1,0 +1,65 @@
+af1036fbc50db4abe344335b7f6f2dc0
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TwoFactorModule = void 0;
+const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
+const mongoose_1 = require("@nestjs/mongoose");
+const auth_module_1 = require("../auth.module");
+const passkeys_module_1 = require("../passkeys/passkeys.module"); // feature:passkeys
+const passkey_second_factor_verifier_1 = require("../passkeys/services/passkey-second-factor.verifier"); // feature:passkeys
+const two_factor_controller_1 = require("./two-factor.controller");
+const two_factor_service_1 = require("./two-factor.service");
+const two_factor_login_service_1 = require("./two-factor-login.service");
+const two_factor_reauth_service_1 = require("./services/two-factor-reauth.service");
+const second_factor_verifiers_1 = require("./services/second-factor-verifiers");
+const user_schema_1 = require("../../user/schemas/user.schema");
+const common_module_1 = require("../../common/common.module");
+/**
+ * Routes for the TOTP second factor.
+ *
+ * The pieces the sign-in paths need, the challenge service and the secret
+ * crypto, live in AuthModule instead: password, magic link and OAuth all have
+ * to reach them, and importing this module from there would close a cycle.
+ *
+ * Other ways of answering a challenge are registered under
+ * SECOND_FACTOR_VERIFIERS, one line per feature that offers one. The
+ * dependency runs one way: a passkey knows nothing about the second factor.
+ */
+let TwoFactorModule = class TwoFactorModule {
+};
+exports.TwoFactorModule = TwoFactorModule;
+exports.TwoFactorModule = TwoFactorModule = __decorate([
+    (0, common_1.Module)({
+        imports: [
+            config_1.ConfigModule,
+            mongoose_1.MongooseModule.forFeature([{ name: user_schema_1.User.name, schema: user_schema_1.UserSchema }]),
+            common_module_1.CommonModule,
+            auth_module_1.AuthModule,
+            passkeys_module_1.PasskeysModule, // feature:passkeys
+        ],
+        controllers: [two_factor_controller_1.TwoFactorController],
+        providers: [
+            two_factor_service_1.TwoFactorService,
+            two_factor_login_service_1.TwoFactorLoginService,
+            two_factor_reauth_service_1.TwoFactorReauthService,
+            {
+                provide: second_factor_verifiers_1.SECOND_FACTOR_VERIFIERS,
+                useFactory: (passkeys) => [
+                    passkeys, // feature:passkeys
+                ],
+                inject: [
+                    passkey_second_factor_verifier_1.PasskeySecondFactorVerifier, // feature:passkeys
+                ],
+            },
+        ],
+        exports: [two_factor_service_1.TwoFactorService],
+    })
+], TwoFactorModule);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC90d28tZmFjdG9yL3R3by1mYWN0b3IubW9kdWxlLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7OztBQUFBLDJDQUF3QztBQUN4QywyQ0FBOEM7QUFDOUMsK0NBQWtEO0FBQ2xELGdEQUE0QztBQUM1QyxpRUFBNkQsQ0FBQyxtQkFBbUI7QUFDakYsd0dBQWtHLENBQUMsbUJBQW1CO0FBQ3RILG1FQUE4RDtBQUM5RCw2REFBd0Q7QUFDeEQseUVBQW1FO0FBQ25FLG9GQUE4RTtBQUM5RSxnRkFHNEM7QUFDNUMsZ0VBQWtFO0FBQ2xFLDhEQUEwRDtBQUUxRDs7Ozs7Ozs7OztHQVVHO0FBNEJJLElBQU0sZUFBZSxHQUFyQixNQUFNLGVBQWU7Q0FBRyxDQUFBO0FBQWxCLDBDQUFlOzBCQUFmLGVBQWU7SUEzQjNCLElBQUEsZUFBTSxFQUFDO1FBQ04sT0FBTyxFQUFFO1lBQ1AscUJBQVk7WUFDWix5QkFBYyxDQUFDLFVBQVUsQ0FBQyxDQUFDLEVBQUUsSUFBSSxFQUFFLGtCQUFJLENBQUMsSUFBSSxFQUFFLE1BQU0sRUFBRSx3QkFBVSxFQUFFLENBQUMsQ0FBQztZQUNwRSw0QkFBWTtZQUNaLHdCQUFVO1lBQ1YsZ0NBQWMsRUFBRSxtQkFBbUI7U0FDcEM7UUFDRCxXQUFXLEVBQUUsQ0FBQywyQ0FBbUIsQ0FBQztRQUNsQyxTQUFTLEVBQUU7WUFDVCxxQ0FBZ0I7WUFDaEIsZ0RBQXFCO1lBQ3JCLGtEQUFzQjtZQUN0QjtnQkFDRSxPQUFPLEVBQUUsaURBQXVCO2dCQUNoQyxVQUFVLEVBQUUsQ0FDVixRQUFxQyxFQUNiLEVBQUUsQ0FBQztvQkFDM0IsUUFBUSxFQUFFLG1CQUFtQjtpQkFDOUI7Z0JBQ0QsTUFBTSxFQUFFO29CQUNOLDREQUEyQixFQUFFLG1CQUFtQjtpQkFDakQ7YUFDRjtTQUNGO1FBQ0QsT0FBTyxFQUFFLENBQUMscUNBQWdCLENBQUM7S0FDNUIsQ0FBQztHQUNXLGVBQWUsQ0FBRyIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy9hdXRoL3R3by1mYWN0b3IvdHdvLWZhY3Rvci5tb2R1bGUudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgTW9kdWxlIH0gZnJvbSAnQG5lc3Rqcy9jb21tb24nO1xuaW1wb3J0IHsgQ29uZmlnTW9kdWxlIH0gZnJvbSAnQG5lc3Rqcy9jb25maWcnO1xuaW1wb3J0IHsgTW9uZ29vc2VNb2R1bGUgfSBmcm9tICdAbmVzdGpzL21vbmdvb3NlJztcbmltcG9ydCB7IEF1dGhNb2R1bGUgfSBmcm9tICcuLi9hdXRoLm1vZHVsZSc7XG5pbXBvcnQgeyBQYXNza2V5c01vZHVsZSB9IGZyb20gJy4uL3Bhc3NrZXlzL3Bhc3NrZXlzLm1vZHVsZSc7IC8vIGZlYXR1cmU6cGFzc2tleXNcbmltcG9ydCB7IFBhc3NrZXlTZWNvbmRGYWN0b3JWZXJpZmllciB9IGZyb20gJy4uL3Bhc3NrZXlzL3NlcnZpY2VzL3Bhc3NrZXktc2Vjb25kLWZhY3Rvci52ZXJpZmllcic7IC8vIGZlYXR1cmU6cGFzc2tleXNcbmltcG9ydCB7IFR3b0ZhY3RvckNvbnRyb2xsZXIgfSBmcm9tICcuL3R3by1mYWN0b3IuY29udHJvbGxlcic7XG5pbXBvcnQgeyBUd29GYWN0b3JTZXJ2aWNlIH0gZnJvbSAnLi90d28tZmFjdG9yLnNlcnZpY2UnO1xuaW1wb3J0IHsgVHdvRmFjdG9yTG9naW5TZXJ2aWNlIH0gZnJvbSAnLi90d28tZmFjdG9yLWxvZ2luLnNlcnZpY2UnO1xuaW1wb3J0IHsgVHdvRmFjdG9yUmVhdXRoU2VydmljZSB9IGZyb20gJy4vc2VydmljZXMvdHdvLWZhY3Rvci1yZWF1dGguc2VydmljZSc7XG5pbXBvcnQge1xuICBTRUNPTkRfRkFDVE9SX1ZFUklGSUVSUyxcbiAgU2Vjb25kRmFjdG9yVmVyaWZpZXIsXG59IGZyb20gJy4vc2VydmljZXMvc2Vjb25kLWZhY3Rvci12ZXJpZmllcnMnO1xuaW1wb3J0IHsgVXNlciwgVXNlclNjaGVtYSB9IGZyb20gJy4uLy4uL3VzZXIvc2NoZW1hcy91c2VyLnNjaGVtYSc7XG5pbXBvcnQgeyBDb21tb25Nb2R1bGUgfSBmcm9tICcuLi8uLi9jb21tb24vY29tbW9uLm1vZHVsZSc7XG5cbi8qKlxuICogUm91dGVzIGZvciB0aGUgVE9UUCBzZWNvbmQgZmFjdG9yLlxuICpcbiAqIFRoZSBwaWVjZXMgdGhlIHNpZ24taW4gcGF0aHMgbmVlZCwgdGhlIGNoYWxsZW5nZSBzZXJ2aWNlIGFuZCB0aGUgc2VjcmV0XG4gKiBjcnlwdG8sIGxpdmUgaW4gQXV0aE1vZHVsZSBpbnN0ZWFkOiBwYXNzd29yZCwgbWFnaWMgbGluayBhbmQgT0F1dGggYWxsIGhhdmVcbiAqIHRvIHJlYWNoIHRoZW0sIGFuZCBpbXBvcnRpbmcgdGhpcyBtb2R1bGUgZnJvbSB0aGVyZSB3b3VsZCBjbG9zZSBhIGN5Y2xlLlxuICpcbiAqIE90aGVyIHdheXMgb2YgYW5zd2VyaW5nIGEgY2hhbGxlbmdlIGFyZSByZWdpc3RlcmVkIHVuZGVyXG4gKiBTRUNPTkRfRkFDVE9SX1ZFUklGSUVSUywgb25lIGxpbmUgcGVyIGZlYXR1cmUgdGhhdCBvZmZlcnMgb25lLiBUaGVcbiAqIGRlcGVuZGVuY3kgcnVucyBvbmUgd2F5OiBhIHBhc3NrZXkga25vd3Mgbm90aGluZyBhYm91dCB0aGUgc2Vjb25kIGZhY3Rvci5cbiAqL1xuQE1vZHVsZSh7XG4gIGltcG9ydHM6IFtcbiAgICBDb25maWdNb2R1bGUsXG4gICAgTW9uZ29vc2VNb2R1bGUuZm9yRmVhdHVyZShbeyBuYW1lOiBVc2VyLm5hbWUsIHNjaGVtYTogVXNlclNjaGVtYSB9XSksXG4gICAgQ29tbW9uTW9kdWxlLFxuICAgIEF1dGhNb2R1bGUsXG4gICAgUGFzc2tleXNNb2R1bGUsIC8vIGZlYXR1cmU6cGFzc2tleXNcbiAgXSxcbiAgY29udHJvbGxlcnM6IFtUd29GYWN0b3JDb250cm9sbGVyXSxcbiAgcHJvdmlkZXJzOiBbXG4gICAgVHdvRmFjdG9yU2VydmljZSxcbiAgICBUd29GYWN0b3JMb2dpblNlcnZpY2UsXG4gICAgVHdvRmFjdG9yUmVhdXRoU2VydmljZSxcbiAgICB7XG4gICAgICBwcm92aWRlOiBTRUNPTkRfRkFDVE9SX1ZFUklGSUVSUyxcbiAgICAgIHVzZUZhY3Rvcnk6IChcbiAgICAgICAgcGFzc2tleXM6IFBhc3NrZXlTZWNvbmRGYWN0b3JWZXJpZmllciwgLy8gZmVhdHVyZTpwYXNza2V5c1xuICAgICAgKTogU2Vjb25kRmFjdG9yVmVyaWZpZXJbXSA9PiBbXG4gICAgICAgIHBhc3NrZXlzLCAvLyBmZWF0dXJlOnBhc3NrZXlzXG4gICAgICBdLFxuICAgICAgaW5qZWN0OiBbXG4gICAgICAgIFBhc3NrZXlTZWNvbmRGYWN0b3JWZXJpZmllciwgLy8gZmVhdHVyZTpwYXNza2V5c1xuICAgICAgXSxcbiAgICB9LFxuICBdLFxuICBleHBvcnRzOiBbVHdvRmFjdG9yU2VydmljZV0sXG59KVxuZXhwb3J0IGNsYXNzIFR3b0ZhY3Rvck1vZHVsZSB7fVxuIl0sInZlcnNpb24iOjN9

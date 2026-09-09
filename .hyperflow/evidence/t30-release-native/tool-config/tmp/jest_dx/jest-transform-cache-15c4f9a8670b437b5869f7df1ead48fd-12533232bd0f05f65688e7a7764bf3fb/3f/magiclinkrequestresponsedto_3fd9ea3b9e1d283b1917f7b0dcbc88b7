@@ -1,0 +1,37 @@
+aa8a70509a02d1f17c24982bffc5398f
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MagicLinkRequestResponseDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
+const api_response_dto_1 = require("../../../common/dto/api-response.dto");
+const magic_link_constants_1 = require("../constants/magic-link.constants");
+/**
+ * Reply to a link request. Identical for an address with an account, an address
+ * without one, and an address that has already hit the hourly cap.
+ */
+class MagicLinkRequestResponseDto {
+    email;
+    static success(email) {
+        const dto = new MagicLinkRequestResponseDto();
+        dto.email = email;
+        return api_response_dto_1.ApiResponse.success(dto, magic_link_constants_1.MAGIC_LINK_SENT_MESSAGE);
+    }
+}
+exports.MagicLinkRequestResponseDto = MagicLinkRequestResponseDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Address the request was made for',
+        example: 'user@example.com',
+    }),
+    __metadata("design:type", String)
+], MagicLinkRequestResponseDto.prototype, "email", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9tYWdpYy1saW5rL2R0by9tYWdpYy1saW5rLXJlcXVlc3QtcmVzcG9uc2UuZHRvLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLDZDQUE4QztBQUM5QywyRUFBbUU7QUFDbkUsNEVBQTRFO0FBRTVFOzs7R0FHRztBQUNILE1BQWEsMkJBQTJCO0lBS3RDLEtBQUssQ0FBVTtJQUVmLE1BQU0sQ0FBQyxPQUFPLENBQUMsS0FBYTtRQUMxQixNQUFNLEdBQUcsR0FBRyxJQUFJLDJCQUEyQixFQUFFLENBQUM7UUFDOUMsR0FBRyxDQUFDLEtBQUssR0FBRyxLQUFLLENBQUM7UUFDbEIsT0FBTyw4QkFBVyxDQUFDLE9BQU8sQ0FBQyxHQUFHLEVBQUUsOENBQXVCLENBQUMsQ0FBQztJQUMzRCxDQUFDO0NBQ0Y7QUFaRCxrRUFZQztBQVBDO0lBSkMsSUFBQSxxQkFBVyxFQUFDO1FBQ1gsV0FBVyxFQUFFLGtDQUFrQztRQUMvQyxPQUFPLEVBQUUsa0JBQWtCO0tBQzVCLENBQUM7OzBEQUNhIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL2F1dGgvbWFnaWMtbGluay9kdG8vbWFnaWMtbGluay1yZXF1ZXN0LXJlc3BvbnNlLmR0by50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBBcGlQcm9wZXJ0eSB9IGZyb20gJ0BuZXN0anMvc3dhZ2dlcic7XG5pbXBvcnQgeyBBcGlSZXNwb25zZSB9IGZyb20gJy4uLy4uLy4uL2NvbW1vbi9kdG8vYXBpLXJlc3BvbnNlLmR0byc7XG5pbXBvcnQgeyBNQUdJQ19MSU5LX1NFTlRfTUVTU0FHRSB9IGZyb20gJy4uL2NvbnN0YW50cy9tYWdpYy1saW5rLmNvbnN0YW50cyc7XG5cbi8qKlxuICogUmVwbHkgdG8gYSBsaW5rIHJlcXVlc3QuIElkZW50aWNhbCBmb3IgYW4gYWRkcmVzcyB3aXRoIGFuIGFjY291bnQsIGFuIGFkZHJlc3NcbiAqIHdpdGhvdXQgb25lLCBhbmQgYW4gYWRkcmVzcyB0aGF0IGhhcyBhbHJlYWR5IGhpdCB0aGUgaG91cmx5IGNhcC5cbiAqL1xuZXhwb3J0IGNsYXNzIE1hZ2ljTGlua1JlcXVlc3RSZXNwb25zZUR0byB7XG4gIEBBcGlQcm9wZXJ0eSh7XG4gICAgZGVzY3JpcHRpb246ICdBZGRyZXNzIHRoZSByZXF1ZXN0IHdhcyBtYWRlIGZvcicsXG4gICAgZXhhbXBsZTogJ3VzZXJAZXhhbXBsZS5jb20nLFxuICB9KVxuICBlbWFpbCE6IHN0cmluZztcblxuICBzdGF0aWMgc3VjY2VzcyhlbWFpbDogc3RyaW5nKTogQXBpUmVzcG9uc2U8TWFnaWNMaW5rUmVxdWVzdFJlc3BvbnNlRHRvPiB7XG4gICAgY29uc3QgZHRvID0gbmV3IE1hZ2ljTGlua1JlcXVlc3RSZXNwb25zZUR0bygpO1xuICAgIGR0by5lbWFpbCA9IGVtYWlsO1xuICAgIHJldHVybiBBcGlSZXNwb25zZS5zdWNjZXNzKGR0bywgTUFHSUNfTElOS19TRU5UX01FU1NBR0UpO1xuICB9XG59XG4iXSwidmVyc2lvbiI6M30=

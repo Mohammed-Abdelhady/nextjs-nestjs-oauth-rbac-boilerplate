@@ -175,13 +175,11 @@ export const usersApi = baseApi.injectEndpoints({
     /**
      * Delete user (admin)
      */
-    deleteUser: builder.mutation<{ message: string }, string>({
+    deleteUser: builder.mutation<void, string>({
       query: (userId) => ({
         url: `/api/admin/users/${userId}`,
         method: 'DELETE',
       }),
-      transformResponse: (response: { success: boolean; data: { message: string } }) =>
-        response.data,
       invalidatesTags: (result, error, userId) => [
         { type: 'User', id: userId },
         { type: 'User', id: 'LIST' },

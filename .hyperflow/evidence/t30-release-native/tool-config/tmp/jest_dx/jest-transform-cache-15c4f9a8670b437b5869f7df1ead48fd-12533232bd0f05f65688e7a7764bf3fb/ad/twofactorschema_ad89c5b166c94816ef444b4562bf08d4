@@ -1,0 +1,102 @@
+b6fcdd88c88eb9acb7a56084c45a337e
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TwoFactorSchema = exports.TwoFactor = exports.RecoveryCodeSchema = exports.RecoveryCode = exports.TwoFactorSecretSchema = exports.TwoFactorSecret = void 0;
+const mongoose_1 = require("@nestjs/mongoose");
+/**
+ * A TOTP secret encrypted with AES-256-GCM. The three parts are base64.
+ * Nothing here is usable without TOTP_ENCRYPTION_KEY.
+ */
+let TwoFactorSecret = class TwoFactorSecret {
+    ciphertext;
+    iv;
+    tag;
+};
+exports.TwoFactorSecret = TwoFactorSecret;
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], TwoFactorSecret.prototype, "ciphertext", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], TwoFactorSecret.prototype, "iv", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], TwoFactorSecret.prototype, "tag", void 0);
+exports.TwoFactorSecret = TwoFactorSecret = __decorate([
+    (0, mongoose_1.Schema)({ _id: false })
+], TwoFactorSecret);
+exports.TwoFactorSecretSchema = mongoose_1.SchemaFactory.createForClass(TwoFactorSecret);
+/** One recovery code. Only its sha256 is stored, and it works once. */
+let RecoveryCode = class RecoveryCode {
+    /** sha256 of the code, hex encoded. */
+    hash;
+    usedAt;
+};
+exports.RecoveryCode = RecoveryCode;
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], RecoveryCode.prototype, "hash", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Date, default: null }),
+    __metadata("design:type", Object)
+], RecoveryCode.prototype, "usedAt", void 0);
+exports.RecoveryCode = RecoveryCode = __decorate([
+    (0, mongoose_1.Schema)({ _id: false })
+], RecoveryCode);
+exports.RecoveryCodeSchema = mongoose_1.SchemaFactory.createForClass(RecoveryCode);
+/**
+ * Second factor state on a user. A secret is written by setup and stays
+ * unconfirmed until a first correct code arrives, so a failed setup leaves the
+ * account signing in the way it did before.
+ */
+let TwoFactor = class TwoFactor {
+    enabled;
+    secret;
+    /** Set by the confirm step. Null while a secret is still pending. */
+    confirmedAt;
+    recoveryCodes;
+    /**
+     * Highest TOTP step already spent. A code is good for 30 seconds, so without
+     * this an observer who reads one off the screen can use it again.
+     */
+    lastUsedStep;
+};
+exports.TwoFactor = TwoFactor;
+__decorate([
+    (0, mongoose_1.Prop)({ default: false }),
+    __metadata("design:type", Boolean)
+], TwoFactor.prototype, "enabled", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: exports.TwoFactorSecretSchema, default: null }),
+    __metadata("design:type", Object)
+], TwoFactor.prototype, "secret", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Date, default: null }),
+    __metadata("design:type", Object)
+], TwoFactor.prototype, "confirmedAt", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: [exports.RecoveryCodeSchema], default: [] }),
+    __metadata("design:type", Array)
+], TwoFactor.prototype, "recoveryCodes", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Number, default: null }),
+    __metadata("design:type", Object)
+], TwoFactor.prototype, "lastUsedStep", void 0);
+exports.TwoFactor = TwoFactor = __decorate([
+    (0, mongoose_1.Schema)({ _id: false })
+], TwoFactor);
+exports.TwoFactorSchema = mongoose_1.SchemaFactory.createForClass(TwoFactor);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvdXNlci9zY2hlbWFzL3R3by1mYWN0b3Iuc2NoZW1hLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLCtDQUErRDtBQUUvRDs7O0dBR0c7QUFFSSxJQUFNLGVBQWUsR0FBckIsTUFBTSxlQUFlO0lBRTFCLFVBQVUsQ0FBVTtJQUdwQixFQUFFLENBQVU7SUFHWixHQUFHLENBQVU7Q0FDZCxDQUFBO0FBVFksMENBQWU7QUFFMUI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLFFBQVEsRUFBRSxJQUFJLEVBQUUsQ0FBQzs7bURBQ0w7QUFHcEI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLFFBQVEsRUFBRSxJQUFJLEVBQUUsQ0FBQzs7MkNBQ2I7QUFHWjtJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsUUFBUSxFQUFFLElBQUksRUFBRSxDQUFDOzs0Q0FDWjswQkFSRixlQUFlO0lBRDNCLElBQUEsaUJBQU0sRUFBQyxFQUFFLEdBQUcsRUFBRSxLQUFLLEVBQUUsQ0FBQztHQUNWLGVBQWUsQ0FTM0I7QUFFWSxRQUFBLHFCQUFxQixHQUNoQyx3QkFBYSxDQUFDLGNBQWMsQ0FBQyxlQUFlLENBQUMsQ0FBQztBQUVoRCx1RUFBdUU7QUFFaEUsSUFBTSxZQUFZLEdBQWxCLE1BQU0sWUFBWTtJQUN2Qix1Q0FBdUM7SUFFdkMsSUFBSSxDQUFVO0lBR2QsTUFBTSxDQUFlO0NBQ3RCLENBQUE7QUFQWSxvQ0FBWTtBQUd2QjtJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsUUFBUSxFQUFFLElBQUksRUFBRSxDQUFDOzswQ0FDWDtBQUdkO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxJQUFJLEVBQUUsSUFBSSxFQUFFLE9BQU8sRUFBRSxJQUFJLEVBQUUsQ0FBQzs7NENBQ2Y7dUJBTlYsWUFBWTtJQUR4QixJQUFBLGlCQUFNLEVBQUMsRUFBRSxHQUFHLEVBQUUsS0FBSyxFQUFFLENBQUM7R0FDVixZQUFZLENBT3hCO0FBRVksUUFBQSxrQkFBa0IsR0FBRyx3QkFBYSxDQUFDLGNBQWMsQ0FBQyxZQUFZLENBQUMsQ0FBQztBQUU3RTs7OztHQUlHO0FBRUksSUFBTSxTQUFTLEdBQWYsTUFBTSxTQUFTO0lBRXBCLE9BQU8sQ0FBVztJQUdsQixNQUFNLENBQTBCO0lBRWhDLHFFQUFxRTtJQUVyRSxXQUFXLENBQWU7SUFHMUIsYUFBYSxDQUFrQjtJQUUvQjs7O09BR0c7SUFFSCxZQUFZLENBQWlCO0NBQzlCLENBQUE7QUFwQlksOEJBQVM7QUFFcEI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLE9BQU8sRUFBRSxLQUFLLEVBQUUsQ0FBQzs7MENBQ1A7QUFHbEI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLElBQUksRUFBRSw2QkFBcUIsRUFBRSxPQUFPLEVBQUUsSUFBSSxFQUFFLENBQUM7O3lDQUNyQjtBQUloQztJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsSUFBSSxFQUFFLElBQUksRUFBRSxPQUFPLEVBQUUsSUFBSSxFQUFFLENBQUM7OzhDQUNWO0FBRzFCO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxJQUFJLEVBQUUsQ0FBQywwQkFBa0IsQ0FBQyxFQUFFLE9BQU8sRUFBRSxFQUFFLEVBQUUsQ0FBQzs7Z0RBQ25CO0FBTy9CO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxJQUFJLEVBQUUsTUFBTSxFQUFFLE9BQU8sRUFBRSxJQUFJLEVBQUUsQ0FBQzs7K0NBQ1Q7b0JBbkJsQixTQUFTO0lBRHJCLElBQUEsaUJBQU0sRUFBQyxFQUFFLEdBQUcsRUFBRSxLQUFLLEVBQUUsQ0FBQztHQUNWLFNBQVMsQ0FvQnJCO0FBRVksUUFBQSxlQUFlLEdBQUcsd0JBQWEsQ0FBQyxjQUFjLENBQUMsU0FBUyxDQUFDLENBQUMiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvdXNlci9zY2hlbWFzL3R3by1mYWN0b3Iuc2NoZW1hLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IFByb3AsIFNjaGVtYSwgU2NoZW1hRmFjdG9yeSB9IGZyb20gJ0BuZXN0anMvbW9uZ29vc2UnO1xuXG4vKipcbiAqIEEgVE9UUCBzZWNyZXQgZW5jcnlwdGVkIHdpdGggQUVTLTI1Ni1HQ00uIFRoZSB0aHJlZSBwYXJ0cyBhcmUgYmFzZTY0LlxuICogTm90aGluZyBoZXJlIGlzIHVzYWJsZSB3aXRob3V0IFRPVFBfRU5DUllQVElPTl9LRVkuXG4gKi9cbkBTY2hlbWEoeyBfaWQ6IGZhbHNlIH0pXG5leHBvcnQgY2xhc3MgVHdvRmFjdG9yU2VjcmV0IHtcbiAgQFByb3AoeyByZXF1aXJlZDogdHJ1ZSB9KVxuICBjaXBoZXJ0ZXh0ITogc3RyaW5nO1xuXG4gIEBQcm9wKHsgcmVxdWlyZWQ6IHRydWUgfSlcbiAgaXYhOiBzdHJpbmc7XG5cbiAgQFByb3AoeyByZXF1aXJlZDogdHJ1ZSB9KVxuICB0YWchOiBzdHJpbmc7XG59XG5cbmV4cG9ydCBjb25zdCBUd29GYWN0b3JTZWNyZXRTY2hlbWEgPVxuICBTY2hlbWFGYWN0b3J5LmNyZWF0ZUZvckNsYXNzKFR3b0ZhY3RvclNlY3JldCk7XG5cbi8qKiBPbmUgcmVjb3ZlcnkgY29kZS4gT25seSBpdHMgc2hhMjU2IGlzIHN0b3JlZCwgYW5kIGl0IHdvcmtzIG9uY2UuICovXG5AU2NoZW1hKHsgX2lkOiBmYWxzZSB9KVxuZXhwb3J0IGNsYXNzIFJlY292ZXJ5Q29kZSB7XG4gIC8qKiBzaGEyNTYgb2YgdGhlIGNvZGUsIGhleCBlbmNvZGVkLiAqL1xuICBAUHJvcCh7IHJlcXVpcmVkOiB0cnVlIH0pXG4gIGhhc2ghOiBzdHJpbmc7XG5cbiAgQFByb3AoeyB0eXBlOiBEYXRlLCBkZWZhdWx0OiBudWxsIH0pXG4gIHVzZWRBdCE6IERhdGUgfCBudWxsO1xufVxuXG5leHBvcnQgY29uc3QgUmVjb3ZlcnlDb2RlU2NoZW1hID0gU2NoZW1hRmFjdG9yeS5jcmVhdGVGb3JDbGFzcyhSZWNvdmVyeUNvZGUpO1xuXG4vKipcbiAqIFNlY29uZCBmYWN0b3Igc3RhdGUgb24gYSB1c2VyLiBBIHNlY3JldCBpcyB3cml0dGVuIGJ5IHNldHVwIGFuZCBzdGF5c1xuICogdW5jb25maXJtZWQgdW50aWwgYSBmaXJzdCBjb3JyZWN0IGNvZGUgYXJyaXZlcywgc28gYSBmYWlsZWQgc2V0dXAgbGVhdmVzIHRoZVxuICogYWNjb3VudCBzaWduaW5nIGluIHRoZSB3YXkgaXQgZGlkIGJlZm9yZS5cbiAqL1xuQFNjaGVtYSh7IF9pZDogZmFsc2UgfSlcbmV4cG9ydCBjbGFzcyBUd29GYWN0b3Ige1xuICBAUHJvcCh7IGRlZmF1bHQ6IGZhbHNlIH0pXG4gIGVuYWJsZWQhOiBib29sZWFuO1xuXG4gIEBQcm9wKHsgdHlwZTogVHdvRmFjdG9yU2VjcmV0U2NoZW1hLCBkZWZhdWx0OiBudWxsIH0pXG4gIHNlY3JldCE6IFR3b0ZhY3RvclNlY3JldCB8IG51bGw7XG5cbiAgLyoqIFNldCBieSB0aGUgY29uZmlybSBzdGVwLiBOdWxsIHdoaWxlIGEgc2VjcmV0IGlzIHN0aWxsIHBlbmRpbmcuICovXG4gIEBQcm9wKHsgdHlwZTogRGF0ZSwgZGVmYXVsdDogbnVsbCB9KVxuICBjb25maXJtZWRBdCE6IERhdGUgfCBudWxsO1xuXG4gIEBQcm9wKHsgdHlwZTogW1JlY292ZXJ5Q29kZVNjaGVtYV0sIGRlZmF1bHQ6IFtdIH0pXG4gIHJlY292ZXJ5Q29kZXMhOiBSZWNvdmVyeUNvZGVbXTtcblxuICAvKipcbiAgICogSGlnaGVzdCBUT1RQIHN0ZXAgYWxyZWFkeSBzcGVudC4gQSBjb2RlIGlzIGdvb2QgZm9yIDMwIHNlY29uZHMsIHNvIHdpdGhvdXRcbiAgICogdGhpcyBhbiBvYnNlcnZlciB3aG8gcmVhZHMgb25lIG9mZiB0aGUgc2NyZWVuIGNhbiB1c2UgaXQgYWdhaW4uXG4gICAqL1xuICBAUHJvcCh7IHR5cGU6IE51bWJlciwgZGVmYXVsdDogbnVsbCB9KVxuICBsYXN0VXNlZFN0ZXAhOiBudW1iZXIgfCBudWxsO1xufVxuXG5leHBvcnQgY29uc3QgVHdvRmFjdG9yU2NoZW1hID0gU2NoZW1hRmFjdG9yeS5jcmVhdGVGb3JDbGFzcyhUd29GYWN0b3IpO1xuIl0sInZlcnNpb24iOjN9

@@ -1,0 +1,14 @@
+Ready for root validation.
+
+- [Manifest](.hyperflow/evidence/t30-integration/manifest.json): exact allowlists, provenance, five commit groups and blockers.
+- [Plan](.hyperflow/evidence/t30-integration/plan.md): isolated export, genuine hooks and draft PR steps.
+- [Projection metadata](.hyperflow/evidence/t30-integration/projection-metadata.json)
+- [Verification](.hyperflow/evidence/t30-integration/verification.json): artifact consistency checks exit **0**.
+
+Current candidates: **41 new, 88 modified, one deleted**. Proposed hosted-base delta: **802 paths**, before curated reports.
+
+Recommend an independent Git export from verified master, preserving the original read-only Git directory and avoiding publication of legacy coordination/audit history.
+
+Pending: final CLI repair gates, snapshot release, publication curation and root authorization. Security review and Docker/TLS limits remain unresolved.
+
+No source/checkpoint edits, application checks, staging or release operations performed.

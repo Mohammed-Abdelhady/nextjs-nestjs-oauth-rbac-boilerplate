@@ -5,6 +5,7 @@
  * and i18n support. Provides type-safe toast functions with semantic colors.
  */
 
+import type { ReactNode } from 'react';
 import { toast as sonnerToast } from 'sonner';
 import type { ExternalToast } from 'sonner';
 import type { ToastType } from '@/types/toast.types';
@@ -28,7 +29,7 @@ const DEFAULT_DURATIONS = {
 /**
  * Show success toast notification
  */
-export const success = (message: string, options?: ToastOptions): string | number => {
+export const success = (message: ReactNode, options?: ToastOptions): string | number => {
   return sonnerToast.success(message, {
     duration: options?.duration ?? DEFAULT_DURATIONS.success,
     ...options,
@@ -38,7 +39,7 @@ export const success = (message: string, options?: ToastOptions): string | numbe
 /**
  * Show error toast notification
  */
-export const error = (message: string, options?: ToastOptions): string | number => {
+export const error = (message: ReactNode, options?: ToastOptions): string | number => {
   return sonnerToast.error(message, {
     duration: options?.duration ?? DEFAULT_DURATIONS.error,
     ...options,
@@ -48,7 +49,7 @@ export const error = (message: string, options?: ToastOptions): string | number 
 /**
  * Show warning toast notification
  */
-export const warning = (message: string, options?: ToastOptions): string | number => {
+export const warning = (message: ReactNode, options?: ToastOptions): string | number => {
   return sonnerToast.warning(message, {
     duration: options?.duration ?? DEFAULT_DURATIONS.warning,
     ...options,
@@ -58,7 +59,7 @@ export const warning = (message: string, options?: ToastOptions): string | numbe
 /**
  * Show info toast notification
  */
-export const info = (message: string, options?: ToastOptions): string | number => {
+export const info = (message: ReactNode, options?: ToastOptions): string | number => {
   return sonnerToast.info(message, {
     duration: options?.duration ?? DEFAULT_DURATIONS.info,
     ...options,
@@ -68,7 +69,7 @@ export const info = (message: string, options?: ToastOptions): string | number =
 /**
  * Show loading toast notification (must be manually dismissed or updated)
  */
-export const loading = (message: string, options?: ToastOptions): string | number => {
+export const loading = (message: ReactNode, options?: ToastOptions): string | number => {
   return sonnerToast.loading(message, {
     duration: options?.duration ?? DEFAULT_DURATIONS.loading,
     ...options,
@@ -78,7 +79,11 @@ export const loading = (message: string, options?: ToastOptions): string | numbe
 /**
  * Generic toast function that delegates to type-specific functions
  */
-export const show = (type: ToastType, message: string, options?: ToastOptions): string | number => {
+export const show = (
+  type: ToastType,
+  message: ReactNode,
+  options?: ToastOptions,
+): string | number => {
   switch (type) {
     case 'success':
       return success(message, options);
@@ -127,10 +132,7 @@ export const dismissAll = (): void => {
 /**
  * Custom toast with full control (uses Sonner's base toast)
  */
-export const custom = (
-  message: string | React.ReactNode,
-  options?: ToastOptions,
-): string | number => {
+export const custom = (message: ReactNode, options?: ToastOptions): string | number => {
   return sonnerToast(message, options);
 };
 

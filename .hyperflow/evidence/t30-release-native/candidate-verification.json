@@ -1,0 +1,30 @@
+{
+  "head": "3e84f52312196c03aaefc109ceca05c71bebc712",
+  "tree": "af910a9f0f76be863e8630fe0dbdab3cb8822a2c",
+  "files": 852,
+  "delta": 804,
+  "exact_scope": true,
+  "worktree_clean": true,
+  "snapshot_mismatches": [
+    ".dockerignore",
+    ".github/workflows/ci.yml",
+    ".gitignore",
+    "nginx/nginx.conf"
+  ],
+  "formatting_only_paths": [
+    "frontend/e2e/README.md",
+    ".hyperflow/reports/production-hardening.md",
+    ".hyperflow/reports/audit-status.md",
+    "backend/.env.example"
+  ],
+  "projection_sha256": "eb0f89f1d04fc1802c434694a63ce91671a825772290c60e21a9fd1618b8080e",
+  "base_ancestor": "f1d2282d70cf728567fa9877e15176f0ff3705c8",
+  "commits": [
+    "b095faf33116ce06c18b7d92c85f1b2f14ffbd17",
+    "d70220ae656e62e508bf0b5ecd0dfe645d92c62b",
+    "bb4f584731b755ffa556e936c2d516f50f46959a",
+    "88c8a4a7a0e51b509605bddc611776030fb3f2c8",
+    "47107002a1ddc5f79177fa5ff7c771998f3591ea",
+    "3e84f52312196c03aaefc109ceca05c71bebc712"
+  ]
+}

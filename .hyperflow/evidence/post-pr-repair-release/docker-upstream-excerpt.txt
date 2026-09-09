@@ -1,0 +1,90 @@
+Official Moby source blob 2cf2125802e0717253d5d04180455a1962dfc9f6
+https://github.com/moby/moby/blob/master/daemon/libnetwork/drivers/bridge/bridge_linux.go
+1553: func (d *driver) ProgramExternalConnectivity(ctx context.Context, nid, eid string, gw4Id, gw6Id string) (retErr error) {
+1554: 	ctx, span := otel.Tracer("").Start(ctx, spanPrefix+".ProgramExternalConnectivity", trace.WithAttributes(
+1555: 		attribute.String("nid", nid),
+1556: 		attribute.String("eid", eid),
+1557: 		attribute.String("gw4", gw4Id),
+1558: 		attribute.String("gw6", gw6Id)))
+1559: 	defer span.End()
+1560: 
+1561: 	// Make sure the network isn't deleted, or in the middle of a firewalld reload, while
+1562: 	// updating its iptables rules.
+1563: 	d.configNetwork.Lock()
+1564: 	defer d.configNetwork.Unlock()
+1565: 
+1566: 	network, err := d.getNetwork(nid)
+1567: 	if err != nil {
+1568: 		return err
+1569: 	}
+1570: 
+1571: 	endpoint, err := network.getEndpoint(eid)
+1572: 	if err != nil {
+1573: 		return err
+1574: 	}
+1575: 	if endpoint == nil {
+1576: 		return endpointNotFoundError(eid)
+1577: 	}
+1578: 
+1579: 	// Always include rules for routed-mode port mappings - they'll be removed on Leave.
+1580: 	pbmReq := portBindingMode{routed: true}
+1581: 	// Act as the IPv4 gateway if explicitly selected.
+1582: 	if gw4Id == eid {
+1583: 		pbmReq.ipv4 = true
+1584: 	}
+1585: 	// Act as the IPv6 gateway if explicitly selected - or if there's no IPv6
+1586: 	// gateway, but this endpoint is the IPv4 gateway (in which case, the userland
+1587: 	// proxy may proxy between host v6 and container v4 addresses.)
+1588: 	if gw6Id == eid || (gw6Id == "" && gw4Id == eid) {
+1589: 		pbmReq.ipv6 = true
+1590: 	}
+1591: 
+1592: 	// If no change is needed, return.
+1593: 	if endpoint.portBindingState == pbmReq {
+1594: 		return nil
+1595: 	}
+1596: 
+1597: 	// Remove port bindings that aren't needed due to a change in mode.
+1598: 	undoTrim, err := endpoint.trimPortBindings(ctx, network, pbmReq)
+1599: 	if err != nil {
+1600: 		return err
+1601: 	}
+1602: 	// Restore the recorded mode along with the bindings themselves. A failure
+1603: 	// after portBindingState has been updated below would otherwise leave the
+1604: 	// endpoint holding bindings its state says it doesn't have, so the next call
+1605: 	// would compute the wrong set to add or trim.
+1606: 	pbmPrev := endpoint.portBindingState
+1607: 	defer func() {
+1608: 		if retErr != nil && undoTrim != nil {
+1609: 			endpoint.portMapping = append(endpoint.portMapping, undoTrim()...)
+1610: 			endpoint.portBindingState = pbmPrev
+1611: 		}
+1612: 	}()
+1613: 
+1614: 	// Set up port bindings for the modes that have become active, and store them
+1615: 	// in the endpoint.
+1616: 	if endpoint.extConnConfig != nil && endpoint.extConnConfig.PortBindings != nil {
+1617: 		pbmAdd := endpoint.portBindingState.added(pbmReq)
+1618: 		newPMs, err := network.addPortMappings(ctx, endpoint, endpoint.extConnConfig.PortBindings, network.config.DefaultBindingIP, pbmAdd, pbmReq)
+1619: 		if err != nil {
+1620: 			return err
+1621: 		}
+1622: 		endpoint.portMapping = append(endpoint.portMapping, newPMs...)
+1623: 	}
+1624: 
+1625: 	// Remember the new port binding state.
+1626: 	endpoint.portBindingState = pbmReq
+1627: 
+1628: 	// Clean the connection tracker state of the host for the specific endpoint. This is needed because some flows may
+1629: 	// be bound to the local proxy, or to the host (for UDP packets), and won't be redirected to the new endpoints.
+1630: 	clearConntrackEntries(d.nlh, endpoint)
+1631: 
+1632: 	if err = d.storeUpdate(ctx, endpoint); err != nil {
+1633: 		return fmt.Errorf("failed to update bridge endpoint %.7s to store: %v", endpoint.id, err)
+1634: 	}
+1635: 
+1636: 	return nil
+1637: }
+1638: 
+1639: // AddEphemeralPorts implements [driverapi.PortManager]. It publishes additional
+1640: // ports on an endpoint that's already joined to a sandbox, reusing the same

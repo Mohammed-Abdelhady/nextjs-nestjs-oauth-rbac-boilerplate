@@ -1,0 +1,58 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+    - alert [ref=e2]: تسجيل الدخول إلى حسابك | Auth Boilerplate
+    - link "تخطي إلى المحتوى الرئيسي" [ref=e3] [cursor=pointer]:
+        - /url: '#main'
+    - generic [ref=e4]:
+        - banner [ref=e5]:
+            - generic [ref=e6]:
+                - button "التبديل إلى الإنجليزية" [ref=e7]: English
+                - button "التبديل إلى العربية" [ref=e8]: العربية
+            - button "التبديل إلى الوضع الفاتح" [ref=e9]:
+                - img
+        - main [ref=e10]:
+            - region "تسجيل الدخول إلى حسابك" [ref=e14]:
+                - heading "تسجيل الدخول إلى حسابك" [level=1] [ref=e15]
+                - generic [ref=e16]:
+                    - link "إنشاء حساب" [ref=e18] [cursor=pointer]:
+                        - /url: /ar/auth/register
+                        - img [ref=e19]
+                        - generic [ref=e22]: إنشاء حساب
+                    - group "خيارات أخرى لتسجيل الدخول" [ref=e24]:
+                        - button "تسجيل الدخول بـ Local consent fixture" [ref=e25] [cursor=pointer]:
+                            - img [ref=e26]
+                    - generic [ref=e32]: أو المتابعة بـ
+                    - form "تسجيل الدخول إلى حسابك" [ref=e33]:
+                        - generic [ref=e34]:
+                            - text: عنوان البريد الإلكتروني
+                            - textbox "عنوان البريد الإلكتروني" [active] [ref=e35]:
+                                - /placeholder: name@example.com
+                        - generic [ref=e36]:
+                            - text: كلمة المرور
+                            - textbox "كلمة المرور" [ref=e38]:
+                                - /placeholder: ••••••••
+                        - button "تسجيل الدخول" [ref=e39]:
+                            - img
+                            - generic [ref=e40]: تسجيل الدخول
+                        - link "نسيت كلمة المرور؟" [ref=e41] [cursor=pointer]:
+                            - /url: /ar/auth/forgot-password
+                    - generic [ref=e46]: أو المتابعة بـ
+                    - generic [ref=e47]:
+                        - paragraph [ref=e48]: استخدم مفتاح المرور المحفوظ على هذا الجهاز.
+                        - button "تسجيل الدخول بمفتاح مرور" [ref=e50]:
+                            - img
+                            - text: تسجيل الدخول بمفتاح مرور
+                    - generic [ref=e55]: أو المتابعة بـ
+                    - form "أرسل لي رابط تسجيل دخول" [ref=e56]:
+                        - paragraph [ref=e57]: نرسل رابطًا يسجل دخولك دون كلمة مرور.
+                        - generic [ref=e58]:
+                            - text: البريد الإلكتروني
+                            - textbox "البريد الإلكتروني" [ref=e59]:
+                                - /placeholder: name@example.com
+                        - button "إرسال الرابط" [ref=e60]:
+                            - img
+                            - generic [ref=e61]: إرسال الرابط
+    - region "Notifications alt+T"
+```

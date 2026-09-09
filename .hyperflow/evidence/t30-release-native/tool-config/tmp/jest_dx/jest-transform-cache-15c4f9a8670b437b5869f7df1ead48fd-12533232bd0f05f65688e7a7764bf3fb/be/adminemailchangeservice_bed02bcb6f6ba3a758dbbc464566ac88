@@ -1,0 +1,83 @@
+46ab82ce280eb9cfa1a8ec0dc6bb5ab8
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var AdminEmailChangeService_1;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AdminEmailChangeService = void 0;
+const common_1 = require("@nestjs/common");
+const mongoose_1 = require("@nestjs/mongoose");
+const mongoose_2 = require("mongoose");
+const user_schema_1 = require("../../user/schemas/user.schema");
+const verification_code_service_1 = require("../../auth/services/verification-code.service");
+const mail_service_1 = require("../../mail/mail.service");
+const app_exception_1 = require("../../common/exceptions/app.exception");
+const error_code_enum_1 = require("../../common/enums/error-code.enum");
+const role_hierarchy_1 = require("../../common/utils/role-hierarchy");
+/**
+ * Admin-initiated email changes.
+ * Only admins may move an account to another address, and the account always
+ * drops back to unverified until the new mailbox confirms the code.
+ */
+let AdminEmailChangeService = AdminEmailChangeService_1 = class AdminEmailChangeService {
+    userModel;
+    verificationCodeService;
+    mailService;
+    logger = new common_1.Logger(AdminEmailChangeService_1.name);
+    constructor(userModel, verificationCodeService, mailService) {
+        this.userModel = userModel;
+        this.verificationCodeService = verificationCodeService;
+        this.mailService = mailService;
+    }
+    /**
+     * Point an account at a new address and mail a fresh verification code.
+     * The caller saves the document; nothing is persisted if the mail fails.
+     *
+     * @param user - Target user document, mutated in place
+     * @param email - New address
+     * @param actorLevel - Hierarchy level of the acting admin
+     * @throws AppException EMAIL_CHANGE_NOT_ALLOWED, EMAIL_ALREADY_EXISTS or
+     * EMAIL_SEND_FAILED
+     */
+    async apply(user, email, actorLevel) {
+        if (actorLevel < role_hierarchy_1.ADMIN_LEVEL) {
+            throw new app_exception_1.AppException(error_code_enum_1.ErrorCode.EMAIL_CHANGE_NOT_ALLOWED, 'Only admins can change the email address of another account', common_1.HttpStatus.FORBIDDEN);
+        }
+        const taken = await this.userModel.findOne({ email }).exec();
+        if (taken) {
+            throw new app_exception_1.AppException(error_code_enum_1.ErrorCode.EMAIL_ALREADY_EXISTS, 'Email already in use', common_1.HttpStatus.CONFLICT);
+        }
+        const { code } = await this.verificationCodeService.createOrUpdatePendingRegistration(email, user.name);
+        await this.sendCode(email, code, user.name);
+        user.email = email;
+        user.isVerified = false;
+    }
+    async sendCode(email, code, name) {
+        try {
+            await this.mailService.sendActivationCode(email, code, name);
+        }
+        catch (error) {
+            this.logger.error(`Failed to send verification code to ${email}: ${error instanceof Error ? error.message : String(error)}`);
+            throw new app_exception_1.AppException(error_code_enum_1.ErrorCode.EMAIL_SEND_FAILED, 'Failed to send verification email', common_1.HttpStatus.BAD_REQUEST);
+        }
+    }
+};
+exports.AdminEmailChangeService = AdminEmailChangeService;
+exports.AdminEmailChangeService = AdminEmailChangeService = AdminEmailChangeService_1 = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, mongoose_1.InjectModel)(user_schema_1.User.name)),
+    __metadata("design:paramtypes", [mongoose_2.Model,
+        verification_code_service_1.VerificationCodeService,
+        mail_service_1.MailService])
+], AdminEmailChangeService);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYWRtaW4vc2VydmljZXMvYWRtaW4tZW1haWwtY2hhbmdlLnNlcnZpY2UudHMiLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7OztBQUFBLDJDQUFnRTtBQUNoRSwrQ0FBK0M7QUFDL0MsdUNBQWlDO0FBQ2pDLGdFQUFvRTtBQUNwRSw2RkFBd0Y7QUFDeEYsMERBQXNEO0FBQ3RELHlFQUFxRTtBQUNyRSx3RUFBK0Q7QUFDL0Qsc0VBQWdFO0FBRWhFOzs7O0dBSUc7QUFFSSxJQUFNLHVCQUF1QiwrQkFBN0IsTUFBTSx1QkFBdUI7SUFJUztJQUN4QjtJQUNBO0lBTEYsTUFBTSxHQUFHLElBQUksZUFBTSxDQUFDLHlCQUF1QixDQUFDLElBQUksQ0FBQyxDQUFDO0lBRW5FLFlBQzJDLFNBQThCLEVBQ3RELHVCQUFnRCxFQUNoRCxXQUF3QjtRQUZBLGNBQVMsR0FBVCxTQUFTLENBQXFCO1FBQ3RELDRCQUF1QixHQUF2Qix1QkFBdUIsQ0FBeUI7UUFDaEQsZ0JBQVcsR0FBWCxXQUFXLENBQWE7SUFDeEMsQ0FBQztJQUVKOzs7Ozs7Ozs7T0FTRztJQUNILEtBQUssQ0FBQyxLQUFLLENBQ1QsSUFBa0IsRUFDbEIsS0FBYSxFQUNiLFVBQWtCO1FBRWxCLElBQUksVUFBVSxHQUFHLDRCQUFXLEVBQUUsQ0FBQztZQUM3QixNQUFNLElBQUksNEJBQVksQ0FDcEIsMkJBQVMsQ0FBQyx3QkFBd0IsRUFDbEMsNkRBQTZELEVBQzdELG1CQUFVLENBQUMsU0FBUyxDQUNyQixDQUFDO1FBQ0osQ0FBQztRQUVELE1BQU0sS0FBSyxHQUFHLE1BQU0sSUFBSSxDQUFDLFNBQVMsQ0FBQyxPQUFPLENBQUMsRUFBRSxLQUFLLEVBQUUsQ0FBQyxDQUFDLElBQUksRUFBRSxDQUFDO1FBQzdELElBQUksS0FBSyxFQUFFLENBQUM7WUFDVixNQUFNLElBQUksNEJBQVksQ0FDcEIsMkJBQVMsQ0FBQyxvQkFBb0IsRUFDOUIsc0JBQXNCLEVBQ3RCLG1CQUFVLENBQUMsUUFBUSxDQUNwQixDQUFDO1FBQ0osQ0FBQztRQUVELE1BQU0sRUFBRSxJQUFJLEVBQUUsR0FDWixNQUFNLElBQUksQ0FBQyx1QkFBdUIsQ0FBQyxpQ0FBaUMsQ0FDbEUsS0FBSyxFQUNMLElBQUksQ0FBQyxJQUFJLENBQ1YsQ0FBQztRQUVKLE1BQU0sSUFBSSxDQUFDLFFBQVEsQ0FBQyxLQUFLLEVBQUUsSUFBSSxFQUFFLElBQUksQ0FBQyxJQUFJLENBQUMsQ0FBQztRQUU1QyxJQUFJLENBQUMsS0FBSyxHQUFHLEtBQUssQ0FBQztRQUNuQixJQUFJLENBQUMsVUFBVSxHQUFHLEtBQUssQ0FBQztJQUMxQixDQUFDO0lBRU8sS0FBSyxDQUFDLFFBQVEsQ0FDcEIsS0FBYSxFQUNiLElBQVksRUFDWixJQUFZO1FBRVosSUFBSSxDQUFDO1lBQ0gsTUFBTSxJQUFJLENBQUMsV0FBVyxDQUFDLGtCQUFrQixDQUFDLEtBQUssRUFBRSxJQUFJLEVBQUUsSUFBSSxDQUFDLENBQUM7UUFDL0QsQ0FBQztRQUFDLE9BQU8sS0FBSyxFQUFFLENBQUM7WUFDZixJQUFJLENBQUMsTUFBTSxDQUFDLEtBQUssQ0FDZix1Q0FBdUMsS0FBSyxLQUMxQyxLQUFLLFlBQVksS0FBSyxDQUFDLENBQUMsQ0FBQyxLQUFLLENBQUMsT0FBTyxDQUFDLENBQUMsQ0FBQyxNQUFNLENBQUMsS0FBSyxDQUN2RCxFQUFFLENBQ0gsQ0FBQztZQUNGLE1BQU0sSUFBSSw0QkFBWSxDQUNwQiwyQkFBUyxDQUFDLGlCQUFpQixFQUMzQixtQ0FBbUMsRUFDbkMsbUJBQVUsQ0FBQyxXQUFXLENBQ3ZCLENBQUM7UUFDSixDQUFDO0lBQ0gsQ0FBQztDQUNGLENBQUE7QUF6RVksMERBQXVCO2tDQUF2Qix1QkFBdUI7SUFEbkMsSUFBQSxtQkFBVSxHQUFFO0lBS1IsV0FBQSxJQUFBLHNCQUFXLEVBQUMsa0JBQUksQ0FBQyxJQUFJLENBQUMsQ0FBQTtxQ0FBNkIsZ0JBQUs7UUFDZixtREFBdUI7UUFDbkMsMEJBQVc7R0FOaEMsdUJBQXVCLENBeUVuQyIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy9hZG1pbi9zZXJ2aWNlcy9hZG1pbi1lbWFpbC1jaGFuZ2Uuc2VydmljZS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBIdHRwU3RhdHVzLCBJbmplY3RhYmxlLCBMb2dnZXIgfSBmcm9tICdAbmVzdGpzL2NvbW1vbic7XG5pbXBvcnQgeyBJbmplY3RNb2RlbCB9IGZyb20gJ0BuZXN0anMvbW9uZ29vc2UnO1xuaW1wb3J0IHsgTW9kZWwgfSBmcm9tICdtb25nb29zZSc7XG5pbXBvcnQgeyBVc2VyLCBVc2VyRG9jdW1lbnQgfSBmcm9tICcuLi8uLi91c2VyL3NjaGVtYXMvdXNlci5zY2hlbWEnO1xuaW1wb3J0IHsgVmVyaWZpY2F0aW9uQ29kZVNlcnZpY2UgfSBmcm9tICcuLi8uLi9hdXRoL3NlcnZpY2VzL3ZlcmlmaWNhdGlvbi1jb2RlLnNlcnZpY2UnO1xuaW1wb3J0IHsgTWFpbFNlcnZpY2UgfSBmcm9tICcuLi8uLi9tYWlsL21haWwuc2VydmljZSc7XG5pbXBvcnQgeyBBcHBFeGNlcHRpb24gfSBmcm9tICcuLi8uLi9jb21tb24vZXhjZXB0aW9ucy9hcHAuZXhjZXB0aW9uJztcbmltcG9ydCB7IEVycm9yQ29kZSB9IGZyb20gJy4uLy4uL2NvbW1vbi9lbnVtcy9lcnJvci1jb2RlLmVudW0nO1xuaW1wb3J0IHsgQURNSU5fTEVWRUwgfSBmcm9tICcuLi8uLi9jb21tb24vdXRpbHMvcm9sZS1oaWVyYXJjaHknO1xuXG4vKipcbiAqIEFkbWluLWluaXRpYXRlZCBlbWFpbCBjaGFuZ2VzLlxuICogT25seSBhZG1pbnMgbWF5IG1vdmUgYW4gYWNjb3VudCB0byBhbm90aGVyIGFkZHJlc3MsIGFuZCB0aGUgYWNjb3VudCBhbHdheXNcbiAqIGRyb3BzIGJhY2sgdG8gdW52ZXJpZmllZCB1bnRpbCB0aGUgbmV3IG1haWxib3ggY29uZmlybXMgdGhlIGNvZGUuXG4gKi9cbkBJbmplY3RhYmxlKClcbmV4cG9ydCBjbGFzcyBBZG1pbkVtYWlsQ2hhbmdlU2VydmljZSB7XG4gIHByaXZhdGUgcmVhZG9ubHkgbG9nZ2VyID0gbmV3IExvZ2dlcihBZG1pbkVtYWlsQ2hhbmdlU2VydmljZS5uYW1lKTtcblxuICBjb25zdHJ1Y3RvcihcbiAgICBASW5qZWN0TW9kZWwoVXNlci5uYW1lKSBwcml2YXRlIHJlYWRvbmx5IHVzZXJNb2RlbDogTW9kZWw8VXNlckRvY3VtZW50PixcbiAgICBwcml2YXRlIHJlYWRvbmx5IHZlcmlmaWNhdGlvbkNvZGVTZXJ2aWNlOiBWZXJpZmljYXRpb25Db2RlU2VydmljZSxcbiAgICBwcml2YXRlIHJlYWRvbmx5IG1haWxTZXJ2aWNlOiBNYWlsU2VydmljZSxcbiAgKSB7fVxuXG4gIC8qKlxuICAgKiBQb2ludCBhbiBhY2NvdW50IGF0IGEgbmV3IGFkZHJlc3MgYW5kIG1haWwgYSBmcmVzaCB2ZXJpZmljYXRpb24gY29kZS5cbiAgICogVGhlIGNhbGxlciBzYXZlcyB0aGUgZG9jdW1lbnQ7IG5vdGhpbmcgaXMgcGVyc2lzdGVkIGlmIHRoZSBtYWlsIGZhaWxzLlxuICAgKlxuICAgKiBAcGFyYW0gdXNlciAtIFRhcmdldCB1c2VyIGRvY3VtZW50LCBtdXRhdGVkIGluIHBsYWNlXG4gICAqIEBwYXJhbSBlbWFpbCAtIE5ldyBhZGRyZXNzXG4gICAqIEBwYXJhbSBhY3RvckxldmVsIC0gSGllcmFyY2h5IGxldmVsIG9mIHRoZSBhY3RpbmcgYWRtaW5cbiAgICogQHRocm93cyBBcHBFeGNlcHRpb24gRU1BSUxfQ0hBTkdFX05PVF9BTExPV0VELCBFTUFJTF9BTFJFQURZX0VYSVNUUyBvclxuICAgKiBFTUFJTF9TRU5EX0ZBSUxFRFxuICAgKi9cbiAgYXN5bmMgYXBwbHkoXG4gICAgdXNlcjogVXNlckRvY3VtZW50LFxuICAgIGVtYWlsOiBzdHJpbmcsXG4gICAgYWN0b3JMZXZlbDogbnVtYmVyLFxuICApOiBQcm9taXNlPHZvaWQ+IHtcbiAgICBpZiAoYWN0b3JMZXZlbCA8IEFETUlOX0xFVkVMKSB7XG4gICAgICB0aHJvdyBuZXcgQXBwRXhjZXB0aW9uKFxuICAgICAgICBFcnJvckNvZGUuRU1BSUxfQ0hBTkdFX05PVF9BTExPV0VELFxuICAgICAgICAnT25seSBhZG1pbnMgY2FuIGNoYW5nZSB0aGUgZW1haWwgYWRkcmVzcyBvZiBhbm90aGVyIGFjY291bnQnLFxuICAgICAgICBIdHRwU3RhdHVzLkZPUkJJRERFTixcbiAgICAgICk7XG4gICAgfVxuXG4gICAgY29uc3QgdGFrZW4gPSBhd2FpdCB0aGlzLnVzZXJNb2RlbC5maW5kT25lKHsgZW1haWwgfSkuZXhlYygpO1xuICAgIGlmICh0YWtlbikge1xuICAgICAgdGhyb3cgbmV3IEFwcEV4Y2VwdGlvbihcbiAgICAgICAgRXJyb3JDb2RlLkVNQUlMX0FMUkVBRFlfRVhJU1RTLFxuICAgICAgICAnRW1haWwgYWxyZWFkeSBpbiB1c2UnLFxuICAgICAgICBIdHRwU3RhdHVzLkNPTkZMSUNULFxuICAgICAgKTtcbiAgICB9XG5cbiAgICBjb25zdCB7IGNvZGUgfSA9XG4gICAgICBhd2FpdCB0aGlzLnZlcmlmaWNhdGlvbkNvZGVTZXJ2aWNlLmNyZWF0ZU9yVXBkYXRlUGVuZGluZ1JlZ2lzdHJhdGlvbihcbiAgICAgICAgZW1haWwsXG4gICAgICAgIHVzZXIubmFtZSxcbiAgICAgICk7XG5cbiAgICBhd2FpdCB0aGlzLnNlbmRDb2RlKGVtYWlsLCBjb2RlLCB1c2VyLm5hbWUpO1xuXG4gICAgdXNlci5lbWFpbCA9IGVtYWlsO1xuICAgIHVzZXIuaXNWZXJpZmllZCA9IGZhbHNlO1xuICB9XG5cbiAgcHJpdmF0ZSBhc3luYyBzZW5kQ29kZShcbiAgICBlbWFpbDogc3RyaW5nLFxuICAgIGNvZGU6IHN0cmluZyxcbiAgICBuYW1lOiBzdHJpbmcsXG4gICk6IFByb21pc2U8dm9pZD4ge1xuICAgIHRyeSB7XG4gICAgICBhd2FpdCB0aGlzLm1haWxTZXJ2aWNlLnNlbmRBY3RpdmF0aW9uQ29kZShlbWFpbCwgY29kZSwgbmFtZSk7XG4gICAgfSBjYXRjaCAoZXJyb3IpIHtcbiAgICAgIHRoaXMubG9nZ2VyLmVycm9yKFxuICAgICAgICBgRmFpbGVkIHRvIHNlbmQgdmVyaWZpY2F0aW9uIGNvZGUgdG8gJHtlbWFpbH06ICR7XG4gICAgICAgICAgZXJyb3IgaW5zdGFuY2VvZiBFcnJvciA/IGVycm9yLm1lc3NhZ2UgOiBTdHJpbmcoZXJyb3IpXG4gICAgICAgIH1gLFxuICAgICAgKTtcbiAgICAgIHRocm93IG5ldyBBcHBFeGNlcHRpb24oXG4gICAgICAgIEVycm9yQ29kZS5FTUFJTF9TRU5EX0ZBSUxFRCxcbiAgICAgICAgJ0ZhaWxlZCB0byBzZW5kIHZlcmlmaWNhdGlvbiBlbWFpbCcsXG4gICAgICAgIEh0dHBTdGF0dXMuQkFEX1JFUVVFU1QsXG4gICAgICApO1xuICAgIH1cbiAgfVxufVxuIl0sInZlcnNpb24iOjN9

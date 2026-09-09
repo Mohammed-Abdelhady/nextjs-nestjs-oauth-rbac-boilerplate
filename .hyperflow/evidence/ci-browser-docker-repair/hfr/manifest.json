@@ -1,0 +1,41 @@
+{
+  "captured_at": "2026-09-08T12:28:35.386940+00:00",
+  "base_head": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+  "candidate": "/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz",
+  "files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "def3d439a41b6b6d0084d251dde2f1ca5a4f1a5013e68b08ed0d62182edcafc7"
+    },
+    {
+      "path": "frontend/e2e/authenticated-regressions.spec.ts",
+      "sha256": "d96ae4c677ce7f067262c3a8073e85ace2b1de9488b5446bf745c37f2319a134"
+    },
+    {
+      "path": "scripts/config-transforms.test.mjs",
+      "sha256": "86e73e194dd638fe890098d3f42341f36c71a7af3d51a532268b919ce99d5d45"
+    },
+    {
+      "path": "scripts/lib/docker-http-probes.mjs",
+      "sha256": "7b854e75bfe206205ee2be908ac1956ad19b7fbd75b9494b16beddf2e5c30618"
+    },
+    {
+      "path": "scripts/lib/failure-diagnostics.mjs",
+      "sha256": "645dd58cbf2f367adba38010875d62f8d112024df82a6fde3d0c879cbe599723"
+    },
+    {
+      "path": "scripts/verify-docker.mjs",
+      "sha256": "e300867e7eea32d617fed0bd6be2c5b5dc7092e1dcc30b01c4e3b1ff8055bda0"
+    }
+  ],
+  "fingerprint": "848666e146c79f11292447b80c0290239fb794fc91a10e5a03725b82812a9a0c",
+  "fingerprint_format": "sha256 of sorted path TAB sha256 NEWLINE",
+  "source_frozen": true,
+  "prior_fingerprint": "822ea784c2549dd6fa229f2e7d5d1dd0926b9564065472cb4f15ab823e99c195",
+  "hfr_delta_paths": [
+    "frontend/e2e/authenticated-regressions.spec.ts",
+    "scripts/config-transforms.test.mjs",
+    "scripts/lib/docker-http-probes.mjs",
+    "scripts/lib/failure-diagnostics.mjs"
+  ]
+}

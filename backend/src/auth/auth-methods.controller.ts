@@ -4,7 +4,7 @@ import { Public } from './decorators/public.decorator';
 import { AuthFeature } from './enums/auth-feature.enum';
 import { AuthFeaturesService } from './services/auth-features.service';
 import { AuthMethodsResponseDto } from './dto/auth-methods-response.dto';
-import { OAuthRegistryService } from './oauth/oauth-registry.service';
+import { OAuthRegistryService } from './oauth/oauth-registry.service'; // feature:oauth-core
 import { ApiResponse } from '../common/dto/api-response.dto';
 
 /**
@@ -16,7 +16,7 @@ import { ApiResponse } from '../common/dto/api-response.dto';
 export class AuthMethodsController {
   constructor(
     private readonly authFeaturesService: AuthFeaturesService,
-    private readonly oauthRegistry: OAuthRegistryService,
+    private readonly oauthRegistry: OAuthRegistryService, // feature:oauth-core
   ) {}
 
   /**
@@ -36,10 +36,10 @@ export class AuthMethodsController {
     return ApiResponse.success({
       methods: {
         password: this.authFeaturesService.isEnabled(AuthFeature.PASSWORD),
-        magicLink: this.authFeaturesService.isEnabled(AuthFeature.MAGIC_LINK),
-        twoFactor: this.authFeaturesService.isEnabled(AuthFeature.TWO_FACTOR),
-        passkeys: this.authFeaturesService.isEnabled(AuthFeature.PASSKEYS),
-        oauth: this.oauthRegistry.listEnabled(),
+        magicLink: this.authFeaturesService.isEnabled(AuthFeature.MAGIC_LINK), // feature:magic-link
+        twoFactor: this.authFeaturesService.isEnabled(AuthFeature.TWO_FACTOR), // feature:totp
+        passkeys: this.authFeaturesService.isEnabled(AuthFeature.PASSKEYS), // feature:passkeys
+        oauth: this.oauthRegistry.listEnabled(), // feature:oauth-core
       },
     });
   }

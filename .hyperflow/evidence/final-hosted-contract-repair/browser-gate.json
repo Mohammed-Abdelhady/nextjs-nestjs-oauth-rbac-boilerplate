@@ -1,0 +1,13 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "test:e2e",
+    "--workspace",
+    "frontend",
+    "--",
+    "--reporter=line,json"
+  ],
+  "exit": 0,
+  "seconds": 109.83
+}

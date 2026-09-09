@@ -1,0 +1,15 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "test:e2e",
+    "--workspace",
+    "frontend",
+    "--",
+    "--config",
+    "playwright.frontend-only.config.ts",
+    "--reporter=line,json"
+  ],
+  "exit": 1,
+  "seconds": 0.46
+}

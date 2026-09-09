@@ -17,7 +17,11 @@ export const authMethodsApi = baseApi.injectEndpoints({
         data: AuthMethodsResponse;
       }): AuthMethods => ({
         ...response.data.methods,
+        password: response.data.methods.password,
+        magicLink: response.data.methods.magicLink ?? false,
+        twoFactor: response.data.methods.twoFactor ?? false,
         passkeys: response.data.methods.passkeys ?? false,
+        oauth: response.data.methods.oauth ?? [],
       }),
       providesTags: ['AuthMethods'],
     }),

@@ -25,8 +25,8 @@ export const baseApi = createApi({
     'User',
     'Auth',
     'AuthMethods',
-    'LinkedProviders',
-    'ProfileSync',
+    'LinkedProviders', // feature:oauth-core
+    'ProfileSync', // feature:oauth-core
     'Roles',
     'Permissions',
     'Sessions',

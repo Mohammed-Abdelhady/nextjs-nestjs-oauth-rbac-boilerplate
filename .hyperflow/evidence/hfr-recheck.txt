@@ -1,0 +1,16 @@
+**HFR001 — CLOSED.** The overflow catch now immediately rethrows the original assertion; capture runs in the first `afterEach`. [failure-diagnostics.mjs:15](/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz/scripts/lib/failure-diagnostics.mjs:15) reserves 1 second, skips capture below 250 ms, caps capture at 5 seconds and cancellation at 250 ms. Rejections are handled; abort checks prevent subsequent stages, file writing receives the signal, and cancellation requests closure of the owned failed page. Existing audit assertions and fixture teardown remain intact.
+
+Owner evidence covers completed/rejected/stalled capture, cancellation outcomes, and prevention of later stages after abort. The actual **no-browser Playwright** regression verifies all three failures retain exactly one original error ([config-transforms.test.mjs:425](/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz/scripts/config-transforms.test.mjs:425)).
+
+**HFR002 — CLOSED.** [docker-http-probes.mjs:24](/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz/scripts/lib/docker-http-probes.mjs:24) restores `headers.get('location') !== null`. The new regression supplies an otherwise-valid HTTP 200 response with an empty `Location` and verifies rejection.
+
+**Adjacent review:** No new actionable defect found. The strict overflow predicate, 3,000-element scan/20-record output bounds, and exact JSON/PNG artifact allowlist remain unchanged. The helper adds constant coordination state and bounded waiting. Generated-fixture evidence reports byte-exact helper retention, removal of maintainer e2e files, and **43/43** config tests passing using reused dependencies.
+
+HEAD and all six file hashes matched before and after review:
+
+- HEAD: `fc19e55e4f2ae1978c19178e1078c76b47acfa2d`
+- Fingerprint: `848666e146c79f11292447b80c0290239fb794fc91a10e5a03725b82812a9a0c`
+
+The supplied patch reconstructs HEAD exactly. Only the four declared repair paths changed from the prior capture; workflow and Docker launch helper are unchanged.
+
+Owner gates report config **43/43**, lint, types, format and diff checks passing. I ran no tests and made no writes. Actual browser capture/cancellation and Docker runtime confirmation still require the normal hosted run; underlying I/O completion is not certified here. Prior closures and security/CodeQL exclusions remain unchanged. These finding closures return to root for validation, without a broader readiness or release claim.

@@ -1,0 +1,73 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+    - alert [ref=e2]: Dashboard | Auth Boilerplate
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+        - /url: '#main'
+    - generic [ref=e4]:
+        - complementary [ref=e5]:
+            - generic [ref=e6]:
+                - link "Auth App, go to dashboard" [ref=e8] [cursor=pointer]:
+                    - /url: /en/dashboard
+                    - text: Auth App
+                - navigation "Main navigation" [ref=e10]:
+                    - link "Dashboard" [ref=e12] [cursor=pointer]:
+                        - /url: /en/dashboard
+                        - img [ref=e13]
+                        - text: Dashboard
+                    - link "Settings" [ref=e19] [cursor=pointer]:
+                        - /url: /en/settings
+                        - img [ref=e20]
+                        - text: Settings
+                    - generic [ref=e23]:
+                        - button "Admin" [expanded] [ref=e24]:
+                            - generic [ref=e25]:
+                                - img [ref=e26]
+                                - generic [ref=e28]: Admin
+                            - img [ref=e29]
+                        - generic [ref=e31]:
+                            - link "Users" [ref=e32] [cursor=pointer]:
+                                - /url: /en/admin/users
+                                - img [ref=e33]
+                                - text: Users
+                            - link "Roles" [ref=e38] [cursor=pointer]:
+                                - /url: /en/admin/roles
+                                - img [ref=e39]
+                                - text: Roles
+                            - link "Permissions Demo" [ref=e41] [cursor=pointer]:
+                                - /url: /en/admin/permissions-demo
+                                - img [ref=e42]
+                                - text: Permissions Demo
+                    - generic [ref=e45]:
+                        - button "Activity" [expanded] [ref=e46]:
+                            - generic [ref=e47]:
+                                - img [ref=e48]
+                                - generic [ref=e50]: Activity
+                            - img [ref=e51]
+                        - link "Sessions" [ref=e54] [cursor=pointer]:
+                            - /url: /en/sessions
+                            - img [ref=e55]
+                            - text: Sessions
+                - paragraph [ref=e58]: © 2024 Auth App
+        - generic [ref=e59]:
+            - banner [ref=e60]:
+                - group "Account controls" [ref=e61]:
+                    - generic [ref=e62]:
+                        - generic [ref=e63]: Seed Admin
+                        - generic [ref=e64]: (admin)
+                    - generic [ref=e65]:
+                        - button "Switch to English" [ref=e66]: English
+                        - button "Switch to Arabic" [ref=e67]: العربية
+                    - button "Switch to light mode" [ref=e68]:
+                        - img
+                    - button "Logout" [ref=e69]:
+                        - img
+                        - generic [ref=e70]: Logout
+            - main [ref=e71]:
+                - generic [ref=e73]:
+                    - heading "Dashboard" [level=1] [ref=e74]
+                    - paragraph [ref=e75]: Welcome to your dashboard. This page is under construction.
+                    - paragraph [ref=e77]: Dashboard features coming soon...
+    - region "Notifications alt+T"
+```

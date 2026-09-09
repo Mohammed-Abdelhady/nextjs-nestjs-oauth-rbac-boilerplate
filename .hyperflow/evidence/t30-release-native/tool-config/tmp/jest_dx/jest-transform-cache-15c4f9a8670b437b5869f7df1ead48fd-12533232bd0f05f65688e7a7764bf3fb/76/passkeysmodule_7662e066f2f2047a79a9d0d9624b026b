@@ -1,0 +1,67 @@
+6f872cba0de53ea8472689ffdca46b89
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PasskeysModule = void 0;
+const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
+const mongoose_1 = require("@nestjs/mongoose");
+const auth_module_1 = require("../auth.module");
+const passkeys_controller_1 = require("./passkeys.controller");
+const passkey_login_controller_1 = require("./passkey-login.controller");
+const passkey_assertion_service_1 = require("./services/passkey-assertion.service");
+const passkey_challenge_service_1 = require("./services/passkey-challenge.service");
+const passkey_config_service_1 = require("./services/passkey-config.service");
+const passkey_login_service_1 = require("./services/passkey-login.service");
+const passkey_management_service_1 = require("./services/passkey-management.service");
+const passkey_registration_service_1 = require("./services/passkey-registration.service");
+const passkey_second_factor_verifier_1 = require("./services/passkey-second-factor.verifier");
+const webauthn_adapter_1 = require("./services/webauthn.adapter");
+const passkey_schema_1 = require("./schemas/passkey.schema");
+const user_schema_1 = require("../../user/schemas/user.schema");
+/**
+ * WebAuthn sign-in and passkey management. Sessions and the feature switch
+ * come from AuthModule, so this module can be dropped without touching the
+ * rest of auth.
+ *
+ * PasskeySecondFactorVerifier is exported for TwoFactorModule, which accepts a
+ * passkey as an answer to a two-factor challenge. Nothing here imports
+ * TwoFactorModule, which is what keeps that one-way.
+ */
+let PasskeysModule = class PasskeysModule {
+};
+exports.PasskeysModule = PasskeysModule;
+exports.PasskeysModule = PasskeysModule = __decorate([
+    (0, common_1.Module)({
+        imports: [
+            config_1.ConfigModule,
+            mongoose_1.MongooseModule.forFeature([
+                { name: passkey_schema_1.Passkey.name, schema: passkey_schema_1.PasskeySchema },
+                { name: user_schema_1.User.name, schema: user_schema_1.UserSchema },
+            ]),
+            auth_module_1.AuthModule,
+        ],
+        controllers: [passkeys_controller_1.PasskeysController, passkey_login_controller_1.PasskeyLoginController],
+        providers: [
+            webauthn_adapter_1.WebAuthnAdapter,
+            passkey_config_service_1.PasskeyConfigService,
+            passkey_challenge_service_1.PasskeyChallengeService,
+            passkey_registration_service_1.PasskeyRegistrationService,
+            passkey_assertion_service_1.PasskeyAssertionService,
+            passkey_login_service_1.PasskeyLoginService,
+            passkey_management_service_1.PasskeyManagementService,
+            passkey_second_factor_verifier_1.PasskeySecondFactorVerifier,
+        ],
+        exports: [
+            passkey_assertion_service_1.PasskeyAssertionService,
+            passkey_management_service_1.PasskeyManagementService,
+            passkey_second_factor_verifier_1.PasskeySecondFactorVerifier,
+        ],
+    })
+], PasskeysModule);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9wYXNza2V5cy9wYXNza2V5cy5tb2R1bGUudHMiLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7O0FBQUEsMkNBQXdDO0FBQ3hDLDJDQUE4QztBQUM5QywrQ0FBa0Q7QUFDbEQsZ0RBQTRDO0FBQzVDLCtEQUEyRDtBQUMzRCx5RUFBb0U7QUFDcEUsb0ZBQStFO0FBQy9FLG9GQUErRTtBQUMvRSw4RUFBeUU7QUFDekUsNEVBQXVFO0FBQ3ZFLHNGQUFpRjtBQUNqRiwwRkFBcUY7QUFDckYsOEZBQXdGO0FBQ3hGLGtFQUE4RDtBQUM5RCw2REFBa0U7QUFDbEUsZ0VBQWtFO0FBRWxFOzs7Ozs7OztHQVFHO0FBMkJJLElBQU0sY0FBYyxHQUFwQixNQUFNLGNBQWM7Q0FBRyxDQUFBO0FBQWpCLHdDQUFjO3lCQUFkLGNBQWM7SUExQjFCLElBQUEsZUFBTSxFQUFDO1FBQ04sT0FBTyxFQUFFO1lBQ1AscUJBQVk7WUFDWix5QkFBYyxDQUFDLFVBQVUsQ0FBQztnQkFDeEIsRUFBRSxJQUFJLEVBQUUsd0JBQU8sQ0FBQyxJQUFJLEVBQUUsTUFBTSxFQUFFLDhCQUFhLEVBQUU7Z0JBQzdDLEVBQUUsSUFBSSxFQUFFLGtCQUFJLENBQUMsSUFBSSxFQUFFLE1BQU0sRUFBRSx3QkFBVSxFQUFFO2FBQ3hDLENBQUM7WUFDRix3QkFBVTtTQUNYO1FBQ0QsV0FBVyxFQUFFLENBQUMsd0NBQWtCLEVBQUUsaURBQXNCLENBQUM7UUFDekQsU0FBUyxFQUFFO1lBQ1Qsa0NBQWU7WUFDZiw2Q0FBb0I7WUFDcEIsbURBQXVCO1lBQ3ZCLHlEQUEwQjtZQUMxQixtREFBdUI7WUFDdkIsMkNBQW1CO1lBQ25CLHFEQUF3QjtZQUN4Qiw0REFBMkI7U0FDNUI7UUFDRCxPQUFPLEVBQUU7WUFDUCxtREFBdUI7WUFDdkIscURBQXdCO1lBQ3hCLDREQUEyQjtTQUM1QjtLQUNGLENBQUM7R0FDVyxjQUFjLENBQUciLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9wYXNza2V5cy9wYXNza2V5cy5tb2R1bGUudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgTW9kdWxlIH0gZnJvbSAnQG5lc3Rqcy9jb21tb24nO1xuaW1wb3J0IHsgQ29uZmlnTW9kdWxlIH0gZnJvbSAnQG5lc3Rqcy9jb25maWcnO1xuaW1wb3J0IHsgTW9uZ29vc2VNb2R1bGUgfSBmcm9tICdAbmVzdGpzL21vbmdvb3NlJztcbmltcG9ydCB7IEF1dGhNb2R1bGUgfSBmcm9tICcuLi9hdXRoLm1vZHVsZSc7XG5pbXBvcnQgeyBQYXNza2V5c0NvbnRyb2xsZXIgfSBmcm9tICcuL3Bhc3NrZXlzLmNvbnRyb2xsZXInO1xuaW1wb3J0IHsgUGFzc2tleUxvZ2luQ29udHJvbGxlciB9IGZyb20gJy4vcGFzc2tleS1sb2dpbi5jb250cm9sbGVyJztcbmltcG9ydCB7IFBhc3NrZXlBc3NlcnRpb25TZXJ2aWNlIH0gZnJvbSAnLi9zZXJ2aWNlcy9wYXNza2V5LWFzc2VydGlvbi5zZXJ2aWNlJztcbmltcG9ydCB7IFBhc3NrZXlDaGFsbGVuZ2VTZXJ2aWNlIH0gZnJvbSAnLi9zZXJ2aWNlcy9wYXNza2V5LWNoYWxsZW5nZS5zZXJ2aWNlJztcbmltcG9ydCB7IFBhc3NrZXlDb25maWdTZXJ2aWNlIH0gZnJvbSAnLi9zZXJ2aWNlcy9wYXNza2V5LWNvbmZpZy5zZXJ2aWNlJztcbmltcG9ydCB7IFBhc3NrZXlMb2dpblNlcnZpY2UgfSBmcm9tICcuL3NlcnZpY2VzL3Bhc3NrZXktbG9naW4uc2VydmljZSc7XG5pbXBvcnQgeyBQYXNza2V5TWFuYWdlbWVudFNlcnZpY2UgfSBmcm9tICcuL3NlcnZpY2VzL3Bhc3NrZXktbWFuYWdlbWVudC5zZXJ2aWNlJztcbmltcG9ydCB7IFBhc3NrZXlSZWdpc3RyYXRpb25TZXJ2aWNlIH0gZnJvbSAnLi9zZXJ2aWNlcy9wYXNza2V5LXJlZ2lzdHJhdGlvbi5zZXJ2aWNlJztcbmltcG9ydCB7IFBhc3NrZXlTZWNvbmRGYWN0b3JWZXJpZmllciB9IGZyb20gJy4vc2VydmljZXMvcGFzc2tleS1zZWNvbmQtZmFjdG9yLnZlcmlmaWVyJztcbmltcG9ydCB7IFdlYkF1dGhuQWRhcHRlciB9IGZyb20gJy4vc2VydmljZXMvd2ViYXV0aG4uYWRhcHRlcic7XG5pbXBvcnQgeyBQYXNza2V5LCBQYXNza2V5U2NoZW1hIH0gZnJvbSAnLi9zY2hlbWFzL3Bhc3NrZXkuc2NoZW1hJztcbmltcG9ydCB7IFVzZXIsIFVzZXJTY2hlbWEgfSBmcm9tICcuLi8uLi91c2VyL3NjaGVtYXMvdXNlci5zY2hlbWEnO1xuXG4vKipcbiAqIFdlYkF1dGhuIHNpZ24taW4gYW5kIHBhc3NrZXkgbWFuYWdlbWVudC4gU2Vzc2lvbnMgYW5kIHRoZSBmZWF0dXJlIHN3aXRjaFxuICogY29tZSBmcm9tIEF1dGhNb2R1bGUsIHNvIHRoaXMgbW9kdWxlIGNhbiBiZSBkcm9wcGVkIHdpdGhvdXQgdG91Y2hpbmcgdGhlXG4gKiByZXN0IG9mIGF1dGguXG4gKlxuICogUGFzc2tleVNlY29uZEZhY3RvclZlcmlmaWVyIGlzIGV4cG9ydGVkIGZvciBUd29GYWN0b3JNb2R1bGUsIHdoaWNoIGFjY2VwdHMgYVxuICogcGFzc2tleSBhcyBhbiBhbnN3ZXIgdG8gYSB0d28tZmFjdG9yIGNoYWxsZW5nZS4gTm90aGluZyBoZXJlIGltcG9ydHNcbiAqIFR3b0ZhY3Rvck1vZHVsZSwgd2hpY2ggaXMgd2hhdCBrZWVwcyB0aGF0IG9uZS13YXkuXG4gKi9cbkBNb2R1bGUoe1xuICBpbXBvcnRzOiBbXG4gICAgQ29uZmlnTW9kdWxlLFxuICAgIE1vbmdvb3NlTW9kdWxlLmZvckZlYXR1cmUoW1xuICAgICAgeyBuYW1lOiBQYXNza2V5Lm5hbWUsIHNjaGVtYTogUGFzc2tleVNjaGVtYSB9LFxuICAgICAgeyBuYW1lOiBVc2VyLm5hbWUsIHNjaGVtYTogVXNlclNjaGVtYSB9LFxuICAgIF0pLFxuICAgIEF1dGhNb2R1bGUsXG4gIF0sXG4gIGNvbnRyb2xsZXJzOiBbUGFzc2tleXNDb250cm9sbGVyLCBQYXNza2V5TG9naW5Db250cm9sbGVyXSxcbiAgcHJvdmlkZXJzOiBbXG4gICAgV2ViQXV0aG5BZGFwdGVyLFxuICAgIFBhc3NrZXlDb25maWdTZXJ2aWNlLFxuICAgIFBhc3NrZXlDaGFsbGVuZ2VTZXJ2aWNlLFxuICAgIFBhc3NrZXlSZWdpc3RyYXRpb25TZXJ2aWNlLFxuICAgIFBhc3NrZXlBc3NlcnRpb25TZXJ2aWNlLFxuICAgIFBhc3NrZXlMb2dpblNlcnZpY2UsXG4gICAgUGFzc2tleU1hbmFnZW1lbnRTZXJ2aWNlLFxuICAgIFBhc3NrZXlTZWNvbmRGYWN0b3JWZXJpZmllcixcbiAgXSxcbiAgZXhwb3J0czogW1xuICAgIFBhc3NrZXlBc3NlcnRpb25TZXJ2aWNlLFxuICAgIFBhc3NrZXlNYW5hZ2VtZW50U2VydmljZSxcbiAgICBQYXNza2V5U2Vjb25kRmFjdG9yVmVyaWZpZXIsXG4gIF0sXG59KVxuZXhwb3J0IGNsYXNzIFBhc3NrZXlzTW9kdWxlIHt9XG4iXSwidmVyc2lvbiI6M30=

@@ -1,0 +1,84 @@
+f5404b7642c6e30b32691c54528df6db
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var AuthMailService_1;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AuthMailService = void 0;
+const common_1 = require("@nestjs/common");
+const mail_service_1 = require("../../mail/mail.service");
+const app_exception_1 = require("../../common/exceptions/app.exception");
+const error_code_enum_1 = require("../../common/enums/error-code.enum");
+/**
+ * Mail sent by the authentication flows.
+ * A delivery failure becomes EMAIL_SEND_FAILED with the address kept out of
+ * the response, so callers cannot read anything from a failed send.
+ */
+let AuthMailService = AuthMailService_1 = class AuthMailService {
+    mailService;
+    logger = new common_1.Logger(AuthMailService_1.name);
+    constructor(mailService) {
+        this.mailService = mailService;
+    }
+    /**
+     * Mail an activation code.
+     *
+     * @param email - Recipient address
+     * @param code - 6-digit activation code
+     * @param name - Name stored with the pending registration
+     */
+    async sendActivationCode(email, code, name) {
+        await this.send(() => this.mailService.sendActivationCode(email, code, name), 'Failed to send activation email');
+    }
+    /**
+     * Mail a password reset code.
+     *
+     * @param email - Recipient address
+     * @param code - 6-digit reset code
+     * @param name - Account holder name
+     */
+    async sendPasswordResetCode(email, code, name) {
+        await this.send(() => this.mailService.sendPasswordResetCode(email, code, name), 'Failed to send password reset email');
+    }
+    /**
+     * Mail a one-time sign-in link.
+     *
+     * @param email - Recipient address
+     * @param link - Client URL carrying the token
+     * @param expiresInMinutes - Minutes until the link stops working
+     */
+    async sendMagicLink(email, link, expiresInMinutes) {
+        await this.send(() => this.mailService.sendMagicLink(email, link, expiresInMinutes), 'Failed to send sign-in link email');
+    }
+    /**
+     * Tell an account holder that their address was used in a registration.
+     *
+     * @param email - Recipient address
+     * @param name - Account holder name
+     */
+    async sendRegistrationAttemptNotice(email, name) {
+        await this.send(() => this.mailService.sendRegistrationAttemptNotice(email, name), 'Failed to send registration notice email');
+    }
+    async send(action, failureMessage) {
+        try {
+            await action();
+        }
+        catch (error) {
+            this.logger.error(`${failureMessage}: ${error instanceof Error ? error.message : String(error)}`);
+            throw new app_exception_1.AppException(error_code_enum_1.ErrorCode.EMAIL_SEND_FAILED, failureMessage, common_1.HttpStatus.BAD_REQUEST);
+        }
+    }
+};
+exports.AuthMailService = AuthMailService;
+exports.AuthMailService = AuthMailService = AuthMailService_1 = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [mail_service_1.MailService])
+], AuthMailService);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9zZXJ2aWNlcy9hdXRoLW1haWwuc2VydmljZS50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7O0FBQUEsMkNBQWdFO0FBQ2hFLDBEQUFzRDtBQUN0RCx5RUFBcUU7QUFDckUsd0VBQStEO0FBRS9EOzs7O0dBSUc7QUFFSSxJQUFNLGVBQWUsdUJBQXJCLE1BQU0sZUFBZTtJQUdHO0lBRlosTUFBTSxHQUFHLElBQUksZUFBTSxDQUFDLGlCQUFlLENBQUMsSUFBSSxDQUFDLENBQUM7SUFFM0QsWUFBNkIsV0FBd0I7UUFBeEIsZ0JBQVcsR0FBWCxXQUFXLENBQWE7SUFBRyxDQUFDO0lBRXpEOzs7Ozs7T0FNRztJQUNILEtBQUssQ0FBQyxrQkFBa0IsQ0FDdEIsS0FBYSxFQUNiLElBQVksRUFDWixJQUFZO1FBRVosTUFBTSxJQUFJLENBQUMsSUFBSSxDQUNiLEdBQUcsRUFBRSxDQUFDLElBQUksQ0FBQyxXQUFXLENBQUMsa0JBQWtCLENBQUMsS0FBSyxFQUFFLElBQUksRUFBRSxJQUFJLENBQUMsRUFDNUQsaUNBQWlDLENBQ2xDLENBQUM7SUFDSixDQUFDO0lBRUQ7Ozs7OztPQU1HO0lBQ0gsS0FBSyxDQUFDLHFCQUFxQixDQUN6QixLQUFhLEVBQ2IsSUFBWSxFQUNaLElBQVk7UUFFWixNQUFNLElBQUksQ0FBQyxJQUFJLENBQ2IsR0FBRyxFQUFFLENBQUMsSUFBSSxDQUFDLFdBQVcsQ0FBQyxxQkFBcUIsQ0FBQyxLQUFLLEVBQUUsSUFBSSxFQUFFLElBQUksQ0FBQyxFQUMvRCxxQ0FBcUMsQ0FDdEMsQ0FBQztJQUNKLENBQUM7SUFFRDs7Ozs7O09BTUc7SUFDSCxLQUFLLENBQUMsYUFBYSxDQUNqQixLQUFhLEVBQ2IsSUFBWSxFQUNaLGdCQUF3QjtRQUV4QixNQUFNLElBQUksQ0FBQyxJQUFJLENBQ2IsR0FBRyxFQUFFLENBQUMsSUFBSSxDQUFDLFdBQVcsQ0FBQyxhQUFhLENBQUMsS0FBSyxFQUFFLElBQUksRUFBRSxnQkFBZ0IsQ0FBQyxFQUNuRSxtQ0FBbUMsQ0FDcEMsQ0FBQztJQUNKLENBQUM7SUFFRDs7Ozs7T0FLRztJQUNILEtBQUssQ0FBQyw2QkFBNkIsQ0FDakMsS0FBYSxFQUNiLElBQVk7UUFFWixNQUFNLElBQUksQ0FBQyxJQUFJLENBQ2IsR0FBRyxFQUFFLENBQUMsSUFBSSxDQUFDLFdBQVcsQ0FBQyw2QkFBNkIsQ0FBQyxLQUFLLEVBQUUsSUFBSSxDQUFDLEVBQ2pFLDBDQUEwQyxDQUMzQyxDQUFDO0lBQ0osQ0FBQztJQUVPLEtBQUssQ0FBQyxJQUFJLENBQ2hCLE1BQTJCLEVBQzNCLGNBQXNCO1FBRXRCLElBQUksQ0FBQztZQUNILE1BQU0sTUFBTSxFQUFFLENBQUM7UUFDakIsQ0FBQztRQUFDLE9BQU8sS0FBSyxFQUFFLENBQUM7WUFDZixJQUFJLENBQUMsTUFBTSxDQUFDLEtBQUssQ0FDZixHQUFHLGNBQWMsS0FBSyxLQUFLLFlBQVksS0FBSyxDQUFDLENBQUMsQ0FBQyxLQUFLLENBQUMsT0FBTyxDQUFDLENBQUMsQ0FBQyxNQUFNLENBQUMsS0FBSyxDQUFDLEVBQUUsQ0FDL0UsQ0FBQztZQUNGLE1BQU0sSUFBSSw0QkFBWSxDQUNwQiwyQkFBUyxDQUFDLGlCQUFpQixFQUMzQixjQUFjLEVBQ2QsbUJBQVUsQ0FBQyxXQUFXLENBQ3ZCLENBQUM7UUFDSixDQUFDO0lBQ0gsQ0FBQztDQUNGLENBQUE7QUE1RlksMENBQWU7MEJBQWYsZUFBZTtJQUQzQixJQUFBLG1CQUFVLEdBQUU7cUNBSStCLDBCQUFXO0dBSDFDLGVBQWUsQ0E0RjNCIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL2F1dGgvc2VydmljZXMvYXV0aC1tYWlsLnNlcnZpY2UudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgSHR0cFN0YXR1cywgSW5qZWN0YWJsZSwgTG9nZ2VyIH0gZnJvbSAnQG5lc3Rqcy9jb21tb24nO1xuaW1wb3J0IHsgTWFpbFNlcnZpY2UgfSBmcm9tICcuLi8uLi9tYWlsL21haWwuc2VydmljZSc7XG5pbXBvcnQgeyBBcHBFeGNlcHRpb24gfSBmcm9tICcuLi8uLi9jb21tb24vZXhjZXB0aW9ucy9hcHAuZXhjZXB0aW9uJztcbmltcG9ydCB7IEVycm9yQ29kZSB9IGZyb20gJy4uLy4uL2NvbW1vbi9lbnVtcy9lcnJvci1jb2RlLmVudW0nO1xuXG4vKipcbiAqIE1haWwgc2VudCBieSB0aGUgYXV0aGVudGljYXRpb24gZmxvd3MuXG4gKiBBIGRlbGl2ZXJ5IGZhaWx1cmUgYmVjb21lcyBFTUFJTF9TRU5EX0ZBSUxFRCB3aXRoIHRoZSBhZGRyZXNzIGtlcHQgb3V0IG9mXG4gKiB0aGUgcmVzcG9uc2UsIHNvIGNhbGxlcnMgY2Fubm90IHJlYWQgYW55dGhpbmcgZnJvbSBhIGZhaWxlZCBzZW5kLlxuICovXG5ASW5qZWN0YWJsZSgpXG5leHBvcnQgY2xhc3MgQXV0aE1haWxTZXJ2aWNlIHtcbiAgcHJpdmF0ZSByZWFkb25seSBsb2dnZXIgPSBuZXcgTG9nZ2VyKEF1dGhNYWlsU2VydmljZS5uYW1lKTtcblxuICBjb25zdHJ1Y3Rvcihwcml2YXRlIHJlYWRvbmx5IG1haWxTZXJ2aWNlOiBNYWlsU2VydmljZSkge31cblxuICAvKipcbiAgICogTWFpbCBhbiBhY3RpdmF0aW9uIGNvZGUuXG4gICAqXG4gICAqIEBwYXJhbSBlbWFpbCAtIFJlY2lwaWVudCBhZGRyZXNzXG4gICAqIEBwYXJhbSBjb2RlIC0gNi1kaWdpdCBhY3RpdmF0aW9uIGNvZGVcbiAgICogQHBhcmFtIG5hbWUgLSBOYW1lIHN0b3JlZCB3aXRoIHRoZSBwZW5kaW5nIHJlZ2lzdHJhdGlvblxuICAgKi9cbiAgYXN5bmMgc2VuZEFjdGl2YXRpb25Db2RlKFxuICAgIGVtYWlsOiBzdHJpbmcsXG4gICAgY29kZTogc3RyaW5nLFxuICAgIG5hbWU6IHN0cmluZyxcbiAgKTogUHJvbWlzZTx2b2lkPiB7XG4gICAgYXdhaXQgdGhpcy5zZW5kKFxuICAgICAgKCkgPT4gdGhpcy5tYWlsU2VydmljZS5zZW5kQWN0aXZhdGlvbkNvZGUoZW1haWwsIGNvZGUsIG5hbWUpLFxuICAgICAgJ0ZhaWxlZCB0byBzZW5kIGFjdGl2YXRpb24gZW1haWwnLFxuICAgICk7XG4gIH1cblxuICAvKipcbiAgICogTWFpbCBhIHBhc3N3b3JkIHJlc2V0IGNvZGUuXG4gICAqXG4gICAqIEBwYXJhbSBlbWFpbCAtIFJlY2lwaWVudCBhZGRyZXNzXG4gICAqIEBwYXJhbSBjb2RlIC0gNi1kaWdpdCByZXNldCBjb2RlXG4gICAqIEBwYXJhbSBuYW1lIC0gQWNjb3VudCBob2xkZXIgbmFtZVxuICAgKi9cbiAgYXN5bmMgc2VuZFBhc3N3b3JkUmVzZXRDb2RlKFxuICAgIGVtYWlsOiBzdHJpbmcsXG4gICAgY29kZTogc3RyaW5nLFxuICAgIG5hbWU6IHN0cmluZyxcbiAgKTogUHJvbWlzZTx2b2lkPiB7XG4gICAgYXdhaXQgdGhpcy5zZW5kKFxuICAgICAgKCkgPT4gdGhpcy5tYWlsU2VydmljZS5zZW5kUGFzc3dvcmRSZXNldENvZGUoZW1haWwsIGNvZGUsIG5hbWUpLFxuICAgICAgJ0ZhaWxlZCB0byBzZW5kIHBhc3N3b3JkIHJlc2V0IGVtYWlsJyxcbiAgICApO1xuICB9XG5cbiAgLyoqXG4gICAqIE1haWwgYSBvbmUtdGltZSBzaWduLWluIGxpbmsuXG4gICAqXG4gICAqIEBwYXJhbSBlbWFpbCAtIFJlY2lwaWVudCBhZGRyZXNzXG4gICAqIEBwYXJhbSBsaW5rIC0gQ2xpZW50IFVSTCBjYXJyeWluZyB0aGUgdG9rZW5cbiAgICogQHBhcmFtIGV4cGlyZXNJbk1pbnV0ZXMgLSBNaW51dGVzIHVudGlsIHRoZSBsaW5rIHN0b3BzIHdvcmtpbmdcbiAgICovXG4gIGFzeW5jIHNlbmRNYWdpY0xpbmsoXG4gICAgZW1haWw6IHN0cmluZyxcbiAgICBsaW5rOiBzdHJpbmcsXG4gICAgZXhwaXJlc0luTWludXRlczogbnVtYmVyLFxuICApOiBQcm9taXNlPHZvaWQ+IHtcbiAgICBhd2FpdCB0aGlzLnNlbmQoXG4gICAgICAoKSA9PiB0aGlzLm1haWxTZXJ2aWNlLnNlbmRNYWdpY0xpbmsoZW1haWwsIGxpbmssIGV4cGlyZXNJbk1pbnV0ZXMpLFxuICAgICAgJ0ZhaWxlZCB0byBzZW5kIHNpZ24taW4gbGluayBlbWFpbCcsXG4gICAgKTtcbiAgfVxuXG4gIC8qKlxuICAgKiBUZWxsIGFuIGFjY291bnQgaG9sZGVyIHRoYXQgdGhlaXIgYWRkcmVzcyB3YXMgdXNlZCBpbiBhIHJlZ2lzdHJhdGlvbi5cbiAgICpcbiAgICogQHBhcmFtIGVtYWlsIC0gUmVjaXBpZW50IGFkZHJlc3NcbiAgICogQHBhcmFtIG5hbWUgLSBBY2NvdW50IGhvbGRlciBuYW1lXG4gICAqL1xuICBhc3luYyBzZW5kUmVnaXN0cmF0aW9uQXR0ZW1wdE5vdGljZShcbiAgICBlbWFpbDogc3RyaW5nLFxuICAgIG5hbWU6IHN0cmluZyxcbiAgKTogUHJvbWlzZTx2b2lkPiB7XG4gICAgYXdhaXQgdGhpcy5zZW5kKFxuICAgICAgKCkgPT4gdGhpcy5tYWlsU2VydmljZS5zZW5kUmVnaXN0cmF0aW9uQXR0ZW1wdE5vdGljZShlbWFpbCwgbmFtZSksXG4gICAgICAnRmFpbGVkIHRvIHNlbmQgcmVnaXN0cmF0aW9uIG5vdGljZSBlbWFpbCcsXG4gICAgKTtcbiAgfVxuXG4gIHByaXZhdGUgYXN5bmMgc2VuZChcbiAgICBhY3Rpb246ICgpID0+IFByb21pc2U8dm9pZD4sXG4gICAgZmFpbHVyZU1lc3NhZ2U6IHN0cmluZyxcbiAgKTogUHJvbWlzZTx2b2lkPiB7XG4gICAgdHJ5IHtcbiAgICAgIGF3YWl0IGFjdGlvbigpO1xuICAgIH0gY2F0Y2ggKGVycm9yKSB7XG4gICAgICB0aGlzLmxvZ2dlci5lcnJvcihcbiAgICAgICAgYCR7ZmFpbHVyZU1lc3NhZ2V9OiAke2Vycm9yIGluc3RhbmNlb2YgRXJyb3IgPyBlcnJvci5tZXNzYWdlIDogU3RyaW5nKGVycm9yKX1gLFxuICAgICAgKTtcbiAgICAgIHRocm93IG5ldyBBcHBFeGNlcHRpb24oXG4gICAgICAgIEVycm9yQ29kZS5FTUFJTF9TRU5EX0ZBSUxFRCxcbiAgICAgICAgZmFpbHVyZU1lc3NhZ2UsXG4gICAgICAgIEh0dHBTdGF0dXMuQkFEX1JFUVVFU1QsXG4gICAgICApO1xuICAgIH1cbiAgfVxufVxuIl0sInZlcnNpb24iOjN9

@@ -1,0 +1,28 @@
+e39dc32ecb99c01386338d4a149c9813
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.GENERIC_OIDC_PROVIDER = exports.SUPPORTED_OAUTH_PROVIDERS = exports.EMAIL_PROVIDER = void 0;
+/** Provider id for password sign-in. Kept as a plain string so comparisons
+ * against dynamic provider ids stay type safe. */
+exports.EMAIL_PROVIDER = 'email';
+exports.SUPPORTED_OAUTH_PROVIDERS = [
+    'google',
+    'facebook',
+    'github',
+    'microsoft',
+    'apple',
+    'discord',
+    'linkedin',
+    'gitlab',
+    'x',
+    'slack',
+    'twitch',
+    'oidc',
+];
+/**
+ * Id the generic OpenID Connect provider reads its `OAUTH_OIDC_*` variables
+ * under. The id it is served on comes from OAUTH_OIDC_PROVIDER_ID and defaults
+ * to this same value.
+ */
+exports.GENERIC_OIDC_PROVIDER = 'oidc';
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29tbW9uL2NvbnN0YW50cy9vYXV0aC1wcm92aWRlcnMudHMiLCJtYXBwaW5ncyI6Ijs7O0FBQUE7a0RBQ2tEO0FBQ3JDLFFBQUEsY0FBYyxHQUFHLE9BQU8sQ0FBQztBQUV6QixRQUFBLHlCQUF5QixHQUFHO0lBQ3ZDLFFBQVE7SUFDUixVQUFVO0lBQ1YsUUFBUTtJQUNSLFdBQVc7SUFDWCxPQUFPO0lBQ1AsU0FBUztJQUNULFVBQVU7SUFDVixRQUFRO0lBQ1IsR0FBRztJQUNILE9BQU87SUFDUCxRQUFRO0lBQ1IsTUFBTTtDQUNFLENBQUM7QUFJWDs7OztHQUlHO0FBQ1UsUUFBQSxxQkFBcUIsR0FBRyxNQUFNLENBQUMiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29tbW9uL2NvbnN0YW50cy9vYXV0aC1wcm92aWRlcnMudHMiXSwic291cmNlc0NvbnRlbnQiOlsiLyoqIFByb3ZpZGVyIGlkIGZvciBwYXNzd29yZCBzaWduLWluLiBLZXB0IGFzIGEgcGxhaW4gc3RyaW5nIHNvIGNvbXBhcmlzb25zXG4gKiBhZ2FpbnN0IGR5bmFtaWMgcHJvdmlkZXIgaWRzIHN0YXkgdHlwZSBzYWZlLiAqL1xuZXhwb3J0IGNvbnN0IEVNQUlMX1BST1ZJREVSID0gJ2VtYWlsJztcblxuZXhwb3J0IGNvbnN0IFNVUFBPUlRFRF9PQVVUSF9QUk9WSURFUlMgPSBbXG4gICdnb29nbGUnLFxuICAnZmFjZWJvb2snLFxuICAnZ2l0aHViJyxcbiAgJ21pY3Jvc29mdCcsXG4gICdhcHBsZScsXG4gICdkaXNjb3JkJyxcbiAgJ2xpbmtlZGluJyxcbiAgJ2dpdGxhYicsXG4gICd4JyxcbiAgJ3NsYWNrJyxcbiAgJ3R3aXRjaCcsXG4gICdvaWRjJyxcbl0gYXMgY29uc3Q7XG5cbmV4cG9ydCB0eXBlIFN1cHBvcnRlZE9BdXRoUHJvdmlkZXIgPSAodHlwZW9mIFNVUFBPUlRFRF9PQVVUSF9QUk9WSURFUlMpW251bWJlcl07XG5cbi8qKlxuICogSWQgdGhlIGdlbmVyaWMgT3BlbklEIENvbm5lY3QgcHJvdmlkZXIgcmVhZHMgaXRzIGBPQVVUSF9PSURDXypgIHZhcmlhYmxlc1xuICogdW5kZXIuIFRoZSBpZCBpdCBpcyBzZXJ2ZWQgb24gY29tZXMgZnJvbSBPQVVUSF9PSURDX1BST1ZJREVSX0lEIGFuZCBkZWZhdWx0c1xuICogdG8gdGhpcyBzYW1lIHZhbHVlLlxuICovXG5leHBvcnQgY29uc3QgR0VORVJJQ19PSURDX1BST1ZJREVSID0gJ29pZGMnO1xuIl0sInZlcnNpb24iOjN9

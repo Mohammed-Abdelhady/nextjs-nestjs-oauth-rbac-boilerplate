@@ -1,0 +1,175 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+    - alert [ref=e2]
+    - link "تخطي إلى المحتوى الرئيسي" [ref=e3] [cursor=pointer]:
+        - /url: '#main'
+    - generic [ref=e4]:
+        - complementary [ref=e5]:
+            - generic [ref=e6]:
+                - link "Auth App، الانتقال إلى لوحة التحكم" [ref=e8] [cursor=pointer]:
+                    - /url: /ar/dashboard
+                    - text: Auth App
+                - navigation "التنقل الرئيسي" [ref=e10]:
+                    - link "لوحة التحكم" [ref=e12] [cursor=pointer]:
+                        - /url: /ar/dashboard
+                        - img [ref=e13]
+                        - text: لوحة التحكم
+                    - link "الإعدادات" [ref=e19] [cursor=pointer]:
+                        - /url: /ar/settings
+                        - img [ref=e20]
+                        - text: الإعدادات
+                - paragraph [ref=e24]: © 2024 Auth App
+        - generic [ref=e25]:
+            - banner [ref=e26]:
+                - group "عناصر التحكم في الحساب" [ref=e27]:
+                    - generic [ref=e28]:
+                        - generic [ref=e29]: Lifecycle User
+                        - generic [ref=e30]: (user)
+                    - generic [ref=e31]:
+                        - button "التبديل إلى الإنجليزية" [ref=e32]: English
+                        - button "التبديل إلى العربية" [ref=e33]: العربية
+                    - button "التبديل إلى الوضع الفاتح" [ref=e34]:
+                        - img
+                    - button "تسجيل الخروج" [ref=e35]:
+                        - img
+                        - generic [ref=e36]: تسجيل الخروج
+            - main [ref=e37]:
+                - generic [ref=e39]:
+                    - generic [ref=e40]:
+                        - heading "الإعدادات" [level=1] [ref=e41]
+                        - paragraph [ref=e42]: إدارة إعدادات حسابك وتفضيلاتك
+                    - region "الحساب والأمان" [ref=e43]:
+                        - heading "الحساب والأمان" [level=2] [ref=e44]
+                        - generic [ref=e45]:
+                            - generic [ref=e46]:
+                                - generic [ref=e47]:
+                                    - heading "معلومات الملف الشخصي" [level=3] [ref=e48]
+                                    - paragraph [ref=e49]: قم بتحديث معلوماتك الشخصية.
+                                - generic [ref=e51]:
+                                    - generic [ref=e52]:
+                                        - text: الاسم الكامل
+                                        - textbox "الاسم الكامل" [ref=e53]:
+                                            - /placeholder: محمد عبد الله
+                                            - text: Lifecycle User
+                                    - generic [ref=e54]:
+                                        - text: البريد الإلكتروني
+                                        - textbox [disabled] [ref=e55]: lifecycle@example.test
+                                        - paragraph [ref=e56]: لا يمكن تغيير البريد الإلكتروني
+                                    - button "حفظ التغييرات" [ref=e57]:
+                                        - generic [ref=e58]: حفظ التغييرات
+                            - generic [ref=e59]:
+                                - generic [ref=e60]:
+                                    - heading "تغيير كلمة المرور" [level=3] [ref=e61]
+                                    - paragraph [ref=e62]: قم بتحديث كلمة مرور حسابك. سيتم تسجيل خروجك من الجلسات الأخرى.
+                                - generic [ref=e64]:
+                                    - generic [ref=e65]:
+                                        - text: كلمة المرور الحالية
+                                        - generic [ref=e66]:
+                                            - textbox "كلمة المرور الحالية" [ref=e67]:
+                                                - /placeholder: '********'
+                                            - button "إظهار كلمة المرور" [ref=e68]:
+                                                - img [ref=e69]
+                                    - generic [ref=e72]:
+                                        - text: كلمة المرور الجديدة
+                                        - generic [ref=e73]:
+                                            - textbox "كلمة المرور الجديدة" [ref=e74]:
+                                                - /placeholder: '********'
+                                            - button "إظهار كلمة المرور" [ref=e75]:
+                                                - img [ref=e76]
+                                    - generic [ref=e79]:
+                                        - paragraph [ref=e80]: متطلبات كلمة المرور
+                                        - list [ref=e81]:
+                                            - listitem [ref=e82]:
+                                                - img [ref=e83]
+                                                - generic [ref=e85]: 8 أحرف على الأقل
+                                                - generic [ref=e86]: (غير مكتمل)
+                                            - listitem [ref=e87]:
+                                                - img [ref=e88]
+                                                - generic [ref=e90]: حرف كبير واحد على الأقل
+                                                - generic [ref=e91]: (غير مكتمل)
+                                            - listitem [ref=e92]:
+                                                - img [ref=e93]
+                                                - generic [ref=e95]: حرف صغير واحد على الأقل
+                                                - generic [ref=e96]: (غير مكتمل)
+                                            - listitem [ref=e97]:
+                                                - img [ref=e98]
+                                                - generic [ref=e100]: رقم واحد على الأقل
+                                                - generic [ref=e101]: (غير مكتمل)
+                                    - generic [ref=e102]:
+                                        - text: تأكيد كلمة المرور الجديدة
+                                        - generic [ref=e103]:
+                                            - textbox "تأكيد كلمة المرور الجديدة" [ref=e104]:
+                                                - /placeholder: '********'
+                                            - button "إظهار كلمة المرور" [ref=e105]:
+                                                - img [ref=e106]
+                                    - button "تحديث كلمة المرور" [ref=e109]:
+                                        - generic [ref=e110]: تحديث كلمة المرور
+                            - generic [ref=e111]:
+                                - generic [ref=e112]:
+                                    - generic [ref=e113]:
+                                        - heading "التحقق بخطوتين" [level=3] [ref=e114]
+                                        - generic [ref=e115]: غير مفعّل
+                                    - paragraph [ref=e116]: اطلب رمزًا من تطبيق المصادقة عند كل تسجيل دخول.
+                                - button "إعداد" [ref=e118]:
+                                    - img
+                                    - text: إعداد
+                            - generic [ref=e119]:
+                                - generic [ref=e120]:
+                                    - generic [ref=e121]:
+                                        - heading "مفاتيح المرور" [level=3] [ref=e122]
+                                        - generic [ref=e123]: لا يوجد
+                                    - paragraph [ref=e124]: سجّل الدخول ببصمتك أو وجهك أو قفل الشاشة بدلًا من كلمة المرور.
+                                - generic [ref=e125]:
+                                    - paragraph [ref=e126]: لا توجد مفاتيح مرور بعد. أضف واحدًا لتسجيل الدخول دون كلمة مرور.
+                                    - button "إضافة مفتاح مرور" [ref=e128]:
+                                        - img
+                                        - text: إضافة مفتاح مرور
+                    - region "الحسابات المرتبطة والمزامنة" [ref=e129]:
+                        - heading "الحسابات المرتبطة والمزامنة" [level=2] [ref=e130]
+                        - generic [ref=e131]:
+                            - generic [ref=e132]:
+                                - generic [ref=e133]:
+                                    - heading "الحسابات المرتبطة" [level=3] [ref=e134]
+                                    - paragraph [ref=e135]: إدارة مزودي OAuth المتصلين وتعيين حسابك الأساسي لمزامنة الملف الشخصي
+                                - generic [ref=e136]:
+                                    - generic [ref=e137]:
+                                        - heading "الحسابات المتصلة" [level=3] [ref=e138]
+                                        - generic [ref=e143]:
+                                            - generic [ref=e145]: E
+                                            - generic [ref=e146]:
+                                                - generic [ref=e147]:
+                                                    - heading "Email" [level=3] [ref=e148]
+                                                    - generic [ref=e149]:
+                                                        - img [ref=e150]
+                                                        - text: أساسي
+                                                - paragraph [ref=e153]: يُستخدم هذا الحساب لمزامنة الملف الشخصي
+                                    - alert [ref=e154]:
+                                        - img [ref=e155]
+                                        - generic [ref=e157]: يجب الاحتفاظ بطريقة مصادقة واحدة على الأقل مرتبطة بحسابك
+                                    - generic [ref=e158]:
+                                        - heading "المزودون المتاحون" [level=3] [ref=e159]
+                                        - button "ربط Local consent fixture" [ref=e161]:
+                                            - img
+                                            - generic [ref=e162]: ربط Local consent fixture
+                            - generic [ref=e163]:
+                                - generic [ref=e164]:
+                                    - heading "مزامنة الملف الشخصي" [level=3] [ref=e165]
+                                    - paragraph [ref=e166]: مزامنة معلومات ملفك الشخصي من مزود OAuth الأساسي
+                                - generic [ref=e167]:
+                                    - generic [ref=e168]:
+                                        - generic [ref=e169]:
+                                            - generic [ref=e170]: آخر مزامنة
+                                            - generic [ref=e171]: أبداً
+                                        - generic [ref=e172]:
+                                            - generic [ref=e173]: المزود الأساسي
+                                            - generic [ref=e174]: email
+                                    - generic [ref=e175]:
+                                        - img [ref=e176]
+                                        - paragraph [ref=e178]: قم بتعيين مزود OAuth كمزود أساسي لتمكين مزامنة الملف الشخصي
+                                    - button "مزامنة الملف الشخصي" [disabled]:
+                                        - img
+                                        - generic: مزامنة الملف الشخصي
+    - region "Notifications alt+T"
+```

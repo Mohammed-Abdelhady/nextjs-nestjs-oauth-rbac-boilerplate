@@ -1,0 +1,56 @@
+931984bbe5a123db6cafb29dd82e060e
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PendingRegistrationSchema = exports.PendingRegistration = void 0;
+const mongoose_1 = require("@nestjs/mongoose");
+let PendingRegistration = class PendingRegistration {
+    email;
+    /** Absent when the code verifies a new address for an existing account. */
+    hashedPassword;
+    name;
+    hashedCode;
+    attempts;
+    expiresAt;
+    // Timestamp fields (automatically managed by Mongoose with timestamps: true)
+    createdAt;
+    updatedAt;
+};
+exports.PendingRegistration = PendingRegistration;
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, unique: true, lowercase: true, trim: true }),
+    __metadata("design:type", String)
+], PendingRegistration.prototype, "email", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ select: false }),
+    __metadata("design:type", String)
+], PendingRegistration.prototype, "hashedPassword", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, trim: true }),
+    __metadata("design:type", String)
+], PendingRegistration.prototype, "name", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, select: false }),
+    __metadata("design:type", String)
+], PendingRegistration.prototype, "hashedCode", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, default: 0 }),
+    __metadata("design:type", Number)
+], PendingRegistration.prototype, "attempts", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, index: { expireAfterSeconds: 0 } }),
+    __metadata("design:type", Date)
+], PendingRegistration.prototype, "expiresAt", void 0);
+exports.PendingRegistration = PendingRegistration = __decorate([
+    (0, mongoose_1.Schema)({ timestamps: true })
+], PendingRegistration);
+exports.PendingRegistrationSchema = mongoose_1.SchemaFactory.createForClass(PendingRegistration);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9zY2hlbWFzL3BlbmRpbmctcmVnaXN0cmF0aW9uLnNjaGVtYS50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSwrQ0FBK0Q7QUFJeEQsSUFBTSxtQkFBbUIsR0FBekIsTUFBTSxtQkFBbUI7SUFFOUIsS0FBSyxDQUFVO0lBRWYsMkVBQTJFO0lBRTNFLGNBQWMsQ0FBVTtJQUd4QixJQUFJLENBQVU7SUFHZCxVQUFVLENBQVU7SUFHcEIsUUFBUSxDQUFVO0lBR2xCLFNBQVMsQ0FBUTtJQUVqQiw2RUFBNkU7SUFDN0UsU0FBUyxDQUFRO0lBQ2pCLFNBQVMsQ0FBUTtDQUNsQixDQUFBO0FBdkJZLGtEQUFtQjtBQUU5QjtJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsUUFBUSxFQUFFLElBQUksRUFBRSxNQUFNLEVBQUUsSUFBSSxFQUFFLFNBQVMsRUFBRSxJQUFJLEVBQUUsSUFBSSxFQUFFLElBQUksRUFBRSxDQUFDOztrREFDckQ7QUFJZjtJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsTUFBTSxFQUFFLEtBQUssRUFBRSxDQUFDOzsyREFDQTtBQUd4QjtJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsUUFBUSxFQUFFLElBQUksRUFBRSxJQUFJLEVBQUUsSUFBSSxFQUFFLENBQUM7O2lEQUN2QjtBQUdkO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxRQUFRLEVBQUUsSUFBSSxFQUFFLE1BQU0sRUFBRSxLQUFLLEVBQUUsQ0FBQzs7dURBQ3BCO0FBR3BCO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxRQUFRLEVBQUUsSUFBSSxFQUFFLE9BQU8sRUFBRSxDQUFDLEVBQUUsQ0FBQzs7cURBQ25CO0FBR2xCO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxRQUFRLEVBQUUsSUFBSSxFQUFFLEtBQUssRUFBRSxFQUFFLGtCQUFrQixFQUFFLENBQUMsRUFBRSxFQUFFLENBQUM7OEJBQy9DLElBQUk7c0RBQUM7OEJBbEJOLG1CQUFtQjtJQUQvQixJQUFBLGlCQUFNLEVBQUMsRUFBRSxVQUFVLEVBQUUsSUFBSSxFQUFFLENBQUM7R0FDaEIsbUJBQW1CLENBdUIvQjtBQUlZLFFBQUEseUJBQXlCLEdBQ3BDLHdCQUFhLENBQUMsY0FBYyxDQUFDLG1CQUFtQixDQUFDLENBQUMiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9zY2hlbWFzL3BlbmRpbmctcmVnaXN0cmF0aW9uLnNjaGVtYS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBQcm9wLCBTY2hlbWEsIFNjaGVtYUZhY3RvcnkgfSBmcm9tICdAbmVzdGpzL21vbmdvb3NlJztcbmltcG9ydCB7IEh5ZHJhdGVkRG9jdW1lbnQsIFNjaGVtYSBhcyBNb25nb29zZVNjaGVtYSB9IGZyb20gJ21vbmdvb3NlJztcblxuQFNjaGVtYSh7IHRpbWVzdGFtcHM6IHRydWUgfSlcbmV4cG9ydCBjbGFzcyBQZW5kaW5nUmVnaXN0cmF0aW9uIHtcbiAgQFByb3AoeyByZXF1aXJlZDogdHJ1ZSwgdW5pcXVlOiB0cnVlLCBsb3dlcmNhc2U6IHRydWUsIHRyaW06IHRydWUgfSlcbiAgZW1haWwhOiBzdHJpbmc7XG5cbiAgLyoqIEFic2VudCB3aGVuIHRoZSBjb2RlIHZlcmlmaWVzIGEgbmV3IGFkZHJlc3MgZm9yIGFuIGV4aXN0aW5nIGFjY291bnQuICovXG4gIEBQcm9wKHsgc2VsZWN0OiBmYWxzZSB9KVxuICBoYXNoZWRQYXNzd29yZD86IHN0cmluZztcblxuICBAUHJvcCh7IHJlcXVpcmVkOiB0cnVlLCB0cmltOiB0cnVlIH0pXG4gIG5hbWUhOiBzdHJpbmc7XG5cbiAgQFByb3AoeyByZXF1aXJlZDogdHJ1ZSwgc2VsZWN0OiBmYWxzZSB9KVxuICBoYXNoZWRDb2RlITogc3RyaW5nO1xuXG4gIEBQcm9wKHsgcmVxdWlyZWQ6IHRydWUsIGRlZmF1bHQ6IDAgfSlcbiAgYXR0ZW1wdHMhOiBudW1iZXI7XG5cbiAgQFByb3AoeyByZXF1aXJlZDogdHJ1ZSwgaW5kZXg6IHsgZXhwaXJlQWZ0ZXJTZWNvbmRzOiAwIH0gfSlcbiAgZXhwaXJlc0F0ITogRGF0ZTtcblxuICAvLyBUaW1lc3RhbXAgZmllbGRzIChhdXRvbWF0aWNhbGx5IG1hbmFnZWQgYnkgTW9uZ29vc2Ugd2l0aCB0aW1lc3RhbXBzOiB0cnVlKVxuICBjcmVhdGVkQXQhOiBEYXRlO1xuICB1cGRhdGVkQXQhOiBEYXRlO1xufVxuXG5leHBvcnQgdHlwZSBQZW5kaW5nUmVnaXN0cmF0aW9uRG9jdW1lbnQgPSBIeWRyYXRlZERvY3VtZW50PFBlbmRpbmdSZWdpc3RyYXRpb24+O1xuXG5leHBvcnQgY29uc3QgUGVuZGluZ1JlZ2lzdHJhdGlvblNjaGVtYTogTW9uZ29vc2VTY2hlbWE8UGVuZGluZ1JlZ2lzdHJhdGlvbj4gPVxuICBTY2hlbWFGYWN0b3J5LmNyZWF0ZUZvckNsYXNzKFBlbmRpbmdSZWdpc3RyYXRpb24pO1xuIl0sInZlcnNpb24iOjN9

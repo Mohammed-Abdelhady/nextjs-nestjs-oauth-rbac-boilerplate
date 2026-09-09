@@ -1,0 +1,48 @@
+4ee804a464e12c00b8335644dd53e190
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RequireAnyPermission = exports.ANY_PERMISSIONS_KEY = exports.RequirePermissions = exports.PERMISSIONS_KEY = void 0;
+const common_1 = require("@nestjs/common");
+/**
+ * Metadata key for storing required permissions in route handlers.
+ */
+exports.PERMISSIONS_KEY = 'permissions';
+/**
+ * Decorator to require specific permissions for a route.
+ * Use this decorator on controller methods to enforce permission checks.
+ *
+ * @param permissions - Array of required permissions (all must be present)
+ *
+ * @example
+ * ```typescript
+ * @RequirePermissions('users:read:all', 'users:update:all')
+ * @Get(':id')
+ * async getUser(@Param('id') id: string) {
+ *   return this.userService.findById(id);
+ * }
+ * ```
+ */
+const RequirePermissions = (...permissions) => (0, common_1.SetMetadata)(exports.PERMISSIONS_KEY, permissions);
+exports.RequirePermissions = RequirePermissions;
+/**
+ * Metadata key for storing required permissions with OR logic.
+ */
+exports.ANY_PERMISSIONS_KEY = 'anyPermissions';
+/**
+ * Decorator to require ANY of the specified permissions for a route.
+ * User needs at least one of the listed permissions.
+ *
+ * @param permissions - Array of permissions (user needs at least one)
+ *
+ * @example
+ * ```typescript
+ * @RequireAnyPermission('users:read:all', 'users:read:own')
+ * @Get('profile')
+ * async getProfile() {
+ *   return this.userService.getProfile();
+ * }
+ * ```
+ */
+const RequireAnyPermission = (...permissions) => (0, common_1.SetMetadata)(exports.ANY_PERMISSIONS_KEY, permissions);
+exports.RequireAnyPermission = RequireAnyPermission;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29tbW9uL2RlY29yYXRvcnMvcGVybWlzc2lvbnMuZGVjb3JhdG9yLnRzIiwibWFwcGluZ3MiOiI7OztBQUFBLDJDQUE2QztBQUU3Qzs7R0FFRztBQUNVLFFBQUEsZUFBZSxHQUFHLGFBQWEsQ0FBQztBQUU3Qzs7Ozs7Ozs7Ozs7Ozs7R0FjRztBQUNJLE1BQU0sa0JBQWtCLEdBQUcsQ0FBQyxHQUFHLFdBQXFCLEVBQUUsRUFBRSxDQUM3RCxJQUFBLG9CQUFXLEVBQUMsdUJBQWUsRUFBRSxXQUFXLENBQUMsQ0FBQztBQUQvQixRQUFBLGtCQUFrQixzQkFDYTtBQUU1Qzs7R0FFRztBQUNVLFFBQUEsbUJBQW1CLEdBQUcsZ0JBQWdCLENBQUM7QUFFcEQ7Ozs7Ozs7Ozs7Ozs7O0dBY0c7QUFDSSxNQUFNLG9CQUFvQixHQUFHLENBQUMsR0FBRyxXQUFxQixFQUFFLEVBQUUsQ0FDL0QsSUFBQSxvQkFBVyxFQUFDLDJCQUFtQixFQUFFLFdBQVcsQ0FBQyxDQUFDO0FBRG5DLFFBQUEsb0JBQW9CLHdCQUNlIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL2NvbW1vbi9kZWNvcmF0b3JzL3Blcm1pc3Npb25zLmRlY29yYXRvci50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBTZXRNZXRhZGF0YSB9IGZyb20gJ0BuZXN0anMvY29tbW9uJztcblxuLyoqXG4gKiBNZXRhZGF0YSBrZXkgZm9yIHN0b3JpbmcgcmVxdWlyZWQgcGVybWlzc2lvbnMgaW4gcm91dGUgaGFuZGxlcnMuXG4gKi9cbmV4cG9ydCBjb25zdCBQRVJNSVNTSU9OU19LRVkgPSAncGVybWlzc2lvbnMnO1xuXG4vKipcbiAqIERlY29yYXRvciB0byByZXF1aXJlIHNwZWNpZmljIHBlcm1pc3Npb25zIGZvciBhIHJvdXRlLlxuICogVXNlIHRoaXMgZGVjb3JhdG9yIG9uIGNvbnRyb2xsZXIgbWV0aG9kcyB0byBlbmZvcmNlIHBlcm1pc3Npb24gY2hlY2tzLlxuICpcbiAqIEBwYXJhbSBwZXJtaXNzaW9ucyAtIEFycmF5IG9mIHJlcXVpcmVkIHBlcm1pc3Npb25zIChhbGwgbXVzdCBiZSBwcmVzZW50KVxuICpcbiAqIEBleGFtcGxlXG4gKiBgYGB0eXBlc2NyaXB0XG4gKiBAUmVxdWlyZVBlcm1pc3Npb25zKCd1c2VyczpyZWFkOmFsbCcsICd1c2Vyczp1cGRhdGU6YWxsJylcbiAqIEBHZXQoJzppZCcpXG4gKiBhc3luYyBnZXRVc2VyKEBQYXJhbSgnaWQnKSBpZDogc3RyaW5nKSB7XG4gKiAgIHJldHVybiB0aGlzLnVzZXJTZXJ2aWNlLmZpbmRCeUlkKGlkKTtcbiAqIH1cbiAqIGBgYFxuICovXG5leHBvcnQgY29uc3QgUmVxdWlyZVBlcm1pc3Npb25zID0gKC4uLnBlcm1pc3Npb25zOiBzdHJpbmdbXSkgPT5cbiAgU2V0TWV0YWRhdGEoUEVSTUlTU0lPTlNfS0VZLCBwZXJtaXNzaW9ucyk7XG5cbi8qKlxuICogTWV0YWRhdGEga2V5IGZvciBzdG9yaW5nIHJlcXVpcmVkIHBlcm1pc3Npb25zIHdpdGggT1IgbG9naWMuXG4gKi9cbmV4cG9ydCBjb25zdCBBTllfUEVSTUlTU0lPTlNfS0VZID0gJ2FueVBlcm1pc3Npb25zJztcblxuLyoqXG4gKiBEZWNvcmF0b3IgdG8gcmVxdWlyZSBBTlkgb2YgdGhlIHNwZWNpZmllZCBwZXJtaXNzaW9ucyBmb3IgYSByb3V0ZS5cbiAqIFVzZXIgbmVlZHMgYXQgbGVhc3Qgb25lIG9mIHRoZSBsaXN0ZWQgcGVybWlzc2lvbnMuXG4gKlxuICogQHBhcmFtIHBlcm1pc3Npb25zIC0gQXJyYXkgb2YgcGVybWlzc2lvbnMgKHVzZXIgbmVlZHMgYXQgbGVhc3Qgb25lKVxuICpcbiAqIEBleGFtcGxlXG4gKiBgYGB0eXBlc2NyaXB0XG4gKiBAUmVxdWlyZUFueVBlcm1pc3Npb24oJ3VzZXJzOnJlYWQ6YWxsJywgJ3VzZXJzOnJlYWQ6b3duJylcbiAqIEBHZXQoJ3Byb2ZpbGUnKVxuICogYXN5bmMgZ2V0UHJvZmlsZSgpIHtcbiAqICAgcmV0dXJuIHRoaXMudXNlclNlcnZpY2UuZ2V0UHJvZmlsZSgpO1xuICogfVxuICogYGBgXG4gKi9cbmV4cG9ydCBjb25zdCBSZXF1aXJlQW55UGVybWlzc2lvbiA9ICguLi5wZXJtaXNzaW9uczogc3RyaW5nW10pID0+XG4gIFNldE1ldGFkYXRhKEFOWV9QRVJNSVNTSU9OU19LRVksIHBlcm1pc3Npb25zKTtcbiJdLCJ2ZXJzaW9uIjozfQ==

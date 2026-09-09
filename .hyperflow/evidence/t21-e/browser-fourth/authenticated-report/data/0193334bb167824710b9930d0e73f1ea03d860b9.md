@@ -1,0 +1,58 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+    - alert [ref=e2]: Login to your account | Auth Boilerplate
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+        - /url: '#main'
+    - generic [ref=e4]:
+        - banner [ref=e5]:
+            - generic [ref=e6]:
+                - button "Switch to English" [ref=e7]: English
+                - button "Switch to Arabic" [ref=e8]: العربية
+            - button "Switch to light mode" [ref=e9]:
+                - img
+        - main [ref=e10]:
+            - region "Login to your account" [ref=e14]:
+                - heading "Login to your account" [level=1] [ref=e15]
+                - generic [ref=e16]:
+                    - link "Sign up" [ref=e18] [cursor=pointer]:
+                        - /url: /en/auth/register
+                        - img [ref=e19]
+                        - generic [ref=e22]: Sign up
+                    - group "Other sign-in options" [ref=e24]:
+                        - button "Sign in with Local consent fixture" [ref=e25] [cursor=pointer]:
+                            - img [ref=e26]
+                    - generic [ref=e32]: Or continue with
+                    - form "Login to your account" [ref=e33]:
+                        - generic [ref=e34]:
+                            - text: Email address
+                            - textbox "Email address" [active] [ref=e35]:
+                                - /placeholder: name@example.com
+                        - generic [ref=e36]:
+                            - text: Password
+                            - textbox "Password" [ref=e38]:
+                                - /placeholder: ••••••••
+                        - button "Sign in" [ref=e39]:
+                            - img
+                            - generic [ref=e40]: Sign in
+                        - link "Forgot password?" [ref=e41] [cursor=pointer]:
+                            - /url: /en/auth/forgot-password
+                    - generic [ref=e46]: Or continue with
+                    - generic [ref=e47]:
+                        - paragraph [ref=e48]: Use the passkey saved on this device.
+                        - button "Sign in with a passkey" [ref=e50]:
+                            - img
+                            - text: Sign in with a passkey
+                    - generic [ref=e55]: Or continue with
+                    - form "Email me a sign-in link" [ref=e56]:
+                        - paragraph [ref=e57]: We send a link that signs you in. No password needed.
+                        - generic [ref=e58]:
+                            - text: Email address
+                            - textbox "Email address" [ref=e59]:
+                                - /placeholder: name@example.com
+                        - button "Send the link" [ref=e60]:
+                            - img
+                            - generic [ref=e61]: Send the link
+    - region "Notifications alt+T"
+```

@@ -1,0 +1,9 @@
+{
+  "captured_at": "2026-09-08T13:26:06.720315+00:00",
+  "base": "954b99a319d171d8dd488372fda6f4f530440dce",
+  "accepted_fingerprint": "b16a0fc5a6f122c475ba761629d0aa4fa475255889305eb40a92774d73b3d620",
+  "exact_seven_source_hashes": true,
+  "ledger_rows_exact": 137,
+  "remote_and_pr_pinned": true,
+  "candidate": "/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz"
+}

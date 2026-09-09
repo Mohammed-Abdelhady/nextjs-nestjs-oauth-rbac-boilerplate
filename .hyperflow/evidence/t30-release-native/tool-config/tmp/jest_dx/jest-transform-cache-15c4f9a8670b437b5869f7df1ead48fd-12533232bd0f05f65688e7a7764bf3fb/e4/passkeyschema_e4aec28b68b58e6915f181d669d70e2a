@@ -1,0 +1,90 @@
+7d9df31770313a81f149680e1cf353d8
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PasskeySchema = exports.Passkey = void 0;
+const mongoose_1 = require("@nestjs/mongoose");
+const mongoose_2 = require("mongoose");
+const passkeys_constants_1 = require("../constants/passkeys.constants");
+/**
+ * One WebAuthn credential. The public key is all the server needs to check a
+ * signature, so nothing here can be replayed if the collection leaks.
+ */
+let Passkey = class Passkey {
+    user;
+    /** Credential id as base64url, the value the authenticator signs under. */
+    credentialId;
+    /** COSE public key exactly as the authenticator produced it. */
+    publicKey;
+    /**
+     * Signature count reported by the authenticator. A count that fails to move
+     * forward is how a cloned credential shows up, so it is checked on every
+     * assertion. Authenticators that do not count leave it at zero.
+     */
+    counter;
+    /** How the browser reached the authenticator: usb, nfc, internal, hybrid. */
+    transports;
+    /** 'singleDevice' or 'multiDevice', as reported at registration. */
+    deviceType;
+    /** Whether the credential is synced to the provider's keychain. */
+    backedUp;
+    /** Label the user sees in the account settings. */
+    name;
+    /** Set by every accepted assertion. Null until the passkey is first used. */
+    lastUsedAt;
+    // Timestamp fields (automatically managed by Mongoose with timestamps: true)
+    createdAt;
+    updatedAt;
+};
+exports.Passkey = Passkey;
+__decorate([
+    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'User', required: true, index: true }),
+    __metadata("design:type", mongoose_2.Types.ObjectId)
+], Passkey.prototype, "user", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, unique: true }),
+    __metadata("design:type", String)
+], Passkey.prototype, "credentialId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Buffer, required: true }),
+    __metadata("design:type", Buffer)
+], Passkey.prototype, "publicKey", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Number, default: 0 }),
+    __metadata("design:type", Number)
+], Passkey.prototype, "counter", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: [String], default: [] }),
+    __metadata("design:type", Array)
+], Passkey.prototype, "transports", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String }),
+    __metadata("design:type", String)
+], Passkey.prototype, "deviceType", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Boolean, default: false }),
+    __metadata("design:type", Boolean)
+], Passkey.prototype, "backedUp", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, trim: true, maxlength: passkeys_constants_1.PASSKEY_NAME_MAX_LENGTH }),
+    __metadata("design:type", String)
+], Passkey.prototype, "name", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Date, default: null }),
+    __metadata("design:type", Object)
+], Passkey.prototype, "lastUsedAt", void 0);
+exports.Passkey = Passkey = __decorate([
+    (0, mongoose_1.Schema)({ timestamps: true })
+], Passkey);
+exports.PasskeySchema = mongoose_1.SchemaFactory.createForClass(Passkey);
+// Serves the per-user list and the count on the profile.
+exports.PasskeySchema.index({ user: 1, createdAt: -1 });
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9wYXNza2V5cy9zY2hlbWFzL3Bhc3NrZXkuc2NoZW1hLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLCtDQUErRDtBQUMvRCx1Q0FBNkU7QUFDN0Usd0VBQTBFO0FBRTFFOzs7R0FHRztBQUVJLElBQU0sT0FBTyxHQUFiLE1BQU0sT0FBTztJQUVsQixJQUFJLENBQWtCO0lBRXRCLDJFQUEyRTtJQUUzRSxZQUFZLENBQVU7SUFFdEIsZ0VBQWdFO0lBRWhFLFNBQVMsQ0FBVTtJQUVuQjs7OztPQUlHO0lBRUgsT0FBTyxDQUFVO0lBRWpCLDZFQUE2RTtJQUU3RSxVQUFVLENBQVk7SUFFdEIsb0VBQW9FO0lBRXBFLFVBQVUsQ0FBVTtJQUVwQixtRUFBbUU7SUFFbkUsUUFBUSxDQUFXO0lBRW5CLG1EQUFtRDtJQUVuRCxJQUFJLENBQVU7SUFFZCw2RUFBNkU7SUFFN0UsVUFBVSxDQUFlO0lBRXpCLDZFQUE2RTtJQUM3RSxTQUFTLENBQVE7SUFDakIsU0FBUyxDQUFRO0NBQ2xCLENBQUE7QUEzQ1ksMEJBQU87QUFFbEI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLElBQUksRUFBRSxnQkFBSyxDQUFDLFFBQVEsRUFBRSxHQUFHLEVBQUUsTUFBTSxFQUFFLFFBQVEsRUFBRSxJQUFJLEVBQUUsS0FBSyxFQUFFLElBQUksRUFBRSxDQUFDOzhCQUNsRSxnQkFBSyxDQUFDLFFBQVE7cUNBQUM7QUFJdEI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLFFBQVEsRUFBRSxJQUFJLEVBQUUsTUFBTSxFQUFFLElBQUksRUFBRSxDQUFDOzs2Q0FDakI7QUFJdEI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLElBQUksRUFBRSxNQUFNLEVBQUUsUUFBUSxFQUFFLElBQUksRUFBRSxDQUFDOzhCQUMzQixNQUFNOzBDQUFDO0FBUW5CO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxJQUFJLEVBQUUsTUFBTSxFQUFFLE9BQU8sRUFBRSxDQUFDLEVBQUUsQ0FBQzs7d0NBQ2xCO0FBSWpCO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxJQUFJLEVBQUUsQ0FBQyxNQUFNLENBQUMsRUFBRSxPQUFPLEVBQUUsRUFBRSxFQUFFLENBQUM7OzJDQUNoQjtBQUl0QjtJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsSUFBSSxFQUFFLE1BQU0sRUFBRSxDQUFDOzsyQ0FDSDtBQUlwQjtJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsSUFBSSxFQUFFLE9BQU8sRUFBRSxPQUFPLEVBQUUsS0FBSyxFQUFFLENBQUM7O3lDQUNyQjtBQUluQjtJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsUUFBUSxFQUFFLElBQUksRUFBRSxJQUFJLEVBQUUsSUFBSSxFQUFFLFNBQVMsRUFBRSw0Q0FBdUIsRUFBRSxDQUFDOztxQ0FDM0Q7QUFJZDtJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsSUFBSSxFQUFFLElBQUksRUFBRSxPQUFPLEVBQUUsSUFBSSxFQUFFLENBQUM7OzJDQUNYO2tCQXRDZCxPQUFPO0lBRG5CLElBQUEsaUJBQU0sRUFBQyxFQUFFLFVBQVUsRUFBRSxJQUFJLEVBQUUsQ0FBQztHQUNoQixPQUFPLENBMkNuQjtBQUlZLFFBQUEsYUFBYSxHQUN4Qix3QkFBYSxDQUFDLGNBQWMsQ0FBQyxPQUFPLENBQUMsQ0FBQztBQUV4Qyx5REFBeUQ7QUFDekQscUJBQWEsQ0FBQyxLQUFLLENBQUMsRUFBRSxJQUFJLEVBQUUsQ0FBQyxFQUFFLFNBQVMsRUFBRSxDQUFDLENBQUMsRUFBRSxDQUFDLENBQUMiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9wYXNza2V5cy9zY2hlbWFzL3Bhc3NrZXkuc2NoZW1hLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IFByb3AsIFNjaGVtYSwgU2NoZW1hRmFjdG9yeSB9IGZyb20gJ0BuZXN0anMvbW9uZ29vc2UnO1xuaW1wb3J0IHsgSHlkcmF0ZWREb2N1bWVudCwgU2NoZW1hIGFzIE1vbmdvb3NlU2NoZW1hLCBUeXBlcyB9IGZyb20gJ21vbmdvb3NlJztcbmltcG9ydCB7IFBBU1NLRVlfTkFNRV9NQVhfTEVOR1RIIH0gZnJvbSAnLi4vY29uc3RhbnRzL3Bhc3NrZXlzLmNvbnN0YW50cyc7XG5cbi8qKlxuICogT25lIFdlYkF1dGhuIGNyZWRlbnRpYWwuIFRoZSBwdWJsaWMga2V5IGlzIGFsbCB0aGUgc2VydmVyIG5lZWRzIHRvIGNoZWNrIGFcbiAqIHNpZ25hdHVyZSwgc28gbm90aGluZyBoZXJlIGNhbiBiZSByZXBsYXllZCBpZiB0aGUgY29sbGVjdGlvbiBsZWFrcy5cbiAqL1xuQFNjaGVtYSh7IHRpbWVzdGFtcHM6IHRydWUgfSlcbmV4cG9ydCBjbGFzcyBQYXNza2V5IHtcbiAgQFByb3AoeyB0eXBlOiBUeXBlcy5PYmplY3RJZCwgcmVmOiAnVXNlcicsIHJlcXVpcmVkOiB0cnVlLCBpbmRleDogdHJ1ZSB9KVxuICB1c2VyITogVHlwZXMuT2JqZWN0SWQ7XG5cbiAgLyoqIENyZWRlbnRpYWwgaWQgYXMgYmFzZTY0dXJsLCB0aGUgdmFsdWUgdGhlIGF1dGhlbnRpY2F0b3Igc2lnbnMgdW5kZXIuICovXG4gIEBQcm9wKHsgcmVxdWlyZWQ6IHRydWUsIHVuaXF1ZTogdHJ1ZSB9KVxuICBjcmVkZW50aWFsSWQhOiBzdHJpbmc7XG5cbiAgLyoqIENPU0UgcHVibGljIGtleSBleGFjdGx5IGFzIHRoZSBhdXRoZW50aWNhdG9yIHByb2R1Y2VkIGl0LiAqL1xuICBAUHJvcCh7IHR5cGU6IEJ1ZmZlciwgcmVxdWlyZWQ6IHRydWUgfSlcbiAgcHVibGljS2V5ITogQnVmZmVyO1xuXG4gIC8qKlxuICAgKiBTaWduYXR1cmUgY291bnQgcmVwb3J0ZWQgYnkgdGhlIGF1dGhlbnRpY2F0b3IuIEEgY291bnQgdGhhdCBmYWlscyB0byBtb3ZlXG4gICAqIGZvcndhcmQgaXMgaG93IGEgY2xvbmVkIGNyZWRlbnRpYWwgc2hvd3MgdXAsIHNvIGl0IGlzIGNoZWNrZWQgb24gZXZlcnlcbiAgICogYXNzZXJ0aW9uLiBBdXRoZW50aWNhdG9ycyB0aGF0IGRvIG5vdCBjb3VudCBsZWF2ZSBpdCBhdCB6ZXJvLlxuICAgKi9cbiAgQFByb3AoeyB0eXBlOiBOdW1iZXIsIGRlZmF1bHQ6IDAgfSlcbiAgY291bnRlciE6IG51bWJlcjtcblxuICAvKiogSG93IHRoZSBicm93c2VyIHJlYWNoZWQgdGhlIGF1dGhlbnRpY2F0b3I6IHVzYiwgbmZjLCBpbnRlcm5hbCwgaHlicmlkLiAqL1xuICBAUHJvcCh7IHR5cGU6IFtTdHJpbmddLCBkZWZhdWx0OiBbXSB9KVxuICB0cmFuc3BvcnRzITogc3RyaW5nW107XG5cbiAgLyoqICdzaW5nbGVEZXZpY2UnIG9yICdtdWx0aURldmljZScsIGFzIHJlcG9ydGVkIGF0IHJlZ2lzdHJhdGlvbi4gKi9cbiAgQFByb3AoeyB0eXBlOiBTdHJpbmcgfSlcbiAgZGV2aWNlVHlwZT86IHN0cmluZztcblxuICAvKiogV2hldGhlciB0aGUgY3JlZGVudGlhbCBpcyBzeW5jZWQgdG8gdGhlIHByb3ZpZGVyJ3Mga2V5Y2hhaW4uICovXG4gIEBQcm9wKHsgdHlwZTogQm9vbGVhbiwgZGVmYXVsdDogZmFsc2UgfSlcbiAgYmFja2VkVXAhOiBib29sZWFuO1xuXG4gIC8qKiBMYWJlbCB0aGUgdXNlciBzZWVzIGluIHRoZSBhY2NvdW50IHNldHRpbmdzLiAqL1xuICBAUHJvcCh7IHJlcXVpcmVkOiB0cnVlLCB0cmltOiB0cnVlLCBtYXhsZW5ndGg6IFBBU1NLRVlfTkFNRV9NQVhfTEVOR1RIIH0pXG4gIG5hbWUhOiBzdHJpbmc7XG5cbiAgLyoqIFNldCBieSBldmVyeSBhY2NlcHRlZCBhc3NlcnRpb24uIE51bGwgdW50aWwgdGhlIHBhc3NrZXkgaXMgZmlyc3QgdXNlZC4gKi9cbiAgQFByb3AoeyB0eXBlOiBEYXRlLCBkZWZhdWx0OiBudWxsIH0pXG4gIGxhc3RVc2VkQXQhOiBEYXRlIHwgbnVsbDtcblxuICAvLyBUaW1lc3RhbXAgZmllbGRzIChhdXRvbWF0aWNhbGx5IG1hbmFnZWQgYnkgTW9uZ29vc2Ugd2l0aCB0aW1lc3RhbXBzOiB0cnVlKVxuICBjcmVhdGVkQXQhOiBEYXRlO1xuICB1cGRhdGVkQXQhOiBEYXRlO1xufVxuXG5leHBvcnQgdHlwZSBQYXNza2V5RG9jdW1lbnQgPSBIeWRyYXRlZERvY3VtZW50PFBhc3NrZXk+O1xuXG5leHBvcnQgY29uc3QgUGFzc2tleVNjaGVtYTogTW9uZ29vc2VTY2hlbWE8UGFzc2tleT4gPVxuICBTY2hlbWFGYWN0b3J5LmNyZWF0ZUZvckNsYXNzKFBhc3NrZXkpO1xuXG4vLyBTZXJ2ZXMgdGhlIHBlci11c2VyIGxpc3QgYW5kIHRoZSBjb3VudCBvbiB0aGUgcHJvZmlsZS5cblBhc3NrZXlTY2hlbWEuaW5kZXgoeyB1c2VyOiAxLCBjcmVhdGVkQXQ6IC0xIH0pO1xuIl0sInZlcnNpb24iOjN9

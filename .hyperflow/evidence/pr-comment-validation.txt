@@ -1,0 +1,43 @@
+Verified clean HEAD `9e502f9ee0e36c8f9c164fc05a03161c689f374f` before and after review. Inspected tracked files match that revision. No writes, tests, services, network calls or thread actions occurred.
+
+1. **r3957131027 — CONFIRMED, P1: rollback deletes pre-existing data.**  
+   In [20260904000001-add-default-permissions-to-users.js:102](/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz/backend/migrations/20260904000001-add-default-permissions-to-users.js:102), `down()` removes the role’s default strings without recording ownership.
+
+   Concrete trace: `{role: "user", permissions: ["profile:read:own"]}` is excluded by `up()`’s missing/empty selector at lines 34–35. `down()` selects it at lines 79–80 and removes its existing string, leaving `[]`. The migration deletes data it never created.
+
+   **Next scope:** establish rollback ownership and restoration data; add untouched-row and changed-row round-trip fixtures. This is a source trace, not an executed database reproduction.
+
+2. **r3957131034 — CONFIRMED, P1: rollback loses non-legacy provider IDs.**  
+   [20260904000002-linked-accounts.js:159](/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz/backend/migrations/20260904000002-linked-accounts.js:159) maps only Google/Facebook/GitHub IDs, then unsets the entire `linkedAccounts` field at line 172.
+
+   Concrete trace: after `up()`, an email account gains `{provider: "microsoft", providerId: "ms-42", linkedAt: …}`. Microsoft is documented as supported in `README.md:55`. `down()` retains its provider name in `linkedProviders`, but stores no `ms-42` legacy field. The next `up()` finds no legacy ID; lines 119–121 create `linkedAccounts: []` and remove `linkedProviders`. The ID cannot be reconstructed.
+
+   **Next scope:** preserve nonrepresentable records or reject rollback before destructive writes; add this round-trip fixture. No database reproduction was run.
+
+3. **r3957131076 — CONFIRMED, P2: contradictory project documentation.**  
+   [openspec/project.md:159](/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz/openspec/project.md:159) specifies JWT/Passport; lines 200–214 specify AuthContext, native-fetch wrappers and token injection; lines 334/339/345 show bearer-JWT requests; lines 465/472 recommend Node 18/20; line 734 instructs adding a Passport strategy.
+
+   These conflict with the same document’s cookie-session/provider-registry/RTK descriptions at lines 24/29/47, established architecture in `docs/ARCHITECTURE.md:45,122`, and `package.json:33` requiring Node ≥22.12.0.
+
+   **Next scope:** reconcile those documentation sections against established architecture, with a small documentation consistency check. No authentication defect investigation is needed.
+
+4. **r3957131073 — NOT_ESTABLISHED as a binding policy violation.**  
+   No applicable hard 350-line limit was located in the supplied/global instructions, Code Quality Guide, project conventions, hooks or lint configuration.
+
+   Current tracked counts are setup-production **537**, init **491**, verify-docker **415**, and project.md **953**. Thus the Docker count is stale; the claimed 17-file inventory was not independently established.
+
+   **Next scope:** request the rule’s authoritative source and applicability before treating it as a gate. File length can motivate a focused maintainability review, but does not justify a blanket split.
+
+5. **r3957131069 — ALREADY_FIXED for execution; CONFIRMED, P3 for the remaining diagnostic gap.**  
+   Recorded hosted run **34232151880** passed all five Docker checks and cleanup. Current code also supplies phase context at `scripts/verify-docker.mjs:287`, so the comment overstates the absence of context.
+
+   However, [verify-docker.mjs:121](/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz/scripts/verify-docker.mjs:121) drains all stderr, and line 131 reports only executable/first argument/exit code. For example, an image-inspection failure at lines 269–270 identifies the “local images” phase but not the affected image.
+
+   **Next scope:** explicit fixed operation labels and, where safely classifiable, bounded sanitized error reasons. Do not expose arbitrary argument tails or raw stderr. Existing tests cover rejection mechanics, not diagnostic identity; no failure-path execution was performed here.
+
+6. **r3957131062 — ALREADY_FIXED for the reported overflow; NOT_ESTABLISHED as a current 375px/long-value defect.**  
+   Current strict tests cover en/ar **320/385/390/1280px**. Recorded hosted results are authenticated **78/78**, anonymous **44/44**, with zero skipped/flaky cases. The original 390px failure is closed.
+
+   Exact 375px and deliberately long localized-value cases are absent. **Next scope:** optional bounded coverage extension, not a demonstrated current bug.
+
+Passing functional gates do not resolve the two rollback defects. All findings return to root for validation and any later repair authorization; prior security exclusions remain intact.

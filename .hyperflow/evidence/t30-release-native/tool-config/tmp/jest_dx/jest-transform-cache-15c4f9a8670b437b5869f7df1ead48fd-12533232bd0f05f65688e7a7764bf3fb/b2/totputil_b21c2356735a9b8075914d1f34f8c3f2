@@ -1,0 +1,54 @@
+8e990408831b8e5fc342e84a56b4421f
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.generateTotpSecret = generateTotpSecret;
+exports.buildOtpauthUrl = buildOtpauthUrl;
+exports.checkTotpDelta = checkTotpDelta;
+const otplib_1 = require("otplib");
+const two_factor_constants_1 = require("../constants/two-factor.constants");
+/**
+ * The only place that talks to otplib. Everything else works with the three
+ * functions below, which keeps the library swappable and lets the specs stand
+ * in for it without generating real codes.
+ *
+ * Written against otplib 13, whose functional API takes plain option objects.
+ */
+/** otplib counts tolerance in seconds, so the window is converted here. */
+const EPOCH_TOLERANCE_SECONDS = two_factor_constants_1.TWO_FACTOR_WINDOW * two_factor_constants_1.TOTP_STEP_SECONDS;
+const CODE_PATTERN = new RegExp(`^\\d{${two_factor_constants_1.TOTP_DIGITS}}$`);
+/** A fresh base32 secret, the format authenticator apps expect. */
+function generateTotpSecret() {
+    return (0, otplib_1.generateSecret)();
+}
+/** The otpauth:// URL an authenticator app reads out of a QR code. */
+function buildOtpauthUrl(accountName, secret) {
+    return (0, otplib_1.generateURI)({
+        issuer: two_factor_constants_1.TWO_FACTOR_ISSUER,
+        label: accountName,
+        secret,
+        digits: two_factor_constants_1.TOTP_DIGITS,
+        period: two_factor_constants_1.TOTP_STEP_SECONDS,
+    });
+}
+/**
+ * How far the code sits from the current step, or null when it does not match
+ * inside the window. The caller needs the distance to reject a replayed code.
+ *
+ * The shape check comes first because otplib throws on a code of the wrong
+ * length rather than reporting it as a mismatch, and a wrong code is the
+ * ordinary case on this path.
+ */
+function checkTotpDelta(code, secret) {
+    if (!CODE_PATTERN.test(code)) {
+        return null;
+    }
+    const result = (0, otplib_1.verifySync)({
+        secret,
+        token: code,
+        digits: two_factor_constants_1.TOTP_DIGITS,
+        period: two_factor_constants_1.TOTP_STEP_SECONDS,
+        epochTolerance: EPOCH_TOLERANCE_SECONDS,
+    });
+    return result.valid ? result.delta : null;
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC90d28tZmFjdG9yL3V0aWxzL3RvdHAudXRpbC50cyIsIm1hcHBpbmdzIjoiOztBQXNCQSxnREFFQztBQUdELDBDQVFDO0FBVUQsd0NBY0M7QUEzREQsbUNBQWlFO0FBQ2pFLDRFQUsyQztBQUUzQzs7Ozs7O0dBTUc7QUFFSCwyRUFBMkU7QUFDM0UsTUFBTSx1QkFBdUIsR0FBRyx3Q0FBaUIsR0FBRyx3Q0FBaUIsQ0FBQztBQUV0RSxNQUFNLFlBQVksR0FBRyxJQUFJLE1BQU0sQ0FBQyxRQUFRLGtDQUFXLElBQUksQ0FBQyxDQUFDO0FBRXpELG1FQUFtRTtBQUNuRSxTQUFnQixrQkFBa0I7SUFDaEMsT0FBTyxJQUFBLHVCQUFjLEdBQUUsQ0FBQztBQUMxQixDQUFDO0FBRUQsc0VBQXNFO0FBQ3RFLFNBQWdCLGVBQWUsQ0FBQyxXQUFtQixFQUFFLE1BQWM7SUFDakUsT0FBTyxJQUFBLG9CQUFXLEVBQUM7UUFDakIsTUFBTSxFQUFFLHdDQUFpQjtRQUN6QixLQUFLLEVBQUUsV0FBVztRQUNsQixNQUFNO1FBQ04sTUFBTSxFQUFFLGtDQUFXO1FBQ25CLE1BQU0sRUFBRSx3Q0FBaUI7S0FDMUIsQ0FBQyxDQUFDO0FBQ0wsQ0FBQztBQUVEOzs7Ozs7O0dBT0c7QUFDSCxTQUFnQixjQUFjLENBQUMsSUFBWSxFQUFFLE1BQWM7SUFDekQsSUFBSSxDQUFDLFlBQVksQ0FBQyxJQUFJLENBQUMsSUFBSSxDQUFDLEVBQUUsQ0FBQztRQUM3QixPQUFPLElBQUksQ0FBQztJQUNkLENBQUM7SUFFRCxNQUFNLE1BQU0sR0FBRyxJQUFBLG1CQUFVLEVBQUM7UUFDeEIsTUFBTTtRQUNOLEtBQUssRUFBRSxJQUFJO1FBQ1gsTUFBTSxFQUFFLGtDQUFXO1FBQ25CLE1BQU0sRUFBRSx3Q0FBaUI7UUFDekIsY0FBYyxFQUFFLHVCQUF1QjtLQUN4QyxDQUFDLENBQUM7SUFFSCxPQUFPLE1BQU0sQ0FBQyxLQUFLLENBQUMsQ0FBQyxDQUFDLE1BQU0sQ0FBQyxLQUFLLENBQUMsQ0FBQyxDQUFDLElBQUksQ0FBQztBQUM1QyxDQUFDIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL2F1dGgvdHdvLWZhY3Rvci91dGlscy90b3RwLnV0aWwudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgZ2VuZXJhdGVTZWNyZXQsIGdlbmVyYXRlVVJJLCB2ZXJpZnlTeW5jIH0gZnJvbSAnb3RwbGliJztcbmltcG9ydCB7XG4gIFRPVFBfRElHSVRTLFxuICBUT1RQX1NURVBfU0VDT05EUyxcbiAgVFdPX0ZBQ1RPUl9JU1NVRVIsXG4gIFRXT19GQUNUT1JfV0lORE9XLFxufSBmcm9tICcuLi9jb25zdGFudHMvdHdvLWZhY3Rvci5jb25zdGFudHMnO1xuXG4vKipcbiAqIFRoZSBvbmx5IHBsYWNlIHRoYXQgdGFsa3MgdG8gb3RwbGliLiBFdmVyeXRoaW5nIGVsc2Ugd29ya3Mgd2l0aCB0aGUgdGhyZWVcbiAqIGZ1bmN0aW9ucyBiZWxvdywgd2hpY2gga2VlcHMgdGhlIGxpYnJhcnkgc3dhcHBhYmxlIGFuZCBsZXRzIHRoZSBzcGVjcyBzdGFuZFxuICogaW4gZm9yIGl0IHdpdGhvdXQgZ2VuZXJhdGluZyByZWFsIGNvZGVzLlxuICpcbiAqIFdyaXR0ZW4gYWdhaW5zdCBvdHBsaWIgMTMsIHdob3NlIGZ1bmN0aW9uYWwgQVBJIHRha2VzIHBsYWluIG9wdGlvbiBvYmplY3RzLlxuICovXG5cbi8qKiBvdHBsaWIgY291bnRzIHRvbGVyYW5jZSBpbiBzZWNvbmRzLCBzbyB0aGUgd2luZG93IGlzIGNvbnZlcnRlZCBoZXJlLiAqL1xuY29uc3QgRVBPQ0hfVE9MRVJBTkNFX1NFQ09ORFMgPSBUV09fRkFDVE9SX1dJTkRPVyAqIFRPVFBfU1RFUF9TRUNPTkRTO1xuXG5jb25zdCBDT0RFX1BBVFRFUk4gPSBuZXcgUmVnRXhwKGBeXFxcXGR7JHtUT1RQX0RJR0lUU319JGApO1xuXG4vKiogQSBmcmVzaCBiYXNlMzIgc2VjcmV0LCB0aGUgZm9ybWF0IGF1dGhlbnRpY2F0b3IgYXBwcyBleHBlY3QuICovXG5leHBvcnQgZnVuY3Rpb24gZ2VuZXJhdGVUb3RwU2VjcmV0KCk6IHN0cmluZyB7XG4gIHJldHVybiBnZW5lcmF0ZVNlY3JldCgpO1xufVxuXG4vKiogVGhlIG90cGF1dGg6Ly8gVVJMIGFuIGF1dGhlbnRpY2F0b3IgYXBwIHJlYWRzIG91dCBvZiBhIFFSIGNvZGUuICovXG5leHBvcnQgZnVuY3Rpb24gYnVpbGRPdHBhdXRoVXJsKGFjY291bnROYW1lOiBzdHJpbmcsIHNlY3JldDogc3RyaW5nKTogc3RyaW5nIHtcbiAgcmV0dXJuIGdlbmVyYXRlVVJJKHtcbiAgICBpc3N1ZXI6IFRXT19GQUNUT1JfSVNTVUVSLFxuICAgIGxhYmVsOiBhY2NvdW50TmFtZSxcbiAgICBzZWNyZXQsXG4gICAgZGlnaXRzOiBUT1RQX0RJR0lUUyxcbiAgICBwZXJpb2Q6IFRPVFBfU1RFUF9TRUNPTkRTLFxuICB9KTtcbn1cblxuLyoqXG4gKiBIb3cgZmFyIHRoZSBjb2RlIHNpdHMgZnJvbSB0aGUgY3VycmVudCBzdGVwLCBvciBudWxsIHdoZW4gaXQgZG9lcyBub3QgbWF0Y2hcbiAqIGluc2lkZSB0aGUgd2luZG93LiBUaGUgY2FsbGVyIG5lZWRzIHRoZSBkaXN0YW5jZSB0byByZWplY3QgYSByZXBsYXllZCBjb2RlLlxuICpcbiAqIFRoZSBzaGFwZSBjaGVjayBjb21lcyBmaXJzdCBiZWNhdXNlIG90cGxpYiB0aHJvd3Mgb24gYSBjb2RlIG9mIHRoZSB3cm9uZ1xuICogbGVuZ3RoIHJhdGhlciB0aGFuIHJlcG9ydGluZyBpdCBhcyBhIG1pc21hdGNoLCBhbmQgYSB3cm9uZyBjb2RlIGlzIHRoZVxuICogb3JkaW5hcnkgY2FzZSBvbiB0aGlzIHBhdGguXG4gKi9cbmV4cG9ydCBmdW5jdGlvbiBjaGVja1RvdHBEZWx0YShjb2RlOiBzdHJpbmcsIHNlY3JldDogc3RyaW5nKTogbnVtYmVyIHwgbnVsbCB7XG4gIGlmICghQ09ERV9QQVRURVJOLnRlc3QoY29kZSkpIHtcbiAgICByZXR1cm4gbnVsbDtcbiAgfVxuXG4gIGNvbnN0IHJlc3VsdCA9IHZlcmlmeVN5bmMoe1xuICAgIHNlY3JldCxcbiAgICB0b2tlbjogY29kZSxcbiAgICBkaWdpdHM6IFRPVFBfRElHSVRTLFxuICAgIHBlcmlvZDogVE9UUF9TVEVQX1NFQ09ORFMsXG4gICAgZXBvY2hUb2xlcmFuY2U6IEVQT0NIX1RPTEVSQU5DRV9TRUNPTkRTLFxuICB9KTtcblxuICByZXR1cm4gcmVzdWx0LnZhbGlkID8gcmVzdWx0LmRlbHRhIDogbnVsbDtcbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

@@ -1,0 +1,445 @@
+{
+  "captured_at": "2026-09-08T07:49:49.401668+00:00",
+  "head": "68cefb61f450b94c195a8d6cf325ac5e26c15349",
+  "status": "Proposed ownership only. Active T21-C paths and shared files require owner reconciliation before staging.",
+  "groups": {
+    "T29b generation and compiled availability": [
+      {
+        "status": " M",
+        "path": "backend/src/app.module.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/auth/auth-methods.controller.spec.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/auth/auth-methods.controller.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/auth/auth.module.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/auth/dto/auth-methods-response.dto.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/auth/guards/feature-enabled.guard.spec.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/auth/oauth/oauth-redirect.service.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/auth/oauth/oauth-registry.wiring.spec.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/auth/passkeys/passkeys.module.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/auth/passkeys/passkeys.wiring.spec.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/auth/services/auth-features.service.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/auth/services/sign-in.service.spec.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/auth/services/sign-in.service.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/auth/two-factor/constants/two-factor.constants.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/auth/two-factor/dto/verify-two-factor.dto.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/auth/two-factor/two-factor-login.service.spec.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/auth/two-factor/two-factor-login.service.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/auth/two-factor/two-factor.module.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/config/env.oauth.schema.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/user/dto/user-profile.dto.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/user/schemas/user.schema.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/user/services/user-profile.service.spec.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/user/services/user-profile.service.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/src/user/user.module.ts"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/app/[locale]/(dashboard)/settings/page.tsx"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/modules/account/api/index.ts"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/modules/account/components/index.ts"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/modules/account/index.ts"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/modules/account/types/account.types.ts"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/modules/auth/api/authMethodsApi.ts"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/modules/auth/components/LoginForm.tsx"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/modules/auth/methods/__tests__/registry.test.ts"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/modules/auth/methods/password/RegisterForm.tsx"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/modules/auth/methods/registry.ts"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/modules/auth/store/authApi.ts"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/modules/auth/types/auth.types.ts"
+      },
+      {
+        "status": " D",
+        "path": "frontend/src/modules/oauth/components/OAuthDivider.tsx"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/modules/oauth/components/index.ts"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/modules/oauth/index.ts"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/store/api/baseApi.ts"
+      },
+      {
+        "status": " M",
+        "path": "packages/create-nest-next-auth/README.md"
+      },
+      {
+        "status": " M",
+        "path": "packages/create-nest-next-auth/package.json"
+      },
+      {
+        "status": " M",
+        "path": "packages/create-nest-next-auth/src/constants/index.ts"
+      },
+      {
+        "status": " M",
+        "path": "packages/create-nest-next-auth/src/manifest/validate.ts"
+      },
+      {
+        "status": " M",
+        "path": "packages/create-nest-next-auth/src/prune/index.ts"
+      },
+      {
+        "status": " M",
+        "path": "packages/create-nest-next-auth/src/prune/references.ts"
+      },
+      {
+        "status": " M",
+        "path": "packages/create-nest-next-auth/src/report.ts"
+      },
+      {
+        "status": " M",
+        "path": "packages/create-nest-next-auth/src/types.ts"
+      },
+      {
+        "status": " M",
+        "path": "packages/create-nest-next-auth/test/e2e.test.ts"
+      },
+      {
+        "status": " M",
+        "path": "packages/create-nest-next-auth/test/manifest.test.ts"
+      },
+      {
+        "status": " M",
+        "path": "packages/create-nest-next-auth/tsconfig.json"
+      },
+      {
+        "status": " M",
+        "path": "packages/create-nest-next-auth/vitest.config.ts"
+      },
+      {
+        "status": " M",
+        "path": "template.manifest.json"
+      },
+      {
+        "status": "??",
+        "path": "backend/src/auth/constants/available-auth-features.ts"
+      },
+      {
+        "status": "??",
+        "path": "backend/src/auth/passkeys/services/passkey-second-factor.verifier.spec.ts"
+      },
+      {
+        "status": "??",
+        "path": "backend/src/auth/passkeys/services/passkey-second-factor.verifier.ts"
+      },
+      {
+        "status": "??",
+        "path": "backend/src/auth/services/auth-features.service.spec.ts"
+      },
+      {
+        "status": "??",
+        "path": "backend/src/auth/two-factor/services/second-factor-verifiers.ts"
+      },
+      {
+        "status": "??",
+        "path": "backend/src/auth/two-factor/sign-in-second-factor.spec.ts"
+      },
+      {
+        "status": "??",
+        "path": "backend/src/common/constants/client-paths.ts"
+      },
+      {
+        "status": "??",
+        "path": "frontend/src/components/ui/auth-divider.tsx"
+      },
+      {
+        "status": "??",
+        "path": "packages/create-nest-next-auth/src/prune/markers.ts"
+      },
+      {
+        "status": "??",
+        "path": "packages/create-nest-next-auth/test/combination-helpers.ts"
+      },
+      {
+        "status": "??",
+        "path": "packages/create-nest-next-auth/test/combinations.slow.test.ts"
+      },
+      {
+        "status": "??",
+        "path": "packages/create-nest-next-auth/test/feature-runtime.test.ts"
+      },
+      {
+        "status": "??",
+        "path": "packages/create-nest-next-auth/test/feature-runtime.ts"
+      },
+      {
+        "status": "??",
+        "path": "packages/create-nest-next-auth/test/markers.test.ts"
+      },
+      {
+        "status": "??",
+        "path": "packages/create-nest-next-auth/vitest.combinations.config.ts"
+      }
+    ],
+    "T21 anonymous interaction repair and tests": [
+      {
+        "status": " M",
+        "path": "frontend/src/app/[locale]/layout.tsx"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/app/layout.tsx"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/modules/auth/methods/password/ForgotPasswordForm.tsx"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/modules/auth/methods/password/PasswordSignInForm.tsx"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/modules/auth/methods/password/ResetPasswordForm.tsx"
+      },
+      {
+        "status": "??",
+        "path": "frontend/e2e/frontend-only/anonymous-auth.spec.ts"
+      },
+      {
+        "status": "??",
+        "path": "frontend/e2e/frontend-only/fixtures.ts"
+      },
+      {
+        "status": "??",
+        "path": "frontend/e2e/utils/auth-actions.ts"
+      },
+      {
+        "status": "??",
+        "path": "frontend/e2e/utils/selectors.ts"
+      },
+      {
+        "status": "??",
+        "path": "frontend/e2e/utils/serve-frontend.mjs"
+      },
+      {
+        "status": "??",
+        "path": "frontend/playwright.frontend.config.ts"
+      },
+      {
+        "status": "??",
+        "path": "frontend/src/modules/auth/utils/preventNavigationBlur.ts"
+      }
+    ],
+    "T21 authenticated fixtures and final repairs": [
+      {
+        "status": " M",
+        "path": "backend/test/app.boot.e2e-spec.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/test/app.e2e-spec.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/test/jest-e2e.json"
+      },
+      {
+        "status": " M",
+        "path": "backend/test/permissions/admin-permission-routes.e2e-spec.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/test/permissions/permission-enforcement.e2e-spec.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/test/roles/role-access.e2e-spec.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/test/roles/role-crud.e2e-spec.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/test/types/e2e-responses.ts"
+      },
+      {
+        "status": " M",
+        "path": "backend/test/utils/e2e-app.ts"
+      },
+      {
+        "status": " M",
+        "path": "frontend/e2e/role-management.spec.ts"
+      },
+      {
+        "status": " M",
+        "path": "frontend/e2e/sidebar-navigation.spec.ts"
+      },
+      {
+        "status": " M",
+        "path": "frontend/playwright.config.ts"
+      },
+      {
+        "status": "??",
+        "path": "backend/test/utils/browser-server.ts"
+      },
+      {
+        "status": "??",
+        "path": "backend/test/utils/permissions.ts"
+      },
+      {
+        "status": "??",
+        "path": "frontend/e2e/README.md"
+      },
+      {
+        "status": "??",
+        "path": "frontend/e2e/fixtures/authenticated.ts"
+      },
+      {
+        "status": " M",
+        "path": "frontend/src/store/store.ts"
+      },
+      {
+        "status": "??",
+        "path": "frontend/src/store/authPersistence.test.ts"
+      },
+      {
+        "status": "??",
+        "path": "frontend/src/store/authPersistence.ts"
+      }
+    ],
+    "T30 CI and task records": [
+      {
+        "status": " M",
+        "path": ".github/workflows/ci.yml"
+      },
+      {
+        "status": " M",
+        "path": ".hyperflow/tasks/production-hardening.md"
+      },
+      {
+        "status": "??",
+        "path": ".hyperflow/tasks/resume-production-hardening.md"
+      }
+    ],
+    "Exclude from release staging": [
+      {
+        "path": ".hyperflow/evidence/**, .hyperflow/runs/**, .hyperflow/briefs/**",
+        "note": "258 current untracked artifact entries; curate prose separately, never stage recursively."
+      }
+    ]
+  },
+  "shared_paths": [
+    ".github/workflows/ci.yml",
+    "frontend/src/modules/auth/methods/password/ForgotPasswordForm.tsx",
+    "frontend/src/modules/auth/methods/password/PasswordSignInForm.tsx",
+    "frontend/src/modules/auth/methods/password/ResetPasswordForm.tsx",
+    "frontend/e2e/utils/selectors.ts",
+    "frontend/e2e/utils/serve-frontend.mjs",
+    "frontend/e2e/README.md"
+  ],
+  "capture_note": "Three frontend persistence paths appeared after initial git status and before the 07:49:49Z capture. Classified to active T21-C owner by timing and task context; implementation was not inspected.",
+  "final_boundary_supplement": {
+    "captured_at": "2026-09-08T07:56:20.294055+00:00",
+    "additional_active_T21_C_path": "frontend/e2e/session-management.spec.ts",
+    "reconcile_inspected_changes_from": "final-boundary.json",
+    "note": "Final owner inventory supersedes this proposed split. No active source implementation was reassessed."
+  }
+}

@@ -1,3 +1,8 @@
+import type { ApiBody } from '../types/e2e-responses';
+import { getModelToken } from '@nestjs/mongoose';
+import type { Model } from 'mongoose';
+import type { UserDocument } from '../../src/user/schemas/user.schema';
+import { replacePermissions } from '../utils/permissions';
 import request from 'supertest';
 import type { Response } from 'supertest';
 import {
@@ -7,7 +12,7 @@ import {
   type TestAgent,
 } from '../utils/e2e-app';
 import { SEED_ADMIN, SEED_USER } from '../constants/seed-users';
-import type { RegisterResponse, UserResponse } from '../types/e2e-responses';
+import type { UserResponse } from '../types/e2e-responses';
 
 const BASE_PERMISSIONS = ['profile:read:own', 'profile:update:own'];
 
@@ -18,9 +23,7 @@ describe('Permission enforcement (e2e)', () => {
   let testUserId: string;
 
   const setPermissions = async (permissions: string[]): Promise<void> => {
-    await adminAgent
-      .put(`/api/admin/users/${testUserId}/permissions`)
-      .send({ permissions });
+    await replacePermissions(adminAgent, testUserId, permissions);
   };
 
   beforeAll(async () => {
@@ -30,18 +33,20 @@ describe('Permission enforcement (e2e)', () => {
     userAgent = await loginAs(e2e.httpServer, SEED_USER);
 
     const meResponse: Response = await userAgent
-      .get('/api/auth/me')
+      .get('/api/user/profile')
       .expect(200);
-    testUserId = (meResponse.body as UserResponse)._id;
+    testUserId = (meResponse.body as ApiBody<UserResponse>).data.id;
   });
 
   afterAll(async () => {
-    await e2e.app.close();
+    await e2e?.close();
   });
 
   describe('Permission checking logic', () => {
     it('should grant access with wildcard permission', async () => {
-      await setPermissions(['*']);
+      await e2e.app
+        .get<Model<UserDocument>>(getModelToken('User'))
+        .updateOne({ _id: testUserId }, { permissions: ['*'] });
 
       await userAgent.get('/api/roles').expect(200);
 
@@ -55,23 +60,23 @@ describe('Permission enforcement (e2e)', () => {
     it('should grant access with specific permission', async () => {
       await adminAgent
         .post(`/api/admin/users/${testUserId}/permissions`)
-        .send({ permissions: ['roles:list:all'] });
+        .send({ permission: 'roles:list:all' });
 
       await userAgent.get('/api/roles').expect(200);
 
-      await adminAgent
-        .delete(`/api/admin/users/${testUserId}/permissions`)
-        .send({ permissions: ['roles:list:all'] });
+      await adminAgent.delete(
+        `/api/admin/users/${testUserId}/permissions/roles%3Alist%3Aall`,
+      );
     });
   });
 
   describe('Permission inheritance', () => {
     it('should verify permissions are directly assigned to users', async () => {
       const response: Response = await userAgent
-        .get('/api/auth/me')
+        .get('/api/user/profile')
         .expect(200);
 
-      const user = response.body as UserResponse;
+      const user = (response.body as ApiBody<UserResponse>).data;
       expect(user).toHaveProperty('permissions');
       expect(Array.isArray(user.permissions)).toBe(true);
       expect(user).toHaveProperty('role');
@@ -79,30 +84,41 @@ describe('Permission enforcement (e2e)', () => {
 
     it('should allow users with same role to have different permissions', async () => {
       const userResponse: Response = await userAgent
-        .get('/api/auth/me')
+        .get('/api/user/profile')
         .expect(200);
 
       const registerResponse: Response = await request(e2e.httpServer)
         .post('/api/auth/register')
         .send({
           email: 'testuser@test.local',
-          password: 'Test123!',
+          password: 'Test1234!',
           name: 'Test User',
         })
-        .expect(201);
+        .expect(200);
 
-      expect((userResponse.body as UserResponse).role).toBe('user');
-      expect((registerResponse.body as RegisterResponse).user.role).toBe(
+      expect((userResponse.body as ApiBody<UserResponse>).data.role).toBe(
         'user',
       );
+      expect(registerResponse.body).toHaveProperty('success', true);
+      const message = e2e.mail.at(-1);
+      const code = message?.text?.match(/\b\d{6}\b/)?.[0];
+      expect(code).toBeDefined();
+      const activated = request.agent(e2e.httpServer);
+      await activated
+        .post('/api/auth/activate')
+        .send({ email: 'testuser@test.local', code })
+        .expect(200);
+      const profile = await activated.get('/api/user/profile').expect(200);
+      expect((profile.body as ApiBody<UserResponse>).data.role).toBe('user');
+      expect(e2e.mail).toHaveLength(1);
     });
   });
 
   describe('Protected permissions', () => {
     it('should validate permission format against allowed permissions', async () => {
       await adminAgent
-        .put(`/api/admin/users/${testUserId}/permissions`)
-        .send({ permissions: ['invalid:action:scope'] })
+        .post(`/api/admin/users/${testUserId}/permissions`)
+        .send({ permission: 'invalid permission' })
         .expect(400);
     });
 
@@ -124,14 +140,15 @@ describe('Permission enforcement (e2e)', () => {
         'profile:update:own',
       ];
 
-      const response: Response = await adminAgent
-        .put(`/api/admin/users/${testUserId}/permissions`)
-        .send({ permissions: validPermissions })
-        .expect(200);
-
-      expect((response.body as UserResponse).permissions).toEqual(
+      const response = await replacePermissions(
+        adminAgent,
+        testUserId,
         validPermissions,
       );
+
+      expect(
+        [...(response.body as ApiBody<UserResponse>).data.permissions].sort(),
+      ).toEqual([...validPermissions].sort());
 
       await setPermissions(BASE_PERMISSIONS);
     });
@@ -142,10 +159,10 @@ describe('Permission enforcement (e2e)', () => {
       await setPermissions(['users:read:all']);
 
       const response: Response = await userAgent
-        .get('/api/auth/me')
+        .get('/api/user/profile')
         .expect(200);
 
-      const user = response.body as UserResponse;
+      const user = (response.body as ApiBody<UserResponse>).data;
       expect(user.permissions).toContain('users:read:all');
       expect(user.permissions).not.toContain('roles:read:all');
     });
@@ -154,12 +171,12 @@ describe('Permission enforcement (e2e)', () => {
       await setPermissions(['sessions:read:own']);
 
       const response: Response = await userAgent
-        .get('/api/auth/me')
+        .get('/api/user/profile')
         .expect(200);
 
-      expect((response.body as UserResponse).permissions).toContain(
-        'sessions:read:own',
-      );
+      expect(
+        (response.body as ApiBody<UserResponse>).data.permissions,
+      ).toContain('sessions:read:own');
     });
   });
 });

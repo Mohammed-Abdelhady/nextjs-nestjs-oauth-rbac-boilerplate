@@ -1,0 +1,10 @@
+{
+  "name": "helper-tests",
+  "command": [
+    "node",
+    "--test",
+    "scripts/config-transforms.test.mjs"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.7
+}

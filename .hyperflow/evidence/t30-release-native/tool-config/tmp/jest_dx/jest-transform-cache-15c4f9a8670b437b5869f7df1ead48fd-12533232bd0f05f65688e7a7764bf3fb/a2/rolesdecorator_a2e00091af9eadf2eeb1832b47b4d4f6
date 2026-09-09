@@ -1,0 +1,34 @@
+f1a73c7df6daf85a55c77999c9e71acf
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Roles = exports.ROLES_KEY = void 0;
+const common_1 = require("@nestjs/common");
+/**
+ * Metadata key for storing required roles on route handlers.
+ */
+exports.ROLES_KEY = 'roles';
+/**
+ * Decorator to specify which roles are required to access a route.
+ * Can be applied at the controller or method level.
+ *
+ * @example
+ * ```typescript
+ * @Roles(UserRole.ADMIN)
+ * @UseGuards(RolesGuard)
+ * @Get('admin-only')
+ * adminOnlyEndpoint() { ... }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * @Roles(UserRole.ADMIN, UserRole.MANAGER)
+ * @UseGuards(RolesGuard)
+ * @Get('admin-or-manager')
+ * adminOrManagerEndpoint() { ... }
+ * ```
+ *
+ * @param roles - Array of UserRole enums that are allowed to access the route
+ */
+const Roles = (...roles) => (0, common_1.SetMetadata)(exports.ROLES_KEY, roles);
+exports.Roles = Roles;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29tbW9uL2RlY29yYXRvcnMvcm9sZXMuZGVjb3JhdG9yLnRzIiwibWFwcGluZ3MiOiI7OztBQUFBLDJDQUE2QztBQUc3Qzs7R0FFRztBQUNVLFFBQUEsU0FBUyxHQUFHLE9BQU8sQ0FBQztBQUVqQzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O0dBcUJHO0FBQ0ksTUFBTSxLQUFLLEdBQUcsQ0FBQyxHQUFHLEtBQWlCLEVBQUUsRUFBRSxDQUFDLElBQUEsb0JBQVcsRUFBQyxpQkFBUyxFQUFFLEtBQUssQ0FBQyxDQUFDO0FBQWhFLFFBQUEsS0FBSyxTQUEyRCIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy9jb21tb24vZGVjb3JhdG9ycy9yb2xlcy5kZWNvcmF0b3IudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgU2V0TWV0YWRhdGEgfSBmcm9tICdAbmVzdGpzL2NvbW1vbic7XG5pbXBvcnQgeyBVc2VyUm9sZSB9IGZyb20gJy4uLy4uL3VzZXIvZW51bXMvdXNlci1yb2xlLmVudW0nO1xuXG4vKipcbiAqIE1ldGFkYXRhIGtleSBmb3Igc3RvcmluZyByZXF1aXJlZCByb2xlcyBvbiByb3V0ZSBoYW5kbGVycy5cbiAqL1xuZXhwb3J0IGNvbnN0IFJPTEVTX0tFWSA9ICdyb2xlcyc7XG5cbi8qKlxuICogRGVjb3JhdG9yIHRvIHNwZWNpZnkgd2hpY2ggcm9sZXMgYXJlIHJlcXVpcmVkIHRvIGFjY2VzcyBhIHJvdXRlLlxuICogQ2FuIGJlIGFwcGxpZWQgYXQgdGhlIGNvbnRyb2xsZXIgb3IgbWV0aG9kIGxldmVsLlxuICpcbiAqIEBleGFtcGxlXG4gKiBgYGB0eXBlc2NyaXB0XG4gKiBAUm9sZXMoVXNlclJvbGUuQURNSU4pXG4gKiBAVXNlR3VhcmRzKFJvbGVzR3VhcmQpXG4gKiBAR2V0KCdhZG1pbi1vbmx5JylcbiAqIGFkbWluT25seUVuZHBvaW50KCkgeyAuLi4gfVxuICogYGBgXG4gKlxuICogQGV4YW1wbGVcbiAqIGBgYHR5cGVzY3JpcHRcbiAqIEBSb2xlcyhVc2VyUm9sZS5BRE1JTiwgVXNlclJvbGUuTUFOQUdFUilcbiAqIEBVc2VHdWFyZHMoUm9sZXNHdWFyZClcbiAqIEBHZXQoJ2FkbWluLW9yLW1hbmFnZXInKVxuICogYWRtaW5Pck1hbmFnZXJFbmRwb2ludCgpIHsgLi4uIH1cbiAqIGBgYFxuICpcbiAqIEBwYXJhbSByb2xlcyAtIEFycmF5IG9mIFVzZXJSb2xlIGVudW1zIHRoYXQgYXJlIGFsbG93ZWQgdG8gYWNjZXNzIHRoZSByb3V0ZVxuICovXG5leHBvcnQgY29uc3QgUm9sZXMgPSAoLi4ucm9sZXM6IFVzZXJSb2xlW10pID0+IFNldE1ldGFkYXRhKFJPTEVTX0tFWSwgcm9sZXMpO1xuIl0sInZlcnNpb24iOjN9

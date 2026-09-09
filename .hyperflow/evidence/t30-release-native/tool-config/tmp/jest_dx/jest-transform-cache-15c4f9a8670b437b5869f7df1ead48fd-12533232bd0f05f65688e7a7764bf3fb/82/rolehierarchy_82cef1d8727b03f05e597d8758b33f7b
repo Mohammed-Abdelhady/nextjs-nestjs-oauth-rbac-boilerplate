@@ -1,0 +1,110 @@
+44731cc5e8f919d6492e677d1848d7b8
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ADMIN_LEVEL = exports.UNKNOWN_ROLE_LEVEL = exports.CUSTOM_ROLE_LEVEL = exports.ROLE_HIERARCHY = void 0;
+exports.canManageLevel = canManageLevel;
+exports.canModifyLevel = canModifyLevel;
+exports.hasMinimumRole = hasMinimumRole;
+exports.isValidRoleAssignment = isValidRoleAssignment;
+const user_role_enum_1 = require("../../user/enums/user-role.enum");
+/**
+ * Levels of the four system roles. Higher levels manage lower ones.
+ * This map seeds the roles collection and backs documents written before roles
+ * carried a level. Live checks read the level from the database, so custom
+ * roles take part in the hierarchy as well.
+ */
+exports.ROLE_HIERARCHY = {
+    user: 1,
+    support: 2,
+    manager: 3,
+    admin: 4,
+};
+/**
+ * Level given to a role that exists but carries no explicit level.
+ * Custom roles sit alongside the default user role.
+ */
+exports.CUSTOM_ROLE_LEVEL = 1;
+/**
+ * Level given to a role slug that no longer exists in the roles collection.
+ * Only admins may touch users stranded on such a slug.
+ */
+exports.UNKNOWN_ROLE_LEVEL = 0;
+/**
+ * Level an actor must reach to perform admin-only operations.
+ */
+exports.ADMIN_LEVEL = exports.ROLE_HIERARCHY[user_role_enum_1.UserRole.ADMIN];
+/**
+ * Get role hierarchy level for a role string.
+ * Custom roles (not in hierarchy) default to level 0.
+ *
+ * @param role - Role slug or UserRole enum value
+ * @returns Hierarchy level (0 for custom roles)
+ */
+function getRoleLevel(role) {
+    return exports.ROLE_HIERARCHY[role] ?? exports.UNKNOWN_ROLE_LEVEL;
+}
+/**
+ * Check whether an actor level may act on a target level in a read-only way.
+ * Equal levels pass. Stranded roles (level 0) are admin-only.
+ *
+ * @param actorLevel - Hierarchy level of the acting user
+ * @param targetLevel - Hierarchy level of the target user
+ * @returns true when the actor may read the target
+ */
+function canManageLevel(actorLevel, targetLevel) {
+    if (targetLevel === exports.UNKNOWN_ROLE_LEVEL) {
+        return actorLevel >= exports.ADMIN_LEVEL;
+    }
+    return actorLevel >= targetLevel;
+}
+/**
+ * Check whether an actor level may mutate a target level.
+ * Equal levels fail, so peers cannot act on each other.
+ * Stranded roles (level 0) are admin-only.
+ *
+ * @param actorLevel - Hierarchy level of the acting user
+ * @param targetLevel - Hierarchy level of the target user
+ * @returns true when the actor may mutate the target
+ */
+function canModifyLevel(actorLevel, targetLevel) {
+    if (targetLevel === exports.UNKNOWN_ROLE_LEVEL) {
+        return actorLevel >= exports.ADMIN_LEVEL;
+    }
+    return actorLevel > targetLevel;
+}
+/**
+ * Check if a user has at least the minimum required role.
+ *
+ * @param userRole - The user's current role (string or enum)
+ * @param requiredRole - The minimum role required (string or enum)
+ * @returns true if user has sufficient permissions
+ *
+ * @example
+ * ```typescript
+ * hasMinimumRole('manager', 'user'); // true
+ * hasMinimumRole('user', 'manager'); // false
+ * hasMinimumRole(UserRole.MANAGER, UserRole.USER); // true (backward compat)
+ * ```
+ */
+function hasMinimumRole(userRole, requiredRole) {
+    return getRoleLevel(userRole) >= getRoleLevel(requiredRole);
+}
+/**
+ * Check if a role assignment is valid.
+ * ADMIN role cannot be assigned via API (only through database).
+ * Custom roles can be assigned.
+ *
+ * @param newRole - The role to be assigned
+ * @returns true if the role can be assigned
+ *
+ * @example
+ * ```typescript
+ * isValidRoleAssignment('support'); // true
+ * isValidRoleAssignment('admin'); // false
+ * isValidRoleAssignment('custom-role'); // true
+ * ```
+ */
+function isValidRoleAssignment(newRole) {
+    return newRole !== user_role_enum_1.UserRole.ADMIN;
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29tbW9uL3V0aWxzL3JvbGUtaGllcmFyY2h5LnRzIiwibWFwcGluZ3MiOiI7OztBQW1EQSx3Q0FTQztBQVdELHdDQVNDO0FBZ0JELHdDQUtDO0FBaUJELHNEQUVDO0FBeEhELG9FQUEyRDtBQUUzRDs7Ozs7R0FLRztBQUNVLFFBQUEsY0FBYyxHQUEyQjtJQUNwRCxJQUFJLEVBQUUsQ0FBQztJQUNQLE9BQU8sRUFBRSxDQUFDO0lBQ1YsT0FBTyxFQUFFLENBQUM7SUFDVixLQUFLLEVBQUUsQ0FBQztDQUNBLENBQUM7QUFFWDs7O0dBR0c7QUFDVSxRQUFBLGlCQUFpQixHQUFHLENBQUMsQ0FBQztBQUVuQzs7O0dBR0c7QUFDVSxRQUFBLGtCQUFrQixHQUFHLENBQUMsQ0FBQztBQUVwQzs7R0FFRztBQUNVLFFBQUEsV0FBVyxHQUFHLHNCQUFjLENBQUMseUJBQVEsQ0FBQyxLQUFLLENBQUMsQ0FBQztBQUUxRDs7Ozs7O0dBTUc7QUFDSCxTQUFTLFlBQVksQ0FBQyxJQUF1QjtJQUMzQyxPQUFPLHNCQUFjLENBQUMsSUFBSSxDQUFDLElBQUksMEJBQWtCLENBQUM7QUFDcEQsQ0FBQztBQUVEOzs7Ozs7O0dBT0c7QUFDSCxTQUFnQixjQUFjLENBQzVCLFVBQWtCLEVBQ2xCLFdBQW1CO0lBRW5CLElBQUksV0FBVyxLQUFLLDBCQUFrQixFQUFFLENBQUM7UUFDdkMsT0FBTyxVQUFVLElBQUksbUJBQVcsQ0FBQztJQUNuQyxDQUFDO0lBRUQsT0FBTyxVQUFVLElBQUksV0FBVyxDQUFDO0FBQ25DLENBQUM7QUFFRDs7Ozs7Ozs7R0FRRztBQUNILFNBQWdCLGNBQWMsQ0FDNUIsVUFBa0IsRUFDbEIsV0FBbUI7SUFFbkIsSUFBSSxXQUFXLEtBQUssMEJBQWtCLEVBQUUsQ0FBQztRQUN2QyxPQUFPLFVBQVUsSUFBSSxtQkFBVyxDQUFDO0lBQ25DLENBQUM7SUFFRCxPQUFPLFVBQVUsR0FBRyxXQUFXLENBQUM7QUFDbEMsQ0FBQztBQUVEOzs7Ozs7Ozs7Ozs7O0dBYUc7QUFDSCxTQUFnQixjQUFjLENBQzVCLFFBQTJCLEVBQzNCLFlBQStCO0lBRS9CLE9BQU8sWUFBWSxDQUFDLFFBQVEsQ0FBQyxJQUFJLFlBQVksQ0FBQyxZQUFZLENBQUMsQ0FBQztBQUM5RCxDQUFDO0FBRUQ7Ozs7Ozs7Ozs7Ozs7O0dBY0c7QUFDSCxTQUFnQixxQkFBcUIsQ0FBQyxPQUEwQjtJQUM5RCxPQUFPLE9BQU8sS0FBTSx5QkFBUSxDQUFDLEtBQWdCLENBQUM7QUFDaEQsQ0FBQyIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy9jb21tb24vdXRpbHMvcm9sZS1oaWVyYXJjaHkudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgVXNlclJvbGUgfSBmcm9tICcuLi8uLi91c2VyL2VudW1zL3VzZXItcm9sZS5lbnVtJztcblxuLyoqXG4gKiBMZXZlbHMgb2YgdGhlIGZvdXIgc3lzdGVtIHJvbGVzLiBIaWdoZXIgbGV2ZWxzIG1hbmFnZSBsb3dlciBvbmVzLlxuICogVGhpcyBtYXAgc2VlZHMgdGhlIHJvbGVzIGNvbGxlY3Rpb24gYW5kIGJhY2tzIGRvY3VtZW50cyB3cml0dGVuIGJlZm9yZSByb2xlc1xuICogY2FycmllZCBhIGxldmVsLiBMaXZlIGNoZWNrcyByZWFkIHRoZSBsZXZlbCBmcm9tIHRoZSBkYXRhYmFzZSwgc28gY3VzdG9tXG4gKiByb2xlcyB0YWtlIHBhcnQgaW4gdGhlIGhpZXJhcmNoeSBhcyB3ZWxsLlxuICovXG5leHBvcnQgY29uc3QgUk9MRV9ISUVSQVJDSFk6IFJlY29yZDxzdHJpbmcsIG51bWJlcj4gPSB7XG4gIHVzZXI6IDEsXG4gIHN1cHBvcnQ6IDIsXG4gIG1hbmFnZXI6IDMsXG4gIGFkbWluOiA0LFxufSBhcyBjb25zdDtcblxuLyoqXG4gKiBMZXZlbCBnaXZlbiB0byBhIHJvbGUgdGhhdCBleGlzdHMgYnV0IGNhcnJpZXMgbm8gZXhwbGljaXQgbGV2ZWwuXG4gKiBDdXN0b20gcm9sZXMgc2l0IGFsb25nc2lkZSB0aGUgZGVmYXVsdCB1c2VyIHJvbGUuXG4gKi9cbmV4cG9ydCBjb25zdCBDVVNUT01fUk9MRV9MRVZFTCA9IDE7XG5cbi8qKlxuICogTGV2ZWwgZ2l2ZW4gdG8gYSByb2xlIHNsdWcgdGhhdCBubyBsb25nZXIgZXhpc3RzIGluIHRoZSByb2xlcyBjb2xsZWN0aW9uLlxuICogT25seSBhZG1pbnMgbWF5IHRvdWNoIHVzZXJzIHN0cmFuZGVkIG9uIHN1Y2ggYSBzbHVnLlxuICovXG5leHBvcnQgY29uc3QgVU5LTk9XTl9ST0xFX0xFVkVMID0gMDtcblxuLyoqXG4gKiBMZXZlbCBhbiBhY3RvciBtdXN0IHJlYWNoIHRvIHBlcmZvcm0gYWRtaW4tb25seSBvcGVyYXRpb25zLlxuICovXG5leHBvcnQgY29uc3QgQURNSU5fTEVWRUwgPSBST0xFX0hJRVJBUkNIWVtVc2VyUm9sZS5BRE1JTl07XG5cbi8qKlxuICogR2V0IHJvbGUgaGllcmFyY2h5IGxldmVsIGZvciBhIHJvbGUgc3RyaW5nLlxuICogQ3VzdG9tIHJvbGVzIChub3QgaW4gaGllcmFyY2h5KSBkZWZhdWx0IHRvIGxldmVsIDAuXG4gKlxuICogQHBhcmFtIHJvbGUgLSBSb2xlIHNsdWcgb3IgVXNlclJvbGUgZW51bSB2YWx1ZVxuICogQHJldHVybnMgSGllcmFyY2h5IGxldmVsICgwIGZvciBjdXN0b20gcm9sZXMpXG4gKi9cbmZ1bmN0aW9uIGdldFJvbGVMZXZlbChyb2xlOiBzdHJpbmcgfCBVc2VyUm9sZSk6IG51bWJlciB7XG4gIHJldHVybiBST0xFX0hJRVJBUkNIWVtyb2xlXSA/PyBVTktOT1dOX1JPTEVfTEVWRUw7XG59XG5cbi8qKlxuICogQ2hlY2sgd2hldGhlciBhbiBhY3RvciBsZXZlbCBtYXkgYWN0IG9uIGEgdGFyZ2V0IGxldmVsIGluIGEgcmVhZC1vbmx5IHdheS5cbiAqIEVxdWFsIGxldmVscyBwYXNzLiBTdHJhbmRlZCByb2xlcyAobGV2ZWwgMCkgYXJlIGFkbWluLW9ubHkuXG4gKlxuICogQHBhcmFtIGFjdG9yTGV2ZWwgLSBIaWVyYXJjaHkgbGV2ZWwgb2YgdGhlIGFjdGluZyB1c2VyXG4gKiBAcGFyYW0gdGFyZ2V0TGV2ZWwgLSBIaWVyYXJjaHkgbGV2ZWwgb2YgdGhlIHRhcmdldCB1c2VyXG4gKiBAcmV0dXJucyB0cnVlIHdoZW4gdGhlIGFjdG9yIG1heSByZWFkIHRoZSB0YXJnZXRcbiAqL1xuZXhwb3J0IGZ1bmN0aW9uIGNhbk1hbmFnZUxldmVsKFxuICBhY3RvckxldmVsOiBudW1iZXIsXG4gIHRhcmdldExldmVsOiBudW1iZXIsXG4pOiBib29sZWFuIHtcbiAgaWYgKHRhcmdldExldmVsID09PSBVTktOT1dOX1JPTEVfTEVWRUwpIHtcbiAgICByZXR1cm4gYWN0b3JMZXZlbCA+PSBBRE1JTl9MRVZFTDtcbiAgfVxuXG4gIHJldHVybiBhY3RvckxldmVsID49IHRhcmdldExldmVsO1xufVxuXG4vKipcbiAqIENoZWNrIHdoZXRoZXIgYW4gYWN0b3IgbGV2ZWwgbWF5IG11dGF0ZSBhIHRhcmdldCBsZXZlbC5cbiAqIEVxdWFsIGxldmVscyBmYWlsLCBzbyBwZWVycyBjYW5ub3QgYWN0IG9uIGVhY2ggb3RoZXIuXG4gKiBTdHJhbmRlZCByb2xlcyAobGV2ZWwgMCkgYXJlIGFkbWluLW9ubHkuXG4gKlxuICogQHBhcmFtIGFjdG9yTGV2ZWwgLSBIaWVyYXJjaHkgbGV2ZWwgb2YgdGhlIGFjdGluZyB1c2VyXG4gKiBAcGFyYW0gdGFyZ2V0TGV2ZWwgLSBIaWVyYXJjaHkgbGV2ZWwgb2YgdGhlIHRhcmdldCB1c2VyXG4gKiBAcmV0dXJucyB0cnVlIHdoZW4gdGhlIGFjdG9yIG1heSBtdXRhdGUgdGhlIHRhcmdldFxuICovXG5leHBvcnQgZnVuY3Rpb24gY2FuTW9kaWZ5TGV2ZWwoXG4gIGFjdG9yTGV2ZWw6IG51bWJlcixcbiAgdGFyZ2V0TGV2ZWw6IG51bWJlcixcbik6IGJvb2xlYW4ge1xuICBpZiAodGFyZ2V0TGV2ZWwgPT09IFVOS05PV05fUk9MRV9MRVZFTCkge1xuICAgIHJldHVybiBhY3RvckxldmVsID49IEFETUlOX0xFVkVMO1xuICB9XG5cbiAgcmV0dXJuIGFjdG9yTGV2ZWwgPiB0YXJnZXRMZXZlbDtcbn1cblxuLyoqXG4gKiBDaGVjayBpZiBhIHVzZXIgaGFzIGF0IGxlYXN0IHRoZSBtaW5pbXVtIHJlcXVpcmVkIHJvbGUuXG4gKlxuICogQHBhcmFtIHVzZXJSb2xlIC0gVGhlIHVzZXIncyBjdXJyZW50IHJvbGUgKHN0cmluZyBvciBlbnVtKVxuICogQHBhcmFtIHJlcXVpcmVkUm9sZSAtIFRoZSBtaW5pbXVtIHJvbGUgcmVxdWlyZWQgKHN0cmluZyBvciBlbnVtKVxuICogQHJldHVybnMgdHJ1ZSBpZiB1c2VyIGhhcyBzdWZmaWNpZW50IHBlcm1pc3Npb25zXG4gKlxuICogQGV4YW1wbGVcbiAqIGBgYHR5cGVzY3JpcHRcbiAqIGhhc01pbmltdW1Sb2xlKCdtYW5hZ2VyJywgJ3VzZXInKTsgLy8gdHJ1ZVxuICogaGFzTWluaW11bVJvbGUoJ3VzZXInLCAnbWFuYWdlcicpOyAvLyBmYWxzZVxuICogaGFzTWluaW11bVJvbGUoVXNlclJvbGUuTUFOQUdFUiwgVXNlclJvbGUuVVNFUik7IC8vIHRydWUgKGJhY2t3YXJkIGNvbXBhdClcbiAqIGBgYFxuICovXG5leHBvcnQgZnVuY3Rpb24gaGFzTWluaW11bVJvbGUoXG4gIHVzZXJSb2xlOiBzdHJpbmcgfCBVc2VyUm9sZSxcbiAgcmVxdWlyZWRSb2xlOiBzdHJpbmcgfCBVc2VyUm9sZSxcbik6IGJvb2xlYW4ge1xuICByZXR1cm4gZ2V0Um9sZUxldmVsKHVzZXJSb2xlKSA+PSBnZXRSb2xlTGV2ZWwocmVxdWlyZWRSb2xlKTtcbn1cblxuLyoqXG4gKiBDaGVjayBpZiBhIHJvbGUgYXNzaWdubWVudCBpcyB2YWxpZC5cbiAqIEFETUlOIHJvbGUgY2Fubm90IGJlIGFzc2lnbmVkIHZpYSBBUEkgKG9ubHkgdGhyb3VnaCBkYXRhYmFzZSkuXG4gKiBDdXN0b20gcm9sZXMgY2FuIGJlIGFzc2lnbmVkLlxuICpcbiAqIEBwYXJhbSBuZXdSb2xlIC0gVGhlIHJvbGUgdG8gYmUgYXNzaWduZWRcbiAqIEByZXR1cm5zIHRydWUgaWYgdGhlIHJvbGUgY2FuIGJlIGFzc2lnbmVkXG4gKlxuICogQGV4YW1wbGVcbiAqIGBgYHR5cGVzY3JpcHRcbiAqIGlzVmFsaWRSb2xlQXNzaWdubWVudCgnc3VwcG9ydCcpOyAvLyB0cnVlXG4gKiBpc1ZhbGlkUm9sZUFzc2lnbm1lbnQoJ2FkbWluJyk7IC8vIGZhbHNlXG4gKiBpc1ZhbGlkUm9sZUFzc2lnbm1lbnQoJ2N1c3RvbS1yb2xlJyk7IC8vIHRydWVcbiAqIGBgYFxuICovXG5leHBvcnQgZnVuY3Rpb24gaXNWYWxpZFJvbGVBc3NpZ25tZW50KG5ld1JvbGU6IHN0cmluZyB8IFVzZXJSb2xlKTogYm9vbGVhbiB7XG4gIHJldHVybiBuZXdSb2xlICE9PSAoVXNlclJvbGUuQURNSU4gYXMgc3RyaW5nKTtcbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

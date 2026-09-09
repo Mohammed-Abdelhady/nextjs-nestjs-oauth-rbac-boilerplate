@@ -1,0 +1,158 @@
+8af9df2efa79c416c4d394f2d1eb889f
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.validateCertificatePath = validateCertificatePath;
+require("reflect-metadata");
+const x509_1 = require("@peculiar/x509");
+const isCertRevoked_js_1 = require("./isCertRevoked.js");
+/**
+ * Traverse an array of PEM certificates and ensure they form a proper chain
+ * @param x5cCertsPEM Typically the result of `x5c.map(convertASN1toPEM)`
+ * @param trustAnchorsPEM PEM-formatted certs that an attestation statement x5c may chain back to
+ */
+async function validateCertificatePath(x5cCertsPEM, trustAnchorsPEM = []) {
+    if (trustAnchorsPEM.length === 0) {
+        // We have no trust anchors to chain back to, so skip path validation
+        return true;
+    }
+    // Prepare to work with x5c certs
+    const x5cCertsParsed = x5cCertsPEM.map((certPEM) => new x509_1.X509Certificate(certPEM));
+    // Check for any expired or temporally invalid certs in x5c
+    for (let i = 0; i < x5cCertsParsed.length; i++) {
+        const cert = x5cCertsParsed[i];
+        const certPEM = x5cCertsPEM[i];
+        try {
+            await assertCertNotRevoked(cert);
+        }
+        catch (_err) {
+            throw new Error(`Found revoked certificate in x5c:\n${certPEM}`);
+        }
+        try {
+            assertCertIsWithinValidTimeWindow(cert.notBefore, cert.notAfter);
+        }
+        catch (_err) {
+            throw new Error(`Found certificate out of validity period in x5c:\n${certPEM}`);
+        }
+    }
+    // Prepare to work with trust anchor certs
+    const trustAnchorsParsed = trustAnchorsPEM.map((certPEM) => {
+        try {
+            return new x509_1.X509Certificate(certPEM);
+        }
+        catch (err) {
+            const _err = err;
+            throw new Error(`Could not parse trust anchor certificate:\n${certPEM}`, { cause: _err });
+        }
+    });
+    // Filter out any expired or temporally invalid trust anchors certs
+    const validTrustAnchors = [];
+    for (let i = 0; i < trustAnchorsParsed.length; i++) {
+        const cert = trustAnchorsParsed[i];
+        try {
+            await assertCertNotRevoked(cert);
+        }
+        catch (_err) {
+            // Continue processing the other certs
+            continue;
+        }
+        try {
+            assertCertIsWithinValidTimeWindow(cert.notBefore, cert.notAfter);
+        }
+        catch (_err) {
+            // Continue processing the other certs
+            continue;
+        }
+        validTrustAnchors.push(cert);
+    }
+    if (validTrustAnchors.length === 0) {
+        throw new Error('No specified trust anchor was valid for verifying x5c');
+    }
+    // Try to verify x5c with each valid trust anchor
+    let invalidCertificateChain = true;
+    for (const anchor of validTrustAnchors) {
+        try {
+            const x5cWithTrustAnchor = x5cCertsParsed.concat([anchor]);
+            const numUniqueCerts = new Set(x5cWithTrustAnchor.map((cert) => cert.toString('pem'))).size;
+            if (numUniqueCerts !== x5cWithTrustAnchor.length) {
+                throw new Error('Invalid certificate path: found duplicate certificates');
+            }
+            // Break apart x5c to try and build a valid cert chain
+            const x5cLeafCert = x5cCertsParsed[0];
+            let x5cIntermediates = [];
+            if (x5cCertsParsed.length > 1) {
+                x5cIntermediates = x5cCertsParsed.slice(1);
+            }
+            // Order of certs doesn't matter here but for readability
+            const chainBuilder = new x509_1.X509ChainBuilder({ certificates: [...x5cIntermediates, anchor] });
+            // Attempt to build a certificate path
+            const chain = await chainBuilder.build(x5cLeafCert);
+            /**
+             * The cert chain must chain to the anchor. Usually this is as simple as asserting that the
+             * final cert in the chain is the anchor cert. However there's an odd scenario where an
+             * intermediate certificate can chain to an anchor cert's public key, but not actually to the
+             * anchor cert because e.g. the chain builder stopped at a cross-signed cert for the anchor
+             * and not the anchor cert itself.
+             *
+             * So here we're going to check for that. In the simplest case we'll be fine with the last
+             * cert in the chain being byte-equivalent to the current anchor cert. If not, then move a
+             * cert up the chain and explicitly check that it was signed by the anchor cert. This also
+             * future-proofs this logic from the internals of whatever future X.509 library might be used
+             * to build the cert path.
+             */
+            const lastCert = chain[chain.length - 1];
+            const lastCertEqualsAnchor = lastCert.equal(anchor);
+            let certBeforeLastSignedByAnchor = false;
+            if (!lastCertEqualsAnchor && chain.length > 1) {
+                const certBeforeLast = chain[chain.length - 2];
+                certBeforeLastSignedByAnchor = await certBeforeLast.verify({
+                    publicKey: anchor.publicKey,
+                    signatureOnly: true,
+                });
+            }
+            const chainReachesAnchor = lastCertEqualsAnchor || certBeforeLastSignedByAnchor;
+            if (!chainReachesAnchor) {
+                // Invalid cert chain, try the next trust anchor
+                continue;
+            }
+            // If we successfully validated a path then there's no need to continue. Reset any existing
+            // errors that were thrown by earlier trust anchors
+            invalidCertificateChain = false;
+            break;
+        }
+        catch (err) {
+            throw new Error('Unexpected error while validating certificate path', { cause: err });
+        }
+    }
+    // We tried multiple trust anchors and none of them worked
+    if (invalidCertificateChain) {
+        throw new InvalidCertificatePath();
+    }
+    return true;
+}
+/**
+ * Check if the certificate is revoked or not. If it is, raise an error
+ */
+async function assertCertNotRevoked(certificate) {
+    // Check for certificate revocation
+    const subjectCertRevoked = await (0, isCertRevoked_js_1.isCertRevoked)(certificate);
+    if (subjectCertRevoked) {
+        throw new Error('Found revoked certificate in certificate path');
+    }
+}
+/**
+ * Require the cert to be within its notBefore and notAfter time window
+ */
+function assertCertIsWithinValidTimeWindow(certNotBefore, certNotAfter) {
+    const now = new Date(Date.now());
+    if (certNotBefore > now || certNotAfter < now) {
+        throw new Error('Certificate is not yet valid or expired');
+    }
+}
+class InvalidCertificatePath extends Error {
+    constructor() {
+        const message = 'x5c could not be chained to any specified trust anchor';
+        super(message);
+        this.name = 'InvalidX5CChain';
+    }
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovbm9kZV9tb2R1bGVzL0BzaW1wbGV3ZWJhdXRobi9zZXJ2ZXIvc2NyaXB0L2hlbHBlcnMvdmFsaWRhdGVDZXJ0aWZpY2F0ZVBhdGguanMiLCJtYXBwaW5ncyI6IkFBQUEsWUFBWSxDQUFDO0FBQ2IsTUFBTSxDQUFDLGNBQWMsQ0FBQyxPQUFPLEVBQUUsWUFBWSxFQUFFLEVBQUUsS0FBSyxFQUFFLElBQUksRUFBRSxDQUFDLENBQUM7QUFDOUQsT0FBTyxDQUFDLHVCQUF1QixHQUFHLHVCQUF1QixDQUFDO0FBQzFELE9BQU8sQ0FBQyxrQkFBa0IsQ0FBQyxDQUFDO0FBQzVCLE1BQU0sTUFBTSxHQUFHLE9BQU8sQ0FBQyxnQkFBZ0IsQ0FBQyxDQUFDO0FBQ3pDLE1BQU0sa0JBQWtCLEdBQUcsT0FBTyxDQUFDLG9CQUFvQixDQUFDLENBQUM7QUFDekQ7Ozs7R0FJRztBQUNILEtBQUssVUFBVSx1QkFBdUIsQ0FBQyxXQUFXLEVBQUUsZUFBZSxHQUFHLEVBQUU7SUFDcEUsSUFBSSxlQUFlLENBQUMsTUFBTSxLQUFLLENBQUMsRUFBRSxDQUFDO1FBQy9CLHFFQUFxRTtRQUNyRSxPQUFPLElBQUksQ0FBQztJQUNoQixDQUFDO0lBQ0QsaUNBQWlDO0lBQ2pDLE1BQU0sY0FBYyxHQUFHLFdBQVcsQ0FBQyxHQUFHLENBQUMsQ0FBQyxPQUFPLEVBQUUsRUFBRSxDQUFDLElBQUksTUFBTSxDQUFDLGVBQWUsQ0FBQyxPQUFPLENBQUMsQ0FBQyxDQUFDO0lBQ3pGLDJEQUEyRDtJQUMzRCxLQUFLLElBQUksQ0FBQyxHQUFHLENBQUMsRUFBRSxDQUFDLEdBQUcsY0FBYyxDQUFDLE1BQU0sRUFBRSxDQUFDLEVBQUUsRUFBRSxDQUFDO1FBQzdDLE1BQU0sSUFBSSxHQUFHLGNBQWMsQ0FBQyxDQUFDLENBQUMsQ0FBQztRQUMvQixNQUFN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OlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovbm9kZV9tb2R1bGVzL0BzaW1wbGV3ZWJhdXRobi9zZXJ2ZXIvc2NyaXB0L2hlbHBlcnMvdmFsaWRhdGVDZXJ0aWZpY2F0ZVBhdGguanMiXSwic291cmNlc0NvbnRlbnQiOlsiXCJ1c2Ugc3RyaWN0XCI7XG5PYmplY3QuZGVmaW5lUHJvcGVydHkoZXhwb3J0cywgXCJfX2VzTW9kdWxlXCIsIHsgdmFsdWU6IHRydWUgfSk7XG5leHBvcnRzLnZhbGlkYXRlQ2VydGlmaWNhdGVQYXRoID0gdmFsaWRhdGVDZXJ0aWZpY2F0ZVBhdGg7XG5yZXF1aXJlKFwicmVmbGVjdC1tZXRhZGF0YVwiKTtcbmNvbnN0IHg1MDlfMSA9IHJlcXVpcmUoXCJAcGVjdWxpYXIveDUwOVwiKTtcbmNvbnN0IGlzQ2VydFJldm9rZWRfanNfMSA9IHJlcXVpcmUoXCIuL2lzQ2VydFJldm9rZWQuanNcIik7XG4vKipcbiAqIFRyYXZlcnNlIGFuIGFycmF5IG9mIFBFTSBjZXJ0aWZpY2F0ZXMgYW5kIGVuc3VyZSB0aGV5IGZvcm0gYSBwcm9wZXIgY2hhaW5cbiAqIEBwYXJhbSB4NWNDZXJ0c1BFTSBUeXBpY2FsbHkgdGhlIHJlc3VsdCBvZiBgeDVjLm1hcChjb252ZXJ0QVNOMXRvUEVNKWBcbiAqIEBwYXJhbSB0cnVzdEFuY2hvcnNQRU0gUEVNLWZvcm1hdHRlZCBjZXJ0cyB0aGF0IGFuIGF0dGVzdGF0aW9uIHN0YXRlbWVudCB4NWMgbWF5IGNoYWluIGJhY2sgdG9cbiAqL1xuYXN5bmMgZnVuY3Rpb24gdmFsaWRhdGVDZXJ0aWZpY2F0ZVBhdGgoeDVjQ2VydHNQRU0sIHRydXN0QW5jaG9yc1BFTSA9IFtdKSB7XG4gICAgaWYgKHRydXN0QW5jaG9yc1BFTS5sZW5ndGggPT09IDApIHtcbiAgICAgICAgLy8gV2UgaGF2ZSBubyB0cnVzdCBhbmNob3JzIHRvIGNoYWluIGJhY2sgdG8sIHNvIHNraXAgcGF0aCB2YWxpZGF0aW9uXG4gICAgICAgIHJldHVybiB0cnVlO1xuICAgIH1cbiAgICAvLyBQcmVwYXJlIHRvIHdvcmsgd2l0aCB4NWMgY2VydHNcbiAgICBjb25zdCB4NWNDZXJ0c1BhcnNlZCA9IHg1Y0NlcnRzUEVNLm1hcCgoY2VydFBFTSkgPT4gbmV3IHg1MDlfMS5YNTA5Q2VydGlmaWNhdGUoY2VydFBFTSkpO1xuICAgIC8vIENoZWNrIGZvciBhbnkgZXhwaXJlZCBvciB0ZW1wb3JhbGx5IGludmFsaWQgY2VydHMgaW4geDVjXG4gICAgZm9yIChsZXQgaSA9IDA7IGkgPCB4NWNDZXJ0c1BhcnNlZC5sZW5ndGg7IGkrKykge1xuICAgICAgICBjb25zdCBjZXJ0ID0geDVjQ2VydHNQYXJzZWRbaV07XG4gICAgICAgIGNvbnN0IGNlcnRQRU0gPSB4NWNDZXJ0c1BFTVtpXTtcbiAgICAgICAgdHJ5IHtcbiAgICAgICAgICAgIGF3YWl0IGFzc2VydENlcnROb3RSZXZva2VkKGNlcnQpO1xuICAgICAgICB9XG4gICAgICAgIGNhdGNoIChfZXJyKSB7XG4gICAgICAgICAgICB0aHJvdyBuZXcgRXJyb3IoYEZvdW5kIHJldm9rZWQgY2VydGlmaWNhdGUgaW4geDVjOlxcbiR7Y2VydFBFTX1gKTtcbiAgICAgICAgfVxuICAgICAgICB0cnkge1xuICAgICAgICAgICAgYXNzZXJ0Q2VydElzV2l0aGluVmFsaWRUaW1lV2luZG93KGNlcnQubm90QmVmb3JlLCBjZXJ0Lm5vdEFmdGVyKTtcbiAgICAgICAgfVxuICAgICAgICBjYXRjaCAoX2Vycikge1xuICAgICAgICAgICAgdGhyb3cgbmV3IEVycm9yKGBGb3VuZCBjZXJ0aWZpY2F0ZSBvdXQgb2YgdmFsaWRpdHkgcGVyaW9kIGluIHg1YzpcXG4ke2NlcnRQRU19YCk7XG4gICAgICAgIH1cbiAgICB9XG4gICAgLy8gUHJlcGFyZSB0byB3b3JrIHdpdGggdHJ1c3QgYW5jaG9yIGNlcnRzXG4gICAgY29uc3QgdHJ1c3RBbmNob3JzUGFyc2VkID0gdHJ1c3RBbmNob3JzUEVNLm1hcCgoY2VydFBFTSkgPT4ge1xuICAgICAgICB0cnkge1xuICAgICAgICAgICAgcmV0dXJuIG5ldyB4NTA5XzEuWDUwOUNlcnRpZmljYXRlKGNlcnRQRU0pO1xuICAgICAgICB9XG4gICAgICAgIGNhdGNoIChlcnIpIHtcbiAgICAgICAgICAgIGNvbnN0IF9lcnIgPSBlcnI7XG4gICAgICAgICAgICB0aHJvdyBuZXcgRXJyb3IoYENvdWxkIG5vdCBwYXJzZSB0cnVzdCBhbmNob3IgY2VydGlmaWNhdGU6XFxuJHtjZXJ0UEVNfWAsIHsgY2F1c2U6IF9lcnIgfSk7XG4gICAgICAgIH1cbiAgICB9KTtcbiAgICAvLyBGaWx0ZXIgb3V0IGFueSBleHBpcmVkIG9yIHRlbXBvcmFsbHkgaW52YWxpZCB0cnVzdCBhbmNob3JzIGNlcnRzXG4gICAgY29uc3QgdmFsaWRUcnVzdEFuY2hvcnMgPSBbXTtcbiAgICBmb3IgKGxldCBpID0gMDsgaSA8IHRydXN0QW5jaG9yc1BhcnNlZC5sZW5ndGg7IGkrKykge1xuICAgICAgICBjb25zdCBjZXJ0ID0gdHJ1c3RBbmNob3JzUGFyc2VkW2ldO1xuICAgICAgICB0cnkge1xuICAgICAgICAgICAgYXdhaXQgYXNzZXJ0Q2VydE5vdFJldm9rZWQoY2VydCk7XG4gICAgICAgIH1cbiAgICAgICAgY2F0Y2ggKF9lcnIpIHtcbiAgICAgICAgICAgIC8vIENvbnRpbnVlIHByb2Nlc3NpbmcgdGhlIG90aGVyIGNlcnRzXG4gICAgICAgICAgICBjb250aW51ZTtcbiAgICAgICAgfVxuICAgICAgICB0cnkge1xuICAgICAgICAgICAgYXNzZXJ0Q2VydElzV2l0aGluVmFsaWRUaW1lV2luZG93KGNlcnQubm90QmVmb3JlLCBjZXJ0Lm5vdEFmdGVyKTtcbiAgICAgICAgfVxuICAgICAgICBjYXRjaCAoX2Vycikge1xuICAgICAgICAgICAgLy8gQ29udGludWUgcHJvY2Vzc2luZyB0aGUgb3RoZXIgY2VydHNcbiAgICAgICAgICAgIGNvbnRpbnVlO1xuICAgICAgICB9XG4gICAgICAgIHZhbGlkVHJ1c3RBbmNob3JzLnB1c2goY2VydCk7XG4gICAgfVxuICAgIGlmICh2YWxpZFRydXN0QW5jaG9ycy5sZW5ndGggPT09IDApIHtcbiAgICAgICAgdGhyb3cgbmV3IEVycm9yKCdObyBzcGVjaWZpZWQgdHJ1c3QgYW5jaG9yIHdhcyB2YWxpZCBmb3IgdmVyaWZ5aW5nIHg1YycpO1xuICAgIH1cbiAgICAvLyBUcnkgdG8gdmVyaWZ5IHg1YyB3aXRoIGVhY2ggdmFsaWQgdHJ1c3QgYW5jaG9yXG4gICAgbGV0IGludmFsaWRDZXJ0aWZpY2F0ZUNoYWluID0gdHJ1ZTtcbiAgICBmb3IgKGNvbnN0IGFuY2hvciBvZiB2YWxpZFRydXN0QW5jaG9ycykge1xuICAgICAgICB0cnkge1xuICAgICAgICAgICAgY29uc3QgeDVjV2l0aFRydXN0QW5jaG9yID0geDVjQ2VydHNQYXJzZWQuY29uY2F0KFthbmNob3JdKTtcbiAgICAgICAgICAgIGNvbnN0IG51bVVuaXF1ZUNlcnRzID0gbmV3IFNldCh4NWNXaXRoVHJ1c3RBbmNob3IubWFwKChjZXJ0KSA9PiBjZXJ0LnRvU3RyaW5nKCdwZW0nKSkpLnNpemU7XG4gICAgICAgICAgICBpZiAobnVtVW5pcXVlQ2VydHMgIT09IHg1Y1dpdGhUcnVzdEFuY2hvci5sZW5ndGgpIHtcbiAgICAgICAgICAgICAgICB0aHJvdyBuZXcgRXJyb3IoJ0ludmFsaWQgY2VydGlmaWNhdGUgcGF0aDogZm91bmQgZHVwbGljYXRlIGNlcnRpZmljYXRlcycpO1xuICAgICAgICAgICAgfVxuICAgICAgICAgICAgLy8gQnJlYWsgYXBhcnQgeDVjIHRvIHRyeSBhbmQgYnVpbGQgYSB2YWxpZCBjZXJ0IGNoYWluXG4gICAgICAgICAgICBjb25zdCB4NWNMZWFmQ2VydCA9IHg1Y0NlcnRzUGFyc2VkWzBdO1xuICAgICAgICAgICAgbGV0IHg1Y0ludGVybWVkaWF0ZXMgPSBbXTtcbiAgICAgICAgICAgIGlmICh4NWNDZXJ0c1BhcnNlZC5sZW5ndGggPiAxKSB7XG4gICAgICAgICAgICAgICAgeDVjSW50ZXJtZWRpYXRlcyA9IHg1Y0NlcnRzUGFyc2VkLnNsaWNlKDEpO1xuICAgICAgICAgICAgfVxuICAgICAgICAgICAgLy8gT3JkZXIgb2YgY2VydHMgZG9lc24ndCBtYXR0ZXIgaGVyZSBidXQgZm9yIHJlYWRhYmlsaXR5XG4gICAgICAgICAgICBjb25zdCBjaGFpbkJ1aWxkZXIgPSBuZXcgeDUwOV8xLlg1MDlDaGFpbkJ1aWxkZXIoeyBjZXJ0aWZpY2F0ZXM6IFsuLi54NWNJbnRlcm1lZGlhdGVzLCBhbmNob3JdIH0pO1xuICAgICAgICAgICAgLy8gQXR0ZW1wdCB0byBidWlsZCBhIGNlcnRpZmljYXRlIHBhdGhcbiAgICAgICAgICAgIGNvbnN0IGNoYWluID0gYXdhaXQgY2hhaW5CdWlsZGVyLmJ1aWxkKHg1Y0xlYWZDZXJ0KTtcbiAgICAgICAgICAgIC8qKlxuICAgICAgICAgICAgICogVGhlIGNlcnQgY2hhaW4gbXVzdCBjaGFpbiB0byB0aGUgYW5jaG9yLiBVc3VhbGx5IHRoaXMgaXMgYXMgc2ltcGxlIGFzIGFzc2VydGluZyB0aGF0IHRoZVxuICAgICAgICAgICAgICogZmluYWwgY2VydCBpbiB0aGUgY2hhaW4gaXMgdGhlIGFuY2hvciBjZXJ0LiBIb3dldmVyIHRoZXJlJ3MgYW4gb2RkIHNjZW5hcmlvIHdoZXJlIGFuXG4gICAgICAgICAgICAgKiBpbnRlcm1lZGlhdGUgY2VydGlmaWNhdGUgY2FuIGNoYWluIHRvIGFuIGFuY2hvciBjZXJ0J3MgcHVibGljIGtleSwgYnV0IG5vdCBhY3R1YWxseSB0byB0aGVcbiAgICAgICAgICAgICAqIGFuY2hvciBjZXJ0IGJlY2F1c2UgZS5nLiB0aGUgY2hhaW4gYnVpbGRlciBzdG9wcGVkIGF0IGEgY3Jvc3Mtc2lnbmVkIGNlcnQgZm9yIHRoZSBhbmNob3JcbiAgICAgICAgICAgICAqIGFuZCBub3QgdGhlIGFuY2hvciBjZXJ0IGl0c2VsZi5cbiAgICAgICAgICAgICAqXG4gICAgICAgICAgICAgKiBTbyBoZXJlIHdlJ3JlIGdvaW5nIHRvIGNoZWNrIGZvciB0aGF0LiBJbiB0aGUgc2ltcGxlc3QgY2FzZSB3ZSdsbCBiZSBmaW5lIHdpdGggdGhlIGxhc3RcbiAgICAgICAgICAgICAqIGNlcnQgaW4gdGhlIGNoYWluIGJlaW5nIGJ5dGUtZXF1aXZhbGVudCB0byB0aGUgY3VycmVudCBhbmNob3IgY2VydC4gSWYgbm90LCB0aGVuIG1vdmUgYVxuICAgICAgICAgICAgICogY2VydCB1cCB0aGUgY2hhaW4gYW5kIGV4cGxpY2l0bHkgY2hlY2sgdGhhdCBpdCB3YXMgc2lnbmVkIGJ5IHRoZSBhbmNob3IgY2VydC4gVGhpcyBhbHNvXG4gICAgICAgICAgICAgKiBmdXR1cmUtcHJvb2ZzIHRoaXMgbG9naWMgZnJvbSB0aGUgaW50ZXJuYWxzIG9mIHdoYXRldmVyIGZ1dHVyZSBYLjUwOSBsaWJyYXJ5IG1pZ2h0IGJlIHVzZWRcbiAgICAgICAgICAgICAqIHRvIGJ1aWxkIHRoZSBjZXJ0IHBhdGguXG4gICAgICAgICAgICAgKi9cbiAgICAgICAgICAgIGNvbnN0IGxhc3RDZXJ0ID0gY2hhaW5bY2hhaW4ubGVuZ3RoIC0gMV07XG4gICAgICAgICAgICBjb25zdCBsYXN0Q2VydEVxdWFsc0FuY2hvciA9IGxhc3RDZXJ0LmVxdWFsKGFuY2hvcik7XG4gICAgICAgICAgICBsZXQgY2VydEJlZm9yZUxhc3RTaWduZWRCeUFuY2hvciA9IGZhbHNlO1xuICAgICAgICAgICAgaWYgKCFsYXN0Q2VydEVxdWFsc0FuY2hvciAmJiBjaGFpbi5sZW5ndGggPiAxKSB7XG4gICAgICAgICAgICAgICAgY29uc3QgY2VydEJlZm9yZUxhc3QgPSBjaGFpbltjaGFpbi5sZW5ndGggLSAyXTtcbiAgICAgICAgICAgICAgICBjZXJ0QmVmb3JlTGFzdFNpZ25lZEJ5QW5jaG9yID0gYXdhaXQgY2VydEJlZm9yZUxhc3QudmVyaWZ5KHtcbiAgICAgICAgICAgICAgICAgICAgcHVibGljS2V5OiBhbmNob3IucHVibGljS2V5LFxuICAgICAgICAgICAgICAgICAgICBzaWduYXR1cmVPbmx5OiB0cnVlLFxuICAgICAgICAgICAgICAgIH0pO1xuICAgICAgICAgICAgfVxuICAgICAgICAgICAgY29uc3QgY2hhaW5SZWFjaGVzQW5jaG9yID0gbGFzdENlcnRFcXVhbHNBbmNob3IgfHwgY2VydEJlZm9yZUxhc3RTaWduZWRCeUFuY2hvcjtcbiAgICAgICAgICAgIGlmICghY2hhaW5SZWFjaGVzQW5jaG9yKSB7XG4gICAgICAgICAgICAgICAgLy8gSW52YWxpZCBjZXJ0IGNoYWluLCB0cnkgdGhlIG5leHQgdHJ1c3QgYW5jaG9yXG4gICAgICAgICAgICAgICAgY29udGludWU7XG4gICAgICAgICAgICB9XG4gICAgICAgICAgICAvLyBJZiB3ZSBzdWNjZXNzZnVsbHkgdmFsaWRhdGVkIGEgcGF0aCB0aGVuIHRoZXJlJ3Mgbm8gbmVlZCB0byBjb250aW51ZS4gUmVzZXQgYW55IGV4aXN0aW5nXG4gICAgICAgICAgICAvLyBlcnJvcnMgdGhhdCB3ZXJlIHRocm93biBieSBlYXJsaWVyIHRydXN0IGFuY2hvcnNcbiAgICAgICAgICAgIGludmFsaWRDZXJ0aWZpY2F0ZUNoYWluID0gZmFsc2U7XG4gICAgICAgICAgICBicmVhaztcbiAgICAgICAgfVxuICAgICAgICBjYXRjaCAoZXJyKSB7XG4gICAgICAgICAgICB0aHJvdyBuZXcgRXJyb3IoJ1VuZXhwZWN0ZWQgZXJyb3Igd2hpbGUgdmFsaWRhdGluZyBjZXJ0aWZpY2F0ZSBwYXRoJywgeyBjYXVzZTogZXJyIH0pO1xuICAgICAgICB9XG4gICAgfVxuICAgIC8vIFdlIHRyaWVkIG11bHRpcGxlIHRydXN0IGFuY2hvcnMgYW5kIG5vbmUgb2YgdGhlbSB3b3JrZWRcbiAgICBpZiAoaW52YWxpZENlcnRpZmljYXRlQ2hhaW4pIHtcbiAgICAgICAgdGhyb3cgbmV3IEludmFsaWRDZXJ0aWZpY2F0ZVBhdGgoKTtcbiAgICB9XG4gICAgcmV0dXJuIHRydWU7XG59XG4vKipcbiAqIENoZWNrIGlmIHRoZSBjZXJ0aWZpY2F0ZSBpcyByZXZva2VkIG9yIG5vdC4gSWYgaXQgaXMsIHJhaXNlIGFuIGVycm9yXG4gKi9cbmFzeW5jIGZ1bmN0aW9uIGFzc2VydENlcnROb3RSZXZva2VkKGNlcnRpZmljYXRlKSB7XG4gICAgLy8gQ2hlY2sgZm9yIGNlcnRpZmljYXRlIHJldm9jYXRpb25cbiAgICBjb25zdCBzdWJqZWN0Q2VydFJldm9rZWQgPSBhd2FpdCAoMCwgaXNDZXJ0UmV2b2tlZF9qc18xLmlzQ2VydFJldm9rZWQpKGNlcnRpZmljYXRlKTtcbiAgICBpZiAoc3ViamVjdENlcnRSZXZva2VkKSB7XG4gICAgICAgIHRocm93IG5ldyBFcnJvcignRm91bmQgcmV2b2tlZCBjZXJ0aWZpY2F0ZSBpbiBjZXJ0aWZpY2F0ZSBwYXRoJyk7XG4gICAgfVxufVxuLyoqXG4gKiBSZXF1aXJlIHRoZSBjZXJ0IHRvIGJlIHdpdGhpbiBpdHMgbm90QmVmb3JlIGFuZCBub3RBZnRlciB0aW1lIHdpbmRvd1xuICovXG5mdW5jdGlvbiBhc3NlcnRDZXJ0SXNXaXRoaW5WYWxpZFRpbWVXaW5kb3coY2VydE5vdEJlZm9yZSwgY2VydE5vdEFmdGVyKSB7XG4gICAgY29uc3Qgbm93ID0gbmV3IERhdGUoRGF0ZS5ub3coKSk7XG4gICAgaWYgKGNlcnROb3RCZWZvcmUgPiBub3cgfHwgY2VydE5vdEFmdGVyIDwgbm93KSB7XG4gICAgICAgIHRocm93IG5ldyBFcnJvcignQ2VydGlmaWNhdGUgaXMgbm90IHlldCB2YWxpZCBvciBleHBpcmVkJyk7XG4gICAgfVxufVxuY2xhc3MgSW52YWxpZENlcnRpZmljYXRlUGF0aCBleHRlbmRzIEVycm9yIHtcbiAgICBjb25zdHJ1Y3RvcigpIHtcbiAgICAgICAgY29uc3QgbWVzc2FnZSA9ICd4NWMgY291bGQgbm90IGJlIGNoYWluZWQgdG8gYW55IHNwZWNpZmllZCB0cnVzdCBhbmNob3InO1xuICAgICAgICBzdXBlcihtZXNzYWdlKTtcbiAgICAgICAgdGhpcy5uYW1lID0gJ0ludmFsaWRYNUNDaGFpbic7XG4gICAgfVxufVxuIl0sInZlcnNpb24iOjN9

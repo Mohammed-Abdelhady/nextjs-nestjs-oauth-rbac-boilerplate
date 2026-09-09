@@ -1,3 +1,4 @@
+import { realpathSync } from 'node:fs';
 // Copies the repository into template/ so the published package carries the
 // boilerplate. Runs from the package's prebuild script. template/ is gitignored.
 import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
@@ -18,6 +19,17 @@ const EXCLUDED_DIRS = new Set([
   'out',
   'coverage',
   '.turbo',
+  'output',
+  'test-results',
+  'playwright-report',
+  'blob-report',
+  '.auth',
+  '.mongodb-binaries',
+  'mongodb-memory-server',
+  '.ssh',
+  '.aws',
+  '.kube',
+  'ssl',
 ]);
 
 // Paths dropped relative to the repository root. Maintainer tooling and the
@@ -25,6 +37,8 @@ const EXCLUDED_DIRS = new Set([
 const EXCLUDED_PATHS = new Set([
   '.hyperflow',
   '.claude',
+  '.codex',
+  '.agents',
   '.kilocode',
   'openspec',
   'packages',
@@ -35,6 +49,12 @@ const EXCLUDED_PATHS = new Set([
   join('.husky', '_'),
 ]);
 
+const ENV_EXAMPLES = new Set([
+  '.env.docker.example',
+  join('backend', '.env.example'),
+  join('frontend', '.env.example'),
+]);
+
 // npm drops these names from a published tarball, so they travel under a
 // different name and the CLI renames them back while scaffolding.
 const RENAMED_FILES = new Map([
@@ -43,11 +63,14 @@ const RENAMED_FILES = new Map([
   ['package-lock.json', '_package-lock.json'],
 ]);
 
-function isExcluded(relativePath, name, isDirectory) {
+export function isExcluded(relativePath, name, isDirectory) {
   if (EXCLUDED_PATHS.has(relativePath)) return true;
+  if (/(^|[\\/])\.config[\\/]gcloud($|[\\/])/.test(relativePath)) return true;
+  if (name === '.env' || name.startsWith('.env.'))
+    return isDirectory || !ENV_EXAMPLES.has(relativePath);
+  if (/\.(pem|key|crt|tgz)$/i.test(name)) return true;
   if (isDirectory) return EXCLUDED_DIRS.has(name);
   if (name === '.DS_Store' || name.endsWith('.log') || name.endsWith('.tsbuildinfo')) return true;
-  if (name === '.env' || (name.startsWith('.env.') && !name.endsWith('.example'))) return true;
   return false;
 }
 
@@ -86,4 +109,6 @@ async function main() {
   console.log(`manifest: ${Object.keys(JSON.parse(manifest).features).length} features`);
 }
 
-await main();
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  await main();
+}

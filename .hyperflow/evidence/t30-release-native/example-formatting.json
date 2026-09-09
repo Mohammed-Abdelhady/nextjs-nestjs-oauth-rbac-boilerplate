@@ -1,0 +1,7 @@
+{
+  "path": "backend/.env.example",
+  "before_sha256": "12458b8dd99a7f0dd894a06b1bd56c2e41ac7e4233e9a4a18a072c225f68f8f7",
+  "after_sha256": "f71eb4890525f28c9f96d573a695b47bb937128766a881d7e82417eb85254381",
+  "change": "remove exactly one trailing newline byte; all other bytes identical",
+  "original_source_unchanged": true
+}

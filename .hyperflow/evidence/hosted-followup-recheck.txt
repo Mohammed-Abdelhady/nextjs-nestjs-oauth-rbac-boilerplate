@@ -1,0 +1,44 @@
+**NEEDS_FIX: two source-supported findings for Astra validation.** Neither is claimed as the cause of the previous hosted failures.
+
+Verified before and after review:
+
+- HEAD `fc19e55e4f2ae1978c19178e1078c76b47acfa2d`
+- Fingerprint `822ea784c2549dd6fa229f2e7d5d1dd0926b9564065472cb4f15ab823e99c195`
+- Exactly the five authorized paths changed; all hashes match.
+- Reversing the supplied patch in memory reconstructs HEAD exactly.
+
+**HFR001 · P2 · Diagnostic capture can supersede the original assertion with a test timeout**
+
+Location: `frontend/e2e/authenticated-regressions.spec.ts:111–169`.
+
+Trigger: The overflow assertion fails, then geometry evaluation or its file write stalls, or capture consumes the remaining test deadline.
+
+Expected: Diagnostic failure preserves the original overflow assertion as the reported failure. Observed from source: the original error is rethrown only after capture finishes. `page.evaluate` and `writeFile` have no capture deadline; the five-second timeout applies only to the later screenshot. The 3,000-element limit bounds traversal work, not browser responsiveness.
+
+The installed Playwright runner races the test against its deadline and records `timedOut` independently of this catch block. Thus the 45-second test deadline can become the primary failure before line 169 executes.
+
+Correction direction: Give the entire capture operation a bounded budget that respects remaining test time, and preserve the original failure even when capture never settles. Verify rejected and stalled capture paths. This is a source-demonstrated failure path; no runtime reproduction was executed.
+
+**HFR002 · P3 · Empty Location headers now bypass the preserved HTTP assertion**
+
+Location: `scripts/lib/docker-http-probes.mjs:24`; tests at `scripts/config-transforms.test.mjs:205–220`.
+
+Trigger: A target returns HTTP 200, an otherwise valid body, and an empty `Location` header.
+
+Expected: Reject any present Location header, matching HEAD’s `verify-docker.mjs:204`, which required `headers.get('location') === null`. Observed: the replacement checks truthiness, so an empty header passes. The new tests cover a nonempty Location value only.
+
+Impact: The relocated smoke check accepts a response the original contract rejected.
+
+Correction direction: Check header presence and add an empty-Location regression. This contract difference is directly established by the old and new source.
+
+The remaining inspected behavior supports the intended approach:
+
+- Docker probes use five fixed service-DNS targets inside the owned backend container. Product Compose remains unchanged; the smoke network remains internal without host publications.
+- Requests have 10-second signals and 1 MiB response limits. The outer command retains its 65-second limit, cancellation handling, output cap and cleanup path. Results expose fixed names and reasons, with strict success-envelope validation.
+- Browser geometry records at most 20 entries from 3,000 inspected elements, with bounded test IDs/transforms and selected layout fields. The strict overflow predicate remains unchanged.
+- CI uploads only the named geometry JSON and failure PNG beneath authenticated output, on failure, for three days.
+- Processing remains proportional to capped response bodies and bounded DOM traversal. No performance improvement is established or claimed.
+
+Owner evidence records **36/36 configuration tests**, root lint, types, formatting and diff-check passing. These are owner executions. The non-listening tests exercise serialized probe execution and command failure controls; they do not establish Docker runtime or browser-capture success.
+
+CI-DOCKER still needs normal hosted execution. CI-BROWSER remains an unresolved product diagnosis. Prior closures and security/CodeQL limits remain unchanged. No files were written, tests run, services started or release actions taken.

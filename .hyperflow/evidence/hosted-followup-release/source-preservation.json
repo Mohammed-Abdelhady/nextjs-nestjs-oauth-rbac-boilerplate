@@ -1,0 +1,8 @@
+{
+  "original_head": "68cefb61f450b94c195a8d6cf325ac5e26c15349",
+  "projected_source_files_verified_against_original_integration_blobs": 734,
+  "blocked_paths_read": 0,
+  "skipped_prohibited_paths": 0,
+  "original_source_writes": 0,
+  "note": "Checks the original source files used in integration against their recorded Git blobs; the prior847-file aggregate used a different filename filter and is not reasserted here."
+}

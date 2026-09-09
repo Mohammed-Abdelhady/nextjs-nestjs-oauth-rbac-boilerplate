@@ -1,0 +1,33 @@
+0d3d524901929a370717d9c069aeb690
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.VerifyPasskeyLoginDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
+const class_transformer_1 = require("class-transformer");
+const class_validator_1 = require("class-validator");
+const passkey_credential_dto_1 = require("./passkey-credential.dto");
+/** Body of POST /auth/passkeys/login/verify. */
+class VerifyPasskeyLoginDto {
+    response;
+}
+exports.VerifyPasskeyLoginDto = VerifyPasskeyLoginDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Credential returned by navigator.credentials.get()',
+        type: passkey_credential_dto_1.PasskeyCredentialDto,
+    }),
+    (0, class_validator_1.IsObject)(),
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => passkey_credential_dto_1.PasskeyCredentialDto),
+    __metadata("design:type", passkey_credential_dto_1.PasskeyCredentialDto)
+], VerifyPasskeyLoginDto.prototype, "response", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9wYXNza2V5cy9kdG8vdmVyaWZ5LXBhc3NrZXktbG9naW4uZHRvLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLDZDQUE4QztBQUM5Qyx5REFBeUM7QUFDekMscURBQTJEO0FBQzNELHFFQUFnRTtBQUVoRSxnREFBZ0Q7QUFDaEQsTUFBYSxxQkFBcUI7SUFRaEMsUUFBUSxDQUF3QjtDQUNqQztBQVRELHNEQVNDO0FBREM7SUFQQyxJQUFBLHFCQUFXLEVBQUM7UUFDWCxXQUFXLEVBQUUsb0RBQW9EO1FBQ2pFLElBQUksRUFBRSw2Q0FBb0I7S0FDM0IsQ0FBQztJQUNELElBQUEsMEJBQVEsR0FBRTtJQUNWLElBQUEsZ0NBQWMsR0FBRTtJQUNoQixJQUFBLHdCQUFJLEVBQUMsR0FBRyxFQUFFLENBQUMsNkNBQW9CLENBQUM7OEJBQ3RCLDZDQUFvQjt1REFBQyIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy9hdXRoL3Bhc3NrZXlzL2R0by92ZXJpZnktcGFzc2tleS1sb2dpbi5kdG8udHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgQXBpUHJvcGVydHkgfSBmcm9tICdAbmVzdGpzL3N3YWdnZXInO1xuaW1wb3J0IHsgVHlwZSB9IGZyb20gJ2NsYXNzLXRyYW5zZm9ybWVyJztcbmltcG9ydCB7IElzT2JqZWN0LCBWYWxpZGF0ZU5lc3RlZCB9IGZyb20gJ2NsYXNzLXZhbGlkYXRvcic7XG5pbXBvcnQgeyBQYXNza2V5Q3JlZGVudGlhbER0byB9IGZyb20gJy4vcGFzc2tleS1jcmVkZW50aWFsLmR0byc7XG5cbi8qKiBCb2R5IG9mIFBPU1QgL2F1dGgvcGFzc2tleXMvbG9naW4vdmVyaWZ5LiAqL1xuZXhwb3J0IGNsYXNzIFZlcmlmeVBhc3NrZXlMb2dpbkR0byB7XG4gIEBBcGlQcm9wZXJ0eSh7XG4gICAgZGVzY3JpcHRpb246ICdDcmVkZW50aWFsIHJldHVybmVkIGJ5IG5hdmlnYXRvci5jcmVkZW50aWFscy5nZXQoKScsXG4gICAgdHlwZTogUGFzc2tleUNyZWRlbnRpYWxEdG8sXG4gIH0pXG4gIEBJc09iamVjdCgpXG4gIEBWYWxpZGF0ZU5lc3RlZCgpXG4gIEBUeXBlKCgpID0+IFBhc3NrZXlDcmVkZW50aWFsRHRvKVxuICByZXNwb25zZSE6IFBhc3NrZXlDcmVkZW50aWFsRHRvO1xufVxuIl0sInZlcnNpb24iOjN9

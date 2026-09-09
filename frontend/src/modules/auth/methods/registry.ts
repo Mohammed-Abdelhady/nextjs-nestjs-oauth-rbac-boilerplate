@@ -1,5 +1,5 @@
 import { magicLinkMethod } from '@/modules/auth/methods/magic-link'; // feature:magic-link
-import { passwordMethod } from '@/modules/auth/methods/password';
+import { passwordMethod } from '@/modules/auth/methods/password'; // feature:email-password
 import { passkeysMethod } from '@/modules/passkeys'; // feature:passkeys
 import type { AuthMethods } from '../types/auth.types';
 import type { AuthMethodEntry } from './types';
@@ -8,12 +8,11 @@ import type { AuthMethodEntry } from './types';
  * The sign-in forms this project ships, keyed by method id.
  *
  * Each entry is imported through its own module directory rather than by file,
- * so removing a method from a generated project is a matter of deleting that
- * directory and the lines here that carry its `feature:` marker. Nothing
- * outside a method's directory names its components.
+ * so a project that does not ship a method drops that directory and the two
+ * lines naming it. Nothing outside a method's directory names its components.
  */
 const ENTRIES: readonly AuthMethodEntry[] = [
-  passwordMethod,
+  passwordMethod, // feature:email-password
   passkeysMethod, // feature:passkeys
   magicLinkMethod, // feature:magic-link
 ];

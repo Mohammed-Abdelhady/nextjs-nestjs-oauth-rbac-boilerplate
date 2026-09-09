@@ -1,7 +1,7 @@
 /** Response shapes the e2e suites read. Kept here so specs need no casts to any. */
 
 export interface UserResponse {
-  _id: string;
+  id: string;
   email: string;
   name: string;
   role: string;
@@ -20,7 +20,7 @@ export interface RegisterResponse {
 }
 
 export interface RoleResponse {
-  _id: string;
+  id: string;
   name: string;
   slug: string;
   description?: string;
@@ -29,4 +29,9 @@ export interface RoleResponse {
   isProtected: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ApiBody<T> {
+  success: boolean;
+  data: T;
 }

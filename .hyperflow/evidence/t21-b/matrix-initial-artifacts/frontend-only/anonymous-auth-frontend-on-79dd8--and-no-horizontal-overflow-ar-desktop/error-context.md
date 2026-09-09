@@ -1,0 +1,68 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+    - alert [ref=e2]
+    - link "تخطي إلى المحتوى الرئيسي" [ref=e3] [cursor=pointer]:
+        - /url: '#main'
+    - generic [ref=e4]:
+        - banner [ref=e5]:
+            - generic [ref=e6]:
+                - button "التبديل إلى الإنجليزية" [ref=e7]: English
+                - button "التبديل إلى العربية" [ref=e8]: العربية
+            - button "التبديل إلى الوضع الفاتح" [ref=e9]:
+                - img
+        - main [ref=e10]:
+            - region "إنشاء حسابك" [ref=e14]:
+                - heading "إنشاء حسابك" [level=1] [ref=e15]
+                - generic [ref=e16]:
+                    - link "تسجيل الدخول" [ref=e18] [cursor=pointer]:
+                        - /url: /ar/auth/login
+                        - img [ref=e19]
+                        - generic [ref=e22]: تسجيل الدخول
+                    - form "إنشاء حسابك" [ref=e23]:
+                        - generic [ref=e24]:
+                            - text: الاسم الكامل
+                            - textbox "الاسم الكامل" [active] [ref=e25]:
+                                - /placeholder: محمد عبد الله
+                        - generic [ref=e26]:
+                            - text: عنوان البريد الإلكتروني
+                            - textbox "عنوان البريد الإلكتروني" [ref=e27]:
+                                - /placeholder: name@example.com
+                        - generic [ref=e28]:
+                            - text: كلمة المرور
+                            - generic [ref=e29]:
+                                - textbox "كلمة المرور" [ref=e30]:
+                                    - /placeholder: ••••••••
+                                - button "إظهار كلمة المرور" [ref=e31]:
+                                    - img [ref=e32]
+                        - generic [ref=e35]:
+                            - paragraph [ref=e36]: متطلبات كلمة المرور
+                            - list [ref=e37]:
+                                - listitem [ref=e38]:
+                                    - img [ref=e39]
+                                    - generic [ref=e41]: 8 أحرف على الأقل
+                                    - generic [ref=e42]: (غير مكتمل)
+                                - listitem [ref=e43]:
+                                    - img [ref=e44]
+                                    - generic [ref=e46]: حرف كبير واحد على الأقل
+                                    - generic [ref=e47]: (غير مكتمل)
+                                - listitem [ref=e48]:
+                                    - img [ref=e49]
+                                    - generic [ref=e51]: حرف صغير واحد على الأقل
+                                    - generic [ref=e52]: (غير مكتمل)
+                                - listitem [ref=e53]:
+                                    - img [ref=e54]
+                                    - generic [ref=e56]: رقم واحد على الأقل
+                                    - generic [ref=e57]: (غير مكتمل)
+                        - button "إنشاء حساب" [ref=e58]:
+                            - img
+                            - generic [ref=e59]: إنشاء حساب
+    - region "Notifications alt+T":
+        - list:
+            - listitem [ref=e62]:
+                - img [ref=e64]
+                - generic [ref=e66]:
+                    - generic [ref=e67]: toast.error.networkError
+                    - generic [ref=e68]: Failed to GET getCurrentUser
+```

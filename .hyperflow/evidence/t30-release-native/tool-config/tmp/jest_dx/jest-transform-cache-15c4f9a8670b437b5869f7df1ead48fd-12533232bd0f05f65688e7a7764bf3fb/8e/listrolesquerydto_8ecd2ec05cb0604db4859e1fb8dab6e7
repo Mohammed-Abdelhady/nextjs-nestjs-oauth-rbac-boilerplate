@@ -1,0 +1,62 @@
+9225c7e5105174968bd91f8b74a5f598
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ListRolesQueryDto = void 0;
+const class_validator_1 = require("class-validator");
+const class_transformer_1 = require("class-transformer");
+const swagger_1 = require("@nestjs/swagger");
+class ListRolesQueryDto {
+    page = 1;
+    limit = 10;
+    search;
+}
+exports.ListRolesQueryDto = ListRolesQueryDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Page number (starts from 1)',
+        example: 1,
+        minimum: 1,
+        default: 1,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Number)
+], ListRolesQueryDto.prototype, "page", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Number of items per page',
+        example: 10,
+        minimum: 1,
+        maximum: 100,
+        default: 10,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.Max)(100),
+    __metadata("design:type", Number)
+], ListRolesQueryDto.prototype, "limit", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Search by role name or slug',
+        example: 'editor',
+        maxLength: 100,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(100),
+    __metadata("design:type", String)
+], ListRolesQueryDto.prototype, "search", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvcm9sZS9kdG8vbGlzdC1yb2xlcy1xdWVyeS5kdG8udHMiLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7O0FBQUEscURBT3lCO0FBQ3pCLHlEQUF5QztBQUN6Qyw2Q0FBc0Q7QUFFdEQsTUFBYSxpQkFBaUI7SUFXNUIsSUFBSSxHQUFZLENBQUMsQ0FBQztJQWNsQixLQUFLLEdBQVksRUFBRSxDQUFDO0lBVXBCLE1BQU0sQ0FBVTtDQUNqQjtBQXBDRCw4Q0FvQ0M7QUF6QkM7SUFWQyxJQUFBLDZCQUFtQixFQUFDO1FBQ25CLFdBQVcsRUFBRSw2QkFBNkI7UUFDMUMsT0FBTyxFQUFFLENBQUM7UUFDVixPQUFPLEVBQUUsQ0FBQztRQUNWLE9BQU8sRUFBRSxDQUFDO0tBQ1gsQ0FBQztJQUNELElBQUEsNEJBQVUsR0FBRTtJQUNaLElBQUEsd0JBQUksRUFBQyxHQUFHLEVBQUUsQ0FBQyxNQUFNLENBQUM7SUFDbEIsSUFBQSx1QkFBSyxHQUFFO0lBQ1AsSUFBQSxxQkFBRyxFQUFDLENBQUMsQ0FBQzs7K0NBQ1c7QUFjbEI7SUFaQyxJQUFBLDZCQUFtQixFQUFDO1FBQ25CLFdBQVcsRUFBRSwwQkFBMEI7UUFDdkMsT0FBTyxFQUFFLEVBQUU7UUFDWCxPQUFPLEVBQUUsQ0FBQztRQUNWLE9BQU8sRUFBRSxHQUFHO1FBQ1osT0FBTyxFQUFFLEVBQUU7S0FDWixDQUFDO0lBQ0QsSUFBQSw0QkFBVSxHQUFFO0lBQ1osSUFBQSx3QkFBSSxFQUFDLEdBQUcsRUFBRSxDQUFDLE1BQU0sQ0FBQztJQUNsQixJQUFBLHVCQUFLLEdBQUU7SUFDUCxJQUFBLHFCQUFHLEVBQUMsQ0FBQyxDQUFDO0lBQ04sSUFBQSxxQkFBRyxFQUFDLEdBQUcsQ0FBQzs7Z0RBQ1c7QUFVcEI7SUFSQyxJQUFBLDZCQUFtQixFQUFDO1FBQ25CLFdBQVcsRUFBRSw2QkFBNkI7UUFDMUMsT0FBTyxFQUFFLFFBQVE7UUFDakIsU0FBUyxFQUFFLEdBQUc7S0FDZixDQUFDO0lBQ0QsSUFBQSw0QkFBVSxHQUFFO0lBQ1osSUFBQSwwQkFBUSxHQUFFO0lBQ1YsSUFBQSwyQkFBUyxFQUFDLEdBQUcsQ0FBQzs7aURBQ0MiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvcm9sZS9kdG8vbGlzdC1yb2xlcy1xdWVyeS5kdG8udHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHtcbiAgSXNPcHRpb25hbCxcbiAgSXNJbnQsXG4gIE1pbixcbiAgTWF4LFxuICBJc1N0cmluZyxcbiAgTWF4TGVuZ3RoLFxufSBmcm9tICdjbGFzcy12YWxpZGF0b3InO1xuaW1wb3J0IHsgVHlwZSB9IGZyb20gJ2NsYXNzLXRyYW5zZm9ybWVyJztcbmltcG9ydCB7IEFwaVByb3BlcnR5T3B0aW9uYWwgfSBmcm9tICdAbmVzdGpzL3N3YWdnZXInO1xuXG5leHBvcnQgY2xhc3MgTGlzdFJvbGVzUXVlcnlEdG8ge1xuICBAQXBpUHJvcGVydHlPcHRpb25hbCh7XG4gICAgZGVzY3JpcHRpb246ICdQYWdlIG51bWJlciAoc3RhcnRzIGZyb20gMSknLFxuICAgIGV4YW1wbGU6IDEsXG4gICAgbWluaW11bTogMSxcbiAgICBkZWZhdWx0OiAxLFxuICB9KVxuICBASXNPcHRpb25hbCgpXG4gIEBUeXBlKCgpID0+IE51bWJlcilcbiAgQElzSW50KClcbiAgQE1pbigxKVxuICBwYWdlPzogbnVtYmVyID0gMTtcblxuICBAQXBpUHJvcGVydHlPcHRpb25hbCh7XG4gICAgZGVzY3JpcHRpb246ICdOdW1iZXIgb2YgaXRlbXMgcGVyIHBhZ2UnLFxuICAgIGV4YW1wbGU6IDEwLFxuICAgIG1pbmltdW06IDEsXG4gICAgbWF4aW11bTogMTAwLFxuICAgIGRlZmF1bHQ6IDEwLFxuICB9KVxuICBASXNPcHRpb25hbCgpXG4gIEBUeXBlKCgpID0+IE51bWJlcilcbiAgQElzSW50KClcbiAgQE1pbigxKVxuICBATWF4KDEwMClcbiAgbGltaXQ/OiBudW1iZXIgPSAxMDtcblxuICBAQXBpUHJvcGVydHlPcHRpb25hbCh7XG4gICAgZGVzY3JpcHRpb246ICdTZWFyY2ggYnkgcm9sZSBuYW1lIG9yIHNsdWcnLFxuICAgIGV4YW1wbGU6ICdlZGl0b3InLFxuICAgIG1heExlbmd0aDogMTAwLFxuICB9KVxuICBASXNPcHRpb25hbCgpXG4gIEBJc1N0cmluZygpXG4gIEBNYXhMZW5ndGgoMTAwKVxuICBzZWFyY2g/OiBzdHJpbmc7XG59XG4iXSwidmVyc2lvbiI6M30=

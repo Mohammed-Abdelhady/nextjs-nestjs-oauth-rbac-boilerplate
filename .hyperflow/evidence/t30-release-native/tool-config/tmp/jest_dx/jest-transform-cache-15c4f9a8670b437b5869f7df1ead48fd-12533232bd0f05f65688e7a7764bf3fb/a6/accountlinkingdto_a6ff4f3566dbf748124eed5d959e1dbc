@@ -1,0 +1,57 @@
+8735a49d04161ce5ff3f72bde2bad664
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.LinkedProvidersResponseDto = exports.SetPrimaryProviderDto = void 0;
+const class_validator_1 = require("class-validator");
+const swagger_1 = require("@nestjs/swagger");
+const is_registered_provider_validator_1 = require("../../auth/oauth/validators/is-registered-provider.validator");
+/**
+ * DTO for choosing the provider that profile sync follows.
+ */
+class SetPrimaryProviderDto {
+    provider;
+}
+exports.SetPrimaryProviderDto = SetPrimaryProviderDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Registered OAuth provider id to set as primary',
+        example: 'google',
+    }),
+    (0, is_registered_provider_validator_1.IsRegisteredProvider)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], SetPrimaryProviderDto.prototype, "provider", void 0);
+/**
+ * Response DTO for linked providers.
+ */
+class LinkedProvidersResponseDto {
+    providers;
+    primaryProvider;
+}
+exports.LinkedProvidersResponseDto = LinkedProvidersResponseDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: "Sign-in methods on the account: 'email' plus provider ids",
+        example: ['email', 'google'],
+        type: [String],
+    }),
+    __metadata("design:type", Array)
+], LinkedProvidersResponseDto.prototype, "providers", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Provider id used as the source for profile synchronization',
+        example: 'google',
+        required: false,
+    }),
+    __metadata("design:type", String)
+], LinkedProvidersResponseDto.prototype, "primaryProvider", void 0);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvdXNlci9kdG8vYWNjb3VudC1saW5raW5nLmR0by50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSxxREFBNkM7QUFDN0MsNkNBQThDO0FBQzlDLG1IQUFvRztBQUVwRzs7R0FFRztBQUNILE1BQWEscUJBQXFCO0lBT2hDLFFBQVEsQ0FBVTtDQUNuQjtBQVJELHNEQVFDO0FBREM7SUFOQyxJQUFBLHFCQUFXLEVBQUM7UUFDWCxXQUFXLEVBQUUsZ0RBQWdEO1FBQzdELE9BQU8sRUFBRSxRQUFRO0tBQ2xCLENBQUM7SUFDRCxJQUFBLHVEQUFvQixHQUFFO0lBQ3RCLElBQUEsNEJBQVUsR0FBRTs7dURBQ0s7QUFHcEI7O0dBRUc7QUFDSCxNQUFhLDBCQUEwQjtJQU1yQyxTQUFTLENBQVk7SUFPckIsZUFBZSxDQUFVO0NBQzFCO0FBZEQsZ0VBY0M7QUFSQztJQUxDLElBQUEscUJBQVcsRUFBQztRQUNYLFdBQVcsRUFBRSwyREFBMkQ7UUFDeEUsT0FBTyxFQUFFLENBQUMsT0FBTyxFQUFFLFFBQVEsQ0FBQztRQUM1QixJQUFJLEVBQUUsQ0FBQyxNQUFNLENBQUM7S0FDZixDQUFDOzs2REFDbUI7QUFPckI7SUFMQyxJQUFBLHFCQUFXLEVBQUM7UUFDWCxXQUFXLEVBQUUsNERBQTREO1FBQ3pFLE9BQU8sRUFBRSxRQUFRO1FBQ2pCLFFBQVEsRUFBRSxLQUFLO0tBQ2hCLENBQUM7O21FQUN1QiIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy91c2VyL2R0by9hY2NvdW50LWxpbmtpbmcuZHRvLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IElzTm90RW1wdHkgfSBmcm9tICdjbGFzcy12YWxpZGF0b3InO1xuaW1wb3J0IHsgQXBpUHJvcGVydHkgfSBmcm9tICdAbmVzdGpzL3N3YWdnZXInO1xuaW1wb3J0IHsgSXNSZWdpc3RlcmVkUHJvdmlkZXIgfSBmcm9tICcuLi8uLi9hdXRoL29hdXRoL3ZhbGlkYXRvcnMvaXMtcmVnaXN0ZXJlZC1wcm92aWRlci52YWxpZGF0b3InO1xuXG4vKipcbiAqIERUTyBmb3IgY2hvb3NpbmcgdGhlIHByb3ZpZGVyIHRoYXQgcHJvZmlsZSBzeW5jIGZvbGxvd3MuXG4gKi9cbmV4cG9ydCBjbGFzcyBTZXRQcmltYXJ5UHJvdmlkZXJEdG8ge1xuICBAQXBpUHJvcGVydHkoe1xuICAgIGRlc2NyaXB0aW9uOiAnUmVnaXN0ZXJlZCBPQXV0aCBwcm92aWRlciBpZCB0byBzZXQgYXMgcHJpbWFyeScsXG4gICAgZXhhbXBsZTogJ2dvb2dsZScsXG4gIH0pXG4gIEBJc1JlZ2lzdGVyZWRQcm92aWRlcigpXG4gIEBJc05vdEVtcHR5KClcbiAgcHJvdmlkZXIhOiBzdHJpbmc7XG59XG5cbi8qKlxuICogUmVzcG9uc2UgRFRPIGZvciBsaW5rZWQgcHJvdmlkZXJzLlxuICovXG5leHBvcnQgY2xhc3MgTGlua2VkUHJvdmlkZXJzUmVzcG9uc2VEdG8ge1xuICBAQXBpUHJvcGVydHkoe1xuICAgIGRlc2NyaXB0aW9uOiBcIlNpZ24taW4gbWV0aG9kcyBvbiB0aGUgYWNjb3VudDogJ2VtYWlsJyBwbHVzIHByb3ZpZGVyIGlkc1wiLFxuICAgIGV4YW1wbGU6IFsnZW1haWwnLCAnZ29vZ2xlJ10sXG4gICAgdHlwZTogW1N0cmluZ10sXG4gIH0pXG4gIHByb3ZpZGVycyE6IHN0cmluZ1tdO1xuXG4gIEBBcGlQcm9wZXJ0eSh7XG4gICAgZGVzY3JpcHRpb246ICdQcm92aWRlciBpZCB1c2VkIGFzIHRoZSBzb3VyY2UgZm9yIHByb2ZpbGUgc3luY2hyb25pemF0aW9uJyxcbiAgICBleGFtcGxlOiAnZ29vZ2xlJyxcbiAgICByZXF1aXJlZDogZmFsc2UsXG4gIH0pXG4gIHByaW1hcnlQcm92aWRlcj86IHN0cmluZztcbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

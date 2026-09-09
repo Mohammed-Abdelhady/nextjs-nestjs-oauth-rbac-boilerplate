@@ -1,0 +1,45 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+    - alert [ref=e2]: تسجيل الدخول إلى حسابك | Auth Boilerplate
+    - link "تخطي إلى المحتوى الرئيسي" [ref=e3] [cursor=pointer]:
+        - /url: '#main'
+    - generic [ref=e4]:
+        - banner [ref=e5]:
+            - generic [ref=e6]:
+                - button "التبديل إلى الإنجليزية" [ref=e7]: English
+                - button "التبديل إلى العربية" [ref=e8]: العربية
+            - button "التبديل إلى الوضع الفاتح" [ref=e9]:
+                - img
+        - main [ref=e10]:
+            - region "تسجيل الدخول إلى حسابك" [ref=e14]:
+                - heading "تسجيل الدخول إلى حسابك" [level=1] [ref=e15]
+                - generic [ref=e16]:
+                    - link "إنشاء حساب" [ref=e18] [cursor=pointer]:
+                        - /url: /ar/auth/register
+                        - img [ref=e19]
+                        - generic [ref=e22]: إنشاء حساب
+                    - form "تسجيل الدخول إلى حسابك" [ref=e23]:
+                        - generic [ref=e24]:
+                            - text: عنوان البريد الإلكتروني
+                            - textbox "عنوان البريد الإلكتروني" [ref=e25]:
+                                - /placeholder: name@example.com
+                            - paragraph [ref=e26]: البريد الإلكتروني مطلوب
+                        - generic [ref=e27]:
+                            - text: كلمة المرور
+                            - textbox "كلمة المرور" [ref=e29]:
+                                - /placeholder: ••••••••
+                        - button "تسجيل الدخول" [ref=e30]:
+                            - img
+                            - generic [ref=e31]: تسجيل الدخول
+                        - link "نسيت كلمة المرور؟" [active] [ref=e32] [cursor=pointer]:
+                            - /url: /ar/auth/forgot-password
+    - region "Notifications alt+T":
+        - list:
+            - listitem [ref=e33]:
+                - img [ref=e35]
+                - generic [ref=e37]:
+                    - generic [ref=e38]: toast.error.networkError
+                    - generic [ref=e39]: Failed to GET getCurrentUser
+```

@@ -1,3 +1,4 @@
+// feature:totp:start
 // The two-factor module reaches the otplib adapter; this spec only reads
 // module metadata.
 jest.mock('../two-factor/utils/totp.util', () => ({
@@ -5,6 +6,7 @@ jest.mock('../two-factor/utils/totp.util', () => ({
   buildOtpauthUrl: jest.fn(),
   checkTotpDelta: jest.fn(),
 }));
+// feature:totp:end
 
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
@@ -15,9 +17,10 @@ import { PasskeyAssertionService } from './services/passkey-assertion.service';
 import { PasskeyLoginService } from './services/passkey-login.service';
 import { PasskeyManagementService } from './services/passkey-management.service';
 import { PasskeyRegistrationService } from './services/passkey-registration.service';
+import { PasskeySecondFactorVerifier } from './services/passkey-second-factor.verifier';
 import { WebAuthnAdapter } from './services/webauthn.adapter';
 import { AuthModule } from '../auth.module';
-import { TwoFactorModule } from '../two-factor/two-factor.module';
+import { TwoFactorModule } from '../two-factor/two-factor.module'; // feature:totp
 import { AUTH_FEATURE_KEY } from '../decorators/requires-feature.decorator';
 import { AuthFeature } from '../enums/auth-feature.enum';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
@@ -54,6 +57,7 @@ describe('Passkeys wiring', () => {
     ['PasskeyAssertionService', PasskeyAssertionService],
     ['PasskeyLoginService', PasskeyLoginService],
     ['PasskeyManagementService', PasskeyManagementService],
+    ['PasskeySecondFactorVerifier', PasskeySecondFactorVerifier],
   ])('provides %s', (_name, provider) => {
     expect(metadataOf(PasskeysModule, MODULE_METADATA.PROVIDERS)).toContain(
       provider,
@@ -66,10 +70,17 @@ describe('Passkeys wiring', () => {
     );
   });
 
-  it('hands the assertion service to the second factor, one way', () => {
+  it.each([
+    ['PasskeyAssertionService', PasskeyAssertionService],
+    ['PasskeySecondFactorVerifier', PasskeySecondFactorVerifier],
+  ])('hands %s to the features that ask for it', (_name, provider) => {
     expect(metadataOf(PasskeysModule, MODULE_METADATA.EXPORTS)).toContain(
-      PasskeyAssertionService,
+      provider,
     );
+  });
+
+  // feature:totp:start
+  it('links to the second factor one way', () => {
     expect(metadataOf(TwoFactorModule, MODULE_METADATA.IMPORTS)).toContain(
       PasskeysModule,
     );
@@ -77,6 +88,7 @@ describe('Passkeys wiring', () => {
       TwoFactorModule,
     );
   });
+  // feature:totp:end
 
   it.each([
     ['management', PasskeysController],

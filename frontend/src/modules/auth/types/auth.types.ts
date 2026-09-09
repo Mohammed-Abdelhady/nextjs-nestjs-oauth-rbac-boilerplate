@@ -52,8 +52,8 @@ export interface LoginResponse {
 /**
  * Sign-in methods this deployment accepts, from GET /api/auth/methods.
  *
- * A backend older than the passkey routes leaves `passkeys` out, which
- * normalises to false rather than to a button nothing answers.
+ * A backend that does not ship a method leaves its key out, which normalises
+ * to off rather than to a button nothing answers.
  */
 export interface AuthMethods {
   password: boolean;
@@ -75,7 +75,7 @@ export interface AuthMethodProvider {
 
 /** Payload of the methods endpoint before normalisation. */
 export interface AuthMethodsResponse {
-  methods: Omit<AuthMethods, 'passkeys'> & { passkeys?: boolean };
+  methods: Partial<AuthMethods> & { password: boolean };
 }
 
 /**

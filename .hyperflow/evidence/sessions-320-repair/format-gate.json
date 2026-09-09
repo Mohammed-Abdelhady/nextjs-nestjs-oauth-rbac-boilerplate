@@ -1,0 +1,14 @@
+{
+  "command": [
+    "npm",
+    "exec",
+    "--",
+    "prettier",
+    "--write",
+    "frontend/src/app/[locale]/(dashboard)/sessions/page.tsx",
+    "frontend/e2e/authenticated-regressions.spec.ts",
+    "frontend/src/modules/sessions/components/RevokeAllSessionsButton.tsx"
+  ],
+  "exit": 0,
+  "seconds": 0.32
+}

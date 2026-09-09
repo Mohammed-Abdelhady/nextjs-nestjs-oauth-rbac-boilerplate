@@ -1,0 +1,5 @@
+{
+  "exit": 0,
+  "command": "git push origin HEAD:refs/heads/feat/production-hardening",
+  "hooks_enabled": true
+}

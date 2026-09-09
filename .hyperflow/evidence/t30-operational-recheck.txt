@@ -1,0 +1,29 @@
+**PASS for T30-OP-001.** The missing source module is repaired. Returned to Astra for validation and closure, without release authorization.
+
+The correction deletes only `**/e2e` from [.dockerignore](/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.dockerignore:29). This retains the fixture imported by [playwright.frontend.config.ts:2](/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/frontend/playwright.frontend.config.ts:2), including its `../utils/auth-actions` dependency. The existing TypeScript inclusion and build checks remain intact.
+
+I reran the [filtered-context regression](/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/t30-operational-repair/filtered-context-check.mjs:33) in memory, removing its evidence-writing step. Node `v26.8.1` and TypeScript `5.9.3` produced:
+
+| Check | Before rules | Repaired rules |
+| --- | --- | --- |
+| Retained files | 369 | 385 |
+| Local imports checked | 1,003 | 1,017 |
+| Unresolved imports | `./e2e/frontend-only/fixtures` | None |
+| Affected config diagnostics | TS2307 | None |
+
+The compiler host prevents excluded workspace source from satisfying missing imports. No selected inputs changed during this reproduction.
+
+Capture verification passed:
+
+- HEAD remains `68cefb61f450b94c195a8d6cf325ac5e26c15349`.
+- All eight operational files match `capture-after.json`. Their recomputed ordered hash is `dba214cd37aff1a42453d05497f91c73ea04be2ef7c0e92db4c84183be6e4ac2`.
+- Only `.dockerignore` changed among those eight paths. All three regression-source hashes also match.
+- `scripts/verify-docker.mjs` is byte-identical to its saved before copy, with SHA-256 `4abf2cc9fdf3cee8ba2e0131d31b5535e45b210bb444a1d8cc126a3e98703324`.
+
+The recorded frontend capture is internally consistent but differs from the current checkout: one added file, `frontend/e2e/utils/accessibility.ts`, and seven changed files. Its reported 384 files and 1,015 imports describe the earlier capture. The current reproduction above still passes; this drift does not affect the eight-path operational capture.
+
+The reported **20 PASS / 13 BLOCKED** distinction agrees with the runner, JSON results and log. These are recorded passes, not newly rerun helper tests. The thirteen listener cases remain unexecuted. Cleanup evidence records eight exited probe children and removal of owned fixtures; I independently confirmed `/tmp/t30-light-hOf2TO` remains absent.
+
+No remaining actionable source issue was demonstrated within OP001’s repair scope. No performance improvement is claimed.
+
+Docker and loopback access remain blocked and were not retried. Full typechecking, image builds, real HTTP progression, supported Node 22 installation, packed/generated-project gates and production TLS remain unverified. The earlier security review remains **PAUSED and unclosed**.

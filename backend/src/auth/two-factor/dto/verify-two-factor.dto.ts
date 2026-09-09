@@ -1,18 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Type } from 'class-transformer'; // feature:passkeys
 import {
-  IsObject,
+  IsObject, // feature:passkeys
   IsOptional,
   IsString,
   Matches,
-  ValidateNested,
+  ValidateNested, // feature:passkeys
 } from 'class-validator';
-import { PasskeyCredentialDto } from '../../passkeys/dto/passkey-credential.dto';
+import { PasskeyCredentialDto } from '../../passkeys/dto/passkey-credential.dto'; // feature:passkeys
 
 /**
- * One of the three ways to answer a challenge. A code comes from the app, a
- * recovery code is one of the ten handed out at setup and works once, and a
- * passkey is signed by an authenticator the account already registered.
+ * How a held sign-in is answered: a code from the authenticator app, one of
+ * the ten recovery codes handed out at setup, which works once, or a
+ * credential one of the registered second factor verifiers accepts.
  */
 export class VerifyTwoFactorDto {
   @ApiProperty({
@@ -37,6 +37,7 @@ export class VerifyTwoFactorDto {
   })
   recoveryCode?: string;
 
+  // feature:passkeys:start
   @ApiProperty({
     description:
       'Credential from navigator.credentials.get(), fetched with the options ' +
@@ -49,4 +50,5 @@ export class VerifyTwoFactorDto {
   @ValidateNested()
   @Type(() => PasskeyCredentialDto)
   passkeyResponse?: PasskeyCredentialDto;
+  // feature:passkeys:end
 }

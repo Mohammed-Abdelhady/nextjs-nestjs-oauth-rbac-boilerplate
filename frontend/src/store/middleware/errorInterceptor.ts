@@ -7,6 +7,8 @@
  * EXECUTION ORDER: Must run AFTER RTK Query middleware to access error metadata
  */
 
+import { createElement, type ReactNode } from 'react';
+import { LocalizedToastMessage } from '@/components/ui/LocalizedToastMessage';
 import { isRejectedWithValue, type Middleware } from '@reduxjs/toolkit';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { toast } from '@/lib/toast';
@@ -69,7 +71,10 @@ const classifyError = (
 /**
  * Extract user-friendly error message from error object
  */
-const getErrorMessage = (error: FetchBaseQueryError): string => {
+const fallbackMessage = (messageKey: string): ReactNode =>
+  createElement(LocalizedToastMessage, { messageKey });
+
+const getErrorMessage = (error: FetchBaseQueryError): ReactNode => {
   const status = typeof error.status === 'number' ? error.status : 0;
 
   // Check if error has custom message in response data
@@ -97,42 +102,21 @@ const getErrorMessage = (error: FetchBaseQueryError): string => {
 
   // Network errors
   if (!status || error.status === 'FETCH_ERROR') {
-    return ERROR_MESSAGES.NETWORK_ERROR;
+    return fallbackMessage(ERROR_MESSAGES.NETWORK_ERROR);
   }
 
   // Timeout errors
   if (status === 408 || status === 504) {
-    return ERROR_MESSAGES.TIMEOUT_ERROR;
+    return fallbackMessage(ERROR_MESSAGES.TIMEOUT_ERROR);
   }
 
   // Use status code mapping
   if (STATUS_CODE_MESSAGES[status]) {
-    return STATUS_CODE_MESSAGES[status];
+    return fallbackMessage(STATUS_CODE_MESSAGES[status]);
   }
 
   // Fallback to generic error
-  return ERROR_MESSAGES.UNKNOWN_ERROR;
-};
-
-/**
- * Extract endpoint name from RTK Query meta
- */
-const getEndpointName = (action: unknown): string | undefined => {
-  const typedAction = action as { meta?: { arg?: unknown } };
-  const arg = typedAction.meta?.arg as { endpointName?: string } | undefined;
-  return arg?.endpointName;
-};
-
-/**
- * Extract HTTP method from RTK Query meta
- */
-const getHttpMethod = (action: unknown): string | undefined => {
-  const typedAction = action as { meta?: { baseQueryMeta?: unknown } };
-  const baseQueryMeta = typedAction.meta?.baseQueryMeta as
-    | { request?: { method?: string } }
-    | undefined;
-  const originalArgs = baseQueryMeta?.request?.method;
-  return originalArgs || 'GET';
+  return fallbackMessage(ERROR_MESSAGES.UNKNOWN_ERROR);
 };
 
 /**
@@ -145,8 +129,6 @@ export const errorInterceptor: Middleware = () => (next) => (action) => {
   // Check if action is a rejected RTK Query action
   if (isRejectedWithValue(action)) {
     const error = action.payload as FetchBaseQueryError;
-    const endpoint = getEndpointName(action);
-    const method = getHttpMethod(action);
 
     // Skip silent errors
     if (isSilentError(error)) {
@@ -165,7 +147,6 @@ export const errorInterceptor: Middleware = () => (next) => (action) => {
     // Show toast notification using Sonner
     toast.show(classification.type, message, {
       duration: classification.duration,
-      description: endpoint ? `Failed to ${method} ${endpoint}` : undefined,
     });
   }
 

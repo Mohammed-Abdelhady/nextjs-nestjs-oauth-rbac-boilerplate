@@ -1,0 +1,49 @@
+dd74d43074fc1be47cf1151f21f76ea1
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PasskeyConfigService = void 0;
+const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
+const app_1 = require("../../../common/constants/app");
+/**
+ * Relying party settings, in one place because both ceremonies and both verify
+ * routes have to agree on them. A credential is bound to the RP id it was
+ * registered under, so these values are effectively permanent once accounts
+ * hold passkeys.
+ */
+let PasskeyConfigService = class PasskeyConfigService {
+    configService;
+    constructor(configService) {
+        this.configService = configService;
+    }
+    /** Domain the credential is scoped to. A bare hostname, no port, no scheme. */
+    get rpId() {
+        return this.configService.get('passkeys.rpId', 'localhost');
+    }
+    /** What the browser shows in the prompt. */
+    get rpName() {
+        return this.configService.get('passkeys.rpName', app_1.APP_NAME);
+    }
+    /** Origin the browser must be on, scheme and port included. */
+    get origin() {
+        return this.configService.get('passkeys.origin', 'http://localhost:3000');
+    }
+    expectations(challenge) {
+        return { challenge, origin: this.origin, rpId: this.rpId };
+    }
+};
+exports.PasskeyConfigService = PasskeyConfigService;
+exports.PasskeyConfigService = PasskeyConfigService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [config_1.ConfigService])
+], PasskeyConfigService);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9wYXNza2V5cy9zZXJ2aWNlcy9wYXNza2V5LWNvbmZpZy5zZXJ2aWNlLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLDJDQUE0QztBQUM1QywyQ0FBK0M7QUFDL0MsdURBQXlEO0FBR3pEOzs7OztHQUtHO0FBRUksSUFBTSxvQkFBb0IsR0FBMUIsTUFBTSxvQkFBb0I7SUFDRjtJQUE3QixZQUE2QixhQUE0QjtRQUE1QixrQkFBYSxHQUFiLGFBQWEsQ0FBZTtJQUFHLENBQUM7SUFFN0QsK0VBQStFO0lBQy9FLElBQUksSUFBSTtRQUNOLE9BQU8sSUFBSSxDQUFDLGFBQWEsQ0FBQyxHQUFHLENBQVMsZUFBZSxFQUFFLFdBQVcsQ0FBQyxDQUFDO0lBQ3RFLENBQUM7SUFFRCw0Q0FBNEM7SUFDNUMsSUFBSSxNQUFNO1FBQ1IsT0FBTyxJQUFJLENBQUMsYUFBYSxDQUFDLEdBQUcsQ0FBUyxpQkFBaUIsRUFBRSxjQUFRLENBQUMsQ0FBQztJQUNyRSxDQUFDO0lBRUQsK0RBQStEO0lBQy9ELElBQUksTUFBTTtRQUNSLE9BQU8sSUFBSSxDQUFDLGFBQWEsQ0FBQyxHQUFHLENBQzNCLGlCQUFpQixFQUNqQix1QkFBdUIsQ0FDeEIsQ0FBQztJQUNKLENBQUM7SUFFRCxZQUFZLENBQUMsU0FBaUI7UUFDNUIsT0FBTyxFQUFFLFNBQVMsRUFBRSxNQUFNLEVBQUUsSUFBSSxDQUFDLE1BQU0sRUFBRSxJQUFJLEVBQUUsSUFBSSxDQUFDLElBQUksRUFBRSxDQUFDO0lBQzdELENBQUM7Q0FDRixDQUFBO0FBeEJZLG9EQUFvQjsrQkFBcEIsb0JBQW9CO0lBRGhDLElBQUEsbUJBQVUsR0FBRTtxQ0FFaUMsc0JBQWE7R0FEOUMsb0JBQW9CLENBd0JoQyIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy9hdXRoL3Bhc3NrZXlzL3NlcnZpY2VzL3Bhc3NrZXktY29uZmlnLnNlcnZpY2UudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgSW5qZWN0YWJsZSB9IGZyb20gJ0BuZXN0anMvY29tbW9uJztcbmltcG9ydCB7IENvbmZpZ1NlcnZpY2UgfSBmcm9tICdAbmVzdGpzL2NvbmZpZyc7XG5pbXBvcnQgeyBBUFBfTkFNRSB9IGZyb20gJy4uLy4uLy4uL2NvbW1vbi9jb25zdGFudHMvYXBwJztcbmltcG9ydCB7IENlcmVtb255RXhwZWN0YXRpb25zIH0gZnJvbSAnLi93ZWJhdXRobi5hZGFwdGVyJztcblxuLyoqXG4gKiBSZWx5aW5nIHBhcnR5IHNldHRpbmdzLCBpbiBvbmUgcGxhY2UgYmVjYXVzZSBib3RoIGNlcmVtb25pZXMgYW5kIGJvdGggdmVyaWZ5XG4gKiByb3V0ZXMgaGF2ZSB0byBhZ3JlZSBvbiB0aGVtLiBBIGNyZWRlbnRpYWwgaXMgYm91bmQgdG8gdGhlIFJQIGlkIGl0IHdhc1xuICogcmVnaXN0ZXJlZCB1bmRlciwgc28gdGhlc2UgdmFsdWVzIGFyZSBlZmZlY3RpdmVseSBwZXJtYW5lbnQgb25jZSBhY2NvdW50c1xuICogaG9sZCBwYXNza2V5cy5cbiAqL1xuQEluamVjdGFibGUoKVxuZXhwb3J0IGNsYXNzIFBhc3NrZXlDb25maWdTZXJ2aWNlIHtcbiAgY29uc3RydWN0b3IocHJpdmF0ZSByZWFkb25seSBjb25maWdTZXJ2aWNlOiBDb25maWdTZXJ2aWNlKSB7fVxuXG4gIC8qKiBEb21haW4gdGhlIGNyZWRlbnRpYWwgaXMgc2NvcGVkIHRvLiBBIGJhcmUgaG9zdG5hbWUsIG5vIHBvcnQsIG5vIHNjaGVtZS4gKi9cbiAgZ2V0IHJwSWQoKTogc3RyaW5nIHtcbiAgICByZXR1cm4gdGhpcy5jb25maWdTZXJ2aWNlLmdldDxzdHJpbmc+KCdwYXNza2V5cy5ycElkJywgJ2xvY2FsaG9zdCcpO1xuICB9XG5cbiAgLyoqIFdoYXQgdGhlIGJyb3dzZXIgc2hvd3MgaW4gdGhlIHByb21wdC4gKi9cbiAgZ2V0IHJwTmFtZSgpOiBzdHJpbmcge1xuICAgIHJldHVybiB0aGlzLmNvbmZpZ1NlcnZpY2UuZ2V0PHN0cmluZz4oJ3Bhc3NrZXlzLnJwTmFtZScsIEFQUF9OQU1FKTtcbiAgfVxuXG4gIC8qKiBPcmlnaW4gdGhlIGJyb3dzZXIgbXVzdCBiZSBvbiwgc2NoZW1lIGFuZCBwb3J0IGluY2x1ZGVkLiAqL1xuICBnZXQgb3JpZ2luKCk6IHN0cmluZyB7XG4gICAgcmV0dXJuIHRoaXMuY29uZmlnU2VydmljZS5nZXQ8c3RyaW5nPihcbiAgICAgICdwYXNza2V5cy5vcmlnaW4nLFxuICAgICAgJ2h0dHA6Ly9sb2NhbGhvc3Q6MzAwMCcsXG4gICAgKTtcbiAgfVxuXG4gIGV4cGVjdGF0aW9ucyhjaGFsbGVuZ2U6IHN0cmluZyk6IENlcmVtb255RXhwZWN0YXRpb25zIHtcbiAgICByZXR1cm4geyBjaGFsbGVuZ2UsIG9yaWdpbjogdGhpcy5vcmlnaW4sIHJwSWQ6IHRoaXMucnBJZCB9O1xuICB9XG59XG4iXSwidmVyc2lvbiI6M30=

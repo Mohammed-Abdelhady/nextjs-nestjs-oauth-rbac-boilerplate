@@ -1,0 +1,5 @@
+ M .github/workflows/ci.yml
+ M frontend/e2e/authenticated-regressions.spec.ts
+ M scripts/config-transforms.test.mjs
+ M scripts/verify-docker.mjs
+?? scripts/lib/docker-http-probes.mjs

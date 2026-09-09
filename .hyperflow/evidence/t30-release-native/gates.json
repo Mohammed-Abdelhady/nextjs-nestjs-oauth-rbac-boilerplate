@@ -1,0 +1,32 @@
+[
+  {
+    "gate": "lint",
+    "command": [
+      "npm",
+      "run",
+      "lint"
+    ],
+    "exit": 0,
+    "seconds": 12.56
+  },
+  {
+    "gate": "types",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exit": 0,
+    "seconds": 7.07
+  },
+  {
+    "gate": "test",
+    "command": [
+      "npm",
+      "run",
+      "test"
+    ],
+    "exit": 1,
+    "seconds": 19.74
+  }
+]

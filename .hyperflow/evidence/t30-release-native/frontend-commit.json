@@ -1,0 +1,9 @@
+{
+  "group": "frontend",
+  "exit": 0,
+  "seconds": 6.55,
+  "changed_by_hook": [
+    "frontend/e2e/README.md"
+  ],
+  "head": "bb4f584731b755ffa556e936c2d516f50f46959a"
+}

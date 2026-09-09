@@ -1,0 +1,80 @@
+088d6e7f6f14d5450ba906b9a5d43061
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RoleSchema = exports.Role = void 0;
+const mongoose_1 = require("@nestjs/mongoose");
+/**
+ * Role schema for dynamic role management system.
+ * Supports custom roles with granular permission assignments.
+ */
+let Role = class Role {
+    name;
+    slug;
+    description;
+    isSystemRole;
+    isProtected;
+    /**
+     * Hierarchy level. Higher levels manage lower ones.
+     * Left unset on documents created before the field existed; readers fall back
+     * to the seed map and then to the custom-role level.
+     */
+    level;
+    permissions;
+    // Timestamp fields (automatically managed by Mongoose with timestamps: true)
+    createdAt;
+    updatedAt;
+};
+exports.Role = Role;
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, trim: true }),
+    __metadata("design:type", String)
+], Role.prototype, "name", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, unique: true, lowercase: true, trim: true }),
+    __metadata("design:type", String)
+], Role.prototype, "slug", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ trim: true }),
+    __metadata("design:type", String)
+], Role.prototype, "description", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: false }),
+    __metadata("design:type", Boolean)
+], Role.prototype, "isSystemRole", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: false }),
+    __metadata("design:type", Boolean)
+], Role.prototype, "isProtected", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Number, min: 0 }),
+    __metadata("design:type", Number)
+], Role.prototype, "level", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: [String], default: [] }),
+    __metadata("design:type", Array)
+], Role.prototype, "permissions", void 0);
+exports.Role = Role = __decorate([
+    (0, mongoose_1.Schema)({ timestamps: true })
+], Role);
+exports.RoleSchema = mongoose_1.SchemaFactory.createForClass(Role);
+// Indexes for performance
+exports.RoleSchema.index({ slug: 1 }, { unique: true });
+exports.RoleSchema.index({ isSystemRole: 1 });
+exports.RoleSchema.index({ createdAt: -1 });
+// Ensure slug is always lowercase
+exports.RoleSchema.pre('save', function (next) {
+    if (this.isModified('slug')) {
+        this.slug = this.slug.toLowerCase().trim();
+    }
+    next();
+});
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvcm9sZS9zY2hlbWFzL3JvbGUuc2NoZW1hLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLCtDQUErRDtBQUcvRDs7O0dBR0c7QUFFSSxJQUFNLElBQUksR0FBVixNQUFNLElBQUk7SUFFZixJQUFJLENBQVU7SUFHZCxJQUFJLENBQVU7SUFHZCxXQUFXLENBQVU7SUFHckIsWUFBWSxDQUFXO0lBR3ZCLFdBQVcsQ0FBVztJQUV0Qjs7OztPQUlHO0lBRUgsS0FBSyxDQUFVO0lBR2YsV0FBVyxDQUFZO0lBRXZCLDZFQUE2RTtJQUM3RSxTQUFTLENBQVE7SUFDakIsU0FBUyxDQUFRO0NBQ2xCLENBQUE7QUE5Qlksb0JBQUk7QUFFZjtJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsUUFBUSxFQUFFLElBQUksRUFBRSxJQUFJLEVBQUUsSUFBSSxFQUFFLENBQUM7O2tDQUN2QjtBQUdkO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxRQUFRLEVBQUUsSUFBSSxFQUFFLE1BQU0sRUFBRSxJQUFJLEVBQUUsU0FBUyxFQUFFLElBQUksRUFBRSxJQUFJLEVBQUUsSUFBSSxFQUFFLENBQUM7O2tDQUN0RDtBQUdkO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxJQUFJLEVBQUUsSUFBSSxFQUFFLENBQUM7O3lDQUNBO0FBR3JCO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxPQUFPLEVBQUUsS0FBSyxFQUFFLENBQUM7OzBDQUNGO0FBR3ZCO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxPQUFPLEVBQUUsS0FBSyxFQUFFLENBQUM7O3lDQUNIO0FBUXRCO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxJQUFJLEVBQUUsTUFBTSxFQUFFLEdBQUcsRUFBRSxDQUFDLEVBQUUsQ0FBQzs7bUNBQ2hCO0FBR2Y7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLElBQUksRUFBRSxDQUFDLE1BQU0sQ0FBQyxFQUFFLE9BQU8sRUFBRSxFQUFFLEVBQUUsQ0FBQzs7eUNBQ2Y7ZUF6QlosSUFBSTtJQURoQixJQUFBLGlCQUFNLEVBQUMsRUFBRSxVQUFVLEVBQUUsSUFBSSxFQUFFLENBQUM7R0FDaEIsSUFBSSxDQThCaEI7QUFJWSxRQUFBLFVBQVUsR0FDckIsd0JBQWEsQ0FBQyxjQUFjLENBQUMsSUFBSSxDQUFDLENBQUM7QUFFckMsMEJBQTBCO0FBQzFCLGtCQUFVLENBQUMsS0FBSyxDQUFDLEVBQUUsSUFBSSxFQUFFLENBQUMsRUFBRSxFQUFFLEVBQUUsTUFBTSxFQUFFLElBQUksRUFBRSxDQUFDLENBQUM7QUFDaEQsa0JBQVUsQ0FBQyxLQUFLLENBQUMsRUFBRSxZQUFZLEVBQUUsQ0FBQyxFQUFFLENBQUMsQ0FBQztBQUN0QyxrQkFBVSxDQUFDLEtBQUssQ0FBQyxFQUFFLFNBQVMsRUFBRSxDQUFDLENBQUMsRUFBRSxDQUFDLENBQUM7QUFFcEMsa0NBQWtDO0FBQ2xDLGtCQUFVLENBQUMsR0FBRyxDQUFDLE1BQU0sRUFBRSxVQUFVLElBQUk7SUFDbkMsSUFBSSxJQUFJLENBQUMsVUFBVSxDQUFDLE1BQU0sQ0FBQyxFQUFFLENBQUM7UUFDNUIsSUFBSSxDQUFDLElBQUksR0FBRyxJQUFJLENBQUMsSUFBSSxDQUFDLFdBQVcsRUFBRSxDQUFDLElBQUksRUFBRSxDQUFDO0lBQzdDLENBQUM7SUFDRCxJQUFJLEVBQUUsQ0FBQztBQUNULENBQUMsQ0FBQyxDQUFDIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9wcml2YXRlL3Zhci9mb2xkZXJzL2QxL3RrNHkzajAxMmo1N3N0dl9zeTBxcGdscjAwMDBnbi9UL3Byb2R1Y3Rpb24taGFyZGVuaW5nLWludGVncmF0aW9uLTRsZmMyMXF6L2JhY2tlbmQvc3JjL3JvbGUvc2NoZW1hcy9yb2xlLnNjaGVtYS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBQcm9wLCBTY2hlbWEsIFNjaGVtYUZhY3RvcnkgfSBmcm9tICdAbmVzdGpzL21vbmdvb3NlJztcbmltcG9ydCB7IEh5ZHJhdGVkRG9jdW1lbnQsIFNjaGVtYSBhcyBNb25nb29zZVNjaGVtYSB9IGZyb20gJ21vbmdvb3NlJztcblxuLyoqXG4gKiBSb2xlIHNjaGVtYSBmb3IgZHluYW1pYyByb2xlIG1hbmFnZW1lbnQgc3lzdGVtLlxuICogU3VwcG9ydHMgY3VzdG9tIHJvbGVzIHdpdGggZ3JhbnVsYXIgcGVybWlzc2lvbiBhc3NpZ25tZW50cy5cbiAqL1xuQFNjaGVtYSh7IHRpbWVzdGFtcHM6IHRydWUgfSlcbmV4cG9ydCBjbGFzcyBSb2xlIHtcbiAgQFByb3AoeyByZXF1aXJlZDogdHJ1ZSwgdHJpbTogdHJ1ZSB9KVxuICBuYW1lITogc3RyaW5nO1xuXG4gIEBQcm9wKHsgcmVxdWlyZWQ6IHRydWUsIHVuaXF1ZTogdHJ1ZSwgbG93ZXJjYXNlOiB0cnVlLCB0cmltOiB0cnVlIH0pXG4gIHNsdWchOiBzdHJpbmc7XG5cbiAgQFByb3AoeyB0cmltOiB0cnVlIH0pXG4gIGRlc2NyaXB0aW9uPzogc3RyaW5nO1xuXG4gIEBQcm9wKHsgZGVmYXVsdDogZmFsc2UgfSlcbiAgaXNTeXN0ZW1Sb2xlITogYm9vbGVhbjtcblxuICBAUHJvcCh7IGRlZmF1bHQ6IGZhbHNlIH0pXG4gIGlzUHJvdGVjdGVkITogYm9vbGVhbjtcblxuICAvKipcbiAgICogSGllcmFyY2h5IGxldmVsLiBIaWdoZXIgbGV2ZWxzIG1hbmFnZSBsb3dlciBvbmVzLlxuICAgKiBMZWZ0IHVuc2V0IG9uIGRvY3VtZW50cyBjcmVhdGVkIGJlZm9yZSB0aGUgZmllbGQgZXhpc3RlZDsgcmVhZGVycyBmYWxsIGJhY2tcbiAgICogdG8gdGhlIHNlZWQgbWFwIGFuZCB0aGVuIHRvIHRoZSBjdXN0b20tcm9sZSBsZXZlbC5cbiAgICovXG4gIEBQcm9wKHsgdHlwZTogTnVtYmVyLCBtaW46IDAgfSlcbiAgbGV2ZWw/OiBudW1iZXI7XG5cbiAgQFByb3AoeyB0eXBlOiBbU3RyaW5nXSwgZGVmYXVsdDogW10gfSlcbiAgcGVybWlzc2lvbnMhOiBzdHJpbmdbXTtcblxuICAvLyBUaW1lc3RhbXAgZmllbGRzIChhdXRvbWF0aWNhbGx5IG1hbmFnZWQgYnkgTW9uZ29vc2Ugd2l0aCB0aW1lc3RhbXBzOiB0cnVlKVxuICBjcmVhdGVkQXQhOiBEYXRlO1xuICB1cGRhdGVkQXQhOiBEYXRlO1xufVxuXG5leHBvcnQgdHlwZSBSb2xlRG9jdW1lbnQgPSBIeWRyYXRlZERvY3VtZW50PFJvbGU+O1xuXG5leHBvcnQgY29uc3QgUm9sZVNjaGVtYTogTW9uZ29vc2VTY2hlbWE8Um9sZT4gPVxuICBTY2hlbWFGYWN0b3J5LmNyZWF0ZUZvckNsYXNzKFJvbGUpO1xuXG4vLyBJbmRleGVzIGZvciBwZXJmb3JtYW5jZVxuUm9sZVNjaGVtYS5pbmRleCh7IHNsdWc6IDEgfSwgeyB1bmlxdWU6IHRydWUgfSk7XG5Sb2xlU2NoZW1hLmluZGV4KHsgaXNTeXN0ZW1Sb2xlOiAxIH0pO1xuUm9sZVNjaGVtYS5pbmRleCh7IGNyZWF0ZWRBdDogLTEgfSk7XG5cbi8vIEVuc3VyZSBzbHVnIGlzIGFsd2F5cyBsb3dlcmNhc2VcblJvbGVTY2hlbWEucHJlKCdzYXZlJywgZnVuY3Rpb24gKG5leHQpIHtcbiAgaWYgKHRoaXMuaXNNb2RpZmllZCgnc2x1ZycpKSB7XG4gICAgdGhpcy5zbHVnID0gdGhpcy5zbHVnLnRvTG93ZXJDYXNlKCkudHJpbSgpO1xuICB9XG4gIG5leHQoKTtcbn0pO1xuIl0sInZlcnNpb24iOjN9

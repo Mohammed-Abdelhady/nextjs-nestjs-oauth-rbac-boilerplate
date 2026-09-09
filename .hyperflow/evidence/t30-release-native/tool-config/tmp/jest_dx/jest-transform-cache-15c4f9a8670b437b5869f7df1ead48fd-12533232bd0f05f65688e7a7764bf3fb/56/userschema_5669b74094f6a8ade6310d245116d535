@@ -1,0 +1,149 @@
+b85c43803eec0285b918216956ba8fe3
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.UserSchema = exports.User = exports.LinkedAccountSchema = exports.LinkedAccount = void 0;
+const mongoose_1 = require("@nestjs/mongoose");
+const oauth_providers_1 = require("../../common/constants/oauth-providers");
+const two_factor_schema_1 = require("./two-factor.schema"); // feature:totp
+/**
+ * One OAuth account linked to a user, keyed by the provider id from the OAuth registry.
+ */
+let LinkedAccount = class LinkedAccount {
+    provider;
+    providerId;
+    linkedAt;
+};
+exports.LinkedAccount = LinkedAccount;
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], LinkedAccount.prototype, "provider", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], LinkedAccount.prototype, "providerId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, default: () => new Date() }),
+    __metadata("design:type", Date)
+], LinkedAccount.prototype, "linkedAt", void 0);
+exports.LinkedAccount = LinkedAccount = __decorate([
+    (0, mongoose_1.Schema)({ _id: false })
+], LinkedAccount);
+exports.LinkedAccountSchema = mongoose_1.SchemaFactory.createForClass(LinkedAccount);
+let User = class User {
+    email;
+    password;
+    name;
+    avatarUrl;
+    role;
+    permissions;
+    /** Provider the account was created with: 'email' or an OAuth provider id. */
+    authProvider;
+    linkedAccounts;
+    isVerified;
+    isDeleted;
+    deletedAt;
+    /** Provider id used as the source of truth for profile sync. */
+    primaryProvider;
+    profileSyncedAt;
+    lastSyncedProvider;
+    // feature:totp:start
+    /**
+     * Second factor state. Optional subdocument, so accounts written before it
+     * existed read back with the defaults and need no migration.
+     */
+    twoFactor;
+    // feature:totp:end
+    /** Virtual: 'email' when password sign-in applies, plus every linked OAuth provider. */
+    linkedProviders;
+    // Timestamp fields (automatically managed by Mongoose with timestamps: true)
+    createdAt;
+    updatedAt;
+};
+exports.User = User;
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, unique: true, lowercase: true, trim: true }),
+    __metadata("design:type", String)
+], User.prototype, "email", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ select: false }),
+    __metadata("design:type", String)
+], User.prototype, "password", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, trim: true }),
+    __metadata("design:type", String)
+], User.prototype, "name", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], User.prototype, "avatarUrl", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: 'user' }),
+    __metadata("design:type", String)
+], User.prototype, "role", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: [String], default: [] }),
+    __metadata("design:type", Array)
+], User.prototype, "permissions", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: oauth_providers_1.EMAIL_PROVIDER }),
+    __metadata("design:type", String)
+], User.prototype, "authProvider", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: [exports.LinkedAccountSchema], default: [] }),
+    __metadata("design:type", Array)
+], User.prototype, "linkedAccounts", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: false }),
+    __metadata("design:type", Boolean)
+], User.prototype, "isVerified", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: false }),
+    __metadata("design:type", Boolean)
+], User.prototype, "isDeleted", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", Date)
+], User.prototype, "deletedAt", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String }),
+    __metadata("design:type", String)
+], User.prototype, "primaryProvider", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", Date)
+], User.prototype, "profileSyncedAt", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], User.prototype, "lastSyncedProvider", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: two_factor_schema_1.TwoFactorSchema, default: () => ({}) }),
+    __metadata("design:type", two_factor_schema_1.TwoFactor)
+], User.prototype, "twoFactor", void 0);
+exports.User = User = __decorate([
+    (0, mongoose_1.Schema)({ timestamps: true })
+], User);
+exports.UserSchema = mongoose_1.SchemaFactory.createForClass(User);
+exports.UserSchema.virtual('linkedProviders').get(function () {
+    const oauthProviders = (this.linkedAccounts ?? []).map((account) => account.provider);
+    if (this.authProvider === oauth_providers_1.EMAIL_PROVIDER) {
+        return [oauth_providers_1.EMAIL_PROVIDER, ...oauthProviders];
+    }
+    return oauthProviders;
+});
+// Indexes
+exports.UserSchema.index({ createdAt: -1 });
+exports.UserSchema.index({ isDeleted: 1 });
+exports.UserSchema.index({ role: 1 });
+exports.UserSchema.index({ 'linkedAccounts.provider': 1, 'linkedAccounts.providerId': 1 }, { unique: true, sparse: true });
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvdXNlci9zY2hlbWFzL3VzZXIuc2NoZW1hLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLCtDQUErRDtBQUUvRCw0RUFBd0U7QUFDeEUsMkRBQWlFLENBQUMsZUFBZTtBQUVqRjs7R0FFRztBQUVJLElBQU0sYUFBYSxHQUFuQixNQUFNLGFBQWE7SUFFeEIsUUFBUSxDQUFVO0lBR2xCLFVBQVUsQ0FBVTtJQUdwQixRQUFRLENBQVE7Q0FDakIsQ0FBQTtBQVRZLHNDQUFhO0FBRXhCO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxRQUFRLEVBQUUsSUFBSSxFQUFFLENBQUM7OytDQUNQO0FBR2xCO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxRQUFRLEVBQUUsSUFBSSxFQUFFLENBQUM7O2lEQUNMO0FBR3BCO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxRQUFRLEVBQUUsSUFBSSxFQUFFLE9BQU8sRUFBRSxHQUFHLEVBQUUsQ0FBQyxJQUFJLElBQUksRUFBRSxFQUFFLENBQUM7OEJBQ3pDLElBQUk7K0NBQUM7d0JBUkwsYUFBYTtJQUR6QixJQUFBLGlCQUFNLEVBQUMsRUFBRSxHQUFHLEVBQUUsS0FBSyxFQUFFLENBQUM7R0FDVixhQUFhLENBU3pCO0FBRVksUUFBQSxtQkFBbUIsR0FBRyx3QkFBYSxDQUFDLGNBQWMsQ0FBQyxhQUFhLENBQUMsQ0FBQztBQUd4RSxJQUFNLElBQUksR0FBVixNQUFNLElBQUk7SUFFZixLQUFLLENBQVU7SUFHZixRQUFRLENBQVU7SUFHbEIsSUFBSSxDQUFVO0lBR2QsU0FBUyxDQUFVO0lBR25CLElBQUksQ0FBVTtJQUdkLFdBQVcsQ0FBWTtJQUV2Qiw4RUFBOEU7SUFFOUUsWUFBWSxDQUFVO0lBR3RCLGNBQWMsQ0FBbUI7SUFHakMsVUFBVSxDQUFX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VUFBVTtBQUNWLGtCQUFVLENBQUMsS0FBSyxDQUFDLEVBQUUsU0FBUyxFQUFFLENBQUMsQ0FBQyxFQUFFLENBQUMsQ0FBQztBQUNwQyxrQkFBVSxDQUFDLEtBQUssQ0FBQyxFQUFFLFNBQVMsRUFBRSxDQUFDLEVBQUUsQ0FBQyxDQUFDO0FBQ25DLGtCQUFVLENBQUMsS0FBSyxDQUFDLEVBQUUsSUFBSSxFQUFFLENBQUMsRUFBRSxDQUFDLENBQUM7QUFDOUIsa0JBQVUsQ0FBQyxLQUFLLENBQ2QsRUFBRSx5QkFBeUIsRUFBRSxDQUFDLEVBQUUsMkJBQTJCLEVBQUUsQ0FBQyxFQUFFLEVBQ2hFLEVBQUUsTUFBTSxFQUFFLElBQUksRUFBRSxNQUFNLEVBQUUsSUFBSSxFQUFFLENBQy9CLENBQUMiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvdXNlci9zY2hlbWFzL3VzZXIuc2NoZW1hLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IFByb3AsIFNjaGVtYSwgU2NoZW1hRmFjdG9yeSB9IGZyb20gJ0BuZXN0anMvbW9uZ29vc2UnO1xuaW1wb3J0IHsgSHlkcmF0ZWREb2N1bWVudCwgU2NoZW1hIGFzIE1vbmdvb3NlU2NoZW1hIH0gZnJvbSAnbW9uZ29vc2UnO1xuaW1wb3J0IHsgRU1BSUxfUFJPVklERVIgfSBmcm9tICcuLi8uLi9jb21tb24vY29uc3RhbnRzL29hdXRoLXByb3ZpZGVycyc7XG5pbXBvcnQgeyBUd29GYWN0b3IsIFR3b0ZhY3RvclNjaGVtYSB9IGZyb20gJy4vdHdvLWZhY3Rvci5zY2hlbWEnOyAvLyBmZWF0dXJlOnRvdHBcblxuLyoqXG4gKiBPbmUgT0F1dGggYWNjb3VudCBsaW5rZWQgdG8gYSB1c2VyLCBrZXllZCBieSB0aGUgcHJvdmlkZXIgaWQgZnJvbSB0aGUgT0F1dGggcmVnaXN0cnkuXG4gKi9cbkBTY2hlbWEoeyBfaWQ6IGZhbHNlIH0pXG5leHBvcnQgY2xhc3MgTGlua2VkQWNjb3VudCB7XG4gIEBQcm9wKHsgcmVxdWlyZWQ6IHRydWUgfSlcbiAgcHJvdmlkZXIhOiBzdHJpbmc7XG5cbiAgQFByb3AoeyByZXF1aXJlZDogdHJ1ZSB9KVxuICBwcm92aWRlcklkITogc3RyaW5nO1xuXG4gIEBQcm9wKHsgcmVxdWlyZWQ6IHRydWUsIGRlZmF1bHQ6ICgpID0+IG5ldyBEYXRlKCkgfSlcbiAgbGlua2VkQXQhOiBEYXRlO1xufVxuXG5leHBvcnQgY29uc3QgTGlua2VkQWNjb3VudFNjaGVtYSA9IFNjaGVtYUZhY3RvcnkuY3JlYXRlRm9yQ2xhc3MoTGlua2VkQWNjb3VudCk7XG5cbkBTY2hlbWEoeyB0aW1lc3RhbXBzOiB0cnVlIH0pXG5leHBvcnQgY2xhc3MgVXNlciB7XG4gIEBQcm9wKHsgcmVxdWlyZWQ6IHRydWUsIHVuaXF1ZTogdHJ1ZSwgbG93ZXJjYXNlOiB0cnVlLCB0cmltOiB0cnVlIH0pXG4gIGVtYWlsITogc3RyaW5nO1xuXG4gIEBQcm9wKHsgc2VsZWN0OiBmYWxzZSB9KVxuICBwYXNzd29yZD86IHN0cmluZztcblxuICBAUHJvcCh7IHJlcXVpcmVkOiB0cnVlLCB0cmltOiB0cnVlIH0pXG4gIG5hbWUhOiBzdHJpbmc7XG5cbiAgQFByb3AoKVxuICBhdmF0YXJVcmw/OiBzdHJpbmc7XG5cbiAgQFByb3AoeyB0eXBlOiBTdHJpbmcsIGRlZmF1bHQ6ICd1c2VyJyB9KVxuICByb2xlITogc3RyaW5nO1xuXG4gIEBQcm9wKHsgdHlwZTogW1N0cmluZ10sIGRlZmF1bHQ6IFtdIH0pXG4gIHBlcm1pc3Npb25zITogc3RyaW5nW107XG5cbiAgLyoqIFByb3ZpZGVyIHRoZSBhY2NvdW50IHdhcyBjcmVhdGVkIHdpdGg6ICdlbWFpbCcgb3IgYW4gT0F1dGggcHJvdmlkZXIgaWQuICovXG4gIEBQcm9wKHsgdHlwZTogU3RyaW5nLCBkZWZhdWx0OiBFTUFJTF9QUk9WSURFUiB9KVxuICBhdXRoUHJvdmlkZXIhOiBzdHJpbmc7XG5cbiAgQFByb3AoeyB0eXBlOiBbTGlua2VkQWNjb3VudFNjaGVtYV0sIGRlZmF1bHQ6IFtdIH0pXG4gIGxpbmtlZEFjY291bnRzITogTGlua2VkQWNjb3VudFtdO1xuXG4gIEBQcm9wKHsgZGVmYXVsdDogZmFsc2UgfSlcbiAgaXNWZXJpZmllZCE6IGJvb2xlYW47XG5cbiAgQFByb3AoeyBkZWZhdWx0OiBmYWxzZSB9KVxuICBpc0RlbGV0ZWQhOiBib29sZWFuO1xuXG4gIEBQcm9wKClcbiAgZGVsZXRlZEF0PzogRGF0ZTtcblxuICAvKiogUHJvdmlkZXIgaWQgdXNlZCBhcyB0aGUgc291cmNlIG9mIHRydXRoIGZvciBwcm9maWxlIHN5bmMuICovXG4gIEBQcm9wKHsgdHlwZTogU3RyaW5nIH0pXG4gIHByaW1hcnlQcm92aWRlcj86IHN0cmluZztcblxuICBAUHJvcCgpXG4gIHByb2ZpbGVTeW5jZWRBdD86IERhdGU7XG5cbiAgQFByb3AoKVxuICBsYXN0U3luY2VkUHJvdmlkZXI/OiBzdHJpbmc7XG5cbiAgLy8gZmVhdHVyZTp0b3RwOnN0YXJ0XG4gIC8qKlxuICAgKiBTZWNvbmQgZmFjdG9yIHN0YXRlLiBPcHRpb25hbCBzdWJkb2N1bWVudCwgc28gYWNjb3VudHMgd3JpdHRlbiBiZWZvcmUgaXRcbiAgICogZXhpc3RlZCByZWFkIGJhY2sgd2l0aCB0aGUgZGVmYXVsdHMgYW5kIG5lZWQgbm8gbWlncmF0aW9uLlxuICAgKi9cbiAgQFByb3AoeyB0eXBlOiBUd29GYWN0b3JTY2hlbWEsIGRlZmF1bHQ6ICgpID0+ICh7fSkgfSlcbiAgdHdvRmFjdG9yITogVHdvRmFjdG9yO1xuICAvLyBmZWF0dXJlOnRvdHA6ZW5kXG5cbiAgLyoqIFZpcnR1YWw6ICdlbWFpbCcgd2hlbiBwYXNzd29yZCBzaWduLWluIGFwcGxpZXMsIHBsdXMgZXZlcnkgbGlua2VkIE9BdXRoIHByb3ZpZGVyLiAqL1xuICBsaW5rZWRQcm92aWRlcnMhOiBzdHJpbmdbXTtcblxuICAvLyBUaW1lc3RhbXAgZmllbGRzIChhdXRvbWF0aWNhbGx5IG1hbmFnZWQgYnkgTW9uZ29vc2Ugd2l0aCB0aW1lc3RhbXBzOiB0cnVlKVxuICBjcmVhdGVkQXQhOiBEYXRlO1xuICB1cGRhdGVkQXQhOiBEYXRlO1xufVxuXG5leHBvcnQgdHlwZSBVc2VyRG9jdW1lbnQgPSBIeWRyYXRlZERvY3VtZW50PFVzZXI+O1xuXG5leHBvcnQgY29uc3QgVXNlclNjaGVtYTogTW9uZ29vc2VTY2hlbWE8VXNlcj4gPVxuICBTY2hlbWFGYWN0b3J5LmNyZWF0ZUZvckNsYXNzKFVzZXIpO1xuXG5Vc2VyU2NoZW1hLnZpcnR1YWwoJ2xpbmtlZFByb3ZpZGVycycpLmdldChmdW5jdGlvbiAoXG4gIHRoaXM6IFVzZXJEb2N1bWVudCxcbik6IHN0cmluZ1tdIHtcbiAgY29uc3Qgb2F1dGhQcm92aWRlcnMgPSAodGhpcy5saW5rZWRBY2NvdW50cyA/PyBbXSkubWFwKFxuICAgIChhY2NvdW50KSA9PiBhY2NvdW50LnByb3ZpZGVyLFxuICApO1xuICBpZiAodGhpcy5hdXRoUHJvdmlkZXIgPT09IEVNQUlMX1BST1ZJREVSKSB7XG4gICAgcmV0dXJuIFtFTUFJTF9QUk9WSURFUiwgLi4ub2F1dGhQcm92aWRlcnNdO1xuICB9XG4gIHJldHVybiBvYXV0aFByb3ZpZGVycztcbn0pO1xuXG4vLyBJbmRleGVzXG5Vc2VyU2NoZW1hLmluZGV4KHsgY3JlYXRlZEF0OiAtMSB9KTtcblVzZXJTY2hlbWEuaW5kZXgoeyBpc0RlbGV0ZWQ6IDEgfSk7XG5Vc2VyU2NoZW1hLmluZGV4KHsgcm9sZTogMSB9KTtcblVzZXJTY2hlbWEuaW5kZXgoXG4gIHsgJ2xpbmtlZEFjY291bnRzLnByb3ZpZGVyJzogMSwgJ2xpbmtlZEFjY291bnRzLnByb3ZpZGVySWQnOiAxIH0sXG4gIHsgdW5pcXVlOiB0cnVlLCBzcGFyc2U6IHRydWUgfSxcbik7XG4iXSwidmVyc2lvbiI6M30=

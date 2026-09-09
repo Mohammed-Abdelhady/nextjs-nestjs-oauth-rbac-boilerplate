@@ -1,0 +1,11 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "test",
+    "--workspace",
+    "frontend"
+  ],
+  "exit": 0,
+  "seconds": 1.16
+}

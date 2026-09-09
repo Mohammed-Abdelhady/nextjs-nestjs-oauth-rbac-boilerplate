@@ -1,0 +1,17 @@
+**BLOCKED: frozen-candidate verification could not complete.**
+
+The shell rejected the read-only verification script before execution because its here-document required a temporary file: `can't create temp file for here document: operation not permitted`. I stopped without retrying, escalating or rerouting the operation, as instructed.
+
+I read the original reviews, repair report, manifest and `gates.json`. The manifest declares HEAD `3e84f52312196c03aaefc109ceca05c71bebc712` and fingerprint `6077b9d7504b96bf2c8ba4342d115d055b2b73e76394e4bff7b10c3a683d0c53`; neither was independently verified against the candidate.
+
+| IDs | Result | Outstanding evidence |
+| --- | --- | --- |
+| FR001, FR002, FR003 | NEEDS_EVIDENCE | Verified candidate boundary, exact repair diff and regression assessment. |
+| GR001, GR002, GR003, GR004, GR005, GR006, GR007 | NEEDS_EVIDENCE | Verified candidate boundary and source recheck against original closure criteria. |
+| CI-COMB | NEEDS_EVIDENCE | Async subprocess implementation and regression evidence recheck. |
+| CI-BROWSER | NEEDS_EVIDENCE | Independent assessment that synchronization preserves the strict overflow assertion. |
+| CI-DOCKER | NEEDS_EVIDENCE | Configuration recheck and hosted Docker runtime confirmation. |
+
+The supplied owner evidence records lint/types/build passing, backend708/frontend123/CLI106/config18/combinations9/API72/browser116 passing, and no skipped or flaky browser results. These are **owner runs**, not reviewer execution or independently validated closure.
+
+No new product defect was demonstrated. No files were changed. Docker runtime remains unconfirmed; CodeQL31 remains an unresolved status-only gate. Return to Astra for control and evidence disposition. This review closes no findings and makes no readiness or release claim.

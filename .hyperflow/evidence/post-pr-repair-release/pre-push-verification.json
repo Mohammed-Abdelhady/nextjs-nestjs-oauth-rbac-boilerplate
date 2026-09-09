@@ -1,0 +1,12 @@
+{
+  "head": "fc19e55e4f2ae1978c19178e1078c76b47acfa2d",
+  "commits": 5,
+  "allowed_paths_exact": 27,
+  "worktree_clean": true,
+  "diff_check": true,
+  "audit_rows_exact": 137,
+  "curated_links_valid": true,
+  "formatting_mutations": [
+    ".hyperflow/reports/production-hardening.md"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "name": "full-mern-auth-boilerplate",
+  "version": "1.0.0",
+  "description": "Full-stack MERN authentication boilerplate with NestJS backend and Next.js frontend",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "backend",
+    "frontend",
+    "packages/*"
+  ],
+  "scripts": {
+    "init": "node scripts/init.js",
+    "setup:prod": "node scripts/setup-production.js",
+    "prepare": "husky || true",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "lint": "npm run lint --workspaces --if-present",
+    "lint:fix": "npm run lint:fix --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present && npm run test:config",
+    "check:contrast": "node scripts/check-contrast.mjs",
+    "test:config": "node --test scripts/config-transforms.test.mjs"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^18.6.1",
+    "@commitlint/config-conventional": "^18.6.2",
+    "husky": "^9.0.10",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5"
+  },
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=10.9.0"
+  },
+  "overrides": {
+    "diff": ">=8.0.3",
+    "lodash": "^4.18.1"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "at_utc": "2026-09-08T07:42:15.776856+00:00",
+  "owned_container": "/private/tmp/t29b-dependency-reconcile-ispf1d8i",
+  "container_removed": true,
+  "last_gate_process_absent": true,
+  "process_enumeration": "unavailable",
+  "process_enumeration_limitation": "ps invocation rejected with PermissionError: Operation not permitted. No independent descendant-process enumeration is claimed.",
+  "all_gate_commands_returned": true,
+  "remaining_temp_entries_before_container_removal": [
+    "verification-runtime/tmp/node-compile-cache",
+    "verification-runtime/tmp/v8-compile-cache-501"
+  ],
+  "remaining_synthetic_fixture_directories_before_container_removal": [],
+  "source_or_shared_dependencies_modified": false,
+  "free_disk_bytes_after": 14499840000
+}

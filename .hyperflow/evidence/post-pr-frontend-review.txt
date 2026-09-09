@@ -1,0 +1,45 @@
+Frontend review returned to Astra for validation: **three findings**.
+
+- PR: #72
+- Base: `f1d2282d70cf728567fa9877e15176f0ff3705c8`
+- Head: `3e84f52312196c03aaefc109ceca05c71bebc712`
+- Pinned candidate verified; worktree clean before and after review.
+- Evidence below is source tracing. No tests, package commands, services, network requests, or mutations performed.
+
+1. **FR001 — P2: Deleting the last role on a page strands pagination.**  
+   Location: `frontend/src/app/[locale]/(dashboard)/admin/roles/page.tsx:32–40,63–65,128–185`.  
+   Trigger: With 21 roles, open page 2 and delete its sole disposable role. When the refreshed response contains `roles: []`, `total: 20`, and `totalPages: 1`, the component retains `page === 2`. It displays “no roles yet” and hides the entire pagination region. Expected: return to a valid page containing the remaining roles.  
+   Evidence: `DeleteRoleDialog.tsx:63–71` invokes the success callback; that callback only refetches. `PaginationControl.tsx:25–26` also returns nothing when only one page remains. Pagination is newly introduced by this PR.  
+   Repair criterion: Reconcile the current page after totals shrink and preserve access to remaining results. Verify the 21-to-20 role boundary with disposable fixtures; the existing `e2e/role-management.spec.ts:9–15` covers five roles.
+
+2. **FR002 — P2: The new user role filter omits roles beyond the first response page.**  
+   Location: `frontend/src/app/[locale]/(dashboard)/admin/users/page.tsx:44–45,146–151`.  
+   Trigger: A user has a role absent from the first paginated roles response. Expected: that role remains selectable as a user-list filter. Actual: the dropdown contains only `rolesData.roles`; there is no subsequent-page request or option search.  
+   Evidence: `modules/roles/api/rolesApi.ts:18–44` exposes a paginated contract, but this consumer ignores its pagination metadata. `UserListToolbar.tsx:44–55` renders only the supplied options. Unlike the base implementation’s `useUserFilters`, the new implementation can omit a role even when a user with that role is already visible.  
+   Repair criterion: Make every role reachable through pagination or a searchable option source. Verify a later-page role can be selected and produces the corresponding user query; increasing a fixed limit alone leaves the same defect.
+
+3. **FR003 — P3: The new discovery-response example contradicts the frontend contract.**  
+   Location: `docs/ARCHITECTURE.md:153–164`.  
+   Trigger: A developer builds a discovery adapter or mock from this example. Expected: the documented response works with the frontend. Actual: it lacks `data.methods`, so `authMethodsApi.ts:20` dereferences an undefined value. The example also uses different field names and strings where provider objects are expected.  
+   Evidence: `modules/auth/api/authMethodsApi.ts:15–24` and `modules/auth/types/auth.types.ts` define the consumed shape. This is a documentation defect; it does not demonstrate failure with the existing backend.  
+   Repair criterion: Update the example to match `AuthMethodsResponse`, including the nested `methods`, `password`/`twoFactor` names, and provider objects. Check the example against that type.
+
+Clean-review coverage included shared layouts/providers, navigation and mobile sheet, form primitives and ordinary form states, pagination, role/user presentation and cache consumers, profile/session presentation, localization, response helpers, QR rendering code, relevant tests, and frontend documentation.
+
+The explicitly requested repairs were assessed:
+
+| Repair | Assessment |
+|---|---|
+| Startup/provider layout | Localized rehydration placeholder and provider ordering are present. |
+| Navigation blur | Primary-button handling is wired to the affected links; navigation tests cover pointer/keyboard use. |
+| Persistence migration | Boolean-only persistence and transient-state reset have reducer-level tests. |
+| Role destinations | Destination helper and admin/user/explicit-return tests inspected; business policy excluded. |
+| Localized toast/document direction | Locale-aware fallback rendering and client `lang`/`dir` updates have supporting tests. |
+| Profile label/session contrast | Explicit email association and revised text tokens are present; prior accessibility evidence inspected. |
+| Bodyless 204 deletion | Response handling and list invalidation have a focused unit test. |
+
+No additional introduced defect was established in those repairs. Reported **112 browser / 123 frontend unit tests plus build, lint and types** remain prior curated evidence, not independent reruns.
+
+Per-page list work is bounded by 20 returned rows, while retained query results add cache memory. Session rendering remains linear in returned sessions. QR processing uses eight bounded matrix passes, with versions capped at 10; its single SVG path still has output proportional to module count. No measured performance improvement is claimed. QR tests share encoder helpers, so their round trips do not independently establish scanner interoperability.
+
+Excluded coverage: the paused security review and overlapping authentication-policy, passkey/factor/replay/concurrency candidates; activation/deactivation/reactivation journeys; backend, CLI pruner, operational and release domains. Feature markers were considered only at frontend consumers. This review neither completes whole-PR/security coverage nor authorizes release.

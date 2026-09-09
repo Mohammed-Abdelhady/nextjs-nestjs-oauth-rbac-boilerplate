@@ -1,0 +1,2 @@
+command=CI=1 NO_COLOR=1 npm test -w packages/create-nest-next-auth
+exit=1

@@ -34,9 +34,6 @@ export const RECOVERY_CODE_COUNT = 10;
 /** Characters per recovery code. */
 export const RECOVERY_CODE_LENGTH = 10;
 
-/** Client page the OAuth redirect flow sends a challenged user to. */
-export const TWO_FACTOR_CLIENT_PATH = '/auth/2fa';
-
 /**
  * Label the challenge secret is derived under, so the same key cannot be made
  * to sign anything else.

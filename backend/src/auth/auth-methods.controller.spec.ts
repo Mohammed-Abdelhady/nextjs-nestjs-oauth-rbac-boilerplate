@@ -2,10 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { AuthMethodsController } from './auth-methods.controller';
 import { AuthFeaturesService } from './services/auth-features.service';
-import { OAuthRegistryService } from './oauth/oauth-registry.service';
+import { OAuthRegistryService } from './oauth/oauth-registry.service'; // feature:oauth-core
 
 describe('AuthMethodsController', () => {
-  const providers = [{ id: 'google', displayName: 'Google' }];
+  const providers = [{ id: 'google', displayName: 'Google' }]; // feature:oauth-core
 
   async function createController(config: {
     passwordEnabled: boolean;
@@ -26,16 +26,18 @@ describe('AuthMethodsController', () => {
       ),
     } as unknown as ConfigService;
 
+    // feature:oauth-core:start
     const registry = {
       listEnabled: jest.fn().mockReturnValue(providers),
     } as unknown as OAuthRegistryService;
+    // feature:oauth-core:end
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthMethodsController],
       providers: [
         AuthFeaturesService,
         { provide: ConfigService, useValue: configService },
-        { provide: OAuthRegistryService, useValue: registry },
+        { provide: OAuthRegistryService, useValue: registry }, // feature:oauth-core
       ],
     }).compile();
 
@@ -54,10 +56,10 @@ describe('AuthMethodsController', () => {
       data: {
         methods: {
           password: true,
-          magicLink: true,
-          twoFactor: true,
-          passkeys: true,
-          oauth: providers,
+          magicLink: true, // feature:magic-link
+          twoFactor: true, // feature:totp
+          passkeys: true, // feature:passkeys
+          oauth: providers, // feature:oauth-core
         },
       },
       message: undefined,
@@ -74,9 +76,9 @@ describe('AuthMethodsController', () => {
 
     expect(controller.getMethods().data.methods).toMatchObject({
       password: false,
-      magicLink: true,
-      twoFactor: false,
-      passkeys: false,
+      magicLink: true, // feature:magic-link
+      twoFactor: false, // feature:totp
+      passkeys: false, // feature:passkeys
     });
   });
 });

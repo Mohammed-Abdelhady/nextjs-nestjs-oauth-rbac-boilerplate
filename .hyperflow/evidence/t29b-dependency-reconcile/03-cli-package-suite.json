@@ -1,0 +1,18 @@
+{
+  "command": [
+    "npm",
+    "test",
+    "-w",
+    "packages/create-nest-next-auth"
+  ],
+  "cwd": "/private/tmp/t29b-dependency-reconcile-ispf1d8i/checkout",
+  "exit": 0,
+  "started_at_utc": "2026-09-08T07:36:55.020891+00:00",
+  "finished_at_utc": "2026-09-08T07:37:08.100488+00:00",
+  "node": "v26.8.1",
+  "free_disk_bytes_after": 13230080000,
+  "synthetic_fixture_entries_after": [
+    "node-compile-cache",
+    "v8-compile-cache-501"
+  ]
+}

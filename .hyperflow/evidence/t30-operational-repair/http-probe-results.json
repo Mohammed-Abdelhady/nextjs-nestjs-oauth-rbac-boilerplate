@@ -1,0 +1,1509 @@
+{
+  "realDocker": false,
+  "results": [
+    {
+      "scenario": {
+        "name": "success"
+      },
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "scenario": {
+        "name": "health-status",
+        "error": "/health status"
+      },
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "scenario": {
+        "name": "health-redirect",
+        "error": "/health status"
+      },
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "scenario": {
+        "name": "health-json",
+        "error": "JSON"
+      },
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "scenario": {
+        "name": "health-extra-field",
+        "error": "deep-equal"
+      },
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "scenario": {
+        "name": "health-oversize",
+        "error": "response too large"
+      },
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "scenario": {
+        "name": "frontend-language",
+        "error": "ar login document language"
+      },
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "scenario": {
+        "name": "enabled-provider",
+        "error": "external providers disabled"
+      },
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "scenario": {
+        "name": "http-sigint",
+        "signal": "SIGINT",
+        "exit": 130
+      },
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "scenario": {
+        "name": "http-sigterm",
+        "signal": "SIGTERM",
+        "exit": 143
+      },
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "scenario": {
+        "name": "residual-container",
+        "resource": "container"
+      },
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "scenario": {
+        "name": "residual-network",
+        "resource": "network"
+      },
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "scenario": {
+        "name": "residual-volume",
+        "resource": "volume"
+      },
+      "status": "BLOCKED",
+      "reason": "Prior loopback listen EPERM; no retry. See listen-denied.log."
+    },
+    {
+      "scenario": {
+        "name": "residual-malformed-container",
+        "resource": "container",
+        "port": ""
+      },
+      "code": 1,
+      "signal": null,
+      "pid": 78232,
+      "ports": {
+        "backend": 65536,
+        "frontend": 65536,
+        "nginx": 65536
+      },
+      "requests": [],
+      "history": [
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-d880b51b9e3c47b48dd339032605c5a7",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/source",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/source/docker-compose.prod.yml",
+          "config",
+          "--no-env-resolution",
+          "--format",
+          "json"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/docker-config",
+          "image",
+          "inspect",
+          "mongo:7",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-backend:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-frontend:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-nginx:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-d880b51b9e3c47b48dd339032605c5a7",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/compose.json",
+          "up",
+          "--detach",
+          "--wait",
+          "--wait-timeout",
+          "240",
+          "--no-build",
+          "--pull",
+          "never"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-d880b51b9e3c47b48dd339032605c5a7",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/compose.json",
+          "port",
+          "backend",
+          "5000"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-d880b51b9e3c47b48dd339032605c5a7",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/compose.json",
+          "ps",
+          "--all",
+          "--format",
+          "json"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-d880b51b9e3c47b48dd339032605c5a7",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/compose.json",
+          "down",
+          "--volumes",
+          "--remove-orphans",
+          "--timeout",
+          "10"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj/docker-config",
+          "container",
+          "ls",
+          "--all",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-d880b51b9e3c47b48dd339032605c5a7"
+        ]
+      ],
+      "output": "startup completed in 0.0s\nDocker smoke failed during assertions: backend must bind loopback\n[]\ncleanup incomplete for authsmoke-d880b51b9e3c47b48dd339032605c5a7; retained recovery files at /tmp/t30-light-hOf2TO/http-residual-malformed-container/authboiler-smoke-QcWMVj\n",
+      "helperRetainedFixtures": [
+        "authboiler-smoke-QcWMVj"
+      ],
+      "childAbsent": true
+    },
+    {
+      "scenario": {
+        "name": "residual-malformed-network",
+        "resource": "network",
+        "port": ""
+      },
+      "code": 1,
+      "signal": null,
+      "pid": 78245,
+      "ports": {
+        "backend": 65536,
+        "frontend": 65536,
+        "nginx": 65536
+      },
+      "requests": [],
+      "history": [
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-cc38c04c359244ec99bfd11cfbae0483",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/source",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/source/docker-compose.prod.yml",
+          "config",
+          "--no-env-resolution",
+          "--format",
+          "json"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/docker-config",
+          "image",
+          "inspect",
+          "mongo:7",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-backend:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-frontend:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-nginx:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-cc38c04c359244ec99bfd11cfbae0483",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/compose.json",
+          "up",
+          "--detach",
+          "--wait",
+          "--wait-timeout",
+          "240",
+          "--no-build",
+          "--pull",
+          "never"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-cc38c04c359244ec99bfd11cfbae0483",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/compose.json",
+          "port",
+          "backend",
+          "5000"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-cc38c04c359244ec99bfd11cfbae0483",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/compose.json",
+          "ps",
+          "--all",
+          "--format",
+          "json"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-cc38c04c359244ec99bfd11cfbae0483",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/compose.json",
+          "down",
+          "--volumes",
+          "--remove-orphans",
+          "--timeout",
+          "10"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/docker-config",
+          "container",
+          "ls",
+          "--all",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-cc38c04c359244ec99bfd11cfbae0483"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi/docker-config",
+          "network",
+          "ls",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-cc38c04c359244ec99bfd11cfbae0483"
+        ]
+      ],
+      "output": "startup completed in 0.0s\nDocker smoke failed during assertions: backend must bind loopback\n[]\ncleanup incomplete for authsmoke-cc38c04c359244ec99bfd11cfbae0483; retained recovery files at /tmp/t30-light-hOf2TO/http-residual-malformed-network/authboiler-smoke-dRYULi\n",
+      "helperRetainedFixtures": [
+        "authboiler-smoke-dRYULi"
+      ],
+      "childAbsent": true
+    },
+    {
+      "scenario": {
+        "name": "residual-malformed-volume",
+        "resource": "volume",
+        "port": ""
+      },
+      "code": 1,
+      "signal": null,
+      "pid": 78257,
+      "ports": {
+        "backend": 65536,
+        "frontend": 65536,
+        "nginx": 65536
+      },
+      "requests": [],
+      "history": [
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-1ee55f7117aa413f87b233439929f773",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/source",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/source/docker-compose.prod.yml",
+          "config",
+          "--no-env-resolution",
+          "--format",
+          "json"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/docker-config",
+          "image",
+          "inspect",
+          "mongo:7",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-backend:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-frontend:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-nginx:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-1ee55f7117aa413f87b233439929f773",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/compose.json",
+          "up",
+          "--detach",
+          "--wait",
+          "--wait-timeout",
+          "240",
+          "--no-build",
+          "--pull",
+          "never"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-1ee55f7117aa413f87b233439929f773",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/compose.json",
+          "port",
+          "backend",
+          "5000"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-1ee55f7117aa413f87b233439929f773",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/compose.json",
+          "ps",
+          "--all",
+          "--format",
+          "json"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-1ee55f7117aa413f87b233439929f773",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/compose.json",
+          "down",
+          "--volumes",
+          "--remove-orphans",
+          "--timeout",
+          "10"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/docker-config",
+          "container",
+          "ls",
+          "--all",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-1ee55f7117aa413f87b233439929f773"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/docker-config",
+          "network",
+          "ls",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-1ee55f7117aa413f87b233439929f773"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K/docker-config",
+          "volume",
+          "ls",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-1ee55f7117aa413f87b233439929f773"
+        ]
+      ],
+      "output": "startup completed in 0.0s\nDocker smoke failed during assertions: backend must bind loopback\n[]\ncleanup incomplete for authsmoke-1ee55f7117aa413f87b233439929f773; retained recovery files at /tmp/t30-light-hOf2TO/http-residual-malformed-volume/authboiler-smoke-cTu95K\n",
+      "helperRetainedFixtures": [
+        "authboiler-smoke-cTu95K"
+      ],
+      "childAbsent": true
+    },
+    {
+      "scenario": {
+        "name": "malformed-port-0",
+        "port": ""
+      },
+      "code": 1,
+      "signal": null,
+      "pid": 78270,
+      "ports": {
+        "backend": 65536,
+        "frontend": 65536,
+        "nginx": 65536
+      },
+      "requests": [],
+      "history": [
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-23155505733944aeae806caf81f50ec6",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/source",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/source/docker-compose.prod.yml",
+          "config",
+          "--no-env-resolution",
+          "--format",
+          "json"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/docker-config",
+          "image",
+          "inspect",
+          "mongo:7",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-backend:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-frontend:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-nginx:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-23155505733944aeae806caf81f50ec6",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/compose.json",
+          "up",
+          "--detach",
+          "--wait",
+          "--wait-timeout",
+          "240",
+          "--no-build",
+          "--pull",
+          "never"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-23155505733944aeae806caf81f50ec6",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/compose.json",
+          "port",
+          "backend",
+          "5000"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-23155505733944aeae806caf81f50ec6",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/compose.json",
+          "ps",
+          "--all",
+          "--format",
+          "json"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-23155505733944aeae806caf81f50ec6",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/compose.json",
+          "down",
+          "--volumes",
+          "--remove-orphans",
+          "--timeout",
+          "10"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/docker-config",
+          "container",
+          "ls",
+          "--all",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-23155505733944aeae806caf81f50ec6"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/docker-config",
+          "network",
+          "ls",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-23155505733944aeae806caf81f50ec6"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-0/authboiler-smoke-AiRWWI/docker-config",
+          "volume",
+          "ls",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-23155505733944aeae806caf81f50ec6"
+        ]
+      ],
+      "output": "startup completed in 0.0s\nDocker smoke failed during assertions: backend must bind loopback\n[]\nremoved owned fixture authsmoke-23155505733944aeae806caf81f50ec6\n",
+      "helperRetainedFixtures": [],
+      "childAbsent": true
+    },
+    {
+      "scenario": {
+        "name": "malformed-port-1",
+        "port": "0.0.0.0:1234"
+      },
+      "code": 1,
+      "signal": null,
+      "pid": 78283,
+      "ports": {
+        "backend": 65536,
+        "frontend": 65536,
+        "nginx": 65536
+      },
+      "requests": [],
+      "history": [
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-3a05dfddd4764c338630da069772c9d3",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/source",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/source/docker-compose.prod.yml",
+          "config",
+          "--no-env-resolution",
+          "--format",
+          "json"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/docker-config",
+          "image",
+          "inspect",
+          "mongo:7",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-backend:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-frontend:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-nginx:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-3a05dfddd4764c338630da069772c9d3",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/compose.json",
+          "up",
+          "--detach",
+          "--wait",
+          "--wait-timeout",
+          "240",
+          "--no-build",
+          "--pull",
+          "never"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-3a05dfddd4764c338630da069772c9d3",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/compose.json",
+          "port",
+          "backend",
+          "5000"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-3a05dfddd4764c338630da069772c9d3",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/compose.json",
+          "ps",
+          "--all",
+          "--format",
+          "json"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-3a05dfddd4764c338630da069772c9d3",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/compose.json",
+          "down",
+          "--volumes",
+          "--remove-orphans",
+          "--timeout",
+          "10"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/docker-config",
+          "container",
+          "ls",
+          "--all",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-3a05dfddd4764c338630da069772c9d3"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/docker-config",
+          "network",
+          "ls",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-3a05dfddd4764c338630da069772c9d3"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-1/authboiler-smoke-LbXzKW/docker-config",
+          "volume",
+          "ls",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-3a05dfddd4764c338630da069772c9d3"
+        ]
+      ],
+      "output": "startup completed in 0.0s\nDocker smoke failed during assertions: backend must bind loopback\n[]\nremoved owned fixture authsmoke-3a05dfddd4764c338630da069772c9d3\n",
+      "helperRetainedFixtures": [],
+      "childAbsent": true
+    },
+    {
+      "scenario": {
+        "name": "malformed-port-2",
+        "port": "127.0.0.1:abc"
+      },
+      "code": 1,
+      "signal": null,
+      "pid": 78298,
+      "ports": {
+        "backend": 65536,
+        "frontend": 65536,
+        "nginx": 65536
+      },
+      "requests": [],
+      "history": [
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-b7504ca77e9d40aeb1876df17178c023",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/source",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/source/docker-compose.prod.yml",
+          "config",
+          "--no-env-resolution",
+          "--format",
+          "json"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/docker-config",
+          "image",
+          "inspect",
+          "mongo:7",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-backend:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-frontend:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-nginx:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-b7504ca77e9d40aeb1876df17178c023",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/compose.json",
+          "up",
+          "--detach",
+          "--wait",
+          "--wait-timeout",
+          "240",
+          "--no-build",
+          "--pull",
+          "never"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-b7504ca77e9d40aeb1876df17178c023",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/compose.json",
+          "port",
+          "backend",
+          "5000"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-b7504ca77e9d40aeb1876df17178c023",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/compose.json",
+          "ps",
+          "--all",
+          "--format",
+          "json"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-b7504ca77e9d40aeb1876df17178c023",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/compose.json",
+          "down",
+          "--volumes",
+          "--remove-orphans",
+          "--timeout",
+          "10"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/docker-config",
+          "container",
+          "ls",
+          "--all",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-b7504ca77e9d40aeb1876df17178c023"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/docker-config",
+          "network",
+          "ls",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-b7504ca77e9d40aeb1876df17178c023"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-2/authboiler-smoke-c4I4OO/docker-config",
+          "volume",
+          "ls",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-b7504ca77e9d40aeb1876df17178c023"
+        ]
+      ],
+      "output": "startup completed in 0.0s\nDocker smoke failed during assertions: backend must bind loopback\n[]\nremoved owned fixture authsmoke-b7504ca77e9d40aeb1876df17178c023\n",
+      "helperRetainedFixtures": [],
+      "childAbsent": true
+    },
+    {
+      "scenario": {
+        "name": "malformed-port-3",
+        "port": "127.0.0.1:65536"
+      },
+      "code": 1,
+      "signal": null,
+      "pid": 78311,
+      "ports": {
+        "backend": 65536,
+        "frontend": 65536,
+        "nginx": 65536
+      },
+      "requests": [],
+      "history": [
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-6e6a54032bc54265ba9ef677287cd51a",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/source",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/source/docker-compose.prod.yml",
+          "config",
+          "--no-env-resolution",
+          "--format",
+          "json"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/docker-config",
+          "image",
+          "inspect",
+          "mongo:7",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-backend:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-frontend:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-nginx:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-6e6a54032bc54265ba9ef677287cd51a",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/compose.json",
+          "up",
+          "--detach",
+          "--wait",
+          "--wait-timeout",
+          "240",
+          "--no-build",
+          "--pull",
+          "never"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-6e6a54032bc54265ba9ef677287cd51a",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/compose.json",
+          "port",
+          "backend",
+          "5000"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-6e6a54032bc54265ba9ef677287cd51a",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/compose.json",
+          "port",
+          "frontend",
+          "3000"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-6e6a54032bc54265ba9ef677287cd51a",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/compose.json",
+          "port",
+          "nginx",
+          "8080"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-6e6a54032bc54265ba9ef677287cd51a",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/compose.json",
+          "ps",
+          "--all",
+          "--format",
+          "json"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-6e6a54032bc54265ba9ef677287cd51a",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/compose.json",
+          "down",
+          "--volumes",
+          "--remove-orphans",
+          "--timeout",
+          "10"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/docker-config",
+          "container",
+          "ls",
+          "--all",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-6e6a54032bc54265ba9ef677287cd51a"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/docker-config",
+          "network",
+          "ls",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-6e6a54032bc54265ba9ef677287cd51a"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-3/authboiler-smoke-piWVvF/docker-config",
+          "volume",
+          "ls",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-6e6a54032bc54265ba9ef677287cd51a"
+        ]
+      ],
+      "output": "startup completed in 0.0s\nDocker smoke failed during assertions: Failed to parse URL from http://127.0.0.1:65536/health\n[]\nremoved owned fixture authsmoke-6e6a54032bc54265ba9ef677287cd51a\n",
+      "helperRetainedFixtures": [],
+      "childAbsent": true
+    },
+    {
+      "scenario": {
+        "name": "malformed-port-4",
+        "port": "127.0.0.1:1234\n127.0.0.1:5678"
+      },
+      "code": 1,
+      "signal": null,
+      "pid": 78326,
+      "ports": {
+        "backend": 65536,
+        "frontend": 65536,
+        "nginx": 65536
+      },
+      "requests": [],
+      "history": [
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-fe3e14cedf15463cae436088f5c9dc4c",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/source",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/source/docker-compose.prod.yml",
+          "config",
+          "--no-env-resolution",
+          "--format",
+          "json"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/docker-config",
+          "image",
+          "inspect",
+          "mongo:7",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-backend:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-frontend:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/docker-config",
+          "image",
+          "inspect",
+          "authboiler-smoke-nginx:local",
+          "--format",
+          "{{.Id}}"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-fe3e14cedf15463cae436088f5c9dc4c",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/compose.json",
+          "up",
+          "--detach",
+          "--wait",
+          "--wait-timeout",
+          "240",
+          "--no-build",
+          "--pull",
+          "never"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-fe3e14cedf15463cae436088f5c9dc4c",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/compose.json",
+          "port",
+          "backend",
+          "5000"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-fe3e14cedf15463cae436088f5c9dc4c",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/compose.json",
+          "ps",
+          "--all",
+          "--format",
+          "json"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/docker-config",
+          "compose",
+          "--project-name",
+          "authsmoke-fe3e14cedf15463cae436088f5c9dc4c",
+          "--project-directory",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj",
+          "--env-file",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/synthetic.env",
+          "-f",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/compose.json",
+          "down",
+          "--volumes",
+          "--remove-orphans",
+          "--timeout",
+          "10"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/docker-config",
+          "container",
+          "ls",
+          "--all",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-fe3e14cedf15463cae436088f5c9dc4c"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/docker-config",
+          "network",
+          "ls",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-fe3e14cedf15463cae436088f5c9dc4c"
+        ],
+        [
+          "--config",
+          "/tmp/t30-light-hOf2TO/http-malformed-port-4/authboiler-smoke-iSQNEj/docker-config",
+          "volume",
+          "ls",
+          "--quiet",
+          "--filter",
+          "label=com.docker.compose.project=authsmoke-fe3e14cedf15463cae436088f5c9dc4c"
+        ]
+      ],
+      "output": "startup completed in 0.0s\nDocker smoke failed during assertions: backend must bind loopback\n[]\nremoved owned fixture authsmoke-fe3e14cedf15463cae436088f5c9dc4c\n",
+      "helperRetainedFixtures": [],
+      "childAbsent": true
+    }
+  ],
+  "cleanup": "Executed child close events awaited and child PIDs absent; owned case directories removed. No listener started in --no-listen mode. Residual Docker resources were synthetic responses only."
+}

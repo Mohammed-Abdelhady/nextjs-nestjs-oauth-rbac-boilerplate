@@ -1,0 +1,40 @@
+{
+  "runs": [
+    {
+      "name": "cli-build",
+      "command": [
+        "npm",
+        "run",
+        "build",
+        "-w",
+        "packages/create-nest-next-auth"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "generate",
+      "command": [
+        "node",
+        "/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-integration-4lfc21qz/packages/create-nest-next-auth/dist/index.js",
+        "/var/folders/d1/tk4y3j012j57stv_sy0qpglr0000gn/T/production-hardening-gates-k9fbrit6/hfr-generated-43_q2rch/generated",
+        "--yes",
+        "--no-install",
+        "--no-git"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "generated-config-tests",
+      "command": [
+        "npm",
+        "run",
+        "test:config"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "helper_exact_bytes_retained": true,
+  "frontend_e2e_removed": true,
+  "generated_fixture_removed": true,
+  "dependency_note": "Retained candidate dependency directories symlinked; no new installation or real environment loaded."
+}

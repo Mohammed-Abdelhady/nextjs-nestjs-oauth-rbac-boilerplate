@@ -1,33 +1,22 @@
 {
-  "$comment": "Feature map read by packages/create-nest-next-auth. Entries with \"status\": \"planned\" are not offered by the CLI. Entries with \"hidden\": true come in through another feature's \"requires\" instead of being picked directly. Files and env vars listed here are deleted from a generated project when the feature is not selected, so every path must belong to that feature alone.",
+  "$comment": "Feature map read by packages/create-nest-next-auth. Entries with \"status\": \"planned\" are not offered by the CLI. Entries with \"kind\": \"hidden\" come in through another feature's \"requires\" instead of being picked directly. Files and env vars listed here are deleted from a generated project when the feature is not selected. A path may sit under a directory another feature claims, as the provider strategies do under oauth-core; what a path may not do is belong to a feature that is still needed once this one is gone. Lines shared code needs only for one feature carry a `// feature:<id>` marker instead; see the CLI README.",
   "features": {
     "oauth-core": {
-      "hidden": true,
       "label": "OAuth core",
       "description": "Provider registry, start and callback routes, account linking, profile sync. Shared by every OAuth provider.",
-      "kind": "oauth",
-      "default": true,
+      "kind": "hidden",
+      "default": false,
       "files": [
-        "backend/src/auth/oauth/base-oauth.strategy.ts",
-        "backend/src/auth/oauth/oauth-provider.interface.ts",
-        "backend/src/auth/oauth/oauth-redirect.service.ts",
-        "backend/src/auth/oauth/oauth-registry.service.ts",
-        "backend/src/auth/oauth/oauth-registry.service.spec.ts",
-        "backend/src/auth/oauth/oauth-state.service.ts",
-        "backend/src/auth/oauth/oauth-state.service.spec.ts",
-        "backend/src/auth/oauth/oauth.constants.ts",
-        "backend/src/auth/oauth/oauth.controller.ts",
-        "backend/src/auth/oauth/oauth.module.ts",
-        "backend/src/auth/oauth/oauth.service.ts",
-        "backend/src/auth/oauth/utils/id-token.util.ts",
-        "backend/src/auth/oauth/utils/redirect.util.ts",
-        "backend/src/auth/oauth/utils/callback-params.util.ts",
-        "backend/src/auth/oauth/utils/callback-params.util.spec.ts",
-        "backend/src/auth/oauth/strategies/oauth-strategy.harness-spec.ts",
-        "backend/src/auth/oauth/validators/is-registered-provider.validator.ts",
+        "backend/src/auth/oauth/**",
+        "backend/src/user/user-providers.controller.ts",
         "backend/src/user/services/account-linking.service.ts",
+        "backend/src/user/services/account-linking.service.spec.ts",
+        "backend/src/user/services/account-linking.queries.spec.ts",
+        "backend/src/user/services/account-linking.harness-spec.ts",
         "backend/src/user/services/profile-sync.service.ts",
+        "backend/src/user/services/profile-sync.service.spec.ts",
         "backend/src/user/dto/account-linking.dto.ts",
+        "backend/test/constants/oauth-boot-env.ts",
         "frontend/src/modules/oauth/**",
         "frontend/src/modules/account/api/accountLinkingApi.ts",
         "frontend/src/modules/account/api/profileSyncApi.ts",
@@ -62,8 +51,7 @@
       "kind": "oauth",
       "default": true,
       "files": [
-        "backend/src/auth/oauth/strategies/google-oauth.strategy.ts",
-        "backend/src/auth/oauth/strategies/google-oauth.strategy.spec.ts"
+        "backend/src/auth/oauth/strategies/google-oauth.strategy.ts"
       ],
       "envVars": [
         "OAUTH_GOOGLE_CLIENT_ID",
@@ -80,8 +68,7 @@
       "kind": "oauth",
       "default": true,
       "files": [
-        "backend/src/auth/oauth/strategies/github-oauth.strategy.ts",
-        "backend/src/auth/oauth/strategies/github-oauth.strategy.spec.ts"
+        "backend/src/auth/oauth/strategies/github-oauth.strategy.ts"
       ],
       "envVars": [
         "OAUTH_GITHUB_CLIENT_ID",
@@ -98,8 +85,7 @@
       "kind": "oauth",
       "default": true,
       "files": [
-        "backend/src/auth/oauth/strategies/facebook-oauth.strategy.ts",
-        "backend/src/auth/oauth/strategies/facebook-oauth.strategy.spec.ts"
+        "backend/src/auth/oauth/strategies/facebook-oauth.strategy.ts"
       ],
       "envVars": [
         "OAUTH_FACEBOOK_CLIENT_ID",
@@ -355,6 +341,11 @@
   "core": {
     "alwaysRemoveFiles": [
       ".github/workflows/publish-cli.yml",
+      "frontend/e2e/**",
+      "frontend/playwright.config.ts",
+      "frontend/playwright.frontend.config.ts",
+      "backend/test/utils/browser-server.ts",
+      "backend/test/utils/local-oauth.ts",
       "template.manifest.json",
       ".hyperflow/**",
       "openspec/**"

@@ -1,0 +1,144 @@
+# Page snapshot
+
+```yaml
+- generic:
+    - alert
+    - link:
+        - /url: '#main'
+        - text: Skip to main content
+    - generic:
+        - complementary:
+            - generic:
+                - generic:
+                    - link:
+                        - /url: /en/dashboard
+                        - text: Auth App
+                - generic:
+                    - navigation:
+                        - generic:
+                            - link:
+                                - /url: /en/dashboard
+                                - img
+                                - text: Dashboard
+                        - generic:
+                            - link:
+                                - /url: /en/settings
+                                - img
+                                - text: Settings
+                        - generic:
+                            - button [expanded]:
+                                - generic:
+                                    - img
+                                    - generic: Admin
+                                - img
+                            - generic:
+                                - link:
+                                    - /url: /en/admin/users
+                                    - img
+                                    - text: Users
+                                - link:
+                                    - /url: /en/admin/roles
+                                    - img
+                                    - text: Roles
+                                - link:
+                                    - /url: /en/admin/permissions-demo
+                                    - img
+                                    - text: Permissions Demo
+                        - generic:
+                            - button [expanded]:
+                                - generic:
+                                    - img
+                                    - generic: Activity
+                                - img
+                            - generic:
+                                - link:
+                                    - /url: /en/sessions
+                                    - img
+                                    - text: Sessions
+                - generic:
+                    - paragraph: © 2024 Auth App
+        - generic:
+            - banner:
+                - group:
+                    - generic:
+                        - generic: Seed Admin
+                        - generic: (admin)
+                    - generic:
+                        - button: English
+                        - button: العربية
+                    - button:
+                        - img
+                    - button:
+                        - img
+                        - generic: Logout
+            - main:
+                - generic:
+                    - generic:
+                        - generic:
+                            - generic:
+                                - heading [level=1]: Active Sessions
+                                - paragraph: Manage devices where you're currently logged in
+                            - generic:
+                                - button:
+                                    - img
+                                    - text: Refresh
+                                - button:
+                                    - img
+                                    - text: Logout All Other Devices
+                        - note:
+                            - img
+                            - generic: If you see any unfamiliar devices, logout them immediately and change your password.
+                    - region:
+                        - heading [level=2]: Session list
+                        - generic:
+                            - generic:
+                                - article:
+                                    - generic:
+                                        - generic:
+                                            - img
+                                            - generic:
+                                                - heading [level=3]:
+                                                    - generic: Chrome 143 on Windows 10/11
+                                                    - generic:
+                                                        - generic: Active now
+                                                - paragraph: Chrome 143 · Windows 10/11
+                                    - generic:
+                                        - generic:
+                                            - img
+                                            - generic: 127.0.0.1
+                                        - generic:
+                                            - img
+                                            - generic: Last active 1 second ago
+                                        - generic:
+                                            - img
+                                            - generic: Logged in 1 second ago
+                            - generic:
+                                - article:
+                                    - generic:
+                                        - generic:
+                                            - img
+                                            - generic:
+                                                - heading [level=3]:
+                                                    - generic: Chrome 143 on Windows 10/11
+                                                - paragraph: Chrome 143 · Windows 10/11
+                                        - button:
+                                            - img
+                                    - generic:
+                                        - generic:
+                                            - img
+                                            - generic: 127.0.0.1
+                                        - generic:
+                                            - img
+                                            - generic: Last active 1 second ago
+                                        - generic:
+                                            - img
+                                            - generic: Logged in 1 second ago
+    - region "Notifications alt+T"
+    - alertdialog "Logout all other devices?" [ref=e2]:
+        - generic [ref=e3]:
+            - heading "Logout all other devices?" [level=2] [ref=e4]
+            - paragraph [ref=e5]: This will end all sessions except your current one. All other devices (1) will need to log in again.
+        - generic [ref=e6]:
+            - button "Cancel" [active] [ref=e7]
+            - button "Logout All" [ref=e8]
+```

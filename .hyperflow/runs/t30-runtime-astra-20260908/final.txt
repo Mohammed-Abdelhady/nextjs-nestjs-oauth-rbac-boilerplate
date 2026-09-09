@@ -1,0 +1,5 @@
+BLOCKED: Docker socket access was denied; the Node 22 download failed with DNS error, curl exit 6. Fresh install, CLI regressions, image builds and smoke gates remain unverified.
+
+Stable 858-file capture recorded. All eight operational files remain unchanged. No source repairs or product tests ran. Owned temporary files were removed; 12.32 GiB remains free. Heavy window released.
+
+[Report](.hyperflow/evidence/t30-runtime/report.md), [capture](.hyperflow/evidence/t30-runtime/capture.json), [cleanup evidence](.hyperflow/evidence/t30-runtime/completion.json). Ready for root evidence validation, not acceptance.

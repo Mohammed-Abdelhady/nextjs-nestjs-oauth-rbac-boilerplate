@@ -1,0 +1,14 @@
+47eb6c94d84bf4fc9ab866568627df99
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.escapeRegex = escapeRegex;
+/**
+ * Escapes characters with special meaning in regular expressions.
+ *
+ * @param input - Raw string
+ * @returns Escaped string safe for regular expressions
+ */
+function escapeRegex(input) {
+    return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvY29tbW9uL3V0aWxzL2VzY2FwZS1yZWdleC50cyIsIm1hcHBpbmdzIjoiOztBQU1BLGtDQUVDO0FBUkQ7Ozs7O0dBS0c7QUFDSCxTQUFnQixXQUFXLENBQUMsS0FBYTtJQUN2QyxPQUFPLEtBQUssQ0FBQyxPQUFPLENBQUMscUJBQXFCLEVBQUUsTUFBTSxDQUFDLENBQUM7QUFDdEQsQ0FBQyIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy9jb21tb24vdXRpbHMvZXNjYXBlLXJlZ2V4LnRzIl0sInNvdXJjZXNDb250ZW50IjpbIi8qKlxuICogRXNjYXBlcyBjaGFyYWN0ZXJzIHdpdGggc3BlY2lhbCBtZWFuaW5nIGluIHJlZ3VsYXIgZXhwcmVzc2lvbnMuXG4gKlxuICogQHBhcmFtIGlucHV0IC0gUmF3IHN0cmluZ1xuICogQHJldHVybnMgRXNjYXBlZCBzdHJpbmcgc2FmZSBmb3IgcmVndWxhciBleHByZXNzaW9uc1xuICovXG5leHBvcnQgZnVuY3Rpb24gZXNjYXBlUmVnZXgoaW5wdXQ6IHN0cmluZyk6IHN0cmluZyB7XG4gIHJldHVybiBpbnB1dC5yZXBsYWNlKC9bLiorP14ke30oKXxbXFxdXFxcXF0vZywgJ1xcXFwkJicpO1xufVxuIl0sInZlcnNpb24iOjN9

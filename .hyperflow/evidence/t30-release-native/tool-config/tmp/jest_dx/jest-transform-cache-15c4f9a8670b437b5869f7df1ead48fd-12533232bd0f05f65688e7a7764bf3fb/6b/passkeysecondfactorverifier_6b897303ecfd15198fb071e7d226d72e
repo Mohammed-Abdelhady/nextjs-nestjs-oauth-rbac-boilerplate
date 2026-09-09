@@ -1,0 +1,67 @@
+01990b47f608b1d3162ee9513f782692
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PasskeySecondFactorVerifier = void 0;
+const common_1 = require("@nestjs/common");
+const app_exception_1 = require("../../../common/exceptions/app.exception");
+const error_code_enum_1 = require("../../../common/enums/error-code.enum");
+const auth_feature_enum_1 = require("../../enums/auth-feature.enum");
+const auth_features_service_1 = require("../../services/auth-features.service");
+const passkey_assertion_service_1 = require("./passkey-assertion.service");
+/**
+ * A passkey as the answer to a two-factor challenge. It proves possession of a
+ * key the account registered, which is what a code from the authenticator app
+ * proves as well.
+ *
+ * TwoFactorModule picks this up through its verifier registry; nothing here
+ * knows about the second factor.
+ */
+let PasskeySecondFactorVerifier = class PasskeySecondFactorVerifier {
+    authFeaturesService;
+    assertions;
+    constructor(authFeaturesService, assertions) {
+        this.authFeaturesService = authFeaturesService;
+        this.assertions = assertions;
+    }
+    supports(dto) {
+        return dto.passkeyResponse !== undefined;
+    }
+    /**
+     * The credential is checked against the passkey challenge cookie the client
+     * picked up from POST /auth/passkeys/login/options, and has to belong to the
+     * account the two-factor challenge was issued for.
+     *
+     * @throws AppException FEATURE_DISABLED when the deployment turned passkeys off
+     * @throws AppException PASSKEY_VERIFICATION_FAILED when the credential
+     * belongs to another account
+     */
+    async verify(dto, user, request, response) {
+        this.authFeaturesService.assertEnabled(auth_feature_enum_1.AuthFeature.PASSKEYS);
+        if (!dto.passkeyResponse) {
+            throw this.refused();
+        }
+        const { passkey } = await this.assertions.verify(dto.passkeyResponse, request, response);
+        if (passkey.user.toString() !== user._id.toString()) {
+            throw this.refused();
+        }
+    }
+    refused() {
+        return new app_exception_1.AppException(error_code_enum_1.ErrorCode.PASSKEY_VERIFICATION_FAILED, 'That passkey could not be used to sign in', common_1.HttpStatus.UNAUTHORIZED);
+    }
+};
+exports.PasskeySecondFactorVerifier = PasskeySecondFactorVerifier;
+exports.PasskeySecondFactorVerifier = PasskeySecondFactorVerifier = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [auth_features_service_1.AuthFeaturesService,
+        passkey_assertion_service_1.PasskeyAssertionService])
+], PasskeySecondFactorVerifier);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3ByaXZhdGUvdmFyL2ZvbGRlcnMvZDEvdGs0eTNqMDEyajU3c3R2X3N5MHFwZ2xyMDAwMGduL1QvcHJvZHVjdGlvbi1oYXJkZW5pbmctaW50ZWdyYXRpb24tNGxmYzIxcXovYmFja2VuZC9zcmMvYXV0aC9wYXNza2V5cy9zZXJ2aWNlcy9wYXNza2V5LXNlY29uZC1mYWN0b3IudmVyaWZpZXIudHMiLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7O0FBQUEsMkNBQXdEO0FBRXhELDRFQUF3RTtBQUN4RSwyRUFBa0U7QUFFbEUscUVBQTREO0FBQzVELGdGQUEyRTtBQUUzRSwyRUFBc0U7QUFXdEU7Ozs7Ozs7R0FPRztBQUVJLElBQU0sMkJBQTJCLEdBQWpDLE1BQU0sMkJBQTJCO0lBRW5CO0lBQ0E7SUFGbkIsWUFDbUIsbUJBQXdDLEVBQ3hDLFVBQW1DO1FBRG5DLHdCQUFtQixHQUFuQixtQkFBbUIsQ0FBcUI7UUFDeEMsZUFBVSxHQUFWLFVBQVUsQ0FBeUI7SUFDbkQsQ0FBQztJQUVKLFFBQVEsQ0FBQyxHQUErQjtRQUN0QyxPQUFPLEdBQUcsQ0FBQyxlQUFlLEtBQUssU0FBUyxDQUFDO0lBQzNDLENBQUM7SUFFRDs7Ozs7Ozs7T0FRRztJQUNILEtBQUssQ0FBQyxNQUFNLENBQ1YsR0FBK0IsRUFDL0IsSUFBa0IsRUFDbEIsT0FBZ0IsRUFDaEIsUUFBa0I7UUFFbEIsSUFBSSxDQUFDLG1CQUFtQixDQUFDLGFBQWEsQ0FBQywrQkFBVyxDQUFDLFFBQVEsQ0FBQyxDQUFDO1FBRTdELElBQUksQ0FBQyxHQUFHLENBQUMsZUFBZSxFQUFFLENBQUM7WUFDekIsTUFBTSxJQUFJLENBQUMsT0FBTyxFQUFFLENBQUM7UUFDdkIsQ0FBQztRQUVELE1BQU0sRUFBRSxPQUFPLEVBQUUsR0FBRyxNQUFNLElBQUksQ0FBQyxVQUFVLENBQUMsTUFBTSxDQUM5QyxHQUFHLENBQUMsZUFBZSxFQUNuQixPQUFPLEVBQ1AsUUFBUSxDQUNULENBQUM7UUFFRixJQUFJLE9BQU8sQ0FBQyxJQUFJLENBQUMsUUFBUSxFQUFFLEtBQUssSUFBSSxDQUFDLEdBQUcsQ0FBQyxRQUFRLEVBQUUsRUFBRSxDQUFDO1lBQ3BELE1BQU0sSUFBSSxDQUFDLE9BQU8sRUFBRSxDQUFDO1FBQ3ZCLENBQUM7SUFDSCxDQUFDO0lBRU8sT0FBTztRQUNiLE9BQU8sSUFBSSw0QkFBWSxDQUNyQiwyQkFBUyxDQUFDLDJCQUEyQixFQUNyQywyQ0FBMkMsRUFDM0MsbUJBQVUsQ0FBQyxZQUFZLENBQ3hCLENBQUM7SUFDSixDQUFDO0NBQ0YsQ0FBQTtBQWpEWSxrRUFBMkI7c0NBQTNCLDJCQUEyQjtJQUR2QyxJQUFBLG1CQUFVLEdBQUU7cUNBRzZCLDJDQUFtQjtRQUM1QixtREFBdUI7R0FIM0MsMkJBQTJCLENBaUR2QyIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcHJpdmF0ZS92YXIvZm9sZGVycy9kMS90azR5M2owMTJqNTdzdHZfc3kwcXBnbHIwMDAwZ24vVC9wcm9kdWN0aW9uLWhhcmRlbmluZy1pbnRlZ3JhdGlvbi00bGZjMjFxei9iYWNrZW5kL3NyYy9hdXRoL3Bhc3NrZXlzL3NlcnZpY2VzL3Bhc3NrZXktc2Vjb25kLWZhY3Rvci52ZXJpZmllci50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBIdHRwU3RhdHVzLCBJbmplY3RhYmxlIH0gZnJvbSAnQG5lc3Rqcy9jb21tb24nO1xuaW1wb3J0IHsgUmVxdWVzdCwgUmVzcG9uc2UgfSBmcm9tICdleHByZXNzJztcbmltcG9ydCB7IEFwcEV4Y2VwdGlvbiB9IGZyb20gJy4uLy4uLy4uL2NvbW1vbi9leGNlcHRpb25zL2FwcC5leGNlcHRpb24nO1xuaW1wb3J0IHsgRXJyb3JDb2RlIH0gZnJvbSAnLi4vLi4vLi4vY29tbW9uL2VudW1zL2Vycm9yLWNvZGUuZW51bSc7XG5pbXBvcnQgeyBVc2VyRG9jdW1lbnQgfSBmcm9tICcuLi8uLi8uLi91c2VyL3NjaGVtYXMvdXNlci5zY2hlbWEnO1xuaW1wb3J0IHsgQXV0aEZlYXR1cmUgfSBmcm9tICcuLi8uLi9lbnVtcy9hdXRoLWZlYXR1cmUuZW51bSc7XG5pbXBvcnQgeyBBdXRoRmVhdHVyZXNTZXJ2aWNlIH0gZnJvbSAnLi4vLi4vc2VydmljZXMvYXV0aC1mZWF0dXJlcy5zZXJ2aWNlJztcbmltcG9ydCB7IFBhc3NrZXlDcmVkZW50aWFsRHRvIH0gZnJvbSAnLi4vZHRvL3Bhc3NrZXktY3JlZGVudGlhbC5kdG8nO1xuaW1wb3J0IHsgUGFzc2tleUFzc2VydGlvblNlcnZpY2UgfSBmcm9tICcuL3Bhc3NrZXktYXNzZXJ0aW9uLnNlcnZpY2UnO1xuXG4vKipcbiAqIFRoZSBwYXJ0IG9mIGEgdHdvLWZhY3RvciBwYXlsb2FkIHRoaXMgdmVyaWZpZXIgcmVhZHMuIERlY2xhcmVkIGhlcmUgcmF0aGVyXG4gKiB0aGFuIGltcG9ydGVkIGZyb20gdGhlIHNlY29uZCBmYWN0b3IsIHdoaWNoIGlzIHdoYXQgbGV0cyBhIHByb2plY3Qgc2hpcFxuICogcGFzc2tleXMgd2l0aG91dCBpdC5cbiAqL1xuZXhwb3J0IGludGVyZmFjZSBQYXNza2V5U2Vjb25kRmFjdG9yUGF5bG9hZCB7XG4gIHBhc3NrZXlSZXNwb25zZT86IFBhc3NrZXlDcmVkZW50aWFsRHRvO1xufVxuXG4vKipcbiAqIEEgcGFzc2tleSBhcyB0aGUgYW5zd2VyIHRvIGEgdHdvLWZhY3RvciBjaGFsbGVuZ2UuIEl0IHByb3ZlcyBwb3NzZXNzaW9uIG9mIGFcbiAqIGtleSB0aGUgYWNjb3VudCByZWdpc3RlcmVkLCB3aGljaCBpcyB3aGF0IGEgY29kZSBmcm9tIHRoZSBhdXRoZW50aWNhdG9yIGFwcFxuICogcHJvdmVzIGFzIHdlbGwuXG4gKlxuICogVHdvRmFjdG9yTW9kdWxlIHBpY2tzIHRoaXMgdXAgdGhyb3VnaCBpdHMgdmVyaWZpZXIgcmVnaXN0cnk7IG5vdGhpbmcgaGVyZVxuICoga25vd3MgYWJvdXQgdGhlIHNlY29uZCBmYWN0b3IuXG4gKi9cbkBJbmplY3RhYmxlKClcbmV4cG9ydCBjbGFzcyBQYXNza2V5U2Vjb25kRmFjdG9yVmVyaWZpZXIge1xuICBjb25zdHJ1Y3RvcihcbiAgICBwcml2YXRlIHJlYWRvbmx5IGF1dGhGZWF0dXJlc1NlcnZpY2U6IEF1dGhGZWF0dXJlc1NlcnZpY2UsXG4gICAgcHJpdmF0ZSByZWFkb25seSBhc3NlcnRpb25zOiBQYXNza2V5QXNzZXJ0aW9uU2VydmljZSxcbiAgKSB7fVxuXG4gIHN1cHBvcnRzKGR0bzogUGFzc2tleVNlY29uZEZhY3RvclBheWxvYWQpOiBib29sZWFuIHtcbiAgICByZXR1cm4gZHRvLnBhc3NrZXlSZXNwb25zZSAhPT0gdW5kZWZpbmVkO1xuICB9XG5cbiAgLyoqXG4gICAqIFRoZSBjcmVkZW50aWFsIGlzIGNoZWNrZWQgYWdhaW5zdCB0aGUgcGFzc2tleSBjaGFsbGVuZ2UgY29va2llIHRoZSBjbGllbnRcbiAgICogcGlja2VkIHVwIGZyb20gUE9TVCAvYXV0aC9wYXNza2V5cy9sb2dpbi9vcHRpb25zLCBhbmQgaGFzIHRvIGJlbG9uZyB0byB0aGVcbiAgICogYWNjb3VudCB0aGUgdHdvLWZhY3RvciBjaGFsbGVuZ2Ugd2FzIGlzc3VlZCBmb3IuXG4gICAqXG4gICAqIEB0aHJvd3MgQXBwRXhjZXB0aW9uIEZFQVRVUkVfRElTQUJMRUQgd2hlbiB0aGUgZGVwbG95bWVudCB0dXJuZWQgcGFzc2tleXMgb2ZmXG4gICAqIEB0aHJvd3MgQXBwRXhjZXB0aW9uIFBBU1NLRVlfVkVSSUZJQ0FUSU9OX0ZBSUxFRCB3aGVuIHRoZSBjcmVkZW50aWFsXG4gICAqIGJlbG9uZ3MgdG8gYW5vdGhlciBhY2NvdW50XG4gICAqL1xuICBhc3luYyB2ZXJpZnkoXG4gICAgZHRvOiBQYXNza2V5U2Vjb25kRmFjdG9yUGF5bG9hZCxcbiAgICB1c2VyOiBVc2VyRG9jdW1lbnQsXG4gICAgcmVxdWVzdDogUmVxdWVzdCxcbiAgICByZXNwb25zZTogUmVzcG9uc2UsXG4gICk6IFByb21pc2U8dm9pZD4ge1xuICAgIHRoaXMuYXV0aEZlYXR1cmVzU2VydmljZS5hc3NlcnRFbmFibGVkKEF1dGhGZWF0dXJlLlBBU1NLRVlTKTtcblxuICAgIGlmICghZHRvLnBhc3NrZXlSZXNwb25zZSkge1xuICAgICAgdGhyb3cgdGhpcy5yZWZ1c2VkKCk7XG4gICAgfVxuXG4gICAgY29uc3QgeyBwYXNza2V5IH0gPSBhd2FpdCB0aGlzLmFzc2VydGlvbnMudmVyaWZ5KFxuICAgICAgZHRvLnBhc3NrZXlSZXNwb25zZSxcbiAgICAgIHJlcXVlc3QsXG4gICAgICByZXNwb25zZSxcbiAgICApO1xuXG4gICAgaWYgKHBhc3NrZXkudXNlci50b1N0cmluZygpICE9PSB1c2VyLl9pZC50b1N0cmluZygpKSB7XG4gICAgICB0aHJvdyB0aGlzLnJlZnVzZWQoKTtcbiAgICB9XG4gIH1cblxuICBwcml2YXRlIHJlZnVzZWQoKTogQXBwRXhjZXB0aW9uIHtcbiAgICByZXR1cm4gbmV3IEFwcEV4Y2VwdGlvbihcbiAgICAgIEVycm9yQ29kZS5QQVNTS0VZX1ZFUklGSUNBVElPTl9GQUlMRUQsXG4gICAgICAnVGhhdCBwYXNza2V5IGNvdWxkIG5vdCBiZSB1c2VkIHRvIHNpZ24gaW4nLFxuICAgICAgSHR0cFN0YXR1cy5VTkFVVEhPUklaRUQsXG4gICAgKTtcbiAgfVxufVxuIl0sInZlcnNpb24iOjN9

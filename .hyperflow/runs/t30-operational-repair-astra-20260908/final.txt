@@ -1,0 +1,10 @@
+T30-OP-001 repaired by removing `**/e2e` from `.dockerignore`. Helper source is unchanged.
+
+- Regression: old context produces TS2307; repaired context resolves 1,015 source imports with zero affected-config diagnostics.
+- Final checks: 20 PASS, 13 BLOCKED; 10 static checks pass.
+- HTTP listener cases remain unverified after `listen EPERM`; no retry.
+- Owned children and temporary fixtures are gone. No Docker daemon commands ran.
+
+[Report and exact capture evidence](/Users/mohammedabdelhady/Documents/ref/nextjs-nestjs-oauth-rbac-boilerplate/.hyperflow/evidence/t30-operational-repair/report.md)
+
+Source writes stopped. OP001 awaits independent recheck; production image builds remain unverified.
