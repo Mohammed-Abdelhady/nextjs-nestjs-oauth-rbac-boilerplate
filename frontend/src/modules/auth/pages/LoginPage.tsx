@@ -1,9 +1,12 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { useAppSelector } from '@/store/hooks';
-import { selectIsAuthenticated } from '../store/authSlice';
+import { selectIsAuthenticated, selectUser } from '../store/authSlice';
+import { signedInPath } from '../utils/signInRouting';
+import { REDIRECT_PARAM } from '../constants/authMethods';
 import { AuthLayout } from '../components/AuthLayout';
 import { LoginForm } from '../components/LoginForm';
 
@@ -21,13 +24,14 @@ import { LoginForm } from '../components/LoginForm';
 export function LoginPage() {
   const router = useRouter();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const user = useAppSelector(selectUser);
+  const redirect = useSearchParams().get(REDIRECT_PARAM);
 
   useEffect(() => {
-    // Redirect to dashboard if already authenticated
-    if (isAuthenticated) {
-      router.push('/dashboard');
+    if (isAuthenticated && user) {
+      router.replace(signedInPath(user, redirect));
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, redirect, router]);
 
   // Don't render login form if already authenticated
   if (isAuthenticated) {

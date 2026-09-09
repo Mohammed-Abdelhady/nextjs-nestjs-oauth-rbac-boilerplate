@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback, memo } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -9,21 +10,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { SearchBar } from '@/components/design-system';
 import { Plus, Shield } from 'lucide-react';
-import {
-  PROFILE_PERMISSIONS,
-  USER_PERMISSIONS,
-  ROLE_PERMISSIONS,
-  PERMISSION_PERMISSIONS,
-  SESSION_PERMISSIONS,
-  REPORT_PERMISSIONS,
-  WILDCARD_PERMISSION,
-} from '../constants/permissions';
-import { parsePermission } from '../utils/permissionUtils';
+import { WILDCARD_PERMISSION } from '../constants/permissions';
+import { usePermissionLabel } from '../hooks/usePermissionLabel';
+import { SearchPermissionTabs, PERMISSION_GROUPS } from './SearchPermissionTabs';
 
 export interface PermissionSearchDialogProps {
   /**
@@ -67,21 +60,6 @@ export interface PermissionSearchDialogProps {
   onConfirm?: () => void;
 }
 
-interface PermissionGroup {
-  id: string;
-  name: string;
-  permissions: Record<string, string>;
-}
-
-const PERMISSION_GROUPS: PermissionGroup[] = [
-  { id: 'profile', name: 'Profile', permissions: PROFILE_PERMISSIONS },
-  { id: 'users', name: 'Users', permissions: USER_PERMISSIONS },
-  { id: 'roles', name: 'Roles', permissions: ROLE_PERMISSIONS },
-  { id: 'permissions', name: 'Permissions', permissions: PERMISSION_PERMISSIONS },
-  { id: 'sessions', name: 'Sessions', permissions: SESSION_PERMISSIONS },
-  { id: 'reports', name: 'Reports', permissions: REPORT_PERMISSIONS },
-];
-
 /**
  * PermissionSearchDialog - Advanced permission selection dialog
  *
@@ -115,6 +93,9 @@ export const PermissionSearchDialog = memo(function PermissionSearchDialog({
   isLoading = false,
   onConfirm,
 }: PermissionSearchDialogProps) {
+  const t = useTranslations('permissions.searchDialog');
+  const tSelector = useTranslations('permissions.selector');
+  const formatPermissionLabel = usePermissionLabel();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
 
@@ -163,17 +144,6 @@ export const PermissionSearchDialog = memo(function PermissionSearchDialog({
     [selectedPermissions, excludedPermissions, onChange],
   );
 
-  const formatPermissionLabel = (permission: string): string => {
-    const parsed = parsePermission(permission);
-    if (!parsed) return permission;
-
-    const { action, scope } = parsed;
-    const actionLabel = action.charAt(0).toUpperCase() + action.slice(1);
-    const scopeLabel = scope ? ` (${scope})` : '';
-
-    return `${actionLabel}${scopeLabel}`;
-  };
-
   // Filter permissions by search query and tab
   const filteredGroups = useMemo(() => {
     const query = searchQuery.toLowerCase();
@@ -197,7 +167,7 @@ export const PermissionSearchDialog = memo(function PermissionSearchDialog({
         filteredPermissions: Object.fromEntries(filteredPermissions),
       };
     }).filter((group) => Object.keys(group.filteredPermissions).length > 0);
-  }, [searchQuery, excludedPermissions]);
+  }, [searchQuery, excludedPermissions, formatPermissionLabel]);
 
   const hasWildcard = selectedPermissions.includes(WILDCARD_PERMISSION);
   const availableCount = selectedPermissions.filter((p) => !excludedPermissions.includes(p)).length;
@@ -206,16 +176,14 @@ export const PermissionSearchDialog = memo(function PermissionSearchDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-4xl overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Add Permissions</DialogTitle>
-          <DialogDescription>
-            Search and select permissions to add. Use tabs to browse by category.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden flex flex-col gap-4">
           {/* Search Bar */}
           <SearchBar
-            placeholder="Search permissions..."
+            placeholder={t('searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onClear={() => setSearchQuery('')}
@@ -225,8 +193,8 @@ export const PermissionSearchDialog = memo(function PermissionSearchDialog({
 
           {/* Wildcard Option */}
           {showWildcard && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
-              <div className="flex items-start space-x-3">
+            <div className="rounded-lg border border-warning bg-warning/15 p-4 text-warning-foreground">
+              <div className="flex items-start gap-3">
                 <Checkbox
                   id="wildcard-permission"
                   checked={hasWildcard}
@@ -237,13 +205,13 @@ export const PermissionSearchDialog = memo(function PermissionSearchDialog({
                 <div className="flex-1">
                   <Label
                     htmlFor="wildcard-permission"
-                    className="font-semibold text-amber-900 dark:text-amber-100 flex items-center gap-2"
+                    className="font-semibold text-foreground flex items-center gap-2"
                   >
-                    <Shield className="h-4 w-4" />
-                    Wildcard Permission (*)
+                    <Shield className="h-4 w-4 text-warning" aria-hidden="true" />
+                    {tSelector('wildcardTitle')}
                   </Label>
-                  <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
-                    Grants all permissions. Use only for super administrators.
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {tSelector('wildcardDescription')}
                   </p>
                 </div>
               </div>
@@ -252,174 +220,51 @@ export const PermissionSearchDialog = memo(function PermissionSearchDialog({
 
           {/* Category Tabs */}
           {!hasWildcard && (
-            <Tabs
-              value={activeTab}
-              onValueChange={setActiveTab}
-              className="flex-1 flex flex-col overflow-hidden"
-            >
-              <TabsList className="grid w-full grid-cols-7">
-                <TabsTrigger value="all">All</TabsTrigger>
-                {PERMISSION_GROUPS.map((group) => (
-                  <TabsTrigger key={group.id} value={group.id}>
-                    {group.name}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
-              {/* All Permissions Tab */}
-              <TabsContent value="all" className="flex-1 overflow-y-auto mt-4 space-y-6">
-                {filteredGroups.map((group) => {
-                  const groupPerms = Object.values(group.filteredPermissions);
-                  const allSelected = groupPerms.every((p) => selectedPermissions.includes(p));
-
-                  return (
-                    <div key={group.id} className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-semibold tracking-tight">{group.name}</h3>
-                        <button
-                          type="button"
-                          onClick={() => handleSelectAll(group.filteredPermissions)}
-                          disabled={isLoading || groupPerms.length === 0}
-                          className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50 dark:text-blue-400 dark:hover:text-blue-300"
-                        >
-                          {allSelected ? 'Deselect All' : 'Select All'}
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 rounded-lg border border-border-subtle bg-surface-secondary p-4">
-                        {Object.entries(group.filteredPermissions).map(([, permission]) => (
-                          <div key={permission} className="flex items-start space-x-3">
-                            <Checkbox
-                              id={`permission-${permission}`}
-                              checked={selectedPermissions.includes(permission)}
-                              onCheckedChange={() => handleTogglePermission(permission)}
-                              disabled={isLoading}
-                              data-testid={`permission-checkbox-${permission}`}
-                            />
-                            <div className="flex-1">
-                              <Label
-                                htmlFor={`permission-${permission}`}
-                                className="cursor-pointer text-sm leading-tight"
-                              >
-                                {formatPermissionLabel(permission)}
-                              </Label>
-                              <p className="mt-0.5 text-xs text-muted-foreground/60 font-mono">
-                                {permission}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {filteredGroups.length === 0 && (
-                  <div className="text-center py-12 text-sm text-muted-foreground/60">
-                    No permissions found matching &quot;{searchQuery}&quot;
-                  </div>
-                )}
-              </TabsContent>
-
-              {/* Individual Category Tabs */}
-              {PERMISSION_GROUPS.map((group) => {
-                const filtered = filteredGroups.find((g) => g.id === group.id);
-                const groupPerms = filtered ? Object.values(filtered.filteredPermissions) : [];
-                const allSelected = groupPerms.every((p) => selectedPermissions.includes(p));
-
-                return (
-                  <TabsContent
-                    key={group.id}
-                    value={group.id}
-                    className="flex-1 overflow-y-auto mt-4 space-y-4"
-                  >
-                    {filtered && groupPerms.length > 0 ? (
-                      <>
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm text-muted-foreground/60">
-                            {groupPerms.length} permission{groupPerms.length !== 1 ? 's' : ''}{' '}
-                            available
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => handleSelectAll(filtered.filteredPermissions)}
-                            disabled={isLoading}
-                            className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50 dark:text-blue-400 dark:hover:text-blue-300"
-                          >
-                            {allSelected ? 'Deselect All' : 'Select All'}
-                          </button>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 rounded-lg border border-border-subtle bg-surface-secondary p-4">
-                          {Object.entries(filtered.filteredPermissions).map(([, permission]) => (
-                            <div key={permission} className="flex items-start space-x-3">
-                              <Checkbox
-                                id={`permission-${permission}`}
-                                checked={selectedPermissions.includes(permission)}
-                                onCheckedChange={() => handleTogglePermission(permission)}
-                                disabled={isLoading}
-                                data-testid={`permission-checkbox-${permission}`}
-                              />
-                              <div className="flex-1">
-                                <Label
-                                  htmlFor={`permission-${permission}`}
-                                  className="cursor-pointer text-sm leading-tight"
-                                >
-                                  {formatPermissionLabel(permission)}
-                                </Label>
-                                <p className="mt-0.5 text-xs text-muted-foreground/60 font-mono">
-                                  {permission}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-center py-12 text-sm text-muted-foreground/60">
-                        {searchQuery
-                          ? `No ${group.name.toLowerCase()} permissions found matching "${searchQuery}"`
-                          : `All ${group.name.toLowerCase()} permissions are already assigned`}
-                      </div>
-                    )}
-                  </TabsContent>
-                );
-              })}
-            </Tabs>
+            <SearchPermissionTabs
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              filteredGroups={filteredGroups}
+              selectedPermissions={selectedPermissions}
+              onSelectAll={handleSelectAll}
+              onTogglePermission={handleTogglePermission}
+              isLoading={isLoading}
+              searchQuery={searchQuery}
+            />
           )}
 
           {/* Wildcard Notice */}
           {hasWildcard && (
-            <div className="rounded-lg border border-border-subtle bg-surface-secondary p-4 text-center">
-              <p className="text-sm text-muted-foreground/60">
-                Wildcard permission selected. All other permissions are implicitly granted.
-              </p>
+            <div className="rounded-lg border border-border bg-muted p-4 text-center">
+              <p className="text-sm text-muted-foreground">{tSelector('wildcardNotice')}</p>
             </div>
           )}
         </div>
 
         {/* Footer with Selection Summary and Confirm Button */}
-        <div className="flex items-center justify-between pt-4 border-t border-border-subtle">
-          <div className="text-sm text-muted-foreground/60">
+        <div className="flex items-center justify-between pt-4 border-t border-border">
+          <div className="text-sm text-muted-foreground">
             {hasWildcard ? (
-              <span>All permissions granted via wildcard (*)</span>
+              <span>{t('allGrantedWildcard')}</span>
             ) : (
-              <span>
-                {availableCount} new permission{availableCount !== 1 ? 's' : ''} selected
-              </span>
+              <span>{t('selectedCount', { count: availableCount })}</span>
             )}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
-              Cancel
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+              data-testid="cancel-add-permissions"
+            >
+              {t('cancel')}
             </Button>
             <Button
               onClick={onConfirm}
               disabled={availableCount === 0 || isLoading}
               data-testid="confirm-add-permissions"
             >
-              <Plus className="mr-2 h-4 w-4" />
-              Add {availableCount} Permission{availableCount !== 1 ? 's' : ''}
+              <Plus className="me-2 h-4 w-4" aria-hidden="true" />
+              {t('addCount', { count: availableCount })}
             </Button>
           </div>
         </div>

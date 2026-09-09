@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { MailOptions } from './interfaces/mail-options.interface';
+import { escapeHtml } from '../common/utils/escape-html';
 
 @Injectable()
 export class MailService {
@@ -51,7 +52,8 @@ export class MailService {
   }
 
   /**
-   * Send an activation code email to a user
+   * Send an activation code email to a user.
+   * Values that come from user input are escaped before they reach the HTML.
    * @param email - Recipient email address
    * @param code - 6-digit activation code
    * @param name - Recipient's name
@@ -61,6 +63,8 @@ export class MailService {
     code: string,
     name: string,
   ): Promise<void> {
+    const safeName = escapeHtml(name);
+    const safeCode = escapeHtml(code);
     const html = `
       <!DOCTYPE html>
       <html>
@@ -72,10 +76,10 @@ export class MailService {
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
           <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
             <h2 style="color: #333;">Verify Your Email Address</h2>
-            <p>Hi ${name},</p>
+            <p>Hi ${safeName},</p>
             <p>Thank you for registering! Please use the following 6-digit verification code to complete your registration:</p>
             <div style="background-color: #f5f5f5; padding: 20px; text-align: center; border-radius: 5px; margin: 20px 0;">
-              <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #007bff;">${code}</span>
+              <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #007bff;">${safeCode}</span>
             </div>
             <p>This code will expire in 15 minutes.</p>
             <p>If you didn't request this code, you can safely ignore this email.</p>
@@ -96,7 +100,8 @@ export class MailService {
   }
 
   /**
-   * Send a password reset code email to a user
+   * Send a password reset code email to a user.
+   * Values that come from user input are escaped before they reach the HTML.
    * @param email - Recipient email address
    * @param code - 6-digit password reset code
    * @param name - Recipient's name
@@ -106,6 +111,8 @@ export class MailService {
     code: string,
     name: string,
   ): Promise<void> {
+    const safeName = escapeHtml(name);
+    const safeCode = escapeHtml(code);
     const html = `
       <!DOCTYPE html>
       <html>
@@ -117,10 +124,10 @@ export class MailService {
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
           <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
             <h2 style="color: #333;">Reset Your Password</h2>
-            <p>Hi ${name},</p>
+            <p>Hi ${safeName},</p>
             <p>You requested to reset your password. Please use the following 6-digit code to reset your password:</p>
             <div style="background-color: #f5f5f5; padding: 20px; text-align: center; border-radius: 5px; margin: 20px 0;">
-              <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #dc3545;">${code}</span>
+              <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #dc3545;">${safeCode}</span>
             </div>
             <p>This code will expire in 15 minutes.</p>
             <p>If you didn't request this code, you can safely ignore this email. Your password will remain unchanged.</p>
@@ -136,6 +143,77 @@ export class MailService {
       to: email,
       subject: 'Reset Your Password',
       html,
+      text,
+    });
+  }
+
+  /**
+   * Send a one-time sign-in link.
+   * The link is escaped before it reaches the HTML, in the text of the anchor
+   * and in its href.
+   * @param email - Recipient email address
+   * @param link - Client URL carrying the one-time token
+   * @param expiresInMinutes - Minutes until the link stops working
+   */
+  async sendMagicLink(
+    email: string,
+    link: string,
+    expiresInMinutes: number,
+  ): Promise<void> {
+    const safeLink = escapeHtml(link);
+    const safeExpiry = escapeHtml(String(expiresInMinutes));
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Your Sign-In Link</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #333;">Your Sign-In Link</h2>
+            <p>Use this link to sign in. It works once.</p>
+            <div style="margin: 20px 0;">
+              <a href="${safeLink}" style="background-color: #007bff; color: #ffffff; padding: 12px 20px; border-radius: 5px; text-decoration: none; display: inline-block;">Sign in</a>
+            </div>
+            <p>If the button does not work, paste this address into your browser:</p>
+            <p style="word-break: break-all; color: #555;">${safeLink}</p>
+            <p>The link expires in ${safeExpiry} minutes.</p>
+            <p>If you did not request this, ignore this email.</p>
+            <p>Best regards,<br>The Team</p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const text = `Use this link to sign in. It works once:\n\n${link}\n\nThe link expires in ${expiresInMinutes} minutes.\n\nIf you did not request this, ignore this email.\n\nBest regards,\nThe Team`;
+
+    await this.sendMail({
+      to: email,
+      subject: 'Your Sign-In Link',
+      html,
+      text,
+    });
+  }
+
+  /**
+   * Tell an account holder that their address was used in a registration.
+   * Sent instead of an activation code, so registration answers the same way
+   * for an address that has an account and one that does not.
+   * Plain text only: there is nothing to click.
+   * @param email - Recipient email address
+   * @param name - Recipient's name
+   */
+  async sendRegistrationAttemptNotice(
+    email: string,
+    name: string,
+  ): Promise<void> {
+    const text = `Hi ${name},\n\nSomeone just tried to register an account with this email address. You already have an account, so nothing has changed and no new account was created.\n\nIf this was you, sign in instead. If you have forgotten your password, use the forgot password link on the sign-in page.\n\nIf it was not you, you can ignore this email.\n\nBest regards,\nThe Team`;
+
+    await this.sendMail({
+      to: email,
+      subject: 'Someone tried to register with your email address',
       text,
     });
   }

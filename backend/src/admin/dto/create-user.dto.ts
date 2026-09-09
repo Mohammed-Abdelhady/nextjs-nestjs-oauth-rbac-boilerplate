@@ -1,18 +1,27 @@
 import {
   IsEmail,
   IsString,
-  IsEnum,
-  IsIn,
   MinLength,
   MaxLength,
   Matches,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole } from '../../user/enums/user-role.enum';
+import {
+  ROLE_SLUG_MAX_LENGTH,
+  ROLE_SLUG_MESSAGE,
+  ROLE_SLUG_REGEX,
+} from '../../common/constants/roles';
+import {
+  NAME_MAX_LENGTH,
+  NAME_MESSAGE,
+  NAME_MIN_LENGTH,
+  NAME_REGEX,
+} from '../../common/constants/name';
 
 /**
  * DTO for creating a new user via admin panel.
- * ADMIN role cannot be assigned via API.
+ * Any existing role slug is accepted, including custom ones. The service
+ * checks that the role exists and that the actor outranks it.
  */
 export class CreateUserDto {
   @ApiProperty({
@@ -25,12 +34,17 @@ export class CreateUserDto {
   @ApiProperty({
     description: 'User full name',
     example: 'John Doe',
-    minLength: 2,
-    maxLength: 100,
+    minLength: NAME_MIN_LENGTH,
+    maxLength: NAME_MAX_LENGTH,
   })
   @IsString()
-  @MinLength(2, { message: 'Name must be at least 2 characters long' })
-  @MaxLength(100, { message: 'Name must not exceed 100 characters' })
+  @MinLength(NAME_MIN_LENGTH, {
+    message: `Name must be at least ${NAME_MIN_LENGTH} characters long`,
+  })
+  @MaxLength(NAME_MAX_LENGTH, {
+    message: `Name must not exceed ${NAME_MAX_LENGTH} characters`,
+  })
+  @Matches(NAME_REGEX, { message: NAME_MESSAGE })
   name!: string;
 
   @ApiProperty({
@@ -47,11 +61,13 @@ export class CreateUserDto {
   password!: string;
 
   @ApiProperty({
-    description: 'User role (ADMIN cannot be assigned via API)',
-    enum: ['user', 'support', 'manager'],
+    description:
+      'Role slug to assign. Must exist and sit below the actor role level. ' +
+      'ADMIN cannot be assigned through the API.',
     example: 'user',
   })
-  @IsEnum(UserRole)
-  @IsIn([UserRole.USER, UserRole.SUPPORT, UserRole.MANAGER])
-  role!: UserRole;
+  @IsString()
+  @MaxLength(ROLE_SLUG_MAX_LENGTH)
+  @Matches(ROLE_SLUG_REGEX, { message: ROLE_SLUG_MESSAGE })
+  role!: string;
 }

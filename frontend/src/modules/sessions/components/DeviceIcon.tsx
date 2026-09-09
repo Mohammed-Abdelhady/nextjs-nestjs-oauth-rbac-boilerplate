@@ -26,8 +26,9 @@ const iconMap: Record<DeviceType, LucideIcon> = {
 };
 
 /**
- * DeviceIcon component displays an icon based on device type
- * Uses lucide-react icons with consistent sizing and accessibility
+ * DeviceIcon component displays an icon based on device type.
+ * The device name is written next to it, so the icon is decorative unless the
+ * caller passes a label of its own.
  */
 export function DeviceIcon({
   deviceType,
@@ -42,7 +43,9 @@ export function DeviceIcon({
     <Icon
       size={iconSize}
       className={cn('text-muted-foreground', className)}
-      aria-label={ariaLabel || `${deviceType} device`}
+      aria-label={ariaLabel}
+      aria-hidden={ariaLabel ? undefined : true}
+      data-testid={`device-icon-${deviceType.toLowerCase()}`}
     />
   );
 }

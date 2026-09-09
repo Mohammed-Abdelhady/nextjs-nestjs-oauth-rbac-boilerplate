@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
-import { RegisterPage } from '@/modules/auth/pages/RegisterPage';
+import { RegisterPage } from '@/modules/auth/methods/password';
 
 /**
  * Generate metadata for registration page

@@ -1,9 +1,17 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useRouter, usePathname } from '@/i18n/navigation';
+import { LoadingRegion } from '@/components/layout/LoadingRegion';
+import { Button } from '@/components/ui/button';
 import { useAppSelector } from '@/store/hooks';
-import { selectIsAuthenticated, selectAuthLoading } from '@/modules/auth/store/authSlice';
+import {
+  selectIsAuthenticated,
+  selectValidationErrorStatus,
+  selectValidationStatus,
+} from '@/modules/auth/store/authSlice';
+import { useGetCurrentUserQuery } from '@/modules/auth/store/authApi';
 
 interface AuthGuardProps {
   readonly children: React.ReactNode;
@@ -25,34 +33,49 @@ interface AuthGuardProps {
  * }
  */
 export function AuthGuard({ children }: Readonly<AuthGuardProps>) {
+  const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
-  const isAuthLoading = useAppSelector(selectAuthLoading);
+  const validationStatus = useAppSelector(selectValidationStatus);
+  const validationErrorStatus = useAppSelector(selectValidationErrorStatus);
+  const { refetch } = useGetCurrentUserQuery();
+
+  const waiting = validationStatus === 'idle' || validationStatus === 'pending';
+  const unavailable = validationStatus === 'failed' && validationErrorStatus !== 401;
 
   useEffect(() => {
-    // Wait for auth state to be determined
-    if (isAuthLoading) {
+    if (waiting || unavailable) {
       return;
     }
 
-    // If not authenticated, redirect to login with return URL
     if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(pathname);
       router.push(`/auth/login?redirect=${returnUrl}`);
     }
-  }, [isAuthenticated, isAuthLoading, pathname, router]);
+  }, [isAuthenticated, waiting, unavailable, pathname, router]);
 
-  // Show nothing while loading auth state
-  if (isAuthLoading) {
-    return null;
+  if (waiting) {
+    return <LoadingRegion label={t('common.loading')} testId="auth-guard-loading" />;
   }
 
-  // Show nothing while redirecting
+  if (unavailable) {
+    return (
+      <div
+        className="flex min-h-[60vh] w-full flex-col items-center justify-center gap-4 p-6"
+        data-testid="auth-guard-retry"
+      >
+        <p className="text-center text-muted-foreground">{t('auth.sessionCheckFailed')}</p>
+        <Button type="button" onClick={() => void refetch()}>
+          {t('common.retry')}
+        </Button>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
-    return null;
+    return <LoadingRegion label={t('common.loading')} testId="auth-guard-loading" />;
   }
 
-  // User is authenticated, render children
   return <>{children}</>;
 }

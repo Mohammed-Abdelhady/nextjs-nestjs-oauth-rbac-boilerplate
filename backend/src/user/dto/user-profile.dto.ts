@@ -1,4 +1,3 @@
-import { AuthProvider } from '../enums/auth-provider.enum';
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
@@ -38,11 +37,11 @@ export class UserProfileDto {
   permissions!: string[];
 
   @ApiProperty({
-    description: 'Authentication provider (LOCAL, GOOGLE, FACEBOOK, GITHUB)',
-    enum: ['LOCAL', 'GOOGLE', 'FACEBOOK', 'GITHUB'],
-    example: 'LOCAL',
+    description:
+      "Provider the account was created with: 'email' or an OAuth provider id",
+    example: 'email',
   })
-  authProvider!: AuthProvider;
+  authProvider!: string;
 
   @ApiProperty({
     description: 'Whether the user email is verified',
@@ -50,41 +49,43 @@ export class UserProfileDto {
   })
   isVerified!: boolean;
 
+  // feature:totp:start
   @ApiProperty({
-    description: 'Google OAuth ID (if authenticated via Google)',
+    description: 'Whether sign-in on this account asks for a TOTP code',
+    example: false,
+  })
+  twoFactorEnabled!: boolean;
+  // feature:totp:end
+
+  // feature:passkeys:start
+  @ApiProperty({
+    description: 'How many passkeys are registered on the account',
+    example: 2,
+  })
+  passkeyCount!: number;
+  // feature:passkeys:end
+
+  @ApiProperty({
+    description: 'Avatar URL synced from the primary provider',
     example: null,
     required: false,
   })
-  googleId?: string | null;
+  avatarUrl?: string;
 
   @ApiProperty({
-    description: 'Facebook OAuth ID (if authenticated via Facebook)',
-    example: null,
-    required: false,
-  })
-  facebookId?: string | null;
-
-  @ApiProperty({
-    description: 'GitHub OAuth ID (if authenticated via GitHub)',
-    example: null,
-    required: false,
-  })
-  githubId?: string | null;
-
-  @ApiProperty({
-    description: 'List of linked authentication providers',
-    example: ['LOCAL', 'GOOGLE'],
+    description:
+      "Sign-in methods on the account: 'email' plus linked provider ids",
+    example: ['email', 'google'],
     type: [String],
   })
   linkedProviders!: string[];
 
   @ApiProperty({
-    description: 'Primary provider for profile synchronization',
-    enum: ['LOCAL', 'GOOGLE', 'FACEBOOK', 'GITHUB'],
-    example: 'GOOGLE',
+    description: 'Provider id used as the source for profile synchronization',
+    example: 'google',
     required: false,
   })
-  primaryProvider?: AuthProvider;
+  primaryProvider?: string;
 
   @ApiProperty({
     description: 'Timestamp of last profile synchronization',

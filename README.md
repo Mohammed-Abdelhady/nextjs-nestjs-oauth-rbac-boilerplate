@@ -1,229 +1,170 @@
-# Full-Stack Authentication Boilerplate
+# Full-stack authentication boilerplate
 
-Production-ready authentication system with **NestJS** backend and **Next.js** frontend.
+Production boilerplate with a NestJS 11 backend and a Next.js 16 frontend. Uses cookie-based sessions, dynamic role-based access control, and multiple authentication options.
 
 ## Features
 
-### Authentication
+- Email and password registration with a 6-digit verification code sent by email
+- Magic link sign-in sent by email
+- Two-factor authentication (TOTP) with single-use recovery codes
+- Passkey (WebAuthn) registration and authentication
+- 12 OAuth providers plus generic OIDC
+- Dynamic role-based access control with role hierarchy, custom permissions, and direct user overrides
+- Multi-session management with device, browser, OS, and IP tracking
+- Account linking across multiple OAuth providers
+- Dynamic runtime auth method discovery via `GET /api/auth/methods`
 
-- Email/password registration with 6-digit verification code
-- Google OAuth login
-- Facebook OAuth login
-- GitHub OAuth login
-- Password reset via email
-- Multi-session management with device tracking
-- Account linking (connect multiple OAuth providers)
-- Profile synchronization across providers
+## Tech stack
 
-### Authorization (RBAC)
+| Layer    | Technology                                        |
+| -------- | ------------------------------------------------- |
+| Backend  | NestJS 11, TypeScript, MongoDB, Mongoose 8        |
+| Frontend | Next.js 16 (App Router), React 19, Tailwind CSS 4 |
+| State    | Redux Toolkit (RTK Query)                         |
+| UI       | shadcn/ui, Radix UI, Lucide Icons                 |
+| i18n     | next-intl                                         |
+| Tests    | Jest, Playwright                                  |
 
-- Dynamic role-based access control
-- Role management with custom permissions
-- Direct user permission assignment
-- Permission inheritance from roles
-- Protected system roles (admin, superadmin)
-- Permission-based UI rendering
+## Scaffold a new project
 
-### Session Management
-
-- View all active sessions with device info
-- Device type detection (Desktop, Mobile, Tablet)
-- Browser and OS identification
-- IP address tracking
-- Individual session termination
-- Bulk logout (all other devices)
-
-### Security
-
-- bcrypt password hashing
-- Email verification required
-- Rate limiting on auth endpoints
-- CORS configuration
-- Helmet security headers
-- Input validation and sanitization
-- HTTP-only cookies
-
-### Dashboard
-
-- Role management (CRUD operations)
-- Permission management
-- User management
-- Responsive navigation
-- Mobile-first sidebar
-
-### Code Quality
-
-- Pre-commit hooks (linting, formatting, testing)
-- TypeScript strict mode
-- Conventional commits enforcement
-- ESLint + Prettier
-- E2E tests with Playwright
-
-## Tech Stack
-
-| Layer    | Technology                               |
-| -------- | ---------------------------------------- |
-| Backend  | NestJS 11, TypeScript, MongoDB, Mongoose |
-| Frontend | Next.js 16, React 19, Tailwind CSS 4     |
-| State    | Redux Toolkit (RTK Query)                |
-| UI       | shadcn/ui, Radix UI, Lucide Icons        |
-| i18n     | next-intl                                |
-| Testing  | Jest, Playwright                         |
-
-## Quick Start
+To scaffold a project with only the authentication methods you want:
 
 ```bash
-# Clone and install
-git clone https://github.com/your-username/FULL-MERN-AUTH-Boilerplate.git
-cd FULL-MERN-AUTH-Boilerplate
-npm install
-
-# Start with Docker (recommended)
-docker compose up
-
-# Or start manually
-cd backend && npm install && npm run start:dev
-cd frontend && npm install && npm run dev
+npx create-nest-next-auth my-app
 ```
 
-**Access:**
+The CLI prompts for the sign-in methods to keep. It removes unused strategy files, controller endpoints, frontend UI modules, environment variables, and setup docs. See [CLI options and flags](https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/blob/master/packages/create-nest-next-auth/README.md).
+
+## Choose your auth methods
+
+At runtime, the frontend calls `GET /api/auth/methods` to learn which authentication flows the backend enables. The backend checks its configuration and returns the active providers, credential toggles, magic link availability, passkey support, and two-factor requirements. The frontend renders only the matching forms and buttons.
+
+| Method              | Type                  | Setup guide                                      |
+| ------------------- | --------------------- | ------------------------------------------------ |
+| Email and password  | Credential            | [SMTP setup](docs/setup-smtp.md)                 |
+| Magic link          | Passwordless          | [Magic link setup](docs/setup-magic-link.md)     |
+| Two-factor (TOTP)   | Second factor         | [Two-factor setup](docs/setup-two-factor.md)     |
+| Passkeys (WebAuthn) | Credential / 2FA      | [Passkey setup](docs/setup-passkeys.md)          |
+| Google              | OAuth 2.0             | [Google setup](docs/setup-google-oauth.md)       |
+| GitHub              | OAuth 2.0             | [GitHub setup](docs/setup-github-oauth.md)       |
+| Facebook            | OAuth 2.0             | [Facebook setup](docs/setup-facebook-oauth.md)   |
+| Apple               | OAuth 2.0 / Form post | [Apple setup](docs/setup-apple-oauth.md)         |
+| Discord             | OAuth 2.0             | [Discord setup](docs/setup-discord-oauth.md)     |
+| GitLab              | OIDC                  | [GitLab setup](docs/setup-gitlab-oauth.md)       |
+| LinkedIn            | OIDC                  | [LinkedIn setup](docs/setup-linkedin-oauth.md)   |
+| Microsoft           | OAuth 2.0             | [Microsoft setup](docs/setup-microsoft-oauth.md) |
+| Generic OIDC        | OIDC                  | [OIDC setup](docs/setup-oidc-oauth.md)           |
+| Slack               | OIDC                  | [Slack setup](docs/setup-slack-oauth.md)         |
+| Twitch              | OIDC                  | [Twitch setup](docs/setup-twitch-oauth.md)       |
+| X (Twitter)         | OAuth 2.0 with PKCE   | [X setup](docs/setup-x-oauth.md)                 |
+
+## Quick start
+
+Clone the repository and install dependencies:
+
+```bash
+git clone https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate.git
+cd nextjs-nestjs-oauth-rbac-boilerplate
+npm install
+```
+
+### Start with Docker
+
+```bash
+cp .env.docker.example .env.docker
+docker compose --env-file .env.docker up --build
+```
+
+### Start manually
+
+```bash
+# In one terminal, start the backend:
+npm run start:dev -w backend
+
+# In another terminal, start the frontend:
+npm run dev -w frontend
+```
+
+Endpoints:
 
 - Frontend: http://localhost:3000
-- Backend API: http://localhost:5000
-- API Docs: http://localhost:5000/api/docs (set `SWAGGER_ENABLED=true`)
+- Backend API: http://localhost:5000/api
+- Health check: http://localhost:5000/health
+- Swagger documentation: http://localhost:5000/api/docs (set `SWAGGER_ENABLED=true` in `backend/.env`)
 
-## Project Initialization
+## Environment configuration
 
-Use the interactive CLI to configure the boilerplate for your project:
-
-```bash
-npm run init
-```
-
-The script will prompt you for:
-
-| Configuration     | Description                                        |
-| ----------------- | -------------------------------------------------- |
-| App name          | Your project name (generates slug & database name) |
-| Description       | Project description for package.json & README      |
-| Author            | Author name for package.json                       |
-| Ports             | Frontend (3000) and backend (5001) ports           |
-| MongoDB URI       | Database connection string                         |
-| SMTP settings     | Email configuration (optional)                     |
-| OAuth credentials | Google, Facebook, GitHub (optional)                |
-
-**Files updated automatically:**
-
-- `package.json` (root, backend, frontend)
-- `backend/.env` and `frontend/.env.local`
-- `docker-compose.yml` and `docker-compose.prod.yml`
-- `README.md` files
-
-## Production Deployment
-
-Configure your application for production with domains, SSL, and Docker:
+Copy the example configuration files:
 
 ```bash
-npm run setup:prod
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env.local
 ```
 
-The production setup wizard will configure:
+### Key backend variables (`backend/.env`)
 
-| Configuration    | Description                              |
-| ---------------- | ---------------------------------------- |
-| Domain names     | Main, frontend, and API domains          |
-| SSL certificates | Let's Encrypt or self-signed             |
-| MongoDB          | Production database credentials          |
-| Nginx ports      | HTTP (80) and HTTPS (443) ports          |
-| Docker Compose   | Production-ready container configuration |
+| Variable              | Description                                | Default                                |
+| --------------------- | ------------------------------------------ | -------------------------------------- |
+| `PORT`                | API server port                            | `5000`                                 |
+| `NODE_ENV`            | Environment name                           | `development`                          |
+| `MONGO_URI`           | MongoDB connection string                  | `mongodb://localhost:27017/authboiler` |
+| `FRONTEND_URL`        | Frontend origin for CORS and cookie domain | `http://localhost:3000`                |
+| `SESSION_SECRET`      | Secret used to sign session cookies        | Required in production                 |
+| `OAUTH_STATE_SECRET`  | Secret used to sign OAuth state cookies    | Required in production                 |
+| `TOTP_ENCRYPTION_KEY` | 32-byte hex key to encrypt TOTP secrets    | Required for 2FA                       |
 
-**What it does:**
+### Key frontend variables (`frontend/.env.local`)
 
-- Creates production `.env` file with all settings
-- Updates `docker-compose.prod.yml` with your domains
-- Configures Nginx for reverse proxy and SSL
-- Generates SSL certificates (self-signed or Let's Encrypt ready)
-- Backs up existing configuration files
+| Variable              | Description                          | Default                 |
+| --------------------- | ------------------------------------ | ----------------------- |
+| `NEXT_PUBLIC_API_URL` | Backend origin without `/api` suffix | `http://localhost:5000` |
 
-## Documentation
+See [docs/README.md](docs/README.md) for provider-specific credentials and mail settings.
 
-| Guide                                   | Description                         |
-| --------------------------------------- | ----------------------------------- |
-| [Frontend README](./frontend/README.md) | Frontend setup, components, testing |
-| [Backend README](./backend/README.md)   | Backend setup, API, database        |
-| [Setup Guides](./docs/README.md)        | SMTP, OAuth, deployment guides      |
-| [Code Quality](./docs/code-quality.md)  | Linting, testing, commits           |
-| [Deployment](./docs/deployment.md)      | Docker, Vercel deployment           |
+## Seed data
 
-## Project Structure
-
-```
-/
-├── backend/     # NestJS API (auth, user, session, permission modules)
-├── frontend/    # Next.js app (pages, components, modules)
-├── docs/        # Setup guides and documentation
-└── openspec/    # Spec-driven development docs
-```
-
-## API Overview
-
-| Endpoint                        | Description            |
-| ------------------------------- | ---------------------- |
-| `POST /api/auth/register`       | Register with email    |
-| `POST /api/auth/activate`       | Verify email with code |
-| `POST /api/auth/login`          | Login                  |
-| `POST /api/auth/logout`         | Logout                 |
-| `POST /api/auth/oauth/callback` | OAuth callback         |
-| `GET /api/user/profile`         | Get profile            |
-| `PATCH /api/user/profile`       | Update profile         |
-| `POST /api/user/password`       | Change password        |
-| `GET /api/user/sessions`        | List sessions          |
-| `DELETE /api/user/sessions/:id` | Revoke session         |
-
-Full API documentation: [Backend README](./backend/README.md#api-endpoints)
-
-## Environment Setup
-
-**Backend** (`backend/.env`):
-
-```bash
-PORT=5000
-MONGO_URI=mongodb://localhost:27017/authboiler
-SMTP_HOST=smtp.gmail.com
-SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-app-password
-GOOGLE_CLIENT_ID=your-client-id
-```
-
-**Frontend** (`frontend/.env.local`):
-
-```bash
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-client-id
-```
-
-See [Setup Guides](./docs/README.md) for detailed configuration.
-
-## Seed Data
+Run the database seed script from the backend directory:
 
 ```bash
 cd backend
 npm run seed
 ```
 
-| Role    | Email              | Password    |
-| ------- | ------------------ | ----------- |
-| USER    | user@seed.local    | User123!    |
-| SUPPORT | support@seed.local | Support123! |
-| MANAGER | manager@seed.local | Manager123! |
-| ADMIN   | admin@seed.local   | Admin123!   |
+The script runs only when `NODE_ENV` is `development` or `test`. It creates four system roles (`user`, `support`, `manager`, `admin`) and two seed accounts:
+
+| Email              | Default role | Password                                         |
+| ------------------ | ------------ | ------------------------------------------------ |
+| `admin@seed.local` | `admin`      | Generated random base64 string printed to stdout |
+| `user@seed.local`  | `user`       | Generated random base64 string printed to stdout |
+
+To set explicit passwords for seed accounts, set `SEED_ADMIN_PASSWORD` and `SEED_USER_PASSWORD` in `backend/.env` before running the command.
+
+To wipe and reseed the database:
+
+```bash
+npm run seed:reset
+```
+
+## Documentation
+
+| Guide                                        | Description                                                            |
+| -------------------------------------------- | ---------------------------------------------------------------------- |
+| [Architecture](docs/ARCHITECTURE.md)         | Request lifecycle, session storage, OAuth registry, and security model |
+| [Database schema](docs/DATABASE_SCHEMA.md)   | MongoDB collections, indexes, and migrations                           |
+| [RBAC system](docs/RBAC-SYSTEM.md)           | Role levels, permission inheritance, and enforcement guards            |
+| [Migration guide](docs/MIGRATION-GUIDE.md)   | Database migration scripts and versioning                              |
+| [Production setup](docs/PRODUCTION-SETUP.md) | Domain configuration, SSL termination, and Nginx reverse proxy         |
+| [Code quality](docs/code-quality.md)         | Linting, formatting, git hooks, and E2E tests                          |
+| [Deployment](docs/deployment.md)             | Docker Compose and cloud deployment guides                             |
+| [Backend guide](backend/README.md)           | Backend modules, controllers, and configuration schema                 |
+| [Frontend guide](frontend/README.md)         | Frontend routing, components, and internationalization                 |
 
 ## Contributing
 
-1. Create feature branch: `git checkout -b feat/feature-name`
-2. Follow [Conventional Commits](https://conventionalcommits.org)
-3. Ensure pre-commit checks pass
-4. Submit PR to `master`
+1. Create a feature branch: `git checkout -b feat/feature-name`
+2. Follow [Conventional Commits](https://conventionalcommits.org) format for commit messages.
+3. Verify that tests and lint checks pass: `npm run lint && npm run test`
+4. Submit a pull request.
 
 ## License
 

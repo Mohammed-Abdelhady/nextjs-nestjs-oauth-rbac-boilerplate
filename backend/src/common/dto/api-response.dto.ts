@@ -49,19 +49,19 @@ export class ErrorDetails {
     example: 'INVALID_CREDENTIALS',
     enum: Object.values(ErrorCode),
   })
-  code: ErrorCode;
+  code!: ErrorCode;
 
   @ApiProperty({
     description: 'Human-readable error message',
     example: 'Invalid email or password',
   })
-  message: string;
+  message!: string;
 
   @ApiProperty({
     description: 'Optional additional context (e.g., field errors, retry info)',
     example: { remainingAttempts: 3 },
     required: false,
-    type: 'object',
+    type: Object,
     additionalProperties: true,
   })
   details?: Record<string, unknown>;
@@ -86,6 +86,14 @@ export class ErrorResponse {
     type: ErrorDetails,
   })
   error: ErrorDetails;
+
+  @ApiProperty({
+    description:
+      'Correlation id of the request, matching the X-Request-Id response header',
+    example: '3f1c1f0a-0f2c-4a3e-9b1e-2f5a6c7d8e90',
+    required: false,
+  })
+  requestId?: string;
 
   constructor(
     code: ErrorCode,

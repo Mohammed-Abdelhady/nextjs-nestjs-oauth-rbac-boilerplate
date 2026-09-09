@@ -1,0 +1,231 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Reject prohibited tracked filenames
+        run: env -i PATH="$PATH" node scripts/verify-docker.mjs --check-checkout
+
+      - name: Prepare isolated tool home
+        run: mkdir -p "$RUNNER_TEMP/ci-home"
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: env -i PATH="$PATH" HOME="$RUNNER_TEMP/ci-home" CI=true npm ci
+
+      - name: Lint
+        run: env -i PATH="$PATH" HOME="$RUNNER_TEMP/ci-home" CI=true OAUTH_STATE_SECRET=synthetic-ci-state-000000000000000000 MONGO_URI=mongodb://127.0.0.1:27017/unused npm run lint
+
+      - name: Typecheck
+        run: env -i PATH="$PATH" HOME="$RUNNER_TEMP/ci-home" CI=true OAUTH_STATE_SECRET=synthetic-ci-state-000000000000000000 MONGO_URI=mongodb://127.0.0.1:27017/unused npm run typecheck
+
+      - name: Build
+        run: env -i PATH="$PATH" HOME="$RUNNER_TEMP/ci-home" CI=true OAUTH_STATE_SECRET=synthetic-ci-state-000000000000000000 MONGO_URI=mongodb://127.0.0.1:27017/unused npm run build
+
+      - name: Test
+        run: env -i PATH="$PATH" HOME="$RUNNER_TEMP/ci-home" CI=true OAUTH_STATE_SECRET=synthetic-ci-state-000000000000000000 MONGO_URI=mongodb://127.0.0.1:27017/unused npm run test
+
+  scaffold-combinations:
+    name: scaffold-combinations
+    runs-on: ubuntu-latest
+    # The workflow ships inside every generated project, where packages/ does
+    # not exist. Only the boilerplate repository has a CLI to exercise.
+    if: github.repository == 'Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Reject prohibited tracked filenames
+        run: env -i PATH="$PATH" node scripts/verify-docker.mjs --check-checkout
+
+      - name: Prepare isolated tool home
+        run: mkdir -p "$RUNNER_TEMP/ci-home"
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: env -i PATH="$PATH" HOME="$RUNNER_TEMP/ci-home" CI=true npm ci
+
+      - name: Scaffold each feature combination and typecheck it
+        run: env -i PATH="$PATH" HOME="$RUNNER_TEMP/ci-home" CI=true npm run test:combinations -w packages/create-nest-next-auth
+
+  backend-e2e:
+    name: backend and browser integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    # Generated selections do not carry the maintainer fixture contract.
+    if: github.repository == 'Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Reject prohibited tracked filenames
+        run: env -i PATH="$PATH" node scripts/verify-docker.mjs --check-checkout
+
+      - name: Prepare isolated tool home
+        run: mkdir -p "$RUNNER_TEMP/ci-home" "$RUNNER_TEMP/integration-results"
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: env -i PATH="$PATH" HOME="$RUNNER_TEMP/ci-home" CI=true npm ci
+
+      - name: Run fixture-backed backend integration
+        run: env -i PATH="$PATH" HOME="$RUNNER_TEMP/ci-home" CI=true npm run test:e2e -w backend -- --runInBand
+
+      - name: Build frontend for the synthetic API
+        run: env -i PATH="$PATH" HOME="$RUNNER_TEMP/ci-home" CI=true NEXT_PUBLIC_API_URL=http://127.0.0.1:5107 npm run build -w frontend
+
+      - name: Install the workspace's Chromium revision
+        run: env -i PATH="$PATH" HOME="$RUNNER_TEMP/ci-home" CI=true npm exec --workspace frontend --no -- playwright install --with-deps chromium
+
+      - name: Run anonymous browsers
+        run: env -i PATH="$PATH" HOME="$RUNNER_TEMP/ci-home" CI=true PLAYWRIGHT_JSON_OUTPUT_NAME="$RUNNER_TEMP/integration-results/anonymous.json" npm run test:e2e -w frontend -- --config=playwright.frontend.config.ts --reporter=line,json
+
+      - name: Run authenticated browsers
+        run: env -i PATH="$PATH" HOME="$RUNNER_TEMP/ci-home" CI=true PLAYWRIGHT_JSON_OUTPUT_NAME="$RUNNER_TEMP/integration-results/authenticated.json" npm run test:e2e -w frontend -- --reporter=line,json
+
+      - name: Summarize browser counts
+        if: always()
+        env:
+          RESULTS: ${{ runner.temp }}/integration-results
+        run: |
+          env -i PATH="$PATH" RESULTS="$RESULTS" node --input-type=module <<'NODE'
+          import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+          import { join } from 'node:path';
+          const summary = {};
+          for (const name of ['anonymous', 'authenticated']) {
+            const path = join(process.env.RESULTS, `${name}.json`);
+            if (!existsSync(path)) { summary[name] = { status: 'not completed' }; continue; }
+            const { stats } = JSON.parse(readFileSync(path, 'utf8'));
+            summary[name] = {
+              executed: stats.expected + stats.unexpected + stats.flaky,
+              passed: stats.expected, failed: stats.unexpected,
+              skipped: stats.skipped, flaky: stats.flaky,
+            };
+          }
+          console.log(JSON.stringify(summary, null, 2));
+          if (existsSync(process.env.RESULTS)) {
+            writeFileSync(join(process.env.RESULTS, 'counts.json'), JSON.stringify(summary, null, 2));
+          }
+          NODE
+
+      - name: Retain synthetic count diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-counts
+          path: ${{ runner.temp }}/integration-results/counts.json
+          retention-days: 3
+          if-no-files-found: ignore
+
+      - name: Retain synthetic overflow failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-overflow-diagnostics
+          path: |
+            output/playwright/authenticated/**/overflow-geometry.json
+            output/playwright/authenticated/**/overflow-failure.png
+          retention-days: 3
+          if-no-files-found: ignore
+
+  docker:
+    name: docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Reject prohibited tracked filenames
+        run: env -i PATH="$PATH" node scripts/verify-docker.mjs --check-checkout
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Export permitted Docker source
+        run: env -i PATH="$PATH" node scripts/verify-docker.mjs --export "$RUNNER_TEMP/docker-source"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ runner.temp }}/docker-source
+          file: ${{ runner.temp }}/docker-source/backend/Dockerfile
+          target: production
+          push: false
+          load: true
+          tags: authboiler-smoke-backend:local
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ runner.temp }}/docker-source
+          file: ${{ runner.temp }}/docker-source/frontend/Dockerfile
+          target: production
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://127.0.0.1:5107
+          push: false
+          load: true
+          tags: authboiler-smoke-frontend:local
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build nginx image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ runner.temp }}/docker-source/nginx
+          file: ${{ runner.temp }}/docker-source/nginx/Dockerfile
+          push: false
+          load: true
+          tags: authboiler-smoke-nginx:local
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Fetch synthetic database image
+        run: |
+          mkdir -p "$RUNNER_TEMP/docker-home" "$RUNNER_TEMP/docker-config"
+          env -i PATH="$PATH" HOME="$RUNNER_TEMP/docker-home" docker --config "$RUNNER_TEMP/docker-config" pull mongo:7
+
+      - name: Verify synthetic containers and HTTP nginx health
+        run: env -i PATH="$PATH" node scripts/verify-docker.mjs

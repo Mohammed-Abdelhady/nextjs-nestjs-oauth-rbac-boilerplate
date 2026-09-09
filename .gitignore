@@ -1,7 +1,6 @@
 # AI Assistant Files
 .kilocode
 .claude
-openspec
 AGENTS.md
 CLAUDE.md
 
@@ -14,6 +13,11 @@ build/
 .next/
 out/
 
+# Scaffolding CLI build inputs, produced by
+# npm run build -w packages/create-nest-next-auth
+packages/create-nest-next-auth/template/
+packages/create-nest-next-auth/template.manifest.json
+
 # Environment files
 .env
 .env.local
@@ -23,6 +27,13 @@ out/
 
 # Testing
 coverage/
+output/
+test-results/
+playwright-report/
+blob-report/
+.auth/
+.mongodb-binaries/
+mongodb-memory-server/
 
 # Logs
 *.log

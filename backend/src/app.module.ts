@@ -1,24 +1,42 @@
-import { Module } from '@nestjs/common';
+import { Logger, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
-import { APP_GUARD, APP_FILTER } from '@nestjs/core';
+import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { RequestLoggingInterceptor } from './common/interceptors/request-logging.interceptor';
 import { HealthModule } from './health/health.module';
 import { UserModule } from './user/user.module';
 import { SessionModule } from './session/session.module';
-import { PermissionModule } from './permission/permission.module';
 import { AuthModule } from './auth/auth.module';
+import { AuthMethodsController } from './auth/auth-methods.controller';
+import { MagicLinkModule } from './auth/magic-link/magic-link.module'; // feature:magic-link
+import { TwoFactorModule } from './auth/two-factor/two-factor.module'; // feature:totp
+import { PasskeysModule } from './auth/passkeys/passkeys.module'; // feature:passkeys
+import { OAuthModule } from './auth/oauth/oauth.module'; // feature:oauth-core
+import { GoogleOAuthStrategy } from './auth/oauth/strategies/google-oauth.strategy'; // feature:google
+import { GitHubOAuthStrategy } from './auth/oauth/strategies/github-oauth.strategy'; // feature:github
+import { FacebookOAuthStrategy } from './auth/oauth/strategies/facebook-oauth.strategy'; // feature:facebook
+import { MicrosoftOAuthStrategy } from './auth/oauth/strategies/microsoft-oauth.strategy'; // feature:microsoft
+import { AppleOAuthStrategy } from './auth/oauth/strategies/apple-oauth.strategy'; // feature:apple
+import { DiscordOAuthStrategy } from './auth/oauth/strategies/discord-oauth.strategy'; // feature:discord
+import { LinkedInOAuthStrategy } from './auth/oauth/strategies/linkedin-oauth.strategy'; // feature:linkedin
+import { GitLabOAuthStrategy } from './auth/oauth/strategies/gitlab-oauth.strategy'; // feature:gitlab
+import { XOAuthStrategy } from './auth/oauth/strategies/x-oauth.strategy'; // feature:x
+import { SlackOAuthStrategy } from './auth/oauth/strategies/slack-oauth.strategy'; // feature:slack
+import { TwitchOAuthStrategy } from './auth/oauth/strategies/twitch-oauth.strategy'; // feature:twitch
+import { OidcOAuthStrategy } from './auth/oauth/strategies/oidc-oauth.strategy'; // feature:oidc
 import { AdminModule } from './admin/admin.module';
 import { CommonModule } from './common/common.module';
 import { MailModule } from './mail/mail.module';
 import { DatabaseModule } from './database/database.module';
 import { RoleModule } from './role/role.module';
-import { MigrationModule } from './database/migrations/migration.module';
-import configuration, { EnvironmentVariables } from './config/configuration';
+import configuration from './config/configuration';
+import { validateEnvironment } from './config/env.validation';
 import { Connection } from 'mongoose';
 
 @Module({
@@ -31,25 +49,22 @@ import { Connection } from 'mongoose';
         allowUnknown: true,
         abortOnError: true,
       },
-      validate: (config: Record<string, unknown>) => {
-        const validatedConfig = new EnvironmentVariables();
-        Object.assign(validatedConfig, config);
-        return validatedConfig;
-      },
+      validate: validateEnvironment,
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('MONGO_URI'),
         connectionFactory: (connection: Connection) => {
+          const logger = new Logger('Mongoose');
           connection.on('connected', () => {
-            console.log('✅ MongoDB connected successfully');
+            logger.log('Connected to MongoDB');
           });
           connection.on('error', (err: Error) => {
-            console.error('❌ MongoDB connection error:', err);
+            logger.error(`MongoDB connection error: ${err.message}`, err.stack);
           });
           connection.on('disconnected', () => {
-            console.warn('⚠️  MongoDB disconnected');
+            logger.warn('Disconnected from MongoDB');
           });
           return connection;
         },
@@ -71,15 +86,34 @@ import { Connection } from 'mongoose';
     CommonModule,
     MailModule,
     DatabaseModule,
-    MigrationModule,
     UserModule,
     SessionModule,
-    PermissionModule,
     RoleModule,
     AuthModule,
+    // feature:oauth-core:start
+    OAuthModule.register([
+      GoogleOAuthStrategy, // feature:google
+      GitHubOAuthStrategy, // feature:github
+      FacebookOAuthStrategy, // feature:facebook
+      MicrosoftOAuthStrategy, // feature:microsoft
+      AppleOAuthStrategy, // feature:apple
+      DiscordOAuthStrategy, // feature:discord
+      LinkedInOAuthStrategy, // feature:linkedin
+      GitLabOAuthStrategy, // feature:gitlab
+      XOAuthStrategy, // feature:x
+      SlackOAuthStrategy, // feature:slack
+      TwitchOAuthStrategy, // feature:twitch
+      OidcOAuthStrategy, // feature:oidc
+    ]),
+    // feature:oauth-core:end
+    MagicLinkModule, // feature:magic-link
+    PasskeysModule, // feature:passkeys
+    TwoFactorModule, // feature:totp
     AdminModule,
   ],
-  controllers: [AppController],
+  // AuthMethodsController sits here because this is the only context holding
+  // both the auth configuration and the OAuth registry.
+  controllers: [AppController, AuthMethodsController],
   providers: [
     AppService,
     {
@@ -90,6 +124,18 @@ import { Connection } from 'mongoose';
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RequestLoggingInterceptor,
+    },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  /**
+   * Applied here rather than in main.ts so that tests booting AppModule get the
+   * correlation id too.
+   */
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(RequestIdMiddleware).forRoutes('*');
+  }
+}

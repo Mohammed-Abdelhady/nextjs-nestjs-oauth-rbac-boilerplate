@@ -177,7 +177,7 @@ Run the migration script to add permissions to existing users:
 
 ```bash
 cd backend
-npm run migration:run add-permissions-to-users
+npm run migration:up
 ```
 
 **What this does**:
@@ -436,7 +436,8 @@ Manual browser testing:
 2. **Run Migrations**:
 
    ```bash
-   npm run migration:run add-permissions-to-users
+   cd backend
+   npm run migration:up
    npm run seed
    ```
 
@@ -490,7 +491,7 @@ Manual browser testing:
 
    ```bash
    cd backend
-   npm run migration:run add-permissions-to-users
+   npm run migration:up
    npm run seed
    ```
 
@@ -631,8 +632,8 @@ Set up monitoring for:
 **Solution**:
 
 ```bash
-# Re-run migration
-npm run migration:run add-permissions-to-users
+# Re-run migrations
+cd backend && npm run migration:up
 
 # Or manually assign default permissions
 ```

@@ -1,5 +1,3 @@
-'use client';
-
 import type { LucideIcon } from 'lucide-react';
 
 interface ErrorPageLayoutProps {
@@ -31,22 +29,30 @@ export function ErrorPageLayout({
 }: ErrorPageLayoutProps) {
   const colorClass = variant === 'primary' ? 'text-primary' : 'text-destructive';
   const bgClass = variant === 'primary' ? 'bg-primary/10' : 'bg-destructive/10';
-  const iconColorClass = variant === 'primary' ? 'text-primary/30' : 'text-destructive/30';
-  const subtitleColorClass = variant === 'primary' ? 'text-primary/60' : 'text-destructive/60';
+  const iconColorClass =
+    variant === 'primary' ? 'text-primary opacity-30' : 'text-destructive opacity-30';
+  const subtitleColorClass = variant === 'primary' ? 'text-primary' : 'text-destructive';
 
   return (
     <div className="min-h-screen bg-background text-foreground flex justify-center">
-      <div className="max-w-screen-xl m-0 sm:m-20 bg-card shadow sm:rounded-lg flex justify-center flex-1">
-        {/* Left Side - Error Content */}
+      <main
+        id="main"
+        tabIndex={-1}
+        className="max-w-screen-xl m-0 sm:m-20 bg-card shadow sm:rounded-lg flex justify-center flex-1 focus-visible:outline-none"
+        data-testid="error-page-main"
+      >
+        {/* Start Side - Error Content */}
         <div className="lg:w-1/2 xl:w-5/12 p-6 sm:p-12 flex flex-col justify-center">
-          <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
-            {/* Error Code */}
-            <div className="mb-6">
-              <h2 className={`text-8xl font-extrabold ${colorClass}`}>{code}</h2>
-            </div>
-
-            {/* Title */}
+          <div className="flex flex-col items-center lg:items-start text-center lg:text-start">
+            {/* Title carries the only h1; the status code repeats it visually */}
             <h1 className="text-3xl xl:text-4xl font-extrabold text-foreground mb-4">{title}</h1>
+
+            <p
+              aria-hidden="true"
+              className={`order-first mb-6 text-8xl font-extrabold ${colorClass}`}
+            >
+              {code}
+            </p>
 
             {/* Description */}
             <p className="text-lg text-muted-foreground mb-4 max-w-md">{description}</p>
@@ -70,7 +76,7 @@ export function ErrorPageLayout({
             <p className={`mt-8 text-xl font-semibold ${subtitleColorClass}`}>{subtitle}</p>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

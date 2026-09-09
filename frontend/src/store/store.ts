@@ -12,7 +12,7 @@ import {
 import createWebStorage from 'redux-persist/lib/storage/createWebStorage';
 import { baseApi } from './api/baseApi';
 import authReducer from '@/modules/auth/store/authSlice';
-import toastReducer from './slices/toastSlice';
+import { authPersistence } from './authPersistence';
 import { errorInterceptor } from './middleware/errorInterceptor';
 
 /**
@@ -40,44 +40,21 @@ const createNoopStorage = () => {
 const storage = typeof window !== 'undefined' ? createWebStorage('local') : createNoopStorage();
 
 /**
- * Redux persist configuration
- * Persists only the auth slice to localStorage
- * Toast slice is explicitly excluded (ephemeral notifications only)
- */
-const persistConfig = {
-  key: 'root',
-  version: 1,
-  storage,
-  whitelist: ['auth'], // Only persist auth slice, NOT toast
-};
-
-/**
- * Root reducer combining all slices
+ * Root reducer combining slices
  */
 const rootReducer = combineReducers({
   // RTK Query API reducer
   [baseApi.reducerPath]: baseApi.reducer,
-  // Auth slice reducer
-  auth: authReducer,
-  // Toast slice reducer (not persisted)
-  toast: toastReducer,
+  // Persisted auth slice reducer
+  auth: persistReducer(authPersistence(storage), authReducer),
 });
 
-/**
- * Persisted reducer with redux-persist
- */
-const persistedReducer = persistReducer(persistConfig, rootReducer);
-
-/**
- * Redux store configuration with RTK Query integration and redux-persist
- * Includes Redux DevTools support and middleware configuration
- */
 /**
  * Redux store configuration with RTK Query integration and redux-persist
  * Middleware order: errorInterceptor → RTK Query → defaults
  */
 export const store = configureStore({
-  reducer: persistedReducer,
+  reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {

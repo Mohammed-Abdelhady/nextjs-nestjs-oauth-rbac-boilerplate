@@ -43,7 +43,7 @@ export const FormCheckbox = <TFieldValues extends FieldValues = FieldValues>({
     return (
       <BaseFormField
         name={name}
-        className="flex flex-row items-start space-x-3 space-y-0"
+        className="flex flex-row items-start gap-3 space-y-0"
         render={(field) => (
           <>
             <Checkbox
@@ -78,7 +78,7 @@ export const FormCheckbox = <TFieldValues extends FieldValues = FieldValues>({
                 name={name}
                 render={({ field }) => {
                   return (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormItem className="flex flex-row items-start gap-3 space-y-0">
                       <FormControl>
                         <Checkbox
                           checked={field.value?.includes(option.value)}

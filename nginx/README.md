@@ -29,13 +29,16 @@ Nginx (Port 80/443)
 
 ```
 nginx/
-├── Dockerfile          # Nginx container build configuration
-├── nginx.conf          # Main nginx configuration
-├── ssl/                # SSL certificates (create this directory)
-│   ├── fullchain.pem   # Full certificate chain
-│   ├── privkey.pem     # Private key
-│   └── chain.pem       # Intermediate certificate chain
-└── README.md           # This file
+├── Dockerfile                  # Nginx container build configuration
+├── nginx.conf                  # Main nginx configuration
+├── production-nginx.conf       # Production configuration template
+├── snippets/
+│   └── security-headers.conf   # Security headers snippet
+├── ssl/                        # SSL certificates (create this directory)
+│   ├── fullchain.pem           # Full certificate chain
+│   ├── privkey.pem             # Private key
+│   └── chain.pem               # Intermediate certificate chain
+└── README.md                   # This file
 ```
 
 ## Configuration Features
@@ -45,7 +48,8 @@ nginx/
 - **TLS 1.2/1.3 Only**: Modern, secure protocols
 - **Strong Ciphers**: Uses only secure cipher suites
 - **HSTS**: Enforces HTTPS connections
-- **Security Headers**: X-Frame-Options, X-Content-Type-Options, etc.
+- **Security Headers**: Centralized in `snippets/security-headers.conf` and included across all blocks that send headers.
+- **Content Security Policy**: Drops `'unsafe-eval'` to block arbitrary script evaluation. Retains `'unsafe-inline'` for `style-src` because Next.js and Tailwind inject runtime style tags.
 - **Rate Limiting**: Multiple zones for different endpoint types
 - **Hidden Files**: Blocks access to sensitive files
 
@@ -156,7 +160,7 @@ MONGO_PASSWORD=your-secure-password
 
 ### 4. Update nginx.conf
 
-Replace `yourdomain.com` in [`nginx.conf`](nginx/nginx.conf) with your actual domain:
+Replace `yourdomain.com` in [`nginx.conf`](./nginx.conf) with your actual domain:
 
 ```nginx
 server_name yourdomain.com www.yourdomain.com;
@@ -246,7 +250,7 @@ The configuration includes three rate limiting zones:
 2. **API**: 20 requests/second (for API endpoints)
 3. **Auth**: 5 requests/second (for authentication endpoints)
 
-Adjust these values in [`nginx.conf`](nginx/nginx.conf) based on your needs.
+Adjust these values in [`nginx.conf`](./nginx.conf) based on your needs.
 
 ## Troubleshooting
 
@@ -265,7 +269,7 @@ chmod 644 nginx/ssl/*.pem
 
 **Problem**: Ports 80 or 443 already in use
 
-**Solution**: Stop conflicting services or change port mappings in [`docker-compose.prod.yml`](docker-compose.prod.yml)
+**Solution**: Stop conflicting services or change port mappings in [`docker-compose.prod.yml`](../docker-compose.prod.yml)
 
 ### Upstream Connection Errors
 

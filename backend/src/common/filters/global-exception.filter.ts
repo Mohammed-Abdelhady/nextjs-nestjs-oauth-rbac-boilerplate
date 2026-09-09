@@ -11,10 +11,16 @@ import { ThrottlerException } from '@nestjs/throttler';
 import { AppException } from '../exceptions/app.exception';
 import { ErrorCode } from '../enums/error-code.enum';
 import { ErrorResponse } from '../dto/api-response.dto';
+import { RequestWithId } from '../interfaces/request-with-id.interface';
+import {
+  isCastError,
+  isMongoDuplicateKeyError,
+  isDuplicateEmailError,
+} from '../utils/mongo-error.util';
 
 /**
- * Global exception filter that transforms all exceptions into standardized error responses.
- * Handles AppException, HttpException, ValidationException, ThrottlerException, and unknown errors.
+ * Global exception filter that transforms exceptions into standardized error responses.
+ * Handles AppException, ThrottlerException, HttpException, CastError, MongoServerError 11000, and unknown errors.
  */
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -23,12 +29,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
+    const requestId = ctx.getRequest<RequestWithId>().requestId;
+
+    const tag = requestId ? ` [${requestId}]` : '';
 
     let errorResponse: ErrorResponse;
     let statusCode: number;
 
     if (exception instanceof AppException) {
-      // Handle custom AppException with embedded error code
       statusCode = exception.getStatus();
       errorResponse = ErrorResponse.error(
         exception.getCode(),
@@ -36,31 +44,24 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         exception.getDetails(),
       );
       this.logger.warn(
-        `AppException: ${exception.getCode()} - ${exception.message}`,
+        `AppException: ${exception.getCode()} - ${exception.message}${tag}`,
       );
     } else if (exception instanceof ThrottlerException) {
-      // Handle rate limiting exceptions (must be before HttpException since it extends HttpException)
       statusCode = HttpStatus.TOO_MANY_REQUESTS;
-      const response = exception.getResponse();
+      const res = exception.getResponse();
       const retryAfter =
-        typeof response === 'object' &&
-        response !== null &&
-        'retryAfter' in response
-          ? (response as { retryAfter: number }).retryAfter
+        typeof res === 'object' && res !== null && 'retryAfter' in res
+          ? (res as { retryAfter: number }).retryAfter
           : 60;
       errorResponse = ErrorResponse.error(
         ErrorCode.RATE_LIMIT_EXCEEDED,
         'Too many requests',
-        {
-          retryAfter,
-        },
+        { retryAfter },
       );
-      this.logger.warn(`ThrottlerException: ${exception.message}`);
+      this.logger.warn(`ThrottlerException: ${exception.message}${tag}`);
     } else if (exception instanceof HttpException) {
-      // Handle standard NestJS HttpException
       statusCode = exception.getStatus();
 
-      // Check for validation exceptions (from ValidationPipe)
       const validationResult = this.extractValidationErrors(exception);
       if (validationResult) {
         errorResponse = ErrorResponse.error(
@@ -69,100 +70,78 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           validationResult,
         );
         this.logger.warn(
-          `ValidationException: ${JSON.stringify(validationResult.fields)}`,
+          `ValidationException: ${JSON.stringify(validationResult.fields)}${tag}`,
         );
       } else {
-        const { code, details } = this.mapHttpExceptionToErrorCode(exception);
-        errorResponse = ErrorResponse.error(code, exception.message, details);
+        const code = this.mapHttpStatusToErrorCode(statusCode);
+        errorResponse = ErrorResponse.error(code, exception.message);
         this.logger.warn(
-          `HttpException (${statusCode}): ${code} - ${exception.message}`,
+          `HttpException (${statusCode}): ${code} - ${exception.message}${tag}`,
         );
       }
+    } else if (isCastError(exception)) {
+      statusCode = HttpStatus.BAD_REQUEST;
+      errorResponse = ErrorResponse.error(
+        ErrorCode.INVALID_INPUT,
+        exception.message || 'Invalid input',
+      );
+      this.logger.warn(`CastError: ${exception.message}${tag}`);
+    } else if (isMongoDuplicateKeyError(exception)) {
+      statusCode = HttpStatus.CONFLICT;
+      const isEmail = isDuplicateEmailError(exception);
+      const code = isEmail
+        ? ErrorCode.EMAIL_ALREADY_EXISTS
+        : ErrorCode.CONFLICT;
+      const message = isEmail
+        ? 'Email already registered'
+        : 'Resource conflict occurred';
+      errorResponse = ErrorResponse.error(code, message);
+      this.logger.warn(
+        `MongoDuplicateKeyError (11000): ${code} - ${exception.message}${tag}`,
+      );
     } else {
-      // Handle unknown exceptions
       statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
       errorResponse = ErrorResponse.error(
         ErrorCode.INTERNAL_ERROR,
         'An unexpected error occurred',
       );
       this.logger.error(
-        `Unknown exception: ${exception instanceof Error ? exception.message : String(exception)}`,
+        `Unknown exception: ${exception instanceof Error ? exception.message : String(exception)}${tag}`,
         exception instanceof Error ? exception.stack : undefined,
       );
+    }
+
+    if (requestId) {
+      errorResponse.requestId = requestId;
     }
 
     response.status(statusCode).json(errorResponse);
   }
 
   /**
-   * Maps standard NestJS HttpException messages to error codes.
-   * This enables backward compatibility while using the new error code system.
+   * Maps HTTP status codes to standardized error codes when not thrown as an AppException.
    */
-  private mapHttpExceptionToErrorCode(exception: HttpException): {
-    code: ErrorCode;
-    details?: Record<string, unknown>;
-  } {
-    const message = exception.message;
-
-    // Authentication errors
-    if (message.includes('Authentication required')) {
-      return { code: ErrorCode.SESSION_REQUIRED };
+  private mapHttpStatusToErrorCode(status: number): ErrorCode {
+    switch (status as HttpStatus) {
+      case HttpStatus.BAD_REQUEST:
+        return ErrorCode.INVALID_INPUT;
+      case HttpStatus.UNAUTHORIZED:
+        return ErrorCode.SESSION_INVALID;
+      case HttpStatus.FORBIDDEN:
+        return ErrorCode.FORBIDDEN;
+      case HttpStatus.NOT_FOUND:
+        return ErrorCode.NOT_FOUND;
+      case HttpStatus.CONFLICT:
+        return ErrorCode.CONFLICT;
+      case HttpStatus.TOO_MANY_REQUESTS:
+        return ErrorCode.RATE_LIMIT_EXCEEDED;
+      default:
+        return ErrorCode.INTERNAL_ERROR;
     }
-    if (
-      message.includes('Invalid or expired session') ||
-      message.includes('Invalid session')
-    ) {
-      return { code: ErrorCode.SESSION_INVALID };
-    }
-    if (message.includes('Invalid email or password')) {
-      return { code: ErrorCode.INVALID_CREDENTIALS };
-    }
-
-    // Activation errors
-    if (message.includes('Email already registered')) {
-      return { code: ErrorCode.EMAIL_ALREADY_EXISTS };
-    }
-    if (message.includes('Failed to send activation email')) {
-      return { code: ErrorCode.EMAIL_SEND_FAILED };
-    }
-    if (message.includes('No pending registration found')) {
-      return { code: ErrorCode.NO_PENDING_REGISTRATION };
-    }
-    if (message.includes('Activation code has expired')) {
-      return { code: ErrorCode.ACTIVATION_CODE_EXPIRED };
-    }
-    if (
-      message.includes('Invalid code') ||
-      message.includes('attempts remaining')
-    ) {
-      return { code: ErrorCode.ACTIVATION_CODE_INVALID };
-    }
-    if (message.includes('Maximum attempts exceeded')) {
-      return { code: ErrorCode.MAX_ATTEMPTS_EXCEEDED };
-    }
-
-    // Verification errors
-    if (message.includes('Email verification required')) {
-      return { code: ErrorCode.EMAIL_NOT_VERIFIED };
-    }
-
-    // HTTP status code mappings
-    const status = exception.getStatus();
-    if (status === 404) {
-      return { code: ErrorCode.NOT_FOUND };
-    }
-    if (status === 403) {
-      return { code: ErrorCode.FORBIDDEN };
-    }
-    if (status === 401) {
-      return { code: ErrorCode.SESSION_INVALID };
-    }
-    return { code: ErrorCode.INTERNAL_ERROR };
   }
 
   /**
    * Extracts validation errors from BadRequestException thrown by ValidationPipe.
-   * Returns null if not a validation exception.
    */
   private extractValidationErrors(
     exception: HttpException,
@@ -173,34 +152,29 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
 
     const response = exception.getResponse();
+    if (typeof response !== 'object' || response === null) {
+      return null;
+    }
 
-    // ValidationPipe returns { message: string[], error: 'Bad Request', statusCode: 400 }
-    if (typeof response === 'object' && response !== null) {
-      const responseObj = response as Record<string, unknown>;
-      const messages = responseObj.message;
+    const responseObj = response as Record<string, unknown>;
+    const messages = responseObj.message;
 
-      // Check if message is an array (validation errors)
-      if (Array.isArray(messages) && messages.length > 0) {
-        // Parse messages into field-based errors
-        const fields: Record<string, string[]> = {};
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return null;
+    }
 
-        for (const msg of messages) {
-          if (typeof msg === 'string') {
-            // Try to extract field name from message (e.g., "email must be an email")
-            const fieldMatch = msg.match(/^(\w+)\s/);
-            const fieldName = fieldMatch ? fieldMatch[1] : 'general';
-
-            if (!fields[fieldName]) {
-              fields[fieldName] = [];
-            }
-            fields[fieldName].push(msg);
-          }
+    const fields: Record<string, string[]> = {};
+    for (const msg of messages) {
+      if (typeof msg === 'string') {
+        const fieldMatch = msg.match(/^(\w+)\s/);
+        const fieldName = fieldMatch ? fieldMatch[1] : 'general';
+        if (!fields[fieldName]) {
+          fields[fieldName] = [];
         }
-
-        return { fields };
+        fields[fieldName].push(msg);
       }
     }
 
-    return null;
+    return { fields };
   }
 }

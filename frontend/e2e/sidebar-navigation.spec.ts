@@ -1,4 +1,6 @@
-import { test, expect } from '@playwright/test';
+import type { Page } from '@playwright/test';
+const navigation = (page: Page) => page.getByTestId('dashboard-nav').filter({ visible: true });
+import { test, expect } from './fixtures/authenticated';
 
 /**
  * E2E tests for Sidebar Navigation functionality
@@ -9,13 +11,13 @@ test.describe('Sidebar Navigation - Desktop', () => {
   test.use({ viewport: { width: 1280, height: 720 } });
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/en/dashboard');
+    await expect(page.getByTestId('dashboard-main')).toBeVisible();
   });
 
   test('should display desktop sidebar on large screens', async ({ page }) => {
     // Desktop sidebar should be visible
-    const desktopSidebar = page.locator('aside.md\\:block');
+    const desktopSidebar = page.getByTestId('dashboard-sidebar');
     await expect(desktopSidebar).toBeVisible();
 
     // Mobile hamburger menu should not be visible
@@ -24,7 +26,7 @@ test.describe('Sidebar Navigation - Desktop', () => {
   });
 
   test('should display all navigation items in sidebar', async ({ page }) => {
-    const nav = page.getByTestId('dashboard-nav');
+    const nav = navigation(page);
 
     // Top-level items
     await expect(nav.getByTestId('nav-link-dashboard')).toBeVisible();
@@ -37,78 +39,74 @@ test.describe('Sidebar Navigation - Desktop', () => {
 
   test('should highlight active navigation item', async ({ page }) => {
     // Dashboard link should be active
-    const dashboardLink = page.getByTestId('nav-link-dashboard');
-    await expect(dashboardLink).toHaveClass(/bg-primary/);
+    const dashboardLink = navigation(page).getByTestId('nav-link-dashboard');
+    await expect(dashboardLink).toHaveAttribute('aria-current', 'page');
 
     // Navigate to settings
-    await page.getByTestId('nav-link-settings').click();
+    await navigation(page).getByTestId('nav-link-settings').click();
     await page.waitForURL('**/settings');
 
     // Settings link should now be active
-    const settingsLink = page.getByTestId('nav-link-settings');
-    await expect(settingsLink).toHaveClass(/bg-primary/);
+    const settingsLink = navigation(page).getByTestId('nav-link-settings');
+    await expect(settingsLink).toHaveAttribute('aria-current', 'page');
 
     // Dashboard link should no longer be active
-    await expect(dashboardLink).not.toHaveClass(/bg-primary/);
+    await expect(dashboardLink).not.toHaveAttribute('aria-current', 'page');
   });
 
   test('should collapse and expand Admin section', async ({ page }) => {
-    const adminSection = page.getByTestId('nav-section-admin');
+    const adminSection = navigation(page).getByTestId('nav-section-admin');
 
     // Admin section should be expanded by default (unless localStorage says otherwise)
     // Items should be visible
-    const usersLink = page.getByTestId('nav-link-users');
+    const usersLink = navigation(page).getByTestId('nav-link-users');
+    await expect(usersLink).toBeVisible();
     const initialVisibility = await usersLink.isVisible();
 
     // Click to toggle
     await adminSection.click();
-    await page.waitForTimeout(300); // Wait for animation
+    await expect(usersLink).toBeVisible({ visible: !initialVisibility });
 
     // Visibility should change
     const newVisibility = await usersLink.isVisible();
     expect(newVisibility).toBe(!initialVisibility);
 
-    // Chevron icon should change
-    if (initialVisibility) {
-      // Was expanded, now collapsed - should show ChevronRight
-      await expect(adminSection.locator('svg').last()).toHaveAttribute('class', /chevron-right/i);
-    } else {
-      // Was collapsed, now expanded - should show ChevronDown
-      await expect(adminSection.locator('svg').last()).toHaveAttribute('class', /chevron-down/i);
-    }
+    await expect(adminSection).toHaveAttribute('aria-expanded', String(!initialVisibility));
   });
 
   test('should persist collapsed state in localStorage', async ({ page }) => {
-    const adminSection = page.getByTestId('nav-section-admin');
-    const usersLink = page.getByTestId('nav-link-users');
+    const adminSection = navigation(page).getByTestId('nav-section-admin');
+    const usersLink = navigation(page).getByTestId('nav-link-users');
 
     // Get initial state
+    await expect(usersLink).toBeVisible();
     const initialVisibility = await usersLink.isVisible();
 
     // Toggle section
     await adminSection.click();
-    await page.waitForTimeout(300);
+    await expect(usersLink).toBeVisible({ visible: !initialVisibility });
 
     // Reload page
     await page.reload();
-    await page.waitForLoadState('networkidle');
+    await expect(page.getByTestId('dashboard-main')).toBeVisible();
 
     // State should be persisted
-    const newUsersLink = page.getByTestId('nav-link-users');
+    const newUsersLink = navigation(page).getByTestId('nav-link-users');
     const newVisibility = await newUsersLink.isVisible();
     expect(newVisibility).toBe(!initialVisibility);
   });
 
   test('should collapse and expand Activity section independently', async ({ page }) => {
-    const activitySection = page.getByTestId('nav-section-activity');
-    const sessionsLink = page.getByTestId('nav-link-sessions');
+    const activitySection = navigation(page).getByTestId('nav-section-activity');
+    const sessionsLink = navigation(page).getByTestId('nav-link-sessions');
 
     // Get initial state
+    await expect(sessionsLink).toBeVisible();
     const initialVisibility = await sessionsLink.isVisible();
 
     // Toggle Activity section
     await activitySection.click();
-    await page.waitForTimeout(300);
+    await expect(sessionsLink).toBeVisible({ visible: !initialVisibility });
 
     // Sessions link visibility should change
     const newVisibility = await sessionsLink.isVisible();
@@ -117,15 +115,15 @@ test.describe('Sidebar Navigation - Desktop', () => {
 
   test('should navigate to correct page when clicking nav items', async ({ page }) => {
     // Click Users link
-    await page.getByTestId('nav-link-users').click();
+    await navigation(page).getByTestId('nav-link-users').click();
     await expect(page).toHaveURL(/\/admin\/users/);
 
     // Click Roles link
-    await page.getByTestId('nav-link-roles').click();
+    await navigation(page).getByTestId('nav-link-roles').click();
     await expect(page).toHaveURL(/\/admin\/roles/);
 
     // Click Sessions link
-    await page.getByTestId('nav-link-sessions').click();
+    await navigation(page).getByTestId('nav-link-sessions').click();
     await expect(page).toHaveURL(/\/sessions/);
   });
 });
@@ -134,19 +132,19 @@ test.describe('Sidebar Navigation - Mobile', () => {
   test.use({ viewport: { width: 375, height: 667 } });
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/en/dashboard');
+    await expect(page.getByTestId('dashboard-main')).toBeVisible();
   });
 
   test('should hide desktop sidebar on mobile', async ({ page }) => {
     // Desktop sidebar should not be visible
-    const desktopSidebar = page.locator('aside.md\\:block').first();
+    const desktopSidebar = page.getByTestId('dashboard-sidebar').first();
     await expect(desktopSidebar).not.toBeVisible();
   });
 
   test('should show mobile header with hamburger menu', async ({ page }) => {
     // Mobile header should be visible
-    const mobileHeader = page.locator('.md\\:hidden').first();
+    const mobileHeader = page.getByTestId('mobile-menu-button');
     await expect(mobileHeader).toBeVisible();
 
     // Hamburger menu button should be visible
@@ -154,7 +152,7 @@ test.describe('Sidebar Navigation - Mobile', () => {
     await expect(menuButton).toBeVisible();
 
     // App title should be visible
-    await expect(page.getByText('Auth App')).toBeVisible();
+    await expect(page.getByTestId('sidebar-brand-link').filter({ visible: true })).toBeVisible();
   });
 
   test('should open mobile sidebar when clicking hamburger menu', async ({ page }) => {
@@ -179,7 +177,7 @@ test.describe('Sidebar Navigation - Mobile', () => {
     await expect(page.getByTestId('mobile-sidebar')).toBeVisible();
 
     // Click backdrop
-    await page.getByTestId('mobile-menu-backdrop').click();
+    await page.getByTestId('mobile-menu-backdrop').click({ position: { x: 350, y: 600 } });
 
     // Sidebar should close
     await expect(page.getByTestId('mobile-sidebar')).not.toBeVisible();
@@ -215,7 +213,7 @@ test.describe('Sidebar Navigation - Mobile', () => {
     await expect(page.getByTestId('mobile-sidebar')).toBeVisible();
 
     // Click a navigation link
-    await page.getByTestId('nav-link-settings').click();
+    await navigation(page).getByTestId('nav-link-settings').click();
 
     // Sidebar should close automatically
     await expect(page.getByTestId('mobile-sidebar')).not.toBeVisible();
@@ -229,22 +227,24 @@ test.describe('Sidebar Navigation - Mobile', () => {
     await page.getByTestId('mobile-menu-button').click();
 
     // Body should have overflow hidden
-    const bodyOverflow = await page.evaluate(() => document.body.style.overflow);
-    expect(bodyOverflow).toBe('hidden');
+    await expect
+      .poll(() => page.evaluate(() => getComputedStyle(document.body).overflow))
+      .toBe('hidden');
 
     // Close sidebar
     await page.getByTestId('mobile-menu-close').click();
 
     // Body overflow should be restored
-    const newBodyOverflow = await page.evaluate(() => document.body.style.overflow);
-    expect(newBodyOverflow).toBe('');
+    await expect
+      .poll(() => page.evaluate(() => getComputedStyle(document.body).overflow))
+      .not.toBe('hidden');
   });
 
   test('should show all navigation items in mobile sidebar', async ({ page }) => {
     // Open sidebar
     await page.getByTestId('mobile-menu-button').click();
 
-    const nav = page.getByTestId('dashboard-nav');
+    const nav = navigation(page);
 
     // All items should be accessible
     await expect(nav.getByTestId('nav-link-dashboard')).toBeVisible();
@@ -257,15 +257,16 @@ test.describe('Sidebar Navigation - Mobile', () => {
     // Open sidebar
     await page.getByTestId('mobile-menu-button').click();
 
-    const adminSection = page.getByTestId('nav-section-admin');
-    const usersLink = page.getByTestId('nav-link-users');
+    const adminSection = navigation(page).getByTestId('nav-section-admin');
+    const usersLink = navigation(page).getByTestId('nav-link-users');
 
     // Get initial visibility
+    await expect(usersLink).toBeVisible();
     const initialVisibility = await usersLink.isVisible();
 
     // Toggle section
     await adminSection.click();
-    await page.waitForTimeout(300);
+    await expect(usersLink).toBeVisible({ visible: !initialVisibility });
 
     // Visibility should change
     const newVisibility = await usersLink.isVisible();
@@ -276,9 +277,9 @@ test.describe('Sidebar Navigation - Mobile', () => {
 test.describe('Sidebar Navigation - Responsive Breakpoints', () => {
   test('should show desktop sidebar at 768px and above', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 720 });
-    await page.goto('/dashboard');
+    await page.goto('/en/dashboard');
 
-    const desktopSidebar = page.locator('aside.md\\:block').first();
+    const desktopSidebar = page.getByTestId('dashboard-sidebar').first();
     await expect(desktopSidebar).toBeVisible();
 
     const mobileMenuButton = page.getByTestId('mobile-menu-button');
@@ -287,9 +288,9 @@ test.describe('Sidebar Navigation - Responsive Breakpoints', () => {
 
   test('should show mobile menu at 767px and below', async ({ page }) => {
     await page.setViewportSize({ width: 767, height: 720 });
-    await page.goto('/dashboard');
+    await page.goto('/en/dashboard');
 
-    const desktopSidebar = page.locator('aside.md\\:block').first();
+    const desktopSidebar = page.getByTestId('dashboard-sidebar').first();
     await expect(desktopSidebar).not.toBeVisible();
 
     const mobileMenuButton = page.getByTestId('mobile-menu-button');
@@ -299,9 +300,9 @@ test.describe('Sidebar Navigation - Responsive Breakpoints', () => {
   test('should adjust layout when switching between desktop and mobile', async ({ page }) => {
     // Start desktop
     await page.setViewportSize({ width: 1024, height: 720 });
-    await page.goto('/dashboard');
+    await page.goto('/en/dashboard');
 
-    const desktopSidebar = page.locator('aside.md\\:block').first();
+    const desktopSidebar = page.getByTestId('dashboard-sidebar').first();
     await expect(desktopSidebar).toBeVisible();
 
     // Resize to mobile

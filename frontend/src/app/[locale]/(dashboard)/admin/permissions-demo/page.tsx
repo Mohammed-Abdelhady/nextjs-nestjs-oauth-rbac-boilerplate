@@ -1,5 +1,3 @@
-'use client';
-
 import {
   PermissionGuard,
   RoutePermissionGuard,
@@ -27,7 +25,9 @@ export default function PermissionsDemoPage() {
       <div className="container mx-auto max-w-6xl space-y-8 py-8">
         {/* Page Header */}
         <div>
-          <h1 className="text-3xl font-bold text-foreground mt-8">Permissions System Demo</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground mt-8">
+            Permissions System Demo
+          </h1>
           <p className="mt-2 text-muted-foreground">
             This page demonstrates how to use permission guards throughout the application.
           </p>
@@ -144,21 +144,21 @@ export default function PermissionsDemoPage() {
               <div className="flex gap-2">
                 <PermissionGuard permission={USER_PERMISSIONS.READ_ALL}>
                   <Button size="sm" variant="outline">
-                    <Eye className="mr-2 h-4 w-4" />
+                    <Eye className="me-2 h-4 w-4" />
                     View
                   </Button>
                 </PermissionGuard>
 
                 <PermissionGuard permission={USER_PERMISSIONS.UPDATE_ALL}>
                   <Button size="sm" variant="outline">
-                    <Edit className="mr-2 h-4 w-4" />
+                    <Edit className="me-2 h-4 w-4" />
                     Edit
                   </Button>
                 </PermissionGuard>
 
                 <PermissionGuard permission={USER_PERMISSIONS.DELETE_ALL}>
                   <Button size="sm" variant="destructive">
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    <Trash2 className="me-2 h-4 w-4" />
                     Delete
                   </Button>
                 </PermissionGuard>

@@ -47,18 +47,18 @@ export const StatusBadge = forwardRef<HTMLSpanElement, StatusBadgeProps>(
   ) => {
     const statusColors = {
       verified: {
-        solid: 'bg-status-success text-white',
-        soft: 'bg-status-success/10 text-status-success border-status-success/20',
+        solid: 'bg-success text-success-foreground',
+        soft: 'bg-success/10 text-status-success border-success/20',
         outline: 'border-status-success text-status-success',
       },
       pending: {
-        solid: 'bg-status-warning text-white',
-        soft: 'bg-status-warning/10 text-status-warning border-status-warning/20',
+        solid: 'bg-warning text-warning-foreground',
+        soft: 'bg-warning/10 text-status-warning border-warning/20',
         outline: 'border-status-warning text-status-warning',
       },
       active: {
-        solid: 'bg-status-success text-white',
-        soft: 'bg-status-success/10 text-status-success border-status-success/20',
+        solid: 'bg-success text-success-foreground',
+        soft: 'bg-success/10 text-status-success border-success/20',
         outline: 'border-status-success text-status-success',
       },
       inactive: {
@@ -67,18 +67,18 @@ export const StatusBadge = forwardRef<HTMLSpanElement, StatusBadgeProps>(
         outline: 'border-muted text-muted-foreground',
       },
       success: {
-        solid: 'bg-status-success text-white',
-        soft: 'bg-status-success/10 text-status-success border-status-success/20',
+        solid: 'bg-success text-success-foreground',
+        soft: 'bg-success/10 text-status-success border-success/20',
         outline: 'border-status-success text-status-success',
       },
       warning: {
-        solid: 'bg-status-warning text-white',
-        soft: 'bg-status-warning/10 text-status-warning border-status-warning/20',
+        solid: 'bg-warning text-warning-foreground',
+        soft: 'bg-warning/10 text-status-warning border-warning/20',
         outline: 'border-status-warning text-status-warning',
       },
       danger: {
-        solid: 'bg-status-danger text-white',
-        soft: 'bg-status-danger/10 text-status-danger border-status-danger/20',
+        solid: 'bg-destructive text-destructive-foreground',
+        soft: 'bg-destructive/10 text-status-danger border-destructive/20',
         outline: 'border-status-danger text-status-danger',
       },
     };

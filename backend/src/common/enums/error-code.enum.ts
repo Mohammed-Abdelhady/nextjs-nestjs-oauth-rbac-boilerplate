@@ -27,6 +27,40 @@ export enum ErrorCode {
   /** Failed to send email */
   EMAIL_SEND_FAILED = 'EMAIL_SEND_FAILED',
 
+  // Magic link errors
+  /** Magic link token is unknown, already used, or expired */
+  MAGIC_LINK_INVALID = 'MAGIC_LINK_INVALID',
+
+  // Two-factor errors
+  /** Submitted TOTP code or recovery code did not match */
+  TWO_FACTOR_CODE_INVALID = 'TWO_FACTOR_CODE_INVALID',
+  /** Challenge cookie is missing, tampered with, expired, or out of attempts */
+  TWO_FACTOR_CHALLENGE_INVALID = 'TWO_FACTOR_CHALLENGE_INVALID',
+  /** Second factor is already confirmed on this account */
+  TWO_FACTOR_ALREADY_ENABLED = 'TWO_FACTOR_ALREADY_ENABLED',
+  /** Account has no confirmed second factor */
+  TWO_FACTOR_NOT_ENABLED = 'TWO_FACTOR_NOT_ENABLED',
+  /** Confirm was called without a pending secret from setup */
+  TWO_FACTOR_SETUP_REQUIRED = 'TWO_FACTOR_SETUP_REQUIRED',
+  /** TOTP_ENCRYPTION_KEY is missing or not 32 bytes */
+  TWO_FACTOR_NOT_CONFIGURED = 'TWO_FACTOR_NOT_CONFIGURED',
+
+  // Passkey errors
+  /** Challenge cookie is missing, tampered with, expired, or for another step */
+  PASSKEY_CHALLENGE_INVALID = 'PASSKEY_CHALLENGE_INVALID',
+  /** Credential is unknown, its signature failed, or its counter went backwards */
+  PASSKEY_VERIFICATION_FAILED = 'PASSKEY_VERIFICATION_FAILED',
+  /** No passkey with that id on this account */
+  PASSKEY_NOT_FOUND = 'PASSKEY_NOT_FOUND',
+  /** Removing it would leave the account with no way to sign in */
+  PASSKEY_LAST_SIGN_IN_METHOD = 'PASSKEY_LAST_SIGN_IN_METHOD',
+  /** The secret the challenge cookie is signed with is missing */
+  PASSKEY_NOT_CONFIGURED = 'PASSKEY_NOT_CONFIGURED',
+
+  // Feature flag errors
+  /** Route belongs to an authentication method this deployment turned off */
+  FEATURE_DISABLED = 'FEATURE_DISABLED',
+
   // Session errors
   /** Authentication session required */
   SESSION_REQUIRED = 'SESSION_REQUIRED',
@@ -56,6 +90,8 @@ export enum ErrorCode {
   NOT_FOUND = 'NOT_FOUND',
   /** Access forbidden */
   FORBIDDEN = 'FORBIDDEN',
+  /** Resource conflict */
+  CONFLICT = 'CONFLICT',
 
   // Admin errors
   /** User does not exist */
@@ -70,46 +106,20 @@ export enum ErrorCode {
   USER_ALREADY_DELETED = 'USER_ALREADY_DELETED',
 
   // OAuth errors
-  /** Invalid OAuth provider specified */
-  INVALID_OAUTH_PROVIDER = 'INVALID_OAUTH_PROVIDER',
-  /** OAuth authentication failed */
+  /** Provider id is not in the OAuth registry */
+  OAUTH_PROVIDER_UNKNOWN = 'OAUTH_PROVIDER_UNKNOWN',
+  /** Provider has no credentials configured */
+  OAUTH_NOT_CONFIGURED = 'OAUTH_NOT_CONFIGURED',
+  /** State cookie is missing, tampered with, expired, or does not match */
+  OAUTH_STATE_INVALID = 'OAUTH_STATE_INVALID',
+  /** Authorization code could not be exchanged */
+  OAUTH_CODE_INVALID = 'OAUTH_CODE_INVALID',
+  /** Provider did not confirm the email address */
+  OAUTH_EMAIL_UNVERIFIED = 'OAUTH_EMAIL_UNVERIFIED',
+  /** Provider account is already linked to another user */
+  OAUTH_ACCOUNT_LINKED_ELSEWHERE = 'OAUTH_ACCOUNT_LINKED_ELSEWHERE',
+  /** OAuth authentication failed for any other reason */
   OAUTH_AUTHENTICATION_FAILED = 'OAUTH_AUTHENTICATION_FAILED',
-  /** OAuth code is invalid or expired */
-  OAUTH_INVALID_CODE = 'OAUTH_INVALID_CODE',
-
-  // Google OAuth errors
-  /** Google ID token is invalid */
-  GOOGLE_TOKEN_INVALID = 'GOOGLE_TOKEN_INVALID',
-  /** Google ID token has expired */
-  GOOGLE_TOKEN_EXPIRED = 'GOOGLE_TOKEN_EXPIRED',
-  /** Google OAuth not configured */
-  GOOGLE_NOT_CONFIGURED = 'GOOGLE_NOT_CONFIGURED',
-  /** Google email is not verified */
-  GOOGLE_EMAIL_NOT_VERIFIED = 'GOOGLE_EMAIL_NOT_VERIFIED',
-
-  // GitHub OAuth errors
-  /** GitHub authorization code is invalid */
-  GITHUB_CODE_INVALID = 'GITHUB_CODE_INVALID',
-  /** GitHub authorization code has expired */
-  GITHUB_CODE_EXPIRED = 'GITHUB_CODE_EXPIRED',
-  /** GitHub OAuth not configured */
-  GITHUB_NOT_CONFIGURED = 'GITHUB_NOT_CONFIGURED',
-  /** GitHub email is not verified */
-  GITHUB_EMAIL_NOT_VERIFIED = 'GITHUB_EMAIL_NOT_VERIFIED',
-  /** GitHub API error */
-  GITHUB_API_ERROR = 'GITHUB_API_ERROR',
-
-  // Facebook OAuth errors
-  /** Facebook authorization code is invalid */
-  FACEBOOK_CODE_INVALID = 'FACEBOOK_CODE_INVALID',
-  /** Facebook authorization code has expired */
-  FACEBOOK_CODE_EXPIRED = 'FACEBOOK_CODE_EXPIRED',
-  /** Facebook OAuth not configured */
-  FACEBOOK_NOT_CONFIGURED = 'FACEBOOK_NOT_CONFIGURED',
-  /** Facebook email is not verified */
-  FACEBOOK_EMAIL_NOT_VERIFIED = 'FACEBOOK_EMAIL_NOT_VERIFIED',
-  /** Facebook API error */
-  FACEBOOK_API_ERROR = 'FACEBOOK_API_ERROR',
 
   // User self-service errors
   /** Current password is incorrect */
@@ -136,8 +146,6 @@ export enum ErrorCode {
   // Account linking errors
   /** Provider is already linked to this account */
   PROVIDER_ALREADY_LINKED = 'PROVIDER_ALREADY_LINKED',
-  /** Provider ID is already linked to another account */
-  PROVIDER_LINKED_TO_OTHER_ACCOUNT = 'PROVIDER_LINKED_TO_OTHER_ACCOUNT',
   /** Email mismatch when linking provider */
   EMAIL_MISMATCH_ON_LINK = 'EMAIL_MISMATCH_ON_LINK',
   /** Cannot unlink last authentication provider */
@@ -154,4 +162,10 @@ export enum ErrorCode {
   PERMISSION_NOT_FOUND = 'PERMISSION_NOT_FOUND',
   /** Invalid permission format */
   INVALID_PERMISSION_FORMAT = 'INVALID_PERMISSION_FORMAT',
+
+  // Role errors
+  /** Role slug does not exist in the roles collection */
+  ROLE_NOT_FOUND = 'ROLE_NOT_FOUND',
+  /** Only admins may change another user's email address */
+  EMAIL_CHANGE_NOT_ALLOWED = 'EMAIL_CHANGE_NOT_ALLOWED',
 }

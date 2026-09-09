@@ -9,6 +9,9 @@
  * Usage: node scripts/setup-production.js
  */
 
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import { configureNginxDomains } from './lib/config-transforms.js';
 import path from 'node:path';
 import {
   colors,
@@ -20,10 +23,13 @@ import {
   fileExists,
   backupFile,
   validateDomain,
+  resolveOptionalDomain,
   validateEmail,
   validatePort,
+  validateAppName,
   commandExists,
   exec,
+  execFile,
   execAsync,
   createPrompt,
   ask,
@@ -112,8 +118,8 @@ async function configureDomains(rl) {
 
   return {
     mainDomain,
-    frontendDomain: frontendDomain || `www.${mainDomain}`,
-    backendDomain: backendDomain || `api.${mainDomain}`,
+    frontendDomain: resolveOptionalDomain(frontendDomain, `www.${mainDomain}`),
+    backendDomain: resolveOptionalDomain(backendDomain, `api.${mainDomain}`),
   };
 }
 
@@ -148,7 +154,8 @@ async function configureDatabase(rl, appSlug) {
   log.step('MongoDB Configuration');
 
   const username = await ask(rl, 'MongoDB username', 'admin');
-  const password = await ask(rl, 'MongoDB password', 'changeme');
+  const passwordInput = await ask(rl, 'MongoDB password (leave empty to generate)', '');
+  const password = passwordInput || crypto.randomBytes(32).toString('base64url');
   const dbName = await ask(rl, 'Database name', toSnakeCase(appSlug));
 
   return { username, password, dbName };
@@ -195,19 +202,18 @@ BACKEND_DOMAIN=${config.domains.backendDomain}
 # Frontend Configuration
 # ══════════════════════════════════════════
 NEXT_PUBLIC_API_URL=https://${config.domains.backendDomain}
-NEXT_PUBLIC_APP_URL=https://${config.domains.frontendDomain}
 
 # ══════════════════════════════════════════
 # Backend Configuration
 # ══════════════════════════════════════════
 NODE_ENV=production
 CLIENT_URL=https://${config.domains.frontendDomain}
-BACKEND_URL=http://backend:5000
 PORT=5000
 
 # ══════════════════════════════════════════
 # MongoDB Configuration
 # ══════════════════════════════════════════
+MONGO_DATABASE=${config.database.dbName}
 MONGO_USERNAME=${config.database.username}
 MONGO_PASSWORD=${config.database.password}
 MONGO_URI=mongodb://${config.database.username}:${config.database.password}@mongodb:27017/${config.database.dbName}?authSource=admin
@@ -230,13 +236,12 @@ NGINX_HTTPS_PORT=${config.ports.httpsPort}
 APP_NAME=${config.appName}
 
 # ══════════════════════════════════════════
-# Security (generate your own secrets!)
+# Security
 # ══════════════════════════════════════════
-# SESSION_SECRET=your-session-secret
-# JWT_SECRET=your-jwt-secret
+# JWT_SECRET=
 
 # ══════════════════════════════════════════
-# SMTP Configuration (required for emails)
+# SMTP Configuration
 # ══════════════════════════════════════════
 # SMTP_HOST=smtp.gmail.com
 # SMTP_PORT=587
@@ -275,8 +280,15 @@ function updateDockerCompose(config) {
   content = content.replaceAll('authboiler-certbot', `${appSlug}-certbot`);
 
   // Update database name
+  content = content.replaceAll(
+    'MONGO_DATABASE:-authboiler',
+    `MONGO_DATABASE:-${config.database.dbName}`,
+  );
   content = content.replaceAll('/authboiler', `/${config.database.dbName}`);
-  content = content.replaceAll('MONGO_INITDB_DATABASE: authboiler', `MONGO_INITDB_DATABASE: ${config.database.dbName}`);
+  content = content.replaceAll(
+    'MONGO_INITDB_DATABASE: authboiler',
+    `MONGO_INITDB_DATABASE: ${config.database.dbName}`,
+  );
 
   writeFile(filePath, content);
   log.success('docker-compose.prod.yml updated');
@@ -287,7 +299,6 @@ function updateDockerCompose(config) {
 // ═══════════════════════════════════════════════════════════════
 function updateNginxConfig(config) {
   const configFiles = ['nginx/nginx.conf', 'nginx/production-nginx.conf'];
-
   for (const file of configFiles) {
     const filePath = path.join(ROOT_DIR, file);
 
@@ -300,13 +311,7 @@ function updateNginxConfig(config) {
       log.info(`Backed up ${file}`);
     }
 
-    let content = readFile(filePath);
-
-    // Update server_name
-    content = content.replaceAll(
-      /server_name\s+[^;]+;/g,
-      `server_name ${config.domains.mainDomain} ${config.domains.frontendDomain};`
-    );
+    const content = configureNginxDomains(readFile(filePath), config.domains);
 
     writeFile(filePath, content);
     log.success(`${file} updated`);
@@ -322,7 +327,7 @@ async function generateSSLCertificates(config) {
   const sslDir = path.join(ROOT_DIR, 'nginx', 'ssl');
 
   // Create SSL directory
-  exec(`mkdir -p ${sslDir}`, { silent: true });
+  fs.mkdirSync(sslDir, { recursive: true });
 
   if (config.ssl.sslType === 'self-signed') {
     log.warn('Generating self-signed certificates (DEVELOPMENT ONLY)...');
@@ -330,18 +335,39 @@ async function generateSSLCertificates(config) {
     const spinner = createSpinner('Generating certificates...');
     spinner.start();
 
-    const result = exec(
-      `openssl req -x509 -nodes -days 365 -newkey rsa:2048 ` +
-        `-keyout ${sslDir}/privkey.pem ` +
-        `-out ${sslDir}/fullchain.pem ` +
-        `-subj "/C=US/ST=State/L=City/O=${config.appName}/CN=${config.domains.mainDomain}"`,
-      { silent: true }
+    if (!validateAppName(config.appName)) {
+      spinner.stop(false);
+      log.error('Application name contains characters that cannot be used in a certificate subject');
+      return;
+    }
+
+    const keyout = path.join(sslDir, 'privkey.pem');
+    const fullchain = path.join(sslDir, 'fullchain.pem');
+    const result = execFile(
+      'openssl',
+      [
+        'req',
+        '-x509',
+        '-nodes',
+        '-days',
+        '365',
+        '-newkey',
+        'rsa:2048',
+        '-keyout',
+        keyout,
+        '-out',
+        fullchain,
+        '-subj',
+        `/C=US/ST=State/L=City/O=${config.appName}/CN=${config.domains.mainDomain}`,
+      ],
+      { silent: true },
     );
 
     if (result.success) {
-      // Create chain.pem (copy of fullchain for self-signed)
-      exec(`cp ${sslDir}/fullchain.pem ${sslDir}/chain.pem`, { silent: true });
-      exec(`chmod 644 ${sslDir}/*.pem`, { silent: true });
+      fs.copyFileSync(fullchain, path.join(sslDir, 'chain.pem'));
+      fs.chmodSync(fullchain, 0o644);
+      fs.chmodSync(path.join(sslDir, 'chain.pem'), 0o644);
+      fs.chmodSync(keyout, 0o600);
       spinner.stop(true);
       log.success('Self-signed certificates generated');
     } else {
@@ -355,7 +381,9 @@ async function generateSSLCertificates(config) {
     log.info('');
     log.info('To obtain certificates, run:');
     console.log(`  ${colors.cyan}docker compose -f docker-compose.prod.yml up -d${colors.reset}`);
-    console.log(`  ${colors.cyan}docker compose -f docker-compose.prod.yml run --rm certbot certonly --webroot --webroot-path /var/www/certbot --email ${config.ssl.email} --agree-tos --no-eff-email -d ${config.domains.mainDomain} -d ${config.domains.frontendDomain}${colors.reset}`);
+    console.log(
+      `  ${colors.cyan}docker compose -f docker-compose.prod.yml run --rm certbot certonly --webroot --webroot-path /var/www/certbot --email ${config.ssl.email} --agree-tos --no-eff-email -d ${config.domains.mainDomain} -d ${config.domains.frontendDomain} -d ${config.domains.backendDomain}${colors.reset}`,
+    );
   }
 }
 
@@ -401,15 +429,29 @@ function printFinalInstructions(config) {
   drawBox('Setup Complete!', { color: colors.green });
 
   console.log(`${colors.cyan}Access your application:${colors.reset}`);
-  console.log(`  Frontend:    ${colors.green}https://${config.domains.frontendDomain}${colors.reset}`);
-  console.log(`  Backend:     ${colors.green}https://${config.domains.backendDomain}${colors.reset}`);
-  console.log(`  Health:      ${colors.green}https://${config.domains.backendDomain}/health${colors.reset}`);
+  console.log(
+    `  Frontend:    ${colors.green}https://${config.domains.frontendDomain}${colors.reset}`,
+  );
+  console.log(
+    `  Backend:     ${colors.green}https://${config.domains.backendDomain}${colors.reset}`,
+  );
+  console.log(
+    `  Health:      ${colors.green}https://${config.domains.backendDomain}/health${colors.reset}`,
+  );
 
   console.log(`\n${colors.cyan}Useful commands:${colors.reset}`);
-  console.log(`  Start services:    ${colors.green}docker compose -f docker-compose.prod.yml up -d${colors.reset}`);
-  console.log(`  View logs:         ${colors.green}docker compose -f docker-compose.prod.yml logs -f${colors.reset}`);
-  console.log(`  Stop services:     ${colors.green}docker compose -f docker-compose.prod.yml down${colors.reset}`);
-  console.log(`  Check status:      ${colors.green}docker compose -f docker-compose.prod.yml ps${colors.reset}`);
+  console.log(
+    `  Start services:    ${colors.green}docker compose -f docker-compose.prod.yml up -d${colors.reset}`,
+  );
+  console.log(
+    `  View logs:         ${colors.green}docker compose -f docker-compose.prod.yml logs -f${colors.reset}`,
+  );
+  console.log(
+    `  Stop services:     ${colors.green}docker compose -f docker-compose.prod.yml down${colors.reset}`,
+  );
+  console.log(
+    `  Check status:      ${colors.green}docker compose -f docker-compose.prod.yml ps${colors.reset}`,
+  );
 
   console.log(`\n${colors.cyan}Important notes:${colors.reset}`);
   if (config.ssl.sslType === 'self-signed') {
@@ -440,7 +482,13 @@ async function main() {
   try {
     // Get app name
     log.step('Application Configuration');
-    const appName = await ask(rl, 'Application name', 'My App');
+    const appName = await askRequired(rl, 'Application name', (value) => {
+      if (!validateAppName(value)) {
+        log.error('Use letters, numbers, spaces, dots, hyphens or underscores (max 64)');
+        return false;
+      }
+      return true;
+    });
 
     // Gather configuration
     const domains = await configureDomains(rl);
@@ -475,7 +523,8 @@ async function main() {
 
     // Create directories
     log.info('Creating directories...');
-    exec('mkdir -p nginx/ssl logs/nginx', { silent: true });
+    fs.mkdirSync(path.join(ROOT_DIR, 'nginx', 'ssl'), { recursive: true });
+    fs.mkdirSync(path.join(ROOT_DIR, 'logs', 'nginx'), { recursive: true });
     log.success('Directories created');
 
     // Generate .env file
@@ -485,7 +534,7 @@ async function main() {
     if (fileExists(envPath)) {
       backupFile(envPath);
     }
-    writeFile(envPath, envContent);
+    writeFile(envPath, envContent, { mode: 0o600 });
     log.success('.env file created');
 
     // Update Docker Compose

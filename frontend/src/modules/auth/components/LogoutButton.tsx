@@ -1,13 +1,14 @@
 'use client';
 
 import { useCallback } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLogoutMutation } from '@/modules/auth/store/authApi';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { logout as logoutAction, selectIsAuthenticated } from '@/modules/auth/store/authSlice';
 import { toast } from '@/lib/toast';
+import { getPathname } from '@/i18n/navigation';
 
 /**
  * LogoutButton component for navigation
@@ -17,25 +18,27 @@ import { toast } from '@/lib/toast';
 export function LogoutButton() {
   const t = useTranslations('auth.activate');
   const tToast = useTranslations('toast');
+  const locale = useLocale();
   const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
 
   const handleLogout = useCallback(async () => {
+    const loginPath = getPathname({ href: '/auth/login', locale });
     try {
       await logout().unwrap();
       dispatch(logoutAction());
       toast.success(tToast('success.logoutSuccess'));
       // Force full page refresh to clear all cached data
-      window.location.href = '/auth/login';
+      window.location.href = loginPath;
     } catch {
       // Clear state anyway even if API fails
       dispatch(logoutAction());
       toast.warning(tToast('warning.logoutError'));
       // Force full page refresh to clear all cached data
-      window.location.href = '/auth/login';
+      window.location.href = loginPath;
     }
-  }, [logout, dispatch, tToast]);
+  }, [logout, dispatch, tToast, locale]);
 
   // Don't render if not authenticated
   if (!isAuthenticated) {

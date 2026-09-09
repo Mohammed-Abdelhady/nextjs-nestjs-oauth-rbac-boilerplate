@@ -6,7 +6,6 @@ import {
   HttpCode,
   HttpStatus,
   Req,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { Request } from 'express';
@@ -19,19 +18,40 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ResendActivationDto } from './dto/resend-activation.dto';
 import { Public } from './decorators/public.decorator';
-import { AuthGuard } from './guards/auth.guard';
+import { RequiresFeature } from './decorators/requires-feature.decorator';
+import { AuthFeature } from './enums/auth-feature.enum';
 import { Throttle } from '@nestjs/throttler';
+import { SessionCookieService } from './services/session-cookie.service';
+import {
+  THROTTLE_LOGIN,
+  THROTTLE_FORGOT_PASSWORD,
+  THROTTLE_RESET_PASSWORD,
+  THROTTLE_ACTIVATE,
+  THROTTLE_REGISTER,
+} from '../common/constants/throttle';
 
+/**
+ * Password sign-in and the account lifecycle around it.
+ *
+ * The four routes that need a password close with AUTH_PASSWORD_ENABLED=false.
+ * Activation, resend and logout stay open: an activation code also confirms an
+ * address an admin moved an account to, which has nothing to do with passwords.
+ */
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly sessionCookieService: SessionCookieService,
+  ) {}
 
   /**
    * Register a new user
    * POST /api/auth/register
    */
   @Public()
+  @RequiresFeature(AuthFeature.PASSWORD)
+  @Throttle(THROTTLE_REGISTER)
   @Post('register')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -50,6 +70,7 @@ export class AuthController {
    * POST /api/auth/activate
    */
   @Public()
+  @Throttle(THROTTLE_ACTIVATE)
   @Post('activate')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -88,6 +109,8 @@ export class AuthController {
    * POST /api/auth/login
    */
   @Public()
+  @RequiresFeature(AuthFeature.PASSWORD)
+  @Throttle(THROTTLE_LOGIN)
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -107,7 +130,6 @@ export class AuthController {
    * POST /api/auth/logout
    * Requires authentication
    */
-  @UseGuards(AuthGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
@@ -118,17 +140,11 @@ export class AuthController {
       'Requires JWT authentication.',
   })
   async logout(@Req() request: Request, @Res() response: Response) {
-    const cookieName = process.env.SESSION_COOKIE_NAME || 'sid';
-    const sessionToken = request.cookies?.[cookieName];
+    const sessionToken = this.sessionCookieService.read(request) ?? '';
 
-    const result = await this.authService.logout(
-      (sessionToken as string | undefined) ?? '',
-    );
+    const result = await this.authService.logout(sessionToken);
 
-    // Clear session cookie
-    response.clearCookie(cookieName, {
-      path: '/',
-    });
+    this.sessionCookieService.clear(response);
 
     return response.status(HttpStatus.OK).json(result);
   }
@@ -138,6 +154,8 @@ export class AuthController {
    * POST /api/auth/forgot-password
    */
   @Public()
+  @RequiresFeature(AuthFeature.PASSWORD)
+  @Throttle(THROTTLE_FORGOT_PASSWORD)
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -156,6 +174,8 @@ export class AuthController {
    * POST /api/auth/reset-password
    */
   @Public()
+  @RequiresFeature(AuthFeature.PASSWORD)
+  @Throttle(THROTTLE_RESET_PASSWORD)
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

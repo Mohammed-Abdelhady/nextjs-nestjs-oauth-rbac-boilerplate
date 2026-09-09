@@ -1,4 +1,7 @@
+'use client';
+
 import { memo, ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import { SectionHeader } from '@/components/design-system';
 import { cn } from '@/lib/utils';
 
@@ -84,6 +87,9 @@ export const UserListSection = memo(function UserListSection({
   onCollapse,
   className,
 }: UserListSectionProps) {
+  const t = useTranslations('users.list');
+  const gridId = `user-grid-${id}`;
+
   return (
     <section data-testid={`user-list-section-${id}`} className={cn('space-y-4', className)}>
       {/* Section Header */}
@@ -94,13 +100,15 @@ export const UserListSection = memo(function UserListSection({
         collapsible
         collapsed={collapsed}
         onCollapse={onCollapse}
+        contentId={gridId}
       />
 
       {/* User Grid - Animated Collapse */}
       {!collapsed && (
         <div
-          className={cn('grid gap-4 md:grid-cols-2 lg:grid-cols-3', 'animate-fade-in')}
-          data-testid={`user-grid-${id}`}
+          id={gridId}
+          className={cn('grid gap-4 md:grid-cols-2 lg:grid-cols-3', 'motion-safe:animate-fade-in')}
+          data-testid={gridId}
         >
           {children}
         </div>
@@ -108,9 +116,7 @@ export const UserListSection = memo(function UserListSection({
 
       {/* Empty State */}
       {!collapsed && count === 0 && (
-        <div className="py-8 text-center text-sm text-muted-foreground/60">
-          No users in this group
-        </div>
+        <div className="py-8 text-center text-sm text-muted-foreground">{t('emptyGroup')}</div>
       )}
     </section>
   );

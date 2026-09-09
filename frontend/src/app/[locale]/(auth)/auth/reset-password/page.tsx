@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
-import { ResetPasswordPage } from '@/modules/auth/pages/ResetPasswordPage';
+import { ResetPasswordPage } from '@/modules/auth/methods/password';
 
 /**
  * Generate metadata for reset password page

@@ -1,10 +1,5 @@
 export { isValidEmail, isTokenExpired, getRedirectPath, getErrorMessage } from './authHelpers';
-export { saveAuthState, loadAuthState, clearAuthState, isLocalStorageAvailable } from './storage';
-export {
-  openOAuthPopup,
-  waitForOAuthCallback,
-  getOAuthProviderIconPath,
-  formatProviderName,
-  isValidOAuthCallbackData,
-  type OAuthCallbackData,
-} from './oauthHelpers';
+export { filterDigits } from './digitFilter';
+export { isFeatureDisabled } from './featureDisabled';
+export { translatableErrorCode } from './errorCodeMessage';
+export { defaultPathFor, signedInPath, twoFactorPath } from './signInRouting';

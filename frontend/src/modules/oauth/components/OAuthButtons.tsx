@@ -1,30 +1,24 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Loader2 } from 'lucide-react';
 import { useGetEnabledProvidersQuery } from '../api';
 import { OAuthButton } from './OAuthButton';
-import type { OAuthProvider } from '../types';
 
 interface OAuthButtonsProps {
-  mode?: 'signin' | 'link';
-  onSuccess?: () => void;
-  onError?: (error: string) => void;
+  /** Path to return to after sign-in. Defaults to the page's redirect parameter. */
+  redirect?: string;
   disabled?: boolean;
 }
 
 /**
- * OAuthButtons Component
- * Container component that renders OAuth buttons for all enabled providers
+ * Renders one button per provider the backend reports as enabled.
  */
-export function OAuthButtons({
-  mode = 'signin',
-  onSuccess,
-  onError,
-  disabled = false,
-}: OAuthButtonsProps) {
-  const { data: providersData, isLoading: isLoadingProviders } = useGetEnabledProvidersQuery();
+export function OAuthButtons({ redirect, disabled = false }: OAuthButtonsProps) {
+  const t = useTranslations('auth.oauth');
+  const { data: providers = [], isLoading } = useGetEnabledProvidersQuery();
 
-  if (isLoadingProviders) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-4" data-testid="oauth-loading">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -32,9 +26,7 @@ export function OAuthButtons({
     );
   }
 
-  const enabledProviders = providersData?.providers || [];
-
-  if (enabledProviders.length === 0) {
+  if (providers.length === 0) {
     return null;
   }
 
@@ -43,15 +35,13 @@ export function OAuthButtons({
       className="flex flex-wrap items-center justify-center gap-4"
       data-testid="oauth-buttons"
       role="group"
-      aria-label="OAuth authentication options"
+      aria-label={t('groupLabel')}
     >
-      {enabledProviders.map((provider) => (
+      {providers.map((provider) => (
         <OAuthButton
-          key={provider}
-          provider={provider as OAuthProvider}
-          mode={mode}
-          onSuccess={onSuccess}
-          onError={onError}
+          key={provider.id}
+          provider={provider}
+          redirect={redirect}
           disabled={disabled}
         />
       ))}

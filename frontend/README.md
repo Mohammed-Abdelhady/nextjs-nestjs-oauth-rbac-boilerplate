@@ -9,7 +9,7 @@ npm install
 npm run dev          # Development (http://localhost:3000)
 npm run build        # Production build
 npm run lint         # ESLint check
-npm run test:e2e     # Playwright E2E tests
+npm test             # Product unit tests
 ```
 
 ## Tech Stack
@@ -52,14 +52,15 @@ src/
 
 ## Environment Variables
 
-Create `.env.local`:
+Create `frontend/.env.local`:
 
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id
-NEXT_PUBLIC_FACEBOOK_APP_ID=your-facebook-app-id
-NEXT_PUBLIC_GITHUB_CLIENT_ID=your-github-client-id
+# Backend origin without /api suffix
+NEXT_PUBLIC_API_URL=http://localhost:5000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
+
+The frontend discovers enabled OAuth providers and active auth options dynamically from the backend via `GET /api/auth/methods` and `GET /api/auth/oauth/providers`.
 
 ## Key Features
 
@@ -144,6 +145,8 @@ npx shadcn@latest add button dialog
 
 ## Testing
 
+Run `npm test` for product unit tests. The following browser commands are for the original source repository only. Its full-feature Playwright harness is maintainer tooling; generated projects omit that harness, its configurations and these commands. Generated projects retain product unit tests and the backend functional API suite (`npm run test:e2e -w backend` from the project root).
+
 ```bash
 npm run test:e2e          # Run all E2E tests
 npm run test:e2e:ui       # Interactive UI mode
@@ -151,7 +154,7 @@ npm run test:e2e:headed   # See browser
 npm run test:e2e:debug    # Debug mode
 ```
 
-Test files: `e2e/*.spec.ts`
+Source repository browser files: `e2e/*.spec.ts`.
 
 ## Deployment
 

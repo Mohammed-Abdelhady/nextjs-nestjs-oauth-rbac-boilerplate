@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
-import { execSync, spawn } from 'node:child_process';
+import { execFileSync, execSync, spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -125,12 +125,15 @@ export function readFile(filePath) {
   }
 }
 
-export function writeFile(filePath, content) {
+export function writeFile(filePath, content, options = {}) {
   const dir = path.dirname(filePath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
-  fs.writeFileSync(filePath, content);
+  fs.writeFileSync(filePath, content, options);
+  if (typeof options === 'object' && options !== null && options.mode !== undefined) {
+    fs.chmodSync(filePath, options.mode);
+  }
 }
 
 export function fileExists(filePath) {
@@ -163,6 +166,10 @@ export function validateDomain(domain) {
   return domainRegex.test(domain);
 }
 
+export function resolveOptionalDomain(value, fallback) {
+  return value && validateDomain(value) ? value : fallback;
+}
+
 export function validateEmail(email) {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return emailRegex.test(email);
@@ -186,6 +193,25 @@ export function commandExists(command) {
     return true;
   } catch {
     return false;
+  }
+}
+
+export function validateAppName(name) {
+  return /^[A-Za-z0-9 ._-]{1,64}$/.test(name);
+}
+
+export function execFile(executable, args, options = {}) {
+  const { silent = false, cwd = ROOT_DIR } = options;
+  try {
+    const result = execFileSync(executable, args, {
+      cwd,
+      encoding: 'utf8',
+      shell: false,
+      stdio: silent ? 'pipe' : 'inherit',
+    });
+    return { success: true, output: result };
+  } catch (error) {
+    return { success: false, error: error.message };
   }
 }
 

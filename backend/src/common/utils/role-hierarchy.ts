@@ -1,10 +1,10 @@
 import { UserRole } from '../../user/enums/user-role.enum';
 
 /**
- * Role hierarchy for permission checks.
- * Higher numeric values indicate higher privileges.
- * Supports both enum and string-based roles (for migration compatibility).
- * UserRole enum values ('user', 'support', etc.) map to the same keys.
+ * Levels of the four system roles. Higher levels manage lower ones.
+ * This map seeds the roles collection and backs documents written before roles
+ * carried a level. Live checks read the level from the database, so custom
+ * roles take part in the hierarchy as well.
  */
 export const ROLE_HIERARCHY: Record<string, number> = {
   user: 1,
@@ -14,6 +14,23 @@ export const ROLE_HIERARCHY: Record<string, number> = {
 } as const;
 
 /**
+ * Level given to a role that exists but carries no explicit level.
+ * Custom roles sit alongside the default user role.
+ */
+export const CUSTOM_ROLE_LEVEL = 1;
+
+/**
+ * Level given to a role slug that no longer exists in the roles collection.
+ * Only admins may touch users stranded on such a slug.
+ */
+export const UNKNOWN_ROLE_LEVEL = 0;
+
+/**
+ * Level an actor must reach to perform admin-only operations.
+ */
+export const ADMIN_LEVEL = ROLE_HIERARCHY[UserRole.ADMIN];
+
+/**
  * Get role hierarchy level for a role string.
  * Custom roles (not in hierarchy) default to level 0.
  *
@@ -21,7 +38,46 @@ export const ROLE_HIERARCHY: Record<string, number> = {
  * @returns Hierarchy level (0 for custom roles)
  */
 function getRoleLevel(role: string | UserRole): number {
-  return ROLE_HIERARCHY[role] ?? 0;
+  return ROLE_HIERARCHY[role] ?? UNKNOWN_ROLE_LEVEL;
+}
+
+/**
+ * Check whether an actor level may act on a target level in a read-only way.
+ * Equal levels pass. Stranded roles (level 0) are admin-only.
+ *
+ * @param actorLevel - Hierarchy level of the acting user
+ * @param targetLevel - Hierarchy level of the target user
+ * @returns true when the actor may read the target
+ */
+export function canManageLevel(
+  actorLevel: number,
+  targetLevel: number,
+): boolean {
+  if (targetLevel === UNKNOWN_ROLE_LEVEL) {
+    return actorLevel >= ADMIN_LEVEL;
+  }
+
+  return actorLevel >= targetLevel;
+}
+
+/**
+ * Check whether an actor level may mutate a target level.
+ * Equal levels fail, so peers cannot act on each other.
+ * Stranded roles (level 0) are admin-only.
+ *
+ * @param actorLevel - Hierarchy level of the acting user
+ * @param targetLevel - Hierarchy level of the target user
+ * @returns true when the actor may mutate the target
+ */
+export function canModifyLevel(
+  actorLevel: number,
+  targetLevel: number,
+): boolean {
+  if (targetLevel === UNKNOWN_ROLE_LEVEL) {
+    return actorLevel >= ADMIN_LEVEL;
+  }
+
+  return actorLevel > targetLevel;
 }
 
 /**
@@ -46,38 +102,6 @@ export function hasMinimumRole(
 }
 
 /**
- * Check if an actor can manage a target user based on role hierarchy.
- * A user can only manage users with lower or equal role level.
- * Custom roles (level 0) can only be managed by admins.
- *
- * @param actorRole - The role of the user performing the action
- * @param targetRole - The role of the target user
- * @returns true if actor can manage the target
- *
- * @example
- * ```typescript
- * canManageUser('admin', 'manager'); // true
- * canManageUser('manager', 'admin'); // false
- * canManageUser('manager', 'manager'); // true
- * canManageUser('manager', 'custom-role'); // false (custom roles need admin)
- * ```
- */
-export function canManageUser(
-  actorRole: string | UserRole,
-  targetRole: string | UserRole,
-): boolean {
-  const actorLevel = getRoleLevel(actorRole);
-  const targetLevel = getRoleLevel(targetRole);
-
-  // Custom roles (level 0) can only be managed by admins (level 4)
-  if (targetLevel === 0) {
-    return actorLevel === 4; // admin level
-  }
-
-  return actorLevel >= targetLevel;
-}
-
-/**
  * Check if a role assignment is valid.
  * ADMIN role cannot be assigned via API (only through database).
  * Custom roles can be assigned.
@@ -94,81 +118,4 @@ export function canManageUser(
  */
 export function isValidRoleAssignment(newRole: string | UserRole): boolean {
   return newRole !== (UserRole.ADMIN as string);
-}
-
-/**
- * Check if an actor can view a target user based on role hierarchy.
- * A user can view users with same or lower role level.
- * Admins can view all users including custom roles.
- *
- * @param actorRole - The role of the user performing the action
- * @param targetRole - The role of the target user
- * @returns true if actor can view the target
- */
-export function canViewUser(
-  actorRole: string | UserRole,
-  targetRole: string | UserRole,
-): boolean {
-  const actorLevel = getRoleLevel(actorRole);
-  const targetLevel = getRoleLevel(targetRole);
-
-  // Admins can view all users including custom roles
-  if (actorLevel === 4) return true;
-
-  // Custom roles (level 0) can only be viewed by admins
-  if (targetLevel === 0) return false;
-
-  return actorLevel >= targetLevel;
-}
-
-/**
- * Check if an actor can modify a target user based on role hierarchy.
- * A user can only modify users with strictly lower role level.
- * Custom roles can only be modified by admins.
- *
- * @param actorRole - The role of the user performing the action
- * @param targetRole - The role of the target user
- * @returns true if actor can modify the target
- */
-export function canModifyUser(
-  actorRole: string | UserRole,
-  targetRole: string | UserRole,
-): boolean {
-  const actorLevel = getRoleLevel(actorRole);
-  const targetLevel = getRoleLevel(targetRole);
-
-  // Custom roles (level 0) can only be modified by admins
-  if (targetLevel === 0) {
-    return actorLevel === 4;
-  }
-
-  return actorLevel > targetLevel;
-}
-
-/**
- * Get roles that an actor can manage (view/modify).
- * Returns array of system role slugs.
- *
- * @param actorRole - The role of the user performing the action
- * @returns Array of manageable role slugs
- */
-export function getManageableRoles(actorRole: string | UserRole): string[] {
-  const actorLevel = getRoleLevel(actorRole);
-  const systemRoles = ['user', 'support', 'manager', 'admin'];
-
-  return systemRoles.filter((role) => getRoleLevel(role) < actorLevel);
-}
-
-/**
- * Get roles that an actor can view (includes same level).
- * Returns array of system role slugs.
- *
- * @param actorRole - The role of the user performing the action
- * @returns Array of viewable role slugs
- */
-export function getViewableRoles(actorRole: string | UserRole): string[] {
-  const actorLevel = getRoleLevel(actorRole);
-  const systemRoles = ['user', 'support', 'manager', 'admin'];
-
-  return systemRoles.filter((role) => getRoleLevel(role) <= actorLevel);
 }

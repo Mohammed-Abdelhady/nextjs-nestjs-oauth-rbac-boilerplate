@@ -12,6 +12,11 @@ export interface User {
   name: string;
   role: UserRole;
   permissions: string[];
+  /** Only the profile endpoint reports these; a sign-in reply leaves them out. */
+  twoFactorEnabled?: boolean;
+  /** How many passkeys are registered on the account. */
+  passkeyCount?: number;
+  linkedProviders?: string[];
 }
 
 /**
@@ -23,6 +28,8 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  validationStatus: 'idle' | 'pending' | 'succeeded' | 'failed';
+  validationErrorStatus: number | null;
 }
 
 /**
@@ -35,12 +42,42 @@ export interface LoginRequest {
 }
 
 /**
- * Login response from API
- * Uses httpOnly cookies for session management (no token in response)
+ * Body every sign-in route returns. When the account owes a second factor
+ * there is no session yet, so `user` is null and the code goes to /auth/2fa.
  */
 export interface LoginResponse {
-  user: User;
+  requiresTwoFactor: boolean;
+  user: User | null;
   message?: string;
+}
+
+/**
+ * Sign-in methods this deployment accepts, from GET /api/auth/methods.
+ *
+ * A backend that does not ship a method leaves its key out, which normalises
+ * to off rather than to a button nothing answers.
+ */
+export interface AuthMethods {
+  password: boolean;
+  magicLink: boolean;
+  twoFactor: boolean;
+  passkeys: boolean;
+  oauth: AuthMethodProvider[];
+}
+
+/**
+ * One OAuth provider as the methods endpoint lists it. Same shape as the
+ * OAuth module's provider summary, kept separate so the core sign-in types do
+ * not depend on a feature module.
+ */
+export interface AuthMethodProvider {
+  id: string;
+  displayName: string;
+}
+
+/** Payload of the methods endpoint before normalisation. */
+export interface AuthMethodsResponse {
+  methods: Partial<AuthMethods> & { password: boolean };
 }
 
 /**
@@ -136,42 +173,4 @@ export interface ResetPasswordRequest {
 export interface ResetPasswordResponse {
   success: boolean;
   message: string;
-}
-
-/**
- * OAuth provider type
- */
-export type OAuthProvider = 'google' | 'facebook' | 'github';
-
-/**
- * OAuth authorization URL response
- */
-export interface OAuthAuthUrlResponse {
-  url: string;
-  provider: string;
-}
-
-/**
- * OAuth callback request payload
- */
-export interface OAuthCallbackRequest {
-  provider: OAuthProvider;
-  code: string;
-  state?: string;
-}
-
-/**
- * OAuth callback response from API
- * Uses httpOnly cookies for session management (no token in response)
- */
-export interface OAuthCallbackResponse {
-  user: User;
-  message?: string;
-}
-
-/**
- * OAuth providers response
- */
-export interface OAuthProvidersResponse {
-  providers: string[];
 }

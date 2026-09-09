@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { useUpdateUserMutation } from '@/store/api/userApi';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/lib/toast';
+import { parseApiError } from '@/lib/apiError';
 
 interface EditUserDialogProps {
   userId: string | null;
@@ -42,6 +44,7 @@ function EditUserForm({
   onSubmit,
   onClose,
 }: EditUserFormProps) {
+  const t = useTranslations('users.editUser');
   // Initialize directly from props - component remounts when userId changes
   const [name, setName] = useState(initialName || '');
   const [email, setEmail] = useState(initialEmail || '');
@@ -51,15 +54,15 @@ function EditUserForm({
     const newErrors: Record<string, string> = {};
 
     if (!email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t('errors.emailRequired');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Invalid email format';
+      newErrors.email = t('errors.emailInvalid');
     }
 
     if (!name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = t('errors.nameRequired');
     } else if (name.trim().length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
+      newErrors.name = t('errors.nameMinLength');
     }
 
     setErrors(newErrors);
@@ -85,14 +88,14 @@ function EditUserForm({
       <div className="space-y-2">
         <Label
           htmlFor="edit-name"
-          className="text-xs uppercase tracking-widest text-muted-foreground/60"
+          className="text-xs uppercase tracking-widest text-muted-foreground"
         >
-          Full Name
+          {t('name')}
         </Label>
         <Input
           id="edit-name"
           type="text"
-          placeholder="John Doe"
+          placeholder={t('namePlaceholder')}
           value={name}
           onChange={(e) => {
             setName(e.target.value);
@@ -113,14 +116,14 @@ function EditUserForm({
       <div className="space-y-2">
         <Label
           htmlFor="edit-email"
-          className="text-xs uppercase tracking-widest text-muted-foreground/60"
+          className="text-xs uppercase tracking-widest text-muted-foreground"
         >
-          Email Address
+          {t('email')}
         </Label>
         <Input
           id="edit-email"
           type="email"
-          placeholder="user@example.com"
+          placeholder={t('emailPlaceholder')}
           value={email}
           onChange={(e) => {
             setEmail(e.target.value);
@@ -145,16 +148,21 @@ function EditUserForm({
           disabled={isLoading}
           data-testid="cancel-edit-user-button"
         >
-          Cancel
+          {t('cancel')}
         </Button>
-        <Button type="submit" disabled={isLoading} data-testid="submit-edit-user-button">
+        <Button
+          type="submit"
+          disabled={isLoading}
+          aria-busy={isLoading}
+          data-testid="submit-edit-user-button"
+        >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
+              <Loader2 className="me-2 h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
+              {t('saving')}
             </>
           ) : (
-            'Save Changes'
+            t('save')
           )}
         </Button>
       </DialogFooter>
@@ -190,15 +198,15 @@ export function EditUserDialog({
   open,
   onOpenChange,
 }: EditUserDialogProps) {
+  const t = useTranslations('users.editUser');
   const [updateUser, { isLoading }] = useUpdateUserMutation();
-  const { toast } = useToast();
 
   const handleSubmit = async (data: { name: string; email: string }): Promise<boolean> => {
     if (!userId) return false;
 
     // Check if nothing changed
     if (data.name === currentName && data.email === currentEmail) {
-      toast.info('No changes to save');
+      toast.info(t('noChanges'));
       return true;
     }
 
@@ -209,14 +217,11 @@ export function EditUserDialog({
         email: data.email,
       }).unwrap();
 
-      toast.success('User updated successfully');
+      toast.success(t('success'));
       return true;
     } catch (error) {
-      const errorMessage =
-        error && typeof error === 'object' && 'data' in error && error.data
-          ? String((error.data as { message?: string }).message)
-          : 'Failed to update user';
-      toast.error(errorMessage);
+      const parsed = parseApiError(error);
+      toast.error(parsed.message || t('error'));
       return false;
     }
   };
@@ -231,9 +236,9 @@ export function EditUserDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]" data-testid="edit-user-dialog">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-light tracking-tight">Edit User</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground/60">
-            Update user information. Changes will be saved immediately.
+          <DialogTitle className="text-xl font-semibold tracking-tight">{t('title')}</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            {t('description')}
           </DialogDescription>
         </DialogHeader>
 

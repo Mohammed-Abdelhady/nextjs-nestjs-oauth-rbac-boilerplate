@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
-import { ForgotPasswordPage } from '@/modules/auth/pages/ForgotPasswordPage';
+import { ForgotPasswordPage } from '@/modules/auth/methods/password';
 
 /**
  * Generate metadata for forgot password page

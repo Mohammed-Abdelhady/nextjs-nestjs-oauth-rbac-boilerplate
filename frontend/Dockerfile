@@ -1,77 +1,57 @@
-# Multi-stage build for Next.js frontend
-# Stage 1: Base
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 
-# Install dependencies for native modules if needed
 RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
-# Stage 2: Dependencies
 FROM base AS deps
 
-# Copy package files
-COPY package*.json ./
+COPY package.json package-lock.json ./
+COPY frontend/package.json ./frontend/
 
-# Install all dependencies (including devDependencies for build)
-RUN npm ci
+RUN npm ci --workspace frontend
 
-# Stage 3: Builder
 FROM deps AS builder
 
-# Copy source code
-COPY . .
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
-# Build Next.js application
-RUN npm run build
+COPY frontend ./frontend
 
-# Stage 4: Development
+RUN npm run build --workspace frontend
+
 FROM base AS development
 
-# Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/frontend/node_modules ./frontend/node_modules
+COPY package.json package-lock.json ./
+COPY frontend ./frontend
 
-# Copy source code for hot reload
-COPY . .
+WORKDIR /app/frontend
 
-# Expose port
 EXPOSE 3000
 
-# Start development server with hot reload
 CMD ["npm", "run", "dev"]
 
-# Stage 5: Production
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
-# Install dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init
 
-# Create non-root user
 RUN addgroup -g 1001 -S nextjs && \
     adduser -S nextjs -u 1001
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+COPY --from=builder --chown=nextjs:nextjs /app/frontend/.next/standalone ./
+COPY --from=builder --chown=nextjs:nextjs /app/frontend/.next/static ./frontend/.next/static
+COPY --from=builder --chown=nextjs:nextjs /app/frontend/public ./frontend/public
 
-# Install only production dependencies
-RUN npm ci --only=production && \
-    npm cache clean --force
+WORKDIR /app/frontend
 
-# Copy built artifacts and standalone files from builder
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nextjs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nextjs /app/.next/static ./.next/static
-
-# Switch to non-root user
 USER nextjs
 
-# Expose port
 EXPOSE 3000
 
-# Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start production server
 CMD ["node", "server.js"]

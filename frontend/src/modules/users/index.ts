@@ -3,12 +3,12 @@ export {
   UserCard,
   UserActionsMenu,
   UserListSection,
-  UserPermissionsBadge,
   UserPermissionsDialog,
   UserRoleSelector,
   CreateUserButton,
   CreateUserDialog,
   EditUserDialog,
+  UserListSkeleton,
 } from './components';
 
 // API hooks

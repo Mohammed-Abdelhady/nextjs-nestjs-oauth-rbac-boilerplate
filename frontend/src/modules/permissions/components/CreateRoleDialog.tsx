@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -13,9 +14,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { FieldError, SubmitButton } from '@/components/forms';
 import { useCreateRoleMutation } from '../api/rolesApi';
 import { PermissionSelector } from './PermissionSelector';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
+import { parseApiError } from '@/lib/apiError';
 
 export interface CreateRoleDialogProps {
   /**
@@ -34,37 +37,54 @@ export interface CreateRoleDialogProps {
   onSuccess?: () => void;
 }
 
+interface RoleFormErrors {
+  name?: string;
+  permissions?: string;
+}
+
 /**
- * Dialog for creating a new role.
+ * Dialog for creating a new role. Validation problems are shown under the field
+ * they belong to and linked with `aria-describedby`, not only as a toast.
  *
  * @example
  * ```tsx
  * const [open, setOpen] = useState(false);
  *
- * <CreateRoleDialog
- *   open={open}
- *   onOpenChange={setOpen}
- *   onSuccess={() => console.log('Role created!')}
- * />
+ * <CreateRoleDialog open={open} onOpenChange={setOpen} onSuccess={refetch} />
  * ```
  */
 export function CreateRoleDialog({ open, onOpenChange, onSuccess }: CreateRoleDialogProps) {
+  const t = useTranslations('roles.form');
+  const uid = useId();
+  const nameId = `${uid}-name`;
+  const nameErrorId = `${uid}-name-error`;
+  const descriptionId = `${uid}-description`;
+  const permissionsLabelId = `${uid}-permissions-label`;
+  const permissionsErrorId = `${uid}-permissions-error`;
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [permissions, setPermissions] = useState<string[]>([]);
+  const [errors, setErrors] = useState<RoleFormErrors>({});
 
   const [createRole, { isLoading }] = useCreateRoleMutation();
+
+  const resetForm = () => {
+    setName('');
+    setDescription('');
+    setPermissions([]);
+    setErrors({});
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name.trim()) {
-      toast.error('Please enter a role name');
-      return;
-    }
+    const nextErrors: RoleFormErrors = {};
+    if (!name.trim()) nextErrors.name = t('nameError');
+    if (permissions.length === 0) nextErrors.permissions = t('permissionsError');
 
-    if (permissions.length === 0) {
-      toast.error('Please select at least one permission');
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
       return;
     }
 
@@ -75,96 +95,96 @@ export function CreateRoleDialog({ open, onOpenChange, onSuccess }: CreateRoleDi
         permissions,
       }).unwrap();
 
-      toast.success('Role created successfully');
-
-      // Reset form
-      setName('');
-      setDescription('');
-      setPermissions([]);
-
-      // Close dialog
+      toast.success(t('createSuccess', { name: name.trim() }));
+      resetForm();
       onOpenChange(false);
-
-      // Call success callback
       onSuccess?.();
     } catch (error: unknown) {
-      const errorMessage =
-        error && typeof error === 'object' && 'data' in error
-          ? (error.data as { message?: string })?.message || 'Failed to create role'
-          : 'Failed to create role';
-
-      toast.error(errorMessage);
+      const parsed = parseApiError(error);
+      toast.error(parsed.message || t('error'));
     }
   };
 
   const handleCancel = () => {
-    // Reset form
-    setName('');
-    setDescription('');
-    setPermissions([]);
-
-    // Close dialog
+    resetForm();
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
-        <form onSubmit={handleSubmit}>
+      <DialogContent
+        className="max-h-[90vh] max-w-3xl overflow-y-auto"
+        data-testid="create-role-dialog"
+      >
+        <form onSubmit={handleSubmit} noValidate>
           <DialogHeader>
-            <DialogTitle>Create New Role</DialogTitle>
-            <DialogDescription>
-              Create a custom role with specific permissions. Roles can be assigned to users for
-              access control.
-            </DialogDescription>
+            <DialogTitle>{t('createTitle')}</DialogTitle>
+            <DialogDescription>{t('createDescription')}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 py-6">
             {/* Role Name */}
             <div className="space-y-2">
-              <Label htmlFor="role-name">
-                Role Name <span className="text-red-500">*</span>
+              <Label htmlFor={nameId}>
+                {t('nameLabel')} <span className="text-destructive">{t('nameRequired')}</span>
               </Label>
               <Input
-                id="role-name"
+                id={nameId}
                 value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Content Editor"
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
+                }}
+                placeholder={t('namePlaceholder')}
                 disabled={isLoading}
                 required
+                aria-invalid={Boolean(errors.name)}
+                aria-describedby={errors.name ? nameErrorId : undefined}
                 data-testid="role-name-input"
               />
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                A unique name for this role (e.g., Content Editor, Moderator)
-              </p>
+              <FieldError id={nameErrorId} message={errors.name} testId="role-name-error" />
             </div>
 
             {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="role-description">Description</Label>
+              <Label htmlFor={descriptionId}>{t('descriptionLabel')}</Label>
               <Textarea
-                id="role-description"
+                id={descriptionId}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe what this role is for..."
+                placeholder={t('descriptionPlaceholder')}
                 rows={3}
                 disabled={isLoading}
                 data-testid="role-description-input"
               />
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Optional description of the role&apos;s purpose and responsibilities
-              </p>
             </div>
 
             {/* Permissions */}
             <div className="space-y-2">
-              <Label>
-                Permissions <span className="text-red-500">*</span>
+              <Label id={permissionsLabelId}>
+                {t('permissionsLabel')}{' '}
+                <span className="text-destructive">{t('permissionsRequired')}</span>
               </Label>
-              <PermissionSelector
-                selectedPermissions={permissions}
-                onChange={setPermissions}
-                disabled={isLoading}
+              <div
+                role="group"
+                aria-labelledby={permissionsLabelId}
+                aria-describedby={errors.permissions ? permissionsErrorId : undefined}
+              >
+                <PermissionSelector
+                  selectedPermissions={permissions}
+                  onChange={(next) => {
+                    setPermissions(next);
+                    if (errors.permissions) {
+                      setErrors((prev) => ({ ...prev, permissions: undefined }));
+                    }
+                  }}
+                  disabled={isLoading}
+                />
+              </div>
+              <FieldError
+                id={permissionsErrorId}
+                message={errors.permissions}
+                testId="role-permissions-error"
               />
             </div>
           </div>
@@ -177,11 +197,16 @@ export function CreateRoleDialog({ open, onOpenChange, onSuccess }: CreateRoleDi
               disabled={isLoading}
               data-testid="cancel-button"
             >
-              Cancel
+              {t('cancel')}
             </Button>
-            <Button type="submit" disabled={isLoading} data-testid="create-role-button">
-              {isLoading ? 'Creating...' : 'Create Role'}
-            </Button>
+            <SubmitButton
+              isLoading={isLoading}
+              loadingText={t('creating')}
+              className="h-10 mt-0 w-auto py-2"
+              testId="create-role-button"
+            >
+              {t('create')}
+            </SubmitButton>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -1,15 +1,13 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAppDispatch } from '@/store/hooks';
+import { useRouter } from '@/i18n/navigation';
 import { useGetCurrentUserQuery } from '../store/authApi';
-import { logout } from '../store/authSlice';
 
 /**
  * Hook to validate authentication state on app load
  * Checks if user has valid session cookie by calling getCurrentUser API
- * - 401: Logs out user (invalid/expired session)
+ * - 401: slice records a failed unauthenticated session; AuthGuard redirects
  * - 403: Redirects to forbidden page (valid session, insufficient permissions)
  *
  * @returns Loading state while validating
@@ -26,7 +24,6 @@ import { logout } from '../store/authSlice';
  * }
  */
 export function useAuthValidation() {
-  const dispatch = useAppDispatch();
   const router = useRouter();
 
   // Always call getCurrentUser on mount to check for valid session cookie
@@ -39,16 +36,11 @@ export function useAuthValidation() {
     if (isError) {
       const statusCode = (error as { status?: number })?.status;
 
-      if (statusCode === 401) {
-        // Unauthorized: Invalid or expired session - logout
-        dispatch(logout());
-      } else if (statusCode === 403) {
-        // Forbidden: Valid session but insufficient permissions - redirect
+      if (statusCode === 403) {
         router.push('/403');
       }
-      // Other errors (network, 500, etc.) are ignored - user can retry
     }
-  }, [isError, error, dispatch, router]);
+  }, [isError, error, router]);
 
   // Return loading state while validating
   return isLoading;

@@ -1,24 +1,24 @@
 {
   "info": {
-    "name": "FULL-MERN-AUTH-Boilerplate API",
-    "description": "Complete API collection for FULL-MERN-AUTH-Boilerplate backend with authentication, user management, and admin operations.\n\n## Error Response Format\n\nAll errors follow a consistent format:\n```json\n{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"ERROR_CODE\",\n    \"message\": \"Human-readable message\",\n    \"details\": { ... }\n  }\n}\n```\n\nThe `code` field can be used for i18n translation lookup in the frontend.",
+    "name": "NestJS Next.js Auth RBAC API",
+    "description": "API collection for NestJS backend with cookie sessions, dynamic RBAC, TOTP 2FA, passkeys, and OAuth.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "version": "2.1.0"
   },
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000/api",
+      "value": "http://localhost:5000/api",
       "type": "string"
     },
     {
-      "key": "jwtToken",
-      "value": "",
+      "key": "healthUrl",
+      "value": "http://localhost:5000/health",
       "type": "string"
     },
     {
       "key": "testEmail",
-      "value": "test@example.com",
+      "value": "admin@seed.local",
       "type": "string"
     },
     {
@@ -28,45 +28,28 @@
     },
     {
       "key": "testName",
-      "value": "Test User",
+      "value": "Admin User",
       "type": "string"
     },
     {
       "key": "userId",
-      "value": "",
+      "value": "65a000000000000000000001",
+      "type": "string"
+    },
+    {
+      "key": "roleId",
+      "value": "65a000000000000000000002",
       "type": "string"
     },
     {
       "key": "sessionId",
-      "value": "",
+      "value": "65a000000000000000000003",
       "type": "string"
     }
   ],
   "auth": {
-    "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{jwtToken}}",
-        "type": "string"
-      }
-    ]
+    "type": "noauth"
   },
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "// Skip authentication for public endpoints",
-          "const url = pm.request.url.toString();",
-          "if (url.includes('/auth/register') || url.includes('/auth/activate') || url.includes('/auth/login') || url.includes('/auth/oauth') || url.includes('/health') || url.includes('/auth/forgot-password') || url.includes('/auth/reset-password')) {",
-          "  pm.request.headers.remove('Authorization');",
-          "}"
-        ]
-      }
-    }
-  ],
   "item": [
     {
       "name": "Authentication",
@@ -83,302 +66,14 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"name\": \"{{testName}}\"\n}"
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"{{testPassword}}\",\n  \"name\": \"New User\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
               "host": ["{{baseUrl}}"],
               "path": ["auth", "register"]
-            },
-            "description": "Register a new user. Sends activation email with 6-digit code."
-          },
-          "response": [
-            {
-              "name": "Success - User registered",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"Password123!\",\n  \"name\": \"Test User\"\n}"
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/auth/register",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "register"]
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "cookie": [],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"email\": \"test@example.com\",\n    \"message\": \"Activation code sent to your email\"\n  }\n}"
-            },
-            {
-              "name": "Error - Email already exists",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"email\": \"existing@example.com\",\n  \"password\": \"Password123!\",\n  \"name\": \"Test User\"\n}"
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/auth/register",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "register"]
-                }
-              },
-              "status": "Conflict",
-              "code": 409,
-              "_postman_previewlanguage": "json",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "cookie": [],
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"EMAIL_ALREADY_EXISTS\",\n    \"message\": \"This email is already registered\"\n  }\n}"
-            },
-            {
-              "name": "Error - Validation failed",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"email\": \"invalid-email\",\n  \"password\": \"weak\",\n  \"name\": \"\"\n}"
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/auth/register",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "register"]
-                }
-              },
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "cookie": [],
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Validation failed\",\n    \"details\": {\n      \"errors\": [\n        { \"field\": \"email\", \"messages\": [\"email must be a valid email\"] },\n        { \"field\": \"password\", \"messages\": [\"password must be at least 8 characters\"] },\n        { \"field\": \"name\", \"messages\": [\"name should not be empty\"] }\n      ]\n    }\n  }\n}"
             }
-          ],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status is 200 or expected error', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 400, 409]);",
-                  "});",
-                  "",
-                  "pm.test('Response has correct structure', function () {",
-                  "  const jsonData = pm.response.json();",
-                  "  pm.expect(jsonData).to.have.property('success');",
-                  "  if (jsonData.success) {",
-                  "    pm.expect(jsonData).to.have.property('data');",
-                  "  } else {",
-                  "    pm.expect(jsonData).to.have.property('error');",
-                  "    pm.expect(jsonData.error).to.have.property('code');",
-                  "    pm.expect(jsonData.error).to.have.property('message');",
-                  "  }",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Activate Account",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"code\": \"123456\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/activate",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "activate"]
-            },
-            "description": "Activate user account with 6-digit code from email."
-          },
-          "response": [
-            {
-              "name": "Success - Account activated",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"email\": \"test@example.com\",\n  \"code\": \"123456\"\n}"
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/auth/activate",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "activate"]
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "cookie": [],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"user\": {\n      \"id\": \"507f1f77bcf86cd799439011\",\n      \"email\": \"test@example.com\",\n      \"name\": \"Test User\",\n      \"role\": \"user\",\n      \"isVerified\": true\n    }\n  },\n  \"message\": \"Account activated successfully\"\n}"
-            },
-            {
-              "name": "Error - Invalid code",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"email\": \"test@example.com\",\n  \"code\": \"000000\"\n}"
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/auth/activate",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "activate"]
-                }
-              },
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "cookie": [],
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"ACTIVATION_CODE_INVALID\",\n    \"message\": \"Invalid code. 3 attempts remaining.\",\n    \"details\": {\n      \"remainingAttempts\": 3\n    }\n  }\n}"
-            },
-            {
-              "name": "Error - Code expired",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"email\": \"test@example.com\",\n  \"code\": \"123456\"\n}"
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/auth/activate",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "activate"]
-                }
-              },
-              "status": "Gone",
-              "code": 410,
-              "_postman_previewlanguage": "json",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "cookie": [],
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"ACTIVATION_CODE_EXPIRED\",\n    \"message\": \"Activation code has expired. Please request a new one.\"\n  }\n}"
-            },
-            {
-              "name": "Error - Max attempts exceeded",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"email\": \"test@example.com\",\n  \"code\": \"000000\"\n}"
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/auth/activate",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "activate"]
-                }
-              },
-              "status": "Too Many Requests",
-              "code": 429,
-              "_postman_previewlanguage": "json",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "cookie": [],
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"MAX_ATTEMPTS_EXCEEDED\",\n    \"message\": \"Too many failed attempts. Please request a new code.\"\n  }\n}"
-            },
-            {
-              "name": "Error - No pending registration",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"email\": \"unknown@example.com\",\n  \"code\": \"123456\"\n}"
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/auth/activate",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "activate"]
-                }
-              },
-              "status": "Not Found",
-              "code": 404,
-              "_postman_previewlanguage": "json",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "cookie": [],
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"NO_PENDING_REGISTRATION\",\n    \"message\": \"No pending registration found. Please register again.\"\n  }\n}"
-            }
-          ],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Response has correct structure', function () {",
-                  "  const jsonData = pm.response.json();",
-                  "  pm.expect(jsonData).to.have.property('success');",
-                  "  if (jsonData.success) {",
-                  "    pm.expect(jsonData).to.have.property('data');",
-                  "  } else {",
-                  "    pm.expect(jsonData.error).to.have.property('code');",
-                  "    pm.expect(jsonData.error).to.have.property('message');",
-                  "  }",
-                  "});"
-                ]
-              }
-            }
-          ]
+          }
         },
         {
           "name": "Resend Activation Code",
@@ -392,31 +87,35 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{testEmail}}\"\n}"
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/resend-activation",
+              "raw": "{{baseUrl}}/auth/resend-code",
               "host": ["{{baseUrl}}"],
-              "path": ["auth", "resend-activation"]
-            },
-            "description": "Resend activation code to email."
-          },
-          "response": [
-            {
-              "name": "Success - Code resent",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"message\": \"Activation code sent to your email\"\n}"
-            },
-            {
-              "name": "Error - Rate limit exceeded",
-              "status": "Too Many Requests",
-              "code": 429,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"RESEND_RATE_LIMIT_EXCEEDED\",\n    \"message\": \"Please wait before requesting another code\",\n    \"details\": {\n      \"retryAfter\": 60\n    }\n  }\n}"
+              "path": ["auth", "resend-code"]
             }
-          ]
+          }
+        },
+        {
+          "name": "Activate Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/activate",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "activate"]
+            }
+          }
         },
         {
           "name": "Login",
@@ -430,75 +129,26 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}"
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"rememberMe\": true\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
               "host": ["{{baseUrl}}"],
               "path": ["auth", "login"]
-            },
-            "description": "Login with email and password. Returns session cookie."
-          },
-          "response": [
-            {
-              "name": "Success - Logged in",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [
-                {
-                  "key": "Set-Cookie",
-                  "value": "sid=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; Path=/; HttpOnly; SameSite=Strict"
-                }
-              ],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"user\": {\n      \"id\": \"507f1f77bcf86cd799439011\",\n      \"email\": \"test@example.com\",\n      \"name\": \"Test User\",\n      \"role\": \"user\",\n      \"isVerified\": true\n    }\n  }\n}"
-            },
-            {
-              "name": "Error - Invalid credentials",
-              "status": "Unauthorized",
-              "code": 401,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"INVALID_CREDENTIALS\",\n    \"message\": \"Invalid email or password\"\n  }\n}"
-            },
-            {
-              "name": "Error - Email not verified",
-              "status": "Forbidden",
-              "code": 403,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"EMAIL_NOT_VERIFIED\",\n    \"message\": \"Please verify your email before logging in\"\n  }\n}"
-            },
-            {
-              "name": "Error - Rate limit exceeded",
-              "status": "Too Many Requests",
-              "code": 429,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"RATE_LIMIT_EXCEEDED\",\n    \"message\": \"Too many login attempts. Please try again later.\",\n    \"details\": {\n      \"retryAfter\": 60\n    }\n  }\n}"
             }
-          ],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const jsonData = pm.response.json();",
-                  "",
-                  "pm.test('Response has correct structure', function () {",
-                  "  pm.expect(jsonData).to.have.property('success');",
-                  "});",
-                  "",
-                  "if (jsonData.success && jsonData.data && jsonData.data.user) {",
-                  "  pm.collectionVariables.set('userId', jsonData.data.user.id);",
-                  "  // Extract session cookie if present",
-                  "  const cookies = pm.response.headers.filter(h => h.key === 'Set-Cookie');",
-                  "  if (cookies.length > 0) {",
-                  "    console.log('Session cookie set by server');",
-                  "  }",
-                  "}"
-                ]
-              }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
             }
-          ]
+          }
         },
         {
           "name": "Forgot Password",
@@ -518,18 +168,8 @@
               "raw": "{{baseUrl}}/auth/forgot-password",
               "host": ["{{baseUrl}}"],
               "path": ["auth", "forgot-password"]
-            },
-            "description": "Request password reset code via email."
-          },
-          "response": [
-            {
-              "name": "Success - Reset code sent",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"message\": \"If the email is registered, a reset code has been sent\"\n}"
             }
-          ]
+          }
         },
         {
           "name": "Reset Password",
@@ -543,140 +183,34 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"code\": \"123456\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+              "raw": "{\n  \"token\": \"reset-token-from-email\",\n  \"password\": \"NewPassword123!\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/reset-password",
               "host": ["{{baseUrl}}"],
               "path": ["auth", "reset-password"]
-            },
-            "description": "Reset password with code from email."
-          },
-          "response": [
-            {
-              "name": "Success - Password reset",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"message\": \"Password reset successfully\"\n}"
-            },
-            {
-              "name": "Error - Invalid code",
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"PASSWORD_RESET_CODE_INVALID\",\n    \"message\": \"Invalid password reset code\"\n  }\n}"
-            },
-            {
-              "name": "Error - Code expired",
-              "status": "Gone",
-              "code": 410,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"PASSWORD_RESET_CODE_EXPIRED\",\n    \"message\": \"Password reset code has expired. Please request a new one.\"\n  }\n}"
-            },
-            {
-              "name": "Error - No pending reset",
-              "status": "Not Found",
-              "code": 404,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"NO_PENDING_PASSWORD_RESET\",\n    \"message\": \"No password reset request found. Please request a new one.\"\n  }\n}"
             }
-          ]
+          }
         },
         {
-          "name": "Logout",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": ""
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "logout"]
-            },
-            "description": "Logout current session."
-          },
-          "response": [
-            {
-              "name": "Success - Logged out",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"message\": \"Logged out successfully\"\n}"
-            }
-          ],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Response has success: true', function () {",
-                  "  const jsonData = pm.response.json();",
-                  "  pm.expect(jsonData.success).to.be.true;",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "OAuth",
-      "item": [
-        {
-          "name": "Get Authorization URL",
+          "name": "Get Enabled Auth Methods",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/auth/oauth/authorize?provider=google",
+              "raw": "{{baseUrl}}/auth/methods",
               "host": ["{{baseUrl}}"],
-              "query": [
-                {
-                  "key": "provider",
-                  "value": "google",
-                  "description": "OAuth provider (google, facebook, github)"
-                }
-              ],
-              "path": ["auth", "oauth", "authorize"]
-            },
-            "description": "Get OAuth authorization URL for a provider."
-          },
-          "response": [
-            {
-              "name": "Success - URL returned",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"url\": \"https://accounts.google.com/o/oauth2/v2/auth?...\"\n  }\n}"
-            },
-            {
-              "name": "Error - Invalid provider",
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"INVALID_OAUTH_PROVIDER\",\n    \"message\": \"Invalid OAuth provider specified\"\n  }\n}"
-            },
-            {
-              "name": "Error - Provider not configured",
-              "status": "Service Unavailable",
-              "code": 503,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"GOOGLE_NOT_CONFIGURED\",\n    \"message\": \"Google OAuth is not configured on this server\"\n  }\n}"
+              "path": ["auth", "methods"]
             }
-          ]
-        },
+          }
+        }
+      ]
+    },
+    {
+      "name": "Magic Link",
+      "item": [
         {
-          "name": "Handle OAuth Callback",
+          "name": "Send Magic Link",
           "request": {
             "method": "POST",
             "header": [
@@ -687,41 +221,254 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"provider\": \"google\",\n  \"code\": \"4/0AX4XhW7ly5Cx...\"\n}"
+              "raw": "{\n  \"email\": \"{{testEmail}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/oauth/callback",
+              "raw": "{{baseUrl}}/auth/magic-link/send",
               "host": ["{{baseUrl}}"],
-              "path": ["auth", "oauth", "callback"]
-            },
-            "description": "Exchange OAuth code for session."
-          },
-          "response": [
-            {
-              "name": "Success - Authenticated",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"user\": {\n      \"id\": \"507f1f77bcf86cd799439011\",\n      \"email\": \"user@gmail.com\",\n      \"name\": \"Google User\",\n      \"role\": \"user\",\n      \"isVerified\": true,\n      \"linkedProviders\": [\"google\"]\n    },\n    \"isNewUser\": false\n  }\n}"
-            },
-            {
-              "name": "Error - Invalid code",
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"GOOGLE_CODE_INVALID\",\n    \"message\": \"Google authorization code is invalid or expired\"\n  }\n}"
-            },
-            {
-              "name": "Error - Email not verified",
-              "status": "Forbidden",
-              "code": 403,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"GOOGLE_EMAIL_NOT_VERIFIED\",\n    \"message\": \"Please verify your Google email before signing in\"\n  }\n}"
+              "path": ["auth", "magic-link", "send"]
             }
-          ]
+          }
         },
         {
-          "name": "Get Supported Providers",
+          "name": "Verify Magic Link",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"magic-link-token-string\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/magic-link/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "magic-link", "verify"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Two-Factor Authentication",
+      "item": [
+        {
+          "name": "Generate 2FA Secret",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/2fa/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "2fa", "generate"]
+            }
+          }
+        },
+        {
+          "name": "Enable 2FA",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/2fa/enable",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "2fa", "enable"]
+            }
+          }
+        },
+        {
+          "name": "Verify 2FA Challenge",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/2fa/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "2fa", "verify"]
+            }
+          }
+        },
+        {
+          "name": "Disable 2FA",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"{{testPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/2fa/disable",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "2fa", "disable"]
+            }
+          }
+        },
+        {
+          "name": "Regenerate Recovery Codes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/2fa/recovery-codes",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "2fa", "recovery-codes"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Passkeys",
+      "item": [
+        {
+          "name": "Login Options",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/passkeys/login/options",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "passkeys", "login", "options"]
+            }
+          }
+        },
+        {
+          "name": "Login Verify",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"response\": {\n    \"id\": \"credential-id\",\n    \"rawId\": \"base64url\",\n    \"response\": {},\n    \"type\": \"public-key\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/passkeys/login/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "passkeys", "login", "verify"]
+            }
+          }
+        },
+        {
+          "name": "Register Options",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/passkeys/register/options",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "passkeys", "register", "options"]
+            }
+          }
+        },
+        {
+          "name": "Register Verify",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My Laptop\",\n  \"response\": {\n    \"id\": \"credential-id\",\n    \"rawId\": \"base64url\",\n    \"response\": {},\n    \"type\": \"public-key\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/passkeys/register/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "passkeys", "register", "verify"]
+            }
+          }
+        },
+        {
+          "name": "List User Passkeys",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/passkeys",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "passkeys"]
+            }
+          }
+        },
+        {
+          "name": "Delete User Passkey",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/passkeys/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "passkeys", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "passkey-id"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "OAuth",
+      "item": [
+        {
+          "name": "List Enabled Providers",
           "request": {
             "method": "GET",
             "header": [],
@@ -729,23 +476,53 @@
               "raw": "{{baseUrl}}/auth/oauth/providers",
               "host": ["{{baseUrl}}"],
               "path": ["auth", "oauth", "providers"]
-            },
-            "description": "Get list of configured OAuth providers."
-          },
-          "response": [
-            {
-              "name": "Success - Providers list",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"providers\": [\"google\", \"github\", \"facebook\"]\n  }\n}"
             }
-          ]
+          }
+        },
+        {
+          "name": "Start OAuth Flow",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/oauth/google/start?redirect=/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "oauth", "google", "start"],
+              "query": [
+                {
+                  "key": "redirect",
+                  "value": "/dashboard"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Provider Callback",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/oauth/google/callback?code=sample-code&state=sample-state",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "oauth", "google", "callback"],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "sample-code"
+                },
+                {
+                  "key": "state",
+                  "value": "sample-state"
+                }
+              ]
+            }
+          }
         }
       ]
     },
     {
-      "name": "User",
+      "name": "User Profile & Sessions",
       "item": [
         {
           "name": "Get Profile",
@@ -756,25 +533,8 @@
               "raw": "{{baseUrl}}/user/profile",
               "host": ["{{baseUrl}}"],
               "path": ["user", "profile"]
-            },
-            "description": "Get current user profile."
-          },
-          "response": [
-            {
-              "name": "Success - Profile returned",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"507f1f77bcf86cd799439011\",\n    \"email\": \"test@example.com\",\n    \"name\": \"Test User\",\n    \"role\": \"user\",\n    \"isVerified\": true,\n    \"linkedProviders\": [\"google\"],\n    \"createdAt\": \"2024-01-15T10:30:00.000Z\"\n  }\n}"
-            },
-            {
-              "name": "Error - Unauthorized",
-              "status": "Unauthorized",
-              "code": 401,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"SESSION_REQUIRED\",\n    \"message\": \"Please log in to continue\"\n  }\n}"
             }
-          ]
+          }
         },
         {
           "name": "Update Profile",
@@ -794,18 +554,8 @@
               "raw": "{{baseUrl}}/user/profile",
               "host": ["{{baseUrl}}"],
               "path": ["user", "profile"]
-            },
-            "description": "Update current user profile."
-          },
-          "response": [
-            {
-              "name": "Success - Profile updated",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"507f1f77bcf86cd799439011\",\n    \"email\": \"test@example.com\",\n    \"name\": \"Updated Name\",\n    \"role\": \"user\",\n    \"isVerified\": true\n  }\n}"
             }
-          ]
+          }
         },
         {
           "name": "Change Password",
@@ -819,41 +569,47 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"currentPassword\": \"{{testPassword}}\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+              "raw": "{\n  \"currentPassword\": \"{{testPassword}}\",\n  \"newPassword\": \"NewSecurePassword123!\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/user/password",
               "host": ["{{baseUrl}}"],
               "path": ["user", "password"]
-            },
-            "description": "Change user password."
-          },
-          "response": [
-            {
-              "name": "Success - Password changed",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"message\": \"Password changed successfully\"\n}"
-            },
-            {
-              "name": "Error - Invalid current password",
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"INVALID_CURRENT_PASSWORD\",\n    \"message\": \"Current password is incorrect\"\n  }\n}"
-            },
-            {
-              "name": "Error - Same password",
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"SAME_PASSWORD\",\n    \"message\": \"New password must be different from current password\"\n  }\n}"
             }
-          ]
+          }
         },
         {
-          "name": "Get Sessions",
+          "name": "List Linked Providers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/providers",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "providers"]
+            }
+          }
+        },
+        {
+          "name": "Unlink Provider",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/providers/:provider",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "providers", ":provider"],
+              "variable": [
+                {
+                  "key": "provider",
+                  "value": "google"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Active Sessions",
           "request": {
             "method": "GET",
             "header": [],
@@ -861,18 +617,8 @@
               "raw": "{{baseUrl}}/user/sessions",
               "host": ["{{baseUrl}}"],
               "path": ["user", "sessions"]
-            },
-            "description": "Get all active sessions for current user."
-          },
-          "response": [
-            {
-              "name": "Success - Sessions returned",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"sessions\": [\n      {\n        \"id\": \"session123\",\n        \"userAgent\": \"Mozilla/5.0...\",\n        \"ip\": \"192.168.1.1\",\n        \"lastActivity\": \"2024-01-15T10:30:00.000Z\",\n        \"createdAt\": \"2024-01-15T08:00:00.000Z\",\n        \"isCurrent\": true\n      }\n    ],\n    \"total\": 1\n  }\n}"
             }
-          ]
+          }
         },
         {
           "name": "Revoke Session",
@@ -880,60 +626,58 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/user/sessions/{{sessionId}}",
+              "raw": "{{baseUrl}}/user/sessions/:id",
               "host": ["{{baseUrl}}"],
-              "path": ["user", "sessions", "{{sessionId}}"]
-            },
-            "description": "Revoke a specific session."
-          },
-          "response": [
-            {
-              "name": "Success - Session revoked",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"message\": \"Session revoked successfully\"\n}"
-            },
-            {
-              "name": "Error - Session not found",
-              "status": "Not Found",
-              "code": 404,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"SESSION_NOT_FOUND\",\n    \"message\": \"Session not found\"\n  }\n}"
-            },
-            {
-              "name": "Error - Cannot revoke current session",
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"CANNOT_REVOKE_CURRENT_SESSION\",\n    \"message\": \"Cannot revoke current session. Use logout instead.\"\n  }\n}"
+              "path": ["user", "sessions", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{sessionId}}"
+                }
+              ]
             }
-          ]
+          }
         },
         {
           "name": "Revoke All Other Sessions",
           "request": {
-            "method": "POST",
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"{{testPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/sessions/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "sessions", "all"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Roles",
+      "item": [
+        {
+          "name": "List Roles",
+          "request": {
+            "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/user/sessions/revoke-others",
+              "raw": "{{baseUrl}}/roles",
               "host": ["{{baseUrl}}"],
-              "path": ["user", "sessions", "revoke-others"]
-            },
-            "description": "Revoke all sessions except current one."
-          },
-          "response": [
-            {
-              "name": "Success - Sessions revoked",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"revokedCount\": 3\n  },\n  \"message\": \"3 session(s) revoked\"\n}"
+              "path": ["roles"]
             }
-          ]
+          }
         },
         {
-          "name": "Link OAuth Provider",
+          "name": "Create Role",
           "request": {
             "method": "POST",
             "header": [
@@ -944,79 +688,82 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"provider\": \"github\",\n  \"code\": \"github_auth_code...\"\n}"
+              "raw": "{\n  \"name\": \"Editor\",\n  \"slug\": \"editor\",\n  \"description\": \"Content editor\",\n  \"permissions\": [\n    \"articles:read\",\n    \"articles:write\"\n  ],\n  \"level\": 2\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/user/providers/link",
+              "raw": "{{baseUrl}}/roles",
               "host": ["{{baseUrl}}"],
-              "path": ["user", "providers", "link"]
-            },
-            "description": "Link a new OAuth provider to account."
-          },
-          "response": [
-            {
-              "name": "Success - Provider linked",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"linkedProviders\": [\"google\", \"github\"]\n  },\n  \"message\": \"GitHub account linked successfully\"\n}"
-            },
-            {
-              "name": "Error - Provider already linked",
-              "status": "Conflict",
-              "code": 409,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"PROVIDER_ALREADY_LINKED\",\n    \"message\": \"This provider is already linked to your account\"\n  }\n}"
-            },
-            {
-              "name": "Error - Provider linked to other account",
-              "status": "Conflict",
-              "code": 409,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"PROVIDER_LINKED_TO_OTHER_ACCOUNT\",\n    \"message\": \"This provider is already linked to another account\"\n  }\n}"
+              "path": ["roles"]
             }
-          ]
+          }
         },
         {
-          "name": "Unlink OAuth Provider",
+          "name": "Get Role by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/roles/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{roleId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Senior Editor\",\n  \"description\": \"Senior content editor\",\n  \"permissions\": [\n    \"articles:*\"\n  ],\n  \"level\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/roles/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{roleId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Role",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/user/providers/github",
+              "raw": "{{baseUrl}}/roles/:id",
               "host": ["{{baseUrl}}"],
-              "path": ["user", "providers", "github"]
-            },
-            "description": "Unlink an OAuth provider from account."
-          },
-          "response": [
-            {
-              "name": "Success - Provider unlinked",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"linkedProviders\": [\"google\"]\n  },\n  \"message\": \"GitHub account unlinked successfully\"\n}"
-            },
-            {
-              "name": "Error - Cannot unlink last provider",
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"CANNOT_UNLINK_LAST_PROVIDER\",\n    \"message\": \"Cannot unlink last authentication provider. Set a password first.\"\n  }\n}"
-            },
-            {
-              "name": "Error - Provider not linked",
-              "status": "Not Found",
-              "code": 404,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"PROVIDER_NOT_LINKED\",\n    \"message\": \"This provider is not linked to your account\"\n  }\n}"
+              "path": ["roles", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{roleId}}"
+                }
+              ]
             }
-          ]
+          }
         }
       ]
     },
     {
-      "name": "Admin",
+      "name": "Admin Users & Permissions",
       "item": [
         {
           "name": "List Users",
@@ -1030,75 +777,33 @@
               "query": [
                 {
                   "key": "page",
-                  "value": "1",
-                  "description": "Page number"
+                  "value": "1"
                 },
                 {
                   "key": "limit",
-                  "value": "10",
-                  "description": "Items per page"
-                },
-                {
-                  "key": "search",
-                  "value": "",
-                  "description": "Search by name or email",
-                  "disabled": true
-                },
-                {
-                  "key": "role",
-                  "value": "",
-                  "description": "Filter by role",
-                  "disabled": true
+                  "value": "10"
                 }
               ]
-            },
-            "description": "List all users (admin only)."
-          },
-          "response": [
-            {
-              "name": "Success - Users list",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"users\": [\n      {\n        \"id\": \"507f1f77bcf86cd799439011\",\n        \"email\": \"user@example.com\",\n        \"name\": \"John Doe\",\n        \"role\": \"user\",\n        \"isVerified\": true,\n        \"isActive\": true,\n        \"createdAt\": \"2024-01-15T10:30:00.000Z\"\n      }\n    ],\n    \"pagination\": {\n      \"page\": 1,\n      \"limit\": 10,\n      \"total\": 50,\n      \"totalPages\": 5\n    }\n  }\n}"
-            },
-            {
-              "name": "Error - Forbidden",
-              "status": "Forbidden",
-              "code": 403,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"FORBIDDEN\",\n    \"message\": \"You don't have permission to access this resource\"\n  }\n}"
             }
-          ]
+          }
         },
         {
-          "name": "Get User by ID",
+          "name": "Get User Details",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/admin/users/{{userId}}",
+              "raw": "{{baseUrl}}/admin/users/:id",
               "host": ["{{baseUrl}}"],
-              "path": ["admin", "users", "{{userId}}"]
-            },
-            "description": "Get user details by ID (admin only)."
-          },
-          "response": [
-            {
-              "name": "Success - User details",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"507f1f77bcf86cd799439011\",\n    \"email\": \"user@example.com\",\n    \"name\": \"John Doe\",\n    \"role\": \"user\",\n    \"isVerified\": true,\n    \"isActive\": true,\n    \"linkedProviders\": [\"google\"],\n    \"createdAt\": \"2024-01-15T10:30:00.000Z\",\n    \"lastLogin\": \"2024-01-20T15:45:00.000Z\"\n  }\n}"
-            },
-            {
-              "name": "Error - User not found",
-              "status": "Not Found",
-              "code": 404,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"USER_NOT_FOUND\",\n    \"message\": \"User not found\"\n  }\n}"
+              "path": ["admin", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{userId}}"
+                }
+              ]
             }
-          ]
+          }
         },
         {
           "name": "Update User Role",
@@ -1112,45 +817,47 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"role\": \"moderator\"\n}"
+              "raw": "{\n  \"role\": \"manager\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/admin/users/{{userId}}/role",
+              "raw": "{{baseUrl}}/admin/users/:id/role",
               "host": ["{{baseUrl}}"],
-              "path": ["admin", "users", "{{userId}}", "role"]
-            },
-            "description": "Update user role (admin only)."
-          },
-          "response": [
-            {
-              "name": "Success - Role updated",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"507f1f77bcf86cd799439011\",\n    \"role\": \"moderator\"\n  },\n  \"message\": \"User role updated successfully\"\n}"
-            },
-            {
-              "name": "Error - Cannot modify self",
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"CANNOT_MODIFY_SELF\",\n    \"message\": \"Cannot change your own role\"\n  }\n}"
-            },
-            {
-              "name": "Error - Cannot modify higher role",
-              "status": "Forbidden",
-              "code": 403,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"CANNOT_MODIFY_HIGHER_ROLE\",\n    \"message\": \"Cannot modify user with higher role\"\n  }\n}"
-            },
-            {
-              "name": "Error - Invalid role assignment",
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"INVALID_ROLE_ASSIGNMENT\",\n    \"message\": \"Cannot assign admin role via API\"\n  }\n}"
+              "path": ["admin", "users", ":id", "role"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{userId}}"
+                }
+              ]
             }
-          ]
+          }
+        },
+        {
+          "name": "Update User Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/:id/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users", ":id", "status"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{userId}}"
+                }
+              ]
+            }
+          }
         },
         {
           "name": "Delete User",
@@ -1158,28 +865,56 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/admin/users/{{userId}}",
+              "raw": "{{baseUrl}}/admin/users/:id",
               "host": ["{{baseUrl}}"],
-              "path": ["admin", "users", "{{userId}}"]
-            },
-            "description": "Delete/deactivate user (admin only)."
-          },
-          "response": [
-            {
-              "name": "Success - User deleted",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": true,\n  \"message\": \"User deleted successfully\"\n}"
-            },
-            {
-              "name": "Error - User already deleted",
-              "status": "Gone",
-              "code": 410,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"USER_ALREADY_DELETED\",\n    \"message\": \"User is already deleted\"\n  }\n}"
+              "path": ["admin", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{userId}}"
+                }
+              ]
             }
-          ]
+          }
+        },
+        {
+          "name": "List All Permissions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "permissions"]
+            }
+          }
+        },
+        {
+          "name": "Assign Direct Permission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permission\": \"reports:export\",\n  \"action\": \"grant\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/:id/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users", ":id", "permissions"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{userId}}"
+                }
+              ]
+            }
+          }
         }
       ]
     },
@@ -1192,21 +927,10 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["health"]
-            },
-            "description": "Check API health status."
-          },
-          "response": [
-            {
-              "name": "Success - Healthy",
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"status\": \"ok\",\n  \"uptime\": 3600,\n  \"timestamp\": \"2024-01-15T10:30:00.000Z\",\n  \"database\": \"connected\"\n}"
+              "raw": "{{healthUrl}}",
+              "host": ["{{healthUrl}}"]
             }
-          ]
+          }
         }
       ]
     }

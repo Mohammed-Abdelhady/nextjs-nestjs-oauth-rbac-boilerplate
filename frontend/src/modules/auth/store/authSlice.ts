@@ -2,7 +2,6 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '@/store/store';
 import type { AuthState, User } from '../types/auth.types';
 import { authApi } from './authApi';
-import { oauthApi } from '@/modules/oauth/api/oauthApi';
 
 /**
  * Initial authentication state
@@ -13,6 +12,8 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: false,
   error: null,
+  validationStatus: 'idle',
+  validationErrorStatus: null,
 };
 
 /**
@@ -31,6 +32,8 @@ export const authSlice = createSlice({
       state.isAuthenticated = true;
       state.isLoading = false;
       state.error = null;
+      state.validationStatus = 'succeeded';
+      state.validationErrorStatus = null;
     },
 
     /**
@@ -42,6 +45,8 @@ export const authSlice = createSlice({
       state.isAuthenticated = true;
       state.isLoading = false;
       state.error = null;
+      state.validationStatus = 'succeeded';
+      state.validationErrorStatus = null;
     },
 
     /**
@@ -53,6 +58,8 @@ export const authSlice = createSlice({
       state.isAuthenticated = false;
       state.isLoading = false;
       state.error = null;
+      state.validationStatus = 'idle';
+      state.validationErrorStatus = null;
     },
 
     /**
@@ -76,11 +83,18 @@ export const authSlice = createSlice({
       state.isLoading = true;
       state.error = null;
     });
+    // A reply without a user means the account still owes a second factor, so
+    // there is no session to record yet.
     builder.addMatcher(authApi.endpoints.login.matchFulfilled, (state, action) => {
-      state.user = action.payload.user;
-      state.isAuthenticated = true;
       state.isLoading = false;
       state.error = null;
+      if (action.payload.user === null) {
+        return;
+      }
+      state.user = action.payload.user;
+      state.isAuthenticated = true;
+      state.validationStatus = 'succeeded';
+      state.validationErrorStatus = null;
     });
     builder.addMatcher(authApi.endpoints.login.matchRejected, (state, action) => {
       state.isLoading = false;
@@ -93,32 +107,36 @@ export const authSlice = createSlice({
       state.isAuthenticated = false;
       state.isLoading = false;
       state.error = null;
+      state.validationStatus = 'idle';
+      state.validationErrorStatus = null;
     });
 
     // Handle getCurrentUser query lifecycle
+    builder.addMatcher(authApi.endpoints.getCurrentUser.matchPending, (state) => {
+      state.isLoading = true;
+      state.validationStatus = 'pending';
+      state.validationErrorStatus = null;
+    });
     builder.addMatcher(authApi.endpoints.getCurrentUser.matchFulfilled, (state, action) => {
       state.user = action.payload;
       state.isAuthenticated = true;
-    });
-    builder.addMatcher(authApi.endpoints.getCurrentUser.matchRejected, (state) => {
-      state.user = null;
-      state.isAuthenticated = false;
-    });
-
-    // Handle OAuth callback mutation lifecycle
-    builder.addMatcher(oauthApi.endpoints.handleCallback.matchPending, (state) => {
-      state.isLoading = true;
-      state.error = null;
-    });
-    builder.addMatcher(oauthApi.endpoints.handleCallback.matchFulfilled, (state, action) => {
-      state.user = action.payload.user;
-      state.isAuthenticated = true;
       state.isLoading = false;
       state.error = null;
+      state.validationStatus = 'succeeded';
+      state.validationErrorStatus = null;
     });
-    builder.addMatcher(oauthApi.endpoints.handleCallback.matchRejected, (state, action) => {
+    builder.addMatcher(authApi.endpoints.getCurrentUser.matchRejected, (state, action) => {
       state.isLoading = false;
-      state.error = action.error.message || 'OAuth authentication failed';
+      state.validationStatus = 'failed';
+      const status =
+        typeof action.payload === 'object' && action.payload !== null && 'status' in action.payload
+          ? Number((action.payload as { status?: number }).status)
+          : 0;
+      state.validationErrorStatus = Number.isFinite(status) ? status : 0;
+      if (status === 401) {
+        state.user = null;
+        state.isAuthenticated = false;
+      }
     });
   },
 });
@@ -131,6 +149,8 @@ export const selectUser = (state: RootState) => state.auth.user;
 export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
 export const selectAuthLoading = (state: RootState) => state.auth.isLoading;
 export const selectAuthError = (state: RootState) => state.auth.error;
+export const selectValidationStatus = (state: RootState) => state.auth.validationStatus;
+export const selectValidationErrorStatus = (state: RootState) => state.auth.validationErrorStatus;
 
 // Export reducer
 export default authSlice.reducer;

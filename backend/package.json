@@ -5,6 +5,10 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=10.9.0"
+  },
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -12,7 +16,9 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+    "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "typecheck": "tsc --noEmit",
     "lint:check-disables": "! grep -r --include='*.ts' -E '(eslint-disable-next-line|@ts-ignore)' src/ test/ || (echo 'Error: Found forbidden eslint-disable-next-line or @ts-ignore' && exit 1)",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -28,35 +34,37 @@
     "seed:reset": "ts-node -r tsconfig-paths/register src/database/seeds/index.ts --reset"
   },
   "dependencies": {
-    "@nestjs/common": "^11.0.1",
+    "@nestjs/common": "^11.2.3",
     "@nestjs/config": "^4.0.2",
-    "@nestjs/core": "^11.1.18",
+    "@nestjs/core": "^11.2.3",
     "@nestjs/mongoose": "^11.0.4",
-    "@nestjs/platform-express": "^11.1.12",
+    "@nestjs/platform-express": "^11.2.3",
     "@nestjs/schedule": "^6.1.0",
-    "@nestjs/swagger": "^11.2.5",
+    "@nestjs/swagger": "^11.4.7",
     "@nestjs/throttler": "^6.5.0",
+    "@simplewebauthn/server": "^14.0.0",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "cookie-parser": "^1.4.7",
     "helmet": "^8.1.0",
-    "mongoose": "^8.21.0",
-    "nodemailer": "^8.0.5",
+    "jose": "^6.2.8",
+    "mongoose": "^8.24.4",
+    "nodemailer": "^9.1.1",
+    "otplib": "^13.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
-    "@nestjs/cli": "^11.0.0",
-    "@nestjs/schematics": "^11.0.0",
-    "@nestjs/testing": "^11.0.1",
+    "@nestjs/cli": "^11.0.24",
+    "@nestjs/schematics": "^11.1.0",
+    "@nestjs/testing": "^11.2.3",
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
-    "@types/mongoose": "^5.11.96",
     "@types/node": "^22.10.7",
     "@types/nodemailer": "^7.0.5",
     "@types/supertest": "^6.0.2",
@@ -66,6 +74,7 @@
     "globals": "^16.0.0",
     "jest": "^30.0.0",
     "migrate-mongo": "^11.0.0",
+    "mongodb-memory-server": "^11.2.0",
     "prettier": "^3.4.2",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
@@ -88,8 +97,18 @@
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
+      "^.+\\.(t|j)s$": [
+        "ts-jest",
+        {
+          "tsconfig": {
+            "allowJs": true
+          }
+        }
+      ]
     },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!(.*/)?(jose|@scure/base|@noble/hashes|@simplewebauthn)/)"
+    ],
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],

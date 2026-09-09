@@ -1,0 +1,146 @@
+:root {
+  /* Page and content backgrounds */
+  --background: 220 14% 97%;
+  --foreground: 224 71% 6%;
+
+  /* Card surfaces */
+  --card: 0 0% 100%;
+  --card-foreground: 224 71% 6%;
+
+  /* Popover surfaces */
+  --popover: 0 0% 100%;
+  --popover-foreground: 224 71% 6%;
+
+  /* Primary action color */
+  --primary: 239 65% 50%;
+  --primary-foreground: 0 0% 100%;
+
+  /* Secondary surfaces */
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 224 71% 6%;
+
+  /* Muted surfaces and text */
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 10% 40%;
+  --text-tertiary: 220 8% 45%;
+
+  /* Accent highlights */
+  --accent: 220 14% 96%;
+  --accent-foreground: 224 71% 6%;
+
+  /* Destructive actions */
+  --destructive: 0 72% 45%;
+  --destructive-foreground: 0 0% 100%;
+
+  /* State colors */
+  --success: 142 62% 30%;
+  --success-foreground: 0 0% 100%;
+
+  --warning: 38 92% 50%;
+  --warning-foreground: 224 71% 6%;
+
+  --info: 201 90% 34%;
+  --info-foreground: 0 0% 100%;
+
+  /* Status text colors on background */
+  --status-success: 142 60% 27%;
+  --status-warning: 32 85% 30%;
+  --status-danger: 0 65% 40%;
+
+  /* Borders and inputs */
+  --border: 220 13% 88%;
+  --input: 220 13% 58%;
+  --ring: 239 65% 50%;
+
+  /* Border radius */
+  --radius: 0.5rem;
+
+  /* Sidebar colors */
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 224 71% 6%;
+  --sidebar-primary: 239 65% 50%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 220 14% 96%;
+  --sidebar-accent-foreground: 224 71% 6%;
+  --sidebar-border: 220 13% 88%;
+  --sidebar-ring: 239 65% 50%;
+
+  /* Chart colors */
+  --chart-1: 239 65% 50%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
+}
+
+.dark {
+  /* Dark mode page and content backgrounds */
+  --background: 224 71% 5%;
+  --foreground: 210 20% 96%;
+
+  /* Card surfaces */
+  --card: 224 40% 9%;
+  --card-foreground: 210 20% 96%;
+
+  /* Popover surfaces */
+  --popover: 224 40% 9%;
+  --popover-foreground: 210 20% 96%;
+
+  /* Primary action color */
+  --primary: 239 80% 74%;
+  --primary-foreground: 224 71% 6%;
+
+  /* Secondary */
+  --secondary: 215 28% 17%;
+  --secondary-foreground: 210 20% 96%;
+
+  /* Muted surfaces and text */
+  --muted: 215 28% 17%;
+  --muted-foreground: 217 12% 72%;
+  --text-tertiary: 217 10% 66%;
+
+  /* Accent highlights */
+  --accent: 215 28% 17%;
+  --accent-foreground: 210 20% 96%;
+
+  /* Destructive actions */
+  --destructive: 0 70% 66%;
+  --destructive-foreground: 224 71% 6%;
+
+  /* State colors - dark mode */
+  --success: 142 55% 60%;
+  --success-foreground: 224 71% 6%;
+
+  --warning: 38 92% 60%;
+  --warning-foreground: 224 71% 6%;
+
+  --info: 201 85% 66%;
+  --info-foreground: 224 71% 6%;
+
+  /* Status text colors on background */
+  --status-success: 142 55% 62%;
+  --status-warning: 38 90% 62%;
+  --status-danger: 0 70% 68%;
+
+  /* Borders and inputs */
+  --border: 215 20% 20%;
+  --input: 215 20% 38%;
+  --ring: 239 80% 74%;
+
+  /* Sidebar dark mode */
+  --sidebar: 224 40% 9%;
+  --sidebar-foreground: 210 20% 96%;
+  --sidebar-primary: 239 80% 74%;
+  --sidebar-primary-foreground: 224 71% 6%;
+  --sidebar-accent: 215 28% 17%;
+  --sidebar-accent-foreground: 210 20% 96%;
+  --sidebar-border: 215 20% 20%;
+  --sidebar-ring: 239 80% 74%;
+
+  /* Chart colors for dark mode */
+  --chart-1: 239 80% 74%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
+}

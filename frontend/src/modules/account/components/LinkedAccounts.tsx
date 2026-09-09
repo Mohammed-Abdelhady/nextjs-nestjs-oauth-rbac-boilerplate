@@ -5,14 +5,14 @@ import { AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useGetEnabledProvidersQuery, getProviderDisplayName } from '@/modules/oauth';
 import { useGetLinkedProvidersQuery } from '../api';
-import { useGetEnabledProvidersQuery, type OAuthProvider } from '@/modules/oauth';
 import { LinkedAccountCard } from './LinkedAccountCard';
 import { LinkProviderButton } from './LinkProviderButton';
 
 /**
  * LinkedAccounts Component
- * Displays all linked OAuth providers and allows managing them
+ * Lists the sign-in methods on the account and the providers still available
  */
 export function LinkedAccounts() {
   const t = useTranslations('settings.accounts');
@@ -23,14 +23,14 @@ export function LinkedAccounts() {
     refetch,
   } = useGetLinkedProvidersQuery();
 
-  const { data: enabledProvidersData, isLoading: isLoadingEnabled } = useGetEnabledProvidersQuery();
+  const { data: enabledProviders = [], isLoading: isLoadingEnabled } =
+    useGetEnabledProvidersQuery();
 
   const linkedProviders = linkedProvidersData?.providers || [];
   const primaryProvider = linkedProvidersData?.primaryProvider;
-  const enabledProviders = enabledProvidersData?.providers || [];
 
   const availableProviders = enabledProviders.filter(
-    (provider) => !linkedProviders.includes(provider),
+    (provider) => !linkedProviders.includes(provider.id),
   );
 
   const canUnlink = linkedProviders.length > 1;
@@ -61,13 +61,14 @@ export function LinkedAccounts() {
           <div className="space-y-4">
             <h3 className="text-sm font-medium">{t('linkedAccountsLabel')}</h3>
             <div className="space-y-3">
-              {linkedProviders.map((provider) => (
+              {linkedProviders.map((providerId) => (
                 <LinkedAccountCard
-                  key={provider}
-                  provider={provider}
-                  isPrimary={provider === primaryProvider}
+                  key={providerId}
+                  providerId={providerId}
+                  displayName={getProviderDisplayName(providerId, enabledProviders)}
+                  isPrimary={providerId === primaryProvider}
                   canUnlink={canUnlink}
-                  onLinkSuccess={refetch}
+                  onChange={refetch}
                 />
               ))}
             </div>
@@ -86,11 +87,7 @@ export function LinkedAccounts() {
             <h3 className="text-sm font-medium">{t('availableProvidersLabel')}</h3>
             <div className="flex items-center gap-2 flex-wrap">
               {availableProviders.map((provider) => (
-                <LinkProviderButton
-                  key={provider}
-                  provider={provider.toLowerCase() as OAuthProvider}
-                  onLinkSuccess={refetch}
-                />
+                <LinkProviderButton key={provider.id} provider={provider} />
               ))}
             </div>
           </div>

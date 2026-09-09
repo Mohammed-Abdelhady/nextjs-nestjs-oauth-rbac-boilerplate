@@ -6,8 +6,9 @@ export class PendingRegistration {
   @Prop({ required: true, unique: true, lowercase: true, trim: true })
   email!: string;
 
-  @Prop({ required: true, select: false })
-  hashedPassword!: string;
+  /** Absent when the code verifies a new address for an existing account. */
+  @Prop({ select: false })
+  hashedPassword?: string;
 
   @Prop({ required: true, trim: true })
   name!: string;

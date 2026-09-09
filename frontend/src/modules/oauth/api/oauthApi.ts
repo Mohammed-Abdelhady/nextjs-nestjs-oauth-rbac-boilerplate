@@ -1,73 +1,27 @@
 import { baseApi } from '@/store/api/baseApi';
-import type {
-  OAuthProvider,
-  OAuthAuthUrlResponse,
-  OAuthCallbackRequest,
-  OAuthCallbackResponse,
-  OAuthProvidersResponse,
-} from '../types';
+import { OAUTH_PROVIDERS_PATH } from '../constants';
+import type { OAuthProviderSummary, OAuthProvidersResponse } from '../types';
 
 /**
- * OAuth API slice with OAuth authentication endpoints
- * Extends the base API with OAuth-specific operations
+ * OAuth API slice.
+ *
+ * Sign-in itself runs as a browser navigation through the backend start and
+ * callback routes, so the only endpoint left here is provider discovery.
  */
 export const oauthApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     /**
-     * Get authorization URL for OAuth provider
-     * Returns the URL to redirect user to for OAuth authorization
+     * Lists the providers that have credentials configured on the backend.
      */
-    getAuthorizationUrl: builder.query<OAuthAuthUrlResponse, OAuthProvider>({
-      query: (provider) => ({
-        url: `/api/auth/oauth/authorize?provider=${provider}`,
-        method: 'GET',
-      }),
-      transformResponse: (response: {
-        success: boolean;
-        data: OAuthAuthUrlResponse;
-        message: string;
-      }) => response.data,
-    }),
-
-    /**
-     * Handle OAuth callback
-     * Processes the OAuth callback from the provider after user authentication
-     * Exchanges the authorization code for access tokens and creates/updates user account
-     */
-    handleCallback: builder.mutation<OAuthCallbackResponse, OAuthCallbackRequest>({
-      query: (data) => ({
-        url: '/api/auth/oauth/callback',
-        method: 'POST',
-        body: data,
-      }),
-      transformResponse: (response: {
-        success: boolean;
-        data: OAuthCallbackResponse;
-        message: string;
-      }) => response.data,
-      invalidatesTags: ['Auth', 'User', 'LinkedProviders', 'ProfileSync'],
-    }),
-
-    /**
-     * Get list of enabled OAuth providers
-     * Returns a list of configured OAuth providers for authentication
-     */
-    getEnabledProviders: builder.query<OAuthProvidersResponse, void>({
+    getEnabledProviders: builder.query<OAuthProviderSummary[], void>({
       query: () => ({
-        url: '/api/auth/oauth/providers',
+        url: OAUTH_PROVIDERS_PATH,
         method: 'GET',
       }),
-      transformResponse: (response: {
-        success: boolean;
-        data: OAuthProvidersResponse;
-        message: string;
-      }) => response.data,
+      transformResponse: (response: { success: boolean; data: OAuthProvidersResponse }) =>
+        response.data.providers,
     }),
   }),
 });
 
-export const {
-  useGetAuthorizationUrlQuery,
-  useHandleCallbackMutation,
-  useGetEnabledProvidersQuery,
-} = oauthApi;
+export const { useGetEnabledProvidersQuery } = oauthApi;

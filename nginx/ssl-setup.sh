@@ -89,6 +89,7 @@ if [ "$CERT_TYPE" = "letsencrypt" ]; then
     
     # Set proper permissions
     chmod 644 ssl/*.pem
+    chmod 600 ssl/privkey.pem
     
     print_info "Certificates obtained successfully!"
     print_info "Starting nginx..."
@@ -116,6 +117,7 @@ elif [ "$CERT_TYPE" = "self-signed" ]; then
     
     # Set proper permissions
     chmod 644 ssl/*.pem
+    chmod 600 ssl/privkey.pem
     
     print_info "Self-signed certificates generated successfully!"
     print_warning "Remember: Self-signed certificates will show security warnings in browsers!"

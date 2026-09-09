@@ -1,42 +1,27 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-import { Test, TestingModule } from '@nestjs/testing';
+import { bootE2eApp, type E2eApp } from './utils/e2e-app';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from './../src/app.module';
 import type { Response } from 'supertest';
 
 interface HealthResponse {
   status: string;
   timestamp: string;
-  uptime: number;
-  database: {
-    status: string;
-  };
-  memory: {
-    used: number;
-    total: number;
-    percentage: number;
-    unit: string;
-  };
-  environment: string;
 }
 
 describe('AppController (e2e)', () => {
+  let e2e: E2eApp;
   let app: INestApplication;
   let httpServer: ReturnType<INestApplication['getHttpServer']>;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
+    e2e = await bootE2eApp();
+    app = e2e.app;
     httpServer = app.getHttpServer();
   });
 
   afterAll(async () => {
-    await app.close();
+    await e2e?.close();
   });
 
   describe('Application Startup', () => {
@@ -54,10 +39,7 @@ describe('AppController (e2e)', () => {
       const body = response.body as HealthResponse;
       expect(body).toHaveProperty('status');
       expect(body).toHaveProperty('timestamp');
-      expect(body).toHaveProperty('uptime');
-      expect(body).toHaveProperty('database');
-      expect(body).toHaveProperty('memory');
-      expect(body).toHaveProperty('environment');
+      expect(Object.keys(body).sort()).toEqual(['status', 'timestamp']);
     });
 
     it('should return correct health structure', async () => {
@@ -68,12 +50,7 @@ describe('AppController (e2e)', () => {
       const health = response.body as HealthResponse;
       expect(['healthy', 'unhealthy']).toContain(health.status);
       expect(typeof health.timestamp).toBe('string');
-      expect(typeof health.uptime).toBe('number');
-      expect(health.database).toHaveProperty('status');
-      expect(health.memory).toHaveProperty('used');
-      expect(health.memory).toHaveProperty('total');
-      expect(health.memory).toHaveProperty('percentage');
-      expect(health.memory).toHaveProperty('unit');
+      expect(Number.isNaN(Date.parse(health.timestamp))).toBe(false);
     });
   });
 
@@ -92,7 +69,7 @@ describe('AppController (e2e)', () => {
         .get('/health')
         .expect(200)
         .expect('X-Content-Type-Options', 'nosniff')
-        .expect('X-Frame-Options', 'DENY')
+        .expect('X-Frame-Options', 'SAMEORIGIN')
         .expect('X-DNS-Prefetch-Control', 'off');
     });
   });
@@ -130,7 +107,7 @@ describe('AppController (e2e)', () => {
 
   describe('Root Endpoint', () => {
     it('/ (GET)', async () => {
-      await request(httpServer).get('/').expect(200);
+      await request(httpServer).get('/api').expect(200);
     });
   });
 });

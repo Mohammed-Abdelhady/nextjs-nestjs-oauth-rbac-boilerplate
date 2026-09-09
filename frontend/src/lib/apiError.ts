@@ -5,48 +5,11 @@
  * Extracts error codes from backend responses and provides translated messages.
  */
 
-import { ErrorCode, getErrorCodeTranslationKey } from '@/constants/errorCodes';
+import { ErrorCode, getErrorCodeTranslationKey } from '../constants/errorCodes';
+import type { ApiErrorResponse, ParsedApiError, RtkQueryError } from '../types/apiError.types';
+import { extractFieldErrors, getStatusCodeTranslationKey } from './apiErrorHelpers';
 
-/**
- * Backend API error response structure
- */
-export interface ApiErrorResponse {
-  success: false;
-  error: {
-    code: string;
-    message: string;
-    details?: Record<string, unknown>;
-  };
-}
-
-/**
- * RTK Query error structure
- */
-export interface RtkQueryError {
-  status: number | 'FETCH_ERROR' | 'PARSING_ERROR' | 'TIMEOUT_ERROR' | 'CUSTOM_ERROR';
-  data?: ApiErrorResponse | { message?: string; error?: ApiErrorResponse['error'] };
-  error?: string;
-}
-
-/**
- * Parsed API error with all relevant information
- */
-export interface ParsedApiError {
-  /** Error code from backend (e.g., 'INVALID_CREDENTIALS') */
-  code: string;
-  /** Original message from backend */
-  message: string;
-  /** Translation key for the error code */
-  translationKey: string;
-  /** HTTP status code if available */
-  statusCode?: number;
-  /** Additional error details */
-  details?: Record<string, unknown>;
-  /** Whether this is a validation error with field-level errors */
-  isValidationError: boolean;
-  /** Field-level validation errors if present */
-  fieldErrors?: Record<string, string[]>;
-}
+export type { ApiErrorResponse, ParsedApiError, RtkQueryError };
 
 /**
  * Check if an error is an RTK Query error
@@ -208,65 +171,6 @@ export function parseApiError(error: unknown): ParsedApiError {
   }
 
   return defaultError;
-}
-
-/**
- * Extract field-level errors from validation error details
- */
-function extractFieldErrors(
-  details?: Record<string, unknown>,
-): Record<string, string[]> | undefined {
-  if (!details || typeof details !== 'object') {
-    return undefined;
-  }
-
-  // Handle NestJS class-validator format
-  if ('errors' in details && Array.isArray(details.errors)) {
-    const fieldErrors: Record<string, string[]> = {};
-
-    for (const error of details.errors) {
-      if (typeof error === 'object' && error !== null && 'field' in error && 'messages' in error) {
-        const field = String(error.field);
-        const messages = Array.isArray(error.messages)
-          ? error.messages.map(String)
-          : [String(error.messages)];
-        fieldErrors[field] = messages;
-      }
-    }
-
-    return Object.keys(fieldErrors).length > 0 ? fieldErrors : undefined;
-  }
-
-  return undefined;
-}
-
-/**
- * Get translation key for HTTP status code
- */
-function getStatusCodeTranslationKey(statusCode?: number): string {
-  if (!statusCode) {
-    return getErrorCodeTranslationKey('UNKNOWN_ERROR');
-  }
-
-  switch (statusCode) {
-    case 400:
-      return getErrorCodeTranslationKey('VALIDATION_ERROR');
-    case 401:
-      return getErrorCodeTranslationKey('SESSION_EXPIRED');
-    case 403:
-      return getErrorCodeTranslationKey('FORBIDDEN');
-    case 404:
-      return getErrorCodeTranslationKey('NOT_FOUND');
-    case 429:
-      return getErrorCodeTranslationKey('RATE_LIMIT_EXCEEDED');
-    case 500:
-    case 502:
-    case 503:
-    case 504:
-      return getErrorCodeTranslationKey('INTERNAL_ERROR');
-    default:
-      return getErrorCodeTranslationKey('UNKNOWN_ERROR');
-  }
 }
 
 /**

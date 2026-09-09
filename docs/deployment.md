@@ -39,8 +39,8 @@ git --version
 1. **Clone the repository**
 
 ```bash
-git clone <repository-url>
-cd FULL-MERN-AUTH-Boilerplate
+git clone https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate.git
+cd nextjs-nestjs-oauth-rbac-boilerplate
 ```
 
 2. **Create environment file**
@@ -52,7 +52,7 @@ cp .env.docker.example .env.docker
 3. **Start all services**
 
 ```bash
-docker compose up
+docker compose --env-file .env.docker up --build
 ```
 
 This will:
@@ -114,10 +114,10 @@ docker volume ls
 docker volume inspect FULL-MERN-AUTH-Boilerplate_mongo-data
 
 # Backup volume
-docker run --rm -v FULL-MERN-AUTH-Boilerplate_mongo-data:/data -v $(pwd):/backup alpine tar czf /backup/mongo-backup.tar.gz /data
+docker run --rm -v nextjs-nestjs-oauth-rbac-boilerplate_mongo-data:/data -v $(pwd):/backup alpine tar czf /backup/mongo-backup.tar.gz /data
 
 # Restore volume
-docker run --rm -v FULL-MERN-AUTH-Boilerplate_mongo-data:/data -v $(pwd):/backup alpine tar xzf /backup/mongo-backup.tar.gz -C /
+docker run --rm -v nextjs-nestjs-oauth-rbac-boilerplate_mongo-data:/data -v $(pwd):/backup alpine tar xzf /backup/mongo-backup.tar.gz -C /
 ```
 
 ---

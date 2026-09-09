@@ -1,6 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
+import { LoadingRegion } from '@/components/layout/LoadingRegion';
 import { useAppSelector } from '@/store/hooks';
 import {
   selectIsAuthenticated,
@@ -30,25 +33,26 @@ interface ActivationGuardProps {
  * }
  */
 export function ActivationGuard({ children }: Readonly<ActivationGuardProps>) {
+  const t = useTranslations('common');
+  const router = useRouter();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const user = useAppSelector(selectUser);
   const isAuthLoading = useAppSelector(selectAuthLoading);
   const [showWelcome, setShowWelcome] = useState(true);
 
-  // Show nothing while loading auth state
+  // Dismissing the modal navigates to dashboard since the user is signed in
+  const handleCloseWelcome = useCallback(() => {
+    setShowWelcome(false);
+    router.push('/dashboard');
+  }, [router]);
+
   if (isAuthLoading) {
-    return null;
+    return <LoadingRegion label={t('loading')} testId="activation-guard-loading" />;
   }
 
   // If authenticated, show welcome modal
   if (isAuthenticated && user) {
-    return (
-      <WelcomeModal
-        isOpen={showWelcome}
-        userName={user.name}
-        onClose={() => setShowWelcome(false)}
-      />
-    );
+    return <WelcomeModal isOpen={showWelcome} userName={user.name} onClose={handleCloseWelcome} />;
   }
 
   // User is not authenticated, render activation form

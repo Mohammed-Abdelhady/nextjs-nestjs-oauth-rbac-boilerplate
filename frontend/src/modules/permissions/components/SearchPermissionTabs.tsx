@@ -1,0 +1,169 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SearchPermissionGrid } from './SearchPermissionGrid';
+import {
+  PROFILE_PERMISSIONS,
+  USER_PERMISSIONS,
+  ROLE_PERMISSIONS,
+  PERMISSION_PERMISSIONS,
+  SESSION_PERMISSIONS,
+  REPORT_PERMISSIONS,
+} from '../constants/permissions';
+
+export interface PermissionGroup {
+  /** Tab value and key of the group name under permissions.selector.groups */
+  id: string;
+  permissions: Record<string, string>;
+}
+
+export interface FilteredPermissionGroup extends PermissionGroup {
+  filteredPermissions: Record<string, string>;
+}
+
+export const PERMISSION_GROUPS: PermissionGroup[] = [
+  { id: 'profile', permissions: PROFILE_PERMISSIONS },
+  { id: 'users', permissions: USER_PERMISSIONS },
+  { id: 'roles', permissions: ROLE_PERMISSIONS },
+  { id: 'permissions', permissions: PERMISSION_PERMISSIONS },
+  { id: 'sessions', permissions: SESSION_PERMISSIONS },
+  { id: 'reports', permissions: REPORT_PERMISSIONS },
+];
+
+export interface SearchPermissionTabsProps {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+  filteredGroups: FilteredPermissionGroup[];
+  selectedPermissions: string[];
+  onSelectAll: (permissions: Record<string, string>) => void;
+  onTogglePermission: (permission: string) => void;
+  isLoading?: boolean;
+  searchQuery: string;
+}
+
+export function SearchPermissionTabs({
+  activeTab,
+  onTabChange,
+  filteredGroups,
+  selectedPermissions,
+  onSelectAll,
+  onTogglePermission,
+  isLoading = false,
+  searchQuery,
+}: SearchPermissionTabsProps) {
+  const t = useTranslations('permissions.selector');
+  const tDialog = useTranslations('permissions.searchDialog');
+
+  return (
+    <Tabs
+      value={activeTab}
+      onValueChange={onTabChange}
+      className="flex-1 flex flex-col overflow-hidden"
+    >
+      <div className="w-full overflow-x-auto pb-1">
+        <TabsList className="inline-flex w-max min-w-full justify-start flex-nowrap">
+          <TabsTrigger value="all" className="shrink-0" data-testid="permission-tab-all">
+            {t('allTab')}
+          </TabsTrigger>
+          {PERMISSION_GROUPS.map((group) => (
+            <TabsTrigger
+              key={group.id}
+              value={group.id}
+              className="shrink-0"
+              data-testid={`permission-tab-${group.id}`}
+            >
+              {t(`groups.${group.id}`)}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </div>
+
+      {/* All Permissions Tab */}
+      <TabsContent value="all" className="flex-1 overflow-y-auto mt-4 space-y-6">
+        {filteredGroups.map((group) => {
+          const groupPerms = Object.values(group.filteredPermissions);
+          const allSelected = groupPerms.every((p) => selectedPermissions.includes(p));
+
+          return (
+            <div key={group.id} className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold tracking-tight">{t(`groups.${group.id}`)}</h3>
+                <button
+                  type="button"
+                  onClick={() => onSelectAll(group.filteredPermissions)}
+                  disabled={isLoading || groupPerms.length === 0}
+                  className="text-xs text-primary hover:underline disabled:opacity-50"
+                  data-testid={`select-all-${group.id}`}
+                >
+                  {allSelected ? t('deselectAll') : t('selectAll')}
+                </button>
+              </div>
+
+              <SearchPermissionGrid
+                permissions={group.filteredPermissions}
+                selectedPermissions={selectedPermissions}
+                onTogglePermission={onTogglePermission}
+                isLoading={isLoading}
+              />
+            </div>
+          );
+        })}
+
+        {filteredGroups.length === 0 && (
+          <div className="text-center py-12 text-sm text-muted-foreground">
+            {tDialog('noPermissionsMatch', { query: searchQuery })}
+          </div>
+        )}
+      </TabsContent>
+
+      {/* Individual Category Tabs */}
+      {PERMISSION_GROUPS.map((group) => {
+        const filtered = filteredGroups.find((g) => g.id === group.id);
+        const groupPerms = filtered ? Object.values(filtered.filteredPermissions) : [];
+        const allSelected = groupPerms.every((p) => selectedPermissions.includes(p));
+        const category = t(`groups.${group.id}`).toLocaleLowerCase();
+
+        return (
+          <TabsContent
+            key={group.id}
+            value={group.id}
+            className="flex-1 overflow-y-auto mt-4 space-y-4"
+          >
+            {filtered && groupPerms.length > 0 ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    {t('permissionsAvailable', { count: groupPerms.length })}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => onSelectAll(filtered.filteredPermissions)}
+                    disabled={isLoading}
+                    className="text-xs text-primary hover:underline disabled:opacity-50"
+                    data-testid={`select-all-tab-${group.id}`}
+                  >
+                    {allSelected ? t('deselectAll') : t('selectAll')}
+                  </button>
+                </div>
+
+                <SearchPermissionGrid
+                  permissions={filtered.filteredPermissions}
+                  selectedPermissions={selectedPermissions}
+                  onTogglePermission={onTogglePermission}
+                  isLoading={isLoading}
+                />
+              </>
+            ) : (
+              <div className="text-center py-12 text-sm text-muted-foreground">
+                {searchQuery
+                  ? tDialog('noCategoryPermissionsMatch', { category, query: searchQuery })
+                  : tDialog('categoryAllAssigned', { category })}
+              </div>
+            )}
+          </TabsContent>
+        );
+      })}
+    </Tabs>
+  );
+}

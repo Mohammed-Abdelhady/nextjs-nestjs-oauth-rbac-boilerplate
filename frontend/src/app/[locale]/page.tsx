@@ -1,7 +1,9 @@
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Rocket, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 
 /**
  * Home Page
@@ -20,11 +22,20 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const t = await getTranslations({ locale, namespace: 'home' });
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex justify-center">
-      <div className="max-w-screen-xl m-0 sm:m-20 bg-card shadow sm:rounded-lg flex justify-center flex-1">
+    <div className="relative min-h-screen bg-background text-foreground flex justify-center">
+      <header className="absolute inset-x-0 top-0 z-10 flex items-center justify-end gap-2 p-4">
+        <LanguageSwitcher />
+        <ThemeSwitcher />
+      </header>
+      <main
+        id="main"
+        tabIndex={-1}
+        className="max-w-screen-xl m-0 sm:m-20 bg-card shadow sm:rounded-lg flex justify-center flex-1 focus-visible:outline-none"
+        data-testid="home-main"
+      >
         {/* Left Side - Welcome Content */}
         <section className="lg:w-1/2 xl:w-5/12 p-6 sm:p-12 flex flex-col justify-center">
-          <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
+          <div className="flex flex-col items-center lg:items-start text-center lg:text-start">
             {/* Main Heading */}
             <h1 className="text-3xl xl:text-4xl font-extrabold text-foreground mb-4">
               {t('title')}
@@ -38,15 +49,20 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              <Button asChild className="w-full sm:w-auto">
+              <Button asChild className="w-full sm:w-auto" data-testid="cta-primary-button">
                 <Link href="/auth/login">
-                  <ChevronRight className="w-5 h-5 mr-2" />
+                  <ChevronRight className="w-5 h-5 me-2 rtl:rotate-180" />
                   {t('ctaPrimary')}
                 </Link>
               </Button>
-              <Button variant="outline" asChild className="w-full sm:w-auto">
+              <Button
+                variant="outline"
+                asChild
+                className="w-full sm:w-auto"
+                data-testid="cta-secondary-button"
+              >
                 <Link
-                  href="https://github.com/anthropics/claude-code"
+                  href="https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate#readme"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -60,13 +76,15 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         {/* Right Side - Illustration */}
         <div className="flex-1 bg-primary/10 text-center hidden lg:flex items-center justify-center">
           <div className="flex flex-col items-center justify-center p-12">
-            <Rocket className="w-64 h-64 text-primary/30" strokeWidth={1} aria-hidden="true" />
-            <p className="mt-8 text-xl font-semibold text-primary/60">
-              {t('illustrationSubtitle')}
-            </p>
+            <Rocket
+              className="w-64 h-64 text-primary opacity-30"
+              strokeWidth={1}
+              aria-hidden="true"
+            />
+            <p className="mt-8 text-xl font-semibold text-primary">{t('illustrationSubtitle')}</p>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

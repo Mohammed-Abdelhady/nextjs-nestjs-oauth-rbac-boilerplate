@@ -370,12 +370,9 @@ Request
          │ Pass
          ▼
 ┌─────────────────┐
-│ Is @Verified()? │──No──> Allow (auth only)
-└────────┬────────┘
-         │ Yes
-         ▼
-┌─────────────────┐
-│ VerifiedGuard   │──Fail──> 403 Forbidden
+│ Route guards?   │──No──> Allow
+│ (Permission,    │
+│  Roles)         │──Fail──> 403 Forbidden
 └────────┬────────┘
          │ Pass
          ▼

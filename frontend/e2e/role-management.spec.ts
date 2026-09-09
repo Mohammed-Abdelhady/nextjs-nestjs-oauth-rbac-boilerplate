@@ -1,186 +1,122 @@
-import { test, expect } from '@playwright/test';
-
-/**
- * E2E tests for Role Management functionality
- * Tests create, edit, and delete role flows
- */
+import { test, expect } from './fixtures/authenticated';
 
 test.describe('Role Management', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to roles page
-    // Note: In a real app, you would need to login first
-    await page.goto('/admin/roles');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/en/admin/roles');
+    await expect(page.getByTestId('role-sidebar-nav')).toBeVisible();
   });
 
   test('should display roles page with existing roles', async ({ page }) => {
-    // Check page title
-    await expect(page.getByRole('heading', { name: /role management/i })).toBeVisible();
-
-    // Check that roles table exists
-    await expect(page.locator('[data-testid="roles-table"]')).toBeVisible();
-
-    // Should have at least system roles (user, admin, etc.)
-    const roleRows = page.locator('tbody tr');
-    await expect(roleRows).toHaveCount(await roleRows.count());
+    await expect(
+      page.getByTestId('admin-roles-page').getByRole('heading', { level: 1 }),
+    ).toHaveAccessibleName(/role/i);
+    await expect(page.getByTestId('role-nav-item-admin')).toBeVisible();
+    await expect(page.getByTestId('role-nav-item-user')).toBeVisible();
+    await expect(page.getByTestId(/^role-nav-item-/)).toHaveCount(5);
   });
 
   test('should open create role dialog when clicking create button', async ({ page }) => {
-    // Click create role button
     await page.getByTestId('create-role-button').click();
-
-    // Dialog should be visible
-    await expect(page.getByRole('dialog')).toBeVisible();
-    await expect(page.getByRole('heading', { name: /create new role/i })).toBeVisible();
-
-    // Form fields should be empty
-    await expect(page.getByLabel(/role name/i)).toHaveValue('');
-    await expect(page.getByLabel(/description/i)).toHaveValue('');
+    const dialog = page.getByTestId('create-role-dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toHaveAccessibleName(/create/i);
+    await expect(dialog.getByTestId('role-name-input')).toHaveValue('');
+    await expect(dialog.getByTestId('role-description-input')).toHaveValue('');
   });
 
   test('should create a new role successfully', async ({ page }) => {
-    // Open create dialog
     await page.getByTestId('create-role-button').click();
-
-    // Fill in role details
-    await page.getByLabel(/role name/i).fill('Test Manager');
-    await page.getByLabel(/description/i).fill('Test role for E2E testing');
-
-    // Select some permissions
-    await page.getByTestId('permission-selector').click();
-    await page.getByTestId('permission-users:read:all').click();
-    await page.getByTestId('permission-users:update:all').click();
-
-    // Submit form
-    await page.getByTestId('save-role-button').click();
-
-    // Success toast should appear
-    await expect(page.locator('.sonner-toast')).toContainText(/role created successfully/i);
-
-    // Dialog should close
-    await expect(page.getByRole('dialog')).not.toBeVisible();
-
-    // New role should appear in the table
-    await expect(page.locator('tbody').getByText('Test Manager')).toBeVisible();
+    const dialog = page.getByTestId('create-role-dialog');
+    await dialog.getByTestId('role-name-input').fill('Test Manager');
+    await dialog.getByTestId('role-description-input').fill('Test role for E2E testing');
+    await dialog.getByTestId('permission-checkbox-users:read:all').click();
+    await dialog.getByTestId('permission-checkbox-users:update:all').click();
+    await dialog.getByTestId('create-role-button').click();
+    await expect(dialog).not.toBeVisible();
+    await expect(
+      page.getByRole('region', { name: /Notifications/ }).getByRole('listitem'),
+    ).toContainText(/created/i);
+    await expect(page.getByTestId('role-nav-item-test-manager')).toBeVisible();
+    await page.getByTestId('role-nav-item-test-manager').click();
+    const detail = page.getByTestId('role-detail-panel');
+    await expect(detail.getByRole('heading', { level: 2 })).toHaveText('Test Manager');
+    await expect(detail.getByTestId('permission-node-users:read:all')).toBeVisible();
+    await expect(detail.getByTestId('permission-node-users:update:all')).toBeVisible();
   });
 
   test('should validate required fields when creating role', async ({ page }) => {
-    // Open create dialog
     await page.getByTestId('create-role-button').click();
-
-    // Try to submit without filling fields
-    await page.getByTestId('save-role-button').click();
-
-    // Error messages should appear
-    await expect(page.getByText(/role name is required/i)).toBeVisible();
-    await expect(page.getByText(/at least one permission is required/i)).toBeVisible();
-
-    // Dialog should still be open
-    await expect(page.getByRole('dialog')).toBeVisible();
+    const dialog = page.getByTestId('create-role-dialog');
+    await dialog.getByTestId('create-role-button').click();
+    await expect(dialog.getByTestId('role-name-error')).toBeVisible();
+    await expect(dialog.getByTestId('role-permissions-error')).toBeVisible();
+    await expect(dialog.getByTestId('role-name-input')).toHaveAttribute('aria-invalid', 'true');
+    await expect(dialog).toBeVisible();
   });
 
   test('should edit an existing role', async ({ page }) => {
-    // Find and click edit button for a non-protected role
-    const editButton = page.locator('[data-testid^="edit-role-"]').first();
-    await editButton.click();
-
-    // Edit dialog should be visible
-    await expect(page.getByRole('dialog')).toBeVisible();
-    await expect(page.getByRole('heading', { name: /edit role/i })).toBeVisible();
-
-    // Form should be pre-filled
-    const nameInput = page.getByLabel(/role name/i);
-    await expect(nameInput).not.toHaveValue('');
-
-    // Update description
-    const descInput = page.getByLabel(/description/i);
-    await descInput.clear();
-    await descInput.fill('Updated description for E2E test');
-
-    // Save changes
-    await page.getByTestId('save-role-button').click();
-
-    // Success toast should appear
-    await expect(page.locator('.sonner-toast')).toContainText(/role updated successfully/i);
-
-    // Dialog should close
-    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await page.getByTestId('role-nav-item-fixture-editor').click();
+    await page.getByTestId('edit-role-button').click();
+    const dialog = page.getByTestId('edit-role-dialog');
+    await expect(dialog).toHaveAccessibleName(/edit/i);
+    await expect(dialog.getByTestId('edit-role-name-input')).toHaveValue('Fixture Editor');
+    await dialog
+      .getByTestId('edit-role-description-input')
+      .fill('Updated description for E2E test');
+    await dialog.getByTestId('save-role-button').click();
+    await expect(dialog).not.toBeVisible();
+    await expect(
+      page.getByRole('region', { name: /Notifications/ }).getByRole('listitem'),
+    ).toContainText(/updated/i);
+    await expect(page.getByTestId('role-detail-panel')).toContainText(
+      'Updated description for E2E test',
+    );
   });
 
   test('should show confirmation dialog when deleting a role', async ({ page }) => {
-    // Find delete button for a non-protected role
-    const deleteButton = page.locator('[data-testid^="delete-role-"]').first();
-    await deleteButton.click();
-
-    // Confirmation dialog should appear
-    await expect(page.getByRole('alertdialog')).toBeVisible();
-    await expect(page.getByText(/are you sure.*delete/i)).toBeVisible();
-
-    // Should have cancel and confirm buttons
-    await expect(page.getByTestId('cancel-delete-button')).toBeVisible();
-    await expect(page.getByTestId('confirm-delete-button')).toBeVisible();
+    await page.getByTestId('role-nav-item-fixture-editor').click();
+    await page.getByTestId('delete-role-button').click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toHaveAccessibleName(/delete/i);
+    await expect(dialog.getByTestId('cancel-button')).toBeVisible();
+    await expect(dialog.getByTestId('delete-role-button')).toBeVisible();
   });
 
   test('should cancel role deletion', async ({ page }) => {
-    // Find delete button
-    const deleteButton = page.locator('[data-testid^="delete-role-"]').first();
-    await deleteButton.click();
-
-    // Click cancel
-    await page.getByTestId('cancel-delete-button').click();
-
-    // Dialog should close
-    await expect(page.getByRole('alertdialog')).not.toBeVisible();
-
-    // Role should still be in the table
-    const roleCount = await page.locator('tbody tr').count();
-    expect(roleCount).toBeGreaterThan(0);
+    await page.getByTestId('role-nav-item-fixture-editor').click();
+    await page.getByTestId('delete-role-button').click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByTestId('cancel-button').click();
+    await expect(dialog).not.toBeVisible();
+    await expect(page.getByTestId('role-nav-item-fixture-editor')).toBeVisible();
+    await expect(page.getByTestId(/^role-nav-item-/)).toHaveCount(5);
   });
 
   test('should delete a role after confirmation', async ({ page }) => {
-    // Get role count before deletion
-    const initialCount = await page.locator('tbody tr').count();
-
-    // Find delete button for a non-protected, non-system role
-    const deleteButton = page.locator('[data-testid^="delete-role-"]').first();
-    await deleteButton.click();
-
-    // Confirm deletion
-    await page.getByTestId('confirm-delete-button').click();
-
-    // Success toast should appear
-    await expect(page.locator('.sonner-toast')).toContainText(/role deleted successfully/i);
-
-    // Dialog should close
-    await expect(page.getByRole('alertdialog')).not.toBeVisible();
-
-    // Role count should decrease
-    await page.waitForTimeout(500); // Wait for table update
-    const newCount = await page.locator('tbody tr').count();
-    expect(newCount).toBeLessThan(initialCount);
+    await page.getByTestId('role-nav-item-fixture-editor').click();
+    await page.getByTestId('delete-role-button').click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByTestId('delete-role-button').click();
+    await expect(dialog).not.toBeVisible();
+    await expect(
+      page.getByRole('region', { name: /Notifications/ }).getByRole('listitem'),
+    ).toContainText(/deleted/i);
+    await expect(page.getByTestId('role-nav-item-fixture-editor')).toHaveCount(0);
+    await expect(page.getByTestId(/^role-nav-item-/)).toHaveCount(4);
   });
 
   test('should not allow deleting protected roles', async ({ page }) => {
-    // Protected roles should have delete buttons disabled
-    const protectedRoleRow = page.locator('tbody tr', { hasText: /admin|superadmin/i }).first();
-    const deleteButton = protectedRoleRow.locator('[data-testid^="delete-role-"]');
-
-    // Delete button should be disabled
-    await expect(deleteButton).toBeDisabled();
+    await page.getByTestId('role-nav-item-admin').click();
+    await expect(page.getByTestId('delete-role-button')).toBeDisabled();
   });
 
   test('should not allow editing protected role names', async ({ page }) => {
-    // Find a protected role and click edit
-    const protectedRoleRow = page.locator('tbody tr', { hasText: /admin|superadmin/i }).first();
-    const editButton = protectedRoleRow.locator('[data-testid^="edit-role-"]');
-    await editButton.click();
-
-    // Role name input should be disabled
-    const nameInput = page.getByLabel(/role name/i);
-    await expect(nameInput).toBeDisabled();
-
-    // Description should still be editable
-    const descInput = page.getByLabel(/description/i);
-    await expect(descInput).not.toBeDisabled();
+    await page.getByTestId('role-nav-item-admin').click();
+    await expect(page.getByTestId('edit-role-button')).toBeDisabled();
+    await page.getByTestId('role-nav-item-support').click();
+    await page.getByTestId('edit-role-button').click();
+    const dialog = page.getByTestId('edit-role-dialog');
+    await expect(dialog.getByTestId('edit-role-name-input')).toBeDisabled();
+    await expect(dialog.getByTestId('edit-role-description-input')).toBeEditable();
   });
 });

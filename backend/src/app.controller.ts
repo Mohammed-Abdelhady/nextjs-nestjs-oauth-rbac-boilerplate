@@ -1,5 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
+import { Public } from './auth/decorators/public.decorator';
 
 /**
  * Root controller
@@ -14,6 +15,7 @@ export class AppController {
    * Returns API information
    * @returns API status message
    */
+  @Public()
   @Get()
   getHello(): string {
     return this.appService.getHello();

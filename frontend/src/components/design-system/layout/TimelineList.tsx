@@ -73,7 +73,7 @@ export const TimelineList = forwardRef(
               data-testid={`timeline-item-${index}`}
               className={cn(
                 'transition-all duration-300 ease-out',
-                stagger && 'animate-slide-up stagger-animation',
+                stagger && 'motion-safe:animate-slide-up motion-safe:stagger-animation',
                 isHighlighted && 'scale-[1.02]',
               )}
               style={stagger ? ({ '--index': index } as React.CSSProperties) : undefined}
