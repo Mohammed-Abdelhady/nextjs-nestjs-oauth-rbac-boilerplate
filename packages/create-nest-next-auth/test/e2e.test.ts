@@ -292,6 +292,18 @@ describe('the packed CLI', () => {
     expect(appModule).not.toContain('TwoFactorModule');
   });
 
+  it('keeps OAUTH_STATE_SECRET for passkeys-only without a synthetic injection', () => {
+    const result = scaffold(packed, 'passkeys-only', 'passkeys');
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+    const project = join(packed.workspace, 'passkeys-only');
+    const env = readFileSync(join(project, 'backend/.env.example'), 'utf8');
+    expect(env).toContain('OAUTH_STATE_SECRET');
+    expect(env).toContain('AUTH_FEATURES=passkeys');
+    const schema = readFileSync(join(project, 'backend/src/config/env.oauth.schema.ts'), 'utf8');
+    expect(schema).toContain('@MinLength');
+    expect(schema).not.toContain('feature:');
+  });
+
   it('leaves no feature marker anywhere in the tree', () => {
     const project = join(packed.workspace, 'pruned');
     const marked = sourceFilesWithMarkers(project);

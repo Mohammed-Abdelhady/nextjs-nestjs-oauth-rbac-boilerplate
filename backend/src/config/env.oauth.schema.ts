@@ -1,12 +1,13 @@
 import 'reflect-metadata';
 import {
-  IsNotEmpty,
+  IsNotEmpty, // feature:oauth-core,passkeys
   IsOptional,
   IsString,
   IsUrl,
-  MinLength, // feature:oauth-core
+  MinLength, // feature:oauth-core,passkeys
 } from 'class-validator';
-import { OAUTH_STATE_SECRET_MIN_LENGTH } from '../auth/oauth/oauth.constants'; // feature:oauth-core
+
+const OAUTH_STATE_SECRET_MIN_LENGTH = 32; // feature:oauth-core,passkeys
 
 /**
  * OAuth part of the environment contract. Every provider variable is optional:
@@ -14,7 +15,7 @@ import { OAUTH_STATE_SECRET_MIN_LENGTH } from '../auth/oauth/oauth.constants'; /
  * deployment can ship with none of them set.
  */
 export interface OAuthEnvironmentConfig {
-  OAUTH_STATE_SECRET: string;
+  OAUTH_STATE_SECRET: string; // feature:oauth-core,passkeys
   OAUTH_CALLBACK_BASE_URL?: string;
 
   OAUTH_GOOGLE_CLIENT_ID?: string;
@@ -89,14 +90,14 @@ export interface OAuthEnvironmentConfig {
 
 /** Base class of EnvironmentVariables. class-validator reads inherited decorators. */
 export class OAuthEnvironmentVariables {
+  // feature:oauth-core,passkeys:start
   @IsString()
   @IsNotEmpty()
-  // feature:oauth-core:start
   @MinLength(OAUTH_STATE_SECRET_MIN_LENGTH, {
     message: `OAUTH_STATE_SECRET must be at least ${OAUTH_STATE_SECRET_MIN_LENGTH} characters`,
   })
-  // feature:oauth-core:end
   OAUTH_STATE_SECRET!: string;
+  // feature:oauth-core,passkeys:end
 
   @IsString()
   @IsUrl({ require_protocol: true, require_tld: false })

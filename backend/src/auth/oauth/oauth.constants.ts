@@ -7,6 +7,9 @@ export const OAUTH_STATE_COOKIE_PREFIX = 'oauth_';
 /** How long a start request stays valid, in milliseconds. */
 export const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
 
+/** Bound on provider token, profile and JWKS HTTP. */
+export const OAUTH_HTTP_TIMEOUT_MS = 10_000;
+
 /** Minimum length of OAUTH_STATE_SECRET. */
 export const OAUTH_STATE_SECRET_MIN_LENGTH = 32;
 

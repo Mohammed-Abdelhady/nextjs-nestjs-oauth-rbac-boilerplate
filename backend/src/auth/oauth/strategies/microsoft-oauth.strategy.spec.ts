@@ -9,6 +9,7 @@ import {
   mockFetch,
   signIdToken,
 } from './oauth-strategy.harness-spec';
+import { resetJwksCache } from '../utils/id-token.util';
 
 const CLIENT_ID = 'microsoft-client-id';
 const TENANT_ID = '9188040d-6c67-4c5b-b112-36a304b66dad';
@@ -128,6 +129,42 @@ describe('MicrosoftOAuthStrategy', () => {
       expect(tokenCall.method).toBe('POST');
       expect(tokenCall.body.code_verifier).toBe('verifier');
       expect(tokenCall.body.grant_type).toBe('authorization_code');
+    });
+
+    it('maps a JWKS timeout to OAUTH_AUTHENTICATION_FAILED', async () => {
+      resetJwksCache();
+      const idToken = await signIdToken({ key, claims: baseClaims() });
+      global.fetch = jest.fn((input: string | URL | Request) => {
+        const url =
+          typeof input === 'string'
+            ? input
+            : input instanceof URL
+              ? input.href
+              : input.url;
+        if (url.includes('/token')) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                access_token: 'access-token',
+                id_token: idToken,
+              }),
+          } as Response);
+        }
+        return Promise.reject(
+          Object.assign(new Error('The operation timed out'), {
+            name: 'TimeoutError',
+          }),
+        );
+      }) as unknown as typeof fetch;
+
+      await expectAppException(
+        strategy().exchangeCode({
+          code: 'auth-code',
+          redirectUri: REDIRECT_URI,
+        }),
+        ErrorCode.OAUTH_AUTHENTICATION_FAILED,
+      );
     });
 
     it('rejects an id_token whose nonce does not match', async () => {

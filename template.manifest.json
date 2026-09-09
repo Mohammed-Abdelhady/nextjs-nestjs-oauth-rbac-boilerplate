@@ -26,7 +26,7 @@
         "frontend/src/modules/account/components/ProfileSyncStatus.tsx",
         "frontend/src/app/[locale]/(auth)/auth/oauth/**"
       ],
-      "envVars": [],
+      "envVars": ["OAUTH_STATE_SECRET"],
       "requires": [],
       "docs": ["backend/docs/oauth-authentication.md"]
     },
@@ -153,7 +153,8 @@
         "PASSKEYS_ENABLED",
         "WEBAUTHN_RP_ID",
         "WEBAUTHN_RP_NAME",
-        "WEBAUTHN_ORIGIN"
+        "WEBAUTHN_ORIGIN",
+        "OAUTH_STATE_SECRET"
       ],
       "requires": [],
       "docs": ["docs/setup-passkeys.md"]

@@ -120,6 +120,22 @@ describe('DiscordOAuthStrategy', () => {
         ErrorCode.OAUTH_CODE_INVALID,
       );
     });
+
+    it('maps a token endpoint timeout to OAUTH_AUTHENTICATION_FAILED', async () => {
+      global.fetch = jest.fn().mockRejectedValue(
+        Object.assign(new Error('The operation timed out'), {
+          name: 'TimeoutError',
+        }),
+      );
+
+      await expectAppException(
+        strategy().exchangeCode({
+          code: 'auth-code',
+          redirectUri: REDIRECT_URI,
+        }),
+        ErrorCode.OAUTH_AUTHENTICATION_FAILED,
+      );
+    });
   });
 
   describe('fetchProfile', () => {
@@ -175,6 +191,19 @@ describe('DiscordOAuthStrategy', () => {
 
     it('fails when the account has no email', async () => {
       mockFetch([{ url: USER_URL, body: discordUser({ email: null }) }]);
+
+      await expectAppException(
+        strategy().fetchProfile({ accessToken: 'access-token' }),
+        ErrorCode.OAUTH_AUTHENTICATION_FAILED,
+      );
+    });
+
+    it('maps a profile request timeout to OAUTH_AUTHENTICATION_FAILED', async () => {
+      global.fetch = jest.fn().mockRejectedValue(
+        Object.assign(new Error('The operation was aborted'), {
+          name: 'AbortError',
+        }),
+      );
 
       await expectAppException(
         strategy().fetchProfile({ accessToken: 'access-token' }),

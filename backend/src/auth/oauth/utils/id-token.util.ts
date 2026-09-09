@@ -47,6 +47,7 @@ const JWKS_CACHE_TTL_MS = 60 * 60 * 1000;
 const DEFAULT_CLOCK_TOLERANCE_SECONDS = 60;
 const DEFAULT_ALGORITHMS = ['RS256'];
 const TENANT_PLACEHOLDER = '{tid}';
+const JWKS_HTTP_TIMEOUT_MS = 10_000;
 
 interface JwksCacheEntry {
   document: JSONWebKeySet;
@@ -61,10 +62,22 @@ export function resetJwksCache(): void {
 }
 
 async function fetchJwks(jwksUri: string): Promise<JSONWebKeySet> {
-  const response = await fetch(jwksUri, {
-    method: 'GET',
-    headers: { Accept: 'application/json' },
-  });
+  let response: Response;
+  try {
+    response = await fetch(jwksUri, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(JWKS_HTTP_TIMEOUT_MS),
+    });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      (error.name === 'TimeoutError' || error.name === 'AbortError')
+    ) {
+      throw new Error('JWKS request timed out');
+    }
+    throw error;
+  }
 
   if (!response.ok) {
     throw new Error(

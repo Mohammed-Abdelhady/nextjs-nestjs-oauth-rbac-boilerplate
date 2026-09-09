@@ -12,6 +12,7 @@ import {
   OAuthProviderStrategy,
   OAuthTokens,
 } from './oauth-provider.interface';
+import { OAUTH_HTTP_TIMEOUT_MS } from './oauth.constants';
 
 export interface OAuthCredentials {
   clientId: string;
@@ -98,11 +99,40 @@ export abstract class BaseOAuthStrategy implements OAuthProviderStrategy {
     );
   }
 
+  protected providerHttpTimedOut(reason: string): AppException {
+    this.logger.warn(`Provider HTTP timed out for ${this.id}: ${reason}`);
+    return new AppException(
+      ErrorCode.OAUTH_AUTHENTICATION_FAILED,
+      'Provider request timed out',
+      HttpStatus.BAD_GATEWAY,
+      { provider: this.id },
+    );
+  }
+
+  private async fetchWithTimeout(
+    url: string,
+    init: RequestInit,
+  ): Promise<Response> {
+    try {
+      return await fetch(url, {
+        ...init,
+        signal: AbortSignal.timeout(OAUTH_HTTP_TIMEOUT_MS),
+      });
+    } catch (error) {
+      if (isAbortOrTimeout(error)) {
+        throw this.providerHttpTimedOut(
+          error instanceof Error ? error.message : 'aborted',
+        );
+      }
+      throw error;
+    }
+  }
+
   protected async httpGetJson<T>(
     url: string,
     headers: Record<string, string> = {},
   ): Promise<T> {
-    const response = await fetch(url, {
+    const response = await this.fetchWithTimeout(url, {
       method: 'GET',
       headers: { Accept: 'application/json', ...headers },
     });
@@ -125,7 +155,7 @@ export abstract class BaseOAuthStrategy implements OAuthProviderStrategy {
     body: Record<string, string>,
     headers: Record<string, string> = {},
   ): Promise<T> {
-    const response = await fetch(url, {
+    const response = await this.fetchWithTimeout(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -143,4 +173,11 @@ export abstract class BaseOAuthStrategy implements OAuthProviderStrategy {
 
     return (await response.json()) as T;
   }
+}
+
+function isAbortOrTimeout(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    (error.name === 'TimeoutError' || error.name === 'AbortError')
+  );
 }
