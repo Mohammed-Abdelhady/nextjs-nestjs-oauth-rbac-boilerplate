@@ -30,7 +30,7 @@ jobs:
         run: mkdir -p "$RUNNER_TEMP/ci-home"
 
       - name: Set up Node.js 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -67,7 +67,7 @@ jobs:
         run: mkdir -p "$RUNNER_TEMP/ci-home"
 
       - name: Set up Node.js 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -95,7 +95,7 @@ jobs:
         run: mkdir -p "$RUNNER_TEMP/ci-home" "$RUNNER_TEMP/integration-results"
 
       - name: Set up Node.js 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -175,7 +175,7 @@ jobs:
         run: env -i PATH="$PATH" node scripts/verify-docker.mjs --check-checkout
 
       - name: Set up Node.js 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
 
