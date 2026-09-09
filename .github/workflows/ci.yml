@@ -183,7 +183,7 @@ jobs:
         run: env -i PATH="$PATH" node scripts/verify-docker.mjs --export "$RUNNER_TEMP/docker-source"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build backend image
         uses: docker/build-push-action@v7
