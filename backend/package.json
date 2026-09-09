@@ -73,7 +73,7 @@
     "eslint-plugin-prettier": "^5.2.2",
     "globals": "^16.0.0",
     "jest": "^30.0.0",
-    "migrate-mongo": "^11.0.0",
+    "migrate-mongo": "^14.0.7",
     "mongodb-memory-server": "^11.2.0",
     "prettier": "^3.4.2",
     "source-map-support": "^0.5.21",
