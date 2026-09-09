@@ -48,7 +48,7 @@ export class TwoFactorLoginService {
     request: Request,
     response: Response,
   ): Promise<ApiResponse<LoginResponseDto>> {
-    const challenge = await this.challengeService.read(request);
+    const challenge = await this.challengeService.claim(request);
     const user = await this.userModel.findById(challenge.userId);
 
     if (!user || user.isDeleted || !user.twoFactor?.enabled) {

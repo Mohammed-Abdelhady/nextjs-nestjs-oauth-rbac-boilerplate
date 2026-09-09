@@ -12,6 +12,7 @@ describe('PasswordResetCodeService', () => {
     findOne: jest.Mock;
     create: jest.Mock;
     findOneAndUpdate: jest.Mock;
+    findOneAndDelete: jest.Mock;
     deleteOne: jest.Mock;
   };
   let hashService: jest.Mocked<HashService>;
@@ -29,6 +30,7 @@ describe('PasswordResetCodeService', () => {
       findOne: jest.fn(),
       create: jest.fn(),
       findOneAndUpdate: jest.fn(),
+      findOneAndDelete: jest.fn(),
       deleteOne: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -99,16 +101,12 @@ describe('PasswordResetCodeService', () => {
     });
   });
 
-  describe('verifyPasswordReset atomic increment (D-05)', () => {
-    it('should atomically increment attempts via findOneAndUpdate on invalid reset code', async () => {
-      pendingPasswordResetModel.findOne.mockReturnValue({
-        select: jest.fn().mockResolvedValue({
-          ...mockPendingPasswordReset,
-          attempts: 2,
-        }),
-      });
+  describe('verifyPasswordReset atomic reservation', () => {
+    it('should reserve an attempt before comparing an invalid code', async () => {
       hashService.compare.mockResolvedValue(false);
       pendingPasswordResetModel.findOneAndUpdate.mockResolvedValue({
+        _id: 'reset-id',
+        hashedCode: 'hashed-code',
         attempts: 3,
       });
 
@@ -121,18 +119,21 @@ describe('PasswordResetCodeService', () => {
       });
 
       expect(pendingPasswordResetModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { email: 'user@example.com' },
+        {
+          email: { $eq: 'user@example.com' },
+          expiresAt: { $gt: expect.any(Date) as Date },
+          attempts: { $lt: 5 },
+        },
         { $inc: { attempts: 1 } },
-        { new: true },
+        { new: true, select: '+hashedCode' },
       );
     });
 
     it('should drop an expired record and report the expiry', async () => {
-      pendingPasswordResetModel.findOne.mockReturnValue({
-        select: jest.fn().mockResolvedValue({
-          ...mockPendingPasswordReset,
-          expiresAt: new Date(Date.now() - 1000),
-        }),
+      pendingPasswordResetModel.findOneAndUpdate.mockResolvedValue(null);
+      pendingPasswordResetModel.findOne.mockResolvedValue({
+        _id: 'reset-id',
+        expiresAt: new Date(Date.now() - 1000),
       });
 
       await expect(
@@ -141,8 +142,49 @@ describe('PasswordResetCodeService', () => {
         code: ErrorCode.PASSWORD_RESET_CODE_EXPIRED,
       });
       expect(pendingPasswordResetModel.deleteOne).toHaveBeenCalledWith({
-        email: 'user@example.com',
+        _id: 'reset-id',
       });
+    });
+
+    it('should return the reserved generation for a valid code', async () => {
+      hashService.compare.mockResolvedValue(true);
+      pendingPasswordResetModel.findOneAndUpdate.mockResolvedValue({
+        _id: 'reset-id',
+        hashedCode: 'hashed-code',
+        attempts: 1,
+      });
+
+      await expect(
+        service.verifyPasswordReset('user@example.com', '123456'),
+      ).resolves.toEqual({
+        id: 'reset-id',
+        hashedCode: 'hashed-code',
+      });
+    });
+  });
+
+  describe('consumePasswordReset', () => {
+    it('should delete only the hashed generation that was compared', async () => {
+      pendingPasswordResetModel.findOneAndDelete.mockResolvedValue({
+        _id: 'reset-id',
+      });
+
+      await expect(
+        service.consumePasswordReset('reset-id' as never, 'hashed-code'),
+      ).resolves.toBe(true);
+      expect(pendingPasswordResetModel.findOneAndDelete).toHaveBeenCalledWith({
+        _id: 'reset-id',
+        hashedCode: 'hashed-code',
+        expiresAt: { $gt: expect.any(Date) as Date },
+      });
+    });
+
+    it('should report a lost race when the generation is already gone', async () => {
+      pendingPasswordResetModel.findOneAndDelete.mockResolvedValue(null);
+
+      await expect(
+        service.consumePasswordReset('reset-id' as never, 'hashed-code'),
+      ).resolves.toBe(false);
     });
   });
 });

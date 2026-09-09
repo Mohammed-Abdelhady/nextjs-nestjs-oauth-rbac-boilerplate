@@ -1,5 +1,7 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { UserDocument } from '../../../user/schemas/user.schema';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { User, UserDocument } from '../../../user/schemas/user.schema';
 import { TwoFactorSecret } from '../../../user/schemas/two-factor.schema';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
@@ -26,7 +28,10 @@ export interface SecondFactorInput {
 export class TwoFactorVerificationService {
   private readonly logger = new Logger(TwoFactorVerificationService.name);
 
-  constructor(private readonly cryptoService: TotpSecretCryptoService) {}
+  constructor(
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    private readonly cryptoService: TotpSecretCryptoService,
+  ) {}
 
   /**
    * @throws AppException TWO_FACTOR_CODE_INVALID when neither field is filled
@@ -66,8 +71,19 @@ export class TwoFactorVerificationService {
       throw this.invalidCode('code was already used');
     }
 
+    const updated = await this.userModel.updateOne(
+      {
+        _id: user._id,
+        'twoFactor.lastUsedStep': lastUsedStep ?? null,
+      },
+      { $set: { 'twoFactor.lastUsedStep': step } },
+    );
+
+    if (updated.modifiedCount !== 1) {
+      throw this.invalidCode('code was already used');
+    }
+
     user.twoFactor.lastUsedStep = step;
-    await user.save();
   }
 
   /** Spends one recovery code. A code that was already spent is refused. */
@@ -85,9 +101,22 @@ export class TwoFactorVerificationService {
       throw this.invalidCode('recovery code is unknown or already used');
     }
 
-    match.usedAt = new Date();
-    user.markModified('twoFactor.recoveryCodes');
-    await user.save();
+    const usedAt = new Date();
+    const updated = await this.userModel.updateOne(
+      {
+        _id: user._id,
+        'twoFactor.recoveryCodes': {
+          $elemMatch: { hash: match.hash, usedAt: null },
+        },
+      },
+      { $set: { 'twoFactor.recoveryCodes.$.usedAt': usedAt } },
+    );
+
+    if (updated.modifiedCount !== 1) {
+      throw this.invalidCode('recovery code is unknown or already used');
+    }
+
+    match.usedAt = usedAt;
   }
 
   /**

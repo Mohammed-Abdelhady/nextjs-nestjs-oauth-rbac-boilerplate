@@ -110,7 +110,10 @@ export function createHarness(user: MockUser | null): TwoFactorHarness {
   };
   query.select.mockReturnValue(query);
 
-  const userModel = { findById: jest.fn().mockReturnValue(query) };
+  const userModel = {
+    findById: jest.fn().mockReturnValue(query),
+    updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
+  };
   const hashService = {
     hash: jest.fn().mockResolvedValue('hashed-val'),
     compare: jest.fn().mockResolvedValue(true),
@@ -122,7 +125,12 @@ export function createHarness(user: MockUser | null): TwoFactorHarness {
     service: new TwoFactorService(
       userModel as unknown as ConstructorParameters<typeof TwoFactorService>[0],
       crypto,
-      new TwoFactorVerificationService(crypto),
+      new TwoFactorVerificationService(
+        userModel as unknown as ConstructorParameters<
+          typeof TwoFactorVerificationService
+        >[0],
+        crypto,
+      ),
       new TwoFactorReauthService(hashService as unknown as HashService),
     ),
     crypto,

@@ -18,6 +18,13 @@ export class TwoFactorChallenge {
   @Prop({ type: Number, default: 0 })
   attempts!: number;
 
+  /**
+   * Set while one request is checking a code. A second request that arrives
+   * with the same cookie cannot also issue a session from that challenge.
+   */
+  @Prop({ type: Date, default: null })
+  claimedAt!: Date | null;
+
   /** The TTL index clears the record shortly after the challenge lapses. */
   @Prop({ required: true, index: { expireAfterSeconds: 0 } })
   expiresAt!: Date;

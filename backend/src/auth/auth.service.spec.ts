@@ -160,7 +160,7 @@ describe('AuthService registration and code requests', () => {
         harness.authMailService.sendPasswordResetCode,
       ).not.toHaveBeenCalled();
       expect(harness.userModel.findOne).toHaveBeenCalledWith({
-        email: 'nobody@example.com',
+        email: { $eq: 'nobody@example.com' },
         isDeleted: { $ne: true },
       });
     });

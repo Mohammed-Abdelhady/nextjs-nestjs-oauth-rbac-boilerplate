@@ -66,7 +66,7 @@ export class VerificationCodeService {
     hashedPassword?: string,
   ): Promise<PendingCodeData> {
     const existingPending = await this.pendingRegistrationModel
-      .findOne({ email })
+      .findOne({ email: { $eq: email } })
       .select('+hashedPassword +hashedCode');
 
     if (existingPending && existingPending.expiresAt > new Date()) {
@@ -104,7 +104,9 @@ export class VerificationCodeService {
   }
 
   /**
-   * Verify activation code and remove pending registration record.
+   * Atomically reserve one attempt, compare the code, then consume only the
+   * generation that was compared. A refresh that lands during the compare
+   * changes hashedCode, so the stale caller cannot delete the new record.
    *
    * @param email - Address the code was sent to
    * @param code - Code the caller submitted
@@ -116,50 +118,38 @@ export class VerificationCodeService {
     email: string,
     code: string,
   ): Promise<ConsumedRegistration> {
-    const pending = await this.pendingRegistrationModel
-      .findOne({ email })
-      .select('+hashedPassword +hashedCode');
+    const reserved = await this.pendingRegistrationModel.findOneAndUpdate(
+      {
+        email: { $eq: email },
+        expiresAt: { $gt: new Date() },
+        attempts: { $lt: this.maxAttempts },
+      },
+      { $inc: { attempts: 1 } },
+      { new: true, select: '+hashedPassword +hashedCode' },
+    );
 
-    if (!pending) {
-      throw new AppException(
-        ErrorCode.NO_PENDING_REGISTRATION,
-        'No pending registration found',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (new Date() > pending.expiresAt) {
-      await this.pendingRegistrationModel.deleteOne({ email });
-      throw new AppException(
-        ErrorCode.ACTIVATION_CODE_EXPIRED,
-        'Activation code has expired',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (pending.attempts >= this.maxAttempts) {
-      await this.pendingRegistrationModel.deleteOne({ email });
-      throw new AppException(
-        ErrorCode.MAX_ATTEMPTS_EXCEEDED,
-        'Maximum attempts exceeded. Please register again.',
-        HttpStatus.UNAUTHORIZED,
-      );
+    if (!reserved) {
+      return await this.rejectUnreservable(email);
     }
 
     const isCodeValid = await this.hashService.compare(
       code,
-      pending.hashedCode,
+      reserved.hashedCode,
     );
 
     if (!isCodeValid) {
-      const updated = await this.pendingRegistrationModel.findOneAndUpdate(
-        { email },
-        { $inc: { attempts: 1 } },
-        { new: true },
+      const remainingAttempts = Math.max(
+        0,
+        this.maxAttempts - reserved.attempts,
       );
 
-      const attempts = updated ? updated.attempts : pending.attempts + 1;
-      const remainingAttempts = Math.max(0, this.maxAttempts - attempts);
+      if (reserved.attempts >= this.maxAttempts) {
+        throw new AppException(
+          ErrorCode.MAX_ATTEMPTS_EXCEEDED,
+          'Maximum attempts exceeded. Please register again.',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
 
       throw new AppException(
         ErrorCode.ACTIVATION_CODE_INVALID,
@@ -169,12 +159,25 @@ export class VerificationCodeService {
       );
     }
 
-    await this.pendingRegistrationModel.deleteOne({ email });
+    const consumed = await this.pendingRegistrationModel.findOneAndDelete({
+      _id: reserved._id,
+      hashedCode: reserved.hashedCode,
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (!consumed) {
+      throw new AppException(
+        ErrorCode.ACTIVATION_CODE_INVALID,
+        'Invalid code. 0 attempts remaining.',
+        HttpStatus.BAD_REQUEST,
+        { remainingAttempts: 0 },
+      );
+    }
 
     return {
-      email: pending.email,
-      name: pending.name,
-      hashedPassword: pending.hashedPassword,
+      email: reserved.email,
+      name: reserved.name,
+      hashedPassword: reserved.hashedPassword,
     };
   }
 
@@ -188,7 +191,7 @@ export class VerificationCodeService {
    */
   async resendActivationCode(email: string): Promise<PendingCodeData | null> {
     const pending = await this.pendingRegistrationModel
-      .findOne({ email })
+      .findOne({ email: { $eq: email } })
       .select('+hashedCode');
 
     if (!pending) {
@@ -196,7 +199,7 @@ export class VerificationCodeService {
     }
 
     if (new Date() > pending.expiresAt) {
-      await this.pendingRegistrationModel.deleteOne({ email });
+      await this.pendingRegistrationModel.deleteOne({ _id: pending._id });
       return null;
     }
 
@@ -219,5 +222,34 @@ export class VerificationCodeService {
     await pending.save();
 
     return code;
+  }
+
+  private async rejectUnreservable(email: string): Promise<never> {
+    const pending = await this.pendingRegistrationModel.findOne({
+      email: { $eq: email },
+    });
+
+    if (!pending) {
+      throw new AppException(
+        ErrorCode.NO_PENDING_REGISTRATION,
+        'No pending registration found',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (new Date() > pending.expiresAt) {
+      await this.pendingRegistrationModel.deleteOne({ _id: pending._id });
+      throw new AppException(
+        ErrorCode.ACTIVATION_CODE_EXPIRED,
+        'Activation code has expired',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    throw new AppException(
+      ErrorCode.MAX_ATTEMPTS_EXCEEDED,
+      'Maximum attempts exceeded. Please register again.',
+      HttpStatus.UNAUTHORIZED,
+    );
   }
 }

@@ -209,6 +209,39 @@ describe('TwoFactorChallengeService', () => {
     });
   });
 
+  describe('claim', () => {
+    it('should mark an open challenge claimed', async () => {
+      const harness = createHarness();
+      const token = await issueToken(harness);
+      harness.model.findOneAndUpdate.mockResolvedValue(storedChallenge());
+
+      const context = await harness.service.claim(requestWith(token));
+
+      expect(context).toEqual({
+        challengeId: CHALLENGE_ID,
+        userId: USER_ID,
+      });
+      expect(harness.model.findOneAndUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          attempts: { $lt: TWO_FACTOR_MAX_CHALLENGE_ATTEMPTS },
+          $or: [{ claimedAt: null }, { claimedAt: { $exists: false } }],
+        }),
+        { $set: { claimedAt: expect.any(Date) as Date } },
+        { new: true },
+      );
+    });
+
+    it('should refuse a challenge another request already claimed', async () => {
+      const harness = createHarness();
+      const token = await issueToken(harness);
+      harness.model.findOneAndUpdate.mockResolvedValue(null);
+
+      await expectChallengeInvalid(() =>
+        harness.service.claim(requestWith(token)),
+      );
+    });
+  });
+
   describe('registerFailure', () => {
     it('should count a wrong code and keep the challenge open', async () => {
       const harness = createHarness();
@@ -221,7 +254,7 @@ describe('TwoFactorChallengeService', () => {
 
       expect(harness.model.findOneAndUpdate).toHaveBeenCalledWith(
         { _id: CHALLENGE_ID },
-        { $inc: { attempts: 1 } },
+        { $inc: { attempts: 1 }, $unset: { claimedAt: 1 } },
         { new: true },
       );
       expect(harness.model.deleteOne).not.toHaveBeenCalled();

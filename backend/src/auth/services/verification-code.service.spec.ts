@@ -12,6 +12,7 @@ describe('VerificationCodeService', () => {
     findOne: jest.Mock;
     create: jest.Mock;
     findOneAndUpdate: jest.Mock;
+    findOneAndDelete: jest.Mock;
     deleteOne: jest.Mock;
   };
   let hashService: { hash: jest.Mock; compare: jest.Mock };
@@ -43,6 +44,7 @@ describe('VerificationCodeService', () => {
       findOne: jest.fn(),
       create: jest.fn(),
       findOneAndUpdate: jest.fn(),
+      findOneAndDelete: jest.fn(),
       deleteOne: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -181,18 +183,17 @@ describe('VerificationCodeService', () => {
         service.resendActivationCode('user@example.com'),
       ).resolves.toBeNull();
       expect(pendingRegistrationModel.deleteOne).toHaveBeenCalledWith({
-        email: 'user@example.com',
+        _id: undefined,
       });
     });
   });
 
-  describe('verifyAndConsumeRegistration atomic increment (D-05)', () => {
-    it('should atomically increment attempts via findOneAndUpdate on invalid code', async () => {
-      pendingRegistrationModel.findOne.mockReturnValue(
-        selecting(pending({ attempts: 1 })),
-      );
+  describe('verifyAndConsumeRegistration atomic reservation', () => {
+    it('should reserve an attempt before comparing an invalid code', async () => {
       hashService.compare.mockResolvedValue(false);
       pendingRegistrationModel.findOneAndUpdate.mockResolvedValue({
+        _id: 'pending-id',
+        hashedCode: 'hashed-code',
         attempts: 2,
       });
 
@@ -205,10 +206,59 @@ describe('VerificationCodeService', () => {
       });
 
       expect(pendingRegistrationModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { email: 'user@example.com' },
+        {
+          email: { $eq: 'user@example.com' },
+          expiresAt: { $gt: expect.any(Date) as Date },
+          attempts: { $lt: 5 },
+        },
         { $inc: { attempts: 1 } },
-        { new: true },
+        { new: true, select: '+hashedPassword +hashedCode' },
       );
+    });
+
+    it('should consume only the hashed generation that was compared', async () => {
+      hashService.compare.mockResolvedValue(true);
+      pendingRegistrationModel.findOneAndUpdate.mockResolvedValue({
+        _id: 'pending-id',
+        email: 'user@example.com',
+        name: 'Test User',
+        hashedPassword: 'hashed-password',
+        hashedCode: 'hashed-code',
+        attempts: 1,
+      });
+      pendingRegistrationModel.findOneAndDelete.mockResolvedValue({
+        _id: 'pending-id',
+      });
+
+      await expect(
+        service.verifyAndConsumeRegistration('user@example.com', '123456'),
+      ).resolves.toEqual({
+        email: 'user@example.com',
+        name: 'Test User',
+        hashedPassword: 'hashed-password',
+      });
+
+      expect(pendingRegistrationModel.findOneAndDelete).toHaveBeenCalledWith({
+        _id: 'pending-id',
+        hashedCode: 'hashed-code',
+        expiresAt: { $gt: expect.any(Date) as Date },
+      });
+    });
+
+    it('should refuse a stale compare after the code was reissued', async () => {
+      hashService.compare.mockResolvedValue(true);
+      pendingRegistrationModel.findOneAndUpdate.mockResolvedValue({
+        _id: 'pending-id',
+        hashedCode: 'old-hash',
+        attempts: 1,
+      });
+      pendingRegistrationModel.findOneAndDelete.mockResolvedValue(null);
+
+      await expect(
+        service.verifyAndConsumeRegistration('user@example.com', '123456'),
+      ).rejects.toMatchObject({
+        code: ErrorCode.ACTIVATION_CODE_INVALID,
+      });
     });
   });
 });

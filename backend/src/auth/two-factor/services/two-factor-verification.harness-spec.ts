@@ -40,6 +40,7 @@ export function codeAtOffset(secret: string, steps: number): string {
 }
 
 export interface MockUser {
+  _id: string;
   twoFactor: {
     enabled: boolean;
     secret: { ciphertext: string; iv: string; tag: string } | null;
@@ -55,6 +56,7 @@ export interface VerificationHarness {
   service: TwoFactorVerificationService;
   secret: string;
   user: MockUser;
+  userModel: { updateOne: jest.Mock };
 }
 
 export function createVerificationHarness(
@@ -66,11 +68,16 @@ export function createVerificationHarness(
   } as unknown as ConfigService);
 
   const secret = generateTotpSecret();
+  const userModel = {
+    updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
+  };
 
   return {
-    service: new TwoFactorVerificationService(crypto),
+    service: new TwoFactorVerificationService(userModel as never, crypto),
     secret,
+    userModel,
     user: {
+      _id: '507f1f77bcf86cd799439011',
       twoFactor: {
         enabled: true,
         secret: crypto.encrypt(secret),

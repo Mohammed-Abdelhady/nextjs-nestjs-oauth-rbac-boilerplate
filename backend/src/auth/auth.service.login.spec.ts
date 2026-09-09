@@ -32,7 +32,7 @@ describe('AuthService sign-in and password reset', () => {
       });
 
       expect(harness.userModel.findOne).toHaveBeenCalledWith({
-        email: 'deleted@example.com',
+        email: { $eq: 'deleted@example.com' },
         isDeleted: { $ne: true },
       });
       expect(harness.hashService.compare).not.toHaveBeenCalled();
@@ -115,8 +115,8 @@ describe('AuthService sign-in and password reset', () => {
         MOCK_USER_ID,
       );
       expect(
-        harness.passwordResetCodeService.clearPasswordReset,
-      ).toHaveBeenCalledWith('user@example.com');
+        harness.passwordResetCodeService.consumePasswordReset,
+      ).toHaveBeenCalled();
     });
 
     it('should reject a reset for an address without an account', async () => {

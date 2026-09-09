@@ -50,7 +50,7 @@ export class AuthService {
   async register(dto: RegisterDto): Promise<ApiResponse<RegisterResponseDto>> {
     const hashedPassword = await this.hashService.hash(dto.password);
     const existingUser = await this.userModel.findOne({
-      email: dto.email,
+      email: { $eq: dto.email },
       isDeleted: { $ne: true },
     });
 
@@ -115,7 +115,7 @@ export class AuthService {
     dto: ResendActivationDto,
   ): Promise<ApiResponse<ResendActivationResponseDto>> {
     const existingUser = await this.userModel.findOne({
-      email: dto.email,
+      email: { $eq: dto.email },
       isDeleted: { $ne: true },
     });
 
@@ -147,7 +147,7 @@ export class AuthService {
     response: Response,
   ): Promise<ApiResponse<LoginResponseDto>> {
     const user = await this.userModel
-      .findOne({ email: dto.email, isDeleted: { $ne: true } })
+      .findOne({ email: { $eq: dto.email }, isDeleted: { $ne: true } })
       .select('+password');
 
     if (!user || !user.password) {
@@ -208,7 +208,7 @@ export class AuthService {
     dto: ForgotPasswordDto,
   ): Promise<ApiResponse<ForgotPasswordResponseDto>> {
     const user = await this.userModel.findOne({
-      email: dto.email,
+      email: { $eq: dto.email },
       isDeleted: { $ne: true },
     });
 
@@ -234,13 +234,26 @@ export class AuthService {
   async resetPassword(
     dto: ResetPasswordDto,
   ): Promise<ApiResponse<ResetPasswordResponseDto>> {
-    await this.passwordResetCodeService.verifyPasswordReset(
+    const reserved = await this.passwordResetCodeService.verifyPasswordReset(
       dto.email,
       dto.code,
     );
 
+    const consumed = await this.passwordResetCodeService.consumePasswordReset(
+      reserved.id,
+      reserved.hashedCode,
+    );
+    if (!consumed) {
+      throw new AppException(
+        ErrorCode.PASSWORD_RESET_CODE_INVALID,
+        'Invalid code. 0 attempts remaining.',
+        HttpStatus.BAD_REQUEST,
+        { remainingAttempts: 0 },
+      );
+    }
+
     const user = await this.userModel.findOne({
-      email: dto.email,
+      email: { $eq: dto.email },
       isDeleted: { $ne: true },
     });
     if (!user) {
@@ -258,7 +271,6 @@ export class AuthService {
     await this.sessionService.invalidateAllSessions(user._id);
     this.logger.log(`Password reset successful for: ${user.email}`);
 
-    await this.passwordResetCodeService.clearPasswordReset(dto.email);
     return ResetPasswordResponseDto.success();
   }
 

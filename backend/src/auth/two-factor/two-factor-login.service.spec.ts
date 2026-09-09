@@ -53,6 +53,7 @@ interface Harness {
   service: TwoFactorLoginService;
   challengeService: {
     read: jest.Mock;
+    claim: jest.Mock;
     registerFailure: jest.Mock;
     consume: jest.Mock;
     clear: jest.Mock;
@@ -62,10 +63,16 @@ interface Harness {
 }
 
 function createHarness(user: MockUser | null): Harness {
-  const userModel = { findById: jest.fn().mockResolvedValue(user) };
+  const userModel = {
+    findById: jest.fn().mockResolvedValue(user),
+    updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
+  };
 
   const challengeService = {
     read: jest
+      .fn()
+      .mockResolvedValue({ challengeId: CHALLENGE_ID, userId: USER_ID }),
+    claim: jest
       .fn()
       .mockResolvedValue({ challengeId: CHALLENGE_ID, userId: USER_ID }),
     registerFailure: jest.fn().mockResolvedValue(undefined),
@@ -90,7 +97,7 @@ function createHarness(user: MockUser | null): Harness {
         typeof TwoFactorLoginService
       >[0],
       challengeService as unknown as TwoFactorChallengeService,
-      new TwoFactorVerificationService(createCrypto()),
+      new TwoFactorVerificationService(userModel as never, createCrypto()),
       signInService as unknown as SignInService,
       [verifier as unknown as SecondFactorVerifier],
     ),
@@ -245,7 +252,7 @@ describe('TwoFactorLoginService', () => {
 
   it('should pass on the rejection when there is no usable challenge', async () => {
     const harness = createHarness(createEnabledUser(createCrypto()));
-    harness.challengeService.read.mockRejectedValue(
+    harness.challengeService.claim.mockRejectedValue(
       new Error('challenge is unknown'),
     );
 

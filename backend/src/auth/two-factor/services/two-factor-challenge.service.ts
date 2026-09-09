@@ -61,6 +61,7 @@ export class TwoFactorChallengeService {
       user: userId,
       nonceHash: hashNonce(nonce),
       attempts: 0,
+      claimedAt: null,
       expiresAt: new Date(expiresAt),
     });
 
@@ -102,13 +103,41 @@ export class TwoFactorChallengeService {
   }
 
   /**
-   * Counts one wrong code. The challenge is dropped once the count reaches the
-   * cap, which forces the user back through the first factor.
+   * Same as read, then marks the challenge claimed so a second request with
+   * the same cookie cannot also verify a factor and issue a session.
+   *
+   * @throws AppException TWO_FACTOR_CHALLENGE_INVALID when the cookie is
+   * missing, spent, expired, already claimed, or out of attempts
+   */
+  async claim(request: Request): Promise<TwoFactorChallengeContext> {
+    const payload = this.decodeCookie(request);
+    const challenge = await this.challengeModel.findOneAndUpdate(
+      {
+        nonceHash: hashNonce(payload.nonce),
+        user: new Types.ObjectId(payload.sub),
+        expiresAt: { $gt: new Date() },
+        attempts: { $lt: TWO_FACTOR_MAX_CHALLENGE_ATTEMPTS },
+        $or: [{ claimedAt: null }, { claimedAt: { $exists: false } }],
+      },
+      { $set: { claimedAt: new Date() } },
+      { new: true },
+    );
+
+    if (!challenge) {
+      throw this.invalid('challenge is unknown, spent, or already claimed');
+    }
+
+    return { challengeId: challenge._id, userId: challenge.user };
+  }
+
+  /**
+   * Counts one wrong code and releases the claim so another try can proceed.
+   * The challenge is dropped once the count reaches the cap.
    */
   async registerFailure(challengeId: Types.ObjectId): Promise<void> {
     const challenge = await this.challengeModel.findOneAndUpdate(
       { _id: challengeId },
-      { $inc: { attempts: 1 } },
+      { $inc: { attempts: 1 }, $unset: { claimedAt: 1 } },
       { new: true },
     );
 

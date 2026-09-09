@@ -31,7 +31,7 @@ describe('TwoFactorVerificationService', () => {
       await service.verifyTotpCode(asDocument(user), codeAtOffset(secret, 0));
 
       expect(user.twoFactor.lastUsedStep).toBe(CURRENT_STEP);
-      expect(user.save).toHaveBeenCalled();
+      expect(user.save).not.toHaveBeenCalled();
     });
 
     it('should accept a code one step behind and record that step', async () => {
@@ -95,6 +95,15 @@ describe('TwoFactorVerificationService', () => {
       ).rejects.toMatchObject({ code: ErrorCode.TWO_FACTOR_CODE_INVALID });
     });
 
+    it('should refuse a TOTP step another request already spent', async () => {
+      const { service, secret, user, userModel } = createVerificationHarness();
+      userModel.updateOne.mockResolvedValue({ modifiedCount: 0 });
+
+      await expect(
+        service.verifyTotpCode(asDocument(user), codeAtOffset(secret, 0)),
+      ).rejects.toMatchObject({ code: ErrorCode.TWO_FACTOR_CODE_INVALID });
+    });
+
     it('should still accept the next step after one was spent', async () => {
       const { service, secret, user } = createVerificationHarness({
         lastUsedStep: CURRENT_STEP,
@@ -129,7 +138,7 @@ describe('TwoFactorVerificationService', () => {
       await service.verifyRecoveryCode(asDocument(user), RECOVERY_CODE);
 
       expect(user.twoFactor.recoveryCodes[0].usedAt).toEqual(expect.any(Date));
-      expect(user.save).toHaveBeenCalled();
+      expect(user.save).not.toHaveBeenCalled();
     });
 
     it('should refuse the same recovery code a second time', async () => {
@@ -148,6 +157,15 @@ describe('TwoFactorVerificationService', () => {
       await service.verifyRecoveryCode(asDocument(user), 'k3m7q-rtvwx');
 
       expect(user.twoFactor.recoveryCodes[0].usedAt).toEqual(expect.any(Date));
+    });
+
+    it('should refuse a recovery code another request already spent', async () => {
+      const { service, user, userModel } = createVerificationHarness();
+      userModel.updateOne.mockResolvedValue({ modifiedCount: 0 });
+
+      await expect(
+        service.verifyRecoveryCode(asDocument(user), RECOVERY_CODE),
+      ).rejects.toMatchObject({ code: ErrorCode.TWO_FACTOR_CODE_INVALID });
     });
 
     it('should refuse a recovery code the account never had', async () => {
