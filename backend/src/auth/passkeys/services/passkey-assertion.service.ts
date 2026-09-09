@@ -48,7 +48,7 @@ export class PasskeyAssertionService {
       allowCredentials: [],
     });
 
-    this.challenges.issue(response, 'login', options.challenge);
+    await this.challenges.issue(response, 'login', options.challenge);
     return options;
   }
 
@@ -67,10 +67,14 @@ export class PasskeyAssertionService {
     response: Response,
   ): Promise<PasskeyAssertionResult> {
     const challenge = this.challenges.read(request, 'login');
-    this.challenges.clear(response);
+    try {
+      await this.challenges.consume('login', challenge.challenge);
+    } finally {
+      this.challenges.clear(response);
+    }
 
     const passkey = await this.passkeyModel.findOne({
-      credentialId: credential.id,
+      credentialId: { $eq: credential.id },
     });
 
     if (!passkey) {
@@ -94,9 +98,24 @@ export class PasskeyAssertionService {
 
     this.assertCounterMovedForward(passkey.counter, verified.newCounter);
 
+    const lastUsedAt = new Date();
+    if (passkey.counter > 0 || verified.newCounter > 0) {
+      const updated = await this.passkeyModel.updateOne(
+        { _id: passkey._id, counter: passkey.counter },
+        { $set: { counter: verified.newCounter, lastUsedAt } },
+      );
+      if (updated.modifiedCount !== 1) {
+        throw this.failed('counter was already advanced');
+      }
+    } else {
+      await this.passkeyModel.updateOne(
+        { _id: passkey._id },
+        { $set: { lastUsedAt } },
+      );
+    }
+
     passkey.counter = verified.newCounter;
-    passkey.lastUsedAt = new Date();
-    await passkey.save();
+    passkey.lastUsedAt = lastUsedAt;
 
     return { passkey, userVerified: verified.userVerified };
   }

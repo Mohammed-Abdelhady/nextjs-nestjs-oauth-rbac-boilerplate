@@ -37,10 +37,24 @@ export function createConfigService(
   } as unknown as ConfigService;
 }
 
+export function createChallengeStore(): {
+  create: jest.Mock;
+  findOneAndDelete: jest.Mock;
+} {
+  return {
+    create: jest.fn().mockResolvedValue({}),
+    findOneAndDelete: jest.fn().mockResolvedValue({ _id: 'stored' }),
+  };
+}
+
 export function createChallengeService(
   values?: Record<string, string>,
+  store = createChallengeStore(),
 ): PasskeyChallengeService {
-  return new PasskeyChallengeService(createConfigService(values));
+  return new PasskeyChallengeService(
+    store as never,
+    createConfigService(values),
+  );
 }
 
 export function createPasskeyConfig(): PasskeyConfigService {

@@ -13,6 +13,10 @@ import { PasskeyRegistrationService } from './services/passkey-registration.serv
 import { PasskeySecondFactorVerifier } from './services/passkey-second-factor.verifier';
 import { WebAuthnAdapter } from './services/webauthn.adapter';
 import { Passkey, PasskeySchema } from './schemas/passkey.schema';
+import {
+  PasskeyChallenge,
+  PasskeyChallengeSchema,
+} from './schemas/passkey-challenge.schema';
 import { User, UserSchema } from '../../user/schemas/user.schema';
 
 /**
@@ -29,6 +33,7 @@ import { User, UserSchema } from '../../user/schemas/user.schema';
     ConfigModule,
     MongooseModule.forFeature([
       { name: Passkey.name, schema: PasskeySchema },
+      { name: PasskeyChallenge.name, schema: PasskeyChallengeSchema },
       { name: User.name, schema: UserSchema },
     ]),
     AuthModule,

@@ -1,7 +1,9 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
 import { CookieOptions, Request, Response } from 'express';
-import { hkdfSync } from 'crypto';
+import { createHash, hkdfSync } from 'crypto';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import {
@@ -13,10 +15,12 @@ import {
   PASSKEY_CHALLENGE_HKDF_INFO,
   PASSKEY_CHALLENGE_KEY_BYTES,
   PASSKEY_CHALLENGE_TTL_MS,
+  PasskeyChallengePurpose,
 } from '../constants/passkeys.constants';
-
-/** Which ceremony a challenge was handed out for. */
-export type PasskeyChallengePurpose = 'register' | 'login';
+import {
+  PasskeyChallenge,
+  PasskeyChallengeDocument,
+} from '../schemas/passkey-challenge.schema';
 
 export interface PasskeyChallengePayload {
   purpose: PasskeyChallengePurpose;
@@ -30,34 +34,47 @@ export interface PasskeyChallengePayload {
 
 /**
  * The five minutes between "give me options" and "here is the signed
- * response". The challenge itself is the whole state, so it rides in a signed
- * cookie rather than a collection.
- *
- * Registration and sign-in use one cookie name but carry a purpose, so a
- * challenge handed out for one ceremony is refused by the other.
+ * response". The signed cookie carries the challenge for the authenticator;
+ * a hashed copy is stored so a copied cookie cannot be replayed.
  */
 @Injectable()
 export class PasskeyChallengeService {
   private readonly logger = new Logger(PasskeyChallengeService.name);
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    @InjectModel(PasskeyChallenge.name)
+    private readonly challengeModel: Model<PasskeyChallengeDocument>,
+    private readonly configService: ConfigService,
+  ) {}
 
-  issue(
+  async issue(
     response: Response,
     purpose: PasskeyChallengePurpose,
     challenge: string,
     userId?: string,
-  ): void {
+  ): Promise<void> {
+    const signingKey = this.key();
+    const expiresAt = Date.now() + PASSKEY_CHALLENGE_TTL_MS;
     const payload: PasskeyChallengePayload = {
       purpose,
       challenge,
       sub: userId,
-      expiresAt: Date.now() + PASSKEY_CHALLENGE_TTL_MS,
+      expiresAt,
     };
+
+    await this.challengeModel.create({
+      challengeHash: hashChallenge(challenge),
+      purpose,
+      user:
+        userId && Types.ObjectId.isValid(userId)
+          ? new Types.ObjectId(userId)
+          : undefined,
+      expiresAt: new Date(expiresAt),
+    });
 
     response.cookie(
       PASSKEY_CHALLENGE_COOKIE,
-      encodeSignedCookie(payload, this.key()),
+      encodeSignedCookie(payload, signingKey),
       { ...this.cookieOptions(), maxAge: PASSKEY_CHALLENGE_TTL_MS },
     );
   }
@@ -92,6 +109,25 @@ export class PasskeyChallengeService {
     }
 
     return payload;
+  }
+
+  /**
+   * Spend the stored challenge. A copied cookie that still verifies still
+   * fails here once the first request has consumed the record.
+   */
+  async consume(
+    purpose: PasskeyChallengePurpose,
+    challenge: string,
+  ): Promise<void> {
+    const deleted = await this.challengeModel.findOneAndDelete({
+      challengeHash: hashChallenge(challenge),
+      purpose,
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (!deleted) {
+      throw this.invalid('challenge already spent');
+    }
   }
 
   clear(response: Response): void {
@@ -147,4 +183,8 @@ export class PasskeyChallengeService {
       HttpStatus.UNAUTHORIZED,
     );
   }
+}
+
+function hashChallenge(challenge: string): string {
+  return createHash('sha256').update(challenge).digest('hex');
 }

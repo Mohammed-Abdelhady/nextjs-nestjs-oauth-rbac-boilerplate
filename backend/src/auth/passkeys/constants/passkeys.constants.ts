@@ -1,4 +1,5 @@
-/** Cookie carrying the signed WebAuthn challenge between options and verify. */
+/** Which ceremony a challenge was handed out for. */
+export type PasskeyChallengePurpose = 'register' | 'login';
 export const PASSKEY_CHALLENGE_COOKIE = 'pk_challenge';
 
 /** How long a challenge stays usable, in milliseconds. */

@@ -122,9 +122,9 @@ describe('PasskeyRegistrationService', () => {
   });
 
   describe('verify', () => {
-    function verifyWith(harness: Harness, userId: string) {
+    async function verifyWith(harness: Harness, userId: string) {
       const issued = createMockResponse();
-      harness.challenges.issue(
+      await harness.challenges.issue(
         issued.response,
         'register',
         'challenge-value',
@@ -149,7 +149,10 @@ describe('PasskeyRegistrationService', () => {
 
     it('should store the credential and clear the challenge', async () => {
       const harness = createHarness();
-      const { result, verifying } = verifyWith(harness, USER_ID.toString());
+      const { result, verifying } = await verifyWith(
+        harness,
+        USER_ID.toString(),
+      );
 
       const response = await result;
 
@@ -175,7 +178,7 @@ describe('PasskeyRegistrationService', () => {
 
     it('should refuse a challenge issued to another account', async () => {
       const harness = createHarness();
-      const { result } = verifyWith(harness, OTHER_USER_ID.toString());
+      const { result } = await verifyWith(harness, OTHER_USER_ID.toString());
 
       await expect(result).rejects.toMatchObject({
         code: ErrorCode.PASSKEY_CHALLENGE_INVALID,
@@ -188,7 +191,7 @@ describe('PasskeyRegistrationService', () => {
       const harness = createHarness();
       harness.adapter.verifyAttestation.mockResolvedValue(null);
 
-      const { result } = verifyWith(harness, USER_ID.toString());
+      const { result } = await verifyWith(harness, USER_ID.toString());
 
       await expect(result).rejects.toMatchObject({
         code: ErrorCode.PASSKEY_VERIFICATION_FAILED,
@@ -199,7 +202,7 @@ describe('PasskeyRegistrationService', () => {
 
     it('should refuse a credential that is already registered', async () => {
       const harness = createHarness({ alreadyRegistered: true });
-      const { result } = verifyWith(harness, USER_ID.toString());
+      const { result } = await verifyWith(harness, USER_ID.toString());
 
       await expect(result).rejects.toMatchObject({
         code: ErrorCode.PASSKEY_VERIFICATION_FAILED,

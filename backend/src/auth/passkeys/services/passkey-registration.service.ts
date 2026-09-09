@@ -68,7 +68,7 @@ export class PasskeyRegistrationService {
       })),
     });
 
-    this.challenges.issue(
+    await this.challenges.issue(
       response,
       'register',
       options.challenge,
@@ -91,9 +91,11 @@ export class PasskeyRegistrationService {
     response: Response,
   ): Promise<ApiResponse<PasskeySummaryDto>> {
     const challenge = this.challenges.read(request, 'register');
-    // Spent before it is used, so a failed attempt cannot be retried against
-    // the same challenge whichever way the attempt fails.
-    this.challenges.clear(response);
+    try {
+      await this.challenges.consume('register', challenge.challenge);
+    } finally {
+      this.challenges.clear(response);
+    }
 
     if (challenge.sub !== userId) {
       throw new AppException(

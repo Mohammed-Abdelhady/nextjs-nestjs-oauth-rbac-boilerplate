@@ -26,13 +26,14 @@ interface Harness {
   request: ReturnType<typeof createMockRequest>;
 }
 
-function createHarness(
+async function createHarness(
   passkey: MockPasskey | null = createMockPasskey(),
   newCounter = 5,
   userVerified = true,
-): Harness {
+): Promise<Harness> {
   const passkeyModel = {
     findOne: jest.fn().mockResolvedValue(passkey),
+    updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
   };
 
   const adapter = {
@@ -44,7 +45,7 @@ function createHarness(
 
   const challenges = createChallengeService();
   const issued = createMockResponse();
-  challenges.issue(issued.response, 'login', 'challenge-value');
+  await challenges.issue(issued.response, 'login', 'challenge-value');
 
   return {
     service: new PasskeyAssertionService(
@@ -66,7 +67,7 @@ function createHarness(
 describe('PasskeyAssertionService', () => {
   describe('createOptions', () => {
     it('should ask for a discoverable credential and leave a challenge cookie', async () => {
-      const harness = createHarness();
+      const harness = await createHarness();
       const { response, cookies } = createMockResponse();
 
       const options = await harness.service.createOptions(response);
@@ -82,7 +83,7 @@ describe('PasskeyAssertionService', () => {
 
   describe('verify', () => {
     it('should move the counter forward and stamp the passkey as used', async () => {
-      const harness = createHarness();
+      const harness = await createHarness();
       const { response, cleared } = createMockResponse();
 
       const result = await harness.service.verify(
@@ -94,12 +95,12 @@ describe('PasskeyAssertionService', () => {
       expect(result.userVerified).toBe(true);
       expect(harness.passkey.counter).toBe(5);
       expect(harness.passkey.lastUsedAt).toEqual(expect.any(Date));
-      expect(harness.passkey.save).toHaveBeenCalled();
+      expect(harness.passkey.save).not.toHaveBeenCalled();
       expect(cleared).toEqual([PASSKEY_CHALLENGE_COOKIE]);
     });
 
     it('should report a passkey that did not verify the user', async () => {
-      const harness = createHarness(createMockPasskey(), 5, false);
+      const harness = await createHarness(createMockPasskey(), 5, false);
       const { response } = createMockResponse();
 
       const result = await harness.service.verify(
@@ -112,7 +113,7 @@ describe('PasskeyAssertionService', () => {
     });
 
     it('should refuse a counter that repeats, which is how a clone shows up', async () => {
-      const harness = createHarness(createMockPasskey({ counter: 7 }), 7);
+      const harness = await createHarness(createMockPasskey({ counter: 7 }), 7);
       const { response } = createMockResponse();
 
       await expect(
@@ -125,7 +126,7 @@ describe('PasskeyAssertionService', () => {
     });
 
     it('should refuse a counter that goes backwards', async () => {
-      const harness = createHarness(createMockPasskey({ counter: 9 }), 3);
+      const harness = await createHarness(createMockPasskey({ counter: 9 }), 3);
       const { response } = createMockResponse();
 
       await expect(
@@ -134,7 +135,7 @@ describe('PasskeyAssertionService', () => {
     });
 
     it('should let an authenticator that never counts through', async () => {
-      const harness = createHarness(createMockPasskey({ counter: 0 }), 0);
+      const harness = await createHarness(createMockPasskey({ counter: 0 }), 0);
       const { response } = createMockResponse();
 
       const result = await harness.service.verify(
@@ -144,11 +145,11 @@ describe('PasskeyAssertionService', () => {
       );
 
       expect(result.passkey.counter).toBe(0);
-      expect(harness.passkey.save).toHaveBeenCalled();
+      expect(harness.passkey.save).not.toHaveBeenCalled();
     });
 
     it('should refuse a credential that is not registered', async () => {
-      const harness = createHarness(null);
+      const harness = await createHarness(null);
       const { response } = createMockResponse();
 
       await expect(
@@ -157,7 +158,7 @@ describe('PasskeyAssertionService', () => {
     });
 
     it('should refuse an assertion whose signature does not check out', async () => {
-      const harness = createHarness();
+      const harness = await createHarness();
       harness.adapter.verifyAssertion.mockResolvedValue(null);
       const { response } = createMockResponse();
 
@@ -167,7 +168,7 @@ describe('PasskeyAssertionService', () => {
     });
 
     it('should spend the challenge cookie even when the attempt fails', async () => {
-      const harness = createHarness(null);
+      const harness = await createHarness(null);
       const { response, cleared } = createMockResponse();
 
       await expect(
@@ -178,7 +179,7 @@ describe('PasskeyAssertionService', () => {
     });
 
     it('should check the assertion against the stored credential', async () => {
-      const harness = createHarness();
+      const harness = await createHarness();
       const { response } = createMockResponse();
 
       await harness.service.verify(CREDENTIAL_BODY, harness.request, response);
@@ -192,10 +193,15 @@ describe('PasskeyAssertionService', () => {
     });
 
     it('should refuse a sign-in that presents a registration challenge', async () => {
-      const harness = createHarness();
+      const harness = await createHarness();
       const challenges = createChallengeService();
       const issued = createMockResponse();
-      challenges.issue(issued.response, 'register', 'challenge-value', 'user');
+      await challenges.issue(
+        issued.response,
+        'register',
+        'challenge-value',
+        'user',
+      );
       const { response } = createMockResponse();
 
       await expect(
@@ -207,6 +213,90 @@ describe('PasskeyAssertionService', () => {
           }),
           response,
         ),
+      ).rejects.toMatchObject({ code: ErrorCode.PASSKEY_CHALLENGE_INVALID });
+    });
+
+    it('should refuse a copied challenge that was already consumed', async () => {
+      const store = {
+        create: jest.fn().mockResolvedValue({}),
+        findOneAndDelete: jest
+          .fn()
+          .mockResolvedValueOnce({ _id: 'stored' })
+          .mockResolvedValueOnce(null),
+      };
+      const challenges = createChallengeService(undefined, store);
+      const issued = createMockResponse();
+      await challenges.issue(issued.response, 'login', 'challenge-value');
+
+      const passkey = createMockPasskey();
+      const passkeyModel = {
+        findOne: jest.fn().mockResolvedValue(passkey),
+        updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
+      };
+      const adapter = {
+        createAuthenticationOptions: jest.fn(),
+        verifyAssertion: jest
+          .fn()
+          .mockResolvedValue({ newCounter: 5, userVerified: true }),
+      };
+      const service = new PasskeyAssertionService(
+        passkeyModel as never,
+        adapter as never,
+        createPasskeyConfig(),
+        challenges,
+      );
+      const request = createMockRequest({
+        [PASSKEY_CHALLENGE_COOKIE]: issued.cookies[PASSKEY_CHALLENGE_COOKIE],
+      });
+
+      await service.verify(
+        CREDENTIAL_BODY,
+        request,
+        createMockResponse().response,
+      );
+      await expect(
+        service.verify(CREDENTIAL_BODY, request, createMockResponse().response),
+      ).rejects.toMatchObject({ code: ErrorCode.PASSKEY_CHALLENGE_INVALID });
+    });
+
+    it('should refuse a zero-counter replay after the challenge is spent', async () => {
+      const store = {
+        create: jest.fn().mockResolvedValue({}),
+        findOneAndDelete: jest
+          .fn()
+          .mockResolvedValueOnce({ _id: 'stored' })
+          .mockResolvedValueOnce(null),
+      };
+      const challenges = createChallengeService(undefined, store);
+      const issued = createMockResponse();
+      await challenges.issue(issued.response, 'login', 'challenge-value');
+      const passkey = createMockPasskey({ counter: 0 });
+      const passkeyModel = {
+        findOne: jest.fn().mockResolvedValue(passkey),
+        updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
+      };
+      const service = new PasskeyAssertionService(
+        passkeyModel as never,
+        {
+          createAuthenticationOptions: jest.fn(),
+          verifyAssertion: jest
+            .fn()
+            .mockResolvedValue({ newCounter: 0, userVerified: true }),
+        } as never,
+        createPasskeyConfig(),
+        challenges,
+      );
+      const request = createMockRequest({
+        [PASSKEY_CHALLENGE_COOKIE]: issued.cookies[PASSKEY_CHALLENGE_COOKIE],
+      });
+
+      await service.verify(
+        CREDENTIAL_BODY,
+        request,
+        createMockResponse().response,
+      );
+      await expect(
+        service.verify(CREDENTIAL_BODY, request, createMockResponse().response),
       ).rejects.toMatchObject({ code: ErrorCode.PASSKEY_CHALLENGE_INVALID });
     });
   });
