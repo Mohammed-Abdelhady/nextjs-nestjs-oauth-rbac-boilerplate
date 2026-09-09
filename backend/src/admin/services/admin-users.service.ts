@@ -42,7 +42,9 @@ export class AdminUsersService {
   ): Promise<ApiResponse<AdminUserDto>> {
     const { email, name, password, role } = dto;
 
-    const existingUser = await this.userModel.findOne({ email }).exec();
+    const existingUser = await this.userModel
+      .findOne({ email: { $eq: email } })
+      .exec();
     if (existingUser) {
       throw new AppException(
         ErrorCode.EMAIL_ALREADY_EXISTS,

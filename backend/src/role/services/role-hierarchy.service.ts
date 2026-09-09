@@ -71,7 +71,7 @@ export class RoleHierarchyService {
 
   private async findLevel(slug: string): Promise<RoleLevelProjection | null> {
     return this.roleModel
-      .findOne({ slug })
+      .findOne({ slug: { $eq: slug } })
       .select('slug level')
       .lean<RoleLevelProjection | null>()
       .exec();

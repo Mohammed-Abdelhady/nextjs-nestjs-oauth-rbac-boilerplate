@@ -13,6 +13,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import * as bcrypt from 'bcrypt';
 import request from 'supertest';
+import { DEVELOPMENT_CONTENT_SECURITY_POLICY } from '../../src/common/security/content-security-policy';
 import {
   SeedUser,
   SEED_ADMIN,
@@ -128,7 +129,7 @@ export async function bootE2eApp(
     app.setGlobalPrefix('api', { exclude: ['health'] });
     app.use(
       helmet({
-        contentSecurityPolicy: false,
+        contentSecurityPolicy: DEVELOPMENT_CONTENT_SECURITY_POLICY,
         crossOriginEmbedderPolicy: false,
       }),
     );

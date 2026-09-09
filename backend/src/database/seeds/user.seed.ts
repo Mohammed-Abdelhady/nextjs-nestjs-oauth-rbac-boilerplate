@@ -1,4 +1,6 @@
 import * as crypto from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
 import { DEFAULT_ROLE_PERMISSIONS } from '../../common/constants/permissions';
 
 export interface SeedUser {
@@ -77,16 +79,43 @@ export function printSeedCredentials(users: SeedUser[]): void {
   const divider = '-'.repeat(72);
 
   console.log('\n' + border);
-  console.log('SEED USER CREDENTIALS');
+  console.log('SEED USER ACCOUNTS');
   console.log(border);
-  console.log('Role'.padEnd(12) + 'Email'.padEnd(28) + 'Password');
+  console.log('Role'.padEnd(12) + 'Email');
   console.log(divider);
 
   for (const user of users) {
-    console.log(user.role.padEnd(12) + user.email.padEnd(28) + user.password);
+    console.log(user.role.padEnd(12) + user.email);
   }
 
-  console.log(border + '\n');
+  console.log(border);
+
+  if (process.env.SEED_PRINT_PASSWORDS !== 'true') {
+    console.log(
+      'Passwords are omitted. Set SEED_PRINT_PASSWORDS=true to write them to an owner-only file.\n',
+    );
+    return;
+  }
+
+  const filePath = path.resolve(
+    process.cwd(),
+    process.env.SEED_PASSWORD_FILE ?? '.seed-passwords',
+  );
+  const lines = [
+    'SEED USER PASSWORDS',
+    divider,
+    ...users.map(
+      (user) =>
+        `${user.role.padEnd(12)}${user.email.padEnd(28)}${user.password}`,
+    ),
+    '',
+  ];
+  fs.writeFileSync(filePath, lines.join('\n'), {
+    encoding: 'utf8',
+    mode: 0o600,
+  });
+  fs.chmodSync(filePath, 0o600);
+  console.log(`Passwords written to ${filePath}\n`);
 }
 
 export const SEED_USERS: SeedUser[] = getSeedUsers();

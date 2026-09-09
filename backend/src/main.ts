@@ -8,6 +8,7 @@ import { Express } from 'express';
 import { useContainer } from 'class-validator';
 import { AppModule } from './app.module';
 import { ErrorResponse, ErrorDetails } from './common/dto/api-response.dto';
+import { DEVELOPMENT_CONTENT_SECURITY_POLICY } from './common/security/content-security-policy';
 
 /**
  * Bootstrap the NestJS application
@@ -30,7 +31,9 @@ async function bootstrap() {
   app.use(
     helmet({
       contentSecurityPolicy:
-        configService.get('NODE_ENV') === 'production' ? undefined : false,
+        configService.get('NODE_ENV') === 'production'
+          ? undefined
+          : DEVELOPMENT_CONTENT_SECURITY_POLICY,
       crossOriginEmbedderPolicy: false,
     }),
   );

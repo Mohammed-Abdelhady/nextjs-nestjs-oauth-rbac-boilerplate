@@ -65,7 +65,7 @@ export class MagicLinkService {
     dto: RequestMagicLinkDto,
     request: Request,
   ): Promise<ApiResponse<MagicLinkRequestResponseDto>> {
-    const user = await this.userModel.findOne({ email: dto.email });
+    const user = await this.userModel.findOne({ email: { $eq: dto.email } });
 
     if (user?.isDeleted) {
       this.spendTokenHashingTime();
@@ -74,7 +74,7 @@ export class MagicLinkService {
     }
 
     const recentLinks = await this.pendingMagicLinkModel.countDocuments({
-      email: dto.email,
+      email: { $eq: dto.email },
       createdAt: { $gte: new Date(Date.now() - MAGIC_LINK_RATE_WINDOW_MS) },
     });
 
@@ -146,7 +146,7 @@ export class MagicLinkService {
    * address, so it both creates the account and verifies an existing one.
    */
   private async resolveUser(email: string): Promise<UserDocument> {
-    const existing = await this.userModel.findOne({ email });
+    const existing = await this.userModel.findOne({ email: { $eq: email } });
 
     if (existing?.isDeleted) {
       throw this.invalidLink('account is deleted');
@@ -185,7 +185,7 @@ export class MagicLinkService {
       }
 
       // Two links for the same new address were spent at once.
-      const created = await this.userModel.findOne({ email });
+      const created = await this.userModel.findOne({ email: { $eq: email } });
       if (!created) {
         throw error;
       }

@@ -46,7 +46,9 @@ export class AdminEmailChangeService {
       );
     }
 
-    const taken = await this.userModel.findOne({ email }).exec();
+    const taken = await this.userModel
+      .findOne({ email: { $eq: email } })
+      .exec();
     if (taken) {
       throw new AppException(
         ErrorCode.EMAIL_ALREADY_EXISTS,

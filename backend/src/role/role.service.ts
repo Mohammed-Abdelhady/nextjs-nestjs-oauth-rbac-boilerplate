@@ -43,7 +43,7 @@ export class RoleService {
   async create(dto: CreateRoleDto): Promise<RoleResponseDto> {
     const slug = generateSlug(dto.name);
 
-    const existing = await this.roleModel.findOne({ slug });
+    const existing = await this.roleModel.findOne({ slug: { $eq: slug } });
     if (existing) {
       throw new ConflictException(
         `Role with name "${dto.name}" already exists`,
@@ -193,7 +193,7 @@ export class RoleService {
    * Get role by slug (helper method)
    */
   async getRoleBySlug(slug: string): Promise<RoleDocument | null> {
-    return this.roleModel.findOne({ slug }).exec();
+    return this.roleModel.findOne({ slug: { $eq: slug } }).exec();
   }
 
   /**
@@ -222,7 +222,7 @@ export class RoleService {
       role = await this.roleModel.findById(idOrSlug);
     } else {
       // Otherwise treat as slug
-      role = await this.roleModel.findOne({ slug: idOrSlug });
+      role = await this.roleModel.findOne({ slug: { $eq: idOrSlug } });
     }
 
     if (!role) {
@@ -239,7 +239,7 @@ export class RoleService {
     slug: string,
     role: RoleDocument,
   ): Promise<void> {
-    const existing = await this.roleModel.findOne({ slug });
+    const existing = await this.roleModel.findOne({ slug: { $eq: slug } });
 
     if (existing && existing._id.toString() !== role._id.toString()) {
       throw new ConflictException(`Role with slug "${slug}" already exists`);

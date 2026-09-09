@@ -90,7 +90,7 @@ describe('MagicLinkService', () => {
       );
 
       expect(harness.pendingModel.countDocuments).toHaveBeenCalledWith({
-        email: EMAIL,
+        email: { $eq: EMAIL },
         createdAt: { $gte: expect.any(Date) as Date },
       });
       expect(harness.pendingModel.create).not.toHaveBeenCalled();
