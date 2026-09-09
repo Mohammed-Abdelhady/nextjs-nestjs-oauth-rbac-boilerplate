@@ -67,6 +67,8 @@ describe('OAuthStateService', () => {
       expect(payload.nonce).toBeUndefined();
       expect(codeChallenge).toBeUndefined();
       expect(payload.redirect).toBe('/dashboard');
+      expect(payload.intent).toBe('login');
+      expect(payload.linkUserId).toBeUndefined();
       expect(payload.expiresAt).toBeGreaterThan(Date.now());
       expect(payload.expiresAt).toBeLessThanOrEqual(
         Date.now() + OAUTH_STATE_TTL_MS,
@@ -87,6 +89,19 @@ describe('OAuthStateService', () => {
           .update(payload.codeVerifier as string)
           .digest('base64url'),
       );
+    });
+
+    it('stores the session user when the intent is link', () => {
+      const { payload } = service().create({
+        redirect: '/settings',
+        supportsPkce: false,
+        usesOidc: false,
+        intent: 'link',
+        linkUserId: 'user-1',
+      });
+
+      expect(payload.intent).toBe('link');
+      expect(payload.linkUserId).toBe('user-1');
     });
   });
 
@@ -275,6 +290,7 @@ describe('OAuthStateService', () => {
       state: 'expected-state-value',
       redirect: '/',
       expiresAt: Date.now() + 1000,
+      intent: 'login',
     };
 
     it('accepts the state it issued', () => {

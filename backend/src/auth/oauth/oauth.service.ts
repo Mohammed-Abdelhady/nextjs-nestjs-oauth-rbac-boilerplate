@@ -1,10 +1,13 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { SignInService, SignInOutcome } from '../services/sign-in.service';
+import { SessionService } from '../services/session.service';
+import { SessionCookieService } from '../services/session-cookie.service';
 import { User, UserDocument } from '../../user/schemas/user.schema';
 import { ProfileSyncService } from '../../user/services/profile-sync.service';
+import { AccountLinkingService } from '../../user/services/account-linking.service';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { isMongoDuplicateKeyError } from '../../common/utils/mongo-error.util';
@@ -25,6 +28,11 @@ export interface OAuthLoginParams {
   response: Response;
 }
 
+export interface OAuthLinkParams extends OAuthLoginParams {
+  request: Request;
+  linkUserId: string;
+}
+
 const DEFAULT_ROLE = 'user';
 
 /**
@@ -39,6 +47,9 @@ export class OAuthService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly signInService: SignInService,
     private readonly profileSyncService: ProfileSyncService,
+    private readonly accountLinkingService: AccountLinkingService,
+    private readonly sessionService: SessionService,
+    private readonly sessionCookieService: SessionCookieService,
   ) {}
 
   /**
@@ -47,17 +58,7 @@ export class OAuthService {
    */
   async login(params: OAuthLoginParams): Promise<SignInOutcome> {
     const { strategy } = params;
-
-    const tokens = await strategy.exchangeCode({
-      code: params.code,
-      redirectUri: params.redirectUri,
-      codeVerifier: params.codeVerifier,
-      nonce: params.nonce,
-    });
-
-    const profile = await strategy.fetchProfile(tokens, params.callbackParams);
-    this.assertEmailVerified(strategy, profile);
-
+    const profile = await this.loadVerifiedProfile(params);
     const user = await this.findOrCreateUser(strategy.id, profile);
     await this.profileSyncService.syncProfileFromProvider(
       user._id.toString(),
@@ -79,6 +80,75 @@ export class OAuthService {
   }
 
   /**
+   * Attaches the provider identity to the signed-in user. The existing
+   * session is left alone; a second factor is not started.
+   */
+  async link(params: OAuthLinkParams): Promise<void> {
+    const sessionUserId = await this.requireSessionUserId(params.request);
+    if (sessionUserId !== params.linkUserId) {
+      throw new AppException(
+        ErrorCode.OAUTH_STATE_INVALID,
+        'OAuth link intent does not match the signed-in user',
+        HttpStatus.UNAUTHORIZED,
+        { provider: params.strategy.id },
+      );
+    }
+
+    const profile = await this.loadVerifiedProfile(params);
+    await this.accountLinkingService.linkProvider(
+      sessionUserId,
+      params.strategy.id,
+      profile,
+    );
+    await this.profileSyncService.syncProfileFromProvider(
+      sessionUserId,
+      params.strategy.id,
+      profile,
+    );
+    this.logger.log(`Linked ${params.strategy.id} to the signed-in user`);
+  }
+
+  async requireSessionUserId(request: Request): Promise<string> {
+    const token = this.sessionCookieService.read(request);
+    if (!token) {
+      throw new AppException(
+        ErrorCode.SESSION_REQUIRED,
+        'Authentication required',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const session = await this.sessionService.validateSession(token);
+    const user = session?.user as UserDocument | undefined;
+    if (!session || !user || user.isDeleted) {
+      throw new AppException(
+        ErrorCode.SESSION_INVALID,
+        'Invalid or expired session',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    return user._id.toString();
+  }
+
+  private async loadVerifiedProfile(
+    params: OAuthLoginParams,
+  ): Promise<OAuthProfile> {
+    const tokens = await params.strategy.exchangeCode({
+      code: params.code,
+      redirectUri: params.redirectUri,
+      codeVerifier: params.codeVerifier,
+      nonce: params.nonce,
+    });
+    const profile = await params.strategy.fetchProfile(
+      tokens,
+      params.callbackParams,
+    );
+    this.assertEmailVerified(params.strategy, profile);
+    return profile;
+  }
+
+  /**
    * Resolves the account for a provider profile: existing link, existing email,
    * or a new user. The account email is never overwritten from the provider.
    */
@@ -97,7 +167,9 @@ export class OAuthService {
       return linked;
     }
 
-    const byEmail = await this.userModel.findOne({ email: profile.email });
+    const byEmail = await this.userModel.findOne({
+      email: { $eq: profile.email },
+    });
     if (byEmail) {
       this.assertActive(byEmail, provider);
       return this.linkToExistingUser(byEmail, provider, profile);

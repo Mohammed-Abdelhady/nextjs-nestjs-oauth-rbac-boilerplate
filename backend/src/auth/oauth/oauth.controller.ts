@@ -69,17 +69,31 @@ export class OAuthController {
     required: false,
     description: 'Relative path to return to after login',
   })
-  start(
+  @ApiQuery({
+    name: 'intent',
+    required: false,
+    description: 'login (default) or link. link requires a signed-in session.',
+  })
+  async start(
     @Param('provider') providerId: string,
     @Query('redirect') redirect: string | undefined,
+    @Query('intent') intent: string | undefined,
+    @Req() request: Request,
     @Res() response: Response,
-  ): void {
+  ): Promise<void> {
     try {
       const strategy = this.registry.getEnabled(providerId);
+      const linking = intent === 'link';
+      const payloadIntent = linking ? 'link' : 'login';
+      const linkUserId = linking
+        ? await this.oauthService.requireSessionUserId(request)
+        : undefined;
       const { payload, codeChallenge } = this.stateService.create({
         redirect: sanitizeRedirectPath(redirect),
         supportsPkce: strategy.supportsPkce,
         usesOidc: strategy.usesOidc,
+        intent: payloadIntent,
+        linkUserId,
       });
 
       const authorizationUrl = strategy.getAuthorizationUrl({
@@ -186,7 +200,7 @@ export class OAuthController {
         );
       }
 
-      const outcome = await this.oauthService.login({
+      const shared = {
         strategy,
         code: params.code,
         redirectUri: this.registry.getCallbackUrl(strategy.id),
@@ -194,7 +208,28 @@ export class OAuthController {
         nonce: payload.nonce,
         callbackParams: params,
         response,
-      });
+      };
+
+      if (payload.intent === 'link') {
+        if (!payload.linkUserId) {
+          throw new AppException(
+            ErrorCode.OAUTH_STATE_INVALID,
+            'OAuth link intent is missing the signed-in user',
+            HttpStatus.UNAUTHORIZED,
+            { provider: strategy.id },
+          );
+        }
+        await this.oauthService.link({
+          ...shared,
+          request,
+          linkUserId: payload.linkUserId,
+        });
+        this.stateService.clear(response, strategy.id);
+        this.redirectService.toClientSuccess(response, payload.redirect);
+        return;
+      }
+
+      const outcome = await this.oauthService.login(shared);
 
       this.stateService.clear(response, strategy.id);
 

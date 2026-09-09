@@ -20,12 +20,18 @@ export interface OAuthStatePayload {
   redirect: string;
   /** Epoch milliseconds after which the cookie is refused. */
   expiresAt: number;
+  /** Login issues a session; link attaches the provider to the current user. */
+  intent: 'login' | 'link';
+  /** Session user id stored when `intent` is `link`. */
+  linkUserId?: string;
 }
 
 export interface OAuthStateRequest {
   redirect: string;
   supportsPkce: boolean;
   usesOidc: boolean;
+  intent?: 'login' | 'link';
+  linkUserId?: string;
 }
 
 export interface OAuthStateCreation {
@@ -53,7 +59,12 @@ export class OAuthStateService {
       state: randomBytes(RANDOM_BYTES).toString('base64url'),
       redirect: request.redirect,
       expiresAt: Date.now() + OAUTH_STATE_TTL_MS,
+      intent: request.intent === 'link' ? 'link' : 'login',
     };
+
+    if (payload.intent === 'link') {
+      payload.linkUserId = request.linkUserId;
+    }
 
     if (request.usesOidc) {
       payload.nonce = randomBytes(RANDOM_BYTES).toString('base64url');
@@ -189,6 +200,16 @@ export class OAuthStateService {
         typeof payload.expiresAt !== 'number'
       ) {
         throw new Error('missing fields');
+      }
+      if (payload.intent === 'link') {
+        if (
+          typeof payload.linkUserId !== 'string' ||
+          payload.linkUserId.length === 0
+        ) {
+          throw new Error('missing link user');
+        }
+      } else {
+        payload.intent = 'login';
       }
       return payload;
     } catch {
