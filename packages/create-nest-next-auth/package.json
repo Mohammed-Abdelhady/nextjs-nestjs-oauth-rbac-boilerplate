@@ -58,6 +58,6 @@
     "tsdown": "^0.22.14",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",
-    "vitest": "^3.2.7"
+    "vitest": "^5.0.0"
   }
 }
