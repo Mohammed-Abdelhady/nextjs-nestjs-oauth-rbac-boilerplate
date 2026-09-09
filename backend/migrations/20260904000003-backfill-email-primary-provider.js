@@ -7,20 +7,26 @@
  * accounts that are missing it, so profile sync reads the same field for all
  * of them.
  *
- * The stored linkedProviders array is not touched here: it is derived from
- * authProvider and linkedAccounts, and 20260904000002-linked-accounts removes
- * the stored copy.
- *
- * down() unsets primaryProvider on email accounts that hold 'email'. It cannot
- * tell the rows this migration set apart from rows that already held the same
- * value, so the rollback covers both.
+ * Ownership of the backfill is recorded in migration_state so down() unsets
+ * only the values this run wrote that are still 'email'.
  */
 
 const EMAIL_PROVIDER = 'email';
+const STATE_ID = '20260904000003-backfill-email-primary-provider';
 
 module.exports = {
   async up(db) {
-    const result = await db.collection('users').updateMany(
+    const users = db.collection('users');
+    const owned = await users
+      .find({
+        authProvider: EMAIL_PROVIDER,
+        primaryProvider: { $exists: false },
+      })
+      .project({ _id: 1 })
+      .toArray();
+    const ownedIds = owned.map((user) => user._id);
+
+    const result = await users.updateMany(
       {
         authProvider: EMAIL_PROVIDER,
         primaryProvider: { $exists: false },
@@ -28,17 +34,36 @@ module.exports = {
       { $set: { primaryProvider: EMAIL_PROVIDER } },
     );
 
+    await db
+      .collection('migration_state')
+      .updateOne(
+        { _id: STATE_ID },
+        { $set: { userIds: ownedIds, appliedAt: new Date() } },
+        { upsert: true },
+      );
+
     console.log(`Set primaryProvider on ${result.modifiedCount} email users`);
   },
 
   async down(db) {
-    const result = await db.collection('users').updateMany(
-      {
-        authProvider: EMAIL_PROVIDER,
-        primaryProvider: EMAIL_PROVIDER,
-      },
-      { $unset: { primaryProvider: '' } },
-    );
+    const state = await db.collection('migration_state').findOne({
+      _id: STATE_ID,
+    });
+    const ownedIds = Array.isArray(state?.userIds) ? state.userIds : [];
+
+    const result =
+      ownedIds.length === 0
+        ? { modifiedCount: 0 }
+        : await db.collection('users').updateMany(
+            {
+              _id: { $in: ownedIds },
+              authProvider: EMAIL_PROVIDER,
+              primaryProvider: EMAIL_PROVIDER,
+            },
+            { $unset: { primaryProvider: '' } },
+          );
+
+    await db.collection('migration_state').deleteOne({ _id: STATE_ID });
 
     console.log(
       `Removed primaryProvider from ${result.modifiedCount} email users`,

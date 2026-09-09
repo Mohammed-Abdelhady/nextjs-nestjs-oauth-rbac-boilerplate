@@ -6,7 +6,8 @@
  *        stored linkedProviders array (now derived from linkedAccounts), drops
  *        the per-provider unique indexes and creates the compound unique index.
  * down() rebuilds the id fields and linkedProviders from linkedAccounts and
- *        restores the old indexes.
+ *        restores the old indexes. It fails closed when any linked account uses
+ *        a provider the legacy schema cannot represent.
  */
 
 const PROVIDER_ID_FIELDS = {
@@ -149,6 +150,18 @@ module.exports = {
       const linkedAccounts = Array.isArray(user.linkedAccounts)
         ? user.linkedAccounts
         : [];
+      const unsupported = linkedAccounts.filter(
+        (account) =>
+          account && account.provider && !PROVIDER_ID_FIELDS[account.provider],
+      );
+      if (unsupported.length > 0) {
+        const providers = [
+          ...new Set(unsupported.map((account) => account.provider)),
+        ].join(', ');
+        throw new Error(
+          `Cannot roll back linkedAccounts: user ${user._id} has provider(s) ${providers} that the legacy schema cannot store`,
+        );
+      }
       const providerIds = {};
       const linkedProviders = [];
 

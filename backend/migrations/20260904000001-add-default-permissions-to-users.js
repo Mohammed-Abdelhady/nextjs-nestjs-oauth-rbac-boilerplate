@@ -4,7 +4,8 @@
  * Populates default permissions for users missing a permissions array or
  * possessing an empty array, based on their assigned role.
  * Iterates with a cursor in batches of 500 using bulkWrite.
- * Down migration removes only the exact permission strings assigned to that role.
+ * Down migration removes only the exact permission strings this run assigned,
+ * identified by migrationMarkers.defaultPermissions20260904.
  */
 
 const DEFAULT_ROLE_PERMISSIONS = {
@@ -27,6 +28,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
 };
 
 const BATCH_SIZE = 500;
+const OWNERSHIP_MARKER = 'migrationMarkers.defaultPermissions20260904';
 
 module.exports = {
   async up(db) {
@@ -54,7 +56,12 @@ module.exports = {
       bulkOps.push({
         updateOne: {
           filter: { _id: user._id },
-          update: { $set: { permissions: [...defaultPermissions] } },
+          update: {
+            $set: {
+              permissions: [...defaultPermissions],
+              [OWNERSHIP_MARKER]: true,
+            },
+          },
         },
       });
 
@@ -68,7 +75,6 @@ module.exports = {
     if (bulkOps.length > 0) {
       const result = await usersCollection.bulkWrite(bulkOps);
       updatedCount += result.modifiedCount;
-      bulkOps = [];
     }
 
     console.log(`Updated permissions for ${updatedCount} users`);
@@ -77,7 +83,7 @@ module.exports = {
   async down(db) {
     const usersCollection = db.collection('users');
     const cursor = usersCollection.find({
-      permissions: { $exists: true, $ne: [] },
+      [OWNERSHIP_MARKER]: true,
     });
 
     let bulkOps = [];
@@ -98,8 +104,11 @@ module.exports = {
 
       bulkOps.push({
         updateOne: {
-          filter: { _id: user._id },
-          update: { $pullAll: { permissions: defaultPermissions } },
+          filter: { _id: user._id, [OWNERSHIP_MARKER]: true },
+          update: {
+            $pullAll: { permissions: defaultPermissions },
+            $unset: { [OWNERSHIP_MARKER]: '' },
+          },
         },
       });
 
@@ -113,7 +122,6 @@ module.exports = {
     if (bulkOps.length > 0) {
       const result = await usersCollection.bulkWrite(bulkOps);
       rolledBackCount += result.modifiedCount;
-      bulkOps = [];
     }
 
     console.log(`Rolled back permissions for ${rolledBackCount} users`);
