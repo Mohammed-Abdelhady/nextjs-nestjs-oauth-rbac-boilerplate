@@ -186,7 +186,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build backend image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ${{ runner.temp }}/docker-source
           file: ${{ runner.temp }}/docker-source/backend/Dockerfile
@@ -198,7 +198,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build frontend image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ${{ runner.temp }}/docker-source
           file: ${{ runner.temp }}/docker-source/frontend/Dockerfile
@@ -212,7 +212,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build nginx image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ${{ runner.temp }}/docker-source/nginx
           file: ${{ runner.temp }}/docker-source/nginx/Dockerfile
