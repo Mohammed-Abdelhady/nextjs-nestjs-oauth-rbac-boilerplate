@@ -11,9 +11,16 @@ import { OAUTH_ROUTE_BASE } from '../constants';
  * @param providerId - Provider id from the discovery endpoint
  * @param redirect - Relative path to return to after sign-in
  */
-export function buildOAuthStartUrl(providerId: string, redirect: string): string {
+export function buildOAuthStartUrl(
+  providerId: string,
+  redirect: string,
+  intent: 'login' | 'link' = 'login',
+): string {
   const url = new URL(`${OAUTH_ROUTE_BASE}/${encodeURIComponent(providerId)}/start`, API_BASE_URL);
   url.searchParams.set('redirect', redirect);
+  if (intent === 'link') {
+    url.searchParams.set('intent', 'link');
+  }
   return url.toString();
 }
 
@@ -28,6 +35,10 @@ export function currentRedirectPath(): string {
 /**
  * Sends the browser to the provider through the backend start route.
  */
-export function startOAuthFlow(providerId: string, redirect: string): void {
-  window.location.assign(buildOAuthStartUrl(providerId, redirect));
+export function startOAuthFlow(
+  providerId: string,
+  redirect: string,
+  intent: 'login' | 'link' = 'login',
+): void {
+  window.location.assign(buildOAuthStartUrl(providerId, redirect, intent));
 }

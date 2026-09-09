@@ -4,7 +4,14 @@ import { persistReducer, persistStore, type Storage } from 'redux-persist';
 import { authPersistence } from './authPersistence';
 import type { AuthState } from '@/modules/auth/types/auth.types';
 
-const initial: AuthState = { user: null, isAuthenticated: false, isLoading: false, error: null };
+const initial: AuthState = {
+  user: null,
+  isAuthenticated: false,
+  isLoading: false,
+  error: null,
+  validationStatus: 'idle',
+  validationErrorStatus: null,
+};
 
 function memoryStorage(saved?: Record<string, unknown>): {
   storage: Storage;

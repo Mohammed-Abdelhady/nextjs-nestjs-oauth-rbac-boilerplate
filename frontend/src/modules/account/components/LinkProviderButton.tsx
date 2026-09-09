@@ -27,7 +27,7 @@ export function LinkProviderButton({ provider, disabled = false }: LinkProviderB
 
   const handleLinkClick = () => {
     setIsRedirecting(true);
-    startOAuthFlow(provider.id, getRedirectPath(pathname));
+    startOAuthFlow(provider.id, getRedirectPath(pathname), 'link');
   };
 
   return (

@@ -45,6 +45,7 @@
   "auth": {
     "signIn": "تسجيل الدخول",
     "signUp": "إنشاء حساب",
+    "sessionCheckFailed": "تعذر تأكيد جلستك. حاول مرة أخرى.",
     "email": "البريد الإلكتروني",
     "password": "كلمة المرور",
     "confirmPassword": "تأكيد كلمة المرور",

@@ -28,6 +28,8 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  validationStatus: 'idle' | 'pending' | 'succeeded' | 'failed';
+  validationErrorStatus: number | null;
 }
 
 /**

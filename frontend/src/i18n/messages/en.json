@@ -45,6 +45,7 @@
   "auth": {
     "signIn": "Sign In",
     "signUp": "Sign Up",
+    "sessionCheckFailed": "We could not confirm your session. Try again.",
     "email": "Email",
     "password": "Password",
     "confirmPassword": "Confirm Password",
