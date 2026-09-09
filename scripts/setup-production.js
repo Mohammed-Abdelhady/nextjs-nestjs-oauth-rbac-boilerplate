@@ -10,6 +10,7 @@
  */
 
 import crypto from 'node:crypto';
+import fs from 'node:fs';
 import { configureNginxDomains } from './lib/config-transforms.js';
 import path from 'node:path';
 import {
@@ -22,10 +23,13 @@ import {
   fileExists,
   backupFile,
   validateDomain,
+  resolveOptionalDomain,
   validateEmail,
   validatePort,
+  validateAppName,
   commandExists,
   exec,
+  execFile,
   execAsync,
   createPrompt,
   ask,
@@ -114,8 +118,8 @@ async function configureDomains(rl) {
 
   return {
     mainDomain,
-    frontendDomain: frontendDomain || `www.${mainDomain}`,
-    backendDomain: backendDomain || `api.${mainDomain}`,
+    frontendDomain: resolveOptionalDomain(frontendDomain, `www.${mainDomain}`),
+    backendDomain: resolveOptionalDomain(backendDomain, `api.${mainDomain}`),
   };
 }
 
@@ -323,7 +327,7 @@ async function generateSSLCertificates(config) {
   const sslDir = path.join(ROOT_DIR, 'nginx', 'ssl');
 
   // Create SSL directory
-  exec(`mkdir -p ${sslDir}`, { silent: true });
+  fs.mkdirSync(sslDir, { recursive: true });
 
   if (config.ssl.sslType === 'self-signed') {
     log.warn('Generating self-signed certificates (DEVELOPMENT ONLY)...');
@@ -331,19 +335,39 @@ async function generateSSLCertificates(config) {
     const spinner = createSpinner('Generating certificates...');
     spinner.start();
 
-    const result = exec(
-      `openssl req -x509 -nodes -days 365 -newkey rsa:2048 ` +
-        `-keyout ${sslDir}/privkey.pem ` +
-        `-out ${sslDir}/fullchain.pem ` +
-        `-subj "/C=US/ST=State/L=City/O=${config.appName}/CN=${config.domains.mainDomain}"`,
+    if (!validateAppName(config.appName)) {
+      spinner.stop(false);
+      log.error('Application name contains characters that cannot be used in a certificate subject');
+      return;
+    }
+
+    const keyout = path.join(sslDir, 'privkey.pem');
+    const fullchain = path.join(sslDir, 'fullchain.pem');
+    const result = execFile(
+      'openssl',
+      [
+        'req',
+        '-x509',
+        '-nodes',
+        '-days',
+        '365',
+        '-newkey',
+        'rsa:2048',
+        '-keyout',
+        keyout,
+        '-out',
+        fullchain,
+        '-subj',
+        `/C=US/ST=State/L=City/O=${config.appName}/CN=${config.domains.mainDomain}`,
+      ],
       { silent: true },
     );
 
     if (result.success) {
-      // Create chain.pem (copy of fullchain for self-signed)
-      exec(`cp ${sslDir}/fullchain.pem ${sslDir}/chain.pem`, { silent: true });
-      exec(`chmod 644 ${sslDir}/*.pem`, { silent: true });
-      exec(`chmod 600 ${sslDir}/privkey.pem`, { silent: true });
+      fs.copyFileSync(fullchain, path.join(sslDir, 'chain.pem'));
+      fs.chmodSync(fullchain, 0o644);
+      fs.chmodSync(path.join(sslDir, 'chain.pem'), 0o644);
+      fs.chmodSync(keyout, 0o600);
       spinner.stop(true);
       log.success('Self-signed certificates generated');
     } else {
@@ -458,7 +482,13 @@ async function main() {
   try {
     // Get app name
     log.step('Application Configuration');
-    const appName = await ask(rl, 'Application name', 'My App');
+    const appName = await askRequired(rl, 'Application name', (value) => {
+      if (!validateAppName(value)) {
+        log.error('Use letters, numbers, spaces, dots, hyphens or underscores (max 64)');
+        return false;
+      }
+      return true;
+    });
 
     // Gather configuration
     const domains = await configureDomains(rl);
@@ -493,7 +523,8 @@ async function main() {
 
     // Create directories
     log.info('Creating directories...');
-    exec('mkdir -p nginx/ssl logs/nginx', { silent: true });
+    fs.mkdirSync(path.join(ROOT_DIR, 'nginx', 'ssl'), { recursive: true });
+    fs.mkdirSync(path.join(ROOT_DIR, 'logs', 'nginx'), { recursive: true });
     log.success('Directories created');
 
     // Generate .env file

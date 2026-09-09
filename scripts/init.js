@@ -10,6 +10,7 @@ import { configureBackendPort, configureFrontendPort } from './lib/config-transf
  * Usage: node scripts/init.js
  */
 
+import crypto from 'node:crypto';
 import path from 'node:path';
 import {
   colors,
@@ -201,23 +202,25 @@ BCRYPT_ROUNDS=10
 SESSION_COOKIE_NAME=sid
 SESSION_COOKIE_MAX_AGE=604800000
 
+# API origin used by OAuth callbacks and generated clients
+API_URL=http://localhost:${env.backendPort}
+OAUTH_CALLBACK_BASE_URL=http://localhost:${env.backendPort}/api/auth/oauth
+OAUTH_STATE_SECRET=${config.stateSecret}
+
 # Activation Code Configuration
 ACTIVATION_CODE_EXPIRES_IN=900000
 
 # Google OAuth
 ${oauth.google.clientId ? `OAUTH_GOOGLE_CLIENT_ID=${oauth.google.clientId}` : '# OAUTH_GOOGLE_CLIENT_ID=your-google-client-id'}
 ${oauth.google.clientSecret ? `OAUTH_GOOGLE_CLIENT_SECRET=${oauth.google.clientSecret}` : '# OAUTH_GOOGLE_CLIENT_SECRET=your-google-client-secret'}
-${oauth.google.clientId ? `OAUTH_GOOGLE_CALLBACK_URL=http://localhost:${env.frontendPort}/auth/oauth/callback/google` : '# OAUTH_GOOGLE_CALLBACK_URL=http://localhost:3000/auth/oauth/callback/google'}
 
 # Facebook OAuth
 ${oauth.facebook.clientId ? `OAUTH_FACEBOOK_CLIENT_ID=${oauth.facebook.clientId}` : '# OAUTH_FACEBOOK_CLIENT_ID=your-facebook-app-id'}
 ${oauth.facebook.clientSecret ? `OAUTH_FACEBOOK_CLIENT_SECRET=${oauth.facebook.clientSecret}` : '# OAUTH_FACEBOOK_CLIENT_SECRET=your-facebook-app-secret'}
-${oauth.facebook.clientId ? `OAUTH_FACEBOOK_CALLBACK_URL=http://localhost:${env.frontendPort}/auth/oauth/callback/facebook` : '# OAUTH_FACEBOOK_CALLBACK_URL=http://localhost:3000/auth/oauth/callback/facebook'}
 
 # GitHub OAuth
 ${oauth.github.clientId ? `OAUTH_GITHUB_CLIENT_ID=${oauth.github.clientId}` : '# OAUTH_GITHUB_CLIENT_ID=your-github-client-id'}
 ${oauth.github.clientSecret ? `OAUTH_GITHUB_CLIENT_SECRET=${oauth.github.clientSecret}` : '# OAUTH_GITHUB_CLIENT_SECRET=your-github-client-secret'}
-${oauth.github.clientId ? `OAUTH_GITHUB_CALLBACK_URL=http://localhost:${env.frontendPort}/auth/oauth/callback/github` : '# OAUTH_GITHUB_CALLBACK_URL=http://localhost:3000/auth/oauth/callback/github'}
 
 # Swagger/OpenAPI Documentation
 SWAGGER_ENABLED=true
@@ -419,7 +422,13 @@ async function init() {
     const smtp = await collectSmtpConfig(rl);
     const oauth = await collectOAuthConfig(rl);
 
-    const config = { ...basic, env, smtp, oauth };
+    const config = {
+      ...basic,
+      env,
+      smtp,
+      oauth,
+      stateSecret: crypto.randomBytes(48).toString('base64url'),
+    };
 
     // Show summary
     printSummary(config);
@@ -451,7 +460,7 @@ async function init() {
         log.info(`Backed up backend/.env to ${path.basename(backupPath)}`);
       }
     }
-    writeFile(backendEnvPath, generateBackendEnv(config));
+    writeFile(backendEnvPath, generateBackendEnv(config), { mode: 0o600 });
     log.success('Backend .env created');
 
     // Create frontend .env.local
@@ -463,7 +472,7 @@ async function init() {
         log.info(`Backed up frontend/.env.local to ${path.basename(backupPath)}`);
       }
     }
-    writeFile(frontendEnvPath, generateFrontendEnv(config));
+    writeFile(frontendEnvPath, generateFrontendEnv(config), { mode: 0o600 });
     log.success('Frontend .env.local created');
 
     // Update Docker files
