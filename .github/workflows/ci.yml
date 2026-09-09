@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Reject prohibited tracked filenames
         run: env -i PATH="$PATH" node scripts/verify-docker.mjs --check-checkout
@@ -58,7 +58,7 @@ jobs:
     if: github.repository == 'Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Reject prohibited tracked filenames
         run: env -i PATH="$PATH" node scripts/verify-docker.mjs --check-checkout
@@ -86,7 +86,7 @@ jobs:
     if: github.repository == 'Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Reject prohibited tracked filenames
         run: env -i PATH="$PATH" node scripts/verify-docker.mjs --check-checkout
@@ -169,7 +169,7 @@ jobs:
     timeout-minutes: 35
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Reject prohibited tracked filenames
         run: env -i PATH="$PATH" node scripts/verify-docker.mjs --check-checkout
