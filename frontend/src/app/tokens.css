@@ -21,8 +21,8 @@
 
   /* Muted surfaces and text */
   --muted: 220 14% 96%;
-  --muted-foreground: 220 10% 40%;
-  --text-tertiary: 220 8% 45%;
+  --muted-foreground: 220 10% 32%;
+  --text-tertiary: 220 8% 34%;
 
   /* Accent highlights */
   --accent: 220 14% 96%;
@@ -43,7 +43,7 @@
   --info-foreground: 0 0% 100%;
 
   /* Status text colors on background */
-  --status-success: 142 60% 27%;
+  --status-success: 142 65% 22%;
   --status-warning: 32 85% 30%;
   --status-danger: 0 65% 40%;
 

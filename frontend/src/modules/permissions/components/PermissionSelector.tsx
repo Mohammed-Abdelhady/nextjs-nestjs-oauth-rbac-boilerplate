@@ -165,7 +165,7 @@ export const PermissionSelector = memo(function PermissionSelector({
               >
                 {t('allTab')}
                 {selectedPermissions.length > 0 && (
-                  <span className="ms-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px]">
+                  <span className="ms-1 rounded-full bg-secondary text-primary px-1.5 py-0.5 text-[10px]">
                     {selectedPermissions.length}
                   </span>
                 )}
@@ -179,7 +179,7 @@ export const PermissionSelector = memo(function PermissionSelector({
                 >
                   {t(`groups.${group.id}`)}
                   {groupStats[group.id] > 0 && (
-                    <span className="ms-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px]">
+                    <span className="ms-1 rounded-full bg-secondary text-primary px-1.5 py-0.5 text-[10px]">
                       {groupStats[group.id]}
                     </span>
                   )}

@@ -94,7 +94,7 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
                   'flex items-center gap-2',
                   FOCUS_RING_CLASSES,
                   selectedRoleId === role.id
-                    ? 'bg-primary/10 text-primary font-medium'
+                    ? 'bg-secondary text-primary font-medium'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                 )}
                 data-testid={`role-nav-item-${role.slug}`}
@@ -128,7 +128,7 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
                   'flex items-center gap-2',
                   FOCUS_RING_CLASSES,
                   selectedRoleId === role.id
-                    ? 'bg-primary/10 text-primary font-medium'
+                    ? 'bg-secondary text-primary font-medium'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                 )}
                 data-testid={`role-nav-item-${role.slug}`}

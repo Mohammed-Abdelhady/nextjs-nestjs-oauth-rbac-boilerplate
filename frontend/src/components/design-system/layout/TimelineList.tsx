@@ -71,10 +71,10 @@ export const TimelineList = forwardRef(
             <div
               key={index}
               data-testid={`timeline-item-${index}`}
+              data-highlighted={isHighlighted ? 'true' : undefined}
               className={cn(
                 'transition-all duration-300 ease-out',
                 stagger && 'motion-safe:animate-slide-up motion-safe:stagger-animation',
-                isHighlighted && 'scale-[1.02]',
               )}
               style={stagger ? ({ '--index': index } as React.CSSProperties) : undefined}
             >
