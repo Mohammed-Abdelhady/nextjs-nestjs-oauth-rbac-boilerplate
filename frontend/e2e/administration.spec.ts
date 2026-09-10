@@ -90,6 +90,8 @@ test.describe('Arabic session accessibility', () => {
   }, info) => {
     await page.goto('/ar/sessions');
     await expect(page.getByTestId('sessions-page')).toBeVisible();
+    await expect(page.getByTestId('sessions-list')).toBeVisible();
+    await expect(page.getByTestId('logout-session-button').first()).toBeVisible();
     await auditAccessibility(page, info, 'ar-session');
     await info.attach('ar-sessions', {
       body: await page.screenshot({ fullPage: true }),
