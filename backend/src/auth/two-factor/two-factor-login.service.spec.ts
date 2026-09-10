@@ -15,7 +15,6 @@ import { VerifyTwoFactorDto } from './dto/verify-two-factor.dto';
 import { TwoFactorChallengeService } from './services/two-factor-challenge.service';
 import { TwoFactorVerificationService } from './services/two-factor-verification.service';
 import { SignInService } from '../services/sign-in.service';
-import { SecondFactorVerifier } from './services/second-factor-verifiers';
 import { checkTotpDelta } from './utils/totp.util';
 import {
   createCrypto,
@@ -99,7 +98,7 @@ function createHarness(user: MockUser | null): Harness {
       challengeService as unknown as TwoFactorChallengeService,
       new TwoFactorVerificationService(userModel as never, createCrypto()),
       signInService as unknown as SignInService,
-      [verifier as unknown as SecondFactorVerifier],
+      [verifier],
     ),
     challengeService,
     signInService,

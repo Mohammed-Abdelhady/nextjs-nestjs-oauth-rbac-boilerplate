@@ -179,13 +179,13 @@ export class MicrosoftOAuthStrategy extends BaseOAuthStrategy {
     const { clientId } = this.credentials();
 
     try {
-      return (await verifyIdToken({
+      return await verifyIdToken({
         idToken,
         jwksUri: this.tenantUrl(JWKS_URI),
         issuerTemplate: ISSUER_TEMPLATE,
         audience: clientId,
         nonce,
-      })) as MicrosoftIdTokenClaims;
+      });
     } catch (error) {
       throw this.profileFetchFailed(
         `id_token rejected: ${error instanceof Error ? error.message : String(error)}`,

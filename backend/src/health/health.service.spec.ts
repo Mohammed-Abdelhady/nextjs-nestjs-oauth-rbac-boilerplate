@@ -1,10 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getConnectionToken } from '@nestjs/mongoose';
-import { Connection } from 'mongoose';
+import { Connection, ConnectionStates } from 'mongoose';
 import { HealthService } from './health.service';
-
-const MONGOOSE_CONNECTED = 1;
-const MONGOOSE_DISCONNECTED = 0;
 
 describe('HealthService (X-11)', () => {
   const buildService = async (
@@ -23,16 +20,16 @@ describe('HealthService (X-11)', () => {
   describe('checkDatabaseHealth', () => {
     it('should report connected when readyState is 1', async () => {
       const service = await buildService({
-        readyState: MONGOOSE_CONNECTED,
-      } as Partial<Connection>);
+        readyState: ConnectionStates.connected,
+      });
 
       expect(service.checkDatabaseHealth()).toEqual({ status: 'connected' });
     });
 
     it('should report disconnected for any other readyState', async () => {
       const service = await buildService({
-        readyState: MONGOOSE_DISCONNECTED,
-      } as Partial<Connection>);
+        readyState: ConnectionStates.disconnected,
+      });
 
       expect(service.checkDatabaseHealth()).toEqual({ status: 'disconnected' });
     });
@@ -54,8 +51,8 @@ describe('HealthService (X-11)', () => {
   describe('getHealth', () => {
     it('should be healthy while the database is connected', async () => {
       const service = await buildService({
-        readyState: MONGOOSE_CONNECTED,
-      } as Partial<Connection>);
+        readyState: ConnectionStates.connected,
+      });
 
       const health = service.getHealth();
 
@@ -65,16 +62,16 @@ describe('HealthService (X-11)', () => {
 
     it('should be unhealthy while the database is down', async () => {
       const service = await buildService({
-        readyState: MONGOOSE_DISCONNECTED,
-      } as Partial<Connection>);
+        readyState: ConnectionStates.disconnected,
+      });
 
       expect(service.getHealth().status).toBe('unhealthy');
     });
 
     it('should not leak uptime, memory or environment (S-22)', async () => {
       const service = await buildService({
-        readyState: MONGOOSE_CONNECTED,
-      } as Partial<Connection>);
+        readyState: ConnectionStates.connected,
+      });
 
       expect(Object.keys(service.getHealth()).sort()).toEqual([
         'status',

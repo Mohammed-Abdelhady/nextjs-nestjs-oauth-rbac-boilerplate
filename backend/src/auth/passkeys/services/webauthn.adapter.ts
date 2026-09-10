@@ -237,5 +237,5 @@ type LibraryTransports = NonNullable<LibraryDescriptor['transports']>;
 
 /** Transports are stored as plain strings; the library types them as a union. */
 function toLibraryTransports(transports: string[]): LibraryTransports {
-  return transports as unknown as LibraryTransports;
+  return transports;
 }

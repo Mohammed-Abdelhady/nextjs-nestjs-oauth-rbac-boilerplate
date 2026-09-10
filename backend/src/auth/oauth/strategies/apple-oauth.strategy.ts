@@ -143,13 +143,13 @@ export class AppleOAuthStrategy extends BaseOAuthStrategy {
     nonce?: string,
   ): Promise<AppleIdTokenClaims> {
     try {
-      return (await verifyIdToken({
+      return await verifyIdToken({
         idToken,
         jwksUri: JWKS_URI,
         issuers: ISSUERS,
         audience: this.clientId(),
         nonce,
-      })) as AppleIdTokenClaims;
+      });
     } catch (error) {
       throw this.profileFetchFailed(
         `id_token rejected: ${error instanceof Error ? error.message : String(error)}`,
