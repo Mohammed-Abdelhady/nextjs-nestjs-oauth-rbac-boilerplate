@@ -32,8 +32,8 @@ const EXCLUDED_DIRS = new Set([
   'ssl',
 ]);
 
-// Paths dropped relative to the repository root. Maintainer tooling and the
-// publish workflow are not part of a generated project.
+// Paths dropped relative to the repository root. Maintainer tooling is not
+// part of a generated project.
 const EXCLUDED_PATHS = new Set([
   '.hyperflow',
   '.claude',
@@ -45,7 +45,6 @@ const EXCLUDED_PATHS = new Set([
   'CLAUDE.md',
   'AGENTS.md',
   MANIFEST_NAME,
-  join('.github', 'workflows', 'publish-cli.yml'),
   join('.husky', '_'),
 ]);
 

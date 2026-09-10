@@ -186,29 +186,25 @@ build.
 ```bash
 npm run build -w packages/create-nest-next-auth   # sync-template.mjs, then tsdown
 npm run test -w packages/create-nest-next-auth
-npm run test:combinations -w packages/create-nest-next-auth   # slow, runs in CI
+npm run test:combinations -w packages/create-nest-next-auth   # slow
 npm pack -w packages/create-nest-next-auth --dry-run
 npm publish -w packages/create-nest-next-auth --dry-run
 ```
 
 `test:combinations` scaffolds one project per feature combination into a temp
 directory, borrows the repository's `node_modules` through a symlink and runs
-`tsc --noEmit` over both workspaces. `.github/workflows/ci.yml` runs it as the
-`scaffold-combinations` job, which is skipped outside this repository because
-generated projects carry the workflow but not the CLI.
+`tsc --noEmit` over both workspaces.
 
-The full-feature browser suite is maintainer tooling. Generated projects omit `frontend/e2e`, both Playwright configurations and the backend browser/consent helpers. Their frontend package omits the corresponding `test:e2e` scripts. Product unit tests and the disposable backend functional API suite remain available. The source repository and its CI retain all browser coverage.
+The full-feature browser suite is maintainer tooling. Generated projects omit `frontend/e2e`, both Playwright configurations and the backend browser/consent helpers. Their frontend package omits the corresponding `test:e2e` scripts. Product unit tests and the disposable backend functional API suite remain available. The source repository retains all browser coverage.
 
 `prebuild` runs `scripts/sync-template.mjs`, which copies the repository into
 `template/` while skipping `node_modules`, `.git`, `dist`, `.next`, `out`,
-`coverage`, logs, real `.env` files, `packages/`, maintainer folders
-(`.hyperflow`, `.claude`, `openspec`) and this package's publish workflow.
-`.github/workflows/ci.yml` is kept. Build before publishing; a stale or missing
+`coverage`, logs, real `.env` files, `packages/`, and maintainer folders
+(`.hyperflow`, `.claude`, `openspec`). Build before publishing; a stale or missing
 `template/` produces a package that cannot scaffold anything.
 
-Publishing is a tag push. `create-nest-next-auth@0.1.0` triggers
-`.github/workflows/publish-cli.yml`, which checks the tag against the version in
-`package.json`, builds, and runs `npm publish --provenance --access public`
-through npm trusted publishing. No token is stored in the repository.
+Publish from the package directory after a version bump: `npm run build -w
+packages/create-nest-next-auth`, then `npm publish --access public` from
+`packages/create-nest-next-auth`.
 
 Requires Node 22.12 or newer, for both the CLI and the generated project.

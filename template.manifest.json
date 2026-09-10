@@ -341,7 +341,6 @@
   },
   "core": {
     "alwaysRemoveFiles": [
-      ".github/workflows/publish-cli.yml",
       "frontend/e2e/**",
       "frontend/playwright.config.ts",
       "frontend/playwright.frontend.config.ts",
