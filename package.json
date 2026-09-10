@@ -27,7 +27,7 @@
     "@commitlint/config-conventional": "^18.6.2",
     "husky": "^9.0.10",
     "lint-staged": "^15.2.2",
-    "prettier": "^3.2.5"
+    "prettier": "^3.9.6"
   },
   "engines": {
     "node": ">=22.12.0",

@@ -49,15 +49,15 @@
     "test:combinations": "vitest run --config vitest.combinations.config.ts"
   },
   "devDependencies": {
-    "@clack/prompts": "^1.7.0",
+    "@clack/prompts": "^1.8.0",
     "@eslint/js": "^9.18.0",
     "@types/node": "^22.10.7",
     "commander": "^15.0.0",
     "eslint": "^9.18.0",
     "globals": "^16.0.0",
-    "tsdown": "^0.22.14",
+    "tsdown": "^0.23.0",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0",
+    "typescript-eslint": "^8.70.0",
     "vitest": "^5.0.0"
   }
 }
