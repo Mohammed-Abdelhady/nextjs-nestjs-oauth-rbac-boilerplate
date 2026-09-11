@@ -97,7 +97,7 @@ export class AuthController {
     summary: 'Resend activation code',
     description:
       'Sends a new 6-digit activation code to the provided email address. ' +
-      'Rate limited to 3 requests per hour per email.',
+      'Rate limited to 3 requests per hour per client IP.',
   })
   @ApiBody({ type: ResendActivationDto })
   async resendActivation(@Body() dto: ResendActivationDto) {
