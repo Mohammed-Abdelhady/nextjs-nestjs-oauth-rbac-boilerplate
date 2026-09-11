@@ -65,7 +65,7 @@
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
-    "@types/node": "^22.20.2",
+    "@types/node": "^26.5.0",
     "@types/nodemailer": "^7.0.12",
     "@types/supertest": "^6.0.3",
     "eslint": "^9.39.5",
