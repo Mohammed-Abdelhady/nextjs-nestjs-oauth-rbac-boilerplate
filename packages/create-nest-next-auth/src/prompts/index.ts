@@ -38,7 +38,7 @@ export async function askDirectory(fallback: string): Promise<string | typeof CA
     },
   });
 
-  if (isCancel(answer)) return CANCELLED;
+  if (isCancel(answer) || typeof answer === 'symbol') return CANCELLED;
   return answer.trim() === '' ? fallback : answer.trim();
 }
 
@@ -54,6 +54,6 @@ export async function askFeatures(
     selectableGroups: false,
   });
 
-  if (isCancel(answer)) return CANCELLED;
+  if (isCancel(answer) || typeof answer === 'symbol') return CANCELLED;
   return answer;
 }

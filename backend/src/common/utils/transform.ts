@@ -9,7 +9,7 @@
 export function toBoolean(input: unknown): unknown {
   const value =
     typeof input === 'object' && input !== null && 'value' in input
-      ? (input as { value: unknown }).value
+      ? input.value
       : input;
 
   if (value === undefined || value === null || value === '') {

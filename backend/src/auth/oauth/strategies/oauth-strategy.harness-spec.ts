@@ -131,7 +131,7 @@ export function mockFetch(routes: FetchRoute[]): FetchMock {
     },
   );
 
-  global.fetch = fetchMock as unknown as typeof fetch;
+  global.fetch = fetchMock;
   resetJwksCache();
 
   return {

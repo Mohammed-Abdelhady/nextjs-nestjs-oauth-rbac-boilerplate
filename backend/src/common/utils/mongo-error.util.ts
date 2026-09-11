@@ -17,7 +17,7 @@ export function isCastError(
     typeof exception === 'object' &&
     exception !== null &&
     'name' in exception &&
-    (exception as { name: unknown }).name === 'CastError'
+    exception.name === 'CastError'
   );
 }
 
@@ -37,7 +37,7 @@ export function isMongoDuplicateKeyError(
     typeof exception === 'object' &&
     exception !== null &&
     'code' in exception &&
-    (exception as { code: unknown }).code === 11000
+    exception.code === 11000
   );
 }
 

@@ -156,7 +156,7 @@ describe('MicrosoftOAuthStrategy', () => {
             name: 'TimeoutError',
           }),
         );
-      }) as unknown as typeof fetch;
+      });
 
       await expectAppException(
         strategy().exchangeCode({

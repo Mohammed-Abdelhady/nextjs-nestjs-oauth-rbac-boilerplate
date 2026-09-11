@@ -3,6 +3,8 @@ import { expect, type Page, type TestInfo } from '@playwright/test';
 
 export async function settleAnimations(page: Page): Promise<void> {
   await page.evaluate(async () => {
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     await Promise.all(
       document
         .getAnimations()

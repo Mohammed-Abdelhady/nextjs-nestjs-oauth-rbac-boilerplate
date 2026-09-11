@@ -78,7 +78,7 @@ export const SessionCardTimeline = memo(
             'relative p-4 rounded-lg transition-all duration-200',
             'bg-card',
             session.isCurrent
-              ? 'border-2 border-status-success/30 bg-success/5 shadow-md'
+              ? 'border-2 border-status-success/30 shadow-md'
               : 'border border-border hover:border-input hover:shadow-sm',
           )}
         >
@@ -90,16 +90,13 @@ export const SessionCardTimeline = memo(
                 size="lg"
               />
               <div className="flex-1">
-                <h3 className="text-sm font-medium tracking-tight flex items-center gap-2">
+                <h3 className="text-sm font-medium tracking-tight flex items-center gap-2 text-card-foreground">
                   <span data-testid="session-device-label">
                     {session.deviceName || deviceLabel}
                   </span>
                   {session.isCurrent && <CurrentSessionBadge pulse />}
                 </h3>
-                <p
-                  className="text-xs text-muted-foreground mt-0.5"
-                  data-testid="session-browser-os"
-                >
+                <p className="text-sm text-card-foreground mt-0.5" data-testid="session-browser-os">
                   {browser} · {os}
                 </p>
               </div>
@@ -126,7 +123,7 @@ export const SessionCardTimeline = memo(
           </header>
 
           {/* Session Metadata */}
-          <div className="space-y-1 text-xs text-muted-foreground">
+          <div className="space-y-1 text-sm text-card-foreground">
             <div className="flex items-center gap-2" data-testid="session-ip-row">
               <MapPin className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
               <span data-testid="session-ip">{session.ip}</span>

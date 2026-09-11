@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
-import { Connection } from 'mongoose';
+import { Connection, ConnectionStates } from 'mongoose';
 
 export type HealthStatus = 'healthy' | 'unhealthy';
 
@@ -15,8 +15,8 @@ export class HealthService {
 
   checkDatabaseHealth(): { status: 'connected' | 'disconnected' | 'error' } {
     try {
-      const readyState = this.connection.readyState as number;
-      if (readyState === 1) {
+      const readyState = this.connection.readyState;
+      if (readyState === ConnectionStates.connected) {
         return { status: 'connected' };
       }
       return { status: 'disconnected' };

@@ -122,22 +122,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
    * Maps HTTP status codes to standardized error codes when not thrown as an AppException.
    */
   private mapHttpStatusToErrorCode(status: number): ErrorCode {
-    switch (status as HttpStatus) {
-      case HttpStatus.BAD_REQUEST:
-        return ErrorCode.INVALID_INPUT;
-      case HttpStatus.UNAUTHORIZED:
-        return ErrorCode.SESSION_INVALID;
-      case HttpStatus.FORBIDDEN:
-        return ErrorCode.FORBIDDEN;
-      case HttpStatus.NOT_FOUND:
-        return ErrorCode.NOT_FOUND;
-      case HttpStatus.CONFLICT:
-        return ErrorCode.CONFLICT;
-      case HttpStatus.TOO_MANY_REQUESTS:
-        return ErrorCode.RATE_LIMIT_EXCEEDED;
-      default:
-        return ErrorCode.INTERNAL_ERROR;
-    }
+    const codes: Record<number, ErrorCode> = {
+      [HttpStatus.BAD_REQUEST]: ErrorCode.INVALID_INPUT,
+      [HttpStatus.UNAUTHORIZED]: ErrorCode.SESSION_INVALID,
+      [HttpStatus.FORBIDDEN]: ErrorCode.FORBIDDEN,
+      [HttpStatus.NOT_FOUND]: ErrorCode.NOT_FOUND,
+      [HttpStatus.CONFLICT]: ErrorCode.CONFLICT,
+      [HttpStatus.TOO_MANY_REQUESTS]: ErrorCode.RATE_LIMIT_EXCEEDED,
+    };
+    return codes[status] ?? ErrorCode.INTERNAL_ERROR;
   }
 
   /**
@@ -146,8 +139,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   private extractValidationErrors(
     exception: HttpException,
   ): { fields: Record<string, string[]> } | null {
-    const status = exception.getStatus() as HttpStatus;
-    if (status !== HttpStatus.BAD_REQUEST) {
+    const status = exception.getStatus();
+    if (status !== Number(HttpStatus.BAD_REQUEST)) {
       return null;
     }
 

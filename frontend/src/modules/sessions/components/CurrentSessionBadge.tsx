@@ -34,7 +34,7 @@ export const CurrentSessionBadge = forwardRef<HTMLSpanElement, CurrentSessionBad
         ref={ref}
         data-testid="current-session-badge"
         className={cn(
-          'inline-flex items-center gap-1.5 text-xs font-medium text-status-success',
+          'inline-flex items-center gap-1.5 text-sm font-medium text-card-foreground',
           className,
         )}
         {...props}
