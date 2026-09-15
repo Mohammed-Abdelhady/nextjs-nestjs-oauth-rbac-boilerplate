@@ -6,22 +6,15 @@ import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 
-// The theme is only known on the client, so the first client render has to match the
-// server HTML and the switcher can appear once hydration settles. useSyncExternalStore
-// gives that without a setState inside an effect, which would schedule a cascading
-// render on every mount.
-const subscribeToHydration = () => () => {};
-const getClientSnapshot = () => true;
-const getServerSnapshot = () => false;
-
 export function ThemeSwitcher() {
   const t = useTranslations('common');
   const { theme, setTheme } = useTheme();
-  const mounted = React.useSyncExternalStore(
-    subscribeToHydration,
-    getClientSnapshot,
-    getServerSnapshot,
-  );
+  const [mounted, setMounted] = React.useState(false);
+
+  // Avoid hydration mismatch
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (!mounted) {
     return <div className="h-9 w-9" />; // Skeleton to prevent layout shift
