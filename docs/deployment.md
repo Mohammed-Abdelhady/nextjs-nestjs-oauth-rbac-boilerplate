@@ -7,6 +7,7 @@ This guide covers deploying the FULL-MERN-AUTH-Boilerplate application using Doc
 - [Prerequisites](#prerequisites)
 - [Docker Development Setup](#docker-development-setup)
 - [Docker Production Setup](#docker-production-setup)
+- [Dependency Overrides](#dependency-overrides)
 - [Vercel Deployment](#vercel-deployment)
 - [Troubleshooting](#troubleshooting)
 
@@ -178,6 +179,13 @@ docker compose -f docker-compose.prod.yml up -d --scale backend=2
 4. **Configure firewall** to only expose necessary ports
 5. **Regular backups** of MongoDB volume
 6. **Monitor logs** for suspicious activity
+7. **Keep nginx and `trust proxy` in sync.** Every nginx proxy location declares
+   `X-Forwarded-For` from `$remote_addr` instead of appending the incoming header,
+   because the backend runs with `trust proxy = 1` and `@nestjs/throttler` keys its
+   buckets on `req.ip`. If you ever put a load balancer or CDN in front of nginx,
+   those directives and `trust proxy` must change together, and the backend must stay
+   unreachable except through nginx - a client that connects to it directly sets
+   `X-Forwarded-For` itself and picks its own throttle bucket.
 
 ### Resource Limits
 
@@ -188,6 +196,40 @@ Production compose file includes resource limits:
 - **Frontend**: 512MB memory, 0.5 CPU
 
 Adjust these in [`docker-compose.prod.yml`](../docker-compose.prod.yml) as needed.
+
+---
+
+## Dependency Overrides
+
+The root `package.json` pins `@nestjs/platform-express`'s `multer` dependency to an exact
+`2.3.0`:
+
+```json
+"overrides": {
+  "@nestjs/platform-express": { "multer": "2.3.0" }
+}
+```
+
+multer 2.2.0 carries four high-severity advisories (GHSA-wc9g-mqfw-jrwm,
+GHSA-qfvm-cv95-jqjf, GHSA-qvfw-j98x-7q72, GHSA-535w-7cp7-47q4) and no released
+`@nestjs/platform-express` declares a range that reaches 2.3.0, so the override supplies
+the fixed copy rather than waiting for the framework.
+
+- **Removal condition:** drop the override once `@nestjs/platform-express` declares
+  `multer >= 2.3.0` in its own dependency range. `npm audit` reports zero either way
+  once upstream catches up, so the override will not announce that it went stale.
+- **Exact pin, not a caret range:** 2.3.0 is the reviewed artifact and the committed
+  lockfile already fixes what `npm ci` installs. Widen it deliberately, with a fresh
+  `npm audit`, rather than as a side effect of an unrelated `npm install`.
+- **Residual advisory:** GHSA-535w-7cp7-47q4 is only half closed by the version bump.
+  multer 2.3.0 adds `limits.fieldArrayIndexLimit` as an opt-in limit, so the
+  sparse-array DoS path stays open until an upload route sets it. Nothing under
+  `backend/src` parses multipart today (no `MulterModule`, `FileInterceptor` or
+  `FileFieldsInterceptor`), so there is no call site to configure yet; the module that
+  first adds file uploads must set `limits.fieldArrayIndexLimit` to the largest field
+  index the app uses, and both this pin and that limit should be revisited together.
+  Both halves are tracked in
+  [#127](https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/issues/127).
 
 ---
 

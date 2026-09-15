@@ -35,6 +35,9 @@
   },
   "overrides": {
     "diff": ">=8.0.3",
-    "lodash": "^4.18.1"
+    "lodash": "^4.18.1",
+    "@nestjs/platform-express": {
+      "multer": "2.3.0"
+    }
   }
 }

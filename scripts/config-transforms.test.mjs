@@ -30,12 +30,26 @@ const domains = {
   frontendDomain: 'www.example.test',
   backendDomain: 'api.example.test',
 };
+
+// The backend runs with `trust proxy = 1` and rate limits on req.ip, so the edge
+// must declare X-Forwarded-For instead of extending whatever the client sent.
+function assertDeclaredForwardedFor(config) {
+  const directives = [...config.matchAll(/proxy_set_header X-Forwarded-For (\S+);/g)].map(
+    (match) => match[1],
+  );
+  assert.ok(directives.length >= 4, `${directives.length} forwarding directives`);
+  assert.deepEqual([...new Set(directives)], ['$remote_addr']);
+}
+
 for (const file of ['nginx/nginx.conf', 'nginx/production-nginx.conf']) {
   test(`${file}: current and repeated domain setup`, async () => {
     const source = await readFile(new URL(`../${file}`, import.meta.url), 'utf8');
+    assert.doesNotMatch(source, /proxy_add_x_forwarded_for/);
+    assertDeclaredForwardedFor(source);
     const result = configureNginxDomains(source, domains);
     assert.match(result, /server_name example\.test www\.example\.test;/);
     assert.match(result, /server_name api\.example\.test;/);
+    assertDeclaredForwardedFor(result);
     assert.equal((result.match(/listen 8443 ssl;/g) || []).length, 2);
     assert.equal((result.match(/listen \[::\]:8443 ssl;/g) || []).length, 2);
     assert.doesNotMatch(result, /listen (?:\[::\]:)?443\b|backend\/api\/health/);
@@ -49,6 +63,7 @@ for (const file of ['nginx/nginx.conf', 'nginx/production-nginx.conf']) {
     assert.equal((changed.match(/# API server/g) || []).length, 1);
     assert.match(changed, /server_name new\.test;/);
     assert.doesNotMatch(changed, /example\.test/);
+    assertDeclaredForwardedFor(changed);
   });
 }
 for (const file of ['docker-compose.yml', 'docker-compose.prod.yml']) {
