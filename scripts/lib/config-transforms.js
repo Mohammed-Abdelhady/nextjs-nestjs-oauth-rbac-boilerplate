@@ -39,7 +39,12 @@ function generateApiServerBlock(backendDomain) {
 
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            # X-Forwarded-For is declared from $remote_addr, never appended from the client
+            # header: the backend runs with trust proxy = 1 and rate limits key on req.ip,
+            # which resolves to this edge. Putting a trusted LB or CDN in front of nginx means
+            # reworking these directives and the backend's trust proxy together, otherwise
+            # every real client behind that hop shares one throttle bucket.
+            proxy_set_header X-Forwarded-For $remote_addr;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header X-Forwarded-Host $host;
             proxy_set_header X-Forwarded-Port $server_port;
@@ -67,7 +72,8 @@ function generateApiServerBlock(backendDomain) {
 
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            # Declared at the edge, never appended -- see the note above.
+            proxy_set_header X-Forwarded-For $remote_addr;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header X-Forwarded-Host $host;
 
@@ -90,7 +96,8 @@ function generateApiServerBlock(backendDomain) {
             proxy_http_version 1.1;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            # Declared at the edge, never appended -- see the note above.
+            proxy_set_header X-Forwarded-For $remote_addr;
             proxy_set_header X-Forwarded-Proto $scheme;
         }
 
