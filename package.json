@@ -19,8 +19,10 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present && npm run test:config",
+    "check:bans": "node scripts/check-hard-bans.mjs --staged",
+    "check": "npm run check:bans && npm run lint && npm run typecheck",
     "check:contrast": "node scripts/check-contrast.mjs",
-    "test:config": "node --test scripts/config-transforms.test.mjs"
+    "test:config": "node --test scripts/config-transforms.test.mjs scripts/check-hard-bans.test.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^18.6.1",

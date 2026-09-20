@@ -1,1 +1,4 @@
-npx --no -- commitlint --edit $1
+#!/bin/sh
+set -e
+npx --no -- commitlint --edit "$1"
+node scripts/check-hard-bans.mjs --commit-msg "$1"

@@ -9,7 +9,7 @@ Index of architecture documents, system guides, and provider setup tutorials.
 - [RBAC system](RBAC-SYSTEM.md): Dynamic role levels, permissions, and guard enforcement.
 - [Migration guide](MIGRATION-GUIDE.md): Database migrations and rollback procedures.
 - [Production setup](PRODUCTION-SETUP.md): Production checklist, SSL certificates, and Nginx proxy.
-- [Code quality](code-quality.md): Linting, formatting, pre-commit hooks, and testing rules.
+- [Code quality](code-quality.md): Local lint, format, hard-ban hooks, and tests on push.
 - [Deployment](deployment.md): Docker Compose and cloud deployment instructions.
 
 ## Authentication setup guides
