@@ -17,6 +17,7 @@ const eslintConfig = defineConfig([
   ]),
   {
     rules: {
+      '@typescript-eslint/no-explicit-any': 'error',
       'prettier/prettier': ['error', { endOfLine: 'auto' }],
     },
   },
