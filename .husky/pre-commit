@@ -1,21 +1,4 @@
 #!/bin/sh
-
-# Check for forbidden patterns in staged files (excluding config files)
-FORBIDDEN_FILES=$(git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$' | grep -v -E '(\.config\.|lintstagedrc|eslint\.config)' | xargs grep -l "eslint-disable-next-line" 2>/dev/null || true)
-if [ -n "$FORBIDDEN_FILES" ]; then
-  echo "Error: eslint-disable-next-line found in staged files:"
-  echo "$FORBIDDEN_FILES"
-  echo "Please remove eslint-disable-next-line comments and fix the underlying issues."
-  exit 1
-fi
-
-# Check for @ts-ignore in staged TypeScript files
-TS_IGNORE_FILES=$(git diff --cached --name-only | grep -E '\.(ts|tsx)$' | xargs grep -l "@ts-ignore" 2>/dev/null || true)
-if [ -n "$TS_IGNORE_FILES" ]; then
-  echo "Error: @ts-ignore found in staged files:"
-  echo "$TS_IGNORE_FILES"
-  echo "Please remove @ts-ignore comments and fix the underlying type issues."
-  exit 1
-fi
-
+set -e
+node scripts/check-hard-bans.mjs --staged
 npx lint-staged
