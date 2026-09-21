@@ -3,6 +3,7 @@ services:
     image: mongo:7
     container_name: authboiler-mongodb
     restart: unless-stopped
+    command: ['--replSet', 'rs0', '--bind_ip_all']
     ports:
       - '27017:27017'
     volumes:
@@ -12,10 +13,15 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:?MONGO_USERNAME is required}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?MONGO_PASSWORD is required}
     healthcheck:
-      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+      test:
+        [
+          'CMD-SHELL',
+          'mongosh --quiet -u "$$MONGO_INITDB_ROOT_USERNAME" -p "$$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "try { rs.status() } catch (e) { rs.initiate({_id:''rs0'',members:[{_id:0,host:''mongodb:27017''}]}) }"',
+        ]
       interval: 10s
-      timeout: 5s
-      retries: 5
+      timeout: 10s
+      retries: 10
+      start_period: 20s
     networks:
       - app-network
 
@@ -38,7 +44,7 @@ services:
     environment:
       NODE_ENV: development
       PORT: 5000
-      MONGO_URI: mongodb://${MONGO_USERNAME:?MONGO_USERNAME is required}:${MONGO_PASSWORD:?MONGO_PASSWORD is required}@mongodb:27017/${MONGO_DATABASE:-authboiler}?authSource=admin
+      MONGO_URI: mongodb://${MONGO_USERNAME:?MONGO_USERNAME is required}:${MONGO_PASSWORD:?MONGO_PASSWORD is required}@mongodb:27017/${MONGO_DATABASE:-authboiler}?authSource=admin&replicaSet=rs0&w=majority&retryWrites=true
       CLIENT_URL: ${CLIENT_URL:-http://localhost:3000}
     depends_on:
       mongodb:
