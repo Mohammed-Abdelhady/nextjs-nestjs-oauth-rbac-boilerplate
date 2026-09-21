@@ -3,10 +3,10 @@ import { getModelToken } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 import type { UserDocument } from '../../src/user/schemas/user.schema';
 import { replacePermissions } from '../utils/permissions';
-import request from 'supertest';
 import type { Response } from 'supertest';
 import {
   bootE2eApp,
+  browserAgent,
   loginAs,
   type E2eApp,
   type TestAgent,
@@ -87,7 +87,8 @@ describe('Permission enforcement (e2e)', () => {
         .get('/api/user/profile')
         .expect(200);
 
-      const registerResponse: Response = await request(e2e.httpServer)
+      const registerAgent = await browserAgent(e2e.httpServer);
+      const registerResponse: Response = await registerAgent
         .post('/api/auth/register')
         .send({
           email: 'testuser@test.local',
@@ -103,7 +104,7 @@ describe('Permission enforcement (e2e)', () => {
       const message = e2e.mail.at(-1);
       const code = message?.text?.match(/\b\d{6}\b/)?.[0];
       expect(code).toBeDefined();
-      const activated = request.agent(e2e.httpServer);
+      const activated = await browserAgent(e2e.httpServer);
       await activated
         .post('/api/auth/activate')
         .send({ email: 'testuser@test.local', code })

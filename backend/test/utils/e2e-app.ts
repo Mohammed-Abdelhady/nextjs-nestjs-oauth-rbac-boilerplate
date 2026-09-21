@@ -12,8 +12,11 @@ import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import * as bcrypt from 'bcrypt';
+import { CSRF_HEADER } from '../../src/session/constants/browser-proof';
 import request from 'supertest';
+import { browserCors } from '../../src/common/security/browser-cors';
 import { DEVELOPMENT_CONTENT_SECURITY_POLICY } from '../../src/common/security/content-security-policy';
+import { Clock } from '../../src/common/services/clock';
 import {
   SeedUser,
   SEED_ADMIN,
@@ -25,14 +28,19 @@ import type { UserDocument } from '../../src/user/schemas/user.schema';
 import type { OAuthProviderStrategy } from '../../src/auth/oauth/oauth-provider.interface'; // feature:oauth-core
 import { OAUTH_STRATEGIES } from '../../src/auth/oauth/oauth.constants'; // feature:oauth-core
 import type { MailOptions } from '../../src/mail/interfaces/mail-options.interface';
+import { FrozenClock } from './frozen-clock';
 
 export type HttpServer = Server;
 export type TestAgent = ReturnType<typeof request.agent>;
+export const E2E_CLIENT_URL = 'http://127.0.0.1:3107';
+// Keep fixtures ahead of MongoDB's TTL monitor, which uses real time.
+export const E2E_START_TIME = new Date('2099-01-01T12:00:00.000Z');
 
 export interface E2eApp {
   app: INestApplication;
   httpServer: HttpServer;
   mail: MailOptions[];
+  clock: FrozenClock;
   reset: () => Promise<void>;
   close: () => Promise<void>;
 }
@@ -41,6 +49,7 @@ export interface E2eApp {
 export async function bootE2eApp(
   port = 0,
   browserStrategy?: OAuthProviderStrategy, // feature:oauth-core
+  nodeEnv = 'test',
 ): Promise<E2eApp> {
   const originalDirectory = process.cwd();
   const fixtureDirectory = await mkdtemp(join(tmpdir(), 'auth-e2e-'));
@@ -50,9 +59,9 @@ export async function bootE2eApp(
   });
   const environment = {
     OAUTH_STATE_SECRET: 'local-fixture-state-secret-000000000000',
-    NODE_ENV: 'test',
+    NODE_ENV: nodeEnv,
     MONGO_URI: mongo.uri('auth_e2e'),
-    CLIENT_URL: 'http://127.0.0.1:3107',
+    CLIENT_URL: E2E_CLIENT_URL,
     API_URL: 'http://127.0.0.1:5107',
     PORT: '5107',
     BCRYPT_ROUNDS: '4',
@@ -72,6 +81,7 @@ export async function bootE2eApp(
   );
   Object.assign(process.env, environment);
   process.chdir(fixtureDirectory);
+  const clock = new FrozenClock(E2E_START_TIME);
   let app: INestApplication | undefined;
   let closed = false;
   const close = async (): Promise<void> => {
@@ -119,6 +129,7 @@ export async function bootE2eApp(
           return service;
         },
       });
+    builder.overrideProvider(Clock).useValue(clock);
     // feature:oauth-core:start
     if (browserStrategy)
       builder.overrideProvider(OAUTH_STRATEGIES).useValue([browserStrategy]);
@@ -134,12 +145,7 @@ export async function bootE2eApp(
       }),
     );
     app.use(cookieParser());
-    app.enableCors({
-      origin: environment.CLIENT_URL,
-      credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-    });
+    app.enableCors(browserCors(environment.CLIENT_URL));
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -174,6 +180,7 @@ export async function bootE2eApp(
         await collection.deleteMany({});
       await roleSeed.seed();
       await applications.seedFirstPartyApplications();
+      await applications.ensureClientOriginAllowed();
       await users.create(fixtures);
       mail.length = 0;
     };
@@ -182,6 +189,7 @@ export async function bootE2eApp(
       app,
       httpServer: app.getHttpServer() as Server,
       mail,
+      clock,
       reset,
       close,
     };
@@ -197,9 +205,36 @@ export async function loginAs(
   user: SeedUser,
 ): Promise<TestAgent> {
   const agent = request.agent(httpServer);
-  await agent
+  const proof = await agent.get('/api/auth/browser-proof').expect(200);
+  const preAuth = (proof.body as { data: { token: string } }).data.token;
+  const login = await agent
     .post('/api/auth/login')
+    .set(CSRF_HEADER, preAuth)
     .send({ email: user.email, password: user.password })
     .expect(200);
+  return bindBrowserProof(agent, headerToken(login));
+}
+
+export async function browserAgent(httpServer: HttpServer): Promise<TestAgent> {
+  const agent = request.agent(httpServer);
+  const proof = await agent.get('/api/auth/browser-proof').expect(200);
+  const token = (proof.body as { data: { token: string } }).data.token;
+  return bindBrowserProof(agent, token);
+}
+
+function headerToken(response: { headers: Record<string, unknown> }): string {
+  const value = response.headers[CSRF_HEADER];
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new Error('login did not return a browser proof');
+  }
+  return value;
+}
+
+function bindBrowserProof(agent: TestAgent, token: string): TestAgent {
+  const methods = ['post', 'put', 'patch', 'delete'] as const;
+  for (const method of methods) {
+    const original = agent[method].bind(agent);
+    agent[method] = (url: string) => original(url).set(CSRF_HEADER, token);
+  }
   return agent;
 }

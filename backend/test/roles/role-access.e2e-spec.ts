@@ -1,5 +1,4 @@
 import type { ApiBody } from '../types/e2e-responses';
-import request from 'supertest';
 import type { Response } from 'supertest';
 import {
   bootE2eApp,
@@ -91,12 +90,7 @@ describe('Role access and permission validation (e2e)', () => {
     });
 
     it('should reject requests after logout', async () => {
-      const tempAgent = request.agent(e2e.httpServer);
-
-      await tempAgent
-        .post('/api/auth/login')
-        .send({ email: SEED_SUPPORT.email, password: SEED_SUPPORT.password })
-        .expect(200);
+      const tempAgent = await loginAs(e2e.httpServer, SEED_SUPPORT);
 
       // Authenticated, but the support role holds no role permissions
       await tempAgent.get('/api/roles').expect(403);

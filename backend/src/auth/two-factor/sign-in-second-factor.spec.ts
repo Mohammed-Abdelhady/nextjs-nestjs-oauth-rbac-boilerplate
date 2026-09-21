@@ -18,6 +18,7 @@ const USER_ID = new Types.ObjectId('507f1f77bcf86cd799439011');
 
 const MOCK_RESPONSE = {
   req: { headers: { 'user-agent': 'test-agent' }, ip: '127.0.0.1' },
+  setHeader: jest.fn(),
 } as unknown as Response;
 
 interface Harness {
@@ -37,7 +38,10 @@ function createHarness(twoFactorFeatureOn = true): Harness {
   };
 
   const sessionService = {
-    createSession: jest.fn().mockResolvedValue('session-token-123'),
+    createSession: jest.fn().mockResolvedValue({
+      sessionToken: 'session-token-123',
+      csrfToken: 'csrf-token-123',
+    }),
   };
   const sessionCookieService = { set: jest.fn() };
   const challengeService = { issue: jest.fn().mockResolvedValue(undefined) };

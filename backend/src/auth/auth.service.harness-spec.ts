@@ -88,6 +88,7 @@ export const MOCK_RESPONSE = {
     ip: '127.0.0.1',
   },
   cookie: jest.fn(),
+  setHeader: jest.fn(),
 } as unknown as Response;
 
 export async function createAuthServiceHarness(): Promise<AuthServiceHarness> {
@@ -116,7 +117,10 @@ export async function createAuthServiceHarness(): Promise<AuthServiceHarness> {
   };
 
   const sessionService = {
-    createSession: jest.fn().mockResolvedValue('session-token-123'),
+    createSession: jest.fn().mockResolvedValue({
+      sessionToken: 'session-token-123',
+      csrfToken: 'csrf-token-123',
+    }),
     invalidateSession: jest.fn().mockResolvedValue(true),
     invalidateAllSessions: jest.fn().mockResolvedValue(2),
   };
