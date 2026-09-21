@@ -31,9 +31,10 @@ export function mergeMessageTrees(
 
 export async function loadMessages(locale: AppLocale): Promise<AbstractIntlMessages> {
   const base = (await import(`./messages/${locale}.json`)).default;
-  const overlay = (await import(`./messages/session-authority.${locale}.json`)).default;
-  if (!isMessageTree(base) || !isMessageTree(overlay)) {
+  const sessionAuthority = (await import(`./messages/session-authority.${locale}.json`)).default;
+  const browserProof = (await import(`./messages/browser-proof.${locale}.json`)).default;
+  if (!isMessageTree(base) || !isMessageTree(sessionAuthority) || !isMessageTree(browserProof)) {
     throw new Error(`Locale messages for ${locale} are not objects`);
   }
-  return mergeMessageTrees(base, overlay);
+  return mergeMessageTrees(mergeMessageTrees(base, sessionAuthority), browserProof);
 }
