@@ -56,6 +56,15 @@ export class User {
   @Prop()
   deletedAt?: Date;
 
+  @Prop({ type: Number, default: 0 })
+  sessionVersion!: number;
+
+  @Prop({ type: Number, default: 0 })
+  issuanceFence!: number;
+
+  @Prop()
+  credentialsChangedAt?: Date;
+
   /** Provider id used as the source of truth for profile sync. */
   @Prop({ type: String })
   primaryProvider?: string;
