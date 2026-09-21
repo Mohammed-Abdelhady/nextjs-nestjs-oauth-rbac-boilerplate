@@ -12,13 +12,14 @@ import {
   ApiTags,
   ApiOperation,
   ApiParam,
-  ApiBearerAuth,
+  ApiCookieAuth,
 } from '@nestjs/swagger';
 import { UserSessionsService } from './services/user-sessions.service';
 import { RequestWithUser } from '../auth/guards/auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { SessionListData } from './dto/user-profile.dto';
 import { ApiResponse } from '../common/dto/api-response.dto';
+import { SESSION_SWAGGER_AUTH_NAME } from '../common/constants/session';
 import { SessionCookieService } from '../auth/services/session-cookie.service';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 
@@ -27,7 +28,7 @@ import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
  * All endpoints require authentication.
  */
 @ApiTags('user')
-@ApiBearerAuth('JWT-auth')
+@ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
 @Controller('user')
 export class UserSessionsController {
   constructor(

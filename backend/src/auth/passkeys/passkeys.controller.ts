@@ -12,7 +12,7 @@ import {
   Res,
 } from '@nestjs/common';
 import {
-  ApiBearerAuth,
+  ApiCookieAuth,
   ApiBody,
   ApiOperation,
   ApiParam,
@@ -31,6 +31,7 @@ import { PasskeyCreationOptions } from './services/webauthn.adapter';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { RequiresFeature } from '../decorators/requires-feature.decorator';
 import { AuthFeature } from '../enums/auth-feature.enum';
+import { SESSION_SWAGGER_AUTH_NAME } from '../../common/constants/session';
 import { ApiResponse } from '../../common/dto/api-response.dto';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe';
 
@@ -54,7 +55,7 @@ export class PasskeysController {
    */
   @Post('register/options')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth('JWT-auth')
+  @ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
   @ApiOperation({
     summary: 'Options for registering a passkey',
     description:
@@ -75,7 +76,7 @@ export class PasskeysController {
    */
   @Post('register/verify')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth('JWT-auth')
+  @ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
   @ApiOperation({
     summary: 'Store a registered passkey',
     description:
@@ -97,7 +98,7 @@ export class PasskeysController {
    * GET /api/auth/passkeys
    */
   @Get()
-  @ApiBearerAuth('JWT-auth')
+  @ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
   @ApiOperation({
     summary: 'List the passkeys on the account',
     description: 'Newest first. No key material is returned.',
@@ -113,7 +114,7 @@ export class PasskeysController {
    * PATCH /api/auth/passkeys/:id
    */
   @Patch(':id')
-  @ApiBearerAuth('JWT-auth')
+  @ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
   @ApiOperation({
     summary: 'Rename a passkey',
     description: 'A passkey on another account reads as not found.',
@@ -134,7 +135,7 @@ export class PasskeysController {
    */
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth('JWT-auth')
+  @ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
   @ApiOperation({
     summary: 'Remove a passkey',
     description:
