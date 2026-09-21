@@ -2,18 +2,25 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response, CookieOptions } from 'express';
 
+export function resolveSessionCookieName(
+  nodeEnv: string | undefined,
+  configuredName: string | undefined,
+): string {
+  if (configuredName) {
+    return configuredName;
+  }
+  return nodeEnv === 'production' ? '__Host-sid' : 'sid';
+}
+
 @Injectable()
 export class SessionCookieService {
   constructor(private readonly configService: ConfigService) {}
 
   get name(): string {
-    const configuredName = this.configService.get<string>('session.cookieName');
-    if (configuredName) {
-      return configuredName;
-    }
-    const isProduction =
-      this.configService.get<string>('NODE_ENV') === 'production';
-    return isProduction ? '__Host-sid' : 'sid';
+    return resolveSessionCookieName(
+      this.configService.get<string>('NODE_ENV'),
+      this.configService.get<string>('session.cookieName'),
+    );
   }
 
   get options(): CookieOptions {

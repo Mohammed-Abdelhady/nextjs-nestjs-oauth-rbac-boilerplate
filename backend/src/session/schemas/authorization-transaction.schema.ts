@@ -51,6 +51,15 @@ export class AuthorizationTransaction {
   @Prop({ required: true })
   authEpoch!: number;
 
+  @Prop({ type: [String], default: [] })
+  authenticationMethods!: string[];
+
+  @Prop()
+  codeHash?: string;
+
+  @Prop()
+  codeExpiresAt?: Date;
+
   createdAt!: Date;
   updatedAt!: Date;
 }
@@ -64,4 +73,8 @@ export const AuthorizationTransactionSchema: MongooseSchema<AuthorizationTransac
 AuthorizationTransactionSchema.index(
   { expiresAt: 1 },
   { expireAfterSeconds: 0 },
+);
+AuthorizationTransactionSchema.index(
+  { codeHash: 1 },
+  { unique: true, sparse: true, name: 'authorization_code_hash_unique' },
 );

@@ -5,7 +5,10 @@ import { SESSION_LAST_USED_UPDATE_INTERVAL_MS } from '../../common/constants/ses
 import { Clock } from '../../common/services/clock';
 import { AuthEpochService } from '../../common/services/auth-epoch.service';
 import { User, UserDocument } from '../../user/schemas/user.schema';
-import { CREDENTIAL_PURPOSE } from '../constants/credential-purpose';
+import {
+  CREDENTIAL_PURPOSE,
+  CredentialPurpose,
+} from '../constants/credential-purpose';
 import { AUTH_SCHEMA_VERSION } from '../constants/session-policy';
 import { ApplicationDocument } from '../schemas/application.schema';
 import {
@@ -107,6 +110,7 @@ export class SessionAuthorityService {
             grantByClientId.get(candidate.clientId),
             now,
             authEpoch,
+            CREDENTIAL_PURPOSE.BROWSER_SESSION,
           ) !== null,
       );
     } catch (error) {
@@ -136,6 +140,24 @@ export class SessionAuthorityService {
     }
   }
 
+  async validateById(
+    sessionId: Types.ObjectId,
+    extendIdle: boolean,
+  ): Promise<LeanSession | null> {
+    try {
+      const session = await linearizable(
+        this.sessionModel.findById(sessionId),
+      ).exec();
+      return await this.authorizeLoaded(
+        session,
+        extendIdle,
+        CREDENTIAL_PURPOSE.NATIVE_ACCESS,
+      );
+    } catch (error) {
+      asAuthorityUnavailable(error);
+    }
+  }
+
   private async validateAuthoritative(
     token: string,
     extendIdle: boolean,
@@ -143,13 +165,25 @@ export class SessionAuthorityService {
     const session = await linearizable(
       this.sessionModel.findOne({ tokenHash: hashToken(token) }),
     ).exec();
+    return this.authorizeLoaded(
+      session,
+      extendIdle,
+      CREDENTIAL_PURPOSE.BROWSER_SESSION,
+    );
+  }
+
+  private async authorizeLoaded(
+    session: SessionDocument | null,
+    extendIdle: boolean,
+    purpose: CredentialPurpose,
+  ): Promise<LeanSession | null> {
     if (!session || !this.hasRequiredAuthorityFields(session)) {
       return null;
     }
     if (
       !session.isValid ||
       session.revokedAt ||
-      session.credentialPurpose !== CREDENTIAL_PURPOSE.BROWSER_SESSION
+      session.credentialPurpose !== purpose
     ) {
       return null;
     }
@@ -198,6 +232,7 @@ export class SessionAuthorityService {
       grant,
       now,
       this.authEpoch.current(),
+      purpose,
     );
     if (!deadlines) {
       return null;

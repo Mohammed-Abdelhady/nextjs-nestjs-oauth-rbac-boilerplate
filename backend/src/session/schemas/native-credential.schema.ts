@@ -35,6 +35,9 @@ export class NativeCredential {
   @Prop({ required: true })
   expiresAt!: Date;
 
+  @Prop({ required: true, default: false })
+  spent!: boolean;
+
   @Prop()
   consumedAt?: Date;
 

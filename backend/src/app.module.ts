@@ -13,6 +13,7 @@ import { RequestLoggingInterceptor } from './common/interceptors/request-logging
 import { HealthModule } from './health/health.module';
 import { UserModule } from './user/user.module';
 import { SessionModule } from './session/session.module';
+import { NativeOAuthModule } from './session/native/native-oauth.module';
 import { AuthModule } from './auth/auth.module';
 import { AuthMethodsController } from './auth/auth-methods.controller';
 import { MagicLinkModule } from './auth/magic-link/magic-link.module'; // feature:magic-link
@@ -92,6 +93,7 @@ import { Connection } from 'mongoose';
     DatabaseModule,
     UserModule,
     SessionModule,
+    NativeOAuthModule,
     RoleModule,
     AuthModule,
     // feature:oauth-core:start

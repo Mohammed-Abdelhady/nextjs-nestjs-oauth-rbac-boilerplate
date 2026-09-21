@@ -1,6 +1,9 @@
 import { FilterQuery, Types } from 'mongoose';
 import { AUTH_SCHEMA_VERSION } from '../constants/session-policy';
-import { CREDENTIAL_PURPOSE } from '../constants/credential-purpose';
+import {
+  CREDENTIAL_PURPOSE,
+  CredentialPurpose,
+} from '../constants/credential-purpose';
 import { Application } from '../schemas/application.schema';
 import { Session } from '../schemas/session.schema';
 import { UserApplicationGrant } from '../schemas/user-application-grant.schema';
@@ -68,6 +71,7 @@ export function currentSessionDeadlines(
     Pick<UserApplicationGrant, 'allowed' | 'sessionVersion'> | null | undefined,
   now: Date,
   authEpoch: number,
+  purpose: CredentialPurpose,
 ): EffectiveSessionDeadlines | null {
   if (
     !session.clientId ||
@@ -87,7 +91,7 @@ export function currentSessionDeadlines(
   if (
     !session.isValid ||
     session.revokedAt ||
-    session.credentialPurpose !== CREDENTIAL_PURPOSE.BROWSER_SESSION ||
+    session.credentialPurpose !== purpose ||
     session.authEpoch !== authEpoch ||
     session.schemaVersion !== AUTH_SCHEMA_VERSION ||
     !user ||

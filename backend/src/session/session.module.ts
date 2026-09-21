@@ -36,6 +36,7 @@ import { SecurityEventService } from './services/security-event.service';
 import { SessionAuthorityService } from './services/session-authority.service';
 import { SessionIssuanceService } from './services/session-issuance.service';
 import { SessionRevocationService } from './services/session-revocation.service';
+import { NativeAccessService } from './native/native-access.service';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { SessionRevocationService } from './services/session-revocation.service'
     SessionIssuanceService,
     SessionAuthorityService,
     SessionRevocationService,
+    NativeAccessService,
   ],
   exports: [
     MongooseModule,
@@ -74,6 +76,7 @@ import { SessionRevocationService } from './services/session-revocation.service'
     SessionIssuanceService,
     SessionAuthorityService,
     SessionRevocationService,
+    NativeAccessService,
   ],
 })
 export class SessionModule implements OnModuleInit {

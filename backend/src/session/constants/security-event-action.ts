@@ -6,6 +6,7 @@ export const SECURITY_EVENT_ACTION = {
   GRANT_BLOCKED: 'grant_blocked',
   APPLICATION_DISABLED: 'application_disabled',
   APPLICATION_ENABLED: 'application_enabled',
+  REFRESH_REPLAYED: 'refresh_replayed',
 } as const;
 
 export const SECURITY_EVENT_OUTCOME = {

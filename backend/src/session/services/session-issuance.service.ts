@@ -290,6 +290,7 @@ export class SessionIssuanceService {
           grantByClientId.get(candidate.clientId),
           now,
           authEpoch,
+          CREDENTIAL_PURPOSE.BROWSER_SESSION,
         ) !== null,
     );
     const total = activeSessions.length;

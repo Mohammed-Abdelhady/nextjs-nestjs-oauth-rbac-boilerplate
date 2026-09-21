@@ -20,6 +20,10 @@ import { Role, RoleDocument } from '../../role/schemas/role.schema';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { getEffectivePermissions } from '../utils/permissions.util';
+import {
+  NativeAccessService,
+  readBearerToken,
+} from '../../session/native/native-access.service';
 
 export interface RequestWithUser extends Request {
   user?: {
@@ -35,13 +39,15 @@ export interface RequestWithUser extends Request {
 
 /**
  * Runs on every route as a global guard. Routes marked with `@Public()` pass
- * through without a session; everything else needs a valid session cookie.
+ * through without a session. Cookie sessions win. A bearer token is accepted
+ * only when no session cookie is present, and only if it is a native access token.
  */
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private readonly sessionService: SessionService,
     private readonly sessionCookieService: SessionCookieService,
+    private readonly nativeAccess: NativeAccessService,
     @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
     private readonly reflector: Reflector,
   ) {}
@@ -59,16 +65,20 @@ export class AuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<RequestWithUser>();
     const response = context.switchToHttp().getResponse<Response>();
     const sessionToken = this.sessionCookieService.read(request);
+    const bearer = readBearerToken(request);
+    let session: LeanSession | null;
 
-    if (!sessionToken) {
+    if (sessionToken) {
+      session = await this.sessionService.validateSession(sessionToken);
+    } else if (bearer) {
+      session = await this.nativeAccess.validate(bearer);
+    } else {
       throw new AppException(
         ErrorCode.SESSION_REQUIRED,
         'Authentication required',
         HttpStatus.UNAUTHORIZED,
       );
     }
-
-    const session = await this.sessionService.validateSession(sessionToken);
 
     if (!session) {
       this.sessionCookieService.clear(response);
