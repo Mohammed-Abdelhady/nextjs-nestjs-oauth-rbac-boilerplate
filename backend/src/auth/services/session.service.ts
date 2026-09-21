@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { LeanSession } from '../../session/schemas/session.schema';
-import { SessionIssuanceService } from '../../session/services/session-issuance.service';
+import {
+  SessionIssuanceService,
+  IssuedBrowserSession,
+} from '../../session/services/session-issuance.service';
 import { SessionAuthorityService } from '../../session/services/session-authority.service';
 import { SessionRevocationService } from '../../session/services/session-revocation.service';
 import { hashToken } from '../../session/utils/token-hash';
@@ -22,18 +25,24 @@ export class SessionService {
     userId: Types.ObjectId,
     userAgent: string,
     ip: string,
-  ): Promise<string> {
-    const token = await this.issuance.createBrowserSession(
+  ): Promise<IssuedBrowserSession> {
+    const issued = await this.issuance.createBrowserSession(
       userId,
       userAgent,
       ip,
     );
     this.logger.log(`Session created for user ${userId.toString()}`);
-    return token;
+    return issued;
   }
 
   async validateSession(token: string): Promise<LeanSession | null> {
     return this.authority.validate(token, { extendIdle: true });
+  }
+
+  async validateSessionWithoutExtendingIdle(
+    token: string,
+  ): Promise<LeanSession | null> {
+    return this.authority.validate(token, { extendIdle: false });
   }
 
   async invalidateSession(token: string): Promise<boolean> {

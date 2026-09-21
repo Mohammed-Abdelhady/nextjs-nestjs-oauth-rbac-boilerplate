@@ -245,9 +245,14 @@ describe('session authority (plan 02)', () => {
   it('applies concurrent revokes once and keeps the selected session valid', async () => {
     const kept = await login('concurrent-revoke@example.test');
     const targetedTokens = await Promise.all(
-      ['target one', 'target two'].map((agent) =>
-        harness.sessionService.createSession(kept.userId, agent, '127.0.0.1'),
-      ),
+      ['target one', 'target two'].map(async (agent) => {
+        const issued = await harness.sessionService.createSession(
+          kept.userId,
+          agent,
+          '127.0.0.1',
+        );
+        return issued.sessionToken;
+      }),
     );
     await Promise.allSettled([
       ...targetedTokens.map((token) =>

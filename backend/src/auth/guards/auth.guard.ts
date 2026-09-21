@@ -7,7 +7,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Reflector } from '@nestjs/core';
 import { Model } from 'mongoose';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { SessionService } from '../services/session.service';
 import { SessionCookieService } from '../services/session-cookie.service';
@@ -57,6 +57,7 @@ export class AuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<RequestWithUser>();
+    const response = context.switchToHttp().getResponse<Response>();
     const sessionToken = this.sessionCookieService.read(request);
 
     if (!sessionToken) {
@@ -70,6 +71,7 @@ export class AuthGuard implements CanActivate {
     const session = await this.sessionService.validateSession(sessionToken);
 
     if (!session) {
+      this.sessionCookieService.clear(response);
       throw new AppException(
         ErrorCode.SESSION_INVALID,
         'Invalid or expired session',
@@ -81,6 +83,7 @@ export class AuthGuard implements CanActivate {
     const user = session.user as unknown as UserDocument | null;
 
     if (!user || user.isDeleted) {
+      this.sessionCookieService.clear(response);
       throw new AppException(
         ErrorCode.SESSION_INVALID,
         'Invalid or expired session',

@@ -45,6 +45,11 @@ import {
 import { ApplicationRegistryService } from './application-registry.service';
 import { SecurityEventService } from './security-event.service';
 
+export interface IssuedBrowserSession {
+  sessionToken: string;
+  csrfToken: string;
+}
+
 @Injectable()
 export class SessionIssuanceService {
   constructor(
@@ -65,7 +70,7 @@ export class SessionIssuanceService {
     userAgent: string,
     ip: string,
     clientId = WEB_CLIENT_ID,
-  ): Promise<string> {
+  ): Promise<IssuedBrowserSession> {
     try {
       return await withMajorityTransaction(this.connection, (session) =>
         this.issueInTransaction(session, userId, userAgent, ip, clientId),
@@ -81,7 +86,7 @@ export class SessionIssuanceService {
     userAgent: string,
     ip: string,
     clientId: string,
-  ): Promise<string> {
+  ): Promise<IssuedBrowserSession> {
     const user = await this.userModel.findById(userId).session(session).exec();
     if (!user || user.isDeleted) {
       throw new AppException(
@@ -117,6 +122,7 @@ export class SessionIssuanceService {
     await this.assertSessionLimit(session, user, application, now);
 
     const token = randomSecret();
+    const csrfToken = randomSecret();
     const absoluteExpiresAt = addMs(now, application.policy.absoluteLifetimeMs);
     const idleMs =
       application.platform === APPLICATION_PLATFORM.NATIVE
@@ -157,6 +163,7 @@ export class SessionIssuanceService {
           lastActivityAt: now,
           credentialPurpose: CREDENTIAL_PURPOSE.BROWSER_SESSION,
           browserGeneration: 1,
+          csrfToken,
         },
       ],
       { session },
@@ -172,7 +179,7 @@ export class SessionIssuanceService {
       session,
     );
 
-    return token;
+    return { sessionToken: token, csrfToken };
   }
 
   private assertNativeAllowed(application: ApplicationDocument): void {

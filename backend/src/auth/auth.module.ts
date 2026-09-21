@@ -36,6 +36,7 @@ import { CommonModule } from '../common/common.module';
 import { MailModule } from '../mail/mail.module';
 import { UserModule } from '../user/user.module';
 import { SessionModule } from '../session/session.module';
+import { BrowserProofGuard } from './guards/browser-proof.guard';
 import { AuthGuard } from './guards/auth.guard';
 
 @Module({
@@ -78,6 +79,10 @@ import { AuthGuard } from './guards/auth.guard';
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: BrowserProofGuard,
     },
   ],
   exports: [

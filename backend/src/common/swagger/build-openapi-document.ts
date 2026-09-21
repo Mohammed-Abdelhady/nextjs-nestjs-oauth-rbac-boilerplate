@@ -1,4 +1,5 @@
 import { DocumentBuilder } from '@nestjs/swagger';
+import { CSRF_HEADER } from '../../session/constants/browser-proof';
 import { SESSION_SWAGGER_AUTH_NAME } from '../constants/session';
 
 export function buildOpenApiDocument(cookieName: string) {
@@ -25,7 +26,9 @@ export function buildOpenApiDocument(cookieName: string) {
         in: 'cookie',
         name: trimmed,
         description:
-          'Sign in with POST /api/auth/login from the same origin first. ' +
+          'Before signing in, request GET /api/auth/browser-proof and send its token in the ' +
+          `${CSRF_HEADER} header with POST /api/auth/login. ` +
+          'For later unsafe requests, send the current session proof in the same header. ' +
           'The browser sends the HttpOnly cookie automatically. ' +
           'The Authorize value cannot supply it.',
       },
