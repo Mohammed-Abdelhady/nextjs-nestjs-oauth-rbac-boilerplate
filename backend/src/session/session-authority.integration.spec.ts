@@ -63,12 +63,22 @@ describe('session authority (plan 02)', () => {
     token: string;
   }> {
     const user = await createTestUser(harness.users, email);
-    const token = await harness.sessionService.createSession(
-      user._id,
-      'Mozilla/5.0',
-      '127.0.0.1',
-    );
-    return { userId: user._id, token };
+    try {
+      const token = await harness.sessionService.createSession(
+        user._id,
+        'Mozilla/5.0',
+        '127.0.0.1',
+      );
+      return { userId: user._id, token };
+    } catch (error) {
+      if (error instanceof AppException) {
+        throw new Error(
+          `${error.message} ${JSON.stringify(error.getDetails() ?? {})}`,
+          { cause: error },
+        );
+      }
+      throw error;
+    }
   }
 
   it('stores a hash and authenticates the raw secret', async () => {

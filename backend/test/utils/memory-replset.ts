@@ -43,6 +43,10 @@ export async function startMemoryReplSet(): Promise<MemoryReplSet> {
       await setup.close();
     }
 
+    const readyUri = new URL(mongo.getUri());
+    readyUri.searchParams.set('replicaSet', 'rs0');
+    await waitForCommittedTransaction(readyUri.toString());
+
     return {
       uri: (dbName?: string) => {
         const withDb = dbName ? mongo.getUri(dbName) : mongo.getUri();
@@ -72,4 +76,47 @@ async function waitForPrimary(db: Db): Promise<void> {
     });
   }
   throw new Error('replica set did not become primary');
+}
+
+async function waitForCommittedTransaction(uri: string): Promise<void> {
+  const connection = await mongoose
+    .createConnection(uri, { serverSelectionTimeoutMS: 5000 })
+    .asPromise();
+  const deadline = Date.now() + 20000;
+  let lastError: unknown;
+  try {
+    while (Date.now() < deadline) {
+      const session = await connection.startSession();
+      try {
+        session.startTransaction({ writeConcern: { w: 'majority' } });
+        await connection
+          .collection('replset_probe')
+          .insertOne({ at: new Date() }, { session });
+        await session.commitTransaction();
+        return;
+      } catch (error) {
+        lastError = error;
+        if (session.inTransaction()) {
+          try {
+            await session.abortTransaction();
+          } catch (abortError) {
+            // The insert error is the one to retry. Abort can fail after the server already ended the attempt.
+            if (!(error instanceof Error) && abortError instanceof Error) {
+              lastError = abortError;
+            }
+          }
+        }
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 100);
+        });
+      } finally {
+        await session.endSession();
+      }
+    }
+    const detail =
+      lastError instanceof Error ? lastError.message : String(lastError);
+    throw new Error(`replica set cannot commit a transaction: ${detail}`);
+  } finally {
+    await connection.close();
+  }
 }
