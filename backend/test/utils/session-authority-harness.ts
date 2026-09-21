@@ -6,10 +6,12 @@ import {
   getModelToken,
 } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
+import cookieParser from 'cookie-parser';
 import { Connection, Model } from 'mongoose';
 import { Clock } from '../../src/common/services/clock';
 import { SessionService } from '../../src/auth/services/session.service';
 import { SessionModule } from '../../src/session/session.module';
+import { NativeOAuthModule } from '../../src/session/native/native-oauth.module';
 import {
   Session,
   SessionDocument,
@@ -47,6 +49,7 @@ export interface SessionAuthorityHarness {
 export async function bootSessionAuthority(
   mongoUri: string,
   clock: FrozenClock,
+  options?: { nativeEnabled?: boolean; withNativeHttp?: boolean },
 ): Promise<SessionAuthorityHarness> {
   const module: TestingModule = await Test.createTestingModule({
     imports: [
@@ -55,7 +58,11 @@ export async function bootSessionAuthority(
         ignoreEnvFile: true,
         load: [
           () => ({
-            auth: { epoch: 1, nativeEnabled: false, passwordEnabled: true },
+            auth: {
+              epoch: 1,
+              nativeEnabled: options?.nativeEnabled ?? false,
+              passwordEnabled: true,
+            },
             server: { nodeEnv: 'test' },
             cors: { clientUrl: 'http://localhost:3000' },
           }),
@@ -67,6 +74,7 @@ export async function bootSessionAuthority(
         readPreference: 'primary',
       }),
       SessionModule,
+      ...(options?.withNativeHttp ? [NativeOAuthModule] : []),
     ],
     providers: [SessionService],
   })
@@ -75,6 +83,10 @@ export async function bootSessionAuthority(
     .compile();
 
   const app = module.createNestApplication();
+  if (options?.withNativeHttp) {
+    app.use(cookieParser());
+    app.setGlobalPrefix('api');
+  }
   await app.init();
 
   return {

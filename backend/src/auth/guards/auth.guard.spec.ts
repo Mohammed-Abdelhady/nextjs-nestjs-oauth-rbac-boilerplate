@@ -9,6 +9,7 @@ import { SessionCookieService } from '../services/session-cookie.service';
 import { Public } from '../decorators/public.decorator';
 import { Role } from '../../role/schemas/role.schema';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import { NativeAccessService } from '../../session/native/native-access.service';
 
 class GuardedRoutes {
   @Public()
@@ -26,6 +27,9 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
     read: jest.Mock;
     clear: jest.Mock;
   };
+  let nativeAccess: {
+    validate: jest.Mock;
+  };
   let roleModel: {
     findOne: jest.Mock;
   };
@@ -40,6 +44,7 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
   } => {
     const request = {
       cookies,
+      headers: {},
       user: undefined,
       session: undefined,
     };
@@ -68,6 +73,10 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
       clear: jest.fn(),
     };
 
+    nativeAccess = {
+      validate: jest.fn(),
+    };
+
     roleModel = {
       findOne: jest.fn().mockReturnValue({
         exec: jest
@@ -81,6 +90,7 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
         AuthGuard,
         { provide: SessionService, useValue: sessionService },
         { provide: SessionCookieService, useValue: sessionCookieService },
+        { provide: NativeAccessService, useValue: nativeAccess },
         { provide: getModelToken(Role.name), useValue: roleModel },
         Reflector,
       ],
@@ -175,5 +185,37 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
 
     const allowed = await guard.canActivate(context);
     expect(allowed).toBe(true);
+  });
+
+  it('accepts a native access token when no session cookie is present', async () => {
+    const { context, request } = createMockContext({});
+    request.headers = { authorization: 'Bearer access-token' };
+    nativeAccess.validate.mockResolvedValue({
+      user: {
+        _id: new Types.ObjectId('507f1f77bcf86cd799439011'),
+        email: 'active@example.com',
+        name: 'Active User',
+        role: 'user',
+        permissions: [],
+        isVerified: true,
+        isDeleted: false,
+      },
+    });
+
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+    expect(sessionService.validateSession).not.toHaveBeenCalled();
+    expect(nativeAccess.validate).toHaveBeenCalledWith('access-token');
+  });
+
+  it('rejects a bearer token that is not a live access credential', async () => {
+    const { context, request } = createMockContext({});
+    request.headers = { authorization: 'Bearer refresh-token' };
+    nativeAccess.validate.mockResolvedValue(null);
+
+    await expect(guard.canActivate(context)).rejects.toMatchObject({
+      code: ErrorCode.SESSION_INVALID,
+      status: 401,
+    });
+    expect(request.user).toBeUndefined();
   });
 });
