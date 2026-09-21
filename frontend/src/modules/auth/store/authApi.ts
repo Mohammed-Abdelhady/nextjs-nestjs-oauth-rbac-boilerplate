@@ -56,18 +56,6 @@ export const authApi = baseApi.injectEndpoints({
     }),
 
     /**
-     * Refresh token mutation
-     * Refreshes the auth token using refresh cookie
-     */
-    refreshToken: builder.mutation<{ token: string }, void>({
-      query: () => ({
-        url: '/api/auth/refresh',
-        method: 'POST',
-      }),
-      invalidatesTags: ['Auth'],
-    }),
-
-    /**
      * Get current user query
      * Fetches the currently authenticated user's data
      */
@@ -182,7 +170,6 @@ export const authApi = baseApi.injectEndpoints({
 export const {
   useLoginMutation,
   useLogoutMutation,
-  useRefreshTokenMutation,
   useGetCurrentUserQuery,
   useRegisterMutation,
   useActivateMutation,
