@@ -22,7 +22,7 @@ function messageCodes(locale: string): Set<string> {
     );
     const start = raw.indexOf('"codes": {');
     if (start === -1) continue;
-    const close = raw.indexOf('}', start);
+    const close = raw.indexOf('\n    }', start);
     const block = close === -1 ? raw.slice(start) : raw.slice(start, close);
     for (const match of block.matchAll(/"([A-Z_]+)":/g)) {
       codes.add(match[1]);
