@@ -40,6 +40,8 @@ export interface Configuration {
   };
   auth: {
     passwordEnabled: boolean;
+    epoch: number;
+    nativeEnabled: boolean;
   };
   magicLink: {
     enabled: boolean;
@@ -141,6 +143,8 @@ const configuration = (): Configuration => {
     },
     auth: {
       passwordEnabled: process.env.AUTH_PASSWORD_ENABLED !== 'false',
+      epoch: Number.parseInt(process.env.AUTH_EPOCH || '1', 10),
+      nativeEnabled: process.env.AUTH_NATIVE_ENABLED === 'true',
     },
     magicLink: {
       enabled: process.env.MAGIC_LINK_ENABLED
