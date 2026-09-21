@@ -11,7 +11,26 @@ export function hasErrorLabel(error: unknown, label: string): boolean {
 }
 
 export function isTransientTransactionError(error: unknown): boolean {
-  return hasErrorLabel(error, 'TransientTransactionError');
+  return (
+    hasErrorLabel(error, 'TransientTransactionError') ||
+    isCatalogRetry(error, new Set())
+  );
+}
+
+function isCatalogRetry(error: unknown, seen: Set<unknown>): boolean {
+  if (typeof error !== 'object' || error === null || seen.has(error)) {
+    return false;
+  }
+  seen.add(error);
+  const message = error instanceof Error ? error.message : '';
+  if (
+    message.includes('catalog changes') ||
+    message.includes('Please retry your operation')
+  ) {
+    return true;
+  }
+  const cause = (error as { cause?: unknown }).cause;
+  return isCatalogRetry(cause, seen);
 }
 
 export async function withMajorityTransaction<T>(
@@ -32,7 +51,13 @@ export async function withMajorityTransaction<T>(
         return result;
       } catch (error) {
         if (session.inTransaction()) {
-          await session.abortTransaction();
+          try {
+            await session.abortTransaction();
+          } catch (abortError) {
+            if (!(error instanceof Error)) {
+              throw abortError;
+            }
+          }
         }
         lastError = error;
         const canRetry =
@@ -41,6 +66,9 @@ export async function withMajorityTransaction<T>(
         if (!canRetry) {
           throw error;
         }
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 50 * (attempt + 1));
+        });
       }
     }
     throw lastError;

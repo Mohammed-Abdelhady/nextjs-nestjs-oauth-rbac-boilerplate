@@ -1,5 +1,6 @@
 import { Module, OnModuleInit } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { InjectConnection, MongooseModule } from '@nestjs/mongoose';
+import { Connection } from 'mongoose';
 import { CommonModule } from '../common/common.module';
 import { User, UserSchema } from '../user/schemas/user.schema';
 import { Application, ApplicationSchema } from './schemas/application.schema';
@@ -68,11 +69,25 @@ import { SessionRevocationService } from './services/session-revocation.service'
   ],
 })
 export class SessionModule implements OnModuleInit {
-  constructor(private readonly applications: ApplicationRegistryService) {}
+  constructor(
+    private readonly applications: ApplicationRegistryService,
+    @InjectConnection() private readonly connection: Connection,
+  ) {}
 
   async onModuleInit(): Promise<void> {
-    const environment = process.env.NODE_ENV;
-    if (environment === 'production') {
+    await Promise.all(
+      [
+        Session.name,
+        Application.name,
+        UserApplicationGrant.name,
+        NativeCredential.name,
+        AuthorizationTransaction.name,
+        StepUpChallenge.name,
+        SecurityEvent.name,
+        User.name,
+      ].map((name) => this.connection.model(name).createIndexes()),
+    );
+    if (process.env.NODE_ENV === 'production') {
       return;
     }
     await this.applications.seedFirstPartyApplications();
