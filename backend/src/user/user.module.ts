@@ -15,7 +15,6 @@ import {
   PasskeySchema,
 } from '../auth/passkeys/schemas/passkey.schema';
 // feature:passkeys:end
-import { SessionService } from '../auth/services/session.service';
 import { AccountLinkingService } from './services/account-linking.service'; // feature:oauth-core
 import { ProfileSyncService } from './services/profile-sync.service'; // feature:oauth-core
 import { AuthModule } from '../auth/auth.module';
@@ -42,7 +41,6 @@ import { AuthModule } from '../auth/auth.module';
     UserProfileService,
     UserSessionsService,
     UserPermissionsService,
-    SessionService,
     AccountLinkingService, // feature:oauth-core
     ProfileSyncService, // feature:oauth-core
   ],

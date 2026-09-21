@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { Test } from '@nestjs/testing';
 import { getStorageToken, ThrottlerStorageService } from '@nestjs/throttler';
 import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { startMemoryReplSet } from './memory-replset';
 import { Connection, Model } from 'mongoose';
 import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
@@ -44,16 +44,14 @@ export async function bootE2eApp(
 ): Promise<E2eApp> {
   const originalDirectory = process.cwd();
   const fixtureDirectory = await mkdtemp(join(tmpdir(), 'auth-e2e-'));
-  const mongo = await MongoMemoryServer.create({
-    instance: { ip: '127.0.0.1' },
-  }).catch(async (error: unknown) => {
+  const mongo = await startMemoryReplSet().catch(async (error: unknown) => {
     await rmdir(fixtureDirectory);
     throw error;
   });
   const environment = {
     OAUTH_STATE_SECRET: 'local-fixture-state-secret-000000000000',
     NODE_ENV: 'test',
-    MONGO_URI: mongo.getUri('auth_e2e'),
+    MONGO_URI: mongo.uri('auth_e2e'),
     CLIENT_URL: 'http://127.0.0.1:3107',
     API_URL: 'http://127.0.0.1:5107',
     PORT: '5107',
@@ -100,6 +98,8 @@ export async function bootE2eApp(
     const { MailService } = await import('../../src/mail/mail.service');
     const { RoleSeedService } =
       await import('../../src/database/seeds/role.seed');
+    const { ApplicationRegistryService } =
+      await import('../../src/session/services/application-registry.service');
     const { SEED_USER_DEFINITIONS } =
       await import('../../src/database/seeds/user.seed');
     const mail: MailOptions[] = [];
@@ -153,6 +153,7 @@ export async function bootE2eApp(
     const users = app.get<Model<UserDocument>>(getModelToken('User'));
     const roleSeed =
       app.get<InstanceType<typeof RoleSeedService>>(RoleSeedService);
+    const applications = app.get(ApplicationRegistryService);
     const credentials = [SEED_ADMIN, SEED_MANAGER, SEED_SUPPORT, SEED_USER];
     const fixtures = await Promise.all(
       SEED_USER_DEFINITIONS.map(async (user) => ({
@@ -172,6 +173,7 @@ export async function bootE2eApp(
       for (const collection of Object.values(connection.collections))
         await collection.deleteMany({});
       await roleSeed.seed();
+      await applications.seedFirstPartyApplications();
       await users.create(fixtures);
       mail.length = 0;
     };
