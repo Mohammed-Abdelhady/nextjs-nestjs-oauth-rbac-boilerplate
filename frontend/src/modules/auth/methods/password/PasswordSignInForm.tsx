@@ -12,6 +12,7 @@ import { Link } from '@/i18n/navigation';
 import { useCompleteSignIn } from '@/modules/auth/hooks/useCompleteSignIn';
 import { useLoginMutation } from '@/modules/auth/store/authApi';
 import { translateAuthError } from '@/modules/auth/utils/authHelpers';
+import { translatableErrorCode } from '@/modules/auth/utils/errorCodeMessage';
 import { preventNavigationBlur } from '@/modules/auth/utils/preventNavigationBlur';
 import type { AuthMethodFormProps } from '../types';
 
@@ -36,6 +37,7 @@ type PasswordSignInData = z.infer<ReturnType<typeof createPasswordSignInSchema>>
 /** Email and password sign-in. Hands a challenged account to /auth/2fa. */
 export function PasswordSignInForm({ redirect }: AuthMethodFormProps) {
   const t = useTranslations('auth.login');
+  const tCodes = useTranslations('errors.codes');
   const [login, { isLoading }] = useLoginMutation();
   const completeSignIn = useCompleteSignIn();
 
@@ -58,10 +60,14 @@ export function PasswordSignInForm({ redirect }: AuthMethodFormProps) {
         const response = await login({ email: data.email, password: data.password }).unwrap();
         await completeSignIn(response, redirect);
       } catch (err) {
-        setError('root', { type: 'manual', message: translateAuthError(err, t) });
+        const code = translatableErrorCode(err, '');
+        setError('root', {
+          type: 'manual',
+          message: code ? tCodes(code) : translateAuthError(err, t),
+        });
       }
     },
-    [completeSignIn, login, redirect, setError, t],
+    [completeSignIn, login, redirect, setError, t, tCodes],
   );
 
   return (

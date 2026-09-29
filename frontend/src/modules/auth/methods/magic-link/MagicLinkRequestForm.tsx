@@ -12,6 +12,7 @@ import { zodEmail } from '@/lib/validations';
 import { parseApiError } from '@/lib/apiError';
 import { useCooldown } from '@/modules/auth/hooks/useCooldown';
 import { useFeatureDisabledHandler } from '@/modules/auth/hooks/useFeatureDisabled';
+import { translatableErrorCode } from '@/modules/auth/utils/errorCodeMessage';
 import type { AuthMethodFormProps } from '../types';
 import { useRequestMagicLinkMutation } from './magicLinkApi';
 
@@ -36,6 +37,7 @@ type MagicLinkFormData = z.infer<ReturnType<typeof createMagicLinkSchema>>;
  */
 export function MagicLinkRequestForm({ isOnlyMethod }: AuthMethodFormProps) {
   const t = useTranslations('auth.magicLink');
+  const tCodes = useTranslations('errors.codes');
   const [requestMagicLink, { isLoading }] = useRequestMagicLinkMutation();
   const handleFeatureDisabled = useFeatureDisabledHandler();
   const [sentTo, setSentTo] = useState<string | null>(null);
@@ -66,10 +68,14 @@ export function MagicLinkRequestForm({ isOnlyMethod }: AuthMethodFormProps) {
         if (handleFeatureDisabled(err)) {
           return;
         }
-        setError('root', { type: 'manual', message: parseApiError(err).message || t('error') });
+        const code = translatableErrorCode(err, '');
+        setError('root', {
+          type: 'manual',
+          message: code ? tCodes(code) : parseApiError(err).message || t('error'),
+        });
       }
     },
-    [handleFeatureDisabled, requestMagicLink, setError, startCooldown, t],
+    [handleFeatureDisabled, requestMagicLink, setError, startCooldown, t, tCodes],
   );
 
   const onSubmit = useCallback(async (data: MagicLinkFormData) => send(data.email), [send]);

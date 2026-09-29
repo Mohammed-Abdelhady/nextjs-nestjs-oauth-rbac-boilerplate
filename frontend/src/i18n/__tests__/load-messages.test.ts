@@ -54,6 +54,10 @@ describe('session authority locale overlays', () => {
   });
 
   it('ships the same overlay keys in English and Arabic', () => {
-    expect(flatten(readOverlay('en')).sort()).toEqual(flatten(readOverlay('ar')).sort());
+    const english = flatten(readOverlay('en')).sort();
+    const arabic = flatten(readOverlay('ar')).sort();
+    expect(english).toEqual(arabic);
+    expect(english).toContain('errors.codes.SESSION_LIMIT_REACHED');
+    expect(english).toContain('errors.codes.AUTHORITY_UNAVAILABLE');
   });
 });
