@@ -3,7 +3,22 @@ services:
     image: mongo:7
     container_name: authboiler-mongodb
     restart: unless-stopped
-    command: ['--replSet', 'rs0', '--bind_ip_all']
+    entrypoint:
+      - /bin/bash
+      - -ec
+      - |
+        set -o pipefail
+        keyfile=/data/db/.mongodb-keyfile
+        if [ ! -s "$keyfile" ]; then
+          umask 177
+          head -c 756 /dev/urandom | base64 | tr -d '\n' > "$keyfile.tmp"
+          chmod 400 "$keyfile.tmp"
+          chown 999:999 "$keyfile.tmp"
+          mv "$keyfile.tmp" "$keyfile"
+        fi
+        chmod 400 "$keyfile"
+        chown 999:999 "$keyfile"
+        exec docker-entrypoint.sh mongod --replSet rs0 --keyFile "$keyfile" --bind_ip_all
     ports:
       - '27017:27017'
     volumes:
@@ -16,7 +31,7 @@ services:
       test:
         [
           'CMD-SHELL',
-          'mongosh --quiet -u "$$MONGO_INITDB_ROOT_USERNAME" -p "$$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "try { rs.status() } catch (e) { rs.initiate({_id:''rs0'',members:[{_id:0,host:''mongodb:27017''}]}) }"',
+          'mongosh --quiet -u "$$MONGO_INITDB_ROOT_USERNAME" -p "$$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "try { rs.status() } catch (e) { rs.initiate({_id:''rs0'',members:[{_id:0,host:''mongodb:27017''}]}); quit(1); } const status = rs.status(); quit(status.ok === 1 && status.myState === 1 ? 0 : 1)"',
         ]
       interval: 10s
       timeout: 10s
