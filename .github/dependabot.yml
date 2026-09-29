@@ -12,34 +12,17 @@ updates:
           - minor
           - patch
 
-  - package-ecosystem: npm
-    directory: /backend
-    schedule:
-      interval: weekly
-    groups:
-      dependencies:
-        patterns:
-          - '*'
-        update-types:
-          - minor
-          - patch
-
-  - package-ecosystem: npm
-    directory: /frontend
-    schedule:
-      interval: weekly
-    groups:
-      dependencies:
-        patterns:
-          - '*'
-        update-types:
-          - minor
-          - patch
-
   - package-ecosystem: docker
     directory: /backend
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: 'node'
+        versions:
+          - '23.x'
+          - '25.x'
+          - '27.x'
+          - '29.x'
     groups:
       docker:
         patterns:
@@ -52,6 +35,13 @@ updates:
     directory: /frontend
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: 'node'
+        versions:
+          - '23.x'
+          - '25.x'
+          - '27.x'
+          - '29.x'
     groups:
       docker:
         patterns:
