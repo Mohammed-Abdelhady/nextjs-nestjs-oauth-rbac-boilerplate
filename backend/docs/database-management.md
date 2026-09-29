@@ -50,6 +50,9 @@ Or use the default connection string:
 mongodb://localhost:27017/authboiler
 ```
 
+When the backend runs on the host and MongoDB runs in Docker Compose, use `MONGO_URI=mongodb://USER:PASS@localhost:27017/authboiler?authSource=admin&directConnection=true`.
+The replica set advertises `mongodb:27017`, which the host cannot resolve.
+
 ### 2. Install Dependencies
 
 Dependencies are already installed via `package.json`:
