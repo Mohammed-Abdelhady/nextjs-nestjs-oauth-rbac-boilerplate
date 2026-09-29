@@ -7,6 +7,7 @@ import { AuthEpochService } from '../../common/services/auth-epoch.service';
 import { User, UserDocument } from '../../user/schemas/user.schema';
 import { CREDENTIAL_PURPOSE } from '../constants/credential-purpose';
 import { AUTH_SCHEMA_VERSION } from '../constants/session-policy';
+import { ApplicationDocument } from '../schemas/application.schema';
 import {
   LeanSession,
   Session,
@@ -18,12 +19,12 @@ import {
 } from '../schemas/user-application-grant.schema';
 import { asAuthorityUnavailable } from '../utils/authority-unavailable';
 import { linearizable } from '../utils/linearizable-query';
+import { addMs, capIdleByAbsolute } from '../utils/session-deadline';
 import {
-  addMs,
-  capIdleByAbsolute,
-  effectiveDeadline,
-  isDeadlinePassed,
-} from '../utils/session-deadline';
+  currentSessionCandidateFilter,
+  currentSessionDeadlines,
+  isValidDate,
+} from '../utils/current-session-authority';
 import { hashToken } from '../utils/token-hash';
 import { ApplicationRegistryService } from './application-registry.service';
 
@@ -64,18 +65,50 @@ export class SessionAuthorityService {
         return [];
       }
       const userVersion = user.sessionVersion ?? 0;
-      return this.sessionModel
-        .find({
-          user: userId,
-          isValid: true,
-          revokedAt: { $exists: false },
-          expiresAt: { $gt: now },
-          idleExpiresAt: { $gt: now },
-          userVersion,
-        })
+      const authEpoch = this.authEpoch.current();
+      const candidates = await this.sessionModel
+        .find(
+          currentSessionCandidateFilter(userId, now, userVersion, authEpoch),
+        )
         .sort({ lastUsedAt: -1 })
         .lean<LeanSession[]>()
         .exec();
+      const clientIds = [
+        ...new Set(candidates.map((session) => session.clientId)),
+      ];
+      const [applications, grants] = await Promise.all([
+        this.applications.findByClientIds(clientIds),
+        clientIds.length === 0
+          ? Promise.resolve<UserApplicationGrant[]>([])
+          : linearizable(
+              this.grantModel.find({
+                userId,
+                clientId: { $in: clientIds },
+              }),
+            )
+              .lean<UserApplicationGrant[]>()
+              .exec(),
+      ]);
+      const applicationByClientId = new Map<string, ApplicationDocument>();
+      for (const application of applications) {
+        applicationByClientId.set(application.clientId, application);
+      }
+      const grantByClientId = new Map<string, UserApplicationGrant>();
+      for (const grant of grants) {
+        grantByClientId.set(grant.clientId, grant);
+      }
+
+      return candidates.filter(
+        (candidate) =>
+          currentSessionDeadlines(
+            candidate,
+            user,
+            applicationByClientId.get(candidate.clientId),
+            grantByClientId.get(candidate.clientId),
+            now,
+            authEpoch,
+          ) !== null,
+      );
     } catch (error) {
       asAuthorityUnavailable(error);
     }
@@ -83,7 +116,7 @@ export class SessionAuthorityService {
 
   async getById(sessionId: string): Promise<LeanSession | null> {
     try {
-      return this.sessionModel
+      return await this.sessionModel
         .findById(sessionId)
         .lean<LeanSession | null>()
         .exec();
@@ -94,7 +127,7 @@ export class SessionAuthorityService {
 
   async getByToken(token: string): Promise<LeanSession | null> {
     try {
-      return this.sessionModel
+      return await this.sessionModel
         .findOne({ tokenHash: hashToken(token) })
         .lean<LeanSession | null>()
         .exec();
@@ -156,22 +189,17 @@ export class SessionAuthorityService {
     if (!grant || !grant.allowed) {
       return null;
     }
-    if ((session.grantVersion ?? -1) !== (grant.sessionVersion ?? 0)) {
-      return null;
-    }
 
     const now = this.clock.now();
-    const policyAbsolute = addMs(
-      session.authenticatedAt,
-      application.policy.absoluteLifetimeMs,
+    const deadlines = currentSessionDeadlines(
+      session,
+      user,
+      application,
+      grant,
+      now,
+      this.authEpoch.current(),
     );
-    const policyIdle = addMs(
-      session.lastActivityAt,
-      application.policy.idleLifetimeMs,
-    );
-    const absolute = effectiveDeadline(session.expiresAt, policyAbsolute);
-    const idle = effectiveDeadline(session.idleExpiresAt, policyIdle);
-    if (isDeadlinePassed(now, absolute) || isDeadlinePassed(now, idle)) {
+    if (!deadlines) {
       return null;
     }
 
@@ -179,8 +207,8 @@ export class SessionAuthorityService {
       await this.maybeExtendIdle(
         session,
         now,
-        absolute,
-        idle,
+        deadlines.absolute,
+        deadlines.idle,
         application.policy.idleLifetimeMs,
       );
     }
@@ -193,9 +221,10 @@ export class SessionAuthorityService {
   private hasRequiredAuthorityFields(session: SessionDocument): boolean {
     return Boolean(
       session.clientId &&
-      session.authenticatedAt &&
-      session.idleExpiresAt &&
-      session.lastActivityAt &&
+      isValidDate(session.authenticatedAt) &&
+      isValidDate(session.expiresAt) &&
+      isValidDate(session.idleExpiresAt) &&
+      isValidDate(session.lastActivityAt) &&
       typeof session.userVersion === 'number' &&
       typeof session.clientVersion === 'number' &&
       typeof session.grantVersion === 'number' &&

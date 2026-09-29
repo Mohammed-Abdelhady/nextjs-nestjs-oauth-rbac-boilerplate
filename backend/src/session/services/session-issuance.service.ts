@@ -27,7 +27,11 @@ import {
   Application,
   ApplicationDocument,
 } from '../schemas/application.schema';
-import { Session, SessionDocument } from '../schemas/session.schema';
+import {
+  LeanSession,
+  Session,
+  SessionDocument,
+} from '../schemas/session.schema';
 import {
   UserApplicationGrant,
   UserApplicationGrantDocument,
@@ -37,6 +41,10 @@ import { addMs, capIdleByAbsolute } from '../utils/session-deadline';
 import { withMajorityTransaction } from '../utils/mongo-transaction';
 import { asAuthorityUnavailable } from '../utils/authority-unavailable';
 import { hashToken, randomSecret } from '../utils/token-hash';
+import {
+  currentSessionCandidateFilter,
+  currentSessionDeadlines,
+} from '../utils/current-session-authority';
 import { ApplicationRegistryService } from './application-registry.service';
 import { SecurityEventService } from './security-event.service';
 
@@ -248,18 +256,52 @@ export class SessionIssuanceService {
     now: Date,
   ): Promise<void> {
     const userVersion = user.sessionVersion ?? 0;
-    const activeFilter = {
-      user: user._id,
-      isValid: true,
-      revokedAt: { $exists: false },
-      expiresAt: { $gt: now },
-      idleExpiresAt: { $gt: now },
-      userVersion,
-    };
-    const total = await this.sessionModel
-      .countDocuments(activeFilter)
+    const authEpoch = this.authEpoch.current();
+    const candidates = await this.sessionModel
+      .find(
+        currentSessionCandidateFilter(user._id, now, userVersion, authEpoch),
+      )
       .session(session)
+      .lean<LeanSession[]>()
       .exec();
+    const clientIds = [
+      ...new Set(candidates.map((candidate) => candidate.clientId)),
+    ];
+    const applications = await this.applications.findByClientIds(
+      clientIds,
+      session,
+    );
+    const grants =
+      clientIds.length === 0
+        ? []
+        : await this.grantModel
+            .find({ userId: user._id, clientId: { $in: clientIds } })
+            .session(session)
+            .lean<UserApplicationGrant[]>()
+            .exec();
+    const applicationByClientId = new Map<string, ApplicationDocument>();
+    for (const currentApplication of applications) {
+      applicationByClientId.set(
+        currentApplication.clientId,
+        currentApplication,
+      );
+    }
+    const grantByClientId = new Map<string, UserApplicationGrant>();
+    for (const grant of grants) {
+      grantByClientId.set(grant.clientId, grant);
+    }
+    const activeSessions = candidates.filter(
+      (candidate) =>
+        currentSessionDeadlines(
+          candidate,
+          user,
+          applicationByClientId.get(candidate.clientId),
+          grantByClientId.get(candidate.clientId),
+          now,
+          authEpoch,
+        ) !== null,
+    );
+    const total = activeSessions.length;
     if (total >= MAX_SESSIONS_PER_USER) {
       throw new AppException(
         ErrorCode.SESSION_LIMIT_REACHED,
@@ -272,10 +314,9 @@ export class SessionIssuanceService {
       return;
     }
 
-    const adminCount = await this.sessionModel
-      .countDocuments({ ...activeFilter, clientId: ADMIN_CLIENT_ID })
-      .session(session)
-      .exec();
+    const adminCount = activeSessions.filter(
+      (candidate) => candidate.clientId === ADMIN_CLIENT_ID,
+    ).length;
     if (adminCount >= MAX_ADMIN_SESSIONS_PER_USER) {
       throw new AppException(
         ErrorCode.SESSION_LIMIT_REACHED,

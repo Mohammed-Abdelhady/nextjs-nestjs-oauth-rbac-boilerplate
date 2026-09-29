@@ -67,6 +67,21 @@ export class ApplicationRegistryService {
     ).exec();
   }
 
+  async findByClientIds(
+    clientIds: string[],
+    session?: ClientSession,
+  ): Promise<ApplicationDocument[]> {
+    if (clientIds.length === 0) {
+      return [];
+    }
+    const environment = this.authEpoch.environment();
+    const query = this.applicationModel.find({
+      clientId: { $in: clientIds },
+      environment,
+    });
+    return session ? query.session(session).exec() : linearizable(query).exec();
+  }
+
   async seedFirstPartyApplications(): Promise<void> {
     const environment = this.authEpoch.environment();
     const origin = this.authEpoch.clientUrl();
