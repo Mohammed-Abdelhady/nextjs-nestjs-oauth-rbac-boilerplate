@@ -12,6 +12,8 @@ import { LocalizedToastMessage } from '@/components/ui/LocalizedToastMessage';
 import { isRejectedWithValue, type Middleware } from '@reduxjs/toolkit';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { toast } from '@/lib/toast';
+import { getErrorCodeTranslationKey } from '@/constants/errorCodes';
+import { translatableErrorCode } from '@/modules/auth/utils/errorCodeMessage';
 import type { ToastType } from '@/types/toast.types';
 import { STATUS_CODE_MESSAGES, ERROR_MESSAGES, TOAST_DURATION } from '@/constants/toastMessages';
 
@@ -76,6 +78,11 @@ const fallbackMessage = (messageKey: string): ReactNode =>
 
 const getErrorMessage = (error: FetchBaseQueryError): ReactNode => {
   const status = typeof error.status === 'number' ? error.status : 0;
+  const code = translatableErrorCode(error, '');
+
+  if (code) {
+    return fallbackMessage(getErrorCodeTranslationKey(code));
+  }
 
   // Check if error has custom message in response data
   if (error.data && typeof error.data === 'object') {
