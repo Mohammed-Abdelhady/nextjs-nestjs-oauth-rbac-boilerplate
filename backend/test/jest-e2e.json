@@ -14,7 +14,7 @@
     ]
   },
   "transformIgnorePatterns": [
-    "/node_modules/(?!(.*/)?(jose|@scure/base|@noble/hashes|@simplewebauthn)/)"
+    "/node_modules/(?!(.*/)?(jose|@scure/base|@noble/hashes|@simplewebauthn|@nestjs/mongoose)/)"
   ],
   "testTimeout": 60000,
   "maxWorkers": 1
