@@ -24,7 +24,10 @@ export function buildOpenApiDocument(cookieName: string) {
         type: 'apiKey',
         in: 'cookie',
         name: trimmed,
-        description: 'HttpOnly session cookie for application access',
+        description:
+          'Sign in with POST /api/auth/login from the same origin first. ' +
+          'The browser sends the HttpOnly cookie automatically. ' +
+          'The Authorize value cannot supply it.',
       },
       SESSION_SWAGGER_AUTH_NAME,
     )
