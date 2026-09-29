@@ -183,7 +183,15 @@ export class EnvironmentVariables extends OAuthEnvironmentVariables {
   @IsOptional()
   SESSION_COOKIE_MAX_AGE: number = 604800000;
 
-  @Type(() => Number)
+  @Transform(({ value }: { value: unknown }): unknown => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+    if (value.trim() !== value || !/^[0-9]+$/.test(value)) {
+      return value;
+    }
+    return Number(value);
+  })
   @IsInt()
   @Min(1)
   @IsOptional()
