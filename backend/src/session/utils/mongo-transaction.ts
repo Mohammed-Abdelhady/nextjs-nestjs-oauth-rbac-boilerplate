@@ -1,6 +1,8 @@
 import { ClientSession, Connection } from 'mongoose';
 
 const MAX_TRANSACTION_ATTEMPTS = 3;
+const MAX_COMMIT_ATTEMPTS = 3;
+const UNKNOWN_COMMIT_RESULT_LABEL = 'UnknownTransactionCommitResult';
 
 export function hasErrorLabel(error: unknown, label: string): boolean {
   if (typeof error !== 'object' || error === null) {
@@ -41,16 +43,33 @@ export async function withMajorityTransaction<T>(
   try {
     let lastError: unknown;
     for (let attempt = 0; attempt < MAX_TRANSACTION_ATTEMPTS; attempt += 1) {
+      let commitOutcomeUnknown = false;
       try {
         session.startTransaction({
           writeConcern: { w: 'majority' },
           readPreference: 'primary',
         });
         const result = await work(session);
-        await session.commitTransaction();
-        return result;
+        for (
+          let commitAttempt = 0;
+          commitAttempt < MAX_COMMIT_ATTEMPTS;
+          commitAttempt += 1
+        ) {
+          try {
+            await session.commitTransaction();
+            return result;
+          } catch (error) {
+            if (!hasErrorLabel(error, UNKNOWN_COMMIT_RESULT_LABEL)) {
+              throw error;
+            }
+            commitOutcomeUnknown = true;
+            if (commitAttempt === MAX_COMMIT_ATTEMPTS - 1) {
+              throw error;
+            }
+          }
+        }
       } catch (error) {
-        if (session.inTransaction()) {
+        if (session.inTransaction() && !commitOutcomeUnknown) {
           try {
             await session.abortTransaction();
           } catch (abortError) {
@@ -61,6 +80,7 @@ export async function withMajorityTransaction<T>(
         }
         lastError = error;
         const canRetry =
+          !commitOutcomeUnknown &&
           isTransientTransactionError(error) &&
           attempt < MAX_TRANSACTION_ATTEMPTS - 1;
         if (!canRetry) {
