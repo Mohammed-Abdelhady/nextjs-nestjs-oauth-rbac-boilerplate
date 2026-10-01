@@ -1,8 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Request } from 'express';
+import { AppException } from '../../common/exceptions/app.exception';
+import { ErrorCode } from '../../common/enums/error-code.enum';
 import { Clock } from '../../common/services/clock';
+import { AuthEpochService } from '../../common/services/auth-epoch.service';
 import { CREDENTIAL_PURPOSE } from '../constants/credential-purpose';
 import {
   NativeCredential,
@@ -43,9 +46,17 @@ export class NativeAccessService {
     private readonly credentials: Model<NativeCredentialDocument>,
     private readonly authority: SessionAuthorityService,
     private readonly clock: Clock,
+    private readonly authEpoch: AuthEpochService,
   ) {}
 
   async validate(rawToken: string): Promise<LeanSession | null> {
+    if (!this.authEpoch.nativeEnabled()) {
+      throw new AppException(
+        ErrorCode.NATIVE_AUTH_DISABLED,
+        'Native authentication is disabled',
+        HttpStatus.FORBIDDEN,
+      );
+    }
     const credential = await linearizable(
       this.credentials.findOne({
         tokenHash: hashToken(rawToken),

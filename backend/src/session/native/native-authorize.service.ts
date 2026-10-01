@@ -121,7 +121,13 @@ export class NativeAuthorizeService {
     userId: string,
     transactionId: string,
     authenticationMethods: string[],
-  ): Promise<{ redirectUri: string }> {
+  ): Promise<{ redirectUri: string } | OauthFailure> {
+    if (!this.authEpoch.nativeEnabled()) {
+      return oauthFailure(
+        HttpStatus.BAD_REQUEST,
+        OAUTH_ERROR.UNAUTHORIZED_CLIENT,
+      );
+    }
     if (!Types.ObjectId.isValid(userId) || !transactionId.trim()) {
       throw new AppException(
         ErrorCode.VALIDATION_ERROR,

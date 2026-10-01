@@ -3,9 +3,11 @@ import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Connection, Model, Types } from 'mongoose';
 import { Clock } from '../../common/services/clock';
 import { AuthEpochService } from '../../common/services/auth-epoch.service';
+import { AppException } from '../../common/exceptions/app.exception';
+import { ErrorCode } from '../../common/enums/error-code.enum';
 import { User, UserDocument } from '../../user/schemas/user.schema';
 import { APPLICATION_PLATFORM } from '../constants/client-ids';
-import { MAX_SESSIONS_PER_USER } from '../constants/session-policy';
+import { SECURITY_EVENT_ACTION } from '../constants/security-event-action';
 import {
   Application,
   ApplicationDocument,
@@ -18,7 +20,6 @@ import {
   NativeCredential,
   NativeCredentialDocument,
 } from '../schemas/native-credential.schema';
-import { Session, SessionDocument } from '../schemas/session.schema';
 import {
   UserApplicationGrant,
   UserApplicationGrantDocument,
@@ -29,6 +30,7 @@ import { withMajorityTransaction } from '../utils/mongo-transaction';
 import { hashToken } from '../utils/token-hash';
 import { NativeCredentialIssuer } from './native-credential.issuer';
 import { NativeRefreshService } from './native-refresh.service';
+import { SessionIssuanceService } from '../services/session-issuance.service';
 import {
   ClientMeta,
   OAUTH_ERROR,
@@ -48,8 +50,6 @@ export class NativeTokenService {
     private readonly transactions: Model<AuthorizationTransactionDocument>,
     @InjectModel(NativeCredential.name)
     private readonly credentials: Model<NativeCredentialDocument>,
-    @InjectModel(Session.name)
-    private readonly sessions: Model<SessionDocument>,
     @InjectModel(User.name) private readonly users: Model<UserDocument>,
     @InjectModel(Application.name)
     private readonly applications: Model<ApplicationDocument>,
@@ -57,6 +57,7 @@ export class NativeTokenService {
     private readonly grants: Model<UserApplicationGrantDocument>,
     private readonly issuer: NativeCredentialIssuer,
     private readonly refreshes: NativeRefreshService,
+    private readonly sessionIssuance: SessionIssuanceService,
     private readonly clock: Clock,
     private readonly authEpoch: AuthEpochService,
   ) {}
@@ -65,14 +66,14 @@ export class NativeTokenService {
     body: TokenRequest,
     meta: ClientMeta,
   ): Promise<TokenSuccess | OauthFailure> {
-    if (body.client_secret) {
-      return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_CLIENT);
-    }
     if (!this.authEpoch.nativeEnabled()) {
       return oauthFailure(
         HttpStatus.BAD_REQUEST,
         OAUTH_ERROR.UNAUTHORIZED_CLIENT,
       );
+    }
+    if (body.client_secret) {
+      return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_CLIENT);
     }
     try {
       if (body.grant_type === 'authorization_code') {
@@ -95,6 +96,12 @@ export class NativeTokenService {
   }
 
   async revoke(body: RevokeRequest): Promise<RevokeSuccess | OauthFailure> {
+    if (!this.authEpoch.nativeEnabled()) {
+      return oauthFailure(
+        HttpStatus.BAD_REQUEST,
+        OAUTH_ERROR.UNAUTHORIZED_CLIENT,
+      );
+    }
     if (body.client_secret) {
       return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_CLIENT);
     }
@@ -120,6 +127,7 @@ export class NativeTokenService {
           credential.familyId,
           credential.sessionId,
           now,
+          SECURITY_EVENT_ACTION.NATIVE_CLIENT_REVOKED,
         );
       });
       return { ok: true };
@@ -159,9 +167,19 @@ export class NativeTokenService {
       );
       return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_GRANT);
     }
-    return withMajorityTransaction(this.connection, (db) =>
-      this.consumeCode(db, pending._id, meta),
-    );
+    try {
+      return await withMajorityTransaction(this.connection, (db) =>
+        this.consumeCode(db, pending._id, meta),
+      );
+    } catch (error) {
+      if (
+        error instanceof AppException &&
+        error.getCode() === ErrorCode.SESSION_LIMIT_REACHED
+      ) {
+        return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.ACCESS_DENIED);
+      }
+      throw error;
+    }
   }
 
   private async consumeCode(
@@ -180,16 +198,6 @@ export class NativeTokenService {
     if (pending.codeExpiresAt.getTime() <= now.getTime()) {
       return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_GRANT);
     }
-    const claimed = await this.transactions
-      .updateOne(
-        { _id: pending._id, consumed: false },
-        { $set: { consumed: true } },
-      )
-      .session(db)
-      .exec();
-    if (claimed.modifiedCount !== 1) {
-      return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_GRANT);
-    }
     const user = await this.users.findById(pending.userId).session(db).exec();
     const application = await this.applications
       .findOne({
@@ -202,35 +210,42 @@ export class NativeTokenService {
       .findOne({ userId: pending.userId, clientId: pending.clientId })
       .session(db)
       .exec();
-    if (
-      !user ||
-      user.isDeleted ||
-      !application ||
-      !application.enabled ||
-      application.platform !== APPLICATION_PLATFORM.NATIVE ||
-      !grant ||
-      !grant.allowed ||
-      (user.sessionVersion ?? 0) !== (pending.capturedUserVersion ?? -1) ||
-      (application.sessionVersion ?? 0) !==
-        (pending.capturedClientVersion ?? -1) ||
-      (grant.sessionVersion ?? 0) !== (pending.capturedGrantVersion ?? -1) ||
-      pending.authEpoch !== this.authEpoch.current()
-    ) {
-      return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_GRANT);
+    const validAuthority = Boolean(
+      user &&
+      !user.isDeleted &&
+      application &&
+      application.enabled &&
+      application.platform === APPLICATION_PLATFORM.NATIVE &&
+      grant &&
+      grant.allowed &&
+      (user.sessionVersion ?? 0) === (pending.capturedUserVersion ?? -1) &&
+      (application.sessionVersion ?? 0) ===
+        (pending.capturedClientVersion ?? -1) &&
+      (grant.sessionVersion ?? 0) === (pending.capturedGrantVersion ?? -1) &&
+      pending.authEpoch === this.authEpoch.current(),
+    );
+    if (validAuthority && user && application && grant) {
+      await this.users
+        .updateOne({ _id: user._id }, { $inc: { issuanceFence: 1 } })
+        .session(db)
+        .exec();
+      await this.sessionIssuance.assertSessionLimit(db, user, application, now);
     }
-    const active = await this.sessions
-      .countDocuments({
-        user: user._id,
-        isValid: true,
-        revokedAt: { $exists: false },
-        expiresAt: { $gt: now },
-        idleExpiresAt: { $gt: now },
-        userVersion: user.sessionVersion ?? 0,
-      })
+    const claimed = await this.transactions
+      .updateOne(
+        { _id: pending._id, consumed: false },
+        { $set: { consumed: true } },
+      )
       .session(db)
       .exec();
-    if (active >= MAX_SESSIONS_PER_USER) {
-      return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.ACCESS_DENIED);
+    if (
+      claimed.modifiedCount !== 1 ||
+      !validAuthority ||
+      !user ||
+      !application ||
+      !grant
+    ) {
+      return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_GRANT);
     }
     return this.issuer.issuePair(
       db,

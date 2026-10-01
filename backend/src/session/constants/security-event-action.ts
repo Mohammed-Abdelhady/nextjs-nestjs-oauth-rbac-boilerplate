@@ -7,6 +7,7 @@ export const SECURITY_EVENT_ACTION = {
   APPLICATION_DISABLED: 'application_disabled',
   APPLICATION_ENABLED: 'application_enabled',
   REFRESH_REPLAYED: 'refresh_replayed',
+  NATIVE_CLIENT_REVOKED: 'native_client_revoked',
 } as const;
 
 export const SECURITY_EVENT_OUTCOME = {

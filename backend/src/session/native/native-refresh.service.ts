@@ -4,7 +4,9 @@ import { Connection, Model } from 'mongoose';
 import { Clock } from '../../common/services/clock';
 import { AuthEpochService } from '../../common/services/auth-epoch.service';
 import { User, UserDocument } from '../../user/schemas/user.schema';
+import { APPLICATION_PLATFORM } from '../constants/client-ids';
 import { CREDENTIAL_PURPOSE } from '../constants/credential-purpose';
+import { SECURITY_EVENT_ACTION } from '../constants/security-event-action';
 import {
   Application,
   ApplicationDocument,
@@ -19,6 +21,7 @@ import {
   UserApplicationGrantDocument,
 } from '../schemas/user-application-grant.schema';
 import { withMajorityTransaction } from '../utils/mongo-transaction';
+import { currentSessionDeadlines } from '../utils/current-session-authority';
 import { hashToken } from '../utils/token-hash';
 import { NativeCredentialIssuer } from './native-credential.issuer';
 import {
@@ -76,6 +79,7 @@ export class NativeRefreshService {
           presented.familyId,
           presented.sessionId,
           now,
+          SECURITY_EVENT_ACTION.REFRESH_REPLAYED,
         );
         return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_GRANT);
       }
@@ -89,43 +93,9 @@ export class NativeRefreshService {
         .findById(presented.sessionId)
         .session(db)
         .exec();
-      if (
-        !session ||
-        !session.isValid ||
-        session.revokedAt ||
-        session.idleExpiresAt.getTime() <= now.getTime() ||
-        session.expiresAt.getTime() <= now.getTime()
-      ) {
+      if (!session || session.clientId !== presentedClient) {
         return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_GRANT);
       }
-      const claimed = await this.credentials
-        .updateOne(
-          { _id: presented._id, spent: false },
-          { $set: { spent: true, consumedAt: now } },
-        )
-        .session(db)
-        .exec();
-      if (claimed.modifiedCount !== 1) {
-        await this.issuer.revokeFamily(
-          db,
-          presented.familyId,
-          presented.sessionId,
-          now,
-        );
-        return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_GRANT);
-      }
-      await this.credentials
-        .updateMany(
-          {
-            familyId: presented.familyId,
-            sessionId: presented.sessionId,
-            purpose: CREDENTIAL_PURPOSE.NATIVE_ACCESS,
-            spent: false,
-          },
-          { $set: { spent: true, revokedAt: now } },
-        )
-        .session(db)
-        .exec();
       const user = await this.users.findById(session.user).session(db).exec();
       const application = await this.applications
         .findOne({
@@ -142,17 +112,50 @@ export class NativeRefreshService {
         : null;
       if (
         !user ||
-        user.isDeleted ||
         !application ||
-        !application.enabled ||
+        application.platform !== APPLICATION_PLATFORM.NATIVE ||
         !grant ||
-        !grant.allowed ||
-        (session.userVersion ?? -1) !== (user.sessionVersion ?? 0) ||
-        (session.clientVersion ?? -1) !== (application.sessionVersion ?? 0) ||
-        (session.grantVersion ?? -1) !== (grant.sessionVersion ?? 0)
+        !currentSessionDeadlines(
+          session,
+          user,
+          application,
+          grant,
+          now,
+          this.authEpoch.current(),
+          CREDENTIAL_PURPOSE.NATIVE_ACCESS,
+        )
       ) {
         return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_GRANT);
       }
+      const claimed = await this.credentials
+        .updateOne(
+          { _id: presented._id, spent: false },
+          { $set: { spent: true, consumedAt: now } },
+        )
+        .session(db)
+        .exec();
+      if (claimed.modifiedCount !== 1) {
+        await this.issuer.revokeFamily(
+          db,
+          presented.familyId,
+          presented.sessionId,
+          now,
+          SECURITY_EVENT_ACTION.REFRESH_REPLAYED,
+        );
+        return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_GRANT);
+      }
+      await this.credentials
+        .updateMany(
+          {
+            familyId: presented.familyId,
+            sessionId: presented.sessionId,
+            purpose: CREDENTIAL_PURPOSE.NATIVE_ACCESS,
+            spent: false,
+          },
+          { $set: { spent: true, revokedAt: now } },
+        )
+        .session(db)
+        .exec();
       return this.issuer.issuePair(
         db,
         user,

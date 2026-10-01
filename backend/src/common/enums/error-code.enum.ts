@@ -60,6 +60,8 @@ export enum ErrorCode {
   // Feature flag errors
   /** Route belongs to an authentication method this deployment turned off */
   FEATURE_DISABLED = 'FEATURE_DISABLED',
+  /** Native OAuth and bearer authentication are disabled for this deployment */
+  NATIVE_AUTH_DISABLED = 'NATIVE_AUTH_DISABLED',
 
   // Session errors
   /** Authentication session required */

@@ -61,7 +61,8 @@ export class NativeOAuthController {
   async approve(
     @Body() body: { transactionId?: string },
     @Req() request: RequestWithUser,
-  ): Promise<{ success: true; data: { redirectUri: string } }> {
+    @Res() response: Response,
+  ): Promise<void> {
     const transactionId = body.transactionId?.trim() ?? '';
     if (!request.user || !transactionId) {
       throw new AppException(
@@ -75,7 +76,11 @@ export class NativeOAuthController {
       transactionId,
       request.session?.authenticationMethods ?? [],
     );
-    return { success: true, data: approved };
+    if ('ok' in approved) {
+      this.writeError(response, approved);
+      return;
+    }
+    response.status(HttpStatus.OK).json({ success: true, data: approved });
   }
 
   @Public()

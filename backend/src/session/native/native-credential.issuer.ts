@@ -159,6 +159,7 @@ export class NativeCredentialIssuer {
     familyId: string,
     sessionId: Types.ObjectId,
     now: Date,
+    action: string,
   ): Promise<void> {
     await this.sessions
       .updateOne(
@@ -167,7 +168,7 @@ export class NativeCredentialIssuer {
           $set: {
             isValid: false,
             revokedAt: now,
-            revokedReason: SECURITY_EVENT_ACTION.REFRESH_REPLAYED,
+            revokedReason: action,
           },
         },
       )
@@ -183,7 +184,7 @@ export class NativeCredentialIssuer {
     await this.events.record(
       {
         sessionId: sessionId.toString(),
-        action: SECURITY_EVENT_ACTION.REFRESH_REPLAYED,
+        action,
       },
       db,
     );

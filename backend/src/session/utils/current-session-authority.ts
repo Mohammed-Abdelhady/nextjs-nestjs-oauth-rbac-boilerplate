@@ -1,9 +1,6 @@
 import { FilterQuery, Types } from 'mongoose';
 import { AUTH_SCHEMA_VERSION } from '../constants/session-policy';
-import {
-  CREDENTIAL_PURPOSE,
-  CredentialPurpose,
-} from '../constants/credential-purpose';
+import { CredentialPurpose } from '../constants/credential-purpose';
 import { Application } from '../schemas/application.schema';
 import { Session } from '../schemas/session.schema';
 import { UserApplicationGrant } from '../schemas/user-application-grant.schema';
@@ -41,6 +38,7 @@ export function currentSessionCandidateFilter(
   now: Date,
   userVersion: number,
   authEpoch: number,
+  credentialPurposes: CredentialPurpose[],
 ): FilterQuery<Session> {
   return {
     user: userId,
@@ -53,7 +51,7 @@ export function currentSessionCandidateFilter(
     clientId: { $type: 'string', $ne: '' },
     clientVersion: { $type: 'number' },
     grantVersion: { $type: 'number' },
-    credentialPurpose: CREDENTIAL_PURPOSE.BROWSER_SESSION,
+    credentialPurpose: { $in: credentialPurposes },
     authEpoch,
     schemaVersion: AUTH_SCHEMA_VERSION,
     userVersion,

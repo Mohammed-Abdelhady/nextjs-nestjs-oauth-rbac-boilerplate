@@ -12,6 +12,7 @@ import { SKIP_BROWSER_PROOF } from '../decorators/skip-browser-proof.decorator';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { SessionCookieService } from '../services/session-cookie.service';
 import { SessionService } from '../services/session.service';
+import { CREDENTIAL_PURPOSE } from '../../session/constants/credential-purpose';
 import {
   CSRF_HEADER,
   CSRF_TOKEN_MAX_LENGTH,
@@ -49,7 +50,11 @@ export class BrowserProofGuard implements CanActivate {
       context.getClass(),
     ]);
     this.rejectMixedCredentials(request);
-    if (skip || !UNSAFE_METHODS.has(request.method.toUpperCase())) {
+    if (
+      skip ||
+      request.session?.credentialPurpose === CREDENTIAL_PURPOSE.NATIVE_ACCESS ||
+      !UNSAFE_METHODS.has(request.method.toUpperCase())
+    ) {
       return true;
     }
     if (passedRequests.has(request)) {

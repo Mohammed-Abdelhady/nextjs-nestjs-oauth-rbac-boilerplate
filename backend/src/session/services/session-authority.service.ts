@@ -71,7 +71,9 @@ export class SessionAuthorityService {
       const authEpoch = this.authEpoch.current();
       const candidates = await this.sessionModel
         .find(
-          currentSessionCandidateFilter(userId, now, userVersion, authEpoch),
+          currentSessionCandidateFilter(userId, now, userVersion, authEpoch, [
+            CREDENTIAL_PURPOSE.BROWSER_SESSION,
+          ]),
         )
         .sort({ lastUsedAt: -1 })
         .lean<LeanSession[]>()
