@@ -180,6 +180,8 @@ npm run seed                     # Seed roles and development accounts
 npm run seed:reset               # Wipe database and reseed
 ```
 
+Run this release's ObjectId reference migration before deploying the code that uses the typed schemas, or deploy them together. Existing passkeys with string user IDs are not found by passkey management until the migration converts them.
+
 ### Seed accounts
 
 The seed script creates two test users in development environments:
