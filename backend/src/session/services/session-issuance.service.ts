@@ -23,10 +23,7 @@ import {
   NATIVE_INITIAL_IDLE_MS,
   USER_AGENT_MAX_LENGTH,
 } from '../constants/session-policy';
-import {
-  Application,
-  ApplicationDocument,
-} from '../schemas/application.schema';
+import { ApplicationDocument } from '../schemas/application.schema';
 import {
   LeanSession,
   Session,
@@ -57,8 +54,6 @@ export class SessionIssuanceService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @InjectModel(UserApplicationGrant.name)
     private readonly grantModel: Model<UserApplicationGrantDocument>,
-    @InjectModel(Application.name)
-    private readonly applicationModel: Model<ApplicationDocument>,
     private readonly applications: ApplicationRegistryService,
     private readonly events: SecurityEventService,
     private readonly clock: Clock,
@@ -106,7 +101,6 @@ export class SessionIssuanceService {
       .updateOne({ _id: userId }, { $inc: { issuanceFence: 1 } })
       .session(session)
       .exec();
-    await this.applicationModelFence(application, session);
 
     const grant = await this.requireOrCreateGrant(
       session,
@@ -192,16 +186,6 @@ export class SessionIssuanceService {
         HttpStatus.FORBIDDEN,
       );
     }
-  }
-
-  private async applicationModelFence(
-    application: ApplicationDocument,
-    session: ClientSession,
-  ): Promise<void> {
-    await this.applicationModel
-      .updateOne({ _id: application._id }, { $inc: { issuanceFence: 1 } })
-      .session(session)
-      .exec();
   }
 
   private async requireOrCreateGrant(

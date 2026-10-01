@@ -71,9 +71,6 @@ export class Application {
   @Prop({ type: Number, default: 0 })
   policyVersion!: number;
 
-  @Prop({ type: Number, default: 0 })
-  issuanceFence!: number;
-
   createdAt!: Date;
   updatedAt!: Date;
 }

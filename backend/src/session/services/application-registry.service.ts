@@ -129,7 +129,6 @@ export class ApplicationRegistryService {
           enabled: true,
           sessionVersion: 0,
           policyVersion: 0,
-          issuanceFence: 0,
           redirectUris: [],
           audiences: [DEFAULT_API_AUDIENCE],
           allowedScopes: [DEFAULT_API_AUDIENCE],
