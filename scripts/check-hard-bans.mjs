@@ -7,11 +7,14 @@ export const FILE_LINE_LIMIT = 350;
 
 const SCAN_EXTS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.sh']);
 
-const SKIP_DIR_PARTS = ['/node_modules/', '/dist/', '/.next/', '/.husky/_/'];
+const SKIP_DIR_PARTS = ['/node_modules/', '/dist/', '/.next/', '/.husky/_/', '/.expo/'];
+
+const SKIP_PATH_PREFIXES = ['mobile/expo/ios/', 'mobile/expo/android/'];
 
 const CHECKER_NAMES = new Set(['check-hard-bans.mjs', 'check-hard-bans.test.mjs']);
 
-const CAPPED_PATH = /^(backend\/(src|test)|frontend\/(src|e2e)|packages\/[^/]+\/src)\//;
+const CAPPED_PATH =
+  /^(backend\/(src|test)|frontend\/(src|e2e)|packages\/[^/]+\/src|shared\/[^/]+\/src|mobile\/[^/]+\/(src|app))\//;
 
 export const HARD_BAN_TOKENS = [
   'dangerouslySetInnerHTML',
@@ -68,6 +71,7 @@ export function isScanTarget(filePath) {
   const normalized = posixPath(filePath);
   if (normalized === 'package.json' || normalized.endsWith('/package.json')) return true;
   if (normalized.startsWith('.husky/') && !normalized.includes('/_/')) return true;
+  if (SKIP_PATH_PREFIXES.some((prefix) => normalized.startsWith(prefix))) return false;
   if (SKIP_DIR_PARTS.some((part) => normalized.includes(part))) return false;
   if (normalized.endsWith('package-lock.json') || normalized.endsWith('pnpm-lock.yaml')) {
     return false;
