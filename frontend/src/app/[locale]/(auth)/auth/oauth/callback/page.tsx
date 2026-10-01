@@ -1,18 +1,12 @@
 import { getRedirectPath } from '@/modules/auth/utils';
 import { OAuthCallbackPanel, OAUTH_DEFAULT_ERROR_CODE } from '@/modules/oauth';
 import type { OAuthCallbackStatus } from '@/modules/oauth';
+import { firstValue } from '@/lib/searchParams';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
 interface OAuthCallbackPageProps {
   searchParams: Promise<SearchParams>;
-}
-
-function firstValue(value: string | string[] | undefined): string {
-  if (Array.isArray(value)) {
-    return value[0] ?? '';
-  }
-  return value ?? '';
 }
 
 /**
