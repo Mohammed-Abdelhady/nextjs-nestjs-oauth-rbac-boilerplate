@@ -9,6 +9,7 @@ import {
   WEB_ABSOLUTE_LIFETIME_MS,
   WEB_IDLE_LIFETIME_MS,
 } from '../constants/session-policy';
+import { isAcceptableRedirectUri } from '../utils/redirect-uri.util';
 
 @Schema({ _id: false })
 export class ApplicationPolicy {
@@ -50,7 +51,16 @@ export class Application {
   @Prop({ default: true })
   enabled!: boolean;
 
-  @Prop({ type: [String], default: [] })
+  @Prop({
+    type: [String],
+    default: [],
+    validate: {
+      validator: (redirectUris: unknown) =>
+        Array.isArray(redirectUris) &&
+        Array.from(redirectUris).every(isAcceptableRedirectUri),
+      message: 'Redirect URIs must be acceptable callback addresses',
+    },
+  })
   redirectUris!: string[];
 
   @Prop({ type: [String], default: [] })
