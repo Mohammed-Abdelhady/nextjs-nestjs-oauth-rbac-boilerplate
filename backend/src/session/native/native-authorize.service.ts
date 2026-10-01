@@ -32,16 +32,17 @@ import { isPkceVerifier } from '../utils/pkce';
 import { addMs } from '../utils/session-deadline';
 import { hashToken, randomSecret } from '../utils/token-hash';
 import { withMajorityTransaction } from '../utils/mongo-transaction';
+import { isAcceptableRedirectUri } from '../utils/redirect-uri.util';
 import {
   AuthorizeBegin,
-  AuthorizeQuery,
+  NATIVE_AUTH_INTENT,
   OAUTH_ERROR,
   OauthFailure,
   oauthFailure,
 } from './native-oauth.types';
+import { isValidAuthorizeQueryShape } from './native-authorize-query.util';
 
 const STATE_MAX_LENGTH = 512;
-const NATIVE_INTENT = 'native_login';
 
 @Injectable()
 export class NativeAuthorizeService {
@@ -58,7 +59,10 @@ export class NativeAuthorizeService {
     private readonly authEpoch: AuthEpochService,
   ) {}
 
-  async begin(query: AuthorizeQuery): Promise<AuthorizeBegin | OauthFailure> {
+  async begin(query: unknown): Promise<AuthorizeBegin | OauthFailure> {
+    if (!isValidAuthorizeQueryShape(query)) {
+      return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_REQUEST);
+    }
     if (!this.authEpoch.nativeEnabled()) {
       return oauthFailure(
         HttpStatus.BAD_REQUEST,
@@ -71,9 +75,9 @@ export class NativeAuthorizeService {
         OAUTH_ERROR.UNSUPPORTED_RESPONSE_TYPE,
       );
     }
-    const clientId = query.client_id?.trim() ?? '';
-    const redirectUri = query.redirect_uri ?? '';
-    const challenge = query.code_challenge ?? '';
+    const clientId = query.client_id.trim();
+    const redirectUri = query.redirect_uri;
+    const challenge = query.code_challenge;
     if (
       !clientId ||
       !redirectUri ||
@@ -82,7 +86,7 @@ export class NativeAuthorizeService {
     ) {
       return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_REQUEST);
     }
-    const state = query.state ?? '';
+    const state = query.state;
     if (state.length > STATE_MAX_LENGTH) {
       return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_REQUEST);
     }
@@ -109,7 +113,7 @@ export class NativeAuthorizeService {
       state,
       requestedScopes: scopes,
       audience: DEFAULT_API_AUDIENCE,
-      intent: NATIVE_INTENT,
+      intent: NATIVE_AUTH_INTENT,
       expiresAt: addMs(now, PENDING_AUTH_LIFETIME_MS),
       consumed: false,
       authEpoch: this.authEpoch.current(),
@@ -121,11 +125,12 @@ export class NativeAuthorizeService {
     userId: string,
     transactionId: string,
     authenticationMethods: string[],
-  ): Promise<{ redirectUri: string } | OauthFailure> {
+  ): Promise<{ redirectUri: string }> {
     if (!this.authEpoch.nativeEnabled()) {
-      return oauthFailure(
-        HttpStatus.BAD_REQUEST,
-        OAUTH_ERROR.UNAUTHORIZED_CLIENT,
+      throw new AppException(
+        ErrorCode.NATIVE_AUTH_DISABLED,
+        'Native sign-in is disabled',
+        HttpStatus.FORBIDDEN,
       );
     }
     if (!Types.ObjectId.isValid(userId) || !transactionId.trim()) {
@@ -135,7 +140,6 @@ export class NativeAuthorizeService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    const code = randomSecret();
     const approved = await withMajorityTransaction(
       this.connection,
       async (db) => {
@@ -151,17 +155,18 @@ export class NativeAuthorizeService {
         const pending = await this.transactions
           .findOne({
             transactionId,
+            intent: NATIVE_AUTH_INTENT,
             consumed: false,
+            codeHash: { $exists: false },
             expiresAt: { $gt: now },
           })
           .session(db)
           .exec();
-        if (!pending || pending.codeHash) {
-          throw new AppException(
-            ErrorCode.NOT_FOUND,
-            'Authorization request is not pending',
-            HttpStatus.NOT_FOUND,
-          );
+        if (!pending) {
+          throw expiredTransaction();
+        }
+        if (!isAcceptableRedirectUri(pending.redirectUri)) {
+          throw expiredTransaction();
         }
         const application = await this.applications
           .findOne({
@@ -173,28 +178,32 @@ export class NativeAuthorizeService {
           .exec();
         if (
           !application ||
+          application.platform !== APPLICATION_PLATFORM.NATIVE ||
+          application.clientType !== APPLICATION_CLIENT_TYPE.PUBLIC ||
           !application.redirectUris.includes(pending.redirectUri)
         ) {
-          throw new AppException(
-            ErrorCode.APPLICATION_NOT_FOUND,
-            'Application is not registered',
-            HttpStatus.NOT_FOUND,
-          );
+          throw expiredTransaction();
         }
-        const grant = await this.allowGrant(db, user._id, application);
+        const code = randomSecret();
         const codeExpiresAt = addMs(now, AUTHORIZATION_CODE_LIFETIME_MS);
+        const codeHash = hashToken(code);
+        // Claim the transaction first so competing approvals cannot race on grant creation.
         const claimed = await this.transactions
           .updateOne(
-            { _id: pending._id, consumed: false, codeHash: { $exists: false } },
+            {
+              _id: pending._id,
+              consumed: false,
+              codeHash: { $exists: false },
+              expiresAt: { $gt: now },
+            },
             {
               $set: {
-                codeHash: hashToken(code),
+                codeHash,
                 codeExpiresAt,
                 expiresAt: codeExpiresAt,
                 userId: user._id,
                 capturedUserVersion: user.sessionVersion ?? 0,
                 capturedClientVersion: application.sessionVersion ?? 0,
-                capturedGrantVersion: grant.sessionVersion ?? 0,
                 authenticationMethods: authenticationMethods.slice(0, 10),
               },
             },
@@ -202,19 +211,26 @@ export class NativeAuthorizeService {
           .session(db)
           .exec();
         if (claimed.modifiedCount !== 1) {
-          throw new AppException(
-            ErrorCode.NOT_FOUND,
-            'Authorization request is not pending',
-            HttpStatus.NOT_FOUND,
-          );
+          throw expiredTransaction();
         }
-        return { redirectUri: pending.redirectUri, state: pending.state };
+        const grant = await this.allowGrant(db, user._id, application);
+        const capturedGrant = await this.transactions
+          .updateOne(
+            { _id: pending._id, consumed: false, codeHash },
+            { $set: { capturedGrantVersion: grant.sessionVersion ?? 0 } },
+          )
+          .session(db)
+          .exec();
+        if (capturedGrant.modifiedCount !== 1) {
+          throw expiredTransaction();
+        }
+        return { redirectUri: pending.redirectUri, state: pending.state, code };
       },
     );
     return {
       redirectUri: appendAuthorizationCode(
         approved.redirectUri,
-        code,
+        approved.code,
         approved.state,
       ),
     };
@@ -235,7 +251,10 @@ export class NativeAuthorizeService {
         OAUTH_ERROR.UNAUTHORIZED_CLIENT,
       );
     }
-    if (!application.redirectUris.includes(redirectUri)) {
+    if (
+      !isAcceptableRedirectUri(redirectUri) ||
+      !application.redirectUris.includes(redirectUri)
+    ) {
       return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_REQUEST);
     }
     return null;
@@ -302,8 +321,14 @@ function appendAuthorizationCode(
 ): string {
   const target = new URL(redirectUri);
   target.searchParams.set('code', code);
-  if (state) {
-    target.searchParams.set('state', state);
-  }
+  target.searchParams.set('state', state);
   return target.toString();
+}
+
+function expiredTransaction(): AppException {
+  return new AppException(
+    ErrorCode.NATIVE_TRANSACTION_EXPIRED,
+    'Native authorization transaction is expired or already ended',
+    HttpStatus.NOT_FOUND,
+  );
 }

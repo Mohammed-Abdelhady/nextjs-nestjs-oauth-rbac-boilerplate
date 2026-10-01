@@ -3,23 +3,49 @@ import {
   Controller,
   Get,
   HttpStatus,
+  Param,
   Post,
   Query,
   Req,
   Res,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import {
+  ApiBody,
+  ApiCookieAuth,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiUnauthorizedResponse,
+  ApiHeader,
+} from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { Public } from '../../auth/decorators/public.decorator';
 import { SkipBrowserProof } from '../../auth/decorators/skip-browser-proof.decorator';
 import { RequestWithUser } from '../../auth/guards/auth.guard';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import { CSRF_HEADER } from '../constants/browser-proof';
+import {
+  NATIVE_AUTHORIZE_CLIENT_PATH,
+  NATIVE_TRANSACTION_QUERY_KEY,
+} from '../../common/constants/client-paths';
+import { SESSION_SWAGGER_AUTH_NAME } from '../../common/constants/session';
+import { CREDENTIAL_PURPOSE } from '../constants/credential-purpose';
 import { AuthEpochService } from '../../common/services/auth-epoch.service';
+import { NativeAuthorizeBrowserService } from './native-authorize-browser.service';
 import { NativeAuthorizeService } from './native-authorize.service';
 import { NativeTokenService } from './native-token.service';
+import { NativeAuthorizeActionDto } from './dto/native-authorize.dto';
 import {
-  AuthorizeQuery,
+  ApiNativeAuthorizeApproveErrors,
+  ApiNativeAuthorizeStart,
+} from './native-oauth.swagger';
+import { negotiateNativeAuthorizeLocale } from './native-locale.util';
+import {
   OauthFailure,
   RevokeRequest,
   TokenRequest,
@@ -31,10 +57,12 @@ import {
   requestUserAgent,
 } from './native-request';
 
+@ApiTags('oauth')
 @Controller('oauth')
 export class NativeOAuthController {
   constructor(
     private readonly authorize: NativeAuthorizeService,
+    private readonly authorizeBrowser: NativeAuthorizeBrowserService,
     private readonly tokens: NativeTokenService,
     private readonly config: ConfigService,
     private readonly authEpoch: AuthEpochService,
@@ -42,9 +70,11 @@ export class NativeOAuthController {
 
   @Public()
   @SkipBrowserProof()
+  @ApiNativeAuthorizeStart()
   @Get('authorize')
   async authorizeGet(
-    @Query() query: AuthorizeQuery,
+    @Query() query: unknown,
+    @Req() request: Request,
     @Res() response: Response,
   ): Promise<void> {
     const result = await this.authorize.begin(query);
@@ -52,19 +82,90 @@ export class NativeOAuthController {
       this.writeError(response, result);
       return;
     }
-    const login = new URL('/login', this.authEpoch.clientUrl());
-    login.searchParams.set('native_transaction', result.transactionId);
-    response.redirect(login.toString());
+    const locale = negotiateNativeAuthorizeLocale(
+      request.headers['accept-language'],
+    );
+    const target = new URL(
+      `/${locale}${NATIVE_AUTHORIZE_CLIENT_PATH}`,
+      this.authEpoch.clientUrl(),
+    );
+    target.searchParams.set(NATIVE_TRANSACTION_QUERY_KEY, result.transactionId);
+    response.setHeader('Cache-Control', 'no-store');
+    response.redirect(target.toString());
   }
 
-  @Post('authorize/approve')
-  async approve(
-    @Body() body: { transactionId?: string },
+  @ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
+  @ApiOperation({
+    summary: 'Read a native authorization request',
+    description:
+      'Returns the application name, platform, expiry, and current grant state. ' +
+      'It never returns the callback URI, state, or PKCE challenge.',
+  })
+  @ApiParam({ name: 'id', description: 'Native authorization transaction id' })
+  @ApiOkResponse({
+    schema: {
+      example: {
+        success: true,
+        data: {
+          applicationName: 'Example Mobile App',
+          platform: 'native',
+          expiresAt: '2026-10-01T12:05:00.000Z',
+          alreadyGranted: false,
+        },
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({ description: 'A browser session is required' })
+  @ApiForbiddenResponse({ description: 'Native sign-in is disabled' })
+  @ApiNotFoundResponse({
+    description: 'The transaction is unknown, expired, ended, or disabled',
+  })
+  @Get('authorize/transaction/:id')
+  async transaction(
+    @Param('id') transactionId: string,
     @Req() request: RequestWithUser,
     @Res() response: Response,
   ): Promise<void> {
-    const transactionId = body.transactionId?.trim() ?? '';
-    if (!request.user || !transactionId) {
+    const userId = this.requireBrowserSession(request);
+    const data = await this.authorizeBrowser.getTransaction(
+      userId,
+      transactionId,
+    );
+    response.setHeader('Cache-Control', 'no-store');
+    response.status(HttpStatus.OK).json({ success: true, data });
+  }
+
+  @ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
+  @ApiOperation({
+    summary: 'Approve a native authorization request',
+    description:
+      'Atomically approves one pending request and returns its callback URI.',
+  })
+  @ApiBody({ type: NativeAuthorizeActionDto })
+  @ApiHeader({
+    name: CSRF_HEADER,
+    required: true,
+    description: 'Single-use browser proof',
+  })
+  @ApiOkResponse({
+    schema: {
+      example: {
+        success: true,
+        data: { redirectUri: 'myapp://callback?code=abc&state=xyz' },
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({ description: 'A browser session is required' })
+  @ApiNativeAuthorizeApproveErrors()
+  @Post('authorize/approve')
+  async approve(
+    @Body() body: NativeAuthorizeActionDto,
+    @Req() request: RequestWithUser,
+    @Res() response: Response,
+  ): Promise<void> {
+    const userId = this.requireBrowserSession(request);
+    const transactionId = body.transactionId.trim();
+    if (!transactionId) {
       throw new AppException(
         ErrorCode.VALIDATION_ERROR,
         'Authorization approval is incomplete',
@@ -72,15 +173,51 @@ export class NativeOAuthController {
       );
     }
     const approved = await this.authorize.approve(
-      request.user.id,
+      userId,
       transactionId,
       request.session?.authenticationMethods ?? [],
     );
-    if ('ok' in approved) {
-      this.writeError(response, approved);
-      return;
-    }
+    response.setHeader('Cache-Control', 'no-store');
     response.status(HttpStatus.OK).json({ success: true, data: approved });
+  }
+
+  @ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
+  @ApiOperation({
+    summary: 'Deny a native authorization request',
+    description:
+      'Atomically denies one pending request and returns its callback URI.',
+  })
+  @ApiBody({ type: NativeAuthorizeActionDto })
+  @ApiHeader({
+    name: CSRF_HEADER,
+    required: true,
+    description: 'Single-use browser proof',
+  })
+  @ApiOkResponse({
+    schema: {
+      example: {
+        success: true,
+        data: {
+          redirectUri: 'myapp://callback?error=access_denied&state=xyz',
+        },
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({ description: 'A browser session is required' })
+  @ApiForbiddenResponse({
+    description: 'Browser proof is invalid or native sign-in is disabled',
+  })
+  @ApiNotFoundResponse({ description: 'The transaction is expired or ended' })
+  @Post('authorize/deny')
+  async deny(
+    @Body() body: NativeAuthorizeActionDto,
+    @Req() request: RequestWithUser,
+    @Res() response: Response,
+  ): Promise<void> {
+    this.requireBrowserSession(request);
+    const denied = await this.authorizeBrowser.deny(body.transactionId);
+    response.setHeader('Cache-Control', 'no-store');
+    response.status(HttpStatus.OK).json({ success: true, data: denied });
   }
 
   @Public()
@@ -138,6 +275,20 @@ export class NativeOAuthController {
         this.config.get<string>('NODE_ENV'),
         this.config.get<string>('session.cookieName'),
       ) !== undefined
+    );
+  }
+
+  private requireBrowserSession(request: RequestWithUser): string {
+    if (
+      request.user &&
+      request.session?.credentialPurpose === CREDENTIAL_PURPOSE.BROWSER_SESSION
+    ) {
+      return request.user.id;
+    }
+    throw new AppException(
+      ErrorCode.SESSION_REQUIRED,
+      'Authentication required',
+      HttpStatus.UNAUTHORIZED,
     );
   }
 

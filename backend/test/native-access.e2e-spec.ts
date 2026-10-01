@@ -126,8 +126,10 @@ describe('native access (e2e)', () => {
     const approval = await browser
       .post('/api/oauth/authorize/approve')
       .send({ transactionId: pending });
-    expect(approval.status).toBe(400);
-    expect(approval.body).toEqual({ error: OAUTH_ERROR.UNAUTHORIZED_CLIENT });
+    expect(approval.status).toBe(403);
+    expect((approval.body as ApiErrorBody).error.code).toBe(
+      ErrorCode.NATIVE_AUTH_DISABLED,
+    );
     const transactions = e2e.app.get<Model<AuthorizationTransactionDocument>>(
       getModelToken(AuthorizationTransaction.name),
     );
