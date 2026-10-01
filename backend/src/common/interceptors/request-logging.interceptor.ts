@@ -14,6 +14,7 @@ import {
   SUCCESS_STATUS_MIN,
   SUCCESS_STATUS_MAX_EXCLUSIVE,
 } from '../constants/http-status';
+import { getLoggableRequestPath } from '../utils/request-log-path.util';
 
 /**
  * Logs one line per handled request: method, path, status, duration and the
@@ -50,7 +51,7 @@ export class RequestLoggingInterceptor implements NestInterceptor {
     const duration = Date.now() - startedAt;
     const requestId = request.requestId ?? '-';
     // Path only: the OAuth callback carries the authorization code in the query
-    const path = request.originalUrl.split('?')[0];
+    const path = getLoggableRequestPath(request.originalUrl);
     const message = `${request.method} ${path} ${status} ${duration}ms requestId=${requestId}`;
 
     if (status >= SUCCESS_STATUS_MIN && status < SUCCESS_STATUS_MAX_EXCLUSIVE) {
