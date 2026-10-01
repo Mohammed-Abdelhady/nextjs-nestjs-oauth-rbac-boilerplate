@@ -36,7 +36,7 @@ export class Session {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   user!: Types.ObjectId;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   tokenHash!: string;
 
   @Prop({ required: true })
@@ -132,7 +132,17 @@ export interface LeanSession extends Omit<Session, 'user'> {
 export const SessionSchema: MongooseSchema<Session> =
   SchemaFactory.createForClass(Session);
 
-SessionSchema.index({ user: 1, isValid: 1, createdAt: -1, _id: 1 });
-SessionSchema.index({ clientId: 1, isValid: 1 });
+SessionSchema.index(
+  { tokenHash: 1 },
+  { unique: true, name: 'tokenHash_unique' },
+);
+SessionSchema.index(
+  { user: 1, isValid: 1, createdAt: -1, _id: 1 },
+  { name: 'session_user_active_created' },
+);
+SessionSchema.index(
+  { clientId: 1, isValid: 1 },
+  { name: 'session_client_active' },
+);
 SessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 SessionSchema.index({ user: 1, lastUsedAt: -1 });

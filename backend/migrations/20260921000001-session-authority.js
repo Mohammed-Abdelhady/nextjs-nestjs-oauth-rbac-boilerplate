@@ -1,3 +1,7 @@
+const { dropIndexIfExists } = require(
+  '../migration-support/migration-index-utils',
+);
+
 /**
  * Session authority records, indexes, and first-party application registrations.
  * Existing sessions without captured versions stay unusable until a new login.
@@ -53,7 +57,6 @@ module.exports = {
         },
         sessionVersion: 0,
         policyVersion: 0,
-        issuanceFence: 0,
         createdAt: now,
         updatedAt: now,
       });
@@ -74,7 +77,6 @@ module.exports = {
         },
         sessionVersion: 0,
         policyVersion: 0,
-        issuanceFence: 0,
         createdAt: now,
         updatedAt: now,
       });
@@ -91,11 +93,14 @@ module.exports = {
 
   async down(db) {
     const applications = db.collection('applications');
-    await applications.dropIndex('application_client_environment_unique');
+    await dropIndexIfExists(
+      applications,
+      'application_client_environment_unique',
+    );
     const grants = db.collection('userapplicationgrants');
-    await grants.dropIndex('grant_user_client_unique');
+    await dropIndexIfExists(grants, 'grant_user_client_unique');
     const sessions = db.collection('sessions');
-    await sessions.dropIndex('session_user_active_created');
-    await sessions.dropIndex('session_client_active');
+    await dropIndexIfExists(sessions, 'session_user_active_created');
+    await dropIndexIfExists(sessions, 'session_client_active');
   },
 };
