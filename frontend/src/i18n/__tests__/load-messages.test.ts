@@ -2,12 +2,8 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { mergeMessageTrees } from '../load-messages';
-
-type MessageTree = { [key: string]: string | MessageTree };
-
-function isMessageTree(value: unknown): value is MessageTree {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
+import type { MessageTree } from './message-tree';
+import { isMessageTree } from './message-tree';
 
 function readOverlay(locale: string): MessageTree {
   const parsed: unknown = JSON.parse(

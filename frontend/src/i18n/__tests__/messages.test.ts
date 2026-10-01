@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import type { MessageTree } from './message-tree';
 
 /** Every ICU plural category Arabic needs. */
 const ARABIC_PLURAL_CATEGORIES = ['zero', 'one', 'two', 'few', 'many', 'other'] as const;
@@ -10,8 +11,6 @@ const KEY_LINE = /^(\s*)"((?:[^"\\]|\\.)*)"(\s*):/gm;
 
 /** Separator that cannot appear in a message key, used to make duplicate keys survive JSON.parse. */
 const TAG = '@@';
-
-type MessageTree = { [key: string]: string | MessageTree };
 
 function readMessages(locale: string): string {
   return readFileSync(
