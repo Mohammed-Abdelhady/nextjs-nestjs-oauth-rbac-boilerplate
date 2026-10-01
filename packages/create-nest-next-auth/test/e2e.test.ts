@@ -14,6 +14,10 @@ import { dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { MARKER_EXTENSIONS, SKIPPED_DIRS } from '../src/constants/index.js';
+import {
+  DEFAULT_SELECTION_MUST_EXIST,
+  DEFAULT_SELECTION_MUST_NOT_EXIST,
+} from './plain-run-fixture.js';
 
 const PACKAGE_DIR = fileURLToPath(new URL('..', import.meta.url));
 const BUILD_TIMEOUT = 10 * 60 * 1000;
@@ -309,5 +313,44 @@ describe('the packed CLI', () => {
     const marked = sourceFilesWithMarkers(project);
 
     expect(marked).toEqual([]);
+  });
+
+  it('matches the default selection contract and rejects usage errors', () => {
+    const result = scaffold(packed, 'plain-run');
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+
+    const project = join(packed.workspace, 'plain-run');
+    for (const path of DEFAULT_SELECTION_MUST_EXIST) {
+      expect(existsSync(join(project, path)), path).toBe(true);
+    }
+    for (const path of DEFAULT_SELECTION_MUST_NOT_EXIST) {
+      expect(existsSync(join(project, path)), path).toBe(false);
+    }
+    const root = JSON.parse(readFileSync(join(project, 'package.json'), 'utf8')) as {
+      name?: string;
+    };
+    expect(root.name).toBe('plain-run');
+    expect(readFileSync(join(project, 'backend/.env.example'), 'utf8')).toContain(
+      'AUTH_FEATURES=oauth-core,email-password,google,github,facebook',
+    );
+    expect(readFileSync(join(project, 'backend/src/app.module.ts'), 'utf8')).toContain(
+      'GoogleOAuthStrategy',
+    );
+    expect(
+      readFileSync(join(project, 'frontend/src/modules/users/api/usersApi.ts'), 'utf8'),
+    ).toContain('usersApi');
+    const run = (args: string[]): ReturnType<typeof spawnSync> =>
+      spawnSync(process.execPath, [packed.cli, ...args], {
+        encoding: 'utf8',
+        timeout: BUILD_TIMEOUT,
+      });
+    const common = ['--yes', '--no-install', '--no-git'];
+    expect(run([join(packed.workspace, 'bad-flag'), ...common, '--targets']).status).toBe(2);
+
+    const target = join(packed.workspace, 'unknown-feature');
+    const unknown = run([target, ...common, '--features', 'google,nope']);
+    expect(unknown.status).toBe(2);
+    expect(`${unknown.stdout}${unknown.stderr}`).toContain('nope');
+    expect(existsSync(target)).toBe(false);
   });
 });

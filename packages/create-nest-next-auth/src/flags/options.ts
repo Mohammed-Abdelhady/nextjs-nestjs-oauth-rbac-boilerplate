@@ -1,15 +1,24 @@
 import { Command } from 'commander';
-import { CLI_NAME } from '../constants/index.js';
+import { CLI_NAME, DOCKER_OPTION_ID, PRODUCTION_OPTION_ID } from '../constants/index.js';
 import type { CliOptions } from '../types.js';
 
 interface RawOptions {
   yes?: boolean;
   features?: string;
+  targets?: string;
+  database?: string;
+  preset?: string;
+  config?: string;
+  locales?: string;
+  docker?: boolean;
+  production?: boolean;
+  dryRun?: boolean;
   install: boolean;
   git: boolean;
 }
 
-export function splitFeatureList(value: string): string[] {
+/** Trims, lowercases and drops empty entries from a comma separated list. */
+export function splitList(value: string): string[] {
   return value
     .split(',')
     .map((entry) => entry.trim().toLowerCase())
@@ -24,6 +33,20 @@ export function buildProgram(version: string): Command {
     .argument('[directory]', 'directory to create, defaults to a prompt')
     .option('-y, --yes', 'accept the defaults and skip the prompts')
     .option('--features <list>', 'comma separated feature ids, skips the feature prompt')
+    .option('--targets <list>', 'comma separated client ids, skips the client prompt')
+    .option('--database <list>', 'database id; more than one is an error')
+    .option('--preset <id>', 'apply a preset (minimal, standard, everything)')
+    .option('--config <file>', 'JSON file with the same selection keys')
+    .option(
+      '--locales <list>',
+      'locale ids; "en" is required and only "en,ar" together is accepted for now',
+    )
+    .option('--no-docker', 'leave out the Docker files (not available yet)')
+    .option(
+      '--no-production',
+      'leave out the production nginx and compose files (not available yet)',
+    )
+    .option('--dry-run', 'print the resolved plan and write nothing')
     .option('--no-install', 'skip npm install')
     .option('--no-git', 'skip git init and the first commit')
     .allowExcessArguments(false)
@@ -36,10 +59,25 @@ export function parseCliOptions(argv: string[], version = '0.0.0'): CliOptions {
   program.parse(argv, { from: 'user' });
 
   const raw = program.opts<RawOptions>();
+  const optionOverrides: Partial<Record<string, boolean>> = {};
+  if (program.getOptionValueSource(DOCKER_OPTION_ID) === 'cli') {
+    optionOverrides[DOCKER_OPTION_ID] = raw.docker === true;
+  }
+  if (program.getOptionValueSource(PRODUCTION_OPTION_ID) === 'cli') {
+    optionOverrides[PRODUCTION_OPTION_ID] = raw.production === true;
+  }
+
   return {
     directory: program.args[0],
     yes: raw.yes === true,
-    features: raw.features === undefined ? undefined : splitFeatureList(raw.features),
+    features: raw.features === undefined ? undefined : splitList(raw.features),
+    targets: raw.targets === undefined ? undefined : splitList(raw.targets),
+    databases: raw.database === undefined ? undefined : splitList(raw.database),
+    preset: raw.preset === undefined ? undefined : raw.preset.trim().toLowerCase(),
+    config: raw.config,
+    dryRun: raw.dryRun === true,
+    locales: raw.locales === undefined ? undefined : splitList(raw.locales),
+    optionOverrides,
     install: raw.install,
     git: raw.git,
   };

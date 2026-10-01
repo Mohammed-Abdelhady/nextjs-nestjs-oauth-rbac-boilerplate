@@ -9,6 +9,36 @@ export const MANIFEST_FILE = 'template.manifest.json';
 
 export const TEMPLATE_DIR_NAME = 'template';
 
+/** Manifest version this package writes and understands. */
+export const MANIFEST_VERSION = 2;
+
+/** Preset applied when none was named. Used only when the manifest defines it. */
+export const DEFAULT_PRESET_ID = 'standard';
+
+/** The target whose sign-in pages a native shell borrows. */
+export const WEB_TARGET_ID = 'web';
+
+/** Synthetic plan entry for the browser sign-in pages a native shell needs. */
+export const SIGN_IN_SITE_ID = 'web-sign-in-pages';
+
+export const SIGN_IN_SITE_LABEL = 'web sign-in pages';
+
+/** Option ids toggled by dedicated flags. */
+export const DOCKER_OPTION_ID = 'docker';
+
+export const PRODUCTION_OPTION_ID = 'production';
+
+export const LOCALE_AR_OPTION_ID = 'locale-ar';
+
+/** Locales a generated project can carry today. */
+export const LOCALE_IDS = ['en', 'ar'] as const;
+
+/** Exit code for every usage error: bad flags, bad config, bad selection. */
+export const USAGE_EXIT_CODE = 2;
+
+/** Preset keywords, kept together so validation and resolution agree. */
+export const PRESET_KEYWORDS = ['available', 'defaults'] as const;
+
 /** Env example files the pruner edits, relative to a generated project. */
 export const ENV_EXAMPLE_FILES = [
   'backend/.env.example',

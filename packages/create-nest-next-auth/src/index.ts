@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { CommanderError } from 'commander';
 import { main } from './cli.js';
+import { USAGE_EXIT_CODE } from './constants/index.js';
 import { packageRoot } from './paths.js';
 
 async function readVersion(): Promise<string> {
@@ -20,7 +21,7 @@ try {
   process.exitCode = await main(process.argv.slice(2), await readVersion());
 } catch (error) {
   if (error instanceof CommanderError) {
-    process.exitCode = error.exitCode;
+    process.exitCode = error.exitCode === 0 ? 0 : USAGE_EXIT_CODE;
   } else {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;
