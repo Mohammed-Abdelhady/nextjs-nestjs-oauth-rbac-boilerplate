@@ -1,7 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { MongoNetworkError } from 'mongodb';
+import { MongoNetworkError, MongoServerError } from 'mongodb';
 import { Types } from 'mongoose';
+import { HttpStatus } from '@nestjs/common';
+import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { Clock } from '../../common/services/clock';
 import { AuthEpochService } from '../../common/services/auth-epoch.service';
@@ -17,6 +19,9 @@ function resolvingQuery(value: unknown) {
       return this;
     },
     readConcern() {
+      return this;
+    },
+    maxTimeMS() {
       return this;
     },
     sort() {
@@ -35,6 +40,9 @@ function rejectingQuery(error: Error) {
       return this;
     },
     readConcern() {
+      return this;
+    },
+    maxTimeMS() {
       return this;
     },
     sort() {
@@ -127,5 +135,27 @@ describe('SessionAuthorityService query failures', () => {
       .catch((error: unknown) => error);
 
     expect(failure).toMatchObject({ code: ErrorCode.AUTHORITY_UNAVAILABLE });
+  });
+
+  it('maps a server read timeout during validation to service unavailable', async () => {
+    const timeoutError = new MongoServerError({
+      ok: 0,
+      code: 50,
+      codeName: 'MaxTimeMSExpired',
+      errmsg: 'operation exceeded time limit',
+    });
+    await createService(rejectingQuery(timeoutError));
+    const failure = await authority
+      .validate('session-token', { extendIdle: false })
+      .catch((error: unknown) => error);
+    const response =
+      failure instanceof AppException
+        ? { code: failure.getCode(), status: failure.getStatus() }
+        : null;
+
+    expect(response).toEqual({
+      code: ErrorCode.AUTHORITY_UNAVAILABLE,
+      status: HttpStatus.SERVICE_UNAVAILABLE,
+    });
   });
 });

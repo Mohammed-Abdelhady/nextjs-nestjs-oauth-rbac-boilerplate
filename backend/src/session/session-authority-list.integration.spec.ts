@@ -8,7 +8,7 @@ import {
 } from './constants/session-policy';
 import { hashToken } from './utils/token-hash';
 import { startMemoryReplSet } from '../../test/utils/memory-replset';
-import { FrozenClock } from '../../test/utils/frozen-clock';
+import { FrozenClock, TEST_NOW } from '../../test/utils/frozen-clock';
 import {
   bootSessionAuthority,
   createTestUser,
@@ -23,7 +23,7 @@ describe('session authority active-session filtering', () => {
     mongo = await startMemoryReplSet();
     harness = await bootSessionAuthority(
       mongo.uri('session_authority_list'),
-      new FrozenClock(new Date('2026-09-21T12:00:00.000Z')),
+      new FrozenClock(TEST_NOW),
     );
   });
 
@@ -37,7 +37,7 @@ describe('session authority active-session filtering', () => {
   });
 
   beforeEach(async () => {
-    harness.clock.set(new Date('2026-09-21T12:00:00.000Z'));
+    harness.clock.set(TEST_NOW);
     await harness.sessions.deleteMany({});
     await harness.grants.deleteMany({});
     await harness.users.deleteMany({});

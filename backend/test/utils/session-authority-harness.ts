@@ -28,6 +28,8 @@ import { SessionRevocationService } from '../../src/session/services/session-rev
 import { ApplicationAccessService } from '../../src/session/services/application-access.service';
 import { FrozenClock } from './frozen-clock';
 
+export const SESSION_AUTHORITY_BOOT_TIMEOUT_MS = 60000;
+
 export interface SessionAuthorityHarness {
   app: INestApplication;
   clock: FrozenClock;
@@ -104,6 +106,5 @@ export async function createTestUser(
     role: 'user',
     isVerified: true,
     sessionVersion: 0,
-    issuanceFence: 0,
   });
 }

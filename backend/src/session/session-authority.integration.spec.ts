@@ -16,14 +16,13 @@ import {
   SecurityEventDocument,
 } from './schemas/security-event.schema';
 import { startMemoryReplSet } from '../../test/utils/memory-replset';
-import { FrozenClock } from '../../test/utils/frozen-clock';
+import { FrozenClock, TEST_NOW } from '../../test/utils/frozen-clock';
 import {
   bootSessionAuthority,
   createTestUser,
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SessionAuthorityHarness,
 } from '../../test/utils/session-authority-harness';
-
-jest.setTimeout(60000);
 
 describe('session authority (plan 02)', () => {
   let mongo: Awaited<ReturnType<typeof startMemoryReplSet>>;
@@ -33,9 +32,9 @@ describe('session authority (plan 02)', () => {
     mongo = await startMemoryReplSet();
     harness = await bootSessionAuthority(
       mongo.uri('session_authority'),
-      new FrozenClock(new Date('2026-09-21T12:00:00.000Z')),
+      new FrozenClock(TEST_NOW),
     );
-  });
+  }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   afterAll(async () => {
     if (harness) {
@@ -47,7 +46,7 @@ describe('session authority (plan 02)', () => {
   });
 
   beforeEach(async () => {
-    harness.clock.set(new Date('2026-09-21T12:00:00.000Z'));
+    harness.clock.set(TEST_NOW);
     await harness.sessions.deleteMany({});
     await harness.grants.deleteMany({});
     await harness.users.deleteMany({});

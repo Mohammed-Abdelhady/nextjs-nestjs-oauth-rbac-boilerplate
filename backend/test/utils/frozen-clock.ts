@@ -1,3 +1,6 @@
+// Keep session expirations ahead of MongoDB's real-time TTL monitor.
+export const TEST_NOW = new Date('2099-01-01T12:00:00.000Z');
+
 export class FrozenClock {
   current: Date;
 
