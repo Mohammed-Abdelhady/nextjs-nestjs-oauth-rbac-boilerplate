@@ -3,6 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import type { Server } from 'node:http';
 import { Model } from 'mongoose';
+import { UserDocument } from '../../user/schemas/user.schema';
 import {
   APPLICATION_CLIENT_TYPE,
   APPLICATION_PLATFORM,
@@ -14,7 +15,11 @@ import {
 } from '../constants/session-policy';
 import { NativeAccessService } from './native-access.service';
 import { NativeAuthorizeService } from './native-authorize.service';
-import { AuthorizeQuery, TokenSuccess } from './native-oauth.types';
+import {
+  AuthorizeQuery,
+  OauthFailure,
+  TokenSuccess,
+} from './native-oauth.types';
 import { NativeTokenService } from './native-token.service';
 import {
   AuthorizationTransaction,
@@ -25,7 +30,7 @@ import {
   NativeCredentialDocument,
 } from '../schemas/native-credential.schema';
 import { startMemoryReplSet } from '../../../test/utils/memory-replset';
-import { FrozenClock } from '../../../test/utils/frozen-clock';
+import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
 import {
   bootSessionAuthority,
   createTestUser,
@@ -35,8 +40,6 @@ import {
 export const NATIVE_CLIENT_ID = 'native-app';
 export const NATIVE_REDIRECT = 'myapp://callback';
 export const NATIVE_META = { ip: '203.0.113.10', userAgent: 'NativeTest/1' };
-// MongoDB's TTL monitor uses real time, so keep this fixture date ahead of it.
-export const NATIVE_STARTED = new Date('2099-01-01T12:00:00.000Z');
 
 export interface NativeOauthHarness {
   mongo: Awaited<ReturnType<typeof startMemoryReplSet>>;
@@ -46,6 +49,12 @@ export interface NativeOauthHarness {
   access: NativeAccessService;
   transactions: Model<AuthorizationTransactionDocument>;
   credentials: Model<NativeCredentialDocument>;
+}
+
+export interface ApprovedNativeCode {
+  code: string;
+  verifier: string;
+  transactionId: string;
 }
 
 export function nativeAuthorizeQuery(
@@ -73,7 +82,7 @@ export async function startNativeOauth(
   const mongo = await startMemoryReplSet();
   const harness = await bootSessionAuthority(
     mongo.uri(dbName),
-    new FrozenClock(NATIVE_STARTED),
+    new FrozenClock(TEST_NOW),
     { nativeEnabled: true, withNativeHttp: true },
   );
   return {
@@ -95,7 +104,7 @@ export async function stopNativeOauth(ctx: NativeOauthHarness): Promise<void> {
 export async function resetNativeClient(
   ctx: NativeOauthHarness,
 ): Promise<void> {
-  ctx.harness.clock.set(NATIVE_STARTED);
+  ctx.harness.clock.set(TEST_NOW);
   await ctx.harness.sessions.deleteMany({});
   await ctx.harness.grants.deleteMany({});
   await ctx.harness.users.deleteMany({});
@@ -125,28 +134,15 @@ export async function resetNativeClient(
 export async function issueNativeGrant(
   ctx: NativeOauthHarness,
 ): Promise<TokenSuccess> {
-  const verifier = randomBytes(32).toString('base64url');
-  const begun = await ctx.authorize.begin(nativeAuthorizeQuery(verifier));
-  if (!begun.ok) {
-    throw new Error(begun.error);
-  }
   const user = await createTestUser(ctx.harness.users, 'native@example.com');
-  const approved = await ctx.authorize.approve(
-    user._id.toString(),
-    begun.transactionId,
-    ['password'],
-  );
-  const code = new URL(approved.redirectUri).searchParams.get('code');
-  if (!code) {
-    throw new Error('missing code');
-  }
+  const approved = await approveNativeCode(ctx, user);
   const granted = await ctx.tokens.grant(
     {
       grant_type: 'authorization_code',
-      code,
+      code: approved.code,
       redirect_uri: NATIVE_REDIRECT,
       client_id: NATIVE_CLIENT_ID,
-      code_verifier: verifier,
+      code_verifier: approved.verifier,
     },
     NATIVE_META,
   );
@@ -154,4 +150,34 @@ export async function issueNativeGrant(
     throw new Error(granted.error);
   }
   return granted;
+}
+
+export async function approveNativeCode(
+  ctx: NativeOauthHarness,
+  user: UserDocument,
+): Promise<ApprovedNativeCode> {
+  const verifier = randomBytes(32).toString('base64url');
+  const begun = await ctx.authorize.begin(nativeAuthorizeQuery(verifier));
+  if (!begun.ok) {
+    throw new Error(begun.error);
+  }
+  const approved = await ctx.authorize.approve(
+    user._id.toString(),
+    begun.transactionId,
+    ['password'],
+  );
+  const code = new URL(approvalRedirectUri(approved)).searchParams.get('code');
+  if (!code) {
+    throw new Error('missing code');
+  }
+  return { code, verifier, transactionId: begun.transactionId };
+}
+
+export function approvalRedirectUri(
+  approval: { redirectUri: string } | OauthFailure,
+): string {
+  if ('ok' in approval) {
+    throw new Error(approval.error);
+  }
+  return approval.redirectUri;
 }
