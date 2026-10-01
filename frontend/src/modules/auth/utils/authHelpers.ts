@@ -1,4 +1,6 @@
 import { parseApiError } from '../../../lib/apiError';
+import { routing } from '@/i18n/routing';
+import { NATIVE_AUTHORIZE_PATH, NATIVE_TRANSACTION_PARAM } from '../constants/nativeAuthorize';
 
 /**
  * Validates if a string is a valid email format
@@ -26,9 +28,71 @@ const AUTH_PAGES = [
   '/auth/activate',
 ];
 
+const SUPPORTED_LOCALES: readonly string[] = routing.locales;
+
+/** C0 controls and DEL can hide a scheme from a naive reader. */
+const CONTROL_CHARACTERS = /[\u0000-\u001F\u007F]/;
+
+/** True when a supported-locale prefix still leads the path. */
+function hasLocalePrefix(pathname: string): boolean {
+  for (const locale of SUPPORTED_LOCALES) {
+    const prefix = `/${locale}`;
+    if (pathname === prefix || pathname.startsWith(`${prefix}/`)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Removes exactly one supported-locale prefix so the same route compares equal
+ * whether it was captured on `/en/...` or `/ar/...`. Only a whole first segment
+ * counts: `/english` keeps its name. A second locale prefix is left in place
+ * for the caller to reject.
+ */
+function stripLocalePrefix(pathname: string): string {
+  for (const locale of SUPPORTED_LOCALES) {
+    const prefix = `/${locale}`;
+    if (pathname.startsWith(`${prefix}/`)) {
+      return pathname.slice(prefix.length);
+    }
+    if (pathname === prefix) {
+      return '/';
+    }
+  }
+  return pathname;
+}
+
+/**
+ * The one auth route a redirect may name: the native authorize page with
+ * exactly the `transaction` query and nothing else.
+ */
+function isNativeAuthorizeRoute(pathname: string): boolean {
+  if (pathname.includes('#')) {
+    return false;
+  }
+  const separator = pathname.indexOf('?');
+  const path = separator === -1 ? pathname : pathname.slice(0, separator);
+  if (path !== NATIVE_AUTHORIZE_PATH) {
+    return false;
+  }
+  const query = separator === -1 ? '' : pathname.slice(separator + 1);
+  const params = new URLSearchParams(query);
+  const keys = [...params.keys()];
+  // A repeated key yields the key more than once, so this also rejects it.
+  if (keys.length !== 1 || keys[0] !== NATIVE_TRANSACTION_PARAM) {
+    return false;
+  }
+  return (params.get(NATIVE_TRANSACTION_PARAM) ?? '').length > 0;
+}
+
 /**
  * Determines the redirect path after authentication
  * Accepts only same-origin relative paths
+ *
+ * The native authorize route is the single auth page that may be carried
+ * through a sign-in, so the browser can come back and finish the request. It is
+ * accepted only with a transaction id; every other auth path is still rejected.
  *
  * @param pathname - Current pathname or redirect query parameter
  * @param defaultPath - Fallback path when candidate is rejected (defaults to /dashboard)
@@ -38,6 +102,8 @@ const AUTH_PAGES = [
  * getRedirectPath('/dashboard') // '/dashboard'
  * getRedirectPath('https://evil.com') // '/dashboard'
  * getRedirectPath('/auth/login') // '/dashboard'
+ * getRedirectPath('/ar/auth/native/authorize?transaction=abc')
+ *   // '/auth/native/authorize?transaction=abc'
  */
 export function getRedirectPath(
   pathname?: string | null,
@@ -47,23 +113,58 @@ export function getRedirectPath(
     return defaultPath;
   }
 
+  if (!pathname.startsWith('/')) {
+    return defaultPath;
+  }
+
+  if (CONTROL_CHARACTERS.test(pathname)) {
+    return defaultPath;
+  }
+
+  const normalized = stripLocalePrefix(pathname);
+
+  // Exactly one supported-locale prefix: a second one is a different route.
+  if (hasLocalePrefix(normalized)) {
+    return defaultPath;
+  }
+
   // Must start with a single '/' and not '//' or '/\'
-  if (!pathname.startsWith('/') || pathname.startsWith('//') || pathname.startsWith('/\\')) {
+  if (normalized.startsWith('//') || normalized.startsWith('/\\')) {
+    return defaultPath;
+  }
+
+  // A backslash anywhere is normalised to a slash by browsers, so it never
+  // names the route it appears to.
+  if (normalized.includes('\\')) {
+    return defaultPath;
+  }
+
+  const pathPart = normalized.split(/[?#]/, 1)[0];
+  // `//` in the path and `..` segments both let a URL parser reach another host.
+  if (pathPart.includes('//')) {
+    return defaultPath;
+  }
+  if (pathPart.split('/').includes('..')) {
     return defaultPath;
   }
 
   // Must not contain a scheme
   const hasScheme =
-    /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(pathname) ||
-    pathname.includes('://') ||
-    pathname.toLowerCase().includes('javascript:') ||
-    pathname.toLowerCase().includes('data:');
+    /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(normalized) ||
+    normalized.includes('://') ||
+    normalized.toLowerCase().includes('javascript:') ||
+    normalized.toLowerCase().includes('data:');
   if (hasScheme) {
     return defaultPath;
   }
 
+  // The native authorize route is the only auth page allowed through.
+  if (isNativeAuthorizeRoute(normalized)) {
+    return normalized;
+  }
+
   // Must not be an auth page
-  const cleanPath = pathname.split('?')[0].split('#')[0];
+  const cleanPath = normalized.split('?')[0].split('#')[0];
   const isAuthPage =
     cleanPath === '/auth' ||
     cleanPath.startsWith('/auth/') ||
@@ -72,7 +173,7 @@ export function getRedirectPath(
     return defaultPath;
   }
 
-  return pathname;
+  return normalized;
 }
 
 /**
