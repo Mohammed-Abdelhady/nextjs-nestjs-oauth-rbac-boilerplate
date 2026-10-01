@@ -55,6 +55,18 @@ describe('session authority active-session filtering', () => {
     );
   });
 
+  it('finds an ObjectId grant when its user id is queried as a string', async () => {
+    const userId = new Types.ObjectId('507f1f77bcf86cd799439301');
+    await harness.grants.create({ userId, clientId: WEB_CLIENT_ID });
+
+    const grant = await harness.grants.findOne({
+      userId: '507f1f77bcf86cd799439301',
+      clientId: WEB_CLIENT_ID,
+    });
+
+    expect(grant?.userId.toString()).toBe('507f1f77bcf86cd799439301');
+  });
+
   async function seedAtLimit(email: string): Promise<Types.ObjectId> {
     const user = await createTestUser(harness.users, email);
     const token = await harness.sessionService.createSession(
