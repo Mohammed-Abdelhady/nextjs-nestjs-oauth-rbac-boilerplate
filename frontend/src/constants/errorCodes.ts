@@ -43,6 +43,7 @@ export const ErrorCode = {
 
   // Feature flags
   FEATURE_DISABLED: 'FEATURE_DISABLED',
+  NATIVE_AUTH_DISABLED: 'NATIVE_AUTH_DISABLED',
 
   // Session & Verification
   SESSION_REQUIRED: 'SESSION_REQUIRED',

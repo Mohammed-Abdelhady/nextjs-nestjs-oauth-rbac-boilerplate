@@ -50,7 +50,7 @@ describe('session authority locale overlays', () => {
   });
 
   it('ships the same overlay keys in English and Arabic', () => {
-    for (const name of ['session-authority', 'browser-proof']) {
+    for (const name of ['session-authority', 'browser-proof', 'native-auth']) {
       expect(flatten(readOverlay(name, 'en')).sort()).toEqual(
         flatten(readOverlay(name, 'ar')).sort(),
       );
