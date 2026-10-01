@@ -12,6 +12,7 @@ import { FrozenClock, TEST_NOW } from '../../test/utils/frozen-clock';
 import {
   bootSessionAuthority,
   createTestUser,
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SessionAuthorityHarness,
 } from '../../test/utils/session-authority-harness';
 
@@ -25,7 +26,7 @@ describe('session authority active-session filtering', () => {
       mongo.uri('session_authority_list'),
       new FrozenClock(TEST_NOW),
     );
-  });
+  }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   afterAll(async () => {
     if (harness) {
