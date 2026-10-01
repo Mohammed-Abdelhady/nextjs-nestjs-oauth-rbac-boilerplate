@@ -3,10 +3,10 @@ import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class StepUpChallenge {
-  @Prop({ type: Types.ObjectId, ref: 'Session', required: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Session', required: true })
   sessionId!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
   userId!: Types.ObjectId;
 
   @Prop({ required: true })

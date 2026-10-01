@@ -4,7 +4,7 @@ import { DEFAULT_API_AUDIENCE } from '../constants/client-ids';
 
 @Schema({ timestamps: true })
 export class UserApplicationGrant {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
   userId!: Types.ObjectId;
 
   @Prop({ required: true })

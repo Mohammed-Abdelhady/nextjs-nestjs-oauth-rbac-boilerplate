@@ -33,7 +33,7 @@ export class DeviceInfo {
  */
 @Schema({ timestamps: true })
 export class Session {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
   user!: Types.ObjectId;
 
   @Prop({ required: true })

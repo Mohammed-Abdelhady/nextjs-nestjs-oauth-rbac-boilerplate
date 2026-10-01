@@ -36,7 +36,7 @@ export class AuthorizationTransaction {
   @Prop({ default: false })
   consumed!: boolean;
 
-  @Prop({ type: Types.ObjectId, ref: 'User' })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   userId?: Types.ObjectId;
 
   @Prop({ type: Number })

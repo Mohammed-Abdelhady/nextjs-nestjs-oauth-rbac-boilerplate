@@ -17,7 +17,7 @@ export class NativeCredential {
   })
   purpose!: CredentialPurpose;
 
-  @Prop({ type: Types.ObjectId, ref: 'Session', required: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Session', required: true })
   sessionId!: Types.ObjectId;
 
   @Prop({ required: true })
