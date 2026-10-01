@@ -12,6 +12,8 @@ import { zodEmail } from '@/lib/validations';
 import { parseApiError } from '@/lib/apiError';
 import { useCooldown } from '@/modules/auth/hooks/useCooldown';
 import { useFeatureDisabledHandler } from '@/modules/auth/hooks/useFeatureDisabled';
+import { isNativeAuthorizeContinuation } from '@/modules/auth/constants/nativeAuthorize';
+import { getRedirectPath } from '@/modules/auth/utils';
 import { translatableErrorCode } from '@/modules/auth/utils/errorCodeMessage';
 import type { AuthMethodFormProps } from '../types';
 import { useRequestMagicLinkMutation } from './magicLinkApi';
@@ -35,7 +37,7 @@ type MagicLinkFormData = z.infer<ReturnType<typeof createMagicLinkSchema>>;
  * The confirmation says a link is on its way whatever the backend did, which
  * matches a reply that is deliberately the same for every address.
  */
-export function MagicLinkRequestForm({ isOnlyMethod }: AuthMethodFormProps) {
+export function MagicLinkRequestForm({ isOnlyMethod, redirect }: AuthMethodFormProps) {
   const t = useTranslations('auth.magicLink');
   const tCodes = useTranslations('errors.codes');
   const [requestMagicLink, { isLoading }] = useRequestMagicLinkMutation();
@@ -59,8 +61,12 @@ export function MagicLinkRequestForm({ isOnlyMethod }: AuthMethodFormProps) {
 
   const send = useCallback(
     async (email: string) => {
+      // Only the native authorize continuation is worth carrying through the
+      // link, and only its validated value is sent, never the raw query string.
+      const validated = getRedirectPath(redirect, '');
+      const continuation = isNativeAuthorizeContinuation(validated) ? validated : undefined;
       try {
-        await requestMagicLink({ email }).unwrap();
+        await requestMagicLink({ email, redirect: continuation }).unwrap();
         setSentTo(email);
         startCooldown();
       } catch (err) {
@@ -75,7 +81,7 @@ export function MagicLinkRequestForm({ isOnlyMethod }: AuthMethodFormProps) {
         });
       }
     },
-    [handleFeatureDisabled, requestMagicLink, setError, startCooldown, t, tCodes],
+    [handleFeatureDisabled, redirect, requestMagicLink, setError, startCooldown, t, tCodes],
   );
 
   const onSubmit = useCallback(async (data: MagicLinkFormData) => send(data.email), [send]);

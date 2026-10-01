@@ -18,7 +18,10 @@ export interface MagicLinkRequestResult {
  */
 export const magicLinkApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    requestMagicLink: builder.mutation<MagicLinkRequestResult, { email: string }>({
+    requestMagicLink: builder.mutation<
+      MagicLinkRequestResult,
+      { email: string; redirect?: string }
+    >({
       query: (body) => ({ url: REQUEST_PATH, method: 'POST', body }),
       transformResponse: (response: { success: boolean; data: MagicLinkRequestResult }) =>
         response.data,
