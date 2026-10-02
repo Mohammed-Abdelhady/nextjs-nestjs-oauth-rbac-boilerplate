@@ -41,6 +41,38 @@ import configuration from './config/configuration';
 import { validateEnvironment } from './config/env.validation';
 import { Connection } from 'mongoose';
 
+export const MONGOOSE_CONNECTION_OPTIONS = {
+  w: 'majority' as const,
+  retryWrites: true,
+  readPreference: 'primary' as const,
+};
+
+export function buildMongooseOptions(configService: ConfigService): {
+  uri: string | undefined;
+  w: 'majority';
+  retryWrites: boolean;
+  readPreference: 'primary';
+  connectionFactory: (connection: Connection) => Connection;
+} {
+  return {
+    uri: configService.get<string>('MONGO_URI'),
+    ...MONGOOSE_CONNECTION_OPTIONS,
+    connectionFactory: (connection: Connection) => {
+      const logger = new Logger('Mongoose');
+      connection.on('connected', () => {
+        logger.log('Connected to MongoDB');
+      });
+      connection.on('error', (err: Error) => {
+        logger.error(`MongoDB connection error: ${err.message}`, err.stack);
+      });
+      connection.on('disconnected', () => {
+        logger.warn('Disconnected from MongoDB');
+      });
+      return connection;
+    },
+  };
+}
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -55,25 +87,7 @@ import { Connection } from 'mongoose';
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGO_URI'),
-        w: 'majority' as const,
-        retryWrites: true,
-        readPreference: 'primary' as const,
-        connectionFactory: (connection: Connection) => {
-          const logger = new Logger('Mongoose');
-          connection.on('connected', () => {
-            logger.log('Connected to MongoDB');
-          });
-          connection.on('error', (err: Error) => {
-            logger.error(`MongoDB connection error: ${err.message}`, err.stack);
-          });
-          connection.on('disconnected', () => {
-            logger.warn('Disconnected from MongoDB');
-          });
-          return connection;
-        },
-      }),
+      useFactory: buildMongooseOptions,
       inject: [ConfigService],
     }),
     ThrottlerModule.forRootAsync({

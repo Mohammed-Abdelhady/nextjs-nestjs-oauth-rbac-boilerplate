@@ -1,4 +1,4 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Module, OnModuleInit, type INestApplication } from '@nestjs/common';
 import { InjectConnection, MongooseModule } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { CommonModule } from '../common/common.module';
@@ -104,4 +104,10 @@ export class SessionModule implements OnModuleInit {
     }
     await this.applications.ensureClientOriginAllowed();
   }
+}
+
+export async function reconcileStartupApplications(
+  app: INestApplication,
+): Promise<void> {
+  await app.get(ApplicationRegistryService).reconcileNativeApplications();
 }
