@@ -22,6 +22,13 @@ export class AuthEpochService {
     );
   }
 
+  nativeCustomSchemeAllowed(): boolean {
+    return this.configService.get<boolean>(
+      'auth.nativeCustomSchemeAllowed',
+      false,
+    );
+  }
+
   environment(): string {
     return this.configService.get<string>('server.nodeEnv', 'development');
   }

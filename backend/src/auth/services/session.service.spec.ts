@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SessionAuthorityService } from '../../session/services/session-authority.service';
 import { SessionIssuanceService } from '../../session/services/session-issuance.service';
 import { SessionRevocationService } from '../../session/services/session-revocation.service';
+import { NativeSessionRevocationService } from '../../session/services/native-session-revocation.service';
 import { SessionService } from './session.service';
 
 describe('SessionService', () => {
@@ -13,6 +14,7 @@ describe('SessionService', () => {
         { provide: SessionIssuanceService, useValue: {} },
         { provide: SessionAuthorityService, useValue: authority },
         { provide: SessionRevocationService, useValue: {} },
+        { provide: NativeSessionRevocationService, useValue: {} },
       ],
     }).compile();
     const sessions = module.get(SessionService);

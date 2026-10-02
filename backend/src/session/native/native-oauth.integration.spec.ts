@@ -58,6 +58,7 @@ describe('native authorization (plan 04)', () => {
       ok: false,
       status: 400,
       error: OAUTH_ERROR.UNAUTHORIZED_CLIENT,
+      error_description: ErrorCode.NATIVE_AUTH_DISABLED,
     });
     expect(await ctx.transactions.countDocuments()).toBe(0);
   });

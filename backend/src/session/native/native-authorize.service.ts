@@ -33,6 +33,8 @@ import { addMs } from '../utils/session-deadline';
 import { hashToken, randomSecret } from '../utils/token-hash';
 import { withMajorityTransaction } from '../utils/mongo-transaction';
 import { isAcceptableRedirectUri } from '../utils/redirect-uri.util';
+import type { RedirectUriPolicy } from '../utils/redirect-uri.util';
+import { matchesRegisteredRedirectUri } from '../utils/redirect-uri.util';
 import {
   AuthorizeBegin,
   NATIVE_AUTH_INTENT,
@@ -67,6 +69,7 @@ export class NativeAuthorizeService {
       return oauthFailure(
         HttpStatus.BAD_REQUEST,
         OAUTH_ERROR.UNAUTHORIZED_CLIENT,
+        ErrorCode.NATIVE_AUTH_DISABLED,
       );
     }
     if (query.response_type !== 'code') {
@@ -165,7 +168,9 @@ export class NativeAuthorizeService {
         if (!pending) {
           throw expiredTransaction();
         }
-        if (!isAcceptableRedirectUri(pending.redirectUri)) {
+        if (
+          !isAcceptableRedirectUri(pending.redirectUri, this.redirectPolicy())
+        ) {
           throw expiredTransaction();
         }
         const application = await this.applications
@@ -180,7 +185,9 @@ export class NativeAuthorizeService {
           !application ||
           application.platform !== APPLICATION_PLATFORM.NATIVE ||
           application.clientType !== APPLICATION_CLIENT_TYPE.PUBLIC ||
-          !application.redirectUris.includes(pending.redirectUri)
+          !application.redirectUris.some((registered) =>
+            matchesRegisteredRedirectUri(registered, pending.redirectUri),
+          )
         ) {
           throw expiredTransaction();
         }
@@ -236,6 +243,13 @@ export class NativeAuthorizeService {
     };
   }
 
+  private redirectPolicy(): RedirectUriPolicy {
+    return {
+      nodeEnv: this.authEpoch.environment(),
+      allowCustomScheme: this.authEpoch.nativeCustomSchemeAllowed(),
+    };
+  }
+
   private rejectClient(
     application: ApplicationDocument | null,
     redirectUri: string,
@@ -252,8 +266,10 @@ export class NativeAuthorizeService {
       );
     }
     if (
-      !isAcceptableRedirectUri(redirectUri) ||
-      !application.redirectUris.includes(redirectUri)
+      !isAcceptableRedirectUri(redirectUri, this.redirectPolicy()) ||
+      !application.redirectUris.some((registered) =>
+        matchesRegisteredRedirectUri(registered, redirectUri),
+      )
     ) {
       return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_REQUEST);
     }

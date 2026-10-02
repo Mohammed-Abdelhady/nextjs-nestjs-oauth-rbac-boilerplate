@@ -88,91 +88,113 @@ export class SessionRevocationService {
     });
   }
 
-  async revokeAllOthers(
+  async revokeAllOthersExceptSession(
     userId: Types.ObjectId,
-    exceptToken: string,
+    exceptSessionId: string,
+    db?: ClientSession,
   ): Promise<number> {
-    return this.run(async (session) => {
-      const user = await this.userModel
-        .findById(userId)
-        .session(session)
-        .exec();
-      if (!user) {
-        throw new AppException(
-          ErrorCode.USER_NOT_FOUND,
-          'User not found',
-          HttpStatus.NOT_FOUND,
-        );
-      }
-      const currentVersion = user.sessionVersion ?? 0;
-      const survivor = await this.sessionModel
-        .findOne({
-          user: userId,
-          tokenHash: hashToken(exceptToken),
-        })
-        .session(session)
-        .exec();
-      if (
-        !survivor ||
-        !survivor.isValid ||
-        survivor.revokedAt ||
-        (survivor.userVersion ?? -1) !== currentVersion
-      ) {
-        throw new AppException(
-          ErrorCode.SESSION_INVALID,
-          'Current session is no longer active',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
+    if (db) {
+      return this.revokeOthersExceptSessionIn(db, userId, exceptSessionId);
+    }
+    return this.run((session) =>
+      this.revokeOthersExceptSessionIn(session, userId, exceptSessionId),
+    );
+  }
 
-      const count = await this.countActive(session, userId, currentVersion);
-      const nextVersion = currentVersion + 1;
-      const bumped = await this.userModel
-        .updateOne(
-          { _id: userId, sessionVersion: currentVersion },
-          { $inc: { sessionVersion: 1 } },
-        )
-        .session(session)
-        .exec();
-      if (bumped.modifiedCount !== 1) {
-        throw new AppException(
-          ErrorCode.SESSION_INVALID,
-          'Current session is no longer active',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
-
-      const promoted = await this.sessionModel
-        .updateOne(
-          {
-            _id: survivor._id,
-            isValid: true,
-            revokedAt: { $exists: false },
-            userVersion: currentVersion,
-          },
-          { $set: { userVersion: nextVersion } },
-        )
-        .session(session)
-        .exec();
-      if (promoted.modifiedCount !== 1) {
-        throw new AppException(
-          ErrorCode.SESSION_INVALID,
-          'Current session is no longer active',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
-
-      await this.events.record(
-        {
-          targetUserId: userId.toString(),
-          sessionId: survivor._id.toString(),
-          action: SECURITY_EVENT_ACTION.SESSIONS_REVOKED_OTHERS,
-          reasonCode: REVOKED_REASON.ALL_OTHER,
-        },
-        session,
+  private async revokeOthersExceptSessionIn(
+    session: ClientSession,
+    userId: Types.ObjectId,
+    exceptSessionId: string,
+  ): Promise<number> {
+    const user = await this.userModel.findById(userId).session(session).exec();
+    if (!user) {
+      throw new AppException(
+        ErrorCode.USER_NOT_FOUND,
+        'User not found',
+        HttpStatus.NOT_FOUND,
       );
-      return Math.max(0, count - 1);
-    });
+    }
+    if (!Types.ObjectId.isValid(exceptSessionId)) {
+      throw new AppException(
+        ErrorCode.SESSION_INVALID,
+        'Current session is no longer active',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+    const survivor = await this.sessionModel
+      .findOne({ _id: exceptSessionId, user: userId })
+      .session(session)
+      .exec();
+    return this.revokeOthersKeeping(session, user, survivor);
+  }
+
+  private async revokeOthersKeeping(
+    session: ClientSession,
+    user: UserDocument,
+    survivor: SessionDocument | null,
+  ): Promise<number> {
+    const userId = user._id;
+    const currentVersion = user.sessionVersion ?? 0;
+    if (
+      !survivor ||
+      !survivor.isValid ||
+      survivor.revokedAt ||
+      (survivor.userVersion ?? -1) !== currentVersion
+    ) {
+      throw new AppException(
+        ErrorCode.SESSION_INVALID,
+        'Current session is no longer active',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const count = await this.countActive(session, userId, currentVersion);
+    const nextVersion = currentVersion + 1;
+    const bumped = await this.userModel
+      .updateOne(
+        { _id: userId, sessionVersion: currentVersion },
+        { $inc: { sessionVersion: 1 } },
+      )
+      .session(session)
+      .exec();
+    if (bumped.modifiedCount !== 1) {
+      throw new AppException(
+        ErrorCode.SESSION_INVALID,
+        'Current session is no longer active',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const promoted = await this.sessionModel
+      .updateOne(
+        {
+          _id: survivor._id,
+          isValid: true,
+          revokedAt: { $exists: false },
+          userVersion: currentVersion,
+        },
+        { $set: { userVersion: nextVersion } },
+      )
+      .session(session)
+      .exec();
+    if (promoted.modifiedCount !== 1) {
+      throw new AppException(
+        ErrorCode.SESSION_INVALID,
+        'Current session is no longer active',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    await this.events.record(
+      {
+        targetUserId: userId.toString(),
+        sessionId: survivor._id.toString(),
+        action: SECURITY_EVENT_ACTION.SESSIONS_REVOKED_OTHERS,
+        reasonCode: REVOKED_REASON.ALL_OTHER,
+      },
+      session,
+    );
+    return Math.max(0, count - 1);
   }
 
   private async run(

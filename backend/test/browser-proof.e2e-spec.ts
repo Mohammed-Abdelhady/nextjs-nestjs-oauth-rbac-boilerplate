@@ -266,7 +266,30 @@ describe('browser proof (e2e)', () => {
     }
   });
 
-  it('rejects a foreign origin and a cookie sent with authorization', async () => {
+  it('rejects a public browser-session route carrying both a cookie and a bearer', async () => {
+    const proof = await request(e2e.httpServer)
+      .get('/api/auth/browser-proof')
+      .expect(200);
+    const token = (proof.body as ProofBody).data.token;
+    const session = request.agent(e2e.httpServer);
+    await session
+      .post('/api/auth/login')
+      .set('Cookie', cookiePair(proof, BROWSER_PROOF_COOKIE))
+      .set(CSRF_HEADER, token)
+      .send({ email: SEED_USER.email, password: SEED_USER.password })
+      .expect(200);
+
+    const mixed = await session
+      .post('/api/auth/login')
+      .set('Authorization', 'Bearer native-token')
+      .send({ email: SEED_USER.email, password: SEED_USER.password });
+    expect(mixed.status).toBe(400);
+    expect((mixed.body as ErrorBody).error.code).toBe(
+      ErrorCode.MIXED_CREDENTIALS,
+    );
+  });
+
+  it('rejects a foreign origin and an invalid bearer sent with a cookie', async () => {
     const proof = await request(e2e.httpServer)
       .get('/api/auth/browser-proof')
       .expect(200);
@@ -292,12 +315,14 @@ describe('browser proof (e2e)', () => {
       .set(CSRF_HEADER, (sessionProof.body as ProofBody).data.token)
       .send({ email: SEED_USER.email, password: SEED_USER.password })
       .expect(200);
-    const mixed = await session
+    const invalidBearer = await session
       .get('/api/user/profile')
       .set('Authorization', 'Bearer native-token');
-    expect(mixed.status).toBe(400);
-    expect((mixed.body as ErrorBody).error.code).toBe(
-      ErrorCode.MIXED_CREDENTIALS,
+    // Native sign-in stays off in this file, so the bearer attempt fails
+    // closed here instead of falling back to the cookie.
+    expect(invalidBearer.status).toBe(403);
+    expect((invalidBearer.body as ErrorBody).error.code).toBe(
+      ErrorCode.NATIVE_AUTH_DISABLED,
     );
   });
 });

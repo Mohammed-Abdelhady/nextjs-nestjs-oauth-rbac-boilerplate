@@ -27,6 +27,8 @@ import {
   OAUTH_ERROR,
 } from './native-oauth.types';
 import { isAcceptableRedirectUri } from '../utils/redirect-uri.util';
+import type { RedirectUriPolicy } from '../utils/redirect-uri.util';
+import { matchesRegisteredRedirectUri } from '../utils/redirect-uri.util';
 
 @Injectable()
 export class NativeAuthorizeBrowserService {
@@ -118,7 +120,9 @@ export class NativeAuthorizeBrowserService {
   private async applicationForTransaction(
     transaction: AuthorizationTransactionDocument,
   ): Promise<ApplicationDocument> {
-    if (!isAcceptableRedirectUri(transaction.redirectUri)) {
+    if (
+      !isAcceptableRedirectUri(transaction.redirectUri, this.redirectPolicy())
+    ) {
       throw expiredTransaction();
     }
     const application = await this.applications
@@ -132,11 +136,20 @@ export class NativeAuthorizeBrowserService {
       !application ||
       application.platform !== APPLICATION_PLATFORM.NATIVE ||
       application.clientType !== APPLICATION_CLIENT_TYPE.PUBLIC ||
-      !application.redirectUris.includes(transaction.redirectUri)
+      !application.redirectUris.some((registered) =>
+        matchesRegisteredRedirectUri(registered, transaction.redirectUri),
+      )
     ) {
       throw expiredTransaction();
     }
     return application;
+  }
+
+  private redirectPolicy(): RedirectUriPolicy {
+    return {
+      nodeEnv: this.authEpoch.environment(),
+      allowCustomScheme: this.authEpoch.nativeCustomSchemeAllowed(),
+    };
   }
 
   private assertNativeEnabled(): void {

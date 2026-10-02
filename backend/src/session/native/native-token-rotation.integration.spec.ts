@@ -35,7 +35,7 @@ describe('native token rotation (plan 04)', () => {
   let ctx: NativeOauthHarness;
 
   beforeAll(async () => {
-    ctx = await startNativeOauth('native_token');
+    ctx = await startNativeOauth('native_token_rotation');
   }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   afterAll(async () => {

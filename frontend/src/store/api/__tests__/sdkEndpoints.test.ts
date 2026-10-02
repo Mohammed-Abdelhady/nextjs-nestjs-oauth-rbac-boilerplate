@@ -39,6 +39,7 @@ const SESSION = {
   ip: '203.0.113.10',
   createdAt: '2026-01-15T10:30:00.000Z',
   isCurrent: true,
+  credentialPurpose: 'browser_session',
 };
 
 const PROFILE = {
@@ -76,6 +77,7 @@ describe('endpoints that read through @app/sdk', () => {
         ip: '203.0.113.10',
         createdAt: '2026-01-15T10:30:00.000Z',
         isCurrent: true,
+        credentialPurpose: 'browser_session',
       },
     ]);
   });

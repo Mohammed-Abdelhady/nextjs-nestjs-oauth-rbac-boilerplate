@@ -37,6 +37,8 @@ export interface Session {
   createdAt: string;
   lastUsedAt?: string;
   isCurrent: boolean;
+  /** Which credential the session runs on: a browser cookie or a native token family. */
+  credentialPurpose: 'browser_session' | 'native_access';
 }
 
 export interface SessionList {

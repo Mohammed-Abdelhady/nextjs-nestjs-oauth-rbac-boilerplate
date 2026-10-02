@@ -109,6 +109,17 @@ describe('OAuthService linking', () => {
     });
   });
 
+  it('refuses a link start carrying both a cookie and a bearer token', async () => {
+    await expect(
+      service.requireSessionUserId({
+        headers: { authorization: 'Bearer access-token' },
+      } as Request),
+    ).rejects.toMatchObject({
+      code: ErrorCode.MIXED_CREDENTIALS,
+    });
+    expect(sessions.validateSession).not.toHaveBeenCalled();
+  });
+
   it('rejects when the session user does not match the stored link user', async () => {
     await expect(
       service.link(params({ linkUserId: 'other-user' })),

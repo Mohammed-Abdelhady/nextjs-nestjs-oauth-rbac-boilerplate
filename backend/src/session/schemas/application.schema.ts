@@ -57,7 +57,7 @@ export class Application {
     validate: {
       validator: (redirectUris: unknown) =>
         Array.isArray(redirectUris) &&
-        Array.from(redirectUris).every(isAcceptableRedirectUri),
+        Array.from(redirectUris).every((uri) => isAcceptableRedirectUri(uri)),
       message: 'Redirect URIs must be acceptable callback addresses',
     },
   })

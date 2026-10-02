@@ -264,4 +264,55 @@ describe('parseNativeApplications', () => {
       ),
     ).toThrow('entry at index 0: clientId');
   });
+
+  it('accepts a custom scheme outside production without the setting', () => {
+    expect(
+      parseNativeApplications(JSON.stringify([VALID_APPLICATION]), {
+        nodeEnv: 'test',
+      }),
+    ).toEqual([{ ...VALID_APPLICATION, allowedScopes: ['api'] }]);
+  });
+
+  it('refuses a custom scheme in production without the setting', () => {
+    expect(() =>
+      parseNativeApplications(JSON.stringify([VALID_APPLICATION]), {
+        nodeEnv: 'production',
+      }),
+    ).toThrow('redirectUris[0] is not an acceptable redirect address');
+  });
+
+  it('accepts a custom scheme in production with the setting on', () => {
+    expect(
+      parseNativeApplications(JSON.stringify([VALID_APPLICATION]), {
+        nodeEnv: 'production',
+        allowCustomScheme: true,
+      }),
+    ).toEqual([{ ...VALID_APPLICATION, allowedScopes: ['api'] }]);
+  });
+
+  it('keeps https and loopback http accepted in production without the setting', () => {
+    expect(
+      parseNativeApplications(
+        JSON.stringify([
+          {
+            ...VALID_APPLICATION,
+            redirectUris: [
+              'https://client.example/callback',
+              'http://127.0.0.1:5100/callback',
+            ],
+          },
+        ]),
+        { nodeEnv: 'production' },
+      ),
+    ).toEqual([
+      {
+        ...VALID_APPLICATION,
+        redirectUris: [
+          'https://client.example/callback',
+          'http://127.0.0.1:5100/callback',
+        ],
+        allowedScopes: ['api'],
+      },
+    ]);
+  });
 });

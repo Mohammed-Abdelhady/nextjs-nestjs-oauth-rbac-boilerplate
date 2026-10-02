@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { ExecutionContextHost } from '@nestjs/core/helpers/execution-context-host';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { CSRF_HEADER } from '../../session/constants/browser-proof';
+import { CREDENTIAL_PURPOSE } from '../../session/constants/credential-purpose';
 import { WEB_CLIENT_ID } from '../../session/constants/client-ids';
 import { ApplicationRegistryService } from '../../session/services/application-registry.service';
 import { BrowserProofService } from '../../session/services/browser-proof.service';
@@ -18,7 +19,12 @@ const SESSION_TOKEN = 'session-bound-token';
 interface GuardRequest {
   method: string;
   cookies: Record<string, string>;
-  session?: { clientId: string; csrfToken: string };
+  headers: Record<string, string>;
+  session?: {
+    clientId: string;
+    csrfToken: string;
+    credentialPurpose?: string;
+  };
   header: (name: string) => string | undefined;
 }
 
@@ -117,20 +123,69 @@ describe('BrowserProofGuard', () => {
     expect(sessions.validateSessionWithoutExtendingIdle).not.toHaveBeenCalled();
     expect(proofs.consume).toHaveBeenCalledWith(request, PRE_SESSION_TOKEN);
   });
+
+  it('lets a bearer credential win over a session cookie', async () => {
+    const request = createRequest(
+      { sid: 'valid' },
+      PRE_SESSION_TOKEN,
+      {
+        clientId: 'native-app',
+        csrfToken: SESSION_TOKEN,
+        credentialPurpose: CREDENTIAL_PURPOSE.NATIVE_ACCESS,
+      },
+      'Bearer access-token',
+    );
+
+    await expect(guard.canActivate(createContext(request))).resolves.toBe(true);
+
+    expect(proofs.consume).not.toHaveBeenCalled();
+  });
+
+  it('still reports mixed credentials for a non-bearer authorization with a cookie', async () => {
+    const request = createRequest(
+      { sid: 'valid' },
+      PRE_SESSION_TOKEN,
+      undefined,
+      'Basic dXNlcjpwYXNzd29yZA==',
+    );
+
+    await expect(
+      guard.canActivate(createContext(request)),
+    ).rejects.toMatchObject({ code: ErrorCode.MIXED_CREDENTIALS });
+  });
+
+  it('refuses a public route that would act on the cookie when a bearer is also sent', async () => {
+    const request = createRequest(
+      { sid: 'valid' },
+      PRE_SESSION_TOKEN,
+      undefined,
+      'Bearer access-token',
+    );
+
+    await expect(
+      guard.canActivate(createContext(request, true)),
+    ).rejects.toMatchObject({ code: ErrorCode.MIXED_CREDENTIALS });
+    expect(proofs.consume).not.toHaveBeenCalled();
+  });
 });
 
 function createRequest(
   cookies: Record<string, string>,
   csrfToken: string,
   session?: GuardRequest['session'],
+  authorization?: string,
 ): GuardRequest {
   const headers: Record<string, string> = {
     [CSRF_HEADER]: csrfToken,
     origin: ORIGIN,
   };
+  if (authorization !== undefined) {
+    headers.authorization = authorization;
+  }
   return {
     method: 'POST',
     cookies,
+    headers,
     session,
     header: (name) => headers[name.toLowerCase()],
   };

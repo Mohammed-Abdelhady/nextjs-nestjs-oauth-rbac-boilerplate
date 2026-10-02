@@ -218,4 +218,54 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
     });
     expect(request.user).toBeUndefined();
   });
+
+  it('authenticates the bearer user when a cookie for another user is also sent', async () => {
+    const { context, request } = createMockContext({ sid: 'cookie-token' });
+    request.headers = { authorization: 'Bearer access-token' };
+    const bearerUserId = new Types.ObjectId('507f1f77bcf86cd799439012');
+    nativeAccess.validate.mockResolvedValue({
+      user: {
+        _id: bearerUserId,
+        email: 'bearer@example.com',
+        name: 'Bearer User',
+        role: 'user',
+        permissions: [],
+        isVerified: true,
+        isDeleted: false,
+      },
+    });
+
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+    expect(nativeAccess.validate).toHaveBeenCalledWith('access-token');
+    expect(sessionService.validateSession).not.toHaveBeenCalled();
+    expect(request.user).toMatchObject({
+      id: '507f1f77bcf86cd799439012',
+      email: 'bearer@example.com',
+    });
+  });
+
+  it('fails on an invalid bearer without falling back to the cookie', async () => {
+    const { context, request } = createMockContext({ sid: 'cookie-token' });
+    request.headers = { authorization: 'Bearer invalid-token' };
+    nativeAccess.validate.mockResolvedValue(null);
+    sessionService.validateSession.mockResolvedValue({
+      user: {
+        _id: new Types.ObjectId('507f1f77bcf86cd799439011'),
+        email: 'cookie@example.com',
+        name: 'Cookie User',
+        role: 'user',
+        permissions: [],
+        isVerified: true,
+        isDeleted: false,
+      },
+    });
+
+    await expect(guard.canActivate(context)).rejects.toMatchObject({
+      code: ErrorCode.SESSION_INVALID,
+      status: 401,
+    });
+    expect(sessionService.validateSession).not.toHaveBeenCalled();
+    expect(sessionCookieService.clear).not.toHaveBeenCalled();
+    expect(request.user).toBeUndefined();
+  });
 });

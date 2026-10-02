@@ -17,8 +17,8 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
 import { ApiResponse } from '../common/dto/api-response.dto';
-import { SessionCookieService } from '../auth/services/session-cookie.service';
 import { SESSION_SWAGGER_AUTH_NAME } from '../common/constants/session';
+import { requestSessionId } from '../session/utils/request-session';
 
 /**
  * Controller for user profile and account lifecycle operations.
@@ -28,10 +28,7 @@ import { SESSION_SWAGGER_AUTH_NAME } from '../common/constants/session';
 @ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
 @Controller('user')
 export class UserProfileController {
-  constructor(
-    private readonly userProfileService: UserProfileService,
-    private readonly sessionCookieService: SessionCookieService,
-  ) {}
+  constructor(private readonly userProfileService: UserProfileService) {}
 
   /**
    * Get current user's profile.
@@ -88,11 +85,10 @@ export class UserProfileController {
     @Body() dto: ChangePasswordDto,
     @Req() request: RequestWithUser,
   ): Promise<ApiResponse<{ message: string }>> {
-    const currentSessionToken = this.sessionCookieService.read(request) || '';
     return this.userProfileService.changePassword(
       userId,
       dto,
-      currentSessionToken,
+      requestSessionId(request),
     );
   }
 

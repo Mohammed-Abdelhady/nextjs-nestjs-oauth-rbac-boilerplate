@@ -9,6 +9,7 @@ import {
   WEB_CLIENT_ID,
 } from '../../session/constants/client-ids';
 import { isAcceptableRedirectUri } from '../../session/utils/redirect-uri.util';
+import type { RedirectUriPolicy } from '../../session/utils/redirect-uri.util';
 import type { NativeApplicationConfiguration } from '../types/native-application.type';
 
 const FIRST_PARTY_CLIENT_IDS = new Set([WEB_CLIENT_ID, ADMIN_CLIENT_ID]);
@@ -16,6 +17,7 @@ const KNOWN_ENTRY_KEYS = new Set<string>(NATIVE_APPLICATION_KNOWN_KEYS);
 
 export function parseNativeApplications(
   raw: string | undefined,
+  policy: RedirectUriPolicy = {},
 ): NativeApplicationConfiguration[] {
   if (raw === undefined || raw.trim() === '') {
     return [];
@@ -93,7 +95,12 @@ export function parseNativeApplications(
       );
     }
 
-    const redirectUris = parseRedirectUris(entry.redirectUris, index, clientId);
+    const redirectUris = parseRedirectUris(
+      entry.redirectUris,
+      index,
+      clientId,
+      policy,
+    );
     const allowedScopes = parseAllowedScopes(
       entry.allowedScopes,
       index,
@@ -108,6 +115,7 @@ function parseRedirectUris(
   value: unknown,
   index: number,
   clientId: string,
+  policy: RedirectUriPolicy = {},
 ): string[] {
   if (!Array.isArray(value) || value.length === 0) {
     throw entryError(
@@ -142,7 +150,7 @@ function parseRedirectUris(
       );
     }
     seenRedirectUris.add(redirectUri);
-    if (!isAcceptableRedirectUri(redirectUri)) {
+    if (!isAcceptableRedirectUri(redirectUri, policy)) {
       throw entryError(
         index,
         clientId,

@@ -37,7 +37,7 @@ import {
   nativeAuthorizeQuery,
 } from '../src/session/native/native-oauth.fixture';
 import { User, UserDocument } from '../src/user/schemas/user.schema';
-import { SEED_USER } from './constants/seed-users';
+import { SEED_ADMIN, SEED_USER } from './constants/seed-users';
 import { bootE2eApp, loginAs, type E2eApp } from './utils/e2e-app';
 import { SESSION_AUTHORITY_BOOT_TIMEOUT_MS } from './utils/session-authority-harness';
 import { TEST_NOW } from './utils/frozen-clock';
@@ -98,14 +98,12 @@ describe('native access (e2e)', () => {
       ErrorCode.CSRF_REQUIRED,
     );
 
-    const browser = await loginAs(e2e.httpServer, SEED_USER);
-    const mixed = await browser
+    const browser = await loginAs(e2e.httpServer, SEED_ADMIN);
+    const bearerWins = await browser
       .get('/api/user/profile')
       .set('Authorization', `Bearer ${grant.accessToken}`);
-    expect(mixed.status).toBe(400);
-    expect((mixed.body as ApiErrorBody).error.code).toBe(
-      ErrorCode.MIXED_CREDENTIALS,
-    );
+    expect(bearerWins.status).toBe(200);
+    expect(bearerWins.body.data.email).toBe(SEED_USER.email);
   });
 
   it('refuses native OAuth while disabled and restores existing credentials', async () => {
@@ -120,7 +118,10 @@ describe('native access (e2e)', () => {
       .get('/api/oauth/authorize')
       .query(nativeAuthorizeQuery(randomBytes(32).toString('base64url')));
     expect(start.status).toBe(400);
-    expect(start.body).toEqual({ error: OAUTH_ERROR.UNAUTHORIZED_CLIENT });
+    expect(start.body).toEqual({
+      error: OAUTH_ERROR.UNAUTHORIZED_CLIENT,
+      error_description: ErrorCode.NATIVE_AUTH_DISABLED,
+    });
     expect(start.headers['cache-control']).toBe('no-store');
 
     const approval = await browser
@@ -147,7 +148,10 @@ describe('native access (e2e)', () => {
         code_verifier: approved.verifier,
       });
     expect(exchange.status).toBe(400);
-    expect(exchange.body).toEqual({ error: OAUTH_ERROR.UNAUTHORIZED_CLIENT });
+    expect(exchange.body).toEqual({
+      error: OAUTH_ERROR.UNAUTHORIZED_CLIENT,
+      error_description: ErrorCode.NATIVE_AUTH_DISABLED,
+    });
 
     const refresh = await request(e2e.httpServer)
       .post('/api/oauth/token')
@@ -157,13 +161,19 @@ describe('native access (e2e)', () => {
         client_id: NATIVE_CLIENT_ID,
       });
     expect(refresh.status).toBe(400);
-    expect(refresh.body).toEqual({ error: OAUTH_ERROR.UNAUTHORIZED_CLIENT });
+    expect(refresh.body).toEqual({
+      error: OAUTH_ERROR.UNAUTHORIZED_CLIENT,
+      error_description: ErrorCode.NATIVE_AUTH_DISABLED,
+    });
 
     const revoke = await request(e2e.httpServer)
       .post('/api/oauth/revoke')
       .send({ token: grant.accessToken, client_id: NATIVE_CLIENT_ID });
     expect(revoke.status).toBe(400);
-    expect(revoke.body).toEqual({ error: OAUTH_ERROR.UNAUTHORIZED_CLIENT });
+    expect(revoke.body).toEqual({
+      error: OAUTH_ERROR.UNAUTHORIZED_CLIENT,
+      error_description: ErrorCode.NATIVE_AUTH_DISABLED,
+    });
 
     const credentials = e2e.app.get<Model<NativeCredentialDocument>>(
       getModelToken(NativeCredential.name),

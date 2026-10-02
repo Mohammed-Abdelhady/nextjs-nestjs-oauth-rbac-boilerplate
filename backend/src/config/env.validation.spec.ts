@@ -208,4 +208,19 @@ describe('validateEnvironment', () => {
 
     expect(result.AUTH_NATIVE_ENABLED).toBe(true);
   });
+
+  it('AUTH_NATIVE_ALLOW_CUSTOM_SCHEME defaults to false', () => {
+    expect(validateEnvironment(baseEnv).AUTH_NATIVE_ALLOW_CUSTOM_SCHEME).toBe(
+      false,
+    );
+  });
+
+  it("AUTH_NATIVE_ALLOW_CUSTOM_SCHEME='true' yields true", () => {
+    const result = validateEnvironment({
+      ...baseEnv,
+      AUTH_NATIVE_ALLOW_CUSTOM_SCHEME: 'true',
+    });
+
+    expect(result.AUTH_NATIVE_ALLOW_CUSTOM_SCHEME).toBe(true);
+  });
 });

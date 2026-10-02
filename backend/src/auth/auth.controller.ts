@@ -9,7 +9,6 @@ import {
   Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody, ApiCookieAuth } from '@nestjs/swagger';
-import { Request } from 'express';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -29,6 +28,7 @@ import { AppException } from '../common/exceptions/app.exception';
 import { ErrorCode } from '../common/enums/error-code.enum';
 import { RequestWithUser } from './guards/auth.guard';
 import { SESSION_SWAGGER_AUTH_NAME } from '../common/constants/session';
+import { CREDENTIAL_PURPOSE } from '../session/constants/credential-purpose';
 import {
   THROTTLE_LOGIN,
   THROTTLE_FORGOT_PASSWORD,
@@ -183,11 +183,22 @@ export class AuthController {
       'Invalidates current user session and clears session cookie. ' +
       'Requires the session cookie.',
   })
-  async logout(@Req() request: Request, @Res() response: Response) {
-    const sessionToken = this.sessionCookieService.read(request) ?? '';
+  async logout(@Req() request: RequestWithUser, @Res() response: Response) {
+    const session = request.session;
+    if (
+      session?.credentialPurpose === CREDENTIAL_PURPOSE.NATIVE_ACCESS &&
+      request.user
+    ) {
+      const result = await this.authService.logoutNative(
+        session._id.toString(),
+        request.user.id,
+      );
+      return response.status(HttpStatus.OK).json(result);
+    }
 
-    const result = await this.authService.logout(sessionToken);
-
+    const result = await this.authService.logout(
+      this.sessionCookieService.read(request) ?? '',
+    );
     this.sessionCookieService.clear(response);
 
     return response.status(HttpStatus.OK).json(result);

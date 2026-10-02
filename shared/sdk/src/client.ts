@@ -34,10 +34,9 @@ export interface CallOptions<TSignal extends TransportSignal = TransportSignal> 
 }
 
 /**
- * The typed client. The server reads the current session of four calls from
- * the session cookie only, so on a bearer transport they do not yet behave as
- * they do in the browser. Each is marked "cookie only for now" below, and
- * `backend/test/sdk-contract.e2e-spec.ts` pins what a bearer caller gets today.
+ * The typed client. Every call reads the current session from the credential
+ * the request arrived on: the session cookie in the browser, the bearer token
+ * on a native transport.
  */
 export interface ApiClient<TSignal extends TransportSignal = TransportSignal> {
   profile: {
@@ -46,24 +45,24 @@ export interface ApiClient<TSignal extends TransportSignal = TransportSignal> {
   };
   sessions: {
     /**
-     * Cookie only for now: a bearer caller gets browser sessions only, never
-     * its own, and `isCurrent` is false on every row.
+     * Lists browser and native sessions. The row of the session making the
+     * call, cookie or bearer, reads `isCurrent: true` and carries its
+     * `credentialPurpose`.
      */
     list(options?: CallOptions<TSignal>): Promise<SessionList>;
     /**
-     * Cookie only for now: with a bearer the server does not refuse the
-     * caller's own session, so this can end the session making the call.
+     * Refuses the session making the call with `CANNOT_REVOKE_CURRENT_SESSION`.
      * Rejects with a `TypeError` for an empty id, `.` or `..`.
      */
     revoke(sessionId: string, options?: CallOptions<TSignal>): Promise<MessageResult>;
-    /** Cookie only for now: a bearer caller gets 401 `SESSION_INVALID`. */
+    /** Revokes every session except the one making the call. */
     revokeOthers(options?: CallOptions<TSignal>): Promise<RevokeOtherSessionsResult>;
   };
   auth: {
     methods(options?: CallOptions<TSignal>): Promise<AuthMethods>;
     /**
-     * Cookie only for now: a bearer caller gets 401 `SESSION_INVALID` and
-     * signs out with `oauth.revoke` instead.
+     * Signs out the session making the call: the cookie session in the
+     * browser, the native token family on a bearer transport.
      */
     signOut(options?: CallOptions<TSignal>): Promise<MessageResult>;
   };

@@ -17,6 +17,7 @@ export interface OauthFailure {
   ok: false;
   status: number;
   error: OauthErrorCode;
+  error_description?: string;
 }
 
 export interface AuthorizeBegin {
@@ -46,8 +47,12 @@ export interface RevokeSuccess {
 export function oauthFailure(
   status: number,
   error: OauthErrorCode,
+  errorDescription?: string,
 ): OauthFailure {
-  return { ok: false, status, error };
+  if (errorDescription === undefined) {
+    return { ok: false, status, error };
+  }
+  return { ok: false, status, error, error_description: errorDescription };
 }
 
 export interface AuthorizeQuery {
