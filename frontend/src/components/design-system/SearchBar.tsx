@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Search, X } from 'lucide-react';
 import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
 import { cn } from '@/lib/utils';
+import { TEXT_CONTROL_FONT_SIZE } from '@/lib/config/form-styles';
 
 export interface SearchBarProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
   /**
@@ -57,7 +58,8 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
           value={value}
           className={cn(
             'w-full bg-transparent ps-7 pe-8 py-2',
-            'text-sm text-foreground placeholder:text-muted-foreground',
+            'text-foreground placeholder:text-muted-foreground',
+            TEXT_CONTROL_FONT_SIZE,
             'border-0 border-b border-border rounded-sm',
             'focus:border-primary',
             'transition-all duration-200 ease-out',
