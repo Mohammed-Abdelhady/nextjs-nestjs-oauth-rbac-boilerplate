@@ -38,6 +38,7 @@ const OVERLAYS = [
   'native-auth',
   'status-errors',
   'role-errors',
+  'session-kinds',
 ];
 // feature:locale-ar:end
 
