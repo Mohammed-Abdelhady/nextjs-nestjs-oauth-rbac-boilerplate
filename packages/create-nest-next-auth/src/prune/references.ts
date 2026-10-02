@@ -3,8 +3,11 @@ import { extname, join, posix } from 'node:path';
 import {
   FRONTEND_ALIAS,
   FRONTEND_SOURCE,
-  SHARED_CORE_SOURCE,
-  SHARED_CORE_SPECIFIER,
+  PACKAGE_MANIFEST,
+  ROOT_EXPORT,
+  SHARED_PACKAGE_ENTRY,
+  SHARED_PACKAGE_SPECIFIER,
+  SHARED_PACKAGES_ROOT,
   SOURCE_EXTENSIONS,
 } from '../constants/index.js';
 import type { DanglingReference } from '../types.js';
@@ -32,18 +35,67 @@ function workspaceOf(importer: string): string {
   return importer.split('/')[0];
 }
 
+/** Export key (`.`, `./errors`) to the project path it points at, for one shared package. */
+type SharedExports = Map<string, string>;
+type SharedPackages = (name: string) => Promise<SharedExports | undefined>;
+
+/**
+ * Reads what each shared/<name> exports, once per name. A name with no
+ * manifest on disk is not a shared package, unless the pruner just deleted
+ * that manifest: then only the root export is known, by convention.
+ */
+function sharedPackages(root: string, deletedFiles: string[]): SharedPackages {
+  const loaded = new Map<string, Promise<SharedExports | undefined>>();
+
+  async function load(name: string): Promise<SharedExports | undefined> {
+    const directory = posix.join(SHARED_PACKAGES_ROOT, name);
+    const manifest = posix.join(directory, PACKAGE_MANIFEST);
+    const exported: SharedExports = new Map([
+      [ROOT_EXPORT, posix.join(directory, SHARED_PACKAGE_ENTRY)],
+    ]);
+    let declared: unknown;
+    try {
+      const parsed: unknown = JSON.parse(await readFile(join(root, manifest), 'utf8'));
+      declared =
+        typeof parsed === 'object' && parsed !== null ? Reflect.get(parsed, 'exports') : {};
+    } catch {
+      return deletedFiles.includes(manifest) ? exported : undefined;
+    }
+    if (typeof declared !== 'object' || declared === null) return exported;
+    for (const [key, target] of Object.entries(declared)) {
+      if (typeof target === 'string' && isSourceFile(target)) {
+        exported.set(key, withoutExtension(posix.join(directory, target)));
+      }
+    }
+    return exported;
+  }
+
+  return (name) => {
+    const known = loaded.get(name) ?? load(name);
+    loaded.set(name, known);
+    return known;
+  };
+}
+
 /**
  * Turns an import into a project path. Relative specifiers resolve against the
- * importer; `@/x` is the frontend alias for frontend/src/x, bare `@app/core`
- * points at the shared core index, and `src/x` is the baseUrl form inside a
- * workspace. Anything else, deep `@app/core/x` included, is a package name.
+ * importer; `@/x` is the frontend alias for frontend/src/x, `@app/<name>` and
+ * `@app/<name>/<subpath>` point at what shared/<name> exports under that key,
+ * and `src/x` is the baseUrl form inside a workspace. Anything else, a subpath
+ * the package does not export included, is a package name.
  */
-function resolveSpecifier(importer: string, specifier: string): string | undefined {
+async function resolveSpecifier(
+  importer: string,
+  specifier: string,
+  shared: SharedPackages,
+): Promise<string | undefined> {
   if (specifier.startsWith('.')) {
     return withoutExtension(posix.normalize(posix.join(posix.dirname(importer), specifier)));
   }
-  if (specifier === SHARED_CORE_SPECIFIER) {
-    return withoutExtension(posix.join(SHARED_CORE_SOURCE, 'index'));
+  const sharedPackage = SHARED_PACKAGE_SPECIFIER.exec(specifier);
+  if (sharedPackage !== null) {
+    const [, name, subpath] = sharedPackage;
+    return (await shared(name))?.get(`${ROOT_EXPORT}${subpath}`);
   }
   if (specifier.startsWith(FRONTEND_ALIAS)) {
     return withoutExtension(posix.join(FRONTEND_SOURCE, specifier.slice(FRONTEND_ALIAS.length)));
@@ -72,19 +124,20 @@ export async function findDanglingReferences(
     if (path.endsWith('/index')) byPath.set(path.slice(0, -'/index'.length), path);
   }
   const dangling: DanglingReference[] = [];
+  const shared = sharedPackages(root, deletedFiles);
 
   for (const file of (await listFiles(root)).filter(isSourceFile)) {
     const lines = (await readFile(join(root, file), 'utf8')).split('\n');
 
-    lines.forEach((line, index) => {
+    for (const [index, line] of lines.entries()) {
       for (const match of line.matchAll(SPECIFIER)) {
         const specifier = match[1];
-        const resolved = resolveSpecifier(file, specifier);
+        const resolved = await resolveSpecifier(file, specifier, shared);
         const target = resolved === undefined ? undefined : byPath.get(resolved);
         if (target === undefined) continue;
         dangling.push({ file, line: index + 1, specifier, target });
       }
-    });
+    }
   }
 
   return dangling;

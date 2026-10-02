@@ -1,6 +1,6 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { stripEnvVars } from '../src/prune/env.js';
 import { prune } from '../src/prune/index.js';
@@ -19,6 +19,22 @@ async function fixture(): Promise<string> {
 afterEach(async () => {
   for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true });
 });
+
+async function writeSource(root: string, path: string, content: string): Promise<void> {
+  await mkdir(dirname(join(root, path)), { recursive: true });
+  await writeFile(join(root, path), content, 'utf8');
+}
+
+/** A project with one manifest per shared package, each declaring the given exports. */
+async function sharedFixture(packages: Record<string, Record<string, string>>): Promise<string> {
+  const root = await mkdtemp(join(tmpdir(), 'cna-shared-'));
+  roots.push(root);
+  for (const [name, exported] of Object.entries(packages)) {
+    const manifest = { name: `@app/${name}`, exports: exported };
+    await writeSource(root, `shared/${name}/package.json`, `${JSON.stringify(manifest)}\n`);
+  }
+  return root;
+}
 
 describe('prune', () => {
   it('deletes only what the unselected features own', async () => {
@@ -108,43 +124,129 @@ describe('prune', () => {
   });
 
   it('reports @app/core imports left pointing at deleted shared files', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'cna-shared-core-'));
-    roots.push(root);
-    await mkdir(join(root, 'frontend', 'src'), { recursive: true });
-    await mkdir(join(root, 'shared', 'core', 'src'), { recursive: true });
-    await writeFile(
-      join(root, 'frontend', 'src', 'page.ts'),
-      "import { ErrorCode } from '@app/core';\n",
-      'utf8',
-    );
+    const root = await sharedFixture({ core: { '.': './src/index.ts' } });
+    await writeSource(root, 'frontend/src/page.ts', "import { ErrorCode } from '@app/core';\n");
 
     const bare = await findDanglingReferences(root, ['shared/core/src/index.ts']);
-    expect(bare).toHaveLength(1);
-    expect(bare[0]).toMatchObject({
-      file: 'frontend/src/page.ts',
-      line: 1,
-      specifier: '@app/core',
-      target: 'shared/core/src/index',
-    });
+    expect(bare).toEqual([
+      {
+        file: 'frontend/src/page.ts',
+        line: 1,
+        specifier: '@app/core',
+        target: 'shared/core/src/index',
+      },
+    ]);
 
     const intact = await findDanglingReferences(root, ['shared/core/src/other.ts']);
     expect(intact).toEqual([]);
   });
 
-  it('treats a deep @app/core path like any other unknown package', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'cna-shared-deep-'));
-    roots.push(root);
-    await mkdir(join(root, 'frontend', 'src'), { recursive: true });
-    await mkdir(join(root, 'shared', 'core', 'src'), { recursive: true });
-    await writeFile(
-      join(root, 'frontend', 'src', 'deep.ts'),
+  it('follows a subpath the shared package exports', async () => {
+    const root = await sharedFixture({
+      core: { '.': './src/index.ts', './errors': './src/errors.ts' },
+    });
+    await writeSource(
+      root,
+      'shared/sdk/src/envelope.ts',
+      "import { ErrorCode } from '@app/core/errors';\n",
+    );
+
+    const dangling = await findDanglingReferences(root, ['shared/core/src/errors.ts']);
+    expect(dangling).toEqual([
+      {
+        file: 'shared/sdk/src/envelope.ts',
+        line: 1,
+        specifier: '@app/core/errors',
+        target: 'shared/core/src/errors',
+      },
+    ]);
+
+    const rootOnly = await findDanglingReferences(root, ['shared/core/src/index.ts']);
+    expect(rootOnly).toEqual([]);
+  });
+
+  it('treats a deep @app/core path the package does not export as an unknown package', async () => {
+    const root = await sharedFixture({ core: { '.': './src/index.ts' } });
+    await writeSource(
+      root,
+      'frontend/src/deep.ts',
       "import { zodEmail } from '@app/core/validations/string';\n",
-      'utf8',
     );
 
     const dangling = await findDanglingReferences(root, ['shared/core/src/validations/string.ts']);
     expect(dangling).toEqual([]);
   });
+
+  it('reports @app/sdk imports left pointing at the deleted sdk index', async () => {
+    const root = await sharedFixture({ sdk: { '.': './src/index.ts' } });
+    await writeSource(root, 'frontend/src/api.ts', "import { API_PATHS } from '@app/sdk';\n");
+
+    const dangling = await findDanglingReferences(root, ['shared/sdk/src/index.ts']);
+    expect(dangling).toEqual([
+      {
+        file: 'frontend/src/api.ts',
+        line: 1,
+        specifier: '@app/sdk',
+        target: 'shared/sdk/src/index',
+      },
+    ]);
+
+    const otherPackage = await findDanglingReferences(root, ['shared/core/src/index.ts']);
+    expect(otherPackage).toEqual([]);
+  });
+
+  it('still reports imports of a shared package the pruner removed whole', async () => {
+    const root = await sharedFixture({});
+    await writeSource(root, 'frontend/src/api.ts', "import { API_PATHS } from '@app/sdk';\n");
+
+    const dangling = await findDanglingReferences(root, [
+      'shared/sdk/package.json',
+      'shared/sdk/src/index.ts',
+    ]);
+    expect(dangling).toEqual([
+      {
+        file: 'frontend/src/api.ts',
+        line: 1,
+        specifier: '@app/sdk',
+        target: 'shared/sdk/src/index',
+      },
+    ]);
+  });
+
+  it('treats an @app package with no shared folder as an ordinary package', async () => {
+    const root = await sharedFixture({ core: { '.': './src/index.ts' } });
+    await writeSource(root, 'frontend/src/other.ts', "import { thing } from '@app/other';\n");
+
+    // Resolving `@app/other` by convention would land on this path and report it.
+    const dangling = await findDanglingReferences(root, ['shared/other/src/index.ts']);
+    expect(dangling).toEqual([]);
+  });
+
+  it.each(['@app/..', '@app/.', '@app/core.js', '@app/core/../sdk', '@app/Core'])(
+    'does not read %s as a shared package',
+    async (specifier) => {
+      const root = await sharedFixture({
+        core: { '.': './src/index.ts' },
+        'core.js': { '.': './src/index.ts' },
+        sdk: { '.': './src/index.ts' },
+      });
+      // A manifest wherever a looser pattern would look for one.
+      await writeSource(root, 'package.json', '{}\n');
+      await writeSource(root, 'shared/package.json', '{}\n');
+      await writeSource(root, 'frontend/src/odd.ts', `import { thing } from '${specifier}';\n`);
+
+      // Every path one of these would reach if the pattern let it through.
+      const dangling = await findDanglingReferences(root, [
+        'src/index.ts',
+        'shared/src/index.ts',
+        'shared/core/src/index.ts',
+        'shared/core.js/src/index.ts',
+        'shared/Core/src/index.ts',
+        'shared/sdk/src/index.ts',
+      ]);
+      expect(dangling).toEqual([]);
+    },
+  );
 });
 
 describe('stripEnvVars', () => {

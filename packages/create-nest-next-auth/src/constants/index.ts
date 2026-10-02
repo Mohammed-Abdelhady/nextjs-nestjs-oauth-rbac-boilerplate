@@ -85,10 +85,21 @@ export const FRONTEND_ALIAS = '@/';
 
 export const FRONTEND_SOURCE = 'frontend/src';
 
-/** The shared core package, and the source tree its root export maps to. */
-export const SHARED_CORE_SPECIFIER = '@app/core';
+/**
+ * `@app/<name>` and `@app/<name>/<subpath>` name the workspace at
+ * shared/<name>. Names and subpath segments are npm-style: no dots, so `..`
+ * and a file extension never match.
+ */
+export const SHARED_PACKAGE_SPECIFIER = /^@app\/([a-z0-9-]+)((?:\/[a-z0-9-]+)*)$/;
 
-export const SHARED_CORE_SOURCE = 'shared/core/src';
+export const SHARED_PACKAGES_ROOT = 'shared';
+
+/** Where the root export points when the package manifest is gone or names none. */
+export const SHARED_PACKAGE_ENTRY = 'src/index';
+
+export const PACKAGE_MANIFEST = 'package.json';
+
+export const ROOT_EXPORT = '.';
 
 /** Directories the pruner never walks into. */
 export const SKIPPED_DIRS = new Set(['node_modules', '.git', 'dist', '.next', 'out', 'coverage']);
