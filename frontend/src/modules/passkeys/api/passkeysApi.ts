@@ -1,4 +1,5 @@
 import { baseApi } from '@/store/api/baseApi';
+import { invalidateOnSuccess } from '@/store/api/invalidateOnSuccess';
 import type { LoginResponse } from '@/modules/auth/types/auth.types';
 import { PASSKEY_PATHS, passkeyPath } from '../constants';
 import type {
@@ -43,20 +44,20 @@ export const passkeysApi = baseApi.injectEndpoints({
     registerPasskey: builder.mutation<PasskeySummary, RegisterPasskeyRequest>({
       query: (body) => ({ url: PASSKEY_PATHS.REGISTER_VERIFY, method: 'POST', body }),
       transformResponse: (response: { success: boolean; data: PasskeySummary }) => response.data,
-      invalidatesTags: ['Passkeys', 'User'],
+      invalidatesTags: invalidateOnSuccess(['Passkeys', 'User']),
     }),
 
     renamePasskey: builder.mutation<PasskeySummary, RenamePasskeyRequest>({
       query: ({ id, name }) => ({ url: passkeyPath(id), method: 'PATCH', body: { name } }),
       transformResponse: (response: { success: boolean; data: PasskeySummary }) => response.data,
-      invalidatesTags: ['Passkeys'],
+      invalidatesTags: invalidateOnSuccess(['Passkeys']),
     }),
 
     deletePasskey: builder.mutation<{ message: string }, string>({
       query: (id) => ({ url: passkeyPath(id), method: 'DELETE' }),
       transformResponse: (response: { success: boolean; data: { message: string } }) =>
         response.data,
-      invalidatesTags: ['Passkeys', 'User'],
+      invalidatesTags: invalidateOnSuccess(['Passkeys', 'User']),
     }),
 
     createPasskeyLoginOptions: builder.mutation<PublicKeyCredentialRequestOptionsJSON, void>({
@@ -70,13 +71,13 @@ export const passkeysApi = baseApi.injectEndpoints({
     signInWithPasskey: builder.mutation<LoginResponse, PasskeyLoginRequest>({
       query: (body) => ({ url: PASSKEY_PATHS.LOGIN_VERIFY, method: 'POST', body }),
       transformResponse: (response: { success: boolean; data: LoginResponse }) => response.data,
-      invalidatesTags: ['Auth', 'User'],
+      invalidatesTags: invalidateOnSuccess(['Auth', 'User']),
     }),
 
     answerTwoFactorWithPasskey: builder.mutation<LoginResponse, PasskeyTwoFactorRequest>({
       query: (body) => ({ url: PASSKEY_PATHS.TWO_FACTOR_VERIFY, method: 'POST', body }),
       transformResponse: (response: { success: boolean; data: LoginResponse }) => response.data,
-      invalidatesTags: ['Auth', 'User'],
+      invalidatesTags: invalidateOnSuccess(['Auth', 'User']),
     }),
   }),
 });

@@ -1,4 +1,5 @@
 import { baseApi } from '@/store/api/baseApi';
+import { invalidateOnSuccess } from '@/store/api/invalidateOnSuccess';
 import type { LoginResponse } from '@/modules/auth/types/auth.types';
 import { TWO_FACTOR_PATHS } from '../constants';
 import type {
@@ -25,14 +26,14 @@ export const twoFactorApi = baseApi.injectEndpoints({
     confirmTwoFactor: builder.mutation<RecoveryCodes, { code: string }>({
       query: (body) => ({ url: TWO_FACTOR_PATHS.CONFIRM, method: 'POST', body }),
       transformResponse: (response: { success: boolean; data: RecoveryCodes }) => response.data,
-      invalidatesTags: ['User'],
+      invalidatesTags: invalidateOnSuccess(['User']),
     }),
 
     disableTwoFactor: builder.mutation<{ message: string }, DisableTwoFactorRequest>({
       query: (body) => ({ url: TWO_FACTOR_PATHS.DISABLE, method: 'POST', body }),
       transformResponse: (response: { success: boolean; data: { message: string } }) =>
         response.data,
-      invalidatesTags: ['User'],
+      invalidatesTags: invalidateOnSuccess(['User']),
     }),
 
     regenerateRecoveryCodes: builder.mutation<RecoveryCodes, { code: string }>({
@@ -43,7 +44,7 @@ export const twoFactorApi = baseApi.injectEndpoints({
     verifyTwoFactor: builder.mutation<LoginResponse, TwoFactorAnswer>({
       query: (body) => ({ url: TWO_FACTOR_PATHS.VERIFY, method: 'POST', body }),
       transformResponse: (response: { success: boolean; data: LoginResponse }) => response.data,
-      invalidatesTags: ['Auth', 'User'],
+      invalidatesTags: invalidateOnSuccess(['Auth', 'User']),
     }),
   }),
 });

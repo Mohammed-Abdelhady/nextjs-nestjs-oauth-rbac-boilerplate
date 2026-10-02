@@ -1,4 +1,5 @@
 import { baseApi } from '@/store/api/baseApi';
+import { invalidateOnSuccess } from '@/store/api/invalidateOnSuccess';
 import type { ProfileSyncStatus, ManualSyncResponse } from '../types';
 
 /**
@@ -26,7 +27,7 @@ export const profileSyncApi = baseApi.injectEndpoints({
         method: 'POST',
       }),
       transformResponse: (response: { data: ManualSyncResponse }) => response.data,
-      invalidatesTags: ['ProfileSync', 'User'],
+      invalidatesTags: invalidateOnSuccess(['ProfileSync', 'User']),
     }),
   }),
 });

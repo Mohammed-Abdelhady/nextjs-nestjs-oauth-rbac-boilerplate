@@ -45,7 +45,7 @@ export const authApi = baseApi.injectEndpoints({
       }),
       transformResponse: (response: { success: boolean; data: LoginResponse; message: string }) =>
         response.data,
-      invalidatesTags: ['Auth', 'User'],
+      invalidatesTags: invalidateOnSuccess(['Auth', 'User']),
     }),
 
     /**
@@ -58,6 +58,8 @@ export const authApi = baseApi.injectEndpoints({
         method: 'POST',
       }),
       transformResponse: (response: unknown) => unwrapObjectBody<MessageResult>(response),
+      // Sign-out: the server may have ended the session even when the answer
+      // was lost, so the UI must stop showing a signed-in user either way.
       invalidatesTags: [
         'Auth',
         'User',
@@ -105,7 +107,7 @@ export const authApi = baseApi.injectEndpoints({
         data: ActivateResponse;
         message: string;
       }) => response.data,
-      invalidatesTags: ['Auth', 'User'],
+      invalidatesTags: invalidateOnSuccess(['Auth', 'User']),
     }),
 
     /**
