@@ -87,6 +87,7 @@ services:
     volumes:
       - ./frontend:/app/frontend
       - ./shared/core:/app/shared/core
+      - ./shared/sdk:/app/shared/sdk
       - /app/node_modules
       - /app/frontend/node_modules
       - /app/frontend/.next
