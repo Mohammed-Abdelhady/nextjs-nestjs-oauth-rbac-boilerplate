@@ -47,6 +47,9 @@ export interface E2eApp {
 export interface BootE2eAppOptions {
   nodeEnv?: string;
   browserStrategy?: OAuthProviderStrategy; // feature:oauth-core
+  magicLinkEnabled?: boolean; // feature:magic-link
+  /** The mail array records attempts, including the rejected ones. */
+  failMail?: boolean;
 }
 
 /** Owns its database and starts configuration outside the developer's env directory. */
@@ -56,6 +59,7 @@ export async function bootE2eApp(
 ): Promise<E2eApp> {
   const nodeEnv = options.nodeEnv ?? 'test';
   const browserStrategy = options.browserStrategy; // feature:oauth-core
+  const failMail = options.failMail === true;
   const originalDirectory = process.cwd();
   const fixtureDirectory = await mkdtemp(join(tmpdir(), 'auth-e2e-'));
   const mongo = await startMemoryReplSet().catch(async (error: unknown) => {
@@ -81,6 +85,9 @@ export async function bootE2eApp(
   // feature:oauth-core:start
   if (browserStrategy) environment.MAGIC_LINK_ENABLED = 'true';
   // feature:oauth-core:end
+  // feature:magic-link:start
+  if (options.magicLinkEnabled) environment.MAGIC_LINK_ENABLED = 'true';
+  // feature:magic-link:end
   const previous = new Map(
     Object.keys(environment).map((key) => [key, process.env[key]]),
   );
@@ -129,6 +136,9 @@ export async function bootE2eApp(
           >;
           service.sendMail = (options: MailOptions): Promise<void> => {
             mail.push(options);
+            if (failMail) {
+              return Promise.reject(new Error('mail delivery failed in test'));
+            }
             return Promise.resolve();
           };
           return service;
