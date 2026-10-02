@@ -1,11 +1,11 @@
 # Milestone 2: shared code, mobile shells, installer targets
 
-| Field     | Value                                                                                  |
-| --------- | -------------------------------------------------------------------------------------- |
-| Status    | First three pieces specified and dispatched. Mobile shells need their own spec         |
-| Date      | 2026-10-02                                                                             |
-| Base      | `staging` after milestone 1 (PRs #144 to #149, #158 to #161 merged)                    |
-| Gate list | lint, typecheck, test, build, backend e2e, installer combinations. All six, every lane |
+| Field     | Value                                                                                      |
+| --------- | ------------------------------------------------------------------------------------------ |
+| Status    | D1, U1, N1 and D2 merged. B2 in review rounds, S1 started. See "State on 2026-10-02" below |
+| Date      | 2026-10-02                                                                                 |
+| Base      | `staging` after milestone 1 (PRs #144 to #149, #158 to #161 merged)                        |
+| Gate list | lint, typecheck, test, build, backend e2e, installer combinations. All six, every lane     |
 
 ## TL;DR
 
@@ -86,6 +86,37 @@ and at 320, 402 and 1280 wide. Field text and placeholder contrast is measured, 
 
 Not done on the simulator: signing in and the mobile sign-in confirmation page. Another app held the
 only simulator this run may use.
+
+## State on 2026-10-02
+
+| ID  | Piece                                  | State                                                                                |
+| --- | -------------------------------------- | ------------------------------------------------------------------------------------ |
+| D1  | `shared/core`                          | Merged, #164                                                                         |
+| U1  | Sign-in page defects                   | Merged, #165. Also fixed the contrast audit, which never checked dark mode           |
+| A1  | Same answer when mail fails            | Merged, #163                                                                         |
+| N1  | Native applications from configuration | Merged, #166. Six rounds. The seed command can no longer disable applications        |
+| B2  | Installer options                      | Round 5. Docker and production verified on generated projects. Arabic not honest yet |
+| D2  | `shared/sdk`                           | Merged, #167. Also fixed the status mapping and the field-error reader from C1       |
+
+## C1: the error contract between server and clients
+
+Found by the implementer of `shared/sdk` on 2026-10-02 by reading the server. All in `master` too.
+
+| Sev        | Defect                                                                                                                                                                                                        |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Warning    | The shared field-error reader looks for `details.errors`. The server sends `details.fields`. Per-field validation messages from the server never reach a form. The API docs example shows the wrong shape too |
+| Warning    | The shared status-to-code mapping disagrees with the server: 400 and 401 map to different codes on each side                                                                                                  |
+| Suggestion | A validation field name is taken from the first word of the message, so a field can be reported as `Name` instead of `name`                                                                                   |
+| Suggestion | The profile type documents its dates as required and declares them optional, and types them as dates though the wire carries strings                                                                          |
+
+The first two rows were fixed with D2 (#167). Still open: the field name casing, the profile type, and one more found on the way: no web form reads per-field errors from the server, so forms show one message where the server sent one per field.
+
+## Test debt found while gating
+
+| Sev     | Defect                                                                                                                                                                                                                                     |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Warning | Database specs that run the migration tool in a child process had no per-test time limit of their own and failed under load. Two are fixed in N1. The push hook starts many in-memory databases at once and fails when the machine is busy |
+| Warning | The installer's manifest test walks a directory another test file rewrites. Fixed in B2                                                                                                                                                    |
 
 ## A2: two more ways to tell a real address from an unknown one
 
