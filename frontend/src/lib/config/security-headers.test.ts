@@ -1,9 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   buildContentSecurityPolicy,
   buildSecurityHeaders,
   extractOrigin,
+  type SecurityHeadersOptions,
 } from './security-headers';
+
+// Written out by hand. The production strings are the policy as it shipped
+// before development got its own script-src.
+const PRODUCTION_CSP_SAME_ORIGIN =
+  "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'";
+const PRODUCTION_CSP_WITH_API =
+  "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.example.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://api.example.com; object-src 'none'";
+const DEVELOPMENT_CSP_WITH_API =
+  "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.example.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://api.example.com; object-src 'none'";
 
 describe('security-headers', () => {
   describe('extractOrigin', () => {
@@ -54,6 +64,80 @@ describe('security-headers', () => {
 
       expect(csp).toContain("connect-src 'self' http://localhost:5000");
       expect(csp).toContain("form-action 'self' http://localhost:5000");
+    });
+
+    it('keeps the production policy exactly as shipped when no api origin is set', () => {
+      expect(buildContentSecurityPolicy()).toBe(PRODUCTION_CSP_SAME_ORIGIN);
+    });
+
+    it('keeps the production policy exactly as shipped with an api origin', () => {
+      expect(buildContentSecurityPolicy('https://api.example.com/v1')).toBe(
+        PRODUCTION_CSP_WITH_API,
+      );
+    });
+
+    it('keeps eval out when development is explicitly off', () => {
+      expect(buildContentSecurityPolicy('https://api.example.com/v1', false)).toBe(
+        PRODUCTION_CSP_WITH_API,
+      );
+    });
+
+    it('allows eval in script-src only, and only in development', () => {
+      expect(buildContentSecurityPolicy('https://api.example.com/v1', true)).toBe(
+        DEVELOPMENT_CSP_WITH_API,
+      );
+    });
+  });
+
+  describe('content security policy by environment', () => {
+    const API_URL = 'https://api.example.com/v1';
+
+    const cspOf = (options?: SecurityHeadersOptions): string | undefined =>
+      buildSecurityHeaders(options).find((header) => header.key === 'Content-Security-Policy')
+        ?.value;
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it('allows eval when the caller says development', () => {
+      expect(cspOf({ apiUrl: API_URL, isProduction: false, isDevelopment: true })).toBe(
+        DEVELOPMENT_CSP_WITH_API,
+      );
+    });
+
+    it('sends the production policy when the caller says production', () => {
+      expect(cspOf({ apiUrl: API_URL, isProduction: true })).toBe(PRODUCTION_CSP_WITH_API);
+    });
+
+    it('lets production win when both flags are set', () => {
+      expect(cspOf({ apiUrl: API_URL, isProduction: true, isDevelopment: true })).toBe(
+        PRODUCTION_CSP_WITH_API,
+      );
+    });
+
+    it('keeps eval out of an environment that is neither production nor development', () => {
+      expect(cspOf({ apiUrl: API_URL, isProduction: false, isDevelopment: false })).toBe(
+        PRODUCTION_CSP_WITH_API,
+      );
+    });
+
+    it('allows eval when NODE_ENV is development', () => {
+      vi.stubEnv('NODE_ENV', 'development');
+
+      expect(cspOf({ apiUrl: API_URL })).toBe(DEVELOPMENT_CSP_WITH_API);
+    });
+
+    it('sends the production policy when NODE_ENV is production', () => {
+      vi.stubEnv('NODE_ENV', 'production');
+
+      expect(cspOf({ apiUrl: API_URL })).toBe(PRODUCTION_CSP_WITH_API);
+    });
+
+    it('keeps eval out when NODE_ENV is test', () => {
+      vi.stubEnv('NODE_ENV', 'test');
+
+      expect(cspOf({ apiUrl: API_URL })).toBe(PRODUCTION_CSP_WITH_API);
     });
   });
 
