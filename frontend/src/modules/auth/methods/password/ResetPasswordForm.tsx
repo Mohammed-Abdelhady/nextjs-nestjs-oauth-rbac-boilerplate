@@ -20,6 +20,8 @@ import { toast } from '@/lib/toast';
 import { Link, useRouter } from '@/i18n/navigation';
 import { preventNavigationBlur } from '@/modules/auth/utils/preventNavigationBlur';
 import { filterDigits } from '@/modules/auth/utils/digitFilter';
+import { CODE_ENTRY_FONT_SIZE } from '@/lib/config/form-styles';
+import { cn } from '@/lib/utils';
 
 /**
  * Reset password form validation schema
@@ -208,7 +210,7 @@ export function ResetPasswordForm() {
               autoComplete="one-time-code"
               disabled={isLoading}
               maxLength={6}
-              className="mt-5 text-center text-2xl tracking-widest"
+              className={cn('mt-5 text-center tracking-widest', CODE_ENTRY_FONT_SIZE)}
               autoFocus
               onChange={handleCodeChange}
             />

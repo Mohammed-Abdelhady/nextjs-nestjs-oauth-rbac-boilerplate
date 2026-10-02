@@ -18,6 +18,8 @@ import { parseApiError } from '@app/core';
 import { filterDigits } from '../utils/digitFilter';
 import { WelcomeModal } from './WelcomeModal';
 import { createActivationSchema, type ActivationFormData } from '../utils/activationSchema';
+import { CODE_ENTRY_FONT_SIZE } from '@/lib/config/form-styles';
+import { cn } from '@/lib/utils';
 
 /**
  * ActivationForm component for email verification
@@ -200,7 +202,7 @@ export function ActivationForm() {
               autoComplete="one-time-code"
               disabled={isLoading}
               maxLength={6}
-              className="mt-5 text-center text-2xl tracking-widest"
+              className={cn('mt-5 text-center tracking-widest', CODE_ENTRY_FONT_SIZE)}
               autoFocus
               onChange={handleCodeChange}
             />

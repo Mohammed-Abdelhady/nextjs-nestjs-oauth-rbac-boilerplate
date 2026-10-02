@@ -38,6 +38,13 @@
 
 import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
 
+// iOS Safari zooms focused text controls below 16 px. Keep the smaller desktop size.
+export const TEXT_CONTROL_FONT_SIZE = 'text-base md:text-sm';
+
+// Override the desktop modifier too when these tokens are merged with input styles.
+export const CODE_ENTRY_FONT_SIZE = 'text-2xl md:text-2xl';
+export const RECOVERY_CODE_FONT_SIZE = 'text-lg md:text-lg';
+
 /**
  * Atomic design tokens - semantic color system
  *
@@ -76,7 +83,7 @@ const TOKENS = {
 
   // Typography
   typography: {
-    fontSize: 'text-sm',
+    fontSize: TEXT_CONTROL_FONT_SIZE,
     fontWeight: 'font-medium',
   },
 
