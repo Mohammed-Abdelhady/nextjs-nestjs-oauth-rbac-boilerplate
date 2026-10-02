@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DEFAULT_AUTH_EPOCH } from '../../session/constants/session-policy';
+import type { NativeApplicationConfiguration } from '../../config/types/native-application.type';
 
 @Injectable()
 export class AuthEpochService {
@@ -12,6 +13,13 @@ export class AuthEpochService {
 
   nativeEnabled(): boolean {
     return this.configService.get<boolean>('auth.nativeEnabled', false);
+  }
+
+  nativeApplications(): NativeApplicationConfiguration[] {
+    return this.configService.get<NativeApplicationConfiguration[]>(
+      'auth.nativeApplications',
+      [],
+    );
   }
 
   environment(): string {

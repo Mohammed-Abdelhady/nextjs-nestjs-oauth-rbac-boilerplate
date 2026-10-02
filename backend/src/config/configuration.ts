@@ -1,5 +1,7 @@
 import { createOAuthConfig, OAuthConfig } from './oauth.config';
 import { APP_NAME } from '../common/constants/app';
+import type { NativeApplicationConfiguration } from './types/native-application.type';
+import { parseNativeApplications } from './utils/native-application-config.util';
 
 export { EnvironmentConfig, EnvironmentVariables } from './env.schema';
 
@@ -42,6 +44,7 @@ export interface Configuration {
     passwordEnabled: boolean;
     epoch: number;
     nativeEnabled: boolean;
+    nativeApplications: NativeApplicationConfiguration[];
   };
   magicLink: {
     enabled: boolean;
@@ -92,6 +95,7 @@ const configuration = (): Configuration => {
   const port = Number.parseInt(process.env.PORT || '3000', 10);
   const apiUrl = process.env.API_URL || `http://localhost:${port}`;
   const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+  const nativeEnabled = process.env.AUTH_NATIVE_ENABLED === 'true';
 
   return {
     server: {
@@ -144,7 +148,10 @@ const configuration = (): Configuration => {
     auth: {
       passwordEnabled: process.env.AUTH_PASSWORD_ENABLED !== 'false',
       epoch: Number.parseInt(process.env.AUTH_EPOCH || '1', 10),
-      nativeEnabled: process.env.AUTH_NATIVE_ENABLED === 'true',
+      nativeEnabled,
+      nativeApplications: nativeEnabled
+        ? parseNativeApplications(process.env.AUTH_NATIVE_APPLICATIONS)
+        : [],
     },
     magicLink: {
       enabled: process.env.MAGIC_LINK_ENABLED

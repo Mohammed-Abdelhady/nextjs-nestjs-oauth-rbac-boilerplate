@@ -40,6 +40,7 @@ export interface EnvironmentConfig extends OAuthEnvironmentConfig {
 
   AUTH_EPOCH?: number;
   AUTH_NATIVE_ENABLED?: boolean;
+  AUTH_NATIVE_APPLICATIONS?: string;
 
   ACTIVATION_CODE_EXPIRES_IN?: number;
   ACTIVATION_MAX_ATTEMPTS?: number;
@@ -201,6 +202,11 @@ export class EnvironmentVariables extends OAuthEnvironmentVariables {
   @IsBoolean()
   @IsOptional()
   AUTH_NATIVE_ENABLED: boolean = false;
+
+  @Transform(transformOptionalString)
+  @IsString()
+  @IsOptional()
+  AUTH_NATIVE_APPLICATIONS?: string;
 
   @Type(() => Number)
   @IsInt()
