@@ -1,4 +1,4 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import type { Server } from 'node:http';
 import { mkdtemp, rmdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -16,6 +16,7 @@ import { CSRF_HEADER } from '../../src/session/constants/browser-proof';
 import request from 'supertest';
 import { browserCors } from '../../src/common/security/browser-cors';
 import { DEVELOPMENT_CONTENT_SECURITY_POLICY } from '../../src/common/security/content-security-policy';
+import { createValidationPipe } from '../../src/common/pipes/validation-pipe.factory';
 import { Clock } from '../../src/common/services/clock';
 import {
   SeedUser,
@@ -218,14 +219,7 @@ export async function bootE2eApp(
     );
     nestApp.use(cookieParser());
     nestApp.enableCors(browserCors(environment.CLIENT_URL));
-    nestApp.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-        transformOptions: { enableImplicitConversion: true },
-      }),
-    );
+    nestApp.useGlobalPipes(createValidationPipe());
     await nestApp.init();
     await reconcileStartupApplications(nestApp);
     await nestApp.listen(port, '127.0.0.1');

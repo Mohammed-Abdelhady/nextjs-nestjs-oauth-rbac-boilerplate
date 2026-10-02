@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
@@ -13,6 +13,7 @@ import { ErrorResponse, ErrorDetails } from './common/dto/api-response.dto';
 import { DEVELOPMENT_CONTENT_SECURITY_POLICY } from './common/security/content-security-policy';
 import { browserCors } from './common/security/browser-cors';
 import { buildOpenApiDocument } from './common/swagger/build-openapi-document';
+import { createValidationPipe } from './common/pipes/validation-pipe.factory';
 
 /**
  * Bootstrap the NestJS application
@@ -53,16 +54,7 @@ async function bootstrap() {
   app.enableCors(browserCors(clientUrl));
 
   // 3. Global Validation Pipe - Validate all incoming DTOs
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true, // Strip unknown properties
-      forbidNonWhitelisted: true, // Throw error if unknown properties
-      transform: true, // Transform to DTO instances
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-    }),
-  );
+  app.useGlobalPipes(createValidationPipe());
 
   // 5. Rate Limiting - Applied via ThrottlerGuard in AppModule
 

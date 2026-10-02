@@ -56,7 +56,7 @@ describe('unwrapEnvelope', () => {
             message: 'Validation failed',
             details: {
               fields: {
-                Name: ['Name must be at least 2 characters'],
+                name: ['Name must be at least 2 characters'],
                 email: 'not a list',
                 age: [1, 2],
               },
@@ -68,7 +68,7 @@ describe('unwrapEnvelope', () => {
 
     expect(error.status).toBe(400);
     expect(error.code).toBe('VALIDATION_ERROR');
-    expect(error.fields).toEqual({ Name: ['Name must be at least 2 characters'] });
+    expect(error.fields).toEqual({ name: ['Name must be at least 2 characters'] });
   });
 
   it('keeps a field named __proto__ as an ordinary key', () => {

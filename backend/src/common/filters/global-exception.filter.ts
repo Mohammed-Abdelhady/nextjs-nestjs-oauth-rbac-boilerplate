@@ -9,6 +9,7 @@ import {
 import { Response } from 'express';
 import { ThrottlerException } from '@nestjs/throttler';
 import { AppException } from '../exceptions/app.exception';
+import { ValidationFailedException } from '../exceptions/validation-failed.exception';
 import { ErrorCode } from '../enums/error-code.enum';
 import { ErrorResponse } from '../dto/api-response.dto';
 import { RequestWithId } from '../interfaces/request-with-id.interface';
@@ -44,7 +45,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         exception.getDetails(),
       );
       this.logger.warn(
-        `AppException: ${exception.getCode()} - ${exception.message}${tag}`,
+        `AppException: ${exception.getCode()} - ${exception.message}${this.describeFailedFields(exception)}${tag}`,
       );
     } else if (exception instanceof ThrottlerException) {
       statusCode = HttpStatus.TOO_MANY_REQUESTS;
@@ -61,24 +62,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       this.logger.warn(`ThrottlerException: ${exception.message}${tag}`);
     } else if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
-
-      const validationResult = this.extractValidationErrors(exception);
-      if (validationResult) {
-        errorResponse = ErrorResponse.error(
-          ErrorCode.VALIDATION_ERROR,
-          'Validation failed',
-          validationResult,
-        );
-        this.logger.warn(
-          `ValidationException: ${JSON.stringify(validationResult.fields)}${tag}`,
-        );
-      } else {
-        const code = this.mapHttpStatusToErrorCode(statusCode);
-        errorResponse = ErrorResponse.error(code, exception.message);
-        this.logger.warn(
-          `HttpException (${statusCode}): ${code} - ${exception.message}${tag}`,
-        );
-      }
+      const code = this.mapHttpStatusToErrorCode(statusCode);
+      errorResponse = ErrorResponse.error(code, exception.message);
+      this.logger.warn(
+        `HttpException (${statusCode}): ${code} - ${exception.message}${tag}`,
+      );
     } else if (isCastError(exception)) {
       statusCode = HttpStatus.BAD_REQUEST;
       errorResponse = ErrorResponse.error(
@@ -119,6 +107,18 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   }
 
   /**
+   * Which DTO fields a refused request failed on, for the log. Names only:
+   * messages and unknown property names can carry what the caller sent.
+   */
+  private describeFailedFields(exception: AppException): string {
+    if (!(exception instanceof ValidationFailedException)) {
+      return '';
+    }
+    const { fieldNames, omittedCount } = exception.logSummary;
+    return ` (fields: ${fieldNames.join(', ')}; omitted: ${omittedCount})`;
+  }
+
+  /**
    * Maps HTTP status codes to standardized error codes when not thrown as an AppException.
    */
   private mapHttpStatusToErrorCode(status: number): ErrorCode {
@@ -131,43 +131,5 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       [HttpStatus.TOO_MANY_REQUESTS]: ErrorCode.RATE_LIMIT_EXCEEDED,
     };
     return codes[status] ?? ErrorCode.INTERNAL_ERROR;
-  }
-
-  /**
-   * Extracts validation errors from BadRequestException thrown by ValidationPipe.
-   */
-  private extractValidationErrors(
-    exception: HttpException,
-  ): { fields: Record<string, string[]> } | null {
-    const status = exception.getStatus();
-    if (status !== Number(HttpStatus.BAD_REQUEST)) {
-      return null;
-    }
-
-    const response = exception.getResponse();
-    if (typeof response !== 'object' || response === null) {
-      return null;
-    }
-
-    const responseObj = response as Record<string, unknown>;
-    const messages = responseObj.message;
-
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return null;
-    }
-
-    const fields: Record<string, string[]> = {};
-    for (const msg of messages) {
-      if (typeof msg === 'string') {
-        const fieldMatch = msg.match(/^(\w+)\s/);
-        const fieldName = fieldMatch ? fieldMatch[1] : 'general';
-        if (!fields[fieldName]) {
-          fields[fieldName] = [];
-        }
-        fields[fieldName].push(msg);
-      }
-    }
-
-    return { fields };
   }
 }
