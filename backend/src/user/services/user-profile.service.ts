@@ -1,6 +1,6 @@
 import { Injectable, Logger, HttpStatus } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Connection, Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from '../schemas/user.schema';
 import { Role, RoleDocument } from '../../role/schemas/role.schema';
@@ -11,6 +11,7 @@ import {
 } from '../../auth/passkeys/schemas/passkey.schema';
 // feature:passkeys:end
 import { SessionService } from '../../auth/services/session.service';
+import { withMajorityTransaction } from '../../session/utils/mongo-transaction';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { UserProfileDto } from '../dto/user-profile.dto';
@@ -43,6 +44,7 @@ export class UserProfileService {
     private readonly passkeyModel: Model<PasskeyDocument>,
     // feature:passkeys:end
     private readonly sessionService: SessionService,
+    @InjectConnection() private readonly connection: Connection,
   ) {}
 
   /**
@@ -93,9 +95,17 @@ export class UserProfileService {
   async changePassword(
     userId: string,
     dto: ChangePasswordDto,
-    currentSessionToken: string,
+    currentSessionId: string | null,
   ): Promise<ApiResponse<{ message: string }>> {
     assertValidObjectId(userId, 'Invalid user ID format');
+
+    if (currentSessionId === null) {
+      throw new AppException(
+        ErrorCode.SESSION_INVALID,
+        'Current session is no longer active',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
 
     const user = await this.userModel
       .findById(userId)
@@ -136,14 +146,22 @@ export class UserProfileService {
       );
     }
 
-    user.password = await bcrypt.hash(dto.newPassword, PASSWORD_SALT_ROUNDS);
-    await user.save();
-
-    // Invalidate all other sessions (keep current session)
-    await this.sessionService.invalidateAllSessionsExcept(
-      new Types.ObjectId(userId),
-      currentSessionToken,
+    const hashedPassword = await bcrypt.hash(
+      dto.newPassword,
+      PASSWORD_SALT_ROUNDS,
     );
+
+    // The password save and the revocation of the other sessions share one
+    // transaction: a revocation failure leaves the old password in place.
+    await withMajorityTransaction(this.connection, async (db) => {
+      user.password = hashedPassword;
+      await user.save({ session: db });
+      await this.sessionService.invalidateAllSessionsExceptSession(
+        new Types.ObjectId(userId),
+        currentSessionId,
+        db,
+      );
+    });
 
     this.logger.log(`Password changed for user: ${user.email}`);
     return ApiResponse.success({

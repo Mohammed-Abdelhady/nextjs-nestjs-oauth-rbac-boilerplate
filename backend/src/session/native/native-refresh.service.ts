@@ -73,6 +73,9 @@ export class NativeRefreshService {
       ) {
         return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_GRANT);
       }
+      if (presented.revokedAt) {
+        return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_GRANT);
+      }
       if (presented.spent) {
         await this.issuer.revokeFamily(
           db,
@@ -83,10 +86,7 @@ export class NativeRefreshService {
         );
         return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_GRANT);
       }
-      if (
-        presented.revokedAt ||
-        presented.expiresAt.getTime() <= now.getTime()
-      ) {
+      if (presented.expiresAt.getTime() <= now.getTime()) {
         return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_GRANT);
       }
       const session = await this.sessions

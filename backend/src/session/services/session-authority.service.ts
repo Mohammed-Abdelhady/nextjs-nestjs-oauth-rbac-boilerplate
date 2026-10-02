@@ -73,6 +73,7 @@ export class SessionAuthorityService {
         .find(
           currentSessionCandidateFilter(userId, now, userVersion, authEpoch, [
             CREDENTIAL_PURPOSE.BROWSER_SESSION,
+            CREDENTIAL_PURPOSE.NATIVE_ACCESS,
           ]),
         )
         .sort({ lastUsedAt: -1 })
@@ -112,7 +113,7 @@ export class SessionAuthorityService {
             grantByClientId.get(candidate.clientId),
             now,
             authEpoch,
-            CREDENTIAL_PURPOSE.BROWSER_SESSION,
+            candidate.credentialPurpose,
           ) !== null,
       );
     } catch (error) {

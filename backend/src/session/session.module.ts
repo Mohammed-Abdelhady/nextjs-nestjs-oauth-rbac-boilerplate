@@ -32,6 +32,7 @@ import {
 import { BrowserProofService } from './services/browser-proof.service';
 import { ApplicationAccessService } from './services/application-access.service';
 import { ApplicationRegistryService } from './services/application-registry.service';
+import { NativeSessionRevocationService } from './services/native-session-revocation.service';
 import { SecurityEventService } from './services/security-event.service';
 import { SessionAuthorityService } from './services/session-authority.service';
 import { SessionIssuanceService } from './services/session-issuance.service';
@@ -60,6 +61,7 @@ import { NativeAccessService } from './native/native-access.service';
     ApplicationAccessService,
     ApplicationRegistryService,
     BrowserProofService,
+    NativeSessionRevocationService,
     SecurityEventService,
     SessionIssuanceService,
     SessionAuthorityService,
@@ -72,6 +74,7 @@ import { NativeAccessService } from './native/native-access.service';
     ApplicationAccessService,
     ApplicationRegistryService,
     BrowserProofService,
+    NativeSessionRevocationService,
     SecurityEventService,
     SessionIssuanceService,
     SessionAuthorityService,

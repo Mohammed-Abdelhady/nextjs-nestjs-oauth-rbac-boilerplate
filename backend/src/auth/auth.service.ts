@@ -1,6 +1,6 @@
 import { Injectable, Logger, HttpStatus } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Response } from 'express';
 import { User, UserDocument } from '../user/schemas/user.schema';
 import { RegisterDto } from './dto/register.dto';
@@ -27,6 +27,7 @@ import { VerificationCodeService } from './services/verification-code.service';
 import { PasswordResetCodeService } from './services/password-reset-code.service';
 import { SignInService } from './services/sign-in.service';
 import { resolveActivatedUser } from './utils/activation.util';
+import { assertValidObjectId } from '../user/utils/user-lookup.util';
 import { generateVerificationCode } from './utils/verification-code.util';
 
 @Injectable()
@@ -189,6 +190,30 @@ export class AuthService {
   ): Promise<ApiResponse<{ message: string }>> {
     const invalidated =
       await this.sessionService.invalidateSession(sessionToken);
+
+    if (!invalidated) {
+      throw new AppException(
+        ErrorCode.SESSION_INVALID,
+        'Invalid session',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    this.logger.log('User logged out successfully');
+    return ApiResponse.success({ message: 'Logout successful' });
+  }
+
+  async logoutNative(
+    sessionId: string,
+    userId: string,
+  ): Promise<ApiResponse<{ message: string }>> {
+    assertValidObjectId(userId, 'Invalid user ID format');
+    assertValidObjectId(sessionId, 'Invalid session ID format');
+
+    const invalidated = await this.sessionService.invalidateNativeSession(
+      new Types.ObjectId(userId),
+      sessionId,
+    );
 
     if (!invalidated) {
       throw new AppException(

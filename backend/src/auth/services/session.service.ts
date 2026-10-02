@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Types } from 'mongoose';
+import { Types, type ClientSession } from 'mongoose';
 import { LeanSession } from '../../session/schemas/session.schema';
 import {
   SessionIssuanceService,
@@ -7,6 +7,7 @@ import {
 } from '../../session/services/session-issuance.service';
 import { SessionAuthorityService } from '../../session/services/session-authority.service';
 import { SessionRevocationService } from '../../session/services/session-revocation.service';
+import { NativeSessionRevocationService } from '../../session/services/native-session-revocation.service';
 import { hashToken } from '../../session/utils/token-hash';
 
 export { hashToken };
@@ -19,6 +20,7 @@ export class SessionService {
     private readonly issuance: SessionIssuanceService,
     private readonly authority: SessionAuthorityService,
     private readonly revocation: SessionRevocationService,
+    private readonly nativeRevocation: NativeSessionRevocationService,
   ) {}
 
   async createSession(
@@ -80,15 +82,34 @@ export class SessionService {
     return revoked;
   }
 
-  async invalidateAllSessionsExcept(
+  async invalidateAllSessionsExceptSession(
     userId: Types.ObjectId,
-    exceptToken: string,
+    exceptSessionId: string,
+    db?: ClientSession,
   ): Promise<number> {
-    const count = await this.revocation.revokeAllOthers(userId, exceptToken);
+    const count = await this.revocation.revokeAllOthersExceptSession(
+      userId,
+      exceptSessionId,
+      db,
+    );
     this.logger.log(
       `All sessions except current invalidated for user ${userId.toString()}: ${count} document(s)`,
     );
     return count;
+  }
+
+  async invalidateNativeSession(
+    userId: Types.ObjectId,
+    sessionId: string,
+  ): Promise<boolean> {
+    const revoked = await this.nativeRevocation.revokeNativeSession(
+      sessionId,
+      userId,
+    );
+    this.logger.log(
+      `Native session invalidated: ${revoked ? 1 : 0} document(s)`,
+    );
+    return revoked;
   }
 
   async getSessionByToken(token: string): Promise<LeanSession | null> {

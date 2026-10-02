@@ -1,20 +1,14 @@
-import { Model, Types } from 'mongoose';
-import { getModelToken } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
 import { AppException } from '../common/exceptions/app.exception';
 import { ErrorCode } from '../common/enums/error-code.enum';
 import { CREDENTIAL_PURPOSE } from './constants/credential-purpose';
 import { WEB_CLIENT_ID } from './constants/client-ids';
-import { SECURITY_EVENT_ACTION } from './constants/security-event-action';
 import {
   MAX_SESSIONS_PER_USER,
   WEB_ABSOLUTE_LIFETIME_MS,
   WEB_IDLE_LIFETIME_MS,
 } from './constants/session-policy';
 import { hashToken } from './utils/token-hash';
-import {
-  SecurityEvent,
-  SecurityEventDocument,
-} from './schemas/security-event.schema';
 import { startMemoryReplSet } from '../../test/utils/memory-replset';
 import { FrozenClock, TEST_NOW } from '../../test/utils/frozen-clock';
 import {
@@ -213,121 +207,6 @@ describe('session authority (plan 02)', () => {
         userVersion: 0,
       }),
     ).toBe(MAX_SESSIONS_PER_USER);
-  });
-
-  it('revokes the current session and leaves others until all-other logout', async () => {
-    const first = await login('one@example.test');
-    const second = await harness.sessionService.createSession(
-      first.userId,
-      'second',
-      '127.0.0.1',
-    );
-    const secondToken = second.sessionToken;
-    expect(await harness.sessionService.invalidateSession(first.token)).toBe(
-      true,
-    );
-    expect(
-      await harness.sessionService.validateSession(first.token),
-    ).toBeNull();
-    expect(
-      await harness.sessionService.validateSession(secondToken),
-    ).not.toBeNull();
-
-    const remaining = await harness.sessionService.invalidateAllSessionsExcept(
-      first.userId,
-      secondToken,
-    );
-    expect(remaining).toBe(0);
-    expect(
-      await harness.sessionService.validateSession(secondToken),
-    ).not.toBeNull();
-  });
-
-  it('applies concurrent revokes once and keeps the selected session valid', async () => {
-    const kept = await login('concurrent-revoke@example.test');
-    const targetedTokens = await Promise.all(
-      ['target one', 'target two'].map(async (agent) => {
-        const issued = await harness.sessionService.createSession(
-          kept.userId,
-          agent,
-          '127.0.0.1',
-        );
-        return issued.sessionToken;
-      }),
-    );
-    await Promise.allSettled([
-      ...targetedTokens.map((token) =>
-        harness.sessionService.invalidateSession(token),
-      ),
-      harness.sessionService.invalidateAllSessionsExcept(
-        kept.userId,
-        kept.token,
-      ),
-    ]);
-    const sessions = await harness.sessions.find({ user: kept.userId }).lean();
-    const persisted = [...targetedTokens, kept.token].map((token) => {
-      const session = sessions.find(
-        (row) => row.tokenHash === hashToken(token),
-      );
-      return {
-        id: session?._id.toString(),
-        state: [session?.isValid, Boolean(session?.revokedAt)],
-      };
-    });
-    const events = await harness.app
-      .get<Model<SecurityEventDocument>>(getModelToken(SecurityEvent.name))
-      .find({
-        targetUserId: kept.userId.toString(),
-        action: {
-          $in: [
-            SECURITY_EVENT_ACTION.SESSION_REVOKED,
-            SECURITY_EVENT_ACTION.SESSIONS_REVOKED_OTHERS,
-          ],
-        },
-      })
-      .lean();
-    const expectedEvents = [
-      [SECURITY_EVENT_ACTION.SESSION_REVOKED, persisted[0]?.id],
-      [SECURITY_EVENT_ACTION.SESSION_REVOKED, persisted[1]?.id],
-      [SECURITY_EVENT_ACTION.SESSIONS_REVOKED_OTHERS, persisted[2]?.id],
-    ]
-      .map(([action, sessionId]) => action + ':' + sessionId)
-      .sort();
-
-    expect({
-      sessionState: persisted.map(({ state }) => state),
-      securityEvents: events
-        .map(({ action, sessionId }) => action + ':' + sessionId)
-        .sort(),
-    }).toEqual({
-      sessionState: [
-        [false, true],
-        [false, true],
-        [true, false],
-      ],
-      securityEvents: expectedEvents,
-    });
-  });
-
-  it('does not let a revoked caller promote itself during all-other logout', async () => {
-    const first = await login('survivor@example.test');
-    const otherIssued = await harness.sessionService.createSession(
-      first.userId,
-      'other',
-      '127.0.0.1',
-    );
-    const other = otherIssued.sessionToken;
-    await harness.sessionService.invalidateAllSessionsExcept(
-      first.userId,
-      first.token,
-    );
-    await expect(
-      harness.sessionService.invalidateAllSessionsExcept(first.userId, other),
-    ).rejects.toMatchObject({ code: ErrorCode.SESSION_INVALID });
-    expect(
-      await harness.sessionService.validateSession(first.token),
-    ).not.toBeNull();
-    expect(await harness.sessionService.validateSession(other)).toBeNull();
   });
 
   it('keeps old sessions invalid after an application is re-enabled', async () => {

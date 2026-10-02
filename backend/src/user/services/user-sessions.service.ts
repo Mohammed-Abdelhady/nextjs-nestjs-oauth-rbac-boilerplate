@@ -22,18 +22,13 @@ export class UserSessionsService {
    */
   async getSessions(
     userId: string,
-    currentSessionToken: string,
+    currentSessionId: string | null,
   ): Promise<ApiResponse<SessionListData>> {
     assertValidObjectId(userId, 'Invalid user ID format');
 
     const sessions = await this.sessionService.getUserSessions(
       new Types.ObjectId(userId),
     );
-
-    // Get current session to mark it
-    const currentSession =
-      await this.sessionService.getSessionByToken(currentSessionToken);
-    const currentSessionId = currentSession?._id?.toString();
 
     const sessionDtos: SessionDto[] = sessions.map((session) => ({
       id: session._id.toString(),
@@ -42,7 +37,10 @@ export class UserSessionsService {
       deviceName: session.deviceName,
       createdAt: session.createdAt,
       lastUsedAt: session.lastUsedAt,
-      isCurrent: session._id.toString() === currentSessionId,
+      isCurrent:
+        currentSessionId !== null &&
+        session._id.toString() === currentSessionId,
+      credentialPurpose: session.credentialPurpose,
     }));
 
     this.logger.log(
@@ -60,16 +58,13 @@ export class UserSessionsService {
   async revokeSession(
     userId: string,
     sessionId: string,
-    currentSessionToken: string,
+    currentSessionId: string | null,
   ): Promise<ApiResponse<{ message: string }>> {
     assertValidObjectId(userId, 'Invalid user ID format');
     assertValidObjectId(sessionId, 'Invalid session ID format');
 
     // Check if trying to revoke current session
-    const currentSession =
-      await this.sessionService.getSessionByToken(currentSessionToken);
-
-    if (currentSession && currentSession._id.toString() === sessionId) {
+    if (currentSessionId !== null && currentSessionId === sessionId) {
       throw new AppException(
         ErrorCode.CANNOT_REVOKE_CURRENT_SESSION,
         'Cannot revoke current session. Use logout instead.',
@@ -99,14 +94,23 @@ export class UserSessionsService {
    */
   async revokeAllOtherSessions(
     userId: string,
-    currentSessionToken: string,
+    currentSessionId: string | null,
   ): Promise<ApiResponse<{ revokedCount: number }>> {
     assertValidObjectId(userId, 'Invalid user ID format');
 
-    const revokedCount = await this.sessionService.invalidateAllSessionsExcept(
-      new Types.ObjectId(userId),
-      currentSessionToken,
-    );
+    if (currentSessionId === null) {
+      throw new AppException(
+        ErrorCode.SESSION_INVALID,
+        'Current session is no longer active',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const revokedCount =
+      await this.sessionService.invalidateAllSessionsExceptSession(
+        new Types.ObjectId(userId),
+        currentSessionId,
+      );
 
     this.logger.log(`Revoked ${revokedCount} sessions for user: ${userId}`);
     return ApiResponse.success({
