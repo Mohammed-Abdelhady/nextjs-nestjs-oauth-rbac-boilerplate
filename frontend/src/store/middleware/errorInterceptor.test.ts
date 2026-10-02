@@ -3,6 +3,7 @@ import { isValidElement } from 'react';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { errorInterceptor } from './errorInterceptor';
 import { toast } from '@/lib/toast';
+import { ErrorCode } from '@/constants/errorCodes';
 
 vi.mock('@/lib/toast', () => ({ toast: { show: vi.fn() } }));
 
@@ -25,6 +26,23 @@ function reject(payload: FetchBaseQueryError) {
 afterEach(() => vi.clearAllMocks());
 
 describe('error toast middleware contract', () => {
+  it.each([
+    [409, ErrorCode.SESSION_LIMIT_REACHED],
+    [503, ErrorCode.AUTHORITY_UNAVAILABLE],
+  ])('uses the catalog key for a recognized %i response', (status, code) => {
+    reject({
+      status,
+      data: { success: false, error: { code, message: 'Backend message' } },
+    });
+
+    const message = vi.mocked(toast.show).mock.calls[0][1];
+    expect(isValidElement<{ messageKey: string }>(message)).toBe(true);
+    if (!isValidElement<{ messageKey: string }>(message)) {
+      throw new Error('Expected a localized toast message');
+    }
+    expect(message.props.messageKey).toBe(`errors.codes.${code}`);
+  });
+
   it('renders generated keys through the locale-aware component without endpoint prose', () => {
     reject({ status: 'FETCH_ERROR', error: 'Network failure' });
     expect(toast.show).toHaveBeenCalledWith('error', expect.anything(), { duration: 10000 });

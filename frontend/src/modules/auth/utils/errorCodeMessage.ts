@@ -1,4 +1,4 @@
-import { ErrorCode } from '@/constants/errorCodes';
+import { ErrorCode, getErrorCodeTranslationKey } from '@/constants/errorCodes';
 import { parseApiError } from '@/lib/apiError';
 
 const TRANSLATED_CODES = new Set<string>(Object.values(ErrorCode));
@@ -11,6 +11,9 @@ export function translatableErrorCode(
   error: unknown,
   fallback: string = ErrorCode.INTERNAL_ERROR,
 ): string {
-  const { code } = parseApiError(error);
-  return TRANSLATED_CODES.has(code) ? code : fallback;
+  const { code, translationKey } = parseApiError(error);
+  // The parser defaults to INTERNAL_ERROR when the response has no code.
+  return TRANSLATED_CODES.has(code) && translationKey === getErrorCodeTranslationKey(code)
+    ? code
+    : fallback;
 }

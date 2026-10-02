@@ -9,10 +9,9 @@ const UNKNOWN_ERROR = {
 
 /** Render middleware-generated keys within the Toaster's active locale context. */
 export function LocalizedToastMessage({ messageKey }: { messageKey: string }) {
-  const t = useTranslations('toast');
+  const t = useTranslations();
   const locale = useLocale();
-  const key = messageKey.replace(/^toast\./, '');
-  if (t.has(key)) return t(key);
-  if (t.has('error.unknownError')) return t('error.unknownError');
+  if (t.has(messageKey)) return t(messageKey);
+  if (t.has('toast.error.unknownError')) return t('toast.error.unknownError');
   return locale === 'ar' ? UNKNOWN_ERROR.ar : UNKNOWN_ERROR.en;
 }
