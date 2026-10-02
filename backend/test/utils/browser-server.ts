@@ -6,12 +6,12 @@ import type { PendingMagicLinkDocument } from '../../src/auth/magic-link/schemas
 
 async function main(): Promise<void> {
   const oauth = await startLocalOAuth();
-  const fixture = await bootE2eApp(5107, oauth.strategy).catch(
-    async (error: unknown) => {
-      await oauth.close();
-      throw error;
-    },
-  );
+  const fixture = await bootE2eApp(5107, {
+    browserStrategy: oauth.strategy,
+  }).catch(async (error: unknown) => {
+    await oauth.close();
+    throw error;
+  });
   let stopping = false;
   const stop = async (): Promise<void> => {
     if (stopping) return;
