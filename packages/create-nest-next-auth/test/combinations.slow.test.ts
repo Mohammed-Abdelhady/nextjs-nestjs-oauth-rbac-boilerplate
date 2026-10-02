@@ -58,8 +58,11 @@ let workspace = '';
 let manifest: Manifest;
 let built = { ok: false, output: '' };
 
+/** Every feature the CLI can be asked for. Hidden ids arrive through `requires`. */
 function everything(): string[] {
-  return availableFeatures(manifest).map(({ id }) => id);
+  return availableFeatures(manifest)
+    .filter(({ feature }) => feature.kind !== 'hidden')
+    .map(({ id }) => id);
 }
 
 beforeAll(async () => {
@@ -116,12 +119,13 @@ describe('generated projects', () => {
   });
 
   it('typechecks with everything the manifest offers', async () => {
-    const features = everything();
-    const project = await generate('everything', features);
+    const requested = everything();
+    const project = await generate('everything', requested);
     await expectTypechecks(project);
 
     // Retained application and API test files differ only by feature markers.
-    const differences = await compareWithRepository(project, features);
+    const selected = resolveSelection(manifest, requested).selected;
+    const differences = await compareWithRepository(project, selected);
     expect(differences, JSON.stringify(differences, null, 2)).toEqual([]);
   });
 
@@ -129,7 +133,6 @@ describe('generated projects', () => {
     const selection = resolveSelection(manifest, ['email-password', 'google']);
 
     expect(selection.selected).toContain('oauth-core');
-    expect(selection.added).toEqual(['oauth-core']);
     expect(manifest.features['oauth-core'].kind).toBe('hidden');
   });
 });

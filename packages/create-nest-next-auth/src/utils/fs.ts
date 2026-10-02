@@ -27,6 +27,11 @@ export function toPosix(path: string): string {
   return path.split(sep).join(posix.sep);
 }
 
+/** Narrows an unknown thrown value to one that carries an errno `code`. */
+export function isErrnoException(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && 'code' in error;
+}
+
 /** Removes a file and any directories it leaves empty, stopping at `root`. */
 export async function removeFile(root: string, relativePath: string): Promise<void> {
   const target = join(root, relativePath);

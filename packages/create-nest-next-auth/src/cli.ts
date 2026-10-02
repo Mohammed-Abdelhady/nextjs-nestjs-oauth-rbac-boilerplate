@@ -1,20 +1,25 @@
 import { readdir } from 'node:fs/promises';
 import { basename, relative, resolve } from 'node:path';
 import { cancel, intro, log, note, outro, spinner } from '@clack/prompts';
-import { CLI_NAME } from './constants/index.js';
+import { CLI_NAME, USAGE_EXIT_CODE } from './constants/index.js';
+import { ConfigFileError, readConfigFile } from './flags/config-file.js';
 import { parseCliOptions } from './flags/options.js';
+import { toPlanRequest } from './flags/request.js';
 import { loadManifest } from './manifest/load.js';
-import { defaultFeatureIds, resolveSelection } from './manifest/select.js';
+import { type Plan, resolvePlan } from './manifest/plan.js';
 import { packageRoot, templateDir } from './paths.js';
 import { prune } from './prune/index.js';
-import { askDirectory, askFeatures, CANCELLED } from './prompts/index.js';
+import { askDirectory, CANCELLED } from './prompts/index.js';
+import { askPlan, type PlanPromptNeeds, planPromptNeeds } from './prompts/plan.js';
 import { describeDangling, describeSelection } from './report.js';
+import { buildSummary, describePlanErrors } from './report/summary.js';
 import { copyTemplate } from './scaffold/copy.js';
 import { initRepository } from './scaffold/git.js';
 import { detectPackageManager, installDependencies, isSupported } from './scaffold/install.js';
 import { buildDocLinks, buildNextSteps } from './scaffold/next-steps.js';
 import { setProjectName } from './scaffold/package-json.js';
 import type { CliOptions, Manifest } from './types.js';
+import { isErrnoException } from './utils/fs.js';
 import { validateProjectName } from './utils/project-name.js';
 
 const DEFAULT_DIRECTORY = 'my-app';
@@ -25,7 +30,7 @@ async function isEmptyDirectory(path: string): Promise<boolean> {
   try {
     return (await readdir(path)).length === 0;
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return true;
+    if (isErrnoException(error) && error.code === 'ENOENT') return true;
     throw error;
   }
 }
@@ -35,6 +40,14 @@ function shortestPath(target: string): string {
   const fromHere = relative(process.cwd(), target);
   if (fromHere === '') return '.';
   return fromHere.startsWith('..') ? target : fromHere;
+}
+
+async function validateTarget(input: string): Promise<string> {
+  const target = resolve(process.cwd(), input);
+  const check = validateProjectName(basename(target));
+  if (!check.valid) throw new CliError(check.message ?? 'Invalid project name.');
+  if (!(await isEmptyDirectory(target))) throw new CliError(`${target} exists and is not empty.`);
+  return target;
 }
 
 async function resolveTarget(options: CliOptions): Promise<string> {
@@ -50,38 +63,26 @@ async function resolveTarget(options: CliOptions): Promise<string> {
     }
   }
 
-  const target = resolve(process.cwd(), input);
-  const check = validateProjectName(basename(target));
-  if (!check.valid) throw new CliError(check.message ?? 'Invalid project name.');
-  if (!(await isEmptyDirectory(target))) throw new CliError(`${target} exists and is not empty.`);
-  return target;
+  return validateTarget(input);
 }
 
-async function resolveFeatures(manifest: Manifest, options: CliOptions): Promise<string[]> {
-  if (options.features !== undefined) return options.features;
-  if (options.yes) return defaultFeatureIds(manifest);
-
-  const answer = await askFeatures(manifest, defaultFeatureIds(manifest));
-  if (answer === CANCELLED) throw new CliError('Cancelled.');
-  return answer;
+interface PromptNeeds extends PlanPromptNeeds {
+  directory: boolean;
 }
 
-function requireInteractive(options: CliOptions): void {
-  const needsPrompt = options.directory === undefined || options.features === undefined;
+function requireInteractive(options: CliOptions, needs: PromptNeeds): void {
+  const needsPrompt =
+    needs.directory || needs.targets || needs.database || needs.features || needs.options;
   if (!needsPrompt || options.yes || process.stdin.isTTY === true) return;
-  throw new CliError('No terminal to prompt in. Pass a directory with --yes or --features.');
+  throw new CliError('No terminal to prompt in. Pass --yes or the matching flags.');
 }
 
-async function scaffold(target: string, manifest: Manifest, options: CliOptions): Promise<number> {
-  const selection = resolveSelection(manifest, await resolveFeatures(manifest, options));
-  if (selection.rejected.length > 0) {
-    log.warn(`Not available yet, skipped: ${selection.rejected.join(', ')}`);
-  }
-  if (selection.selected.length === 0) throw new CliError('Select at least one sign-in method.');
-  if (selection.added.length > 0) {
-    log.info(`Added because another method needs it: ${selection.added.join(', ')}`);
-  }
-
+async function scaffold(
+  target: string,
+  manifest: Manifest,
+  plan: Plan,
+  options: CliOptions,
+): Promise<number> {
   const copying = spinner();
   copying.start('Copying the template');
   await copyTemplate(templateDir(), target);
@@ -90,7 +91,7 @@ async function scaffold(target: string, manifest: Manifest, options: CliOptions)
 
   const pruning = spinner();
   pruning.start('Removing what you did not pick');
-  const result = await prune(target, manifest, selection.selected);
+  const result = await prune(target, manifest, plan.features);
   pruning.stop('Pruned');
   log.message(describeSelection(manifest, result).join('\n'));
 
@@ -100,7 +101,7 @@ async function scaffold(target: string, manifest: Manifest, options: CliOptions)
     return 1;
   }
 
-  await finishSetup(target, manifest, selection.selected, options);
+  await finishSetup(target, manifest, plan.features, options);
   return 0;
 }
 
@@ -140,21 +141,68 @@ async function finishSetup(
   note(buildDocLinks(manifest, selected).join('\n'), 'Docs');
 }
 
-export async function main(argv: string[], version: string): Promise<number> {
+export async function main(
+  argv: string[],
+  version: string,
+  manifestRoot = packageRoot(),
+): Promise<number> {
   const options = parseCliOptions(argv, version);
   intro(`${CLI_NAME} ${version}`);
 
   try {
-    requireInteractive(options);
-    const manifest = await loadManifest(packageRoot());
-    const target = await resolveTarget(options);
-    const code = await scaffold(target, manifest, options);
+    const manifest = await loadManifest(manifestRoot);
+    const config = options.config === undefined ? undefined : await readConfigFile(options.config);
+    const request = toPlanRequest(options, config);
+
+    // Flags and the config file are authoritative. Report their errors before
+    // any prompt, so an invalid run never asks a question first.
+    const requested = resolvePlan(manifest, request);
+    if (requested.errors.length > 0) {
+      for (const line of describePlanErrors(manifest, requested.errors)) log.error(line);
+      outro('Nothing was written.');
+      return USAGE_EXIT_CODE;
+    }
+
+    const needs: PromptNeeds = {
+      directory: !options.dryRun && options.directory === undefined,
+      ...planPromptNeeds(manifest, request),
+    };
+    requireInteractive(options, needs);
+
+    const target = options.dryRun
+      ? options.directory === undefined
+        ? ''
+        : await validateTarget(options.directory)
+      : await resolveTarget(options);
+
+    if (!options.yes) {
+      const answers = await askPlan(manifest, request, needs);
+      if (answers === CANCELLED) throw new CliError('Cancelled.');
+      Object.assign(request, answers);
+    }
+
+    const plan = resolvePlan(manifest, request);
+    if (plan.errors.length > 0) {
+      for (const line of describePlanErrors(manifest, plan.errors)) log.error(line);
+      outro('Nothing was written.');
+      return USAGE_EXIT_CODE;
+    }
+    if (plan.features.length === 0) throw new CliError('Select at least one sign-in method.');
+
+    log.message(buildSummary(manifest, plan).join('\n'));
+
+    if (options.dryRun) {
+      outro('Dry run: nothing written.');
+      return 0;
+    }
+
+    const code = await scaffold(target, manifest, plan, options);
     if (code === 0) outro('Done.');
     return code;
   } catch (error) {
-    if (error instanceof CliError) {
+    if (error instanceof ConfigFileError || error instanceof CliError) {
       cancel(error.message);
-      return 1;
+      return USAGE_EXIT_CODE;
     }
     throw error;
   }

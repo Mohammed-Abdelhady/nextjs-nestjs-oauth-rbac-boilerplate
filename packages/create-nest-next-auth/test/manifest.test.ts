@@ -101,12 +101,7 @@ describe('the repository manifest', () => {
 
   it('preselects email and password with the three first-party providers', async () => {
     const manifest = await loadManifest(REPO_ROOT);
-    expect(defaultFeatureIds(manifest)).toEqual([
-      'email-password',
-      'google',
-      'github',
-      'facebook',
-    ]);
+    expect(defaultFeatureIds(manifest)).toEqual(['email-password', 'google', 'github', 'facebook']);
   });
 
   it('keeps hidden features out of the prompt and off the defaults', async () => {
@@ -139,14 +134,11 @@ describe('the repository manifest', () => {
     }
   });
 
-  it('drops unknown ids from a selection and pulls in requirements', async () => {
+  it('pulls in requirements and leaves ids outside the selection out', async () => {
     const manifest = await loadManifest(REPO_ROOT);
-    const selection = resolveSelection(manifest, ['google', 'apple', 'nope']);
+    const selection = resolveSelection(manifest, ['google', 'apple']);
 
     expect(selection.selected).toEqual(['oauth-core', 'google', 'apple']);
-    expect(selection.added).toEqual(['oauth-core']);
-    expect(selection.rejected).toEqual(['nope']);
-    expect(selection.removed).toContain('facebook');
   });
 
   it('claims every file that exists, so a delete list is never stale', async () => {

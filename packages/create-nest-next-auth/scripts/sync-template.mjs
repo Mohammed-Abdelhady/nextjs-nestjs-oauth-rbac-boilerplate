@@ -63,6 +63,7 @@ const RENAMED_FILES = new Map([
 ]);
 
 export function isExcluded(relativePath, name, isDirectory) {
+  if (name === '.git') return true;
   if (EXCLUDED_PATHS.has(relativePath)) return true;
   if (/(^|[\\/])\.config[\\/]gcloud($|[\\/])/.test(relativePath)) return true;
   if (name === '.env' || name.startsWith('.env.'))
