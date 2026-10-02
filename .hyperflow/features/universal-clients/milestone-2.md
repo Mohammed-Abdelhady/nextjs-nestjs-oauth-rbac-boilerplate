@@ -87,6 +87,19 @@ and at 320, 402 and 1280 wide. Field text and placeholder contrast is measured, 
 Not done on the simulator: signing in and the mobile sign-in confirmation page. Another app held the
 only simulator this run may use.
 
+## A2: two more ways to tell a real address from an unknown one
+
+Found by the reviewer of the forgot-password fix on 2026-10-02. Both are in `master`. Neither is fixed
+by that change.
+
+| Sev     | Defect                                                                                                                                                                         |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Warning | After register, resend or forgot-password, a wrong code answers "nothing pending" for an address with no record and "wrong code, N attempts left" for one with a record        |
+| Warning | Two register or forgot-password requests at the same moment can answer 409 for one kind of address only, because the pending record is looked up and then created in two steps |
+
+The first needs a design: an unknown address must appear to count attempts down too. The second is a
+single atomic write. Owner: Luna, after S1.
+
 ## Debt seen, not scheduled
 
 `as unknown as` appears in existing backend code and specs (one use in `auth.guard.ts`, the rest in
