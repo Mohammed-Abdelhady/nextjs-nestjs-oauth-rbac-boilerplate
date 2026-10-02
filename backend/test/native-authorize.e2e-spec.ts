@@ -55,10 +55,10 @@ describe('native browser authorization (e2e)', () => {
     await createNativeApplication(e2e);
   });
 
-  it('starts in the requested locale and returns only the browser fields', async () => {
-    const started = await beginNativeAuthorization(e2e, 'ar-EG, en;q=0.5');
+  it('returns only the browser fields for a signed-out transaction', async () => {
+    const started = await beginNativeAuthorization(e2e);
     const location = new URL(started.location);
-    expect(location.pathname).toBe('/ar/auth/native/authorize');
+    expect(location.pathname).toBe('/en/auth/native/authorize');
     expect([...location.searchParams.keys()]).toEqual(['transaction']);
 
     const signedOut = await request(e2e.httpServer).get(
@@ -83,6 +83,15 @@ describe('native browser authorization (e2e)', () => {
       },
     });
   });
+
+  // feature:locale-ar:start
+  it('starts in the Arabic locale from the request header', async () => {
+    const started = await beginNativeAuthorization(e2e, 'ar-EG, en;q=0.5');
+    const location = new URL(started.location);
+    expect(location.pathname).toBe('/ar/auth/native/authorize');
+    expect([...location.searchParams.keys()]).toEqual(['transaction']);
+  });
+  // feature:locale-ar:end
 
   it('requires a browser proof header for approval and denial', async () => {
     const browser = request.agent(e2e.httpServer);

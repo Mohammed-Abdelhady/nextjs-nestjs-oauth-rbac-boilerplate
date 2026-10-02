@@ -7,11 +7,13 @@ describe('getAllowedNativeAuthorizeContinuation', () => {
       value: '/en/auth/native/authorize?transaction=abc-123',
       expected: '/en/auth/native/authorize?transaction=abc-123',
     },
+    // feature:locale-ar:start
     {
       label: 'Arabic native route',
       value: '/ar/auth/native/authorize?transaction=abc-123',
       expected: '/ar/auth/native/authorize?transaction=abc-123',
     },
+    // feature:locale-ar:end
     {
       label: 'route without locale',
       value: '/auth/native/authorize?transaction=abc-123',
@@ -49,7 +51,7 @@ describe('getAllowedNativeAuthorizeContinuation', () => {
     },
     {
       label: 'normalized locale traversal path',
-      value: '/en/../ar/auth/native/authorize?transaction=abc-123',
+      value: '/en/../en/auth/native/authorize?transaction=abc-123',
       expected: undefined,
     },
     {

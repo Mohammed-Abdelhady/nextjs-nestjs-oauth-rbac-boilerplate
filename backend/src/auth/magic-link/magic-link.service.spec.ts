@@ -109,7 +109,7 @@ describe('MagicLinkService', () => {
     });
 
     it('stores an allowed native continuation with the pending link', async () => {
-      const redirect = '/ar/auth/native/authorize?transaction=abc-123';
+      const redirect = '/en/auth/native/authorize?transaction=abc-123';
 
       await harness.service.request({ email: EMAIL, redirect }, MOCK_REQUEST);
 
