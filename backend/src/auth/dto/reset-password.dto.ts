@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { PASSWORD_MIN_LENGTH } from '../../common/constants/password';
 
 export class ResetPasswordDto {
   @ApiProperty({
@@ -37,14 +38,16 @@ export class ResetPasswordDto {
   code!: string;
 
   @ApiProperty({
-    description: 'New password (min 8 chars, must contain letter and number)',
+    description: `New password (min ${PASSWORD_MIN_LENGTH} chars, must contain letter and number)`,
     example: 'NewPassword123',
-    minLength: 8,
+    minLength: PASSWORD_MIN_LENGTH,
     maxLength: 128,
   })
   @IsString({ message: 'Password must be a string' })
   @IsNotEmpty({ message: 'Password is required' })
-  @MinLength(8, { message: 'Password must be at least 8 characters' })
+  @MinLength(PASSWORD_MIN_LENGTH, {
+    message: `Password must be at least ${PASSWORD_MIN_LENGTH} characters`,
+  })
   @MaxLength(128, { message: 'Password must not exceed 128 characters' })
   @Matches(/^(?=.*[A-Za-z])(?=.*\d)/, {
     message: 'Password must contain at least one letter and one number',
