@@ -68,12 +68,16 @@ cd nextjs-nestjs-oauth-rbac-boilerplate
 npm install
 ```
 
+<!-- feature:docker:start -->
+
 ### Start with Docker
 
 ```bash
 cp .env.docker.example .env.docker
 docker compose --env-file .env.docker up --build
 ```
+
+<!-- feature:docker:end -->
 
 ### Start manually
 
@@ -103,15 +107,15 @@ cp frontend/.env.example frontend/.env.local
 
 ### Key backend variables (`backend/.env`)
 
-| Variable              | Description                                   | Default                                                                                 |
-| --------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `PORT`                | API server port                               | `5000`                                                                                  |
-| `NODE_ENV`            | Environment name                              | `development`                                                                           |
-| `MONGO_URI`           | MongoDB URI for a backend running on the host | `mongodb://USER:PASS@localhost:27017/authboiler?authSource=admin&directConnection=true` |
-| `FRONTEND_URL`        | Frontend origin for CORS and cookie domain    | `http://localhost:3000`                                                                 |
-| `SESSION_SECRET`      | Secret used to sign session cookies           | Required in production                                                                  |
-| `OAUTH_STATE_SECRET`  | Secret used to sign OAuth state cookies       | Required in production                                                                  |
-| `TOTP_ENCRYPTION_KEY` | 32-byte hex key to encrypt TOTP secrets       | Required for 2FA                                                                        |
+| Variable              | Description                                | Default                                               |
+| --------------------- | ------------------------------------------ | ----------------------------------------------------- |
+| `PORT`                | API server port                            | `5000`                                                |
+| `NODE_ENV`            | Environment name                           | `development`                                         |
+| `MONGO_URI`           | MongoDB URI                                | `mongodb://localhost:27017/authboiler?replicaSet=rs0` |
+| `FRONTEND_URL`        | Frontend origin for CORS and cookie domain | `http://localhost:3000`                               |
+| `SESSION_SECRET`      | Secret used to sign session cookies        | Required in production                                |
+| `OAUTH_STATE_SECRET`  | Secret used to sign OAuth state cookies    | Required in production                                |
+| `TOTP_ENCRYPTION_KEY` | 32-byte hex key to encrypt TOTP secrets    | Required for 2FA                                      |
 
 ### Key frontend variables (`frontend/.env.local`)
 
@@ -121,7 +125,7 @@ cp frontend/.env.example frontend/.env.local
 
 See [docs/README.md](docs/README.md) for provider-specific credentials and mail settings.
 
-For a host-run backend with MongoDB in Docker Compose, include `directConnection=true`. The replica set advertises `mongodb:27017`, which only containers on the Compose network can resolve.
+For a host-run backend with MongoDB in Docker Compose, use `MONGO_URI=mongodb://USER:PASS@localhost:27017/authboiler?authSource=admin&directConnection=true`. The replica set advertises `mongodb:27017`, which only containers on the Compose network can resolve. <!-- feature:docker -->
 
 ## Seed data
 
