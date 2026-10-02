@@ -1,5 +1,9 @@
 import { MongoClient, ObjectId } from 'mongodb';
 import { MongoMemoryServer } from 'mongodb-memory-server';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from '../utils/session-authority-harness';
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const defaultPermissions =
@@ -26,12 +30,12 @@ describe('migration rollback ownership', () => {
   beforeAll(async () => {
     mongo = await MongoMemoryServer.create({ instance: { ip: '127.0.0.1' } });
     client = await MongoClient.connect(mongo.getUri());
-  });
+  }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   afterAll(async () => {
     await client.close();
     await mongo.stop();
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   beforeEach(async () => {
     await client.db().dropDatabase();

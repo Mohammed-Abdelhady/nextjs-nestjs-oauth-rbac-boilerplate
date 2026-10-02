@@ -18,7 +18,10 @@ import {
   NATIVE_CLIENT_ID,
 } from './utils/native-authorize.fixtures';
 import { bootE2eApp, loginAs, type E2eApp } from './utils/e2e-app';
-import { SESSION_AUTHORITY_BOOT_TIMEOUT_MS } from './utils/session-authority-harness';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from './utils/session-authority-harness';
 import { TEST_NOW } from './utils/frozen-clock';
 import { nativeAuthorizeQuery } from '../src/session/native/native-oauth.fixture';
 import type { AuthorizeQuery } from '../src/session/native/native-oauth.types';
@@ -45,7 +48,7 @@ describe('native authorization input and stored data guardrails (e2e)', () => {
 
   afterAll(async () => {
     await e2e?.close();
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   beforeEach(async () => {
     e2e.clock.set(TEST_NOW);

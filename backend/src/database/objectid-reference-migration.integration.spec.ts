@@ -3,7 +3,10 @@ import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { startMemoryReplSet } from '../../test/utils/memory-replset';
 import { runMigrateMongo } from '../../test/utils/migrate-mongo-cli';
-import { SESSION_AUTHORITY_BOOT_TIMEOUT_MS } from '../../test/utils/session-authority-harness';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from '../../test/utils/session-authority-harness';
 
 interface MigrationConfig {
   changelogCollectionName: string;
@@ -84,7 +87,7 @@ describe('ObjectId reference data migration', () => {
     if (mongo) {
       await mongo.stop();
     }
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   it('converts only scalar valid ids and stays unchanged on a second run', async () => {
     if (!mongo) {

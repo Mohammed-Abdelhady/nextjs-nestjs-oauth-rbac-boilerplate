@@ -8,6 +8,7 @@ import { runMigrateMongo } from '../../test/utils/migrate-mongo-cli';
 import {
   bootSessionAuthority,
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
   SessionAuthorityHarness,
 } from '../../test/utils/session-authority-harness';
 import { FrozenClock, TEST_NOW } from '../../test/utils/frozen-clock';
@@ -180,7 +181,7 @@ describe('session authority migration indexes', () => {
     if (mongo) {
       await mongo.stop();
     }
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   it('exports up and down from every migration migrate-mongo discovers', async () => {
     const sampleMigration = `sample-migration${migrationConfig.migrationFileExtension}`;

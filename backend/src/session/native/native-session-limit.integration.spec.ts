@@ -27,6 +27,7 @@ import {
 import {
   createTestUser,
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
 } from '../../../test/utils/session-authority-harness';
 
 describe('native session limit', () => {
@@ -40,7 +41,7 @@ describe('native session limit', () => {
     if (ctx) {
       await stopNativeOauth(ctx);
     }
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   beforeEach(async () => {
     await resetNativeClient(ctx);

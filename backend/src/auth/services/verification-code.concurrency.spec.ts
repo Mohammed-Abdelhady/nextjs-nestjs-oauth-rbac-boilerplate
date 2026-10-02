@@ -9,6 +9,10 @@ import {
 } from '../schemas/pending-registration.schema';
 import { HashService } from '../../common/services/hash.service';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from '../../../test/utils/session-authority-harness';
 
 describe('VerificationCodeService concurrency', () => {
   let mongo: MongoMemoryServer;
@@ -31,12 +35,12 @@ describe('VerificationCodeService concurrency', () => {
       get: (_key: string, fallback?: number) => fallback ?? 4,
     } as unknown as ConfigService);
     service = new VerificationCodeService(model, hashService, config);
-  });
+  }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   afterAll(async () => {
     await connection.close();
     await mongo.stop();
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   beforeEach(async () => {
     await model.deleteMany({});

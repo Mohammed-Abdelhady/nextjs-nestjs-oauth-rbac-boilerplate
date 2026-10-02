@@ -2,7 +2,10 @@ import { ErrorCode } from '../src/common/enums/error-code.enum';
 import type { OAuthProviderStrategy } from '../src/auth/oauth/oauth-provider.interface';
 import { SEED_USER } from './constants/seed-users';
 import { bootE2eApp, loginAs, type E2eApp } from './utils/e2e-app';
-import { SESSION_AUTHORITY_BOOT_TIMEOUT_MS } from './utils/session-authority-harness';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from './utils/session-authority-harness';
 import { TEST_NOW } from './utils/frozen-clock';
 
 const GOOGLE_STRATEGY: OAuthProviderStrategy = {
@@ -28,7 +31,7 @@ describe('provider link start with both credentials (e2e)', () => {
 
   afterAll(async () => {
     await e2e?.close();
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   beforeEach(async () => {
     e2e.clock.set(TEST_NOW);

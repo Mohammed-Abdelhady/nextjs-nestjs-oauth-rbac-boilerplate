@@ -30,7 +30,11 @@ import { SessionRevocationService } from '../../src/session/services/session-rev
 import { ApplicationAccessService } from '../../src/session/services/application-access.service';
 import { FrozenClock } from './frozen-clock';
 
+/** Jest hook budget for database startup and application boot under load. */
 export const SESSION_AUTHORITY_BOOT_TIMEOUT_MS = 60000;
+
+/** Jest hook budget for database teardown and application shutdown under load. */
+export const SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS = 60000;
 
 export interface SessionAuthorityHarness {
   app: INestApplication;

@@ -31,7 +31,10 @@ import {
 } from './services/webauthn.adapter';
 import { startMemoryReplSet } from '../../../test/utils/memory-replset';
 import { runMigrateMongo } from '../../../test/utils/migrate-mongo-cli';
-import { SESSION_AUTHORITY_BOOT_TIMEOUT_MS } from '../../../test/utils/session-authority-harness';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from '../../../test/utils/session-authority-harness';
 
 const TEST_CONFIGURATION = {
   oauth: { stateSecret: 'passkey-objectid-test-secret-value' },
@@ -78,7 +81,7 @@ describe('passkey ObjectId round trip', () => {
     if (mongo) {
       await mongo.stop();
     }
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   it(
     'stores registration ids as ObjectIds and repairs legacy passkeys',

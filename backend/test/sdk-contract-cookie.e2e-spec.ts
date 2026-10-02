@@ -13,7 +13,10 @@ import {
   resetContractApp,
   type E2eApp,
 } from './utils/sdk-contract.fixtures';
-import { SESSION_AUTHORITY_BOOT_TIMEOUT_MS } from './utils/session-authority-harness';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from './utils/session-authority-harness';
 
 const OBJECT_ID = /^[0-9a-f]{24}$/;
 
@@ -38,7 +41,7 @@ describe('sdk contract over a cookie transport', () => {
 
   afterAll(async () => {
     await e2e?.close();
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   beforeEach(async () => {
     await resetContractApp(e2e);

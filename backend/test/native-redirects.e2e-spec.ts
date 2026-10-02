@@ -27,7 +27,10 @@ import {
 } from '../src/session/native/native-oauth.fixture';
 import { SEED_USER } from './constants/seed-users';
 import { bootE2eApp, loginAs, type E2eApp } from './utils/e2e-app';
-import { SESSION_AUTHORITY_BOOT_TIMEOUT_MS } from './utils/session-authority-harness';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from './utils/session-authority-harness';
 import { TEST_NOW } from './utils/frozen-clock';
 
 const LOOPBACK_REGISTERED = 'http://127.0.0.1:3000/callback';
@@ -46,7 +49,7 @@ describe('native return addresses (e2e)', () => {
 
   afterAll(async () => {
     await e2e?.close();
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   beforeEach(async () => {
     e2e.clock.set(TEST_NOW);
@@ -189,7 +192,7 @@ describe('native custom scheme registration in production (e2e)', () => {
   afterEach(async () => {
     await production?.close();
     production = undefined;
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   it(
     'refuses a custom scheme in production without the setting',

@@ -3,6 +3,7 @@ import { startMemoryReplSet } from '../../test/utils/memory-replset';
 import {
   bootSessionAuthority,
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
   SessionAuthorityHarness,
 } from '../../test/utils/session-authority-harness';
 import { FrozenClock, TEST_NOW } from '../../test/utils/frozen-clock';
@@ -53,7 +54,7 @@ describe('ApplicationRegistryService native configuration reconciliation', () =>
     if (mongo) {
       await mongo.stop();
     }
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   beforeEach(async () => {
     await harness.applications.deleteMany({

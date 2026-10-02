@@ -18,7 +18,10 @@ import {
   SecurityEventDocument,
 } from '../schemas/security-event.schema';
 import { NATIVE_IDLE_LIFETIME_MS } from '../constants/session-policy';
-import { SESSION_AUTHORITY_BOOT_TIMEOUT_MS } from '../../../test/utils/session-authority-harness';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from '../../../test/utils/session-authority-harness';
 import { TEST_NOW } from '../../../test/utils/frozen-clock';
 
 jest.setTimeout(60000);
@@ -34,7 +37,7 @@ describe('native token lifetimes (first use and revoked families)', () => {
     if (ctx) {
       await stopNativeOauth(ctx);
     }
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   beforeEach(async () => {
     await resetNativeClient(ctx);
