@@ -16,41 +16,6 @@ export function isValidEmail(email: string): boolean {
   return emailRegex.test(email);
 }
 
-/**
- * Checks if a JWT token is expired
- * Decodes the token payload and checks the expiration timestamp
- *
- * @param token - JWT token string
- * @returns True if token is expired, false if still valid, null if invalid token
- *
- * @example
- * isTokenExpired('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...') // false
- */
-export function isTokenExpired(token: string): boolean | null {
-  if (!token) return null;
-
-  try {
-    // JWT tokens have 3 parts: header.payload.signature
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-
-    // Decode the payload (second part)
-    const payload = JSON.parse(atob(parts[1]));
-
-    // Check if exp claim exists
-    if (!payload.exp) return null;
-
-    // exp is in seconds, Date.now() is in milliseconds
-    const expirationTime = payload.exp * 1000;
-    const currentTime = Date.now();
-
-    return currentTime > expirationTime;
-  } catch {
-    // Invalid token format
-    return null;
-  }
-}
-
 const DEFAULT_REDIRECT_PATH = '/dashboard';
 
 const AUTH_PAGES = [

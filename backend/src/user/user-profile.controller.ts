@@ -9,7 +9,7 @@ import {
   HttpStatus,
   Req,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBody, ApiCookieAuth } from '@nestjs/swagger';
 import { UserProfileService } from './services/user-profile.service';
 import { RequestWithUser } from '../auth/guards/auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -18,13 +18,14 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
 import { ApiResponse } from '../common/dto/api-response.dto';
 import { SessionCookieService } from '../auth/services/session-cookie.service';
+import { SESSION_SWAGGER_AUTH_NAME } from '../common/constants/session';
 
 /**
  * Controller for user profile and account lifecycle operations.
  * All endpoints require authentication.
  */
 @ApiTags('user')
-@ApiBearerAuth('JWT-auth')
+@ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
 @Controller('user')
 export class UserProfileController {
   constructor(

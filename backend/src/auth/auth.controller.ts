@@ -7,7 +7,7 @@ import {
   HttpStatus,
   Req,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBody, ApiCookieAuth } from '@nestjs/swagger';
 import { Request } from 'express';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -22,6 +22,7 @@ import { RequiresFeature } from './decorators/requires-feature.decorator';
 import { AuthFeature } from './enums/auth-feature.enum';
 import { Throttle } from '@nestjs/throttler';
 import { SessionCookieService } from './services/session-cookie.service';
+import { SESSION_SWAGGER_AUTH_NAME } from '../common/constants/session';
 import {
   THROTTLE_LOGIN,
   THROTTLE_FORGOT_PASSWORD,
@@ -117,7 +118,7 @@ export class AuthController {
     summary: 'Login user',
     description:
       'Authenticates a user with email and password. ' +
-      'Returns JWT token and sets session cookie upon successful authentication.',
+      'Sets the session cookie upon successful authentication.',
   })
   @ApiBody({ type: LoginDto })
   async login(@Body() dto: LoginDto, @Res() response: Response) {
@@ -132,12 +133,12 @@ export class AuthController {
    */
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth('JWT-auth')
+  @ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
   @ApiOperation({
     summary: 'Logout user',
     description:
       'Invalidates current user session and clears session cookie. ' +
-      'Requires JWT authentication.',
+      'Requires the session cookie.',
   })
   async logout(@Req() request: Request, @Res() response: Response) {
     const sessionToken = this.sessionCookieService.read(request) ?? '';

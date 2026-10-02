@@ -17,7 +17,7 @@ import {
   ApiQuery,
   ApiBody,
   ApiParam,
-  ApiBearerAuth,
+  ApiCookieAuth,
 } from '@nestjs/swagger';
 import { AdminUsersService } from './services/admin-users.service';
 import { AdminUserQueriesService } from './services/admin-user-queries.service';
@@ -32,6 +32,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { ApiResponse } from '../common/dto/api-response.dto';
 import { AdminUserDto, UserListData } from './dto/admin-user-response.dto';
 import { USER_PERMISSIONS } from '../common/constants/permissions';
+import { SESSION_SWAGGER_AUTH_NAME } from '../common/constants/session';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 
 /**
@@ -40,7 +41,7 @@ import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
  * needs the actor's level to exceed the target's level.
  */
 @ApiTags('admin')
-@ApiBearerAuth('JWT-auth')
+@ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
 @Controller('admin/users')
 @UseGuards(PermissionGuard)
 export class AdminUsersController {
