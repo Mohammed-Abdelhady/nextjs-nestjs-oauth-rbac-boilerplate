@@ -1,0 +1,9 @@
+{
+  "sessions": {
+    "kind": {
+      "browser": "متصفح",
+      "nativeApp": "تطبيق الهاتف"
+    },
+    "unknownDevice": "جهاز غير معروف"
+  }
+}

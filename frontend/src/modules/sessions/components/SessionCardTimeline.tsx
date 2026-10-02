@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useState, useCallback } from 'react';
+import { memo, useId, useState, useCallback } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Loader2, LogOut, MapPin, Clock, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,9 @@ import {
 import { useDeleteSessionMutation } from '../api/sessionsApi';
 import { DeviceIcon } from './DeviceIcon';
 import { CurrentSessionBadge } from './CurrentSessionBadge';
+import { SessionKindBadge } from './SessionKindBadge';
+import { SESSION_KIND } from '../constants';
+import { describeNativeDevice, sessionKindOf } from '../utils/sessionDevice';
 import { parseUserAgent, getDeviceLabel } from '@/lib/parseUserAgent';
 import type { Session } from '@app/sdk';
 import { toast } from '@/lib/toast';
@@ -55,6 +58,14 @@ export const SessionCardTimeline = memo(
     const { device, browser, os } = parseUserAgent(session.userAgent);
     const deviceLabel = getDeviceLabel(session.userAgent);
 
+    const titleId = useId();
+    const kindId = useId();
+    const kind = sessionKindOf(session.credentialPurpose);
+    // The app's user agent is not a browser, so a native row is named by its system alone.
+    const nativeDevice =
+      kind === SESSION_KIND.NATIVE_APP ? describeNativeDevice(session.userAgent) : null;
+    const nativeName = nativeDevice ? (nativeDevice.os ?? t('unknownDevice')) : null;
+
     const handleLogout = useCallback(async () => {
       try {
         await deleteSession(session.id).unwrap();
@@ -74,6 +85,7 @@ export const SessionCardTimeline = memo(
     return (
       <>
         <article
+          aria-labelledby={kind ? `${titleId} ${kindId}` : titleId}
           data-testid={`session-card-timeline-${session.id}`}
           className={cn(
             'relative p-4 rounded-lg transition-all duration-200',
@@ -87,19 +99,27 @@ export const SessionCardTimeline = memo(
           <header className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3 flex-1">
               <DeviceIcon
-                deviceType={device as 'Desktop' | 'Mobile' | 'Tablet' | 'Unknown'}
+                deviceType={
+                  nativeDevice?.deviceType ??
+                  (device as 'Desktop' | 'Mobile' | 'Tablet' | 'Unknown')
+                }
                 size="lg"
               />
               <div className="flex-1">
                 <h3 className="text-sm font-medium tracking-tight flex items-center gap-2 text-card-foreground">
-                  <span data-testid="session-device-label">
-                    {session.deviceName || deviceLabel}
+                  <span id={titleId} data-testid="session-device-label">
+                    {nativeName ?? (session.deviceName || deviceLabel)}
                   </span>
                   {session.isCurrent && <CurrentSessionBadge pulse />}
                 </h3>
-                <p className="text-sm text-card-foreground mt-0.5" data-testid="session-browser-os">
-                  {browser} · {os}
-                </p>
+                <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                  {kind && <SessionKindBadge id={kindId} kind={kind} />}
+                  {!nativeDevice && (
+                    <p className="text-sm text-card-foreground" data-testid="session-browser-os">
+                      {browser} · {os}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -149,7 +169,7 @@ export const SessionCardTimeline = memo(
               <AlertDialogTitle>{t('logoutConfirmTitle')}</AlertDialogTitle>
               <AlertDialogDescription>
                 {t.rich('logoutConfirmDescription', {
-                  device: deviceLabel,
+                  device: nativeName ?? deviceLabel,
                   strong: (chunks) => <strong>{chunks}</strong>,
                 })}
               </AlertDialogDescription>
