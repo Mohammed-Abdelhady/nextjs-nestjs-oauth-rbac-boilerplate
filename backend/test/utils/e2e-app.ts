@@ -7,7 +7,7 @@ import { Test } from '@nestjs/testing';
 import { getStorageToken, ThrottlerStorageService } from '@nestjs/throttler';
 import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 import { startMemoryReplSet } from './memory-replset';
-import { Connection, Model } from 'mongoose';
+import mongoose, { Connection, Model } from 'mongoose';
 import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
@@ -28,6 +28,7 @@ import type { UserDocument } from '../../src/user/schemas/user.schema';
 import type { OAuthProviderStrategy } from '../../src/auth/oauth/oauth-provider.interface'; // feature:oauth-core
 import { OAUTH_STRATEGIES } from '../../src/auth/oauth/oauth.constants'; // feature:oauth-core
 import type { MailOptions } from '../../src/mail/interfaces/mail-options.interface';
+import type { NativeApplicationConfiguration } from '../../src/config/types/native-application.type';
 import { FrozenClock, TEST_NOW } from './frozen-clock';
 
 export type HttpServer = Server;
@@ -50,6 +51,8 @@ export interface BootE2eAppOptions {
   magicLinkEnabled?: boolean; // feature:magic-link
   /** The mail array records attempts, including the rejected ones. */
   failMail?: boolean;
+  nativeEnabled?: boolean;
+  nativeApplications?: NativeApplicationConfiguration[];
 }
 
 /** Owns its database and starts configuration outside the developer's env directory. */
@@ -76,6 +79,8 @@ export async function bootE2eApp(
     BCRYPT_ROUNDS: '4',
     THROTTLE_LIMIT: '1000',
     AUTH_PASSWORD_ENABLED: 'true',
+    AUTH_NATIVE_ENABLED: String(options.nativeEnabled ?? false),
+    AUTH_NATIVE_APPLICATIONS: JSON.stringify(options.nativeApplications ?? []),
     MAGIC_LINK_ENABLED: 'false',
     OAUTH_CALLBACK_BASE_URL: 'http://127.0.0.1:5107/api/auth/oauth',
     SMTP_HOST: '127.0.0.1',
@@ -88,42 +93,83 @@ export async function bootE2eApp(
   // feature:magic-link:start
   if (options.magicLinkEnabled) environment.MAGIC_LINK_ENABLED = 'true';
   // feature:magic-link:end
-  const previous = new Map(
-    Object.keys(environment).map((key) => [key, process.env[key]]),
-  );
-  Object.assign(process.env, environment);
-  process.chdir(fixtureDirectory);
+  const previous = new Map(Object.entries(process.env));
   const clock = new FrozenClock(TEST_NOW);
   let app: INestApplication | undefined;
+  let fixtureConnection: Connection | undefined;
   let closed = false;
   const close = async (): Promise<void> => {
     if (closed) return;
     closed = true;
+    let cleanupError: unknown;
+    let hasCleanupError = false;
+    const recordCleanupError = (error: unknown): void => {
+      if (hasCleanupError) return;
+      cleanupError = error;
+      hasCleanupError = true;
+    };
+
     try {
       await app?.close();
-    } finally {
+    } catch (error) {
+      recordCleanupError(error);
+    }
+
+    if (fixtureConnection) {
       try {
-        await mongo.stop();
-      } finally {
-        process.chdir(originalDirectory);
-        for (const [key, value] of previous) {
-          if (value === undefined) delete process.env[key];
-          else process.env[key] = value;
-        }
-        await rmdir(fixtureDirectory);
+        await fixtureConnection.destroy(true);
+      } catch (error) {
+        recordCleanupError(error);
       }
+      fixtureConnection = undefined;
+    }
+
+    try {
+      await mongo.stop();
+    } catch (error) {
+      recordCleanupError(error);
+    }
+
+    try {
+      process.chdir(originalDirectory);
+    } catch (error) {
+      recordCleanupError(error);
+    }
+    for (const key of Object.keys(process.env)) {
+      if (!previous.has(key)) delete process.env[key];
+    }
+    for (const [key, value] of previous) {
+      process.env[key] = value;
+    }
+    try {
+      await rmdir(fixtureDirectory);
+    } catch (error) {
+      recordCleanupError(error);
+    }
+
+    if (hasCleanupError) {
+      throw cleanupError;
     }
   };
 
   try {
-    const { AppModule } = await import('../../src/app.module');
+    Object.assign(process.env, environment);
+    process.chdir(fixtureDirectory);
+    const { AppModule, MONGOOSE_CONNECTION_OPTIONS } =
+      await import('../../src/app.module');
     const { MailService } = await import('../../src/mail/mail.service');
     const { RoleSeedService } =
       await import('../../src/database/seeds/role.seed');
-    const { ApplicationRegistryService } =
-      await import('../../src/session/services/application-registry.service');
+    const { reconcileStartupApplications } =
+      await import('../../src/session/session.module');
     const { SEED_USER_DEFINITIONS } =
       await import('../../src/database/seeds/user.seed');
+    // Own this connection so a failed compile cannot leave Nest retries running.
+    fixtureConnection = await mongoose
+      .createConnection(environment.MONGO_URI, {
+        ...MONGOOSE_CONNECTION_OPTIONS,
+      })
+      .asPromise();
     const mail: MailOptions[] = [];
     const builder = Test.createTestingModule({
       imports: [AppModule],
@@ -145,23 +191,27 @@ export async function bootE2eApp(
         },
       });
     builder.overrideProvider(Clock).useValue(clock);
+    builder.overrideProvider(getConnectionToken()).useValue(fixtureConnection);
     // feature:oauth-core:start
     if (browserStrategy)
       builder.overrideProvider(OAUTH_STRATEGIES).useValue([browserStrategy]);
     // feature:oauth-core:end
     const moduleFixture = await builder.compile();
-    app = moduleFixture.createNestApplication({ logger: ['error', 'warn'] });
-    useContainer(app.select(AppModule), { fallbackOnErrors: true });
-    app.setGlobalPrefix('api', { exclude: ['health'] });
-    app.use(
+    const nestApp = moduleFixture.createNestApplication({
+      logger: ['error', 'warn'],
+    });
+    app = nestApp;
+    useContainer(nestApp.select(AppModule), { fallbackOnErrors: true });
+    nestApp.setGlobalPrefix('api', { exclude: ['health'] });
+    nestApp.use(
       helmet({
         contentSecurityPolicy: DEVELOPMENT_CONTENT_SECURITY_POLICY,
         crossOriginEmbedderPolicy: false,
       }),
     );
-    app.use(cookieParser());
-    app.enableCors(browserCors(environment.CLIENT_URL));
-    app.useGlobalPipes(
+    nestApp.use(cookieParser());
+    nestApp.enableCors(browserCors(environment.CLIENT_URL));
+    nestApp.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
         forbidNonWhitelisted: true,
@@ -169,12 +219,16 @@ export async function bootE2eApp(
         transformOptions: { enableImplicitConversion: true },
       }),
     );
-    await app.listen(port, '127.0.0.1');
-    const connection = app.get<Connection>(getConnectionToken());
-    const users = app.get<Model<UserDocument>>(getModelToken('User'));
+    await nestApp.init();
+    await reconcileStartupApplications(nestApp);
+    await nestApp.listen(port, '127.0.0.1');
+    const connection = nestApp.get<Connection>(getConnectionToken());
+    const users = nestApp.get<Model<UserDocument>>(getModelToken('User'));
     const roleSeed =
-      app.get<InstanceType<typeof RoleSeedService>>(RoleSeedService);
-    const applications = app.get(ApplicationRegistryService);
+      nestApp.get<InstanceType<typeof RoleSeedService>>(RoleSeedService);
+    const { ApplicationRegistryService: RegistryService } =
+      await import('../../src/session/services/application-registry.service');
+    const applications = nestApp.get(RegistryService);
     const credentials = [SEED_ADMIN, SEED_MANAGER, SEED_SUPPORT, SEED_USER];
     const fixtures = await Promise.all(
       SEED_USER_DEFINITIONS.map(async (user) => ({
@@ -187,7 +241,8 @@ export async function bootE2eApp(
         ),
       })),
     );
-    const throttleStorage = app.get<ThrottlerStorageService>(getStorageToken());
+    const throttleStorage =
+      nestApp.get<ThrottlerStorageService>(getStorageToken());
     const reset = async (): Promise<void> => {
       throttleStorage.onApplicationShutdown();
       throttleStorage.storage.clear();
@@ -196,20 +251,21 @@ export async function bootE2eApp(
       await roleSeed.seed();
       await applications.seedFirstPartyApplications();
       await applications.ensureClientOriginAllowed();
+      await reconcileStartupApplications(nestApp);
       await users.create(fixtures);
       mail.length = 0;
     };
     await reset();
     return {
-      app,
-      httpServer: app.getHttpServer() as Server,
+      app: nestApp,
+      httpServer: nestApp.getHttpServer() as Server,
       mail,
       clock,
       reset,
       close,
     };
   } catch (error) {
-    await close();
+    await close().catch(() => undefined);
     throw error;
   }
 }
