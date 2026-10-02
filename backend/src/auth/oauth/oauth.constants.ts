@@ -15,6 +15,3 @@ export const OAUTH_STATE_SECRET_MIN_LENGTH = 32;
 
 /** Path the client handles after the backend callback. */
 export const OAUTH_CLIENT_CALLBACK_PATH = '/auth/oauth/callback';
-
-/** Fallback redirect when the requested one is missing or unsafe. */
-export const OAUTH_DEFAULT_REDIRECT = '/';

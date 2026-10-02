@@ -23,7 +23,7 @@ import {
   OAuthCallbackParams,
   OAuthProviderSummary,
 } from './oauth-provider.interface';
-import { sanitizeRedirectPath } from './utils/redirect.util';
+import { sanitizeRedirectPath } from '../../common/utils/redirect.util';
 import { toCallbackParams } from './utils/callback-params.util';
 import { OAuthRedirectService } from './oauth-redirect.service';
 

@@ -4,6 +4,9 @@
  * import from a feature module.
  */
 
+/** Fallback when a requested post-sign-in redirect is missing or unsafe. */
+export const DEFAULT_REDIRECT_PATH = '/';
+
 /** Where a sign-in that still owes a second factor continues. */
 export const TWO_FACTOR_CLIENT_PATH = '/auth/2fa';
 

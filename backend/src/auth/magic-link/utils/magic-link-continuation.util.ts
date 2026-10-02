@@ -3,7 +3,7 @@ import {
   NATIVE_TRANSACTION_QUERY_KEY,
 } from '../../../common/constants/client-paths';
 import { SUPPORTED_LOCALES } from '../../../common/constants/locales';
-import { sanitizeRedirectPath } from '../../oauth/utils/redirect.util';
+import { sanitizeRedirectPath } from '../../../common/utils/redirect.util';
 
 const CONTINUATION_BASE_URL = 'https://continuation.invalid';
 const NATIVE_AUTHORIZE_PATHS = new Set([
