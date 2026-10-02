@@ -19,9 +19,8 @@ Single source of truth for all visual properties:
 ```typescript
 const TOKENS = {
   colors: {
-    bg: 'bg-gray-100', // All input backgrounds
-    bgFocus: 'focus:bg-white', // Focus background
-    border: 'border-gray-200', // Border color
+    bg: 'bg-background', // All input backgrounds
+    border: 'border-input', // Border color
     // ... more color tokens
   },
   spacing: {
@@ -83,7 +82,7 @@ Edit one token → affects all inputs, textareas, selects:
 // src/lib/config/form-styles.ts
 const TOKENS = {
   colors: {
-    bg: 'bg-blue-50', // Changed from bg-gray-100
+    bg: 'bg-blue-50', // Changed from bg-background
   },
 };
 ```
@@ -174,9 +173,8 @@ Current design system values:
 |                | textarea.minHeight | `min-h-30` (120px)       | Textareas                |
 | **Spacing**    | input.padding      | `px-5` (20px horizontal) | Inputs, selects          |
 |                | textarea.padding   | `px-5 py-3`              | Textareas                |
-| **Colors**     | bg                 | `bg-gray-100`            | All form fields          |
-|                | bgFocus            | `focus:bg-white`         | All form fields (focus)  |
-|                | border             | `border-gray-200`        | All form fields          |
+| **Colors**     | bg                 | `bg-background`          | All form fields          |
+|                | border             | `border-input`           | All form fields          |
 |                | borderFocus        | `focus:border-gray-400`  | All form fields (focus)  |
 | **Typography** | fontSize           | `text-sm`                | All form fields          |
 |                | fontWeight         | `font-medium`            | All form fields          |
