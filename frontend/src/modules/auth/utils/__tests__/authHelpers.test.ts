@@ -34,7 +34,7 @@ describe('getRedirectPath', () => {
 
   it('normalises a supported-locale prefix off an ordinary path', () => {
     expect(getRedirectPath('/en/dashboard')).toBe('/dashboard');
-    expect(getRedirectPath('/ar/settings?tab=1')).toBe('/settings?tab=1');
+    expect(getRedirectPath('/ar/settings?tab=1')).toBe('/settings?tab=1'); // feature:locale-ar
     expect(getRedirectPath('/english')).toBe('/english');
   });
 
@@ -56,7 +56,7 @@ describe('getRedirectPath native authorize continuation', () => {
   it.each([
     [ROUTE, ROUTE],
     [`/en${ROUTE}`, ROUTE],
-    [`/ar${ROUTE}`, ROUTE],
+    [`/ar${ROUTE}`, ROUTE], // feature:locale-ar
     [
       '/auth/native/authorize?transaction=a%2Fb%2Bc',
       '/auth/native/authorize?transaction=a%2Fb%2Bc',
@@ -80,7 +80,8 @@ describe('getRedirectPath native authorize continuation', () => {
     ['an extra path segment', '/auth/native/authorize/extra?transaction=abc123'],
     ['another native route', '/auth/native/other?transaction=abc123'],
     ['a fragment', `${ROUTE}#section`],
-    ['a second locale prefix', '/en/ar/auth/native/authorize?transaction=abc123'],
+    ['a second English locale prefix', '/en/en/auth/native/authorize?transaction=abc123'],
+    ['a second locale prefix', '/en/ar/auth/native/authorize?transaction=abc123'], // feature:locale-ar
   ])('rejects the native route with %s', (_label, candidate) => {
     expect(getRedirectPath(candidate)).toBe('/dashboard');
   });
@@ -95,7 +96,8 @@ describe('getRedirectPath native authorize continuation', () => {
     ['a double slash inside the path', '/auth//native/authorize?transaction=abc123'],
     ['a backslash inside the path', '/auth\\native\\authorize?transaction=abc123'],
     ['a second locale prefix before an auth route', '/en/en/auth/login'],
-    ['a second locale prefix before a path', '/ar/ar/dashboard'],
+    ['a second locale prefix before a path', '/en/en/dashboard'],
+    ['a second locale prefix before a path', '/ar/ar/dashboard'], // feature:locale-ar
     ['a NUL character', '/dashboard\u0000'],
     ['a tab character', '/auth/native/authorize?transaction=a\tb'],
     ['a newline character', '/dashboard\n'],
@@ -109,7 +111,7 @@ describe('getRedirectPath native authorize continuation', () => {
 
   it('carries the continuation through signedInPath unchanged', () => {
     expect(signedInPath(null, ROUTE)).toBe(ROUTE);
-    expect(signedInPath(null, `/ar${ROUTE}`)).toBe(ROUTE);
+    expect(signedInPath(null, `/ar${ROUTE}`)).toBe(ROUTE); // feature:locale-ar
   });
 
   it('carries the continuation into the two-factor page', () => {

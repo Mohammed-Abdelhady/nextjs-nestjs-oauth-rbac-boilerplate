@@ -2,22 +2,16 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { usePathname, useRouter } from '@/i18n/navigation';
+import { routing } from '@/i18n/routing';
 import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
 import { cn } from '@/lib/utils';
 
-type SwitchableLocale = 'en' | 'ar';
-
-interface LocaleOption {
-  locale: SwitchableLocale;
-  /** Written in its own language, so it carries its own `lang`. */
-  label: string;
-  labelKey: 'switchToEnglish' | 'switchToArabic';
-}
-
-const LOCALE_OPTIONS: readonly LocaleOption[] = [
+const LOCALE_OPTIONS = [
   { locale: 'en', label: 'English', labelKey: 'switchToEnglish' },
-  { locale: 'ar', label: 'العربية', labelKey: 'switchToArabic' },
-];
+  { locale: 'ar', label: 'العربية', labelKey: 'switchToArabic' }, // feature:locale-ar
+] as const;
+
+type SwitchableLocale = (typeof LOCALE_OPTIONS)[number]['locale'];
 
 export function LanguageSwitcher() {
   const t = useTranslations('common');
@@ -25,13 +19,19 @@ export function LanguageSwitcher() {
   const router = useRouter();
   const currentLocale = useLocale();
 
+  // Only offer a locale the router actually serves; one is not a choice, so a
+  // single-button switcher would do nothing.
+  const routed = new Set<string>(routing.locales);
+  const options = LOCALE_OPTIONS.filter((option) => routed.has(option.locale));
+  if (options.length < 2) return null;
+
   const handleLanguageChange = (newLocale: SwitchableLocale) => {
     router.replace(pathname, { locale: newLocale });
   };
 
   return (
     <div className="flex gap-2 items-center" data-testid="language-switcher">
-      {LOCALE_OPTIONS.map(({ locale, label, labelKey }) => {
+      {options.map(({ locale, label, labelKey }) => {
         const isCurrent = currentLocale === locale;
 
         return (

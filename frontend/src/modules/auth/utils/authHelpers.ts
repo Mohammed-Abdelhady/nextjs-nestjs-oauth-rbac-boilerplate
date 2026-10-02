@@ -46,7 +46,7 @@ function hasLocalePrefix(pathname: string): boolean {
 
 /**
  * Removes exactly one supported-locale prefix so the same route compares equal
- * whether it was captured on `/en/...` or `/ar/...`. Only a whole first segment
+ * whether it was captured with or without one. Only a whole first segment
  * counts: `/english` keeps its name. A second locale prefix is left in place
  * for the caller to reject.
  */
@@ -102,7 +102,7 @@ function isNativeAuthorizeRoute(pathname: string): boolean {
  * getRedirectPath('/dashboard') // '/dashboard'
  * getRedirectPath('https://evil.com') // '/dashboard'
  * getRedirectPath('/auth/login') // '/dashboard'
- * getRedirectPath('/ar/auth/native/authorize?transaction=abc')
+ * getRedirectPath('/auth/native/authorize?transaction=abc')
  *   // '/auth/native/authorize?transaction=abc'
  */
 export function getRedirectPath(

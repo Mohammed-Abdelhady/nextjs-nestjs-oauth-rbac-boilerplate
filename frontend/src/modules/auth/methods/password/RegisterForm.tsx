@@ -18,9 +18,9 @@ import { UserPlus, LogIn } from 'lucide-react';
 import { IconLinkButton } from '@/components/ui/icon-link-button';
 import { useCallback, useMemo } from 'react';
 import { toast } from '@/lib/toast';
-import { AuthDivider } from '@/components/ui/auth-divider';
+import { AuthDivider } from '@/components/ui/auth-divider'; // feature:oauth-core
 import { OAuthButtons } from '@/modules/oauth'; // feature:oauth-core
-import { useAuthMethods } from '@/modules/auth/hooks/useAuthMethods';
+import { useAuthMethods } from '@/modules/auth/hooks/useAuthMethods'; // feature:oauth-core
 
 /**
  * Registration form validation schema using centralized validators
@@ -70,7 +70,7 @@ export function RegisterForm() {
   const tToast = useTranslations('toast');
   const router = useRouter();
   const [register, { isLoading }] = useRegisterMutation();
-  const { methods } = useAuthMethods();
+  const { methods } = useAuthMethods(); // feature:oauth-core
   const hasOAuth = (methods?.oauth.length ?? 0) > 0; // feature:oauth-core
 
   // Memoize schema creation when translation function changes

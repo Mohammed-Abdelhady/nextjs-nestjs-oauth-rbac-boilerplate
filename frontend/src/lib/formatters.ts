@@ -3,18 +3,23 @@
  *
  * Every function takes the active locale, which callers read from `useLocale()`
  * on the client or from the route params on the server. There is no default:
- * a missing locale used to mean en-US, which showed English dates on the
- * Arabic pages.
+ * a missing locale used to mean en-US, which showed English dates everywhere.
  */
 
 /**
- * Arabic renders with Western digits. The dates sit next to IP addresses,
- * permission codes and ids that stay Latin, and mixing digit systems in one
- * line is harder to read than keeping one.
+ * Locales whose formatted numbers should use Western digits, so dates line up
+ * with the IP addresses, permission codes and ids that stay Latin.
  */
+const WESTERN_DIGIT_LOCALES: string[] = [
+  'ar', // feature:locale-ar
+];
+
+/** The locale tag passed to Intl for this locale. */
 function resolveLocale(locale: string): string {
-  if (locale === 'ar' || locale.startsWith('ar-')) return `${locale}-u-nu-latn`;
-  return locale;
+  const westernDigits = WESTERN_DIGIT_LOCALES.some(
+    (prefix) => locale === prefix || locale.startsWith(`${prefix}-`),
+  );
+  return westernDigits ? `${locale}-u-nu-latn` : locale;
 }
 
 /**

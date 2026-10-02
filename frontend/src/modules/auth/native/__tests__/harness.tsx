@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { render } from '@testing-library/react';
 import { NextIntlClientProvider, createTranslator, type AbstractIntlMessages } from 'next-intl';
 import { vi } from 'vitest';
+import type { AppLocale } from '@/i18n/load-messages';
 import { baseApi } from '@/store/api/baseApi';
 import { authApi } from '../../store/authApi';
 import { NativeAuthorizePanel } from '../NativeAuthorizePanel';
@@ -65,7 +66,7 @@ export async function seedReady(store: TestStore): Promise<void> {
 }
 
 interface RenderPanelOptions {
-  locale: 'en' | 'ar';
+  locale: AppLocale;
   messages: AbstractIntlMessages;
   store: TestStore;
   transaction?: string;
@@ -95,7 +96,7 @@ export function renderPanel(options: RenderPanelOptions): ReturnType<typeof rend
 /** Expected strings are resolved through the same catalogue the app ships. */
 export type MessageFn = (key: string, values?: Record<string, string | number>) => string;
 
-export function translator(locale: 'en' | 'ar', messages: AbstractIntlMessages): MessageFn {
+export function translator(locale: AppLocale, messages: AbstractIntlMessages): MessageFn {
   return createTranslator({
     locale,
     messages,
@@ -103,7 +104,7 @@ export function translator(locale: 'en' | 'ar', messages: AbstractIntlMessages):
   }) as MessageFn;
 }
 
-export function codeTranslator(locale: 'en' | 'ar', messages: AbstractIntlMessages): MessageFn {
+export function codeTranslator(locale: AppLocale, messages: AbstractIntlMessages): MessageFn {
   return createTranslator({ locale, messages, namespace: 'errors.codes' }) as MessageFn;
 }
 

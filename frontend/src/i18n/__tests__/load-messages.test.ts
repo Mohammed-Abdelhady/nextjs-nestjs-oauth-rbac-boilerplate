@@ -1,7 +1,8 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs'; // feature:locale-ar
+import { fileURLToPath } from 'node:url'; // feature:locale-ar
 import { describe, expect, it } from 'vitest';
 import { mergeMessageTrees } from '../load-messages';
+// feature:locale-ar:start
 import type { MessageTree } from './message-tree';
 import { isMessageTree } from './message-tree';
 
@@ -30,6 +31,7 @@ function flatten(tree: MessageTree, prefix = ''): string[] {
   }
   return keys;
 }
+// feature:locale-ar:end
 
 describe('session authority locale overlays', () => {
   it('keeps sibling catalog keys when overlaying nested error codes', () => {
@@ -49,6 +51,7 @@ describe('session authority locale overlays', () => {
     });
   });
 
+  // feature:locale-ar:start
   it('ships the same overlay keys in English and Arabic', () => {
     for (const name of ['session-authority', 'browser-proof', 'native-auth', 'status-errors']) {
       expect(flatten(readOverlay(name, 'en')).sort()).toEqual(
@@ -59,4 +62,5 @@ describe('session authority locale overlays', () => {
     expect(english).toContain('errors.codes.SESSION_LIMIT_REACHED');
     expect(english).toContain('errors.codes.AUTHORITY_UNAVAILABLE');
   });
+  // feature:locale-ar:end
 });

@@ -21,11 +21,11 @@ vi.mock('@/i18n/navigation', () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
 }));
 
-let messages: Record<'en' | 'ar', AbstractIntlMessages>;
+let messages: AbstractIntlMessages;
 let assignMock: ReturnType<typeof vi.fn>;
 
 beforeAll(async () => {
-  messages = { en: await loadMessages('en'), ar: await loadMessages('ar') };
+  messages = await loadMessages('en');
 });
 
 beforeEach(() => {
@@ -50,7 +50,7 @@ function readResponse(): Response {
 
 async function renderReady(store: TestStore) {
   await seedReady(store);
-  return renderPanel({ locale: 'en', messages: messages.en, store });
+  return renderPanel({ locale: 'en', messages, store });
 }
 
 describe('NativeAuthorizePanel actions', () => {
@@ -70,7 +70,7 @@ describe('NativeAuthorizePanel actions', () => {
     expect(screen.getByTestId('native-authorize-approve').getAttribute('aria-busy')).toBe('true');
     expect(screen.getByTestId('native-authorize-deny').getAttribute('aria-busy')).toBe('false');
     expect(screen.getByTestId('native-authorize-status').textContent).toBe(
-      translator('en', messages.en)('approving'),
+      translator('en', messages)('approving'),
     );
 
     await act(async () => {
@@ -90,7 +90,7 @@ describe('NativeAuthorizePanel actions', () => {
     fireEvent.click(screen.getByTestId('native-authorize-deny'));
 
     expect(screen.getByTestId('native-authorize-status').textContent).toBe(
-      translator('en', messages.en)('denying'),
+      translator('en', messages)('denying'),
     );
     expect(screen.getByTestId('native-authorize-deny').hasAttribute('disabled')).toBe(true);
     expect(screen.getByTestId('native-authorize-approve').hasAttribute('disabled')).toBe(true);

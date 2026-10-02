@@ -79,26 +79,26 @@ describe('translatableErrorCode', () => {
     // feature:magic-link:end
   });
 
-  it('resolves every known code through the real loader in both locales', async () => {
+  it('gives every error code an English message', async () => {
     const english = codesOf(await loadMessages('en'));
-    const arabic = codesOf(await loadMessages('ar'));
     const untranslated = Object.values(ErrorCode).filter((code) => {
-      const englishMessage = english[code];
-      const arabicMessage = arabic[code];
-      return (
-        typeof englishMessage !== 'string' ||
-        englishMessage.trim().length === 0 ||
-        typeof arabicMessage !== 'string' ||
-        arabicMessage.trim().length === 0
-      );
+      const message = english[code];
+      return typeof message !== 'string' || message.trim().length === 0;
     });
 
     expect(untranslated).toEqual([]);
   });
 
-  it('keeps the same ICU arguments in English and Arabic for every code', async () => {
+  // feature:locale-ar:start
+  it('gives every code a non-empty Arabic message and the same ICU arguments', async () => {
     const english = codesOf(await loadMessages('en'));
     const arabic = codesOf(await loadMessages('ar'));
+    const untranslated = Object.values(ErrorCode).filter((code) => {
+      const message = arabic[code];
+      return typeof message !== 'string' || message.trim().length === 0;
+    });
+    expect(untranslated).toEqual([]);
+
     const mismatched = Object.values(ErrorCode).filter((code) => {
       const englishMessage = english[code];
       const arabicMessage = arabic[code];
@@ -110,6 +110,7 @@ describe('translatableErrorCode', () => {
 
     expect(mismatched).toEqual([]);
   });
+  // feature:locale-ar:end
 
   it.each([
     ['Hello {name}', ['name']],
