@@ -1,10 +1,10 @@
 # Milestone 2: shared code, mobile shells, installer targets
 
-| Field     | Value                                                                        |
-| --------- | ---------------------------------------------------------------------------- |
-| Status    | First three pieces specified and dispatched. Mobile shells need their own spec |
-| Date      | 2026-10-02                                                                   |
-| Base      | `staging` after milestone 1 (PRs #144 to #149, #158 to #161 merged)          |
+| Field     | Value                                                                                  |
+| --------- | -------------------------------------------------------------------------------------- |
+| Status    | First three pieces specified and dispatched. Mobile shells need their own spec         |
+| Date      | 2026-10-02                                                                             |
+| Base      | `staging` after milestone 1 (PRs #144 to #149, #158 to #161 merged)                    |
 | Gate list | lint, typecheck, test, build, backend e2e, installer combinations. All six, every lane |
 
 ## TL;DR
@@ -15,11 +15,14 @@ register a mobile app with the server, and installer options that really remove 
 
 ## Pieces in this file
 
-| ID  | Piece                                                         | Owner    | Depends on |
-| --- | ------------------------------------------------------------- | -------- | ---------- |
+| ID  | Piece                                                                                  | Owner    | Depends on |
+| --- | -------------------------------------------------------------------------------------- | -------- | ---------- |
 | D1  | `shared/core`: error codes, permissions, password rules, validators, API error parsing | Muse     | none       |
-| N1  | Native applications declared in configuration and reconciled at start | Luna     | none       |
-| B2  | Installer options that prune: Docker files, production files, Arabic | DeepSeek | none       |
+| N1  | Native applications declared in configuration and reconciled at start                  | Luna     | none       |
+| B2  | Installer options that prune: Docker files, production files, Arabic                   | DeepSeek | none       |
+| U1  | Three sign-in page defects found at phone width                                        | Muse     | D1         |
+
+The mobile pieces have their own file, `mobile.md`.
 
 ## D1: `shared/core`
 
@@ -66,6 +69,28 @@ Today nothing creates a native application record. The real-environment run inse
 - A generated project with any mix of the three options installs, typechecks and builds. The
   combinations suite gains those cases.
 - Only when all of that passes do the three options lose `planned`.
+
+## U1: sign-in page at phone width
+
+Found on 2026-10-02 at 402 points wide, on the iPhone simulator and again in a desktop browser. All
+three are in `master` too.
+
+| Sev        | Defect                                                                                                                       |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Warning    | In light mode an unfocused field is filled with dark slate. The field uses the border colour token as its background         |
+| Warning    | "Forgot password?" is positioned outside the form and the divider below overlaps it by 8 points                              |
+| Suggestion | In development the page's content policy blocks `eval`, which React needs for its error overlay, so every page logs an error |
+
+Each fix states its cause, measures the result in a browser in light and dark, in English and Arabic,
+and at 320, 402 and 1280 wide. Field text and placeholder contrast is measured, not assumed.
+
+Not done on the simulator: signing in and the mobile sign-in confirmation page. Another app held the
+only simulator this run may use.
+
+## Debt seen, not scheduled
+
+`as unknown as` appears in existing backend code and specs (one use in `auth.guard.ts`, the rest in
+specs). The gate checks added lines only, so it passes. Removing them is its own piece.
 
 ## Later pieces, not specified here
 
