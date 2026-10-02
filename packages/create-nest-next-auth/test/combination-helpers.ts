@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { writeFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import { existsSync, mkdirSync, readFileSync, symlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -12,7 +13,12 @@ export const CLI = join(PACKAGE_DIR, 'dist', 'index.js');
 export const BUILD_TIMEOUT = 10 * 60 * 1000;
 
 /** Workspaces whose node_modules the generated project borrows. */
-const LINKED_MODULES = ['node_modules', 'backend/node_modules', 'frontend/node_modules'];
+const LINKED_MODULES = [
+  'node_modules',
+  'backend/node_modules',
+  'frontend/node_modules',
+  'shared/core/node_modules',
+];
 
 const TYPESCRIPT_BIN = join(REPO_ROOT, 'node_modules', 'typescript', 'bin', 'tsc');
 
@@ -93,8 +99,47 @@ export function typecheck(project: string, workspace: string): Promise<CommandRe
   return runTool(process.execPath, [TYPESCRIPT_BIN, '--noEmit', '-p', workspace], { cwd: project });
 }
 
+/**
+ * Name of the temporary tsconfig the combinations write into each generated
+ * frontend. It is test scaffolding, never shipped with the template.
+ */
+export const PRUNED_SHARED_TSCONFIG = 'tsconfig.shared-pruned.json';
+
+/**
+ * Writes a frontend tsconfig that resolves `@app/core` to the generated
+ * project's own (pruned) `shared/core` instead of the repository's copy,
+ * which `node_modules/@app/core` still points at through the linked
+ * dependencies. Extends the generated `frontend/tsconfig.json`; `paths`
+ * replaces the base mapping, so the `@/` alias is repeated here.
+ */
+export async function writePrunedSharedTsconfig(project: string): Promise<void> {
+  const config = {
+    extends: './tsconfig.json',
+    compilerOptions: {
+      paths: {
+        '@/*': ['./src/*'],
+        '@app/core': ['../shared/core/src/index.ts'],
+      },
+    },
+  };
+  await writeFile(
+    join(project, 'frontend', PRUNED_SHARED_TSCONFIG),
+    `${JSON.stringify(config, null, 2)}\n`,
+    'utf8',
+  );
+}
+
+/** Typechecks the generated frontend against its own pruned `shared/core`. */
+export function typecheckFrontendWithPrunedShared(project: string): Promise<CommandResult> {
+  return runTool(
+    process.execPath,
+    [TYPESCRIPT_BIN, '--noEmit', '-p', `frontend/${PRUNED_SHARED_TSCONFIG}`],
+    { cwd: project },
+  );
+}
+
 /** Where the full selection has to match the repository, marker lines aside. */
-const COMPARED_DIRECTORIES = ['backend/src', 'backend/test', 'frontend/src'];
+const COMPARED_DIRECTORIES = ['backend/src', 'backend/test', 'frontend/src', 'shared/core/src'];
 const MAINTAINER_BROWSER_HELPERS = new Set([
   'backend/test/utils/browser-server.ts',
   'backend/test/utils/local-oauth.ts',

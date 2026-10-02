@@ -14,11 +14,14 @@ import {
   runTool,
   scaffold,
   typecheck,
+  typecheckFrontendWithPrunedShared,
+  writePrunedSharedTsconfig,
 } from './combination-helpers.js';
 
 /**
  * Every combination a generated project has to compile in. Slow by nature: it
- * builds the CLI, scaffolds seven trees and runs two typechecks over each.
+ * builds the CLI, scaffolds seven trees and runs three typechecks, the drift
+ * spec, and a frontend check against the pruned shared package over each.
  * Run it with `npm run test:combinations -w packages/create-nest-next-auth`.
  */
 
@@ -91,6 +94,38 @@ async function expectTypechecks(project: string): Promise<void> {
   expect(backend.ok, backend.output).toBe(true);
   const frontend = await typecheck(project, 'frontend');
   expect(frontend.ok, frontend.output).toBe(true);
+  const shared = await typecheck(project, 'shared/core');
+  expect(shared.ok, shared.output).toBe(true);
+}
+
+/**
+ * Runs the backend drift spec in the generated project. Feature pruning strips
+ * marked error codes from both the backend enum and the shared package, so a
+ * missing marker on either side shows up here, not in the typecheck.
+ */
+async function expectDriftMatches(project: string): Promise<void> {
+  const drift = await runTool(
+    process.execPath,
+    [
+      join(REPO_ROOT, 'node_modules/jest/bin/jest.js'),
+      '--runInBand',
+      '--runTestsByPath',
+      'src/common/constants/shared-core-drift.spec.ts',
+    ],
+    { cwd: join(project, 'backend') },
+  );
+  expect(drift.ok, drift.output).toBe(true);
+}
+
+/**
+ * Typechecks the generated frontend against its own pruned `shared/core`. A
+ * surviving file that uses a stripped code passes the plain typecheck (which
+ * resolves `@app/core` to this repository) and fails here.
+ */
+async function expectPrunedShared(project: string): Promise<void> {
+  await writePrunedSharedTsconfig(project);
+  const pruned = await typecheckFrontendWithPrunedShared(project);
+  expect(pruned.ok, pruned.output).toBe(true);
 }
 
 describe('generated projects', () => {
@@ -101,6 +136,8 @@ describe('generated projects', () => {
   it.each(COMBINATIONS)('typechecks with $name', async ({ name, features }) => {
     const project = await generate(name, features);
     await expectTypechecks(project);
+    await expectDriftMatches(project);
+    await expectPrunedShared(project);
     if (features.includes('google') && features.length === 2) {
       const api = await runTool(
         process.execPath,
@@ -122,6 +159,8 @@ describe('generated projects', () => {
     const requested = everything();
     const project = await generate('everything', requested);
     await expectTypechecks(project);
+    await expectDriftMatches(project);
+    await expectPrunedShared(project);
 
     // Retained application and API test files differ only by feature markers.
     const selected = resolveSelection(manifest, requested).selected;
