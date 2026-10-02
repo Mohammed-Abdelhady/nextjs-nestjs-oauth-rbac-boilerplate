@@ -109,6 +109,8 @@ export const TOAST_DURATION = {
   INFO: 4000,
   LOADING: Infinity, // Must be manually dismissed
   CRITICAL_ERROR: Infinity, // Server errors require manual acknowledgment
+  NETWORK_ERROR: 10000, // Time to check the connection
+  TIMEOUT_ERROR: 8000,
 } as const;
 
 /**

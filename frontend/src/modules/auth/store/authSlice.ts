@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '@/store/store';
+import { HTTP_STATUS } from '@/constants/httpStatus';
 import type { AuthState, SignedInUser } from '../types/auth.types';
 import { authApi } from './authApi';
 
@@ -114,6 +115,9 @@ export const authSlice = createSlice({
     // Handle getCurrentUser query lifecycle
     builder.addMatcher(authApi.endpoints.getCurrentUser.matchPending, (state) => {
       state.isLoading = true;
+      // A refetch of a session that is already validated keeps its status, so
+      // the guards do not swap the page for a loader and unmount what is on it.
+      if (state.validationStatus === 'succeeded') return;
       state.validationStatus = 'pending';
       state.validationErrorStatus = null;
     });
@@ -127,13 +131,16 @@ export const authSlice = createSlice({
     });
     builder.addMatcher(authApi.endpoints.getCurrentUser.matchRejected, (state, action) => {
       state.isLoading = false;
-      state.validationStatus = 'failed';
       const status =
         typeof action.payload === 'object' && action.payload !== null && 'status' in action.payload
           ? Number((action.payload as { status?: number }).status)
           : 0;
+      // Once a session is validated, only the server saying it is gone ends it. A
+      // refetch that fails for any other reason keeps the page and the last known user.
+      if (state.validationStatus === 'succeeded' && status !== HTTP_STATUS.UNAUTHORIZED) return;
+      state.validationStatus = 'failed';
       state.validationErrorStatus = Number.isFinite(status) ? status : 0;
-      if (status === 401) {
+      if (status === HTTP_STATUS.UNAUTHORIZED) {
         state.user = null;
         state.isAuthenticated = false;
       }

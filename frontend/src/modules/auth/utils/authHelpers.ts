@@ -177,24 +177,6 @@ export function getRedirectPath(
 }
 
 /**
- * Extracts error message from various error formats
- * Handles API errors, Error objects, and strings
- *
- * @param error - Error object, string, or API error response
- * @returns User-friendly error message
- *
- * @example
- * getErrorMessage(new Error('Network error')) // 'Network error'
- * getErrorMessage({ message: 'Invalid credentials' }) // 'Invalid credentials'
- * getErrorMessage('Something went wrong') // 'Something went wrong'
- *
- * @deprecated Use parseApiError from '@app/core' for better error handling with i18n support
- */
-export function getErrorMessage(error: unknown): string {
-  return parseApiError(error).message;
-}
-
-/**
  * Maps API error messages to translation keys
  * Provides translation key for common error scenarios
  *
@@ -206,7 +188,7 @@ export function getErrorMessage(error: unknown): string {
  * translateAuthError(apiError, t) // 'Invalid email or password'
  */
 export function translateAuthError(error: unknown, t: (key: string) => string): string {
-  const rawMessage = getErrorMessage(error).toLowerCase();
+  const rawMessage = parseApiError(error).message.toLowerCase();
 
   // Map common error messages to translation keys
   const errorMap: Record<string, string> = {

@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useDeleteRoleMutation, type Role } from '../api/rolesApi';
 import { toast } from '@/lib/toast';
-import { parseApiError } from '@app/core';
+import { reportUnlessHandled } from '@/lib/requestFailure';
 
 export interface DeleteRoleDialogProps {
   /**
@@ -69,9 +69,8 @@ export function DeleteRoleDialog({ open, onOpenChange, role, onSuccess }: Delete
 
       // Call success callback
       onSuccess?.();
-    } catch (error: unknown) {
-      const parsed = parseApiError(error);
-      toast.error(parsed.message || t('error'));
+    } catch (error) {
+      reportUnlessHandled(error);
     }
   };
 

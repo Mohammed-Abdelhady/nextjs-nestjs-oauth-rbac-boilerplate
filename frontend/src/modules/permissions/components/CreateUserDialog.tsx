@@ -25,8 +25,13 @@ import { FieldError, PasswordVisibilityToggle, SubmitButton } from '@/components
 import { useCreateUserMutation } from '@/store/api/userApi';
 import { useListRolesQuery } from '../api/rolesApi';
 import { toast } from '@/lib/toast';
-import { parseApiError } from '@app/core';
+import { reportUnlessHandled } from '@/lib/requestFailure';
 import { validateCreateUserForm } from '../utils/createUserValidation';
+import {
+  fieldElementId,
+  useLocalFieldTarget,
+  useServerFieldErrors,
+} from '@/hooks/useServerFieldErrors';
 
 export interface CreateUserDialogProps {
   open: boolean;
@@ -56,8 +61,8 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
   const tValidation = useTranslations('validation');
   const tCommon = useTranslations('common');
   const uid = useId();
-  const fieldId = (name: string) => `${uid}-${name}`;
-  const errorId = (name: string) => `${uid}-${name}-error`;
+  const fieldId = (name: string) => fieldElementId(uid, name);
+  const errorId = (name: string) => `${fieldId(name)}-error`;
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
@@ -70,6 +75,11 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
 
   const roles = rolesData?.roles || [];
   const availableRoles = roles.filter((r) => !r.isProtected);
+
+  const applyServerFieldErrors = useServerFieldErrors(
+    useLocalFieldTarget(setErrors, uid),
+    isLoading,
+  );
 
   const validateForm = (): boolean => {
     const newErrors = validateCreateUserForm({ email, name, password, role }, tValidation);
@@ -96,8 +106,9 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
       handleClose();
       onSuccess?.();
     } catch (error) {
-      const parsed = parseApiError(error);
-      toast.error(parsed.message || t('error'));
+      // A dialog that was closed in the meantime has no fields left to mark.
+      applyServerFieldErrors(error);
+      reportUnlessHandled(error);
     }
   };
 
@@ -112,7 +123,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(next) => (next ? onOpenChange(true) : handleClose())}>
       <DialogContent className="sm:max-w-[500px]" data-testid="create-user-dialog">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold tracking-tight">{t('title')}</DialogTitle>

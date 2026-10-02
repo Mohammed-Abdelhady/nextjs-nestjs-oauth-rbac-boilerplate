@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useRevokeAllOtherSessionsMutation } from '../api/sessionsApi';
 import { toast } from '@/lib/toast';
+import { reportUnlessHandled } from '@/lib/requestFailure';
 
 export interface RevokeAllSessionsButtonProps {
   /** Number of other sessions that will be revoked */
@@ -61,8 +62,8 @@ export function RevokeAllSessionsButton({
       toast.success(t('logoutAllSuccess', { count: result.revokedCount }));
       setOpen(false);
       onSuccess?.(result.revokedCount);
-    } catch {
-      toast.error(t('logoutAllError'));
+    } catch (error) {
+      reportUnlessHandled(error);
     }
   };
 

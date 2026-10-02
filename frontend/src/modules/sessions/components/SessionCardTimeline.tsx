@@ -20,6 +20,7 @@ import { CurrentSessionBadge } from './CurrentSessionBadge';
 import { parseUserAgent, getDeviceLabel } from '@/lib/parseUserAgent';
 import type { Session } from '@app/sdk';
 import { toast } from '@/lib/toast';
+import { reportUnlessHandled } from '@/lib/requestFailure';
 import { cn } from '@/lib/utils';
 import { formatTimeAgo } from '@/lib/formatters';
 
@@ -59,8 +60,8 @@ export const SessionCardTimeline = memo(
         await deleteSession(session.id).unwrap();
         toast.success(t('logoutSuccess'));
         setShowConfirm(false);
-      } catch {
-        toast.error(t('logoutError'));
+      } catch (error) {
+        reportUnlessHandled(error);
       }
     }, [deleteSession, session.id, t]);
 

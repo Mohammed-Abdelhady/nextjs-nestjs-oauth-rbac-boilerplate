@@ -10,6 +10,7 @@ import { ShieldCheck, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCallback, useMemo, useEffect, useState } from 'react';
 import { toast } from '@/lib/toast';
+import { reportUnlessHandled } from '@/lib/requestFailure';
 import { useAppDispatch } from '@/store/hooks';
 import { setUser } from '@/modules/auth/store/authSlice';
 import { useRouter } from '@/i18n/navigation';
@@ -116,7 +117,6 @@ export function ActivationForm() {
           type: 'manual',
           message: errorMessage,
         });
-        toast.error(errorMessage);
 
         setValue('code', '');
       }
@@ -131,19 +131,10 @@ export function ActivationForm() {
       toast.success(tToast('success.resendSuccess'));
       setCooldownSeconds(60);
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      let errorMessage = tToast('error.resendError');
-
-      if (parsed.code === 'NO_PENDING_REGISTRATION_FOR_RESEND') {
-        errorMessage = tToast('error.resendNoPending');
+      if (parseApiError(err).code === 'NO_PENDING_REGISTRATION_FOR_RESEND') {
         setTimeout(() => router.push('/auth/register'), 3000);
-      } else if (parsed.code === 'RATE_LIMIT_EXCEEDED') {
-        errorMessage = tToast('error.resendRateLimit');
-      } else if (parsed.message) {
-        errorMessage = parsed.message;
       }
-
-      toast.error(errorMessage);
+      reportUnlessHandled(err);
     }
   }, [resendActivation, emailFromUrl, router, tToast]);
 

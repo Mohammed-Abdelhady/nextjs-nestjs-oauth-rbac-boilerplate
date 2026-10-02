@@ -1,4 +1,5 @@
 import { baseApi } from '@/store/api/baseApi';
+import { invalidateOnSuccess } from '@/store/api/invalidateOnSuccess';
 import type {
   AdminUser,
   GetUsersParams,
@@ -85,7 +86,7 @@ export const usersApi = baseApi.injectEndpoints({
         const { id, ...rest } = response.data;
         return { ...rest, _id: id };
       },
-      invalidatesTags: [{ type: 'User', id: 'LIST' }],
+      invalidatesTags: invalidateOnSuccess([{ type: 'User', id: 'LIST' }]),
     }),
 
     /**
@@ -120,10 +121,10 @@ export const usersApi = baseApi.injectEndpoints({
         const { id, ...rest } = response.data;
         return { ...rest, _id: id };
       },
-      invalidatesTags: (result, error, { userId }) => [
+      invalidatesTags: invalidateOnSuccess(({ userId }: UpdateUserRequest) => [
         { type: 'User', id: userId },
         { type: 'User', id: 'LIST' },
-      ],
+      ]),
     }),
 
     /**
