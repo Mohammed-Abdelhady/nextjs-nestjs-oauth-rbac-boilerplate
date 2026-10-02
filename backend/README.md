@@ -128,6 +128,17 @@ rolling deploy, start all instances with the same list; a rollback must also
 restore the previous list, otherwise the rolled-back server disables the new
 clients and signs their users out.
 
+### Native OAuth error shapes
+
+The token, revoke and authorize routes answer failures in three shapes. They
+are intentionally not unified, so a client parser must handle all three.
+
+| Shape                | When                                                                 | Status | Body                                                                                                                                                                |
+| -------------------- | -------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OAuth                | Token, revoke and authorize validation and OAuth failures            | `400`  | `{"error":"invalid_grant"}`. When native sign-in is turned off the reason is included: `{"error":"unauthorized_client","error_description":"NATIVE_AUTH_DISABLED"}` |
+| Application envelope | Browser authorize actions (read, approve, deny) and other API routes | `4xx`  | `{"success":false,"error":{"code":"NATIVE_TRANSACTION_EXPIRED","message":"..."},"requestId":"..."}`                                                                 |
+| Throttling answer    | Any route over the rate limit                                        | `429`  | `{"success":false,"error":{"code":"RATE_LIMIT_EXCEEDED","message":"Too many requests","details":{"retryAfter":60}},"requestId":"..."}`                              |
+
 ## API endpoints
 
 ### Authentication (`/api/auth`)
