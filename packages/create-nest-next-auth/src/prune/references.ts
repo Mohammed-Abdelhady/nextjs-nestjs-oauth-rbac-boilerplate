@@ -10,6 +10,7 @@ import {
   SHARED_PACKAGES_ROOT,
   SOURCE_EXTENSIONS,
 } from '../constants/index.js';
+import { isRecord } from '../manifest/read.js';
 import type { DanglingReference } from '../types.js';
 import { listFiles } from '../utils/fs.js';
 
@@ -107,17 +108,15 @@ async function resolveSpecifier(
 }
 
 /**
- * Reports imports that point at files the pruner deleted. A non-empty result
- * means the manifest claims a file belongs to one feature while shared code
- * still depends on it.
+ * Reports imports and package scripts that point at files the pruner deleted. A
+ * non-empty result means the manifest claims a file belongs to one feature or
+ * option while shared code still depends on it, or a script still runs it.
  */
 export async function findDanglingReferences(
   root: string,
   deletedFiles: string[],
 ): Promise<DanglingReference[]> {
   const deletedSources = deletedFiles.filter(isSourceFile).map(withoutExtension);
-  if (deletedSources.length === 0) return [];
-
   const byPath = new Map(deletedSources.map((path) => [path, path]));
   for (const path of deletedSources) {
     // An index file is imported through its directory.
@@ -125,8 +124,9 @@ export async function findDanglingReferences(
   }
   const dangling: DanglingReference[] = [];
   const shared = sharedPackages(root, deletedFiles);
+  const files = await listFiles(root);
 
-  for (const file of (await listFiles(root)).filter(isSourceFile)) {
+  for (const file of files.filter(isSourceFile)) {
     const lines = (await readFile(join(root, file), 'utf8')).split('\n');
 
     for (const [index, line] of lines.entries()) {
@@ -137,6 +137,23 @@ export async function findDanglingReferences(
         if (target === undefined) continue;
         dangling.push({ file, line: index + 1, specifier, target });
       }
+    }
+  }
+
+  for (const file of files.filter((path) => path.endsWith('package.json'))) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(await readFile(join(root, file), 'utf8'));
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      throw new Error(`Could not parse ${file}: ${reason}`);
+    }
+    if (!isRecord(parsed) || !isRecord(parsed.scripts)) continue;
+    for (const [name, command] of Object.entries(parsed.scripts)) {
+      if (typeof command !== 'string') continue;
+      const target = deletedFiles.find((path) => command.includes(path));
+      if (target === undefined) continue;
+      dangling.push({ file, line: 1, specifier: name, target, script: name });
     }
   }
 

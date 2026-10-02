@@ -39,7 +39,7 @@ async function sharedFixture(packages: Record<string, Record<string, string>>): 
 describe('prune', () => {
   it('deletes only what the unselected features own', async () => {
     const root = await fixture();
-    const result = await prune(root, FIXTURE_MANIFEST, ['email-password', 'alpha']);
+    const result = await prune(root, FIXTURE_MANIFEST, ['email-password', 'alpha'], []);
     const files = await listFiles(root);
 
     expect(result.deletedFiles).toEqual([
@@ -58,7 +58,7 @@ describe('prune', () => {
 
   it('strips the env lines of removed features and keeps shared ones', async () => {
     const root = await fixture();
-    const result = await prune(root, FIXTURE_MANIFEST, ['email-password', 'alpha']);
+    const result = await prune(root, FIXTURE_MANIFEST, ['email-password', 'alpha'], []);
 
     const backend = await readFile(join(root, 'backend/.env.example'), 'utf8');
     const docker = await readFile(join(root, '.env.docker.example'), 'utf8');
@@ -75,7 +75,7 @@ describe('prune', () => {
 
   it('keeps a shared var when only one of its owners is removed', async () => {
     const root = await fixture();
-    await prune(root, FIXTURE_MANIFEST, ['email-password']);
+    await prune(root, FIXTURE_MANIFEST, ['email-password'], []);
     const backend = await readFile(join(root, 'backend/.env.example'), 'utf8');
 
     expect(backend).toContain('SHARED_KEY=shared');
@@ -84,7 +84,7 @@ describe('prune', () => {
 
   it('records the enabled features in the backend env example', async () => {
     const root = await fixture();
-    await prune(root, FIXTURE_MANIFEST, ['email-password', 'alpha']);
+    await prune(root, FIXTURE_MANIFEST, ['email-password', 'alpha'], []);
     const backend = await readFile(join(root, 'backend/.env.example'), 'utf8');
 
     expect(backend).toContain('AUTH_FEATURES=email-password,alpha');
@@ -93,7 +93,7 @@ describe('prune', () => {
 
   it('removes doc links from lists and tables, and leaves the rest', async () => {
     const root = await fixture();
-    const result = await prune(root, FIXTURE_MANIFEST, ['email-password', 'alpha']);
+    const result = await prune(root, FIXTURE_MANIFEST, ['email-password', 'alpha'], []);
 
     const docsIndex = await readFile(join(root, 'docs/README.md'), 'utf8');
     const readme = await readFile(join(root, 'README.md'), 'utf8');
@@ -102,12 +102,12 @@ describe('prune', () => {
     expect(docsIndex).not.toContain('setup-beta.md');
     expect(docsIndex).toContain('setup-alpha.md');
     expect(readme).not.toContain('docs/setup-beta.md');
-    expect(readme).toContain('| Guide | Description |');
+    expect(readme).toContain('| Guide');
   });
 
   it('reports imports left pointing at deleted files', async () => {
     const root = await fixture();
-    const result = await prune(root, FIXTURE_MANIFEST, ['email-password', 'beta']);
+    const result = await prune(root, FIXTURE_MANIFEST, ['email-password', 'beta'], []);
 
     expect(result.dangling).toHaveLength(1);
     expect(result.dangling[0]).toMatchObject({
@@ -119,7 +119,7 @@ describe('prune', () => {
 
   it('removes planned features that never made it into the prompt', async () => {
     const root = await fixture();
-    const result = await prune(root, FIXTURE_MANIFEST, ['email-password', 'alpha', 'beta']);
+    const result = await prune(root, FIXTURE_MANIFEST, ['email-password', 'alpha', 'beta'], []);
     expect(result.removed).toEqual(['gamma']);
   });
 

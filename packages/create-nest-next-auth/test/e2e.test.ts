@@ -191,6 +191,7 @@ describe('the packed CLI', () => {
     expect(existsSync(join(project, '.gitignore'))).toBe(true);
     expect(existsSync(join(project, 'package-lock.json'))).toBe(true);
     expect(existsSync(join(project, '_gitignore'))).toBe(false);
+    expect(readFileSync(join(project, '.gitignore'), 'utf8')).toContain('mongodb-data/');
   });
 
   it.each(['email-password', 'email-password,google'])(

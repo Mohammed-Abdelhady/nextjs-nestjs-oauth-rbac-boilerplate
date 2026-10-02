@@ -1,7 +1,7 @@
 import { readdir } from 'node:fs/promises';
 import { basename, relative, resolve } from 'node:path';
 import { cancel, intro, log, note, outro, spinner } from '@clack/prompts';
-import { CLI_NAME, USAGE_EXIT_CODE } from './constants/index.js';
+import { CLI_NAME, DOCKER_OPTION_ID, USAGE_EXIT_CODE } from './constants/index.js';
 import { ConfigFileError, readConfigFile } from './flags/config-file.js';
 import { parseCliOptions } from './flags/options.js';
 import { toPlanRequest } from './flags/request.js';
@@ -16,9 +16,9 @@ import { buildSummary, describePlanErrors } from './report/summary.js';
 import { copyTemplate } from './scaffold/copy.js';
 import { initRepository } from './scaffold/git.js';
 import { detectPackageManager, installDependencies, isSupported } from './scaffold/install.js';
-import { buildDocLinks, buildNextSteps } from './scaffold/next-steps.js';
+import { buildDocLinks, buildNextSteps, readWorkspaceStartScripts } from './scaffold/next-steps.js';
 import { setProjectName } from './scaffold/package-json.js';
-import type { CliOptions, Manifest } from './types.js';
+import type { CliOptions, Manifest, PruneResult } from './types.js';
 import { isErrnoException } from './utils/fs.js';
 import { validateProjectName } from './utils/project-name.js';
 
@@ -91,7 +91,16 @@ async function scaffold(
 
   const pruning = spinner();
   pruning.start('Removing what you did not pick');
-  const result = await prune(target, manifest, plan.features);
+  let result: PruneResult;
+  try {
+    result = await prune(target, manifest, plan.features, plan.options);
+  } catch (error) {
+    pruning.stop('Pruning failed');
+    const reason = error instanceof Error ? error.message : String(error);
+    log.error(`Pruning failed: ${reason}`);
+    outro(`Left the tree at ${target} so you can inspect it.`);
+    return 1;
+  }
   pruning.stop('Pruned');
   log.message(describeSelection(manifest, result).join('\n'));
 
@@ -101,14 +110,14 @@ async function scaffold(
     return 1;
   }
 
-  await finishSetup(target, manifest, plan.features, options);
+  await finishSetup(target, manifest, plan, options);
   return 0;
 }
 
 async function finishSetup(
   target: string,
   manifest: Manifest,
-  selected: string[],
+  plan: Plan,
   options: CliOptions,
 ): Promise<void> {
   if (options.git) {
@@ -137,8 +146,17 @@ async function finishSetup(
   }
 
   const directoryLabel = shortestPath(target);
-  note(buildNextSteps({ directoryLabel, installed }).join('\n'), 'Next steps');
-  note(buildDocLinks(manifest, selected).join('\n'), 'Docs');
+  const scripts = await readWorkspaceStartScripts(target);
+  note(
+    buildNextSteps({
+      directoryLabel,
+      installed,
+      docker: plan.options.includes(DOCKER_OPTION_ID),
+      scripts,
+    }).join('\n'),
+    'Next steps',
+  );
+  note(buildDocLinks(manifest, plan.features).join('\n'), 'Docs');
 }
 
 export async function main(

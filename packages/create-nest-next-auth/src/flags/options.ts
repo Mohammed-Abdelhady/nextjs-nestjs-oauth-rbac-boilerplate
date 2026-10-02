@@ -37,15 +37,9 @@ export function buildProgram(version: string): Command {
     .option('--database <list>', 'database id; more than one is an error')
     .option('--preset <id>', 'apply a preset (minimal, standard, everything)')
     .option('--config <file>', 'JSON file with the same selection keys')
-    .option(
-      '--locales <list>',
-      'locale ids; "en" is required and only "en,ar" together is accepted for now',
-    )
-    .option('--no-docker', 'leave out the Docker files (not available yet)')
-    .option(
-      '--no-production',
-      'leave out the production nginx and compose files (not available yet)',
-    )
+    .option('--locales <list>', 'locale ids; "en" is required, "ar" adds Arabic')
+    .option('--no-docker', 'leave out the Docker files')
+    .option('--no-production', 'leave out the production nginx and compose files')
     .option('--dry-run', 'print the resolved plan and write nothing')
     .option('--no-install', 'skip npm install')
     .option('--no-git', 'skip git init and the first commit')

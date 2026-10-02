@@ -4,6 +4,7 @@ import { promisify } from 'node:util';
 import { existsSync, mkdirSync, readdirSync, readFileSync, symlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { format, getFileInfo, resolveConfig } from 'prettier';
 import { listFiles } from '../src/utils/fs.js';
 import { stripFeatureMarkers } from '../src/prune/markers.js';
 
@@ -71,15 +72,28 @@ export function buildCli(): Promise<CommandResult> {
   return runTool('npm', ['run', 'build'], { cwd: PACKAGE_DIR });
 }
 
-export function scaffold(target: string, features: string[]): Promise<CommandResult> {
+export function scaffold(
+  target: string,
+  features: string[],
+  flags: string[] = [],
+): Promise<CommandResult> {
   return runTool(process.execPath, [
     CLI,
     target,
+    '--yes',
     '--features',
     features.join(','),
+    ...flags,
     '--no-install',
     '--no-git',
   ]);
+}
+
+/** Installs a generated project the way a user would, without lifecycle scripts. */
+export function installProject(project: string): Promise<CommandResult> {
+  return runTool('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], {
+    cwd: project,
+  });
 }
 
 /**
@@ -181,6 +195,16 @@ export interface MarkerDifference {
   reason: string;
 }
 
+/** Formats with the repository config, the way the CLI formats a generated tree. */
+async function formatLikeRepository(content: string, relative: string): Promise<string | null> {
+  const path = join(REPO_ROOT, relative);
+  const info = await getFileInfo(path);
+  if (info.inferredParser === null) return null;
+
+  const config = await resolveConfig(path);
+  return format(content, { ...config, filepath: path });
+}
+
 /**
  * Compares a project scaffolded with everything selected against the
  * repository: retained files differ only by markers, and the two maintainer
@@ -189,9 +213,10 @@ export interface MarkerDifference {
 export async function compareWithRepository(
   project: string,
   featureIds: string[],
+  markerIds: string[],
 ): Promise<MarkerDifference[]> {
   const kept = new Set(featureIds);
-  const known = new Set(featureIds);
+  const known = new Set(markerIds);
   const differences: MarkerDifference[] = [];
 
   for (const directory of COMPARED_DIRECTORIES) {
@@ -203,7 +228,9 @@ export async function compareWithRepository(
         continue;
       }
       const source = readFileSync(join(REPO_ROOT, relative), 'utf8');
-      const expected = stripFeatureMarkers(source, relative, kept, known).content;
+      const stripped = stripFeatureMarkers(source, relative, kept, known).content;
+      const formatted = await formatLikeRepository(stripped, relative);
+      const expected = formatted ?? stripped;
 
       let generated: string;
       try {

@@ -69,7 +69,7 @@ export const PLAN_MANIFEST: Manifest = validateManifest({
       requires: ['docker'],
     },
     'locale-ar': {
-      label: 'Arabic and right-to-left support',
+      label: 'Arabic locale',
       default: true,
       files: [],
       requires: [],

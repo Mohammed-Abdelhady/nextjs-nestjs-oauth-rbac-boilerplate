@@ -4,7 +4,6 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { main } from '../src/cli.js';
-import { loadManifest } from '../src/manifest/load.js';
 
 const REPO_ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 const roots: string[] = [];
@@ -62,27 +61,31 @@ describe('usage errors exit 2', () => {
     expect(output).toContain('native-expo');
   });
 
-  it('accepts a locale list that matches the planned default', async () => {
+  it('accepts a locale list that includes Arabic', async () => {
     const { code } = await run([...(await target()).flags, '--dry-run', '--locales', 'en,ar']);
     expect(code).toBe(0);
   });
 
-  it('rejects turning a planned option off, naming its label', async () => {
-    const manifest = await loadManifest(REPO_ROOT);
+  it('rejects docker off while production is still requested', async () => {
     const { code, output } = await run([...(await target()).flags, '--dry-run', '--no-docker']);
     expect(code).toBe(2);
-    expect(output).toContain(
-      `Turning off "${manifest.options.docker.label}" is not available yet. Every project includes this for now.`,
-    );
+    expect(output).toContain('"production" needs "docker", which was turned off.');
   });
 
-  it('rejects dropping Arabic, naming its label', async () => {
-    const manifest = await loadManifest(REPO_ROOT);
+  it('accepts docker and production off together', async () => {
+    const { code } = await run([
+      ...(await target()).flags,
+      '--dry-run',
+      '--no-docker',
+      '--no-production',
+    ]);
+    expect(code).toBe(0);
+  });
+
+  it('accepts dropping Arabic with an English-only locale list', async () => {
     const { code, output } = await run([...(await target()).flags, '--dry-run', '--locales', 'en']);
-    expect(code).toBe(2);
-    expect(output).toContain(
-      `Turning off "${manifest.options['locale-ar'].label}" is not available yet. Every project includes this for now.`,
-    );
+    expect(code).toBe(0);
+    expect(output).not.toContain('not available yet');
   });
 
   it('requires English in a locale list', async () => {
@@ -224,5 +227,12 @@ describe('config file usage errors exit 2', () => {
     const { code, output } = await run([...(await target()).flags, '--dry-run', '--config', path]);
     expect(code).toBe(0);
     expect(output).toContain('Email and password');
+  });
+
+  it('turns options off from a config file', async () => {
+    const path = await config(JSON.stringify({ docker: false, production: false }));
+    const { code, output } = await run([...(await target()).flags, '--dry-run', '--config', path]);
+    expect(code).toBe(0);
+    expect(output).toContain('Removed    Docker files, Production nginx and compose (options)');
   });
 });

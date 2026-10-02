@@ -46,6 +46,12 @@ export const ENV_EXAMPLE_FILES = [
   'frontend/.env.example',
 ] as const;
 
+/** Root manifest whose scripts can belong to a project option. */
+export const ROOT_PACKAGE_JSON = 'package.json';
+
+/** Frontend manifest whose scripts the scaffold rewrites. */
+export const FRONTEND_PACKAGE_JSON = 'frontend/package.json';
+
 /** Env var written into backend/.env.example with the enabled feature ids. */
 export const FEATURE_FLAG_VAR = 'AUTH_FEATURES';
 

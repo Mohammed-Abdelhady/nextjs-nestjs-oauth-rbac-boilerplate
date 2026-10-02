@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   CLI_NAME,
@@ -6,6 +6,7 @@ import {
   FEATURE_FLAG_VAR,
   MANIFEST_FILE,
 } from '../constants/index.js';
+import { readFileIfExists } from '../utils/fs.js';
 
 const ASSIGNMENT = new RegExp('^\\s*#?\\s*([A-Za-z_][A-Za-z0-9_]*)\\s*=');
 const COMMENT = new RegExp('^\\s*#');
@@ -72,12 +73,8 @@ export async function stripEnvFiles(root: string, removals: EnvRemovals): Promis
 
   for (const relative of ENV_EXAMPLE_FILES) {
     const path = join(root, relative);
-    let content: string;
-    try {
-      content = await readFile(path, 'utf8');
-    } catch {
-      continue;
-    }
+    const content = await readFileIfExists(path);
+    if (content === undefined) continue;
     const result = stripEnvVars(content, removals);
     if (result.stripped.length === 0) continue;
     await writeFile(path, result.content, 'utf8');
@@ -90,12 +87,8 @@ export async function stripEnvFiles(root: string, removals: EnvRemovals): Promis
 /** Records the enabled feature ids in the generated backend env example. */
 export async function writeFeatureFlag(root: string, selected: string[]): Promise<void> {
   const path = join(root, 'backend/.env.example');
-  let content: string;
-  try {
-    content = await readFile(path, 'utf8');
-  } catch {
-    return;
-  }
+  const content = await readFileIfExists(path);
+  if (content === undefined) return;
 
   const block = [
     '',

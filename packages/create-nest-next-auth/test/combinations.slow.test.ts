@@ -5,7 +5,6 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { loadManifest } from '../src/manifest/load.js';
 import { availableFeatures, resolveSelection } from '../src/manifest/select.js';
 import type { Manifest } from '../src/types.js';
-import { verifyFeatureAvailability } from './feature-runtime.js';
 import {
   buildCli,
   compareWithRepository,
@@ -13,16 +12,20 @@ import {
   REPO_ROOT,
   runTool,
   scaffold,
-  typecheck,
-  typecheckFrontendWithPrunedShared,
-  writePrunedSharedTsconfig,
 } from './combination-helpers.js';
+import {
+  expectDriftMatches,
+  expectLints,
+  expectPrunedShared,
+  expectTypechecks,
+} from './combination-scenarios.js';
+import { verifyFeatureAvailability } from './feature-runtime.js';
 
 /**
- * Every combination a generated project has to compile in. Slow by nature: it
- * builds the CLI, scaffolds seven trees and runs three typechecks, the drift
- * spec, and a frontend check against the pruned shared package over each.
- * Run it with `npm run test:combinations -w packages/create-nest-next-auth`.
+ * Every feature combination a generated project has to compile in. Slow by
+ * nature: it builds the CLI, scaffolds seven trees and runs three typechecks,
+ * the drift spec, and a frontend check against the pruned shared package over
+ * each. Run it with `npm run test:combinations -w packages/create-nest-next-auth`.
  */
 
 const ALL_OAUTH = [
@@ -89,57 +92,17 @@ async function generate(name: string, features: string[]): Promise<string> {
   return project;
 }
 
-async function expectTypechecks(project: string): Promise<void> {
-  const backend = await typecheck(project, 'backend');
-  expect(backend.ok, backend.output).toBe(true);
-  const frontend = await typecheck(project, 'frontend');
-  expect(frontend.ok, frontend.output).toBe(true);
-  const shared = await typecheck(project, 'shared/core');
-  expect(shared.ok, shared.output).toBe(true);
-  const sdk = await typecheck(project, 'shared/sdk');
-  expect(sdk.ok, sdk.output).toBe(true);
-}
-
-/**
- * Runs the backend drift spec in the generated project. Feature pruning strips
- * marked error codes from both the backend enum and the shared package, so a
- * missing marker on either side shows up here, not in the typecheck.
- */
-async function expectDriftMatches(project: string): Promise<void> {
-  const drift = await runTool(
-    process.execPath,
-    [
-      join(REPO_ROOT, 'node_modules/jest/bin/jest.js'),
-      '--runInBand',
-      '--runTestsByPath',
-      'src/common/constants/shared-core-drift.spec.ts',
-    ],
-    { cwd: join(project, 'backend') },
-  );
-  expect(drift.ok, drift.output).toBe(true);
-}
-
-/**
- * Typechecks the generated frontend against its own pruned `shared/*` sources
- * through tsconfig paths. The plain typecheck reaches the same sources through
- * the linked node_modules, so this one guards the mapping a bundler would use.
- */
-async function expectPrunedShared(project: string): Promise<void> {
-  await writePrunedSharedTsconfig(project);
-  const pruned = await typecheckFrontendWithPrunedShared(project);
-  expect(pruned.ok, pruned.output).toBe(true);
-}
-
 describe('generated projects', () => {
   it('builds the CLI first', () => {
     expect(built.ok, built.output).toBe(true);
   });
 
-  it.each(COMBINATIONS)('typechecks with $name', async ({ name, features }) => {
+  it.each(COMBINATIONS)('typechecks and lints with $name', async ({ name, features }) => {
     const project = await generate(name, features);
     await expectTypechecks(project);
     await expectDriftMatches(project);
     await expectPrunedShared(project);
+    await expectLints(project);
     if (features.includes('google') && features.length === 2) {
       const api = await runTool(
         process.execPath,
@@ -157,16 +120,19 @@ describe('generated projects', () => {
     }
   });
 
-  it('typechecks with everything the manifest offers', async () => {
+  it('typechecks and lints with everything the manifest offers', async () => {
     const requested = everything();
     const project = await generate('everything', requested);
     await expectTypechecks(project);
     await expectDriftMatches(project);
     await expectPrunedShared(project);
+    await expectLints(project);
 
     // Retained application and API test files differ only by feature markers.
     const selected = resolveSelection(manifest, requested).selected;
-    const differences = await compareWithRepository(project, selected);
+    const markerIds = [...Object.keys(manifest.features), ...Object.keys(manifest.options)];
+    const kept = [...selected, ...Object.keys(manifest.options)];
+    const differences = await compareWithRepository(project, kept, markerIds);
     expect(differences, JSON.stringify(differences, null, 2)).toEqual([]);
   });
 

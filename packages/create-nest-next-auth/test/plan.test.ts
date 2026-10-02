@@ -230,25 +230,45 @@ describe('plan precedence', () => {
   });
 });
 
-describe('planned options', () => {
-  it('accepts a flag that asks for the manifest default', async () => {
+describe('option availability', () => {
+  it('turns a locale off when the list drops Arabic', async () => {
+    const manifest = await loadManifest(REPO_ROOT);
+    const plan = resolvePlan(manifest, { locales: ['en'] });
+    expect(plan.errors).toEqual([]);
+    expect(plan.options).not.toContain('locale-ar');
+  });
+
+  it('turns Arabic on when the list includes it', async () => {
     const manifest = await loadManifest(REPO_ROOT);
     const plan = resolvePlan(manifest, { locales: ['en', 'ar'] });
     expect(plan.errors).toEqual([]);
     expect(plan.options).toContain('locale-ar');
   });
 
-  it('rejects a flag that asks for the opposite of the manifest default', async () => {
+  it('reports production needing docker when docker is turned off', async () => {
     const manifest = await loadManifest(REPO_ROOT);
     const plan = resolvePlan(manifest, { options: { docker: false } });
-    expect(plan.errors).toContainEqual({ id: 'docker', reason: 'planned' });
+    expect(plan.errors).toContainEqual({
+      id: 'production',
+      needed: 'docker',
+      reason: 'option-conflict',
+    });
   });
 
-  it('keeps planned options at their default when a preset omits them', async () => {
+  it('turns docker and production off together', async () => {
+    const manifest = await loadManifest(REPO_ROOT);
+    const plan = resolvePlan(manifest, { options: { docker: false, production: false } });
+    expect(plan.errors).toEqual([]);
+    expect(plan.options).not.toContain('docker');
+    expect(plan.options).not.toContain('production');
+    expect(plan.options).toContain('locale-ar');
+  });
+
+  it('lets the minimal preset drop every option', async () => {
     const manifest = await loadManifest(REPO_ROOT);
     const plan = resolvePlan(manifest, { preset: 'minimal' });
     expect(plan.errors).toEqual([]);
-    expect(plan.options).toEqual(['docker', 'production', 'locale-ar']);
+    expect(plan.options).toEqual([]);
   });
 });
 
@@ -263,6 +283,64 @@ describe('option requires conflicts', () => {
       needed: 'docker',
       reason: 'option-conflict',
     });
+  });
+});
+
+describe('planned options', () => {
+  const withPlannedOptions = {
+    ...PLAN_MANIFEST,
+    options: {
+      ...PLAN_MANIFEST.options,
+      'planned-on': {
+        label: 'Planned on',
+        default: true,
+        files: [],
+        requires: [],
+        docs: [],
+        catalogueKeys: [],
+        status: 'planned' as const,
+      },
+      'planned-off': {
+        label: 'Planned off',
+        default: false,
+        files: [],
+        requires: [],
+        docs: [],
+        catalogueKeys: [],
+        status: 'planned' as const,
+      },
+    },
+  };
+
+  it('fixes a planned option at its default when a preset omits it', () => {
+    const plan = resolvePlan(withPlannedOptions, { preset: 'minimal' });
+
+    expect(plan.errors).toEqual([]);
+    expect(plan.options).toContain('planned-on');
+    expect(plan.options).not.toContain('planned-off');
+  });
+
+  it('rejects turning a planned-on option off', () => {
+    const plan = resolvePlan(withPlannedOptions, { options: { 'planned-on': false } });
+
+    expect(plan.errors).toContainEqual({ id: 'planned-on', reason: 'planned' });
+  });
+
+  it('rejects turning a planned-off option on', () => {
+    const plan = resolvePlan(withPlannedOptions, { options: { 'planned-off': true } });
+
+    expect(plan.errors).toContainEqual({ id: 'planned-off', reason: 'planned' });
+  });
+
+  it('explains both planned-option directions with its label', () => {
+    expect(
+      describePlanErrors(withPlannedOptions, [{ id: 'planned-on', reason: 'planned' }]),
+    ).toEqual([
+      'Turning off "Planned on" is not available yet. Every project includes this for now.',
+    ]);
+    expect(
+      describePlanErrors(withPlannedOptions, [{ id: 'planned-off', reason: 'planned' }]),
+    ).toEqual(['Turning on "Planned off" is not available yet. Every project omits this for now.']);
   });
 });
 

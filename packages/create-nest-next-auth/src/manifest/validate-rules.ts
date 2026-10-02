@@ -134,7 +134,7 @@ function checkPlannedFiles(dimensions: Dimensions, problems: string[]): void {
     );
   }
   for (const [id, option] of Object.entries(dimensions.options)) {
-    rejectPlannedFiles('options', id, option.status, [option.files], problems);
+    rejectPlannedFiles('options', id, option.status, [option.files, option.docs], problems);
   }
 }
 
