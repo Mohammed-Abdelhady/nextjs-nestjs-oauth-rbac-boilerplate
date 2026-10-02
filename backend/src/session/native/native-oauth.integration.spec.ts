@@ -25,6 +25,7 @@ import {
 import {
   createTestUser,
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
 } from '../../../test/utils/session-authority-harness';
 import { TEST_NOW } from '../../../test/utils/frozen-clock';
 
@@ -41,7 +42,7 @@ describe('native authorization (plan 04)', () => {
     if (ctx) {
       await stopNativeOauth(ctx);
     }
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   beforeEach(async () => {
     await resetNativeClient(ctx);

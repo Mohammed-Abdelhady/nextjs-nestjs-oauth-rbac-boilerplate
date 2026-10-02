@@ -10,7 +10,10 @@ import {
   startNativeOauth,
   stopNativeOauth,
 } from './native-oauth.fixture';
-import { SESSION_AUTHORITY_BOOT_TIMEOUT_MS } from '../../../test/utils/session-authority-harness';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from '../../../test/utils/session-authority-harness';
 import { RaceBarrier, pauseQuery } from '../../../test/utils/race-gate';
 
 describe('native refresh replay against rotation race', () => {
@@ -24,7 +27,7 @@ describe('native refresh replay against rotation race', () => {
     if (ctx) {
       await stopNativeOauth(ctx);
     }
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   beforeEach(async () => {
     await resetNativeClient(ctx);

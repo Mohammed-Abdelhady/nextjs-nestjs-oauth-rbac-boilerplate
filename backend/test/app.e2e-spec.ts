@@ -3,6 +3,10 @@ import { bootE2eApp, type E2eApp } from './utils/e2e-app';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import type { Response } from 'supertest';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from './utils/session-authority-harness';
 
 interface HealthResponse {
   status: string;
@@ -20,11 +24,11 @@ describe('AppController (e2e)', () => {
     e2e = await bootE2eApp();
     app = e2e.app;
     httpServer = app.getHttpServer();
-  });
+  }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   afterAll(async () => {
     await e2e?.close();
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   describe('Application Startup', () => {
     it('should start successfully', () => {

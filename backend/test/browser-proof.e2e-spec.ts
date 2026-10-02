@@ -21,6 +21,7 @@ import {
 import { SEED_USER } from './constants/seed-users';
 import { bootE2eApp, E2E_CLIENT_URL, type E2eApp } from './utils/e2e-app';
 import { TEST_NOW } from './utils/frozen-clock';
+import * as SESSION_AUTHORITY_TIMEOUTS from './utils/session-authority-harness';
 
 interface ErrorBody {
   error: { code: string };
@@ -37,7 +38,7 @@ describe('browser proof (e2e)', () => {
 
   beforeAll(async () => {
     e2e = await bootE2eApp();
-  });
+  }, SESSION_AUTHORITY_TIMEOUTS.SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   beforeEach(async () => {
     e2e.clock.set(TEST_NOW);
@@ -46,7 +47,7 @@ describe('browser proof (e2e)', () => {
 
   afterAll(async () => {
     await e2e?.close();
-  });
+  }, SESSION_AUTHORITY_TIMEOUTS.SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   it('rejects login without a proof and rejects a spent proof without a session cookie', async () => {
     const missing = await request(e2e.httpServer)

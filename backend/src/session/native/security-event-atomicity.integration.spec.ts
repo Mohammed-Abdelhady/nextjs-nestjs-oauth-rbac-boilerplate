@@ -21,6 +21,7 @@ import {
 import {
   createTestUser,
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
 } from '../../../test/utils/session-authority-harness';
 
 describe('security event insert failure atomicity', () => {
@@ -38,7 +39,7 @@ describe('security event insert failure atomicity', () => {
     if (ctx) {
       await stopNativeOauth(ctx);
     }
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   beforeEach(async () => {
     await resetNativeClient(ctx);

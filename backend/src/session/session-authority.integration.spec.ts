@@ -15,6 +15,7 @@ import {
   bootSessionAuthority,
   createTestUser,
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
   SessionAuthorityHarness,
 } from '../../test/utils/session-authority-harness';
 
@@ -37,7 +38,7 @@ describe('session authority (plan 02)', () => {
     if (mongo) {
       await mongo.stop();
     }
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   beforeEach(async () => {
     harness.clock.set(TEST_NOW);

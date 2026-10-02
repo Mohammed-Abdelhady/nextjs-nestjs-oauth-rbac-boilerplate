@@ -19,6 +19,7 @@ import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
 import {
   bootSessionAuthority,
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
   type SessionAuthorityHarness,
 } from '../../../test/utils/session-authority-harness';
 
@@ -66,7 +67,7 @@ describe('password change keeps the calling session (plan S1)', () => {
   afterAll(async () => {
     await harness?.app.close();
     await mongo?.stop();
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   beforeEach(async () => {
     harness.clock.set(TEST_NOW);

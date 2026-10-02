@@ -17,6 +17,10 @@ import { REQUEST_ID_HEADER } from '../../src/common/constants/request-id';
 import type { UserDocument } from '../../src/user/schemas/user.schema';
 import { bootE2eApp, browserAgent, type E2eApp } from '../utils/e2e-app';
 import { TEST_NOW } from '../utils/frozen-clock';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from '../utils/session-authority-harness';
 
 const PASSWORD = 'Password123!';
 
@@ -80,7 +84,7 @@ describe('Address-request routes with a failing mail boundary (e2e)', () => {
       getModelToken('PendingMagicLink'),
     );
     // feature:magic-link:end
-  });
+  }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   beforeEach(async () => {
     e2e.clock.set(TEST_NOW);
@@ -89,7 +93,7 @@ describe('Address-request routes with a failing mail boundary (e2e)', () => {
 
   afterAll(async () => {
     await e2e?.close();
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   afterEach(() => {
     jest.restoreAllMocks();

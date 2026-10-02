@@ -2,6 +2,10 @@ import request from 'supertest';
 import type { Response } from 'supertest';
 import { bootE2eApp, type E2eApp } from './utils/e2e-app';
 import { browserAgent } from './utils/e2e-app'; // feature:magic-link,totp,passkeys
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from './utils/session-authority-harness';
 // feature:oauth-core:start
 import {
   OAUTH_BOOT_PROVIDER_IDS,
@@ -66,12 +70,12 @@ describe('AppModule boot (e2e)', () => {
   beforeAll(async () => {
     restoreEnv = applyOAuthBootEnv(); // feature:oauth-core
     e2e = await bootE2eApp();
-  });
+  }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   afterAll(async () => {
     await e2e?.close();
     restoreEnv(); // feature:oauth-core
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   it('should answer the health check', async () => {
     const response: Response = await request(e2e.httpServer).get('/health');

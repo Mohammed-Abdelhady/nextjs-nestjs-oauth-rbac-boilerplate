@@ -9,6 +9,10 @@ import {
 } from '../utils/e2e-app';
 import { SEED_ADMIN, SEED_USER } from '../constants/seed-users';
 import type { RoleResponse } from '../types/e2e-responses';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from '../utils/session-authority-harness';
 
 describe('Role CRUD (e2e)', () => {
   let e2e: E2eApp;
@@ -20,11 +24,11 @@ describe('Role CRUD (e2e)', () => {
 
     adminAgent = await loginAs(e2e.httpServer, SEED_ADMIN);
     userAgent = await loginAs(e2e.httpServer, SEED_USER);
-  });
+  }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   afterAll(async () => {
     await e2e?.close();
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   describe('GET /api/roles', () => {
     it('should return all roles for admin with wildcard permission', async () => {

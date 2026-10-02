@@ -14,6 +14,7 @@ import {
   bootSessionAuthority,
   createTestUser,
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
   SessionAuthorityHarness,
 } from '../../test/utils/session-authority-harness';
 import { RaceBarrier } from '../../test/utils/race-gate';
@@ -37,7 +38,7 @@ describe('browser sign-in against revoke-all race', () => {
     if (mongo) {
       await mongo.stop();
     }
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   beforeEach(async () => {
     harness.clock.set(TEST_NOW);

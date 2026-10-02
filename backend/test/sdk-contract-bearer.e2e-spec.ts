@@ -19,7 +19,10 @@ import {
   resetContractApp,
   type E2eApp,
 } from './utils/sdk-contract.fixtures';
-import { SESSION_AUTHORITY_BOOT_TIMEOUT_MS } from './utils/session-authority-harness';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from './utils/session-authority-harness';
 
 describe('sdk contract over a bearer transport', () => {
   let e2e: E2eApp;
@@ -30,7 +33,7 @@ describe('sdk contract over a bearer transport', () => {
 
   afterAll(async () => {
     await e2e?.close();
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   beforeEach(async () => {
     await resetContractApp(e2e);

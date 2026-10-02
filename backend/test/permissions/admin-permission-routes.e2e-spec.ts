@@ -9,6 +9,10 @@ import {
 } from '../utils/e2e-app';
 import { SEED_ADMIN, SEED_MANAGER, SEED_USER } from '../constants/seed-users';
 import type { PermissionsResponse, UserResponse } from '../types/e2e-responses';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from '../utils/session-authority-harness';
 
 const BASE_PERMISSIONS = ['profile:read:own', 'profile:update:own'];
 
@@ -34,11 +38,11 @@ describe('Admin permission routes (e2e)', () => {
       .get('/api/user/profile')
       .expect(200);
     testUserId = (meResponse.body as ApiBody<UserResponse>).data.id;
-  });
+  }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   afterAll(async () => {
     await e2e?.close();
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   describe('GET /api/admin/users/:id/permissions', () => {
     it('should return user permissions for admin', async () => {

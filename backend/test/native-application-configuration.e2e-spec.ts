@@ -14,7 +14,10 @@ import {
   beginNativeAuthorization,
 } from './utils/native-authorize.fixtures';
 import { bootE2eApp, type E2eApp } from './utils/e2e-app';
-import { SESSION_AUTHORITY_BOOT_TIMEOUT_MS } from './utils/session-authority-harness';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from './utils/session-authority-harness';
 
 describe('native application configuration at startup', () => {
   let e2e: E2eApp | undefined;
@@ -22,7 +25,7 @@ describe('native application configuration at startup', () => {
   afterEach(async () => {
     await e2e?.close();
     e2e = undefined;
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   it(
     'starts authorization for a client declared only in configuration',
