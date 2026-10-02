@@ -240,7 +240,7 @@ export class SessionIssuanceService {
     return created;
   }
 
-  private async assertSessionLimit(
+  async assertSessionLimit(
     session: ClientSession,
     user: UserDocument,
     application: ApplicationDocument,
@@ -250,7 +250,10 @@ export class SessionIssuanceService {
     const authEpoch = this.authEpoch.current();
     const candidates = await this.sessionModel
       .find(
-        currentSessionCandidateFilter(user._id, now, userVersion, authEpoch),
+        currentSessionCandidateFilter(user._id, now, userVersion, authEpoch, [
+          CREDENTIAL_PURPOSE.BROWSER_SESSION,
+          CREDENTIAL_PURPOSE.NATIVE_ACCESS,
+        ]),
       )
       .session(session)
       .lean<LeanSession[]>()
@@ -290,6 +293,7 @@ export class SessionIssuanceService {
           grantByClientId.get(candidate.clientId),
           now,
           authEpoch,
+          candidate.credentialPurpose,
         ) !== null,
     );
     const total = activeSessions.length;

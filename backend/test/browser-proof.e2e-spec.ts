@@ -19,12 +19,8 @@ import {
   WEB_CLIENT_ID,
 } from '../src/session/constants/client-ids';
 import { SEED_USER } from './constants/seed-users';
-import {
-  bootE2eApp,
-  E2E_CLIENT_URL,
-  E2E_START_TIME,
-  type E2eApp,
-} from './utils/e2e-app';
+import { bootE2eApp, E2E_CLIENT_URL, type E2eApp } from './utils/e2e-app';
+import { TEST_NOW } from './utils/frozen-clock';
 
 interface ErrorBody {
   error: { code: string };
@@ -44,7 +40,7 @@ describe('browser proof (e2e)', () => {
   });
 
   beforeEach(async () => {
-    e2e.clock.set(E2E_START_TIME);
+    e2e.clock.set(TEST_NOW);
     await e2e.reset();
   });
 

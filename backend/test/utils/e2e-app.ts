@@ -28,13 +28,11 @@ import type { UserDocument } from '../../src/user/schemas/user.schema';
 import type { OAuthProviderStrategy } from '../../src/auth/oauth/oauth-provider.interface'; // feature:oauth-core
 import { OAUTH_STRATEGIES } from '../../src/auth/oauth/oauth.constants'; // feature:oauth-core
 import type { MailOptions } from '../../src/mail/interfaces/mail-options.interface';
-import { FrozenClock } from './frozen-clock';
+import { FrozenClock, TEST_NOW } from './frozen-clock';
 
 export type HttpServer = Server;
 export type TestAgent = ReturnType<typeof request.agent>;
 export const E2E_CLIENT_URL = 'http://127.0.0.1:3107';
-// Keep fixtures ahead of MongoDB's TTL monitor, which uses real time.
-export const E2E_START_TIME = new Date('2099-01-01T12:00:00.000Z');
 
 export interface E2eApp {
   app: INestApplication;
@@ -81,7 +79,7 @@ export async function bootE2eApp(
   );
   Object.assign(process.env, environment);
   process.chdir(fixtureDirectory);
-  const clock = new FrozenClock(E2E_START_TIME);
+  const clock = new FrozenClock(TEST_NOW);
   let app: INestApplication | undefined;
   let closed = false;
   const close = async (): Promise<void> => {

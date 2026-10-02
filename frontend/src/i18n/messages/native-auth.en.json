@@ -1,0 +1,7 @@
+{
+  "errors": {
+    "codes": {
+      "NATIVE_AUTH_DISABLED": "Mobile sign-in is turned off for now. Please try again later"
+    }
+  }
+}
