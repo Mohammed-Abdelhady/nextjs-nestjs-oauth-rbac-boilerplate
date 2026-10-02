@@ -7,5 +7,7 @@ module.exports = {
   'packages/create-nest-next-auth/**/*.ts': [
     'eslint --fix --max-warnings 0 --config packages/create-nest-next-auth/eslint.config.mjs',
   ],
+  'shared/**/*.{ts,tsx,js,json}': ['prettier --write'],
+  'mobile/**/*.{ts,tsx,js,jsx,json}': ['prettier --write'],
   '*.{md,yml,yaml}': ['prettier --write'],
 };
