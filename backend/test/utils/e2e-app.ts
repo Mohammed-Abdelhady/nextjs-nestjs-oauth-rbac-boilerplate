@@ -53,6 +53,9 @@ export interface BootE2eAppOptions {
   failMail?: boolean;
   nativeEnabled?: boolean;
   nativeApplications?: NativeApplicationConfiguration[];
+  nativeCustomSchemeAllowed?: boolean;
+  throttleLimit?: number;
+  throttleTtl?: number;
 }
 
 /** Owns its database and starts configuration outside the developer's env directory. */
@@ -77,10 +80,14 @@ export async function bootE2eApp(
     API_URL: 'http://127.0.0.1:5107',
     PORT: '5107',
     BCRYPT_ROUNDS: '4',
-    THROTTLE_LIMIT: '1000',
+    THROTTLE_TTL: String(options.throttleTtl ?? 60),
+    THROTTLE_LIMIT: String(options.throttleLimit ?? 1000),
     AUTH_PASSWORD_ENABLED: 'true',
     AUTH_NATIVE_ENABLED: String(options.nativeEnabled ?? false),
     AUTH_NATIVE_APPLICATIONS: JSON.stringify(options.nativeApplications ?? []),
+    AUTH_NATIVE_ALLOW_CUSTOM_SCHEME: String(
+      options.nativeCustomSchemeAllowed ?? false,
+    ),
     MAGIC_LINK_ENABLED: 'false',
     OAUTH_CALLBACK_BASE_URL: 'http://127.0.0.1:5107/api/auth/oauth',
     SMTP_HOST: '127.0.0.1',

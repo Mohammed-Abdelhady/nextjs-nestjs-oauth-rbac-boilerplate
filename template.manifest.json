@@ -122,6 +122,7 @@
         "backend/src/user/services/profile-sync.service.spec.ts",
         "backend/src/user/dto/account-linking.dto.ts",
         "backend/test/constants/oauth-boot-env.ts",
+        "backend/test/oauth-link.e2e-spec.ts",
         "frontend/src/modules/oauth/**",
         "frontend/src/modules/account/api/accountLinkingApi.ts",
         "frontend/src/modules/account/api/profileSyncApi.ts",
