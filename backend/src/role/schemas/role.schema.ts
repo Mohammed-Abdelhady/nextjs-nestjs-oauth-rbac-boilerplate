@@ -10,7 +10,7 @@ export class Role {
   @Prop({ required: true, trim: true })
   name!: string;
 
-  @Prop({ required: true, unique: true, lowercase: true, trim: true })
+  @Prop({ required: true, lowercase: true, trim: true })
   slug!: string;
 
   @Prop({ trim: true })
@@ -44,7 +44,7 @@ export const RoleSchema: MongooseSchema<Role> =
   SchemaFactory.createForClass(Role);
 
 // Indexes for performance
-RoleSchema.index({ slug: 1 }, { unique: true });
+RoleSchema.index({ slug: 1 }, { unique: true, name: 'slug_1' });
 RoleSchema.index({ isSystemRole: 1 });
 RoleSchema.index({ createdAt: -1 });
 

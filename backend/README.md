@@ -76,6 +76,42 @@ SWAGGER_ENABLED=true
 
 Use this URI when the backend runs on the host and MongoDB runs in Docker Compose. The replica set advertises `mongodb:27017`, which only containers on the Compose network can resolve.
 
+## Native applications
+
+Set `AUTH_NATIVE_ENABLED=true` to enable native sign-in. Declare clients in
+`AUTH_NATIVE_APPLICATIONS` as a JSON array with `clientId`, `displayName`, and
+one or more `redirectUris`. You can add `allowedScopes`; when omitted, the
+application gets the same `api` scope as the first-party web application.
+
+```bash
+AUTH_NATIVE_APPLICATIONS='[{"clientId":"com.example.mobile","displayName":"Example Mobile","redirectUris":["com.example.mobile://oauth/callback"]}]'
+```
+
+Each client ID must use letters, numbers, periods, underscores, hyphens, or
+tildes, and can be at most 128 characters. Redirect addresses use the native
+redirect rules. Custom schemes are allowed. HTTP addresses must use a loopback
+host, and fragments are rejected.
+
+At startup, the backend reconciles the list for the current environment. It
+creates or updates listed clients and disables native clients that are missing
+from the list. While native sign-in is enabled, this list is the only source of
+truth. An empty or missing list disables every native application in the current
+environment. A native application created by hand or by another process is also
+disabled at the next start if it is missing from the list. Disabled applications
+no longer authorize their existing sessions. Those users must sign in again
+after the application is registered and enabled.
+
+The backend does not delete application records. When native sign-in is
+disabled, startup ignores this list and does not write native application
+records.
+
+Reconciliation runs when the HTTP server starts, not when the application
+module is created, so `npm run seed` never changes native applications. Every
+server process reconciles on boot and the last one to start decides. During a
+rolling deploy, start all instances with the same list; a rollback must also
+restore the previous list, otherwise the rolled-back server disables the new
+clients and signs their users out.
+
 ## API endpoints
 
 ### Authentication (`/api/auth`)

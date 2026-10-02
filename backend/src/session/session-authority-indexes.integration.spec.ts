@@ -18,6 +18,7 @@ import {
   UserApplicationGrantSchema,
 } from './schemas/user-application-grant.schema';
 import { User, UserSchema } from '../user/schemas/user.schema';
+import { Role, RoleSchema } from '../role/schemas/role.schema';
 
 interface MigrationExports {
   up?: (database: Db, client: MongoClient) => Promise<void>;
@@ -137,6 +138,26 @@ const EXPECTED_INDEXES = {
       sparse: false,
     },
   ],
+  roles: [
+    {
+      name: 'createdAt_-1',
+      keys: [['createdAt', -1]],
+      unique: false,
+      sparse: false,
+    },
+    {
+      name: 'isSystemRole_1',
+      keys: [['isSystemRole', 1]],
+      unique: false,
+      sparse: false,
+    },
+    {
+      name: 'slug_1',
+      keys: [['slug', 1]],
+      unique: true,
+      sparse: false,
+    },
+  ],
 };
 
 describe('session authority migration indexes', () => {
@@ -188,29 +209,37 @@ describe('session authority migration indexes', () => {
     expect(missingExports).toEqual([]);
   });
 
-  it('uses the same index contracts when migrations run before schemas', async () => {
-    const { connection, mongoUri } = await freshDatabase();
-    try {
-      await runMigrateMongo('up', mongoUri);
-      await createSchemaIndexes(connection);
+  it(
+    'uses the same index contracts when migrations run before schemas',
+    async () => {
+      const { connection, mongoUri } = await freshDatabase();
+      try {
+        await runMigrateMongo('up', mongoUri);
+        await createSchemaIndexes(connection);
 
-      expect(await readIndexContracts(connection)).toEqual(EXPECTED_INDEXES);
-    } finally {
-      await connection.dropDatabase();
-    }
-  });
+        expect(await readIndexContracts(connection)).toEqual(EXPECTED_INDEXES);
+      } finally {
+        await connection.dropDatabase();
+      }
+    },
+    SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  );
 
-  it('uses the same index contracts when schemas run before migrations', async () => {
-    const { connection, mongoUri } = await freshDatabase();
-    try {
-      await createSchemaIndexes(connection);
-      await runMigrateMongo('up', mongoUri);
+  it(
+    'uses the same index contracts when schemas run before migrations',
+    async () => {
+      const { connection, mongoUri } = await freshDatabase();
+      try {
+        await createSchemaIndexes(connection);
+        await runMigrateMongo('up', mongoUri);
 
-      expect(await readIndexContracts(connection)).toEqual(EXPECTED_INDEXES);
-    } finally {
-      await connection.dropDatabase();
-    }
-  });
+        expect(await readIndexContracts(connection)).toEqual(EXPECTED_INDEXES);
+      } finally {
+        await connection.dropDatabase();
+      }
+    },
+    SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  );
 
   it('keeps application and session records when rollback sees missing indexes', async () => {
     const { connection, mongoUri } = await freshDatabase();
@@ -260,6 +289,7 @@ async function createSchemaIndexes(connection: Connection): Promise<void> {
       .model(UserApplicationGrant.name, UserApplicationGrantSchema)
       .createIndexes(),
     connection.model(User.name, UserSchema).createIndexes(),
+    connection.model(Role.name, RoleSchema).createIndexes(),
   ]);
 }
 
@@ -272,11 +302,12 @@ function requireDatabase(connection: Connection): Db {
 
 async function readIndexContracts(connection: Connection) {
   const database = requireDatabase(connection);
-  const [sessions, applications, grants, users] = await Promise.all([
+  const [sessions, applications, grants, users, roles] = await Promise.all([
     database.collection('sessions').indexes(),
     database.collection('applications').indexes(),
     database.collection('userapplicationgrants').indexes(),
     database.collection('users').indexes(),
+    database.collection('roles').indexes(),
   ]);
 
   return {
@@ -284,6 +315,7 @@ async function readIndexContracts(connection: Connection) {
     users: captureIndexes(users),
     applications: captureIndexes(applications),
     grants: captureIndexes(grants),
+    roles: captureIndexes(roles),
   };
 }
 

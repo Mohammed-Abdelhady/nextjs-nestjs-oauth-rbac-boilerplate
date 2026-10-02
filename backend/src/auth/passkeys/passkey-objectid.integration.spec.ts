@@ -80,150 +80,157 @@ describe('passkey ObjectId round trip', () => {
     }
   });
 
-  it('stores registration ids as ObjectIds and repairs legacy passkeys', async () => {
-    if (!mongo) {
-      throw new Error('expected a MongoDB replica set');
-    }
+  it(
+    'stores registration ids as ObjectIds and repairs legacy passkeys',
+    async () => {
+      if (!mongo) {
+        throw new Error('expected a MongoDB replica set');
+      }
 
-    const databaseName = 'passkey_objectid_round_trip';
-    const mongoUri = mongo.uri(databaseName);
-    const rawClient = new MongoClient(mongoUri);
-    await rawClient.connect();
-    const database = rawClient.db(databaseName);
-    const mongoose = new Mongoose();
-    const connection = await mongoose.createConnection(mongoUri).asPromise();
+      const databaseName = 'passkey_objectid_round_trip';
+      const mongoUri = mongo.uri(databaseName);
+      const rawClient = new MongoClient(mongoUri);
+      await rawClient.connect();
+      const database = rawClient.db(databaseName);
+      const mongoose = new Mongoose();
+      const connection = await mongoose.createConnection(mongoUri).asPromise();
 
-    try {
-      connection.model(Passkey.name, PasskeySchema);
-      connection.model(PasskeyChallenge.name, PasskeyChallengeSchema);
-      connection.model(User.name, UserSchema);
-      const passkeys = connection.model<PasskeyDocument>(Passkey.name);
-      const challenges = connection.model<PasskeyChallengeDocument>(
-        PasskeyChallenge.name,
-      );
-      const users = connection.model<UserDocument>(User.name);
-      await Promise.all([
-        passkeys.createIndexes(),
-        challenges.createIndexes(),
-        users.createIndexes(),
-      ]);
+      try {
+        connection.model(Passkey.name, PasskeySchema);
+        connection.model(PasskeyChallenge.name, PasskeyChallengeSchema);
+        connection.model(User.name, UserSchema);
+        const passkeys = connection.model<PasskeyDocument>(Passkey.name);
+        const challenges = connection.model<PasskeyChallengeDocument>(
+          PasskeyChallenge.name,
+        );
+        const users = connection.model<UserDocument>(User.name);
+        await Promise.all([
+          passkeys.createIndexes(),
+          challenges.createIndexes(),
+          users.createIndexes(),
+        ]);
 
-      const config = new ConfigService(TEST_CONFIGURATION);
-      const challengeService = new PasskeyChallengeService(challenges, config);
-      const adapter = new WebAuthnAdapter();
-      jest.spyOn(adapter, 'verifyAttestation').mockResolvedValue(ATTESTATION);
-      const registration = new PasskeyRegistrationService(
-        passkeys,
-        users,
-        adapter,
-        new PasskeyConfigService(config),
-        challengeService,
-      );
-      const management = new PasskeyManagementService(
-        passkeys,
-        users,
-        new AuthFeaturesService(config),
-      );
+        const config = new ConfigService(TEST_CONFIGURATION);
+        const challengeService = new PasskeyChallengeService(
+          challenges,
+          config,
+        );
+        const adapter = new WebAuthnAdapter();
+        jest.spyOn(adapter, 'verifyAttestation').mockResolvedValue(ATTESTATION);
+        const registration = new PasskeyRegistrationService(
+          passkeys,
+          users,
+          adapter,
+          new PasskeyConfigService(config),
+          challengeService,
+        );
+        const management = new PasskeyManagementService(
+          passkeys,
+          users,
+          new AuthFeaturesService(config),
+        );
 
-      await users.create({
-        _id: new Types.ObjectId(REGISTERED_USER_ID),
-        email: 'registered-passkey@example.test',
-        name: 'Registered user',
-        role: 'user',
-      });
-      const registeredUserId = REGISTERED_USER_ID;
-      const issued = createResponse();
-      await challengeService.issue(
-        issued.response,
-        'register',
-        'round-trip-challenge',
-        registeredUserId,
-      );
-      const request = createRequest({
-        [PASSKEY_CHALLENGE_COOKIE]: issued.cookies[PASSKEY_CHALLENGE_COOKIE],
-      });
-      const dto: VerifyPasskeyRegistrationDto = {
-        response: {
-          id: 'round-trip-credential',
-          rawId: 'round-trip-credential',
-          response: {},
-          clientExtensionResults: {},
-          type: 'public-key',
-        },
-        name: 'Registered key',
-      };
+        await users.create({
+          _id: new Types.ObjectId(REGISTERED_USER_ID),
+          email: 'registered-passkey@example.test',
+          name: 'Registered user',
+          role: 'user',
+        });
+        const registeredUserId = REGISTERED_USER_ID;
+        const issued = createResponse();
+        await challengeService.issue(
+          issued.response,
+          'register',
+          'round-trip-challenge',
+          registeredUserId,
+        );
+        const request = createRequest({
+          [PASSKEY_CHALLENGE_COOKIE]: issued.cookies[PASSKEY_CHALLENGE_COOKIE],
+        });
+        const dto: VerifyPasskeyRegistrationDto = {
+          response: {
+            id: 'round-trip-credential',
+            rawId: 'round-trip-credential',
+            response: {},
+            clientExtensionResults: {},
+            type: 'public-key',
+          },
+          name: 'Registered key',
+        };
 
-      const created = await registration.verify(
-        registeredUserId,
-        dto,
-        request,
-        issued.response,
-      );
-      const rawPasskeys = database.collection<RawPasskey>('passkeys');
-      const stored = await rawPasskeys.findOne({
-        credentialId: ATTESTATION.credentialId,
-      });
-      const storedUser = stored?.user;
-      const storedUserIsObjectId = storedUser instanceof ObjectId;
-      const storedUserHex =
-        storedUser instanceof ObjectId ? storedUser.toHexString() : null;
+        const created = await registration.verify(
+          registeredUserId,
+          dto,
+          request,
+          issued.response,
+        );
+        const rawPasskeys = database.collection<RawPasskey>('passkeys');
+        const stored = await rawPasskeys.findOne({
+          credentialId: ATTESTATION.credentialId,
+        });
+        const storedUser = stored?.user;
+        const storedUserIsObjectId = storedUser instanceof ObjectId;
+        const storedUserHex =
+          storedUser instanceof ObjectId ? storedUser.toHexString() : null;
 
-      const listed = await management.list(registeredUserId.toUpperCase());
+        const listed = await management.list(registeredUserId.toUpperCase());
 
-      await users.create({
-        _id: new Types.ObjectId(LEGACY_USER_ID),
-        email: 'legacy-passkey@example.test',
-        name: 'Legacy user',
-        role: 'user',
-      });
-      const legacyUserId = LEGACY_USER_ID;
-      await rawPasskeys.insertOne({
-        _id: LEGACY_PASSKEY_ID,
-        user: legacyUserId,
-        credentialId: 'legacy-passkey-credential',
-        publicKey: Buffer.from([4, 5, 6]),
-        counter: 1,
-        transports: ['internal'],
-        backedUp: false,
-        name: 'Legacy key',
-        lastUsedAt: null,
-        createdAt: LEGACY_CREATED_AT,
-        updatedAt: LEGACY_CREATED_AT,
-      });
+        await users.create({
+          _id: new Types.ObjectId(LEGACY_USER_ID),
+          email: 'legacy-passkey@example.test',
+          name: 'Legacy user',
+          role: 'user',
+        });
+        const legacyUserId = LEGACY_USER_ID;
+        await rawPasskeys.insertOne({
+          _id: LEGACY_PASSKEY_ID,
+          user: legacyUserId,
+          credentialId: 'legacy-passkey-credential',
+          publicKey: Buffer.from([4, 5, 6]),
+          counter: 1,
+          transports: ['internal'],
+          backedUp: false,
+          name: 'Legacy key',
+          lastUsedAt: null,
+          createdAt: LEGACY_CREATED_AT,
+          updatedAt: LEGACY_CREATED_AT,
+        });
 
-      const legacyBeforeMigration = await management.list(legacyUserId);
-      const migrationOutput = await runMigrateMongo('up', mongoUri);
-      const legacyAfterMigration = await management.list(legacyUserId);
+        const legacyBeforeMigration = await management.list(legacyUserId);
+        const migrationOutput = await runMigrateMongo('up', mongoUri);
+        const legacyAfterMigration = await management.list(legacyUserId);
 
-      expect({
-        storedUserIsObjectId,
-        storedUserHex,
-        registrationFoundByStringId: listed.data.passkeys.some(
-          ({ id }) => id === created.data.id,
-        ),
-        legacyIdsBeforeMigration: legacyBeforeMigration.data.passkeys.map(
-          ({ id }) => id,
-        ),
-        migrationReportedOneLegacyPasskey: migrationOutput.includes(
-          'Converted 1 string ids in passkeys.user',
-        ),
-        legacyIdsAfterMigration: legacyAfterMigration.data.passkeys.map(
-          ({ id }) => id,
-        ),
-      }).toEqual({
-        storedUserIsObjectId: true,
-        storedUserHex: REGISTERED_USER_ID,
-        registrationFoundByStringId: true,
-        legacyIdsBeforeMigration: [],
-        migrationReportedOneLegacyPasskey: true,
-        legacyIdsAfterMigration: ['507f1f77bcf86cd799439201'],
-      });
-    } finally {
-      await database.dropDatabase();
-      await connection.close();
-      await rawClient.close();
-    }
-  });
+        expect({
+          storedUserIsObjectId,
+          storedUserHex,
+          registrationFoundByStringId: listed.data.passkeys.some(
+            ({ id }) => id === created.data.id,
+          ),
+          legacyIdsBeforeMigration: legacyBeforeMigration.data.passkeys.map(
+            ({ id }) => id,
+          ),
+          migrationReportedOneLegacyPasskey: migrationOutput.includes(
+            'Converted 1 string ids in passkeys.user',
+          ),
+          legacyIdsAfterMigration: legacyAfterMigration.data.passkeys.map(
+            ({ id }) => id,
+          ),
+        }).toEqual({
+          storedUserIsObjectId: true,
+          storedUserHex: REGISTERED_USER_ID,
+          registrationFoundByStringId: true,
+          legacyIdsBeforeMigration: [],
+          migrationReportedOneLegacyPasskey: true,
+          legacyIdsAfterMigration: ['507f1f77bcf86cd799439201'],
+        });
+      } finally {
+        await database.dropDatabase();
+        await connection.close();
+        await rawClient.close();
+      }
+    },
+    SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  );
 });
 
 function createResponse(): {
