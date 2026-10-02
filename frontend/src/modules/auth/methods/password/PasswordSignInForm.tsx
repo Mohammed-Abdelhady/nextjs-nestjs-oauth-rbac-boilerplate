@@ -73,7 +73,7 @@ export function PasswordSignInForm({ redirect }: AuthMethodFormProps) {
   return (
     <FormProvider {...form}>
       <form
-        className="relative mx-auto max-w-xs"
+        className="mx-auto max-w-xs"
         onSubmit={handleSubmit(onSubmit)}
         data-testid="login-form"
         noValidate
@@ -108,15 +108,17 @@ export function PasswordSignInForm({ redirect }: AuthMethodFormProps) {
           {t('submit')}
         </SubmitButton>
 
-        <Link
-          href="/auth/forgot-password"
-          className="no-underline hover:underline text-primary text-md text-end absolute end-0 mt-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
-          data-testid="forgot-password-link"
-          aria-label={t('forgotPassword')}
-          onMouseDown={preventNavigationBlur}
-        >
-          {t('forgotPassword')}
-        </Link>
+        <div className="mt-2 flex justify-end">
+          <Link
+            href="/auth/forgot-password"
+            className="no-underline hover:underline text-primary text-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
+            data-testid="forgot-password-link"
+            aria-label={t('forgotPassword')}
+            onMouseDown={preventNavigationBlur}
+          >
+            {t('forgotPassword')}
+          </Link>
+        </div>
       </form>
     </FormProvider>
   );

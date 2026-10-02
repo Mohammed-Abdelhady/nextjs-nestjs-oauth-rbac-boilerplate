@@ -15,8 +15,8 @@
  * ## Semantic Color System
  *
  * All color tokens use semantic names that automatically theme:
- * - `bg-input` - Form field backgrounds (adapts to light/dark)
- * - `border-border` - Field borders (adapts to light/dark)
+ * - `bg-background` - Form field backgrounds (adapts to light/dark)
+ * - `border-input` - Field borders (adapts to light/dark)
  * - `bg-primary` - Primary brand color
  * - `text-foreground` - Primary text color
  *
@@ -26,8 +26,8 @@
  *
  * ### Change Visual Design (affects all components)
  * ```typescript
- * // Update in globals.css instead of here:
- * // :root { --input: 220 13% 91%; }
+ * // Update in tokens.css instead of here. `--input` is the field border:
+ * // :root { --input: 220 13% 58%; }
  * ```
  *
  * ### Override Per Instance
@@ -45,9 +45,8 @@ import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
  * This enables automatic theme switching without dark: variants.
  *
  * Token Mapping (old hardcoded → new semantic):
- * - bg: bg-gray-100 dark:bg-gray-800 → bg-input
- * - bgFocus: focus:bg-white dark:focus:bg-gray-900 → focus:bg-background
- * - border: border-gray-200 dark:border-gray-700 → border-border
+ * - bg: bg-gray-100 dark:bg-gray-800 → bg-background
+ * - border: border-gray-200 dark:border-gray-700 → border-input
  * - borderFocus: focus:border-gray-400 dark:focus:border-gray-600 → focus:border-ring
  * - placeholder: placeholder-gray-500 dark:placeholder-gray-400 → placeholder-muted-foreground
  * - buttonPrimaryBg: bg-indigo-500 dark:bg-indigo-600 → bg-primary
@@ -63,9 +62,8 @@ import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
 const TOKENS = {
   // Semantic color palette
   colors: {
-    bg: 'bg-input',
-    bgFocus: 'focus:bg-background',
-    border: 'border-border',
+    bg: 'bg-background',
+    border: 'border-input',
     borderFocus: 'focus:border-ring',
     placeholder: 'placeholder-muted-foreground',
   },
@@ -118,7 +116,6 @@ const BASE_COMPOSITIONS = {
     TOKENS.typography.fontSize,
     TOKENS.states.focusRing,
     TOKENS.colors.borderFocus,
-    TOKENS.colors.bgFocus,
   ],
 } as const;
 

@@ -35,7 +35,7 @@ This document defines the semantic color token system used throughout the applic
 | `text-gray-700`   | `text-muted-foreground`           | Secondary text      | Captions, labels                |
 | `text-gray-600`   | `text-muted-foreground`           | Placeholder text    | Input placeholders, hints       |
 | `text-white`      | `text-primary-foreground`         | Text on primary     | Text on primary buttons         |
-| `border-gray-200` | `border-border`                   | All borders         | Input borders, dividers         |
+| `border-gray-200` | `border-border`                   | Default borders     | Card borders, dividers          |
 | `border-gray-400` | `border-ring`                     | Focus borders       | Focus indicators                |
 | `bg-red-50`       | `bg-destructive/10`               | Error backgrounds   | Error message backgrounds       |
 | `text-red-600`    | `text-destructive`                | Error text          | Error messages, warnings        |
@@ -56,7 +56,9 @@ This document defines the semantic color token system used throughout the applic
 | `bg-muted`       | Muted/subtle backgrounds                | Gray-100 (#f3f4f6)   | Slate-800 (#1e293b)  |
 | `bg-accent`      | Accent highlights                       | Gray-100 (#f3f4f6)   | Slate-800 (#1e293b)  |
 | `bg-destructive` | Destructive actions (delete, error)     | Red-500 (#ef4444)    | Red-900 (#7f1d1d)    |
-| `bg-input`       | Form input backgrounds                  | Gray-200 (#e5e7eb)   | Slate-800 (#1e293b)  |
+| `bg-input`       | Unchecked switch track, never a field   | `hsl(220 13% 58%)`   | `hsl(215 20% 41%)`   |
+
+Form fields are filled with `bg-background`. `--input` is the field border colour, so `bg-input` on a field paints it in the border colour.
 
 ### Text Colors
 
@@ -74,7 +76,7 @@ This document defines the semantic color token system used throughout the applic
 | Token           | Usage                 | Light Mode           | Dark Mode            |
 | --------------- | --------------------- | -------------------- | -------------------- |
 | `border-border` | Default borders       | Gray-200 (#e5e7eb)   | Slate-800 (#1e293b)  |
-| `border-input`  | Input field borders   | Gray-200 (#e5e7eb)   | Slate-800 (#1e293b)  |
+| `border-input`  | Input field borders   | `hsl(220 13% 58%)`   | `hsl(215 20% 41%)`   |
 | `border-ring`   | Focus ring indicators | Indigo-500 (#6366f1) | Indigo-500 (#6366f1) |
 
 ---
@@ -106,7 +108,7 @@ This document defines the semantic color token system used throughout the applic
 </div>
 
 // Input field
-<input className="bg-input border-border focus:border-ring" />
+<input className="bg-background border-input focus:border-ring" />
 ```
 
 ### ❌ Incorrect Usage (DO NOT USE)
@@ -155,7 +157,8 @@ Always pair background and foreground tokens correctly for WCAG compliance:
 | `bg-primary`     | `text-primary-foreground`   | 4.5:1 (AA)     |
 | `bg-secondary`   | `text-secondary-foreground` | 15.8:1 (AAA)   |
 | `bg-destructive` | `text-primary-foreground`   | 4.5:1 (AA)     |
-| `bg-input`       | `text-foreground`           | 12.6:1 (AAA)   |
+
+A form field is `bg-background` with `text-foreground`, the first row above. Its `border-input` border needs 3:1 against the page and the card. `npm run check:contrast` checks both in light and dark.
 
 ---
 
@@ -306,7 +309,7 @@ All semantic tokens map to CSS variables defined in `globals.css`:
   --accent: 220 14% 96%;
   --destructive: 0 84% 60%;
   --border: 220 13% 91%;
-  --input: 220 13% 91%;
+  --input: 220 13% 58%; /* field border, not a field fill */
   --ring: 239 84% 67%;
   /* ... see globals.css for complete list */
 }
@@ -315,6 +318,7 @@ All semantic tokens map to CSS variables defined in `globals.css`:
 .dark {
   --background: 224 71% 4%;
   --foreground: 210 20% 98%;
+  --input: 215 20% 41%;
   /* ... see globals.css for complete list */
 }
 ```
