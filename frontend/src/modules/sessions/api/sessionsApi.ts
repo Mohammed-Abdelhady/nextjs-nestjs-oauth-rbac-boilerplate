@@ -25,6 +25,9 @@ export const sessionsApi = baseApi.injectEndpoints({
         method: 'DELETE',
       }),
       transformResponse: (response: unknown) => unwrapObjectBody<MessageResult>(response),
+      // Revocation: a 404 "already revoked" answers after the server did
+      // revoke, and an answer can be lost in flight, so the list must be
+      // refetched whichever way the request fails.
       invalidatesTags: ['Sessions'],
     }),
 
@@ -38,6 +41,8 @@ export const sessionsApi = baseApi.injectEndpoints({
       }),
       transformResponse: (response: unknown) =>
         unwrapObjectBody<RevokeOtherSessionsResult>(response),
+      // Revocation: a lost answer can still have ended the other sessions, so
+      // the list must refetch rather than be trusted after a failure.
       invalidatesTags: ['Sessions'],
     }),
   }),
