@@ -55,6 +55,9 @@ import { Connection } from 'mongoose';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('MONGO_URI'),
+        w: 'majority' as const,
+        retryWrites: true,
+        readPreference: 'primary' as const,
         connectionFactory: (connection: Connection) => {
           const logger = new Logger('Mongoose');
           connection.on('connected', () => {

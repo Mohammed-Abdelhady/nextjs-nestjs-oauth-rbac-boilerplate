@@ -38,6 +38,9 @@ export interface EnvironmentConfig extends OAuthEnvironmentConfig {
   SESSION_COOKIE_NAME?: string;
   SESSION_COOKIE_MAX_AGE?: number;
 
+  AUTH_EPOCH?: number;
+  AUTH_NATIVE_ENABLED?: boolean;
+
   ACTIVATION_CODE_EXPIRES_IN?: number;
   ACTIVATION_MAX_ATTEMPTS?: number;
 
@@ -179,6 +182,25 @@ export class EnvironmentVariables extends OAuthEnvironmentVariables {
   @Min(1000)
   @IsOptional()
   SESSION_COOKIE_MAX_AGE: number = 604800000;
+
+  @Transform(({ value }: { value: unknown }): unknown => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+    if (value.trim() !== value || !/^[0-9]+$/.test(value)) {
+      return value;
+    }
+    return Number(value);
+  })
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  AUTH_EPOCH: number = 1;
+
+  @Transform(transformBoolean(false))
+  @IsBoolean()
+  @IsOptional()
+  AUTH_NATIVE_ENABLED: boolean = false;
 
   @Type(() => Number)
   @IsInt()

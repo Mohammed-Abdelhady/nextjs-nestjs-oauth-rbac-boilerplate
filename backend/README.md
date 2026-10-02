@@ -49,7 +49,7 @@ Configure these in `backend/.env`:
 ```bash
 PORT=5000
 NODE_ENV=development
-MONGO_URI=mongodb://localhost:27017/authboiler
+MONGO_URI=mongodb://USER:PASS@localhost:27017/authboiler?authSource=admin&directConnection=true
 FRONTEND_URL=http://localhost:3000
 
 # Session and state security
@@ -73,6 +73,8 @@ OAUTH_GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/oauth/google/callback
 # Swagger API docs
 SWAGGER_ENABLED=true
 ```
+
+Use this URI when the backend runs on the host and MongoDB runs in Docker Compose. The replica set advertises `mongodb:27017`, which only containers on the Compose network can resolve.
 
 ## API endpoints
 

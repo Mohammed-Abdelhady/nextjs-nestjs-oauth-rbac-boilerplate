@@ -177,4 +177,35 @@ describe('validateEnvironment', () => {
       }),
     ).toThrow(/TOTP_ENCRYPTION_KEY/);
   });
+
+  it('AUTH_EPOCH defaults to 1 and AUTH_NATIVE_ENABLED defaults to false', () => {
+    const result = validateEnvironment(baseEnv);
+
+    expect(result.AUTH_EPOCH).toBe(1);
+    expect(result.AUTH_NATIVE_ENABLED).toBe(false);
+  });
+
+  it.each(['0x10', '1e3', '0', '-1', ' 2 '])(
+    'rejects AUTH_EPOCH=%j',
+    (epoch) => {
+      expect(() =>
+        validateEnvironment({ ...baseEnv, AUTH_EPOCH: epoch }),
+      ).toThrow(/AUTH_EPOCH/);
+    },
+  );
+
+  it("accepts AUTH_EPOCH='7' as the number 7", () => {
+    const result = validateEnvironment({ ...baseEnv, AUTH_EPOCH: '7' });
+
+    expect(result.AUTH_EPOCH).toBe(7);
+  });
+
+  it("AUTH_NATIVE_ENABLED='true' yields true", () => {
+    const result = validateEnvironment({
+      ...baseEnv,
+      AUTH_NATIVE_ENABLED: 'true',
+    });
+
+    expect(result.AUTH_NATIVE_ENABLED).toBe(true);
+  });
 });
