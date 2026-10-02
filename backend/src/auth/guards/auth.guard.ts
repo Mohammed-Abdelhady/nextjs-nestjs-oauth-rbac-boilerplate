@@ -24,6 +24,10 @@ import {
   NativeAccessService,
   readBearerToken,
 } from '../../session/native/native-access.service';
+import {
+  REQUEST_CREDENTIAL,
+  selectRequestCredential,
+} from '../../session/utils/request-credential';
 
 export interface RequestWithUser extends Request {
   user?: {
@@ -39,8 +43,10 @@ export interface RequestWithUser extends Request {
 
 /**
  * Runs on every route as a global guard. Routes marked with `@Public()` pass
- * through without a session. Cookie sessions win. A bearer token is accepted
- * only when no session cookie is present, and only if it is a native access token.
+ * through without a session. A bearer token wins when one is sent, even when
+ * a session cookie is also present. A bearer token that is invalid fails the
+ * request; it never falls back to the cookie. Refusing a bearer never clears
+ * the session cookie: only a refused cookie does.
  */
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -66,12 +72,19 @@ export class AuthGuard implements CanActivate {
     const response = context.switchToHttp().getResponse<Response>();
     const sessionToken = this.sessionCookieService.read(request);
     const bearer = readBearerToken(request);
+    const credential = selectRequestCredential(
+      bearer !== null,
+      sessionToken !== undefined,
+    );
+    // Only the selected credential was evaluated. Refusing a bearer must
+    // never clear the session cookie: the cookie still names a live session.
+    const cookieSelected = credential === REQUEST_CREDENTIAL.COOKIE;
     let session: LeanSession | null;
 
-    if (sessionToken) {
-      session = await this.sessionService.validateSession(sessionToken);
-    } else if (bearer) {
+    if (credential === REQUEST_CREDENTIAL.BEARER && bearer) {
       session = await this.nativeAccess.validate(bearer);
+    } else if (cookieSelected && sessionToken) {
+      session = await this.sessionService.validateSession(sessionToken);
     } else {
       throw new AppException(
         ErrorCode.SESSION_REQUIRED,
@@ -81,7 +94,9 @@ export class AuthGuard implements CanActivate {
     }
 
     if (!session) {
-      this.sessionCookieService.clear(response);
+      if (cookieSelected) {
+        this.sessionCookieService.clear(response);
+      }
       throw new AppException(
         ErrorCode.SESSION_INVALID,
         'Invalid or expired session',
@@ -93,7 +108,9 @@ export class AuthGuard implements CanActivate {
     const user = session.user as unknown as UserDocument | null;
 
     if (!user || user.isDeleted) {
-      this.sessionCookieService.clear(response);
+      if (cookieSelected) {
+        this.sessionCookieService.clear(response);
+      }
       throw new AppException(
         ErrorCode.SESSION_INVALID,
         'Invalid or expired session',

@@ -27,6 +27,12 @@ import { BrowserProofService } from '../../session/services/browser-proof.servic
 import { ApplicationRegistryService } from '../../session/services/application-registry.service';
 import { decideOrigin } from '../../session/utils/request-origin';
 import { secretEquals } from '../../session/utils/token-hash';
+import { readBearerToken } from '../../session/native/native-access.service';
+import {
+  REQUEST_CREDENTIAL,
+  hasBothCredentials,
+  selectRequestCredential,
+} from '../../session/utils/request-credential';
 import { RequestWithUser } from './auth.guard';
 
 // AuthModule is imported from more than one place, so this guard can be
@@ -65,6 +71,19 @@ export class BrowserProofGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
+    if (
+      isPublic === true &&
+      hasBothCredentials(
+        readBearerToken(request) !== null,
+        this.sessionCookie.read(request) !== undefined,
+      )
+    ) {
+      throw new AppException(
+        ErrorCode.MIXED_CREDENTIALS,
+        'Send either the session cookie or an authorization credential',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     const session = await this.sessionForProof(request, isPublic === true);
     await this.rejectUntrustedOrigin(request, session);
     const presented = presentedToken(request);
@@ -102,7 +121,11 @@ export class BrowserProofGuard implements CanActivate {
     const authorization = request.header('authorization');
     const hasAuthorization =
       typeof authorization === 'string' && authorization.trim().length > 0;
-    if (hasAuthorization && this.sessionCookie.read(request)) {
+    const credential = selectRequestCredential(
+      readBearerToken(request) !== null,
+      this.sessionCookie.read(request) !== undefined,
+    );
+    if (hasAuthorization && credential === REQUEST_CREDENTIAL.COOKIE) {
       throw new AppException(
         ErrorCode.MIXED_CREDENTIALS,
         'Send either the session cookie or an authorization credential',

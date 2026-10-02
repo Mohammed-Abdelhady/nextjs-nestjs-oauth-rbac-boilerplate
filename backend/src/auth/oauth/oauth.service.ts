@@ -11,6 +11,8 @@ import { AccountLinkingService } from '../../user/services/account-linking.servi
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { isMongoDuplicateKeyError } from '../../common/utils/mongo-error.util';
+import { readBearerToken } from '../../session/native/native-access.service';
+import { hasBothCredentials } from '../../session/utils/request-credential';
 import {
   OAuthCallbackParams,
   OAuthProfile,
@@ -109,6 +111,18 @@ export class OAuthService {
   }
 
   async requireSessionUserId(request: Request): Promise<string> {
+    if (
+      hasBothCredentials(
+        readBearerToken(request) !== null,
+        this.sessionCookieService.read(request) !== undefined,
+      )
+    ) {
+      throw new AppException(
+        ErrorCode.MIXED_CREDENTIALS,
+        'Send either the session cookie or an authorization credential',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     const token = this.sessionCookieService.read(request);
     if (!token) {
       throw new AppException(
