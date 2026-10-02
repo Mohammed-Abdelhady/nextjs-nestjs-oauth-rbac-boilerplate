@@ -25,7 +25,7 @@ import { FieldError, PasswordVisibilityToggle, SubmitButton } from '@/components
 import { useCreateUserMutation } from '@/store/api/userApi';
 import { useListRolesQuery } from '../api/rolesApi';
 import { toast } from '@/lib/toast';
-import { parseApiError } from '@/lib/apiError';
+import { parseApiError } from '@app/core';
 import { validateCreateUserForm } from '../utils/createUserValidation';
 
 export interface CreateUserDialogProps {

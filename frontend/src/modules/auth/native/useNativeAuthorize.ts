@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { ErrorCode } from '@/constants/errorCodes';
+import { ErrorCode } from '@app/core';
 import { useRouter } from '@/i18n/navigation';
 import { useAppDispatch } from '@/store/hooks';
 import { REDIRECT_PARAM } from '../constants/authMethods';

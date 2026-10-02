@@ -13,13 +13,12 @@ import {
   SubmitButton,
 } from '@/components/forms';
 import { useResetPasswordMutation } from '@/modules/auth/store/authApi';
-import { zodPassword } from '@/lib/validations';
+import { zodPassword, parseApiError } from '@app/core';
 import { KeyRound } from 'lucide-react';
 import { useCallback, useMemo, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import { Link, useRouter } from '@/i18n/navigation';
 import { preventNavigationBlur } from '@/modules/auth/utils/preventNavigationBlur';
-import { parseApiError } from '@/lib/apiError';
 import { filterDigits } from '@/modules/auth/utils/digitFilter';
 
 /**

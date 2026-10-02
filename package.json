@@ -7,7 +7,8 @@
   "workspaces": [
     "backend",
     "frontend",
-    "packages/*"
+    "packages/*",
+    "shared/*"
   ],
   "scripts": {
     "init": "node scripts/init.js",

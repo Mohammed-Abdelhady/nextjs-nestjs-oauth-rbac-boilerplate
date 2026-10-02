@@ -18,7 +18,7 @@ import { FieldError, SubmitButton } from '@/components/forms';
 import { useCreateRoleMutation } from '../api/rolesApi';
 import { PermissionSelector } from './PermissionSelector';
 import { toast } from '@/lib/toast';
-import { parseApiError } from '@/lib/apiError';
+import { parseApiError } from '@app/core';
 
 export interface CreateRoleDialogProps {
   /**

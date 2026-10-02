@@ -1,4 +1,5 @@
-import { RoutePermissionGuard, REPORT_PERMISSIONS } from '@/modules/permissions';
+import { RoutePermissionGuard } from '@/modules/permissions';
+import { REPORT_PERMISSIONS } from '@app/core';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 

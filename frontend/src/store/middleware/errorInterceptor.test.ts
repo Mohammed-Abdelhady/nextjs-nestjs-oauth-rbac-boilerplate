@@ -3,7 +3,7 @@ import { isValidElement } from 'react';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { errorInterceptor } from './errorInterceptor';
 import { toast } from '@/lib/toast';
-import { ErrorCode } from '@/constants/errorCodes';
+import { ErrorCode } from '@app/core';
 
 vi.mock('@/lib/toast', () => ({ toast: { show: vi.fn() } }));
 

@@ -5,7 +5,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useUpdateRoleMutation, type Role } from '../api/rolesApi';
 import { EditRoleForm, type EditRoleFormValues } from './EditRoleForm';
 import { toast } from '@/lib/toast';
-import { parseApiError } from '@/lib/apiError';
+import { parseApiError } from '@app/core';
 
 export interface EditRoleDialogProps {
   /**

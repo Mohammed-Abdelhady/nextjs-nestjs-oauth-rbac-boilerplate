@@ -11,8 +11,7 @@ import {
   CSRF_ENDPOINT,
   LOGOUT_ENDPOINT,
 } from '@/constants/api';
-import { ErrorCode } from '@/constants/errorCodes';
-import { getErrorCode } from '@/lib/apiError';
+import { ErrorCode, getErrorCode } from '@app/core';
 import {
   CSRF_HEADER,
   clearBrowserProof,

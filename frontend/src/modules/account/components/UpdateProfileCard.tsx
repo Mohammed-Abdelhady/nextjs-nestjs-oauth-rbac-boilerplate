@@ -11,8 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FormInput, SubmitButton } from '@/components/forms';
 import { useGetCurrentUserQuery, useUpdateProfileMutation } from '@/modules/auth/store';
-import { parseApiError } from '@/lib/apiError';
-import { zodName } from '@/lib/validations/string';
+import { parseApiError, zodName } from '@app/core';
 
 const createUpdateProfileSchema = (t: (key: string) => string) =>
   z.object({

@@ -13,7 +13,7 @@ import {
   SESSION_PERMISSIONS,
   REPORT_PERMISSIONS,
   WILDCARD_PERMISSION,
-} from '../constants/permissions';
+} from '@app/core';
 
 import { PermissionGroupGrid } from './PermissionGroupGrid';
 

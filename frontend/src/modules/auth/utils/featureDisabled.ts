@@ -1,5 +1,4 @@
-import { ErrorCode } from '@/constants/errorCodes';
-import { parseApiError } from '@/lib/apiError';
+import { ErrorCode, parseApiError } from '@app/core';
 
 /**
  * True when a call failed because this deployment turned the method off.

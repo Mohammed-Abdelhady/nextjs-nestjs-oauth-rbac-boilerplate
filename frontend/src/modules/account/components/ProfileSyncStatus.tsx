@@ -8,7 +8,7 @@ import { RefreshCw, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/lib/toast';
-import { parseApiError } from '@/lib/apiError';
+import { parseApiError } from '@app/core';
 import { getRedirectPath } from '@/modules/auth/utils';
 import { startOAuthFlow } from '@/modules/oauth';
 import { useGetSyncStatusQuery, useInitiateProfileSyncMutation } from '../api';

@@ -14,7 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { SearchBar } from '@/components/design-system';
 import { Plus, Shield } from 'lucide-react';
-import { WILDCARD_PERMISSION } from '../constants/permissions';
+import { WILDCARD_PERMISSION } from '@app/core';
 import { usePermissionLabel } from '../hooks/usePermissionLabel';
 import { SearchPermissionTabs, PERMISSION_GROUPS } from './SearchPermissionTabs';
 

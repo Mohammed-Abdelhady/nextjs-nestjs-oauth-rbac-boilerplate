@@ -1,8 +1,10 @@
-import { readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { stripEnvVars } from '../src/prune/env.js';
 import { prune } from '../src/prune/index.js';
+import { findDanglingReferences } from '../src/prune/references.js';
 import { listFiles } from '../src/utils/fs.js';
 import { createFixtureTree, FIXTURE_MANIFEST } from './fixture.js';
 
@@ -103,6 +105,45 @@ describe('prune', () => {
     const root = await fixture();
     const result = await prune(root, FIXTURE_MANIFEST, ['email-password', 'alpha', 'beta']);
     expect(result.removed).toEqual(['gamma']);
+  });
+
+  it('reports @app/core imports left pointing at deleted shared files', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'cna-shared-core-'));
+    roots.push(root);
+    await mkdir(join(root, 'frontend', 'src'), { recursive: true });
+    await mkdir(join(root, 'shared', 'core', 'src'), { recursive: true });
+    await writeFile(
+      join(root, 'frontend', 'src', 'page.ts'),
+      "import { ErrorCode } from '@app/core';\n",
+      'utf8',
+    );
+
+    const bare = await findDanglingReferences(root, ['shared/core/src/index.ts']);
+    expect(bare).toHaveLength(1);
+    expect(bare[0]).toMatchObject({
+      file: 'frontend/src/page.ts',
+      line: 1,
+      specifier: '@app/core',
+      target: 'shared/core/src/index',
+    });
+
+    const intact = await findDanglingReferences(root, ['shared/core/src/other.ts']);
+    expect(intact).toEqual([]);
+  });
+
+  it('treats a deep @app/core path like any other unknown package', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'cna-shared-deep-'));
+    roots.push(root);
+    await mkdir(join(root, 'frontend', 'src'), { recursive: true });
+    await mkdir(join(root, 'shared', 'core', 'src'), { recursive: true });
+    await writeFile(
+      join(root, 'frontend', 'src', 'deep.ts'),
+      "import { zodEmail } from '@app/core/validations/string';\n",
+      'utf8',
+    );
+
+    const dangling = await findDanglingReferences(root, ['shared/core/src/validations/string.ts']);
+    expect(dangling).toEqual([]);
   });
 });
 

@@ -12,7 +12,7 @@ import { LocalizedToastMessage } from '@/components/ui/LocalizedToastMessage';
 import { isRejectedWithValue, type Middleware } from '@reduxjs/toolkit';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { toast } from '@/lib/toast';
-import { getErrorCodeTranslationKey } from '@/constants/errorCodes';
+import { getErrorCodeTranslationKey } from '@app/core';
 import { translatableErrorCode } from '@/modules/auth/utils/errorCodeMessage';
 import type { ToastType } from '@/types/toast.types';
 import { STATUS_CODE_MESSAGES, ERROR_MESSAGES, TOAST_DURATION } from '@/constants/toastMessages';

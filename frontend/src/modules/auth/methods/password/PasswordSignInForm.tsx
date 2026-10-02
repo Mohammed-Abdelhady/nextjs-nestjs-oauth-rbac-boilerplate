@@ -7,7 +7,7 @@ import { FormProvider } from 'react-hook-form';
 import { LogIn } from 'lucide-react';
 import { useFormWithValidation } from '@/hooks/useFormWithValidation';
 import { FormInput, FormPassword, FormRootError, SubmitButton } from '@/components/forms';
-import { zodEmail } from '@/lib/validations';
+import { zodEmail } from '@app/core';
 import { Link } from '@/i18n/navigation';
 import { useCompleteSignIn } from '@/modules/auth/hooks/useCompleteSignIn';
 import { useLoginMutation } from '@/modules/auth/store/authApi';

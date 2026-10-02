@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AbstractIntlMessages } from 'next-intl';
-import { ErrorCode } from '@/constants/errorCodes';
+import { ErrorCode } from '@app/core';
 import { loadMessages } from '@/i18n/load-messages';
 import { isMessageTree } from '@/i18n/__tests__/message-tree';
 import { translatableErrorCode } from '../errorCodeMessage';
@@ -43,9 +43,11 @@ function apiError(code: string): unknown {
 
 describe('translatableErrorCode', () => {
   it('returns the code the backend sent when it has a message', () => {
+    // feature:magic-link:start
     expect(translatableErrorCode(apiError(ErrorCode.MAGIC_LINK_INVALID))).toBe(
       ErrorCode.MAGIC_LINK_INVALID,
     );
+    // feature:magic-link:end
     expect(translatableErrorCode(apiError(ErrorCode.FEATURE_DISABLED))).toBe(
       ErrorCode.FEATURE_DISABLED,
     );
@@ -70,9 +72,11 @@ describe('translatableErrorCode', () => {
 
   it('falls back for a code this client does not know', () => {
     expect(translatableErrorCode(apiError('SOMETHING_NEW'))).toBe(ErrorCode.INTERNAL_ERROR);
+    // feature:magic-link:start
     expect(translatableErrorCode(apiError('SOMETHING_NEW'), ErrorCode.MAGIC_LINK_INVALID)).toBe(
       ErrorCode.MAGIC_LINK_INVALID,
     );
+    // feature:magic-link:end
   });
 
   it('resolves every known code through the real loader in both locales', async () => {

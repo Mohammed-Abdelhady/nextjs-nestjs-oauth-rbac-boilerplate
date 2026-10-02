@@ -85,6 +85,11 @@ export const FRONTEND_ALIAS = '@/';
 
 export const FRONTEND_SOURCE = 'frontend/src';
 
+/** The shared core package, and the source tree its root export maps to. */
+export const SHARED_CORE_SPECIFIER = '@app/core';
+
+export const SHARED_CORE_SOURCE = 'shared/core/src';
+
 /** Directories the pruner never walks into. */
 export const SKIPPED_DIRS = new Set(['node_modules', '.git', 'dist', '.next', 'out', 'coverage']);
 

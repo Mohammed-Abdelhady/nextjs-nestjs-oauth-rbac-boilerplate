@@ -1,6 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { extname, join, posix } from 'node:path';
-import { FRONTEND_ALIAS, FRONTEND_SOURCE, SOURCE_EXTENSIONS } from '../constants/index.js';
+import {
+  FRONTEND_ALIAS,
+  FRONTEND_SOURCE,
+  SHARED_CORE_SOURCE,
+  SHARED_CORE_SPECIFIER,
+  SOURCE_EXTENSIONS,
+} from '../constants/index.js';
 import type { DanglingReference } from '../types.js';
 import { listFiles } from '../utils/fs.js';
 
@@ -28,12 +34,16 @@ function workspaceOf(importer: string): string {
 
 /**
  * Turns an import into a project path. Relative specifiers resolve against the
- * importer; `@/x` is the frontend alias for frontend/src/x, and `src/x` is the
- * baseUrl form inside a workspace. Anything else is a package name.
+ * importer; `@/x` is the frontend alias for frontend/src/x, bare `@app/core`
+ * points at the shared core index, and `src/x` is the baseUrl form inside a
+ * workspace. Anything else, deep `@app/core/x` included, is a package name.
  */
 function resolveSpecifier(importer: string, specifier: string): string | undefined {
   if (specifier.startsWith('.')) {
     return withoutExtension(posix.normalize(posix.join(posix.dirname(importer), specifier)));
+  }
+  if (specifier === SHARED_CORE_SPECIFIER) {
+    return withoutExtension(posix.join(SHARED_CORE_SOURCE, 'index'));
   }
   if (specifier.startsWith(FRONTEND_ALIAS)) {
     return withoutExtension(posix.join(FRONTEND_SOURCE, specifier.slice(FRONTEND_ALIAS.length)));

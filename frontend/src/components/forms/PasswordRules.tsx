@@ -5,11 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Check, Circle } from 'lucide-react';
 import { useWatch } from 'react-hook-form';
 import { cn } from '@/lib/utils';
-import {
-  evaluatePasswordRules,
-  MIN_PASSWORD_LENGTH,
-  type PasswordRuleId,
-} from '@/lib/validations/passwordRules';
+import { evaluatePasswordRules, MIN_PASSWORD_LENGTH, type PasswordRuleId } from '@app/core';
 
 export interface PasswordRulesProps {
   /** Explicit password value if controlled directly */

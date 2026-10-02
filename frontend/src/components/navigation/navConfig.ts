@@ -4,7 +4,7 @@ import {
   ROLE_PERMISSIONS,
   PERMISSION_PERMISSIONS,
   SESSION_PERMISSIONS,
-} from '@/modules/permissions';
+} from '@app/core';
 import { LayoutDashboard, Users, Shield, Settings, Activity, Code } from 'lucide-react';
 
 export interface NavItem {

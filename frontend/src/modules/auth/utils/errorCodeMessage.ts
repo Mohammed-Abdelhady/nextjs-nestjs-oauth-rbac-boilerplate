@@ -1,5 +1,4 @@
-import { ErrorCode, getErrorCodeTranslationKey } from '@/constants/errorCodes';
-import { parseApiError } from '@/lib/apiError';
+import { ErrorCode, getErrorCodeTranslationKey, parseApiError } from '@app/core';
 
 const TRANSLATED_CODES = new Set<string>(Object.values(ErrorCode));
 

@@ -13,7 +13,7 @@ import { toast } from '@/lib/toast';
 import { useAppDispatch } from '@/store/hooks';
 import { setUser } from '@/modules/auth/store/authSlice';
 import { useRouter } from '@/i18n/navigation';
-import { parseApiError } from '@/lib/apiError';
+import { parseApiError } from '@app/core';
 import { filterDigits } from '../utils/digitFilter';
 import { WelcomeModal } from './WelcomeModal';
 import { createActivationSchema, type ActivationFormData } from '../utils/activationSchema';

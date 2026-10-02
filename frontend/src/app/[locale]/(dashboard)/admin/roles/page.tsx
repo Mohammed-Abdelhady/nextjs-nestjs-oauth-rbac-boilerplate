@@ -11,10 +11,10 @@ import type { Role } from '@/modules/roles/types';
 import { RoleSidebarNav } from '@/modules/permissions/components/RoleSidebarNav';
 import { RoleDetailPanel } from '@/modules/permissions/components/RoleDetailPanel';
 import { RoleSplitViewSkeleton, RoleDialogs } from '@/modules/roles/components';
-import { RoutePermissionGuard, ROLE_PERMISSIONS } from '@/modules/permissions';
+import { RoutePermissionGuard } from '@/modules/permissions';
+import { ROLE_PERMISSIONS, parseApiError } from '@app/core';
 import { Plus, Shield } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
-import { parseApiError } from '@/lib/apiError';
 
 export default function RolesPage() {
   const t = useTranslations('roles');

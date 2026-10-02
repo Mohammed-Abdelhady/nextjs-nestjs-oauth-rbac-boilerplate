@@ -17,6 +17,7 @@ import {
   NAME_MIN_LENGTH,
   NAME_REGEX,
 } from '../../common/constants/name';
+import { PASSWORD_MIN_LENGTH } from '../../common/constants/password';
 
 /**
  * DTO for creating a new user via admin panel.
@@ -50,10 +51,12 @@ export class CreateUserDto {
   @ApiProperty({
     description: 'User password',
     example: 'SecureP@ssw0rd',
-    minLength: 8,
+    minLength: PASSWORD_MIN_LENGTH,
   })
   @IsString()
-  @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  @MinLength(PASSWORD_MIN_LENGTH, {
+    message: `Password must be at least ${PASSWORD_MIN_LENGTH} characters long`,
+  })
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
     message:
       'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
