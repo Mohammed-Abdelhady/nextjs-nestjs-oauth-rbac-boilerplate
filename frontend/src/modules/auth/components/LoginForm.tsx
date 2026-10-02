@@ -8,7 +8,7 @@ import { AuthDivider } from '@/components/ui/auth-divider';
 import { IconLinkButton } from '@/components/ui/icon-link-button';
 import { OAuthButtons } from '@/modules/oauth'; // feature:oauth-core
 import { enabledAuthMethods } from '../methods/registry';
-import type { AuthMethods } from '../types/auth.types';
+import type { AuthMethods } from '@app/sdk';
 import { AuthMethodsGate } from './AuthMethodsGate';
 
 interface SignInMethodsProps {

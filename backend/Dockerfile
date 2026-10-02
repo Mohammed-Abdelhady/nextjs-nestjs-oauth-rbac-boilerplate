@@ -8,6 +8,9 @@ FROM base AS deps
 
 COPY package.json package-lock.json ./
 COPY backend/package.json ./backend/
+# The backend's tests depend on the shared workspaces: npm links them from these manifests.
+COPY shared/core/package.json ./shared/core/
+COPY shared/sdk/package.json ./shared/sdk/
 RUN npm ci --workspace backend
 
 FROM deps AS builder

@@ -9,7 +9,7 @@ import { loadMessages } from '@/i18n/load-messages';
 import { baseApi } from '@/store/api/baseApi';
 import { clearBrowserProof, rememberBrowserProof } from '@/store/api/browser-proof';
 import authReducer from '@/modules/auth/store/authSlice';
-import type { User } from '@/modules/auth/types/auth.types';
+import type { SignedInUser } from '@/modules/auth/types/auth.types';
 import { MagicLinkRequestForm } from '../MagicLinkRequestForm';
 import { MagicLinkVerifyPanel } from '../MagicLinkVerifyPanel';
 
@@ -23,7 +23,7 @@ vi.mock('@/i18n/navigation', () => ({
 /** Hand-written continuation the server is expected to store and echo back. */
 const NATIVE_ROUTE = '/auth/native/authorize?transaction=txn-abc123';
 
-const USER: User = {
+const USER: SignedInUser = {
   id: 'user-1',
   email: 'layla@example.com',
   name: 'Layla Haddad',

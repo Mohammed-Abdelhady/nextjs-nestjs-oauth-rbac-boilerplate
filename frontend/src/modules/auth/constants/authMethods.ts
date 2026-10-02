@@ -1,6 +1,3 @@
-/** Discovery endpoint that says which sign-in methods this deployment runs. */
-export const AUTH_METHODS_PATH = '/api/auth/methods';
-
 /** Sign-in method ids the registry can hold. */
 export const AUTH_METHOD_ID = {
   PASSWORD: 'password',

@@ -1,6 +1,6 @@
 import { baseApi } from '@/store/api/baseApi';
-import { AUTH_METHODS_PATH } from '../constants/authMethods';
-import type { AuthMethods, AuthMethodsResponse } from '../types/auth.types';
+import { API_PATHS, unwrapAuthMethodsBody } from '@app/sdk';
+import type { AuthMethods } from '@app/sdk';
 
 /**
  * Sign-in method discovery.
@@ -11,18 +11,8 @@ import type { AuthMethods, AuthMethodsResponse } from '../types/auth.types';
 export const authMethodsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getAuthMethods: builder.query<AuthMethods, void>({
-      query: () => ({ url: AUTH_METHODS_PATH, method: 'GET' }),
-      transformResponse: (response: {
-        success: boolean;
-        data: AuthMethodsResponse;
-      }): AuthMethods => ({
-        ...response.data.methods,
-        password: response.data.methods.password,
-        magicLink: response.data.methods.magicLink ?? false,
-        twoFactor: response.data.methods.twoFactor ?? false,
-        passkeys: response.data.methods.passkeys ?? false,
-        oauth: response.data.methods.oauth ?? [],
-      }),
+      query: () => ({ url: API_PATHS.auth.methods, method: 'GET' }),
+      transformResponse: (response: unknown) => unwrapAuthMethodsBody(response),
       providesTags: ['AuthMethods'],
     }),
   }),

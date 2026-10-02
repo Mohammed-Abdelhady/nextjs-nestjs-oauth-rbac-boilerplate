@@ -1,30 +1,17 @@
-/**
- * User role enumeration
- */
-export type UserRole = 'user' | 'admin' | 'manager' | 'support';
+import type { User } from '@app/sdk';
 
 /**
- * User entity representing authenticated user data
+ * The account as a sign-in reply carries it. Only the profile endpoint reports
+ * the rest of `User`.
  */
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: UserRole;
-  permissions: string[];
-  /** Only the profile endpoint reports these; a sign-in reply leaves them out. */
-  twoFactorEnabled?: boolean;
-  /** How many passkeys are registered on the account. */
-  passkeyCount?: number;
-  linkedProviders?: string[];
-}
+export type SignedInUser = Pick<User, 'id' | 'email' | 'name' | 'role' | 'permissions'>;
 
 /**
  * Authentication state managed by Redux
  * Session tokens stored in httpOnly cookies (not in Redux state)
  */
 export interface AuthState {
-  user: User | null;
+  user: SignedInUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -47,39 +34,10 @@ export interface LoginRequest {
  */
 export interface LoginResponse {
   requiresTwoFactor: boolean;
-  user: User | null;
+  user: SignedInUser | null;
   message?: string;
   /** Continuation stored on a mailed link, echoed back by the verify step. */
   redirect?: string;
-}
-
-/**
- * Sign-in methods this deployment accepts, from GET /api/auth/methods.
- *
- * A backend that does not ship a method leaves its key out, which normalises
- * to off rather than to a button nothing answers.
- */
-export interface AuthMethods {
-  password: boolean;
-  magicLink: boolean;
-  twoFactor: boolean;
-  passkeys: boolean;
-  oauth: AuthMethodProvider[];
-}
-
-/**
- * One OAuth provider as the methods endpoint lists it. Same shape as the
- * OAuth module's provider summary, kept separate so the core sign-in types do
- * not depend on a feature module.
- */
-export interface AuthMethodProvider {
-  id: string;
-  displayName: string;
-}
-
-/** Payload of the methods endpoint before normalisation. */
-export interface AuthMethodsResponse {
-  methods: Partial<AuthMethods> & { password: boolean };
 }
 
 /**
@@ -124,7 +82,7 @@ export interface ActivateRequest {
  * Uses httpOnly cookies for session management (no token in response)
  */
 export interface ActivateResponse {
-  user: User;
+  user: SignedInUser;
 }
 
 /**

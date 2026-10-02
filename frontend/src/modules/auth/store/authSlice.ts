@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '@/store/store';
-import type { AuthState, User } from '../types/auth.types';
+import type { AuthState, SignedInUser } from '../types/auth.types';
 import { authApi } from './authApi';
 
 /**
@@ -27,7 +27,7 @@ export const authSlice = createSlice({
     /**
      * Set authenticated user and mark as logged in
      */
-    loginFulfilled: (state, action: PayloadAction<User>) => {
+    loginFulfilled: (state, action: PayloadAction<SignedInUser>) => {
       state.user = action.payload;
       state.isAuthenticated = true;
       state.isLoading = false;
@@ -40,7 +40,7 @@ export const authSlice = createSlice({
      * Set user data (for activation flow)
      * Session managed via httpOnly cookie
      */
-    setUser: (state, action: PayloadAction<User>) => {
+    setUser: (state, action: PayloadAction<SignedInUser>) => {
       state.user = action.payload;
       state.isAuthenticated = true;
       state.isLoading = false;

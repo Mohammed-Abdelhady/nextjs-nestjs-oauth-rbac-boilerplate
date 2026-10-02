@@ -61,7 +61,7 @@ export function parseApiError(error: unknown): ParsedApiError {
   const defaultError: ParsedApiError = {
     code: ErrorCode.INTERNAL_ERROR,
     message: 'An unexpected error occurred',
-    translationKey: getErrorCodeTranslationKey('UNKNOWN_ERROR'),
+    translationKey: getErrorCodeTranslationKey(ErrorCode.UNKNOWN_ERROR),
     isValidationError: false,
   };
 

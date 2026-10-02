@@ -1,3 +1,5 @@
+import { API_PATHS } from '@app/sdk';
+
 /**
  * Origin of the NestJS API.
  *
@@ -12,4 +14,4 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost
  */
 export const CSRF_ENDPOINT = '/api/auth/csrf';
 export const BROWSER_PROOF_ENDPOINT = '/api/auth/browser-proof';
-export const LOGOUT_ENDPOINT = '/api/auth/logout';
+export const LOGOUT_ENDPOINT = API_PATHS.auth.logout;

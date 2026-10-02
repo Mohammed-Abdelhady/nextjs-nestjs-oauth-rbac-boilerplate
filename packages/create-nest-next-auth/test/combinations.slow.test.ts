@@ -96,6 +96,8 @@ async function expectTypechecks(project: string): Promise<void> {
   expect(frontend.ok, frontend.output).toBe(true);
   const shared = await typecheck(project, 'shared/core');
   expect(shared.ok, shared.output).toBe(true);
+  const sdk = await typecheck(project, 'shared/sdk');
+  expect(sdk.ok, sdk.output).toBe(true);
 }
 
 /**
@@ -118,9 +120,9 @@ async function expectDriftMatches(project: string): Promise<void> {
 }
 
 /**
- * Typechecks the generated frontend against its own pruned `shared/core`. A
- * surviving file that uses a stripped code passes the plain typecheck (which
- * resolves `@app/core` to this repository) and fails here.
+ * Typechecks the generated frontend against its own pruned `shared/*` sources
+ * through tsconfig paths. The plain typecheck reaches the same sources through
+ * the linked node_modules, so this one guards the mapping a bundler would use.
  */
 async function expectPrunedShared(project: string): Promise<void> {
   await writePrunedSharedTsconfig(project);

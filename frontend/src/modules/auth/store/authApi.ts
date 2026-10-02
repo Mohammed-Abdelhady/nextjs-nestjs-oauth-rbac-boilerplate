@@ -1,12 +1,12 @@
 import { baseApi } from '@/store/api/baseApi';
-import { LOGOUT_ENDPOINT } from '@/constants/api';
+import { API_PATHS, unwrapObjectBody } from '@app/sdk';
+import type { MessageResult, UpdateProfileRequest, User } from '@app/sdk';
 import {
   NATIVE_AUTHORIZE_APPROVE_ENDPOINT,
   NATIVE_AUTHORIZE_DENY_ENDPOINT,
   nativeAuthorizeTransactionEndpoint,
 } from '../constants/nativeAuthorize';
 import type {
-  User,
   LoginRequest,
   LoginResponse,
   RegisterRequest,
@@ -51,11 +51,12 @@ export const authApi = baseApi.injectEndpoints({
      * Logout mutation
      * Clears user session and auth cookies
      */
-    logout: builder.mutation<{ message: string }, void>({
+    logout: builder.mutation<MessageResult, void>({
       query: () => ({
-        url: LOGOUT_ENDPOINT,
+        url: API_PATHS.auth.logout,
         method: 'POST',
       }),
+      transformResponse: (response: unknown) => unwrapObjectBody<MessageResult>(response),
       invalidatesTags: [
         'Auth',
         'User',
@@ -71,8 +72,8 @@ export const authApi = baseApi.injectEndpoints({
      * Fetches the currently authenticated user's data
      */
     getCurrentUser: builder.query<User, void>({
-      query: () => '/api/user/profile',
-      transformResponse: (response: { success: boolean; data: User }) => response.data,
+      query: () => API_PATHS.user.profile,
+      transformResponse: (response: unknown) => unwrapObjectBody<User>(response),
       providesTags: ['User'],
     }),
 
@@ -165,13 +166,13 @@ export const authApi = baseApi.injectEndpoints({
      * Update profile mutation
      * Updates user profile information (name)
      */
-    updateProfile: builder.mutation<User, { name: string }>({
+    updateProfile: builder.mutation<User, UpdateProfileRequest>({
       query: (data) => ({
-        url: '/api/user/profile',
+        url: API_PATHS.user.profile,
         method: 'PATCH',
         body: data,
       }),
-      transformResponse: (response: { success: boolean; data: User }) => response.data,
+      transformResponse: (response: unknown) => unwrapObjectBody<User>(response),
       invalidatesTags: ['User'],
     }),
 

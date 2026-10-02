@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AUTH_METHOD_ID } from '../../constants/authMethods';
-import type { AuthMethods } from '../../types/auth.types';
+import type { AuthMethods } from '@app/sdk';
 import { enabledAuthMethods } from '../registry';
 
 function methods(overrides: Partial<AuthMethods> = {}): AuthMethods {

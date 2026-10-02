@@ -1,0 +1,46 @@
+import { OAUTH_TOKEN_TYPE } from './constants';
+import { malformedResponse, nonEmptyString, unwrapOAuth, type JsonObject } from './envelope';
+import type { TransportResponse } from './transport';
+import type { TokenSet } from './types';
+
+function malformedToken(status: number, problem: string) {
+  return malformedResponse(status, `The token response is malformed: ${problem}`);
+}
+
+function requireToken(body: JsonObject, key: string, status: number): string {
+  const token = nonEmptyString(body[key]);
+  if (token === undefined) {
+    throw malformedToken(status, `${key} is not a non-empty string`);
+  }
+  return token;
+}
+
+/**
+ * The reply of POST /api/oauth/token in the client's naming. Every field is
+ * checked: a token set with a missing token would fail later, far from here.
+ */
+export function unwrapTokenSet(response: TransportResponse): TokenSet {
+  const { status } = response;
+  const body = unwrapOAuth<JsonObject>(response);
+  const accessToken = requireToken(body, 'access_token', status);
+  const refreshToken = requireToken(body, 'refresh_token', status);
+  const expiresIn = body.expires_in;
+
+  if (typeof expiresIn !== 'number' || !Number.isFinite(expiresIn) || expiresIn <= 0) {
+    throw malformedToken(status, 'expires_in is not a positive number');
+  }
+  if (body.token_type !== OAUTH_TOKEN_TYPE) {
+    throw malformedToken(status, `token_type is not ${OAUTH_TOKEN_TYPE}`);
+  }
+  if (typeof body.scope !== 'string') {
+    throw malformedToken(status, 'scope is not a string');
+  }
+
+  return {
+    accessToken,
+    tokenType: OAUTH_TOKEN_TYPE,
+    expiresIn,
+    refreshToken,
+    scope: body.scope,
+  };
+}

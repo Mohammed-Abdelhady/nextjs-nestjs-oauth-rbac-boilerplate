@@ -126,9 +126,7 @@ test('architecture methods example satisfies the actual frontend response type',
   const payload = example && JSON.parse(example);
   assert.ok(example, 'methods example exists');
   const filename = fileURLToPath(new URL('../methods-documentation-contract.ts', import.meta.url));
-  const authTypes = fileURLToPath(
-    new URL('../frontend/src/modules/auth/types/auth.types.js', import.meta.url),
-  );
+  const authTypes = fileURLToPath(new URL('../shared/sdk/src/types.js', import.meta.url));
   const options = {
     noEmit: true,
     strict: true,

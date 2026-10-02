@@ -8,7 +8,7 @@ import { baseApi } from '@/store/api/baseApi';
 import { authApi } from '../../store/authApi';
 import { NativeAuthorizePanel } from '../NativeAuthorizePanel';
 import authReducer from '../../store/authSlice';
-import type { User } from '../../types/auth.types';
+import type { User } from '@app/sdk';
 
 export const TEST_TRANSACTION = 'txn-abc123';
 
@@ -18,6 +18,11 @@ export const TEST_USER: User = {
   name: 'Layla Haddad',
   role: 'user',
   permissions: [],
+  authProvider: 'email',
+  isVerified: true,
+  twoFactorEnabled: false, // feature:totp
+  passkeyCount: 0, // feature:passkeys
+  linkedProviders: ['email'],
 };
 
 /** Platform value is never shown; it is part of the contract payload. */

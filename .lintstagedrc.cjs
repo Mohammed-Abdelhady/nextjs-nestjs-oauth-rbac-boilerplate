@@ -9,6 +9,7 @@ module.exports = {
   ],
   'shared/**/*.{ts,tsx,js,json}': ['prettier --write'],
   'shared/core/**/*.ts': ['eslint --fix --max-warnings 0 --config shared/core/eslint.config.mjs'],
+  'shared/sdk/**/*.ts': ['eslint --fix --max-warnings 0 --config shared/sdk/eslint.config.mjs'],
   'mobile/**/*.{ts,tsx,js,jsx,json}': ['prettier --write'],
   '*.{md,yml,yaml}': ['prettier --write'],
 };
