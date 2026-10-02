@@ -31,6 +31,14 @@ function flatten(tree: MessageTree, prefix = ''): string[] {
   }
   return keys;
 }
+
+const OVERLAYS = [
+  'session-authority',
+  'browser-proof',
+  'native-auth',
+  'status-errors',
+  'role-errors',
+];
 // feature:locale-ar:end
 
 describe('session authority locale overlays', () => {
@@ -53,7 +61,7 @@ describe('session authority locale overlays', () => {
 
   // feature:locale-ar:start
   it('ships the same overlay keys in English and Arabic', () => {
-    for (const name of ['session-authority', 'browser-proof', 'native-auth', 'status-errors']) {
+    for (const name of OVERLAYS) {
       expect(flatten(readOverlay(name, 'en')).sort()).toEqual(
         flatten(readOverlay(name, 'ar')).sort(),
       );

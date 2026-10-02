@@ -201,6 +201,16 @@ export enum ErrorCode {
   // Role errors
   /** Role slug does not exist in the roles collection */
   ROLE_NOT_FOUND = 'ROLE_NOT_FOUND',
+  /** Another role already has this name */
+  ROLE_NAME_TAKEN = 'ROLE_NAME_TAKEN',
+  /** The role is a system or protected role and cannot be deleted */
+  ROLE_PROTECTED = 'ROLE_PROTECTED',
+  /** Users still hold the role, so it cannot be deleted */
+  ROLE_HAS_USERS = 'ROLE_HAS_USERS',
+  /** A system role keeps its name */
+  SYSTEM_ROLE_RENAME_FORBIDDEN = 'SYSTEM_ROLE_RENAME_FORBIDDEN',
+  /** The admin role keeps the wildcard permission */
+  ADMIN_WILDCARD_REQUIRED = 'ADMIN_WILDCARD_REQUIRED',
   /** Only admins may change another user's email address */
   EMAIL_CHANGE_NOT_ALLOWED = 'EMAIL_CHANGE_NOT_ALLOWED',
 }
