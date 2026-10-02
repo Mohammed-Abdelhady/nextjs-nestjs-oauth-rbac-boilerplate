@@ -18,7 +18,7 @@ import { useDeleteSessionMutation } from '../api/sessionsApi';
 import { DeviceIcon } from './DeviceIcon';
 import { CurrentSessionBadge } from './CurrentSessionBadge';
 import { parseUserAgent, getDeviceLabel } from '@/lib/parseUserAgent';
-import type { Session } from '../types/session.types';
+import type { Session } from '@app/sdk';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import { formatTimeAgo } from '@/lib/formatters';

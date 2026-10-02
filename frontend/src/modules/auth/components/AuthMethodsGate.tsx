@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthMethods } from '../hooks/useAuthMethods';
-import type { AuthMethods } from '../types/auth.types';
+import type { AuthMethods } from '@app/sdk';
 
 interface AuthMethodsGateProps {
   /** Rendered once the enabled methods are known. */

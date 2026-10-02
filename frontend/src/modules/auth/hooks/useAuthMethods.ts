@@ -1,7 +1,7 @@
 'use client';
 
 import { useGetAuthMethodsQuery } from '../api/authMethodsApi';
-import type { AuthMethods } from '../types/auth.types';
+import type { AuthMethods } from '@app/sdk';
 
 /** What a screen knows about the sign-in methods before it renders. */
 export interface AuthMethodsState {
