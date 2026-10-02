@@ -12,6 +12,7 @@ import {
 import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { Public } from '../decorators/public.decorator';
+import { SkipBrowserProof } from '../decorators/skip-browser-proof.decorator';
 import { ApiResponse } from '../../common/dto/api-response.dto';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
@@ -143,6 +144,7 @@ export class OAuthController {
 
   @Public()
   @Post(':provider/callback')
+  @SkipBrowserProof()
   @ApiOperation({
     summary: 'OAuth provider callback posted as a form',
     description:

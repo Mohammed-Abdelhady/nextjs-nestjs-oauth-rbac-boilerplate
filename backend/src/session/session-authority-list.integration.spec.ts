@@ -69,11 +69,13 @@ describe('session authority active-session filtering', () => {
 
   async function seedAtLimit(email: string): Promise<Types.ObjectId> {
     const user = await createTestUser(harness.users, email);
-    const token = await harness.sessionService.createSession(
-      user._id,
-      'session fixture',
-      '127.0.0.1',
-    );
+    const token = (
+      await harness.sessionService.createSession(
+        user._id,
+        'session fixture',
+        '127.0.0.1',
+      )
+    ).sessionToken;
     const original = await harness.sessions.findOne({
       tokenHash: hashToken(token),
     });
@@ -99,11 +101,13 @@ describe('session authority active-session filtering', () => {
     await invalidate();
     const listedBeforeIssuance =
       await harness.sessionService.getUserSessions(userId);
-    const replacementToken = await harness.sessionService.createSession(
-      userId,
-      'replacement',
-      '127.0.0.1',
-    );
+    const replacementToken = (
+      await harness.sessionService.createSession(
+        userId,
+        'replacement',
+        '127.0.0.1',
+      )
+    ).sessionToken;
     const replacement = await harness.sessions.findOne({
       tokenHash: hashToken(replacementToken),
     });
@@ -174,11 +178,13 @@ describe('session authority active-session filtering', () => {
       harness.users,
       'missing-expiry@example.test',
     );
-    const token = await harness.sessionService.createSession(
-      user._id,
-      'session fixture',
-      '127.0.0.1',
-    );
+    const token = (
+      await harness.sessionService.createSession(
+        user._id,
+        'session fixture',
+        '127.0.0.1',
+      )
+    ).sessionToken;
     await harness.sessions.updateOne(
       { tokenHash: hashToken(token) },
       { $unset: { expiresAt: 1 } },
@@ -191,11 +197,13 @@ describe('session authority active-session filtering', () => {
 
   it('fails closed when captured authority fields are missing', async () => {
     const user = await createTestUser(harness.users, 'legacy@example.test');
-    const token = await harness.sessionService.createSession(
-      user._id,
-      'session fixture',
-      '127.0.0.1',
-    );
+    const token = (
+      await harness.sessionService.createSession(
+        user._id,
+        'session fixture',
+        '127.0.0.1',
+      )
+    ).sessionToken;
     await harness.sessions.updateOne(
       { tokenHash: hashToken(token) },
       { $unset: { clientId: 1, userVersion: 1 } },
@@ -206,11 +214,13 @@ describe('session authority active-session filtering', () => {
 
   it('does not extend idle deadlines when listing sessions', async () => {
     const user = await createTestUser(harness.users, 'list@example.test');
-    const token = await harness.sessionService.createSession(
-      user._id,
-      'session fixture',
-      '127.0.0.1',
-    );
+    const token = (
+      await harness.sessionService.createSession(
+        user._id,
+        'session fixture',
+        '127.0.0.1',
+      )
+    ).sessionToken;
     const before = await harness.sessions.findOne({
       tokenHash: hashToken(token),
     });
@@ -233,11 +243,13 @@ describe('session authority active-session filtering', () => {
 
   it('rejects a session captured under a different auth epoch', async () => {
     const user = await createTestUser(harness.users, 'old-epoch@example.test');
-    const token = await harness.sessionService.createSession(
-      user._id,
-      'session fixture',
-      '127.0.0.1',
-    );
+    const token = (
+      await harness.sessionService.createSession(
+        user._id,
+        'session fixture',
+        '127.0.0.1',
+      )
+    ).sessionToken;
     await harness.sessions.updateOne(
       { tokenHash: hashToken(token) },
       { $set: { authEpoch: 0 } },

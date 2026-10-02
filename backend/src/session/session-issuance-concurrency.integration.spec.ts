@@ -104,7 +104,9 @@ describe('session issuance concurrency', () => {
     const token = outcome[0];
     const validation =
       token.status === 'fulfilled'
-        ? await harness.authority.validate(token.value, { extendIdle: false })
+        ? await harness.authority.validate(token.value.sessionToken, {
+            extendIdle: false,
+          })
         : undefined;
 
     expect({

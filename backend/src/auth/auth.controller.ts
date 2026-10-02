@@ -1,4 +1,5 @@
 import {
+  Get,
   Controller,
   Post,
   Body,
@@ -22,6 +23,11 @@ import { RequiresFeature } from './decorators/requires-feature.decorator';
 import { AuthFeature } from './enums/auth-feature.enum';
 import { Throttle } from '@nestjs/throttler';
 import { SessionCookieService } from './services/session-cookie.service';
+import { BrowserProofService } from '../session/services/browser-proof.service';
+import { CSRF_HEADER } from '../session/constants/browser-proof';
+import { AppException } from '../common/exceptions/app.exception';
+import { ErrorCode } from '../common/enums/error-code.enum';
+import { RequestWithUser } from './guards/auth.guard';
 import { SESSION_SWAGGER_AUTH_NAME } from '../common/constants/session';
 import {
   THROTTLE_LOGIN,
@@ -44,7 +50,44 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly sessionCookieService: SessionCookieService,
+    private readonly browserProof: BrowserProofService,
   ) {}
+
+  @Public()
+  @Get('browser-proof')
+  @ApiOperation({
+    summary: 'Issue a short-lived browser proof',
+    description:
+      'Sets the proof cookie and returns the header secret for login, registration, and other requests that do not have a session yet.',
+  })
+  async issueBrowserProof(@Res({ passthrough: true }) response: Response) {
+    const token = await this.browserProof.issue(response);
+    response.setHeader(CSRF_HEADER, token);
+    return { success: true, data: { token } };
+  }
+
+  @Get('csrf')
+  @ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
+  @ApiOperation({
+    summary: 'Read the session browser proof',
+    description:
+      'Returns the CSRF secret for the current session so a reloaded page can keep it in memory.',
+  })
+  csrf(
+    @Req() request: RequestWithUser,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const token = request.session?.csrfToken;
+    if (!token) {
+      throw new AppException(
+        ErrorCode.CSRF_INVALID,
+        'Browser proof is invalid',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    response.setHeader(CSRF_HEADER, token);
+    return { success: true, data: { token } };
+  }
 
   /**
    * Register a new user

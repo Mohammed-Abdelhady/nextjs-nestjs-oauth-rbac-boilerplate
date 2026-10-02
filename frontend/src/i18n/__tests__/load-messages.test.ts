@@ -5,15 +5,15 @@ import { mergeMessageTrees } from '../load-messages';
 import type { MessageTree } from './message-tree';
 import { isMessageTree } from './message-tree';
 
-function readOverlay(locale: string): MessageTree {
+function readOverlay(name: string, locale: string): MessageTree {
   const parsed: unknown = JSON.parse(
     readFileSync(
-      fileURLToPath(new URL(`../messages/session-authority.${locale}.json`, import.meta.url)),
+      fileURLToPath(new URL(`../messages/${name}.${locale}.json`, import.meta.url)),
       'utf8',
     ),
   );
   if (!isMessageTree(parsed)) {
-    throw new Error(`session-authority.${locale}.json is not an object`);
+    throw new Error(`${name}.${locale}.json is not an object`);
   }
   return parsed;
 }
@@ -50,9 +50,12 @@ describe('session authority locale overlays', () => {
   });
 
   it('ships the same overlay keys in English and Arabic', () => {
-    const english = flatten(readOverlay('en')).sort();
-    const arabic = flatten(readOverlay('ar')).sort();
-    expect(english).toEqual(arabic);
+    for (const name of ['session-authority', 'browser-proof']) {
+      expect(flatten(readOverlay(name, 'en')).sort()).toEqual(
+        flatten(readOverlay(name, 'ar')).sort(),
+      );
+    }
+    const english = flatten(readOverlay('session-authority', 'en'));
     expect(english).toContain('errors.codes.SESSION_LIMIT_REACHED');
     expect(english).toContain('errors.codes.AUTHORITY_UNAVAILABLE');
   });

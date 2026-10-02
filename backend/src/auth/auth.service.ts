@@ -20,6 +20,7 @@ import { HashService } from '../common/services/hash.service';
 import { AppException } from '../common/exceptions/app.exception';
 import { ErrorCode } from '../common/enums/error-code.enum';
 import { AuthMailService } from './services/auth-mail.service';
+import { CSRF_HEADER } from '../session/constants/browser-proof';
 import { SessionCookieService } from './services/session-cookie.service';
 import { SessionService } from './services/session.service';
 import { VerificationCodeService } from './services/verification-code.service';
@@ -95,13 +96,14 @@ export class AuthService {
 
     const userAgent = response.req.headers['user-agent'] || 'Unknown';
     const ip = response.req.ip || '127.0.0.1';
-    const sessionToken = await this.sessionService.createSession(
+    const issued = await this.sessionService.createSession(
       user._id,
       userAgent,
       ip,
     );
 
-    this.sessionCookieService.set(response, sessionToken);
+    this.sessionCookieService.set(response, issued.sessionToken);
+    response.setHeader(CSRF_HEADER, issued.csrfToken);
     return ActivateResponseDto.success(user);
   }
 

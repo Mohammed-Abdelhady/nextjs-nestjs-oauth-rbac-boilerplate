@@ -24,6 +24,7 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
   };
   let sessionCookieService: {
     read: jest.Mock;
+    clear: jest.Mock;
   };
   let roleModel: {
     findOne: jest.Mock;
@@ -32,21 +33,27 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
   const createMockContext = (
     cookies: Record<string, string> = {},
     handler: () => void = GuardedRoutes.prototype.closedRoute,
-  ): { context: ExecutionContext; request: Record<string, unknown> } => {
+  ): {
+    context: ExecutionContext;
+    request: Record<string, unknown>;
+    response: Record<string, unknown>;
+  } => {
     const request = {
       cookies,
       user: undefined,
       session: undefined,
     };
+    const response: Record<string, unknown> = {};
     const context = {
       switchToHttp: () => ({
         getRequest: () => request,
+        getResponse: () => response,
       }),
       getHandler: () => handler,
       getClass: () => GuardedRoutes,
     } as unknown as ExecutionContext;
 
-    return { context, request };
+    return { context, request, response };
   };
 
   beforeEach(async () => {
@@ -58,6 +65,7 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
       read: jest.fn(
         (req: { cookies?: Record<string, string> }) => req.cookies?.sid,
       ),
+      clear: jest.fn(),
     };
 
     roleModel = {
@@ -104,8 +112,10 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
     expect(sessionCookieService.read).toHaveBeenCalledWith(request);
   });
 
-  it('should throw SESSION_INVALID when validateSession returns null', async () => {
-    const { context, request } = createMockContext({ sid: 'invalid-token' });
+  it('should clear the stale cookie when validateSession returns null', async () => {
+    const { context, request, response } = createMockContext({
+      sid: 'invalid-token',
+    });
     sessionService.validateSession.mockResolvedValue(null);
 
     await expect(guard.canActivate(context)).rejects.toMatchObject({
@@ -117,6 +127,7 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
     expect(sessionService.validateSession).toHaveBeenCalledWith(
       'invalid-token',
     );
+    expect(sessionCookieService.clear).toHaveBeenCalledWith(response);
   });
 
   it('should throw SESSION_INVALID when populated user is missing', async () => {

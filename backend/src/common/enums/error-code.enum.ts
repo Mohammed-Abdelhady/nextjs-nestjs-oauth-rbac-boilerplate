@@ -79,6 +79,15 @@ export enum ErrorCode {
   /** User is blocked from this application */
   GRANT_BLOCKED = 'GRANT_BLOCKED',
 
+  /** Unsafe request did not include the browser proof header */
+  CSRF_REQUIRED = 'CSRF_REQUIRED',
+  /** Presented browser proof does not match the session or was already used */
+  CSRF_INVALID = 'CSRF_INVALID',
+  /** Origin, referer, or fetch-site metadata is not allowed for this application */
+  ORIGIN_REJECTED = 'ORIGIN_REJECTED',
+  /** Cookie session and Authorization were both sent */
+  MIXED_CREDENTIALS = 'MIXED_CREDENTIALS',
+
   // Verification errors
   /** Email address not verified */
   EMAIL_NOT_VERIFIED = 'EMAIL_NOT_VERIFIED',

@@ -84,7 +84,7 @@ export class ApplicationRegistryService {
 
   async seedFirstPartyApplications(): Promise<void> {
     const environment = this.authEpoch.environment();
-    const origin = this.authEpoch.clientUrl();
+    const origin = this.clientOrigin();
     await this.upsertApplication({
       clientId: WEB_CLIENT_ID,
       displayName: 'Web',
@@ -109,6 +109,31 @@ export class ApplicationRegistryService {
         idleLifetimeMs: ADMIN_IDLE_LIFETIME_MS,
       },
     });
+  }
+
+  async ensureClientOriginAllowed(): Promise<void> {
+    await this.applicationModel
+      .updateMany(
+        {
+          environment: this.authEpoch.environment(),
+          $or: [
+            {
+              clientId: WEB_CLIENT_ID,
+              platform: APPLICATION_PLATFORM.WEB,
+            },
+            {
+              clientId: ADMIN_CLIENT_ID,
+              platform: APPLICATION_PLATFORM.ADMIN,
+            },
+          ],
+        },
+        { $addToSet: { allowedOrigins: this.clientOrigin() } },
+      )
+      .exec();
+  }
+
+  private clientOrigin(): string {
+    return new URL(this.authEpoch.clientUrl()).origin;
   }
 
   private async upsertApplication(input: {

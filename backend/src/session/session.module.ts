@@ -16,6 +16,10 @@ import {
   SecurityEvent,
   SecurityEventSchema,
 } from './schemas/security-event.schema';
+import {
+  BrowserProof,
+  BrowserProofSchema,
+} from './schemas/browser-proof.schema';
 import { Session, SessionSchema } from './schemas/session.schema';
 import {
   StepUpChallenge,
@@ -25,6 +29,7 @@ import {
   UserApplicationGrant,
   UserApplicationGrantSchema,
 } from './schemas/user-application-grant.schema';
+import { BrowserProofService } from './services/browser-proof.service';
 import { ApplicationAccessService } from './services/application-access.service';
 import { ApplicationRegistryService } from './services/application-registry.service';
 import { SecurityEventService } from './services/security-event.service';
@@ -37,6 +42,7 @@ import { SessionRevocationService } from './services/session-revocation.service'
     CommonModule,
     MongooseModule.forFeature([
       { name: Session.name, schema: SessionSchema },
+      { name: BrowserProof.name, schema: BrowserProofSchema },
       { name: Application.name, schema: ApplicationSchema },
       { name: UserApplicationGrant.name, schema: UserApplicationGrantSchema },
       { name: NativeCredential.name, schema: NativeCredentialSchema },
@@ -52,6 +58,7 @@ import { SessionRevocationService } from './services/session-revocation.service'
   providers: [
     ApplicationAccessService,
     ApplicationRegistryService,
+    BrowserProofService,
     SecurityEventService,
     SessionIssuanceService,
     SessionAuthorityService,
@@ -62,6 +69,7 @@ import { SessionRevocationService } from './services/session-revocation.service'
     CommonModule,
     ApplicationAccessService,
     ApplicationRegistryService,
+    BrowserProofService,
     SecurityEventService,
     SessionIssuanceService,
     SessionAuthorityService,
@@ -78,6 +86,7 @@ export class SessionModule implements OnModuleInit {
     await Promise.all(
       [
         Session.name,
+        BrowserProof.name,
         Application.name,
         UserApplicationGrant.name,
         NativeCredential.name,
@@ -87,9 +96,9 @@ export class SessionModule implements OnModuleInit {
         User.name,
       ].map((name) => this.connection.model(name).createIndexes()),
     );
-    if (process.env.NODE_ENV === 'production') {
-      return;
+    if (process.env.NODE_ENV !== 'production') {
+      await this.applications.seedFirstPartyApplications();
     }
-    await this.applications.seedFirstPartyApplications();
+    await this.applications.ensureClientOriginAllowed();
   }
 }

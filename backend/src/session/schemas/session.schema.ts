@@ -106,8 +106,9 @@ export class Session {
   })
   credentialPurpose!: CredentialPurpose;
 
-  @Prop({ type: Number, default: 1 })
-  browserGeneration!: number;
+  /** Session CSRF secret. Not a credential; the browser reads it back after reload. */
+  @Prop()
+  csrfToken?: string;
 
   @Prop()
   revokedAt?: Date;

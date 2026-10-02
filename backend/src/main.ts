@@ -10,6 +10,7 @@ import { AppModule } from './app.module';
 import { SessionCookieService } from './auth/services/session-cookie.service';
 import { ErrorResponse, ErrorDetails } from './common/dto/api-response.dto';
 import { DEVELOPMENT_CONTENT_SECURITY_POLICY } from './common/security/content-security-policy';
+import { browserCors } from './common/security/browser-cors';
 import { buildOpenApiDocument } from './common/swagger/build-openapi-document';
 
 /**
@@ -48,12 +49,7 @@ async function bootstrap() {
     'CLIENT_URL',
     'http://localhost:3000',
   );
-  app.enableCors({
-    origin: clientUrl,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  });
+  app.enableCors(browserCors(clientUrl));
 
   // 3. Global Validation Pipe - Validate all incoming DTOs
   app.useGlobalPipes(

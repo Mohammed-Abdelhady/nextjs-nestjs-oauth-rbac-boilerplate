@@ -8,6 +8,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { PrivateCacheInterceptor } from './common/interceptors/private-cache.interceptor';
 import { RequestLoggingInterceptor } from './common/interceptors/request-logging.interceptor';
 import { HealthModule } from './health/health.module';
 import { UserModule } from './user/user.module';
@@ -130,6 +131,10 @@ import { Connection } from 'mongoose';
     {
       provide: APP_INTERCEPTOR,
       useClass: RequestLoggingInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: PrivateCacheInterceptor,
     },
   ],
 })

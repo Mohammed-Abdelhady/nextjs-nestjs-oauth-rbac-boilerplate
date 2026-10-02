@@ -1,0 +1,146 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { Reflector } from '@nestjs/core';
+import { ExecutionContextHost } from '@nestjs/core/helpers/execution-context-host';
+import { ErrorCode } from '../../common/enums/error-code.enum';
+import { CSRF_HEADER } from '../../session/constants/browser-proof';
+import { WEB_CLIENT_ID } from '../../session/constants/client-ids';
+import { ApplicationRegistryService } from '../../session/services/application-registry.service';
+import { BrowserProofService } from '../../session/services/browser-proof.service';
+import { SessionService } from '../services/session.service';
+import { SessionCookieService } from '../services/session-cookie.service';
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { BrowserProofGuard } from './browser-proof.guard';
+
+const ORIGIN = 'http://localhost:3000';
+const PRE_SESSION_TOKEN = 'pre-session-token';
+const SESSION_TOKEN = 'session-bound-token';
+
+interface GuardRequest {
+  method: string;
+  cookies: Record<string, string>;
+  session?: { clientId: string; csrfToken: string };
+  header: (name: string) => string | undefined;
+}
+
+describe('BrowserProofGuard', () => {
+  let guard: BrowserProofGuard;
+  let sessionCookie: { read: jest.Mock };
+  let sessions: { validateSessionWithoutExtendingIdle: jest.Mock };
+  let proofs: { consume: jest.Mock };
+  let applications: { findByClientId: jest.Mock };
+
+  beforeEach(async () => {
+    sessionCookie = {
+      read: jest.fn((request: GuardRequest) => request.cookies.sid),
+    };
+    sessions = { validateSessionWithoutExtendingIdle: jest.fn() };
+    proofs = { consume: jest.fn().mockResolvedValue(undefined) };
+    applications = {
+      findByClientId: jest.fn().mockResolvedValue({ allowedOrigins: [ORIGIN] }),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        BrowserProofGuard,
+        Reflector,
+        { provide: SessionCookieService, useValue: sessionCookie },
+        { provide: SessionService, useValue: sessions },
+        { provide: BrowserProofService, useValue: proofs },
+        { provide: ApplicationRegistryService, useValue: applications },
+      ],
+    }).compile();
+
+    guard = module.get(BrowserProofGuard);
+  });
+
+  it('consumes a pre-session proof when a public route has a stale cookie', async () => {
+    const request = createRequest({ sid: 'revoked' }, PRE_SESSION_TOKEN);
+    sessions.validateSessionWithoutExtendingIdle.mockResolvedValue(null);
+
+    await expect(guard.canActivate(createContext(request, true))).resolves.toBe(
+      true,
+    );
+
+    expect(proofs.consume).toHaveBeenCalledWith(request, PRE_SESSION_TOKEN);
+    expect(sessions.validateSessionWithoutExtendingIdle).toHaveBeenCalledWith(
+      'revoked',
+    );
+  });
+
+  it('checks the session-bound token on protected routes', async () => {
+    const request = createRequest({ sid: 'valid' }, PRE_SESSION_TOKEN, {
+      clientId: WEB_CLIENT_ID,
+      csrfToken: SESSION_TOKEN,
+    });
+
+    await expect(
+      guard.canActivate(createContext(request)),
+    ).rejects.toMatchObject({ code: ErrorCode.CSRF_INVALID });
+
+    expect(proofs.consume).not.toHaveBeenCalled();
+  });
+
+  it('accepts the session token on a public route with a valid cookie', async () => {
+    const session = { clientId: 'admin-app', csrfToken: SESSION_TOKEN };
+    const request = createRequest({ sid: 'valid' }, SESSION_TOKEN);
+    sessions.validateSessionWithoutExtendingIdle.mockResolvedValue(session);
+
+    await expect(guard.canActivate(createContext(request, true))).resolves.toBe(
+      true,
+    );
+
+    expect(proofs.consume).not.toHaveBeenCalled();
+    expect(applications.findByClientId).toHaveBeenCalledWith('admin-app');
+  });
+
+  it('consumes a pre-session proof on a public route with a valid cookie', async () => {
+    sessions.validateSessionWithoutExtendingIdle.mockResolvedValue({
+      clientId: WEB_CLIENT_ID,
+      csrfToken: SESSION_TOKEN,
+    });
+    const request = createRequest({ sid: 'valid' }, PRE_SESSION_TOKEN);
+
+    await expect(guard.canActivate(createContext(request, true))).resolves.toBe(
+      true,
+    );
+
+    expect(proofs.consume).toHaveBeenCalledWith(request, PRE_SESSION_TOKEN);
+  });
+
+  it('consumes a pre-session proof on a public route without a cookie', async () => {
+    const request = createRequest({}, PRE_SESSION_TOKEN);
+
+    await expect(guard.canActivate(createContext(request, true))).resolves.toBe(
+      true,
+    );
+
+    expect(sessions.validateSessionWithoutExtendingIdle).not.toHaveBeenCalled();
+    expect(proofs.consume).toHaveBeenCalledWith(request, PRE_SESSION_TOKEN);
+  });
+});
+
+function createRequest(
+  cookies: Record<string, string>,
+  csrfToken: string,
+  session?: GuardRequest['session'],
+): GuardRequest {
+  const headers: Record<string, string> = {
+    [CSRF_HEADER]: csrfToken,
+    origin: ORIGIN,
+  };
+  return {
+    method: 'POST',
+    cookies,
+    session,
+    header: (name) => headers[name.toLowerCase()],
+  };
+}
+
+function createContext(
+  request: GuardRequest,
+  isPublic = false,
+): ExecutionContextHost {
+  const handler = (): void => undefined;
+  if (isPublic) Reflect.defineMetadata(IS_PUBLIC_KEY, true, handler);
+  return new ExecutionContextHost([request, {}], BrowserProofGuard, handler);
+}

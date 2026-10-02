@@ -69,12 +69,12 @@ describe('session authority (plan 02)', () => {
   }> {
     const user = await createTestUser(harness.users, email);
     try {
-      const token = await harness.sessionService.createSession(
+      const issued = await harness.sessionService.createSession(
         user._id,
         'Mozilla/5.0',
         '127.0.0.1',
       );
-      return { userId: user._id, token };
+      return { userId: user._id, token: issued.sessionToken };
     } catch (error) {
       if (error instanceof AppException) {
         throw new Error(
@@ -217,11 +217,12 @@ describe('session authority (plan 02)', () => {
 
   it('revokes the current session and leaves others until all-other logout', async () => {
     const first = await login('one@example.test');
-    const secondToken = await harness.sessionService.createSession(
+    const second = await harness.sessionService.createSession(
       first.userId,
       'second',
       '127.0.0.1',
     );
+    const secondToken = second.sessionToken;
     expect(await harness.sessionService.invalidateSession(first.token)).toBe(
       true,
     );
@@ -245,9 +246,14 @@ describe('session authority (plan 02)', () => {
   it('applies concurrent revokes once and keeps the selected session valid', async () => {
     const kept = await login('concurrent-revoke@example.test');
     const targetedTokens = await Promise.all(
-      ['target one', 'target two'].map((agent) =>
-        harness.sessionService.createSession(kept.userId, agent, '127.0.0.1'),
-      ),
+      ['target one', 'target two'].map(async (agent) => {
+        const issued = await harness.sessionService.createSession(
+          kept.userId,
+          agent,
+          '127.0.0.1',
+        );
+        return issued.sessionToken;
+      }),
     );
     await Promise.allSettled([
       ...targetedTokens.map((token) =>
@@ -305,11 +311,12 @@ describe('session authority (plan 02)', () => {
 
   it('does not let a revoked caller promote itself during all-other logout', async () => {
     const first = await login('survivor@example.test');
-    const other = await harness.sessionService.createSession(
+    const otherIssued = await harness.sessionService.createSession(
       first.userId,
       'other',
       '127.0.0.1',
     );
+    const other = otherIssued.sessionToken;
     await harness.sessionService.invalidateAllSessionsExcept(
       first.userId,
       first.token,

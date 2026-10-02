@@ -1,4 +1,5 @@
 import { baseApi } from '@/store/api/baseApi';
+import { LOGOUT_ENDPOINT } from '@/constants/api';
 import type {
   User,
   LoginRequest,
@@ -42,7 +43,7 @@ export const authApi = baseApi.injectEndpoints({
      */
     logout: builder.mutation<{ message: string }, void>({
       query: () => ({
-        url: '/api/auth/logout',
+        url: LOGOUT_ENDPOINT,
         method: 'POST',
       }),
       invalidatesTags: [
