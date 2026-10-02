@@ -23,7 +23,7 @@
     "check:bans": "node scripts/check-hard-bans.mjs --staged",
     "check": "npm run check:bans && npm run lint && npm run typecheck",
     "check:contrast": "node scripts/check-contrast.mjs",
-    "test:config": "node --test scripts/config-transforms.test.mjs scripts/check-hard-bans.test.mjs scripts/check-contrast.test.mjs"
+    "test:config": "node --test scripts/config-transforms.test.mjs scripts/config-transforms.ports.test.mjs scripts/check-hard-bans.test.mjs scripts/check-contrast.test.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^18.6.1",
