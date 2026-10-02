@@ -5,3 +5,19 @@
  */
 export const GENERIC_CODE_SENT_MESSAGE =
   'If an account exists, a code has been sent';
+
+/** Logged when an activation email is not handed over. */
+export const ACTIVATION_EMAIL_FAILED_MESSAGE =
+  'Failed to send activation email';
+
+/** Logged when a password reset email is not handed over. */
+export const PASSWORD_RESET_EMAIL_FAILED_MESSAGE =
+  'Failed to send password reset email';
+
+/** Logged when a sign-in link email is not handed over. */
+export const SIGN_IN_LINK_EMAIL_FAILED_MESSAGE =
+  'Failed to send sign-in link email';
+
+/** Logged when a registration notice email is not handed over. */
+export const REGISTRATION_NOTICE_EMAIL_FAILED_MESSAGE =
+  'Failed to send registration notice email';

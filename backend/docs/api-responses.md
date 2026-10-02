@@ -116,9 +116,11 @@ All error responses follow this structure:
 
 ### Email Errors
 
-| Code                | HTTP Status | Description          |
-| ------------------- | ----------- | -------------------- |
-| `EMAIL_SEND_FAILED` | 400         | Failed to send email |
+| Code                | HTTP Status | Description                                              |
+| ------------------- | ----------- | -------------------------------------------------------- |
+| `EMAIL_SEND_FAILED` | 400         | Admin email change could not send the verification email |
+
+`EMAIL_SEND_FAILED` comes only from the admin email-change route. The signed-out code-request routes (register, resend activation, forgot password, magic link) log a delivery failure and still answer `200`, so none of them can reveal whether an address has an account.
 
 ### Session Errors
 

@@ -7,6 +7,7 @@ import {
   REQUEST_ID_MAX_LENGTH,
   REQUEST_ID_PATTERN,
 } from '../constants/request-id';
+import { runWithRequestContext } from '../context/request-context';
 
 /**
  * Gives every request a correlation id.
@@ -24,7 +25,7 @@ export class RequestIdMiddleware implements NestMiddleware {
     request.requestId = requestId;
     response.setHeader(REQUEST_ID_HEADER, requestId);
 
-    next();
+    runWithRequestContext(requestId, () => next());
   }
 
   private resolveId(incoming: string | undefined): string {

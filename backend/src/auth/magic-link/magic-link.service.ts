@@ -101,13 +101,15 @@ export class MagicLinkService {
       ...(redirect ? { redirect } : {}),
     });
 
-    await this.authMailService.sendMagicLink(
+    const sent = await this.authMailService.sendMagicLink(
       dto.email,
       this.buildLink(token),
       Math.round(this.expiresIn / MILLISECONDS_PER_MINUTE),
     );
 
-    this.logger.log(`Magic link sent to ${dto.email}`);
+    if (sent) {
+      this.logger.log(`Magic link sent to ${dto.email}`);
+    }
     return MagicLinkRequestResponseDto.success(dto.email);
   }
 
