@@ -46,8 +46,9 @@ export default tseslint.config(
       'no-restricted-imports': [
         'error',
         {
-          paths: ['react', 'react-dom', 'next', 'react-native'],
-          patterns: ['node:*', 'next/*'],
+          // `@app/sdk` depends on this package, never the reverse.
+          paths: ['react', 'react-dom', 'next', 'react-native', '@app/sdk'],
+          patterns: ['node:*', 'next/*', '@app/sdk/*'],
         },
       ],
     },

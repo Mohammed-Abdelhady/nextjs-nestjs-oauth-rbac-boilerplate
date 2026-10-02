@@ -139,9 +139,7 @@ export const CommonErrorResponses = {
           code: 'VALIDATION_ERROR',
           message: 'Validation failed',
           details: {
-            errors: [
-              { field: 'email', messages: ['email must be a valid email'] },
-            ],
+            fields: { email: ['email must be a valid email'] },
           },
         },
       },

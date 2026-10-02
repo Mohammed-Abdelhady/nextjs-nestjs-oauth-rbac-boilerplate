@@ -81,6 +81,9 @@ export const ErrorCode = {
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   NOT_FOUND: 'NOT_FOUND',
   FORBIDDEN: 'FORBIDDEN',
+  CONFLICT: 'CONFLICT',
+  // Client side only: a response with no code and a status with no mapping.
+  UNKNOWN_ERROR: 'UNKNOWN_ERROR',
 
   // User Management
   USER_NOT_FOUND: 'USER_NOT_FOUND',
