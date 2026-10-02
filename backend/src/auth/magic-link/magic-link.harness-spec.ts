@@ -9,6 +9,8 @@ import { AuthMailService } from '../services/auth-mail.service';
 import { SignInService } from '../services/sign-in.service';
 import { User } from '../../user/schemas/user.schema';
 import { AuthProvider } from '../../user/enums/auth-provider.enum';
+import { Clock } from '../../common/services/clock';
+import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
 
 /**
  * Shared setup for the MagicLinkService specs.
@@ -18,6 +20,7 @@ import { AuthProvider } from '../../user/enums/auth-provider.enum';
 
 export interface MagicLinkHarness {
   service: MagicLinkService;
+  clock: FrozenClock;
   pendingModel: {
     create: jest.Mock;
     countDocuments: jest.Mock;
@@ -74,6 +77,7 @@ const CONFIG_VALUES: Record<string, string | number> = {
 };
 
 export async function createMagicLinkHarness(): Promise<MagicLinkHarness> {
+  const clock = new FrozenClock(TEST_NOW);
   const pendingModel = {
     create: jest.fn().mockResolvedValue(undefined),
     countDocuments: jest.fn().mockResolvedValue(0),
@@ -113,11 +117,13 @@ export async function createMagicLinkHarness(): Promise<MagicLinkHarness> {
       { provide: ConfigService, useValue: configService },
       { provide: AuthMailService, useValue: authMailService },
       { provide: SignInService, useValue: signInService },
+      { provide: Clock, useValue: clock },
     ],
   }).compile();
 
   return {
     service: module.get<MagicLinkService>(MagicLinkService),
+    clock,
     pendingModel,
     userModel,
     authMailService,

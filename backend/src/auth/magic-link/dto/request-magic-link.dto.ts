@@ -1,6 +1,12 @@
-import { IsEmail, IsNotEmpty, MaxLength } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class RequestMagicLinkDto {
   @ApiProperty({
@@ -13,4 +19,13 @@ export class RequestMagicLinkDto {
   @IsNotEmpty({ message: 'Email is required' })
   @Transform(({ value }: { value: string }) => value?.toLowerCase()?.trim())
   email!: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Allowed relative native authorization route to resume after sign-in',
+    example: '/en/auth/native/authorize?transaction=abc-123',
+  })
+  @IsOptional()
+  @IsString()
+  redirect?: string;
 }

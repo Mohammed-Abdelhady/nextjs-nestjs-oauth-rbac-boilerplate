@@ -1,6 +1,7 @@
 import request from 'supertest';
 import type { Response } from 'supertest';
-import { bootE2eApp, browserAgent, type E2eApp } from './utils/e2e-app';
+import { bootE2eApp, type E2eApp } from './utils/e2e-app';
+import { browserAgent } from './utils/e2e-app'; // feature:magic-link,totp,passkeys
 // feature:oauth-core:start
 import {
   OAUTH_BOOT_PROVIDER_IDS,

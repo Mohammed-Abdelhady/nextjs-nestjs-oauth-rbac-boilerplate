@@ -14,4 +14,10 @@ describe('buildOAuthStartUrl', () => {
       `${API_BASE_URL}/api/auth/oauth/google/start?redirect=%2Fsettings&intent=link`,
     );
   });
+
+  it('carries the native authorize continuation to the provider start route', () => {
+    expect(buildOAuthStartUrl('google', '/auth/native/authorize?transaction=txn-abc123')).toBe(
+      `${API_BASE_URL}/api/auth/oauth/google/start?redirect=%2Fauth%2Fnative%2Fauthorize%3Ftransaction%3Dtxn-abc123`,
+    );
+  });
 });

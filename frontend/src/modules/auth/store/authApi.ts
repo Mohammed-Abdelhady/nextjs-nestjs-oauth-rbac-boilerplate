@@ -1,5 +1,10 @@
 import { baseApi } from '@/store/api/baseApi';
 import { LOGOUT_ENDPOINT } from '@/constants/api';
+import {
+  NATIVE_AUTHORIZE_APPROVE_ENDPOINT,
+  NATIVE_AUTHORIZE_DENY_ENDPOINT,
+  nativeAuthorizeTransactionEndpoint,
+} from '../constants/nativeAuthorize';
 import type {
   User,
   LoginRequest,
@@ -15,6 +20,11 @@ import type {
   ResetPasswordRequest,
   ResetPasswordResponse,
 } from '../types/auth.types';
+import type {
+  NativeAuthorizeActionRequest,
+  NativeAuthorizeRedirect,
+  NativeAuthorizeTransaction,
+} from '../types/nativeAuthorize.types';
 
 /**
  * Auth API slice with authentication endpoints
@@ -164,6 +174,47 @@ export const authApi = baseApi.injectEndpoints({
       transformResponse: (response: { success: boolean; data: User }) => response.data,
       invalidatesTags: ['User'],
     }),
+
+    /**
+     * Read a native authorize transaction.
+     * Answers whether the signed-in browser may approve it, and withholds the
+     * redirect address, the PKCE challenge and the state.
+     */
+    getNativeAuthorizeTransaction: builder.query<NativeAuthorizeTransaction, string>({
+      query: (transactionId) => nativeAuthorizeTransactionEndpoint(transactionId),
+      transformResponse: (response: { success: boolean; data: NativeAuthorizeTransaction }) =>
+        response.data,
+    }),
+
+    /**
+     * Approve a native authorize transaction.
+     * Ends it once and answers with the redirect address carrying the code.
+     */
+    approveNativeAuthorize: builder.mutation<NativeAuthorizeRedirect, NativeAuthorizeActionRequest>(
+      {
+        query: (body) => ({
+          url: NATIVE_AUTHORIZE_APPROVE_ENDPOINT,
+          method: 'POST',
+          body,
+        }),
+        transformResponse: (response: { success: boolean; data: NativeAuthorizeRedirect }) =>
+          response.data,
+      },
+    ),
+
+    /**
+     * Deny a native authorize transaction.
+     * Ends it once and answers with the redirect address carrying access_denied.
+     */
+    denyNativeAuthorize: builder.mutation<NativeAuthorizeRedirect, NativeAuthorizeActionRequest>({
+      query: (body) => ({
+        url: NATIVE_AUTHORIZE_DENY_ENDPOINT,
+        method: 'POST',
+        body,
+      }),
+      transformResponse: (response: { success: boolean; data: NativeAuthorizeRedirect }) =>
+        response.data,
+    }),
   }),
 });
 
@@ -179,4 +230,7 @@ export const {
   useResetPasswordMutation,
   useChangePasswordMutation,
   useUpdateProfileMutation,
+  useGetNativeAuthorizeTransactionQuery,
+  useApproveNativeAuthorizeMutation,
+  useDenyNativeAuthorizeMutation,
 } = authApi;

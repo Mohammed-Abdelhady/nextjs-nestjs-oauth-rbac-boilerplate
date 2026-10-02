@@ -62,6 +62,8 @@ export enum ErrorCode {
   FEATURE_DISABLED = 'FEATURE_DISABLED',
   /** Native OAuth and bearer authentication are disabled for this deployment */
   NATIVE_AUTH_DISABLED = 'NATIVE_AUTH_DISABLED',
+  /** Native authorization transaction is unknown, expired, or already ended */
+  NATIVE_TRANSACTION_EXPIRED = 'NATIVE_TRANSACTION_EXPIRED',
 
   // Session errors
   /** Authentication session required */

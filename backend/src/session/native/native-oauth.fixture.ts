@@ -68,6 +68,7 @@ export function nativeAuthorizeQuery(
     code_challenge: createHash('sha256').update(verifier).digest('base64url'),
     code_challenge_method: 'S256',
     state: 'state-1',
+    scope: DEFAULT_API_AUDIENCE,
     ...overrides,
   };
 }

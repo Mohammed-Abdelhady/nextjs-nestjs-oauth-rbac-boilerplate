@@ -49,6 +49,8 @@ export interface LoginResponse {
   requiresTwoFactor: boolean;
   user: User | null;
   message?: string;
+  /** Continuation stored on a mailed link, echoed back by the verify step. */
+  redirect?: string;
 }
 
 /**

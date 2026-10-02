@@ -191,7 +191,7 @@ describe('browser proof (e2e)', () => {
   });
 
   it('allows the configured origin in production without seeding applications', async () => {
-    const production = await bootE2eApp(0, undefined, 'production');
+    const production = await bootE2eApp(0, { nodeEnv: 'production' });
     try {
       const applications = production.app.get<Model<ApplicationDocument>>(
         getModelToken(Application.name),

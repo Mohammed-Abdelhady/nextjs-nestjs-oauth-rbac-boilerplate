@@ -7,7 +7,7 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { MagicLinkService } from './magic-link.service';
@@ -68,6 +68,34 @@ export class MagicLinkController {
       'The token works once; a spent or expired one answers MAGIC_LINK_INVALID.',
   })
   @ApiBody({ type: VerifyMagicLinkDto })
+  @ApiOkResponse({
+    description: 'Signs in and optionally returns the validated continuation',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        data: {
+          type: 'object',
+          properties: {
+            requiresTwoFactor: { type: 'boolean' },
+            user: {
+              type: 'object',
+              nullable: true,
+              additionalProperties: true,
+            },
+            redirect: {
+              type: 'string',
+              description:
+                'Present only when a native authorization continuation was stored',
+            },
+          },
+          required: ['requiresTwoFactor', 'user'],
+        },
+        message: { type: 'string' },
+      },
+      required: ['success', 'data'],
+    },
+  })
   async verify(@Body() dto: VerifyMagicLinkDto, @Res() response: Response) {
     const result = await this.magicLinkService.verify(dto, response);
     return response.status(HttpStatus.OK).json(result);

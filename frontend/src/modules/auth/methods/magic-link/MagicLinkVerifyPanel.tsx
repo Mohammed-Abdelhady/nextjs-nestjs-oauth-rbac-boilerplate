@@ -43,7 +43,7 @@ export function MagicLinkVerifyPanel({ token, redirect }: MagicLinkVerifyPanelPr
 
     verifyMagicLink({ token })
       .unwrap()
-      .then((response) => completeSignIn(response, redirect))
+      .then((response) => completeSignIn(response, response.redirect ?? redirect))
       .catch((error: unknown) => {
         handleFeatureDisabled(error, false);
         setFailureCode(translatableErrorCode(error, ErrorCode.MAGIC_LINK_INVALID));

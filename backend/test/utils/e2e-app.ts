@@ -43,12 +43,19 @@ export interface E2eApp {
   close: () => Promise<void>;
 }
 
+/** Optional overrides for a booted fixture. A feature's option never shifts another. */
+export interface BootE2eAppOptions {
+  nodeEnv?: string;
+  browserStrategy?: OAuthProviderStrategy; // feature:oauth-core
+}
+
 /** Owns its database and starts configuration outside the developer's env directory. */
 export async function bootE2eApp(
   port = 0,
-  browserStrategy?: OAuthProviderStrategy, // feature:oauth-core
-  nodeEnv = 'test',
+  options: BootE2eAppOptions = {},
 ): Promise<E2eApp> {
+  const nodeEnv = options.nodeEnv ?? 'test';
+  const browserStrategy = options.browserStrategy; // feature:oauth-core
   const originalDirectory = process.cwd();
   const fixtureDirectory = await mkdtemp(join(tmpdir(), 'auth-e2e-'));
   const mongo = await startMemoryReplSet().catch(async (error: unknown) => {

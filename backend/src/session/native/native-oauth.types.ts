@@ -9,6 +9,8 @@ export const OAUTH_ERROR = {
   ACCESS_DENIED: 'access_denied',
 } as const;
 
+export const NATIVE_AUTH_INTENT = 'native_login';
+
 export type OauthErrorCode = (typeof OAUTH_ERROR)[keyof typeof OAUTH_ERROR];
 
 export interface OauthFailure {
@@ -20,6 +22,13 @@ export interface OauthFailure {
 export interface AuthorizeBegin {
   ok: true;
   transactionId: string;
+}
+
+export interface NativeAuthorizeTransactionDetails {
+  applicationName: string;
+  platform: string;
+  expiresAt: string;
+  alreadyGranted: boolean;
 }
 
 export interface TokenSuccess {
@@ -42,12 +51,12 @@ export function oauthFailure(
 }
 
 export interface AuthorizeQuery {
-  response_type?: string;
-  client_id?: string;
-  redirect_uri?: string;
-  code_challenge?: string;
-  code_challenge_method?: string;
-  state?: string;
+  response_type: string;
+  client_id: string;
+  redirect_uri: string;
+  code_challenge: string;
+  code_challenge_method: string;
+  state: string;
   scope?: string;
 }
 

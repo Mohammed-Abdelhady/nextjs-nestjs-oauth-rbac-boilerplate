@@ -1,5 +1,6 @@
 import { randomBytes } from 'crypto';
 import request from 'supertest';
+import { ErrorCode } from '../../common/enums/error-code.enum';
 import { AuthEpochService } from '../../common/services/auth-epoch.service';
 import { OAUTH_ERROR } from './native-oauth.types';
 import { CREDENTIAL_PURPOSE } from '../constants/credential-purpose';
@@ -90,16 +91,13 @@ describe('native authorization (plan 04)', () => {
       .spyOn(ctx.harness.app.get(AuthEpochService), 'nativeEnabled')
       .mockReturnValueOnce(false);
 
-    const result = await ctx.authorize.approve(
-      user._id.toString(),
-      begun.transactionId,
-      ['password'],
-    );
-
-    expect(result).toEqual({
-      ok: false,
-      status: 400,
-      error: OAUTH_ERROR.UNAUTHORIZED_CLIENT,
+    await expect(
+      ctx.authorize.approve(user._id.toString(), begun.transactionId, [
+        'password',
+      ]),
+    ).rejects.toMatchObject({
+      code: ErrorCode.NATIVE_AUTH_DISABLED,
+      status: 403,
     });
     expect(
       (await ctx.transactions.findOne({ transactionId: begun.transactionId }))
@@ -107,16 +105,18 @@ describe('native authorization (plan 04)', () => {
     ).toBeUndefined();
   });
 
-  it('sends the browser to the first-party login page', async () => {
+  it('sends the browser to the localized native authorization page', async () => {
     const verifier = randomBytes(32).toString('base64url');
     const response = await request(nativeHttpServer(ctx.harness.app))
       .get('/api/oauth/authorize')
       .query(nativeAuthorizeQuery(verifier))
+      .set('Accept-Language', 'ar')
       .redirects(0);
     expect(response.status).toBe(302);
-    expect(response.headers.location).toContain(
-      'http://localhost:3000/login?native_transaction=',
-    );
+    const location = new URL(String(response.headers.location));
+    expect(location.origin).toBe('http://localhost:3000');
+    expect(location.pathname).toBe('/ar/auth/native/authorize');
+    expect([...location.searchParams.keys()]).toEqual(['transaction']);
     expect(String(response.headers.location)).not.toContain('myapp://');
   });
 
