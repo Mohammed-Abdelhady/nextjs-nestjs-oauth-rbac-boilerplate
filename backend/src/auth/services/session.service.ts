@@ -1,212 +1,88 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import * as crypto from 'crypto';
-import {
-  Session,
-  SessionDocument,
-  LeanSession,
-} from '../../session/schemas/session.schema';
-import { UserDocument } from '../../user/schemas/user.schema';
-import { SESSION_LAST_USED_UPDATE_INTERVAL_MS } from '../../common/constants/session';
-import { parseUserAgent } from '../../common/utils/parse-user-agent';
+import { Types } from 'mongoose';
+import { LeanSession } from '../../session/schemas/session.schema';
+import { SessionIssuanceService } from '../../session/services/session-issuance.service';
+import { SessionAuthorityService } from '../../session/services/session-authority.service';
+import { SessionRevocationService } from '../../session/services/session-revocation.service';
+import { hashToken } from '../../session/utils/token-hash';
 
-export function hashToken(token: string): string {
-  return crypto.createHash('sha256').update(token).digest('hex');
-}
+export { hashToken };
 
 @Injectable()
 export class SessionService {
   private readonly logger = new Logger(SessionService.name);
 
   constructor(
-    @InjectModel(Session.name) private sessionModel: Model<SessionDocument>,
-    private readonly configService: ConfigService,
+    private readonly issuance: SessionIssuanceService,
+    private readonly authority: SessionAuthorityService,
+    private readonly revocation: SessionRevocationService,
   ) {}
 
-  /**
-   * Create a new session for a user.
-   * Stores sha256 token hash in database and returns raw token once.
-   */
   async createSession(
     userId: Types.ObjectId,
     userAgent: string,
     ip: string,
   ): Promise<string> {
-    const token = crypto.randomBytes(32).toString('hex');
-    const tokenHash = hashToken(token);
-    const cookieMaxAge = this.configService.get<number>(
-      'session.cookieMaxAge',
-      604800000,
-    );
-
-    const expiresAt = new Date(Date.now() + cookieMaxAge);
-    const device = parseUserAgent(userAgent);
-
-    await this.sessionModel.create({
-      user: userId,
-      tokenHash,
+    const token = await this.issuance.createBrowserSession(
+      userId,
       userAgent,
-      device,
-      deviceName: device.name,
       ip,
-      expiresAt,
-    });
-
+    );
     this.logger.log(`Session created for user ${userId.toString()}`);
-
     return token;
   }
 
-  /**
-   * Validate a session token.
-   * Hashes the incoming token before lookup.
-   * Updates lastUsedAt with updateOne only when older than 5 minutes.
-   */
   async validateSession(token: string): Promise<LeanSession | null> {
-    const tokenHash = hashToken(token);
-    const session = await this.sessionModel
-      .findOne({
-        tokenHash,
-        isValid: true,
-        expiresAt: { $gt: new Date() },
-      })
-      .populate('user')
-      .lean<LeanSession | null>()
-      .exec();
-
-    if (!session) {
-      return null;
-    }
-
-    const user = session.user as unknown as UserDocument | null;
-    if (!user || user.isDeleted) {
-      return null;
-    }
-
-    const now = new Date();
-    const lastUsedTime = session.lastUsedAt
-      ? new Date(session.lastUsedAt).getTime()
-      : 0;
-
-    if (now.getTime() - lastUsedTime > SESSION_LAST_USED_UPDATE_INTERVAL_MS) {
-      await this.sessionModel.updateOne(
-        { _id: session._id },
-        { $set: { lastUsedAt: now } },
-      );
-      session.lastUsedAt = now;
-    }
-
-    return session;
+    return this.authority.validate(token, { extendIdle: true });
   }
 
-  /**
-   * Invalidate a session by token.
-   */
   async invalidateSession(token: string): Promise<boolean> {
-    const tokenHash = hashToken(token);
-    const result = await this.sessionModel.updateOne(
-      { tokenHash },
-      { isValid: false },
-    );
-
-    this.logger.log(`Session invalidated: ${result.modifiedCount} document(s)`);
-
-    return result.modifiedCount > 0;
+    const revoked = await this.revocation.revokeByToken(token);
+    this.logger.log(`Session invalidated: ${revoked ? 1 : 0} document(s)`);
+    return revoked;
   }
 
-  /**
-   * Invalidate all sessions for a user.
-   */
   async invalidateAllSessions(userId: Types.ObjectId): Promise<number> {
-    const result = await this.sessionModel.updateMany(
-      { user: userId },
-      { isValid: false },
-    );
-
+    const count = await this.revocation.revokeAllForUser(userId);
     this.logger.log(
-      `All sessions invalidated for user ${userId.toString()}: ${result.modifiedCount} document(s)`,
+      `All sessions invalidated for user ${userId.toString()}: ${count} document(s)`,
     );
-
-    return result.modifiedCount;
+    return count;
   }
 
-  /**
-   * Get all active sessions for a user.
-   */
   async getUserSessions(userId: Types.ObjectId): Promise<LeanSession[]> {
-    return this.sessionModel
-      .find({
-        user: userId,
-        isValid: true,
-        expiresAt: { $gt: new Date() },
-      })
-      .sort({ lastUsedAt: -1 })
-      .lean<LeanSession[]>()
-      .exec();
+    return this.authority.listActive(userId);
   }
 
-  /**
-   * Get a session by ID.
-   */
   async getSessionById(sessionId: string): Promise<LeanSession | null> {
-    return this.sessionModel
-      .findById(sessionId)
-      .lean<LeanSession | null>()
-      .exec();
+    return this.authority.getById(sessionId);
   }
 
-  /**
-   * Invalidate a specific session by ID.
-   */
   async invalidateSessionById(
     sessionId: string,
     userId: Types.ObjectId,
   ): Promise<boolean> {
-    const result = await this.sessionModel.updateOne(
-      { _id: sessionId, user: userId, isValid: true },
-      { isValid: false },
-    );
-
-    if (result.modifiedCount > 0) {
+    const revoked = await this.revocation.revokeById(sessionId, userId);
+    if (revoked) {
       this.logger.log(
         `Session ${sessionId} invalidated for user ${userId.toString()}`,
       );
-      return true;
     }
-
-    return false;
+    return revoked;
   }
 
-  /**
-   * Invalidate all sessions for a user except one.
-   */
   async invalidateAllSessionsExcept(
     userId: Types.ObjectId,
     exceptToken: string,
   ): Promise<number> {
-    const exceptTokenHash = hashToken(exceptToken);
-    const result = await this.sessionModel.updateMany(
-      { user: userId, tokenHash: { $ne: exceptTokenHash }, isValid: true },
-      { isValid: false },
-    );
-
+    const count = await this.revocation.revokeAllOthers(userId, exceptToken);
     this.logger.log(
-      `All sessions except current invalidated for user ${userId.toString()}: ${result.modifiedCount} document(s)`,
+      `All sessions except current invalidated for user ${userId.toString()}: ${count} document(s)`,
     );
-
-    return result.modifiedCount;
+    return count;
   }
 
-  /**
-   * Get session by raw token.
-   */
   async getSessionByToken(token: string): Promise<LeanSession | null> {
-    const tokenHash = hashToken(token);
-    return this.sessionModel
-      .findOne({ tokenHash })
-      .lean<LeanSession | null>()
-      .exec();
+    return this.authority.getByToken(token);
   }
 }

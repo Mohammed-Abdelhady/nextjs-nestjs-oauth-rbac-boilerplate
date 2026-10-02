@@ -8,7 +8,12 @@ import { PASSKEY_NAME_MAX_LENGTH } from '../constants/passkeys.constants';
  */
 @Schema({ timestamps: true })
 export class Passkey {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true,
+  })
   user!: Types.ObjectId;
 
   /** Credential id as base64url, the value the authenticator signs under. */

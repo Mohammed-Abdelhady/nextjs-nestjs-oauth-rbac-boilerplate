@@ -1,0 +1,27 @@
+export const AUTH_SCHEMA_VERSION = 1;
+
+export const DEFAULT_AUTH_EPOCH = 1;
+
+export const USER_AGENT_MAX_LENGTH = 512;
+export const DEVICE_NAME_MAX_LENGTH = 64;
+export const LINEARIZABLE_QUERY_MAX_TIME_MS = 5000;
+
+export const WEB_ABSOLUTE_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
+export const WEB_IDLE_LIFETIME_MS = 30 * 60 * 1000;
+
+export const NATIVE_ABSOLUTE_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
+export const NATIVE_IDLE_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
+export const NATIVE_ACCESS_LIFETIME_MS = 5 * 60 * 1000;
+export const NATIVE_INITIAL_IDLE_MS = 5 * 60 * 1000;
+
+export const ADMIN_ABSOLUTE_LIFETIME_MS = 8 * 60 * 60 * 1000;
+export const ADMIN_IDLE_LIFETIME_MS = 15 * 60 * 1000;
+export const SENSITIVE_ACTION_WINDOW_MS = 5 * 60 * 1000;
+
+export const MAX_SESSIONS_PER_USER = 20;
+export const MAX_ADMIN_SESSIONS_PER_USER = 5;
+
+export const AUTHORIZATION_CODE_LIFETIME_MS = 60 * 1000;
+export const PENDING_AUTH_LIFETIME_MS = 5 * 60 * 1000;
+
+export const SECURITY_EVENT_PURGE_MS = 90 * 24 * 60 * 60 * 1000;

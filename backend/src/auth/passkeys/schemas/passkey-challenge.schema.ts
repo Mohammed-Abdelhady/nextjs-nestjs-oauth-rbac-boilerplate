@@ -16,7 +16,7 @@ export class PasskeyChallenge {
   @Prop({ required: true })
   purpose!: PasskeyChallengePurpose;
 
-  @Prop({ type: Types.ObjectId, ref: 'User' })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   user?: Types.ObjectId;
 
   @Prop({ required: true, index: { expireAfterSeconds: 0 } })

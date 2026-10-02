@@ -1,3 +1,7 @@
+const { dropIndexIfExists } = require(
+  '../migration-support/migration-index-utils',
+);
+
 /**
  * Migration: Move per-provider id fields into linkedAccounts
  *
@@ -33,17 +37,6 @@ const LINKED_ACCOUNTS_INDEX = {
   'linkedAccounts.provider': 1,
   'linkedAccounts.providerId': 1,
 };
-
-async function dropIndexIfExists(collection, name) {
-  try {
-    await collection.dropIndex(name);
-    console.log(`Dropped index ${name}`);
-  } catch (error) {
-    if (error.codeName !== 'IndexNotFound' && error.code !== 27) {
-      throw error;
-    }
-  }
-}
 
 async function flush(collection, operations) {
   if (operations.length === 0) {

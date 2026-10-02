@@ -1,3 +1,7 @@
+const { dropIndexIfExists } = require(
+  '../migration-support/migration-index-utils',
+);
+
 /**
  * Migration: Initial Indexes
  *
@@ -27,17 +31,8 @@ module.exports = {
     const usersCollection = db.collection('users');
 
     for (const indexName of legacyIndexNames) {
-      try {
-        await usersCollection.dropIndex(indexName);
+      if (await dropIndexIfExists(usersCollection, indexName)) {
         console.log(`Dropped index ${indexName}`);
-      } catch (error) {
-        if (
-          error &&
-          (error.code === 27 || error.codeName === 'IndexNotFound')
-        ) {
-          continue;
-        }
-        throw error;
       }
     }
   },

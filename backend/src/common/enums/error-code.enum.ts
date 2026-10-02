@@ -68,6 +68,16 @@ export enum ErrorCode {
   SESSION_INVALID = 'SESSION_INVALID',
   /** Session has expired */
   SESSION_EXPIRED = 'SESSION_EXPIRED',
+  /** Concurrent session cap would be exceeded */
+  SESSION_LIMIT_REACHED = 'SESSION_LIMIT_REACHED',
+  /** Authoritative session state could not be read */
+  AUTHORITY_UNAVAILABLE = 'AUTHORITY_UNAVAILABLE',
+  /** Registered application is missing */
+  APPLICATION_NOT_FOUND = 'APPLICATION_NOT_FOUND',
+  /** Registered application is disabled */
+  APPLICATION_DISABLED = 'APPLICATION_DISABLED',
+  /** User is blocked from this application */
+  GRANT_BLOCKED = 'GRANT_BLOCKED',
 
   // Verification errors
   /** Email address not verified */

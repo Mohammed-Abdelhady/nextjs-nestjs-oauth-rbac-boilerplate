@@ -38,6 +38,8 @@ describe('HealthController', () => {
       const healthData: HealthResponse = {
         status: 'healthy',
         timestamp: '2026-09-03T00:00:00.000Z',
+        authEpoch: 1,
+        authSchemaVersion: 1,
       };
 
       mockHealthService.getHealth.mockReturnValue(healthData);
@@ -55,6 +57,8 @@ describe('HealthController', () => {
       const healthData: HealthResponse = {
         status: 'unhealthy',
         timestamp: '2026-09-03T00:00:00.000Z',
+        authEpoch: 1,
+        authSchemaVersion: 1,
       };
 
       mockHealthService.getHealth.mockReturnValue(healthData);

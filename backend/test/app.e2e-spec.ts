@@ -7,6 +7,8 @@ import type { Response } from 'supertest';
 interface HealthResponse {
   status: string;
   timestamp: string;
+  authEpoch: number;
+  authSchemaVersion: number;
 }
 
 describe('AppController (e2e)', () => {
@@ -39,7 +41,12 @@ describe('AppController (e2e)', () => {
       const body = response.body as HealthResponse;
       expect(body).toHaveProperty('status');
       expect(body).toHaveProperty('timestamp');
-      expect(Object.keys(body).sort()).toEqual(['status', 'timestamp']);
+      expect(Object.keys(body).sort()).toEqual([
+        'authEpoch',
+        'authSchemaVersion',
+        'status',
+        'timestamp',
+      ]);
     });
 
     it('should return correct health structure', async () => {

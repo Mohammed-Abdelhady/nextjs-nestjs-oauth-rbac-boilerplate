@@ -5,6 +5,7 @@ import { UserSchema } from '../../user/schemas/user.schema';
 import { RoleSchema } from '../../role/schemas/role.schema';
 import { SeedService } from './seed.service';
 import { RoleSeedService } from './role.seed';
+import { SessionModule } from '../../session/session.module';
 
 /**
  * Seed Module
@@ -27,6 +28,7 @@ import { RoleSeedService } from './role.seed';
         schema: RoleSchema,
       },
     ]),
+    SessionModule,
   ],
   providers: [SeedService, RoleSeedService],
   exports: [SeedService],

@@ -1,3 +1,7 @@
+const { dropIndexIfExists } = require(
+  '../migration-support/migration-index-utils',
+);
+
 /**
  * Migration: Add Linked Providers Fields
  *
@@ -101,14 +105,10 @@ module.exports = {
       `Removed linked providers fields from ${result.modifiedCount} users`,
     );
 
-    try {
-      await db.collection('users').dropIndex('linkedProviders_index');
+    if (
+      await dropIndexIfExists(db.collection('users'), 'linkedProviders_index')
+    ) {
       console.log('Dropped linkedProviders index');
-    } catch (error) {
-      if (error.code === 27 || error.codeName === 'IndexNotFound') {
-        return;
-      }
-      throw error;
     }
   },
 };
