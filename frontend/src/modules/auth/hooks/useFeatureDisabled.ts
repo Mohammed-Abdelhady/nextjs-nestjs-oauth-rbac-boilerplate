@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { ErrorCode } from '@/constants/errorCodes';
+import { ErrorCode } from '@app/core';
 import { toast } from '@/lib/toast';
 import { baseApi } from '@/store/api/baseApi';
 import { useAppDispatch } from '@/store/hooks';

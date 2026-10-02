@@ -23,7 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Shield, ShieldAlert } from 'lucide-react';
 import { useListRolesQuery } from '../api/rolesApi';
 import { toast } from '@/lib/toast';
-import { parseApiError } from '@/lib/apiError';
+import { parseApiError } from '@app/core';
 
 interface UserRoleSelectorProps {
   readonly userId: string;

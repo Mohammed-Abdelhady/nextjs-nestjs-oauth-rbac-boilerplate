@@ -13,12 +13,11 @@ import {
   SubmitButton,
 } from '@/components/forms';
 import { useRegisterMutation } from '@/modules/auth/store/authApi';
-import { zodEmail, zodPassword, zodName } from '@/lib/validations';
+import { zodEmail, zodPassword, zodName, parseApiError } from '@app/core';
 import { UserPlus, LogIn } from 'lucide-react';
 import { IconLinkButton } from '@/components/ui/icon-link-button';
 import { useCallback, useMemo } from 'react';
 import { toast } from '@/lib/toast';
-import { parseApiError } from '@/lib/apiError';
 import { AuthDivider } from '@/components/ui/auth-divider';
 import { OAuthButtons } from '@/modules/oauth'; // feature:oauth-core
 import { useAuthMethods } from '@/modules/auth/hooks/useAuthMethods';

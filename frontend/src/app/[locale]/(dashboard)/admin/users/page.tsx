@@ -10,11 +10,11 @@ import { PaginationControl } from '@/components/pagination';
 import { useGetUsersQuery } from '@/modules/users/api/usersApi';
 import { UserListSkeleton, UserListToolbar, UserGroupedList } from '@/modules/users/components';
 import { CreateUserButton } from '@/modules/permissions/components/CreateUserButton';
-import { USER_PERMISSIONS, PermissionGuard, RoutePermissionGuard } from '@/modules/permissions';
+import { PermissionGuard, RoutePermissionGuard } from '@/modules/permissions';
+import { USER_PERMISSIONS, parseApiError } from '@app/core';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useAppDispatch } from '@/store/hooks';
 import { baseApi } from '@/store/api/baseApi';
-import { parseApiError } from '@/lib/apiError';
 
 const UserPermissionsDialog = lazy(() =>
   import('@/modules/permissions/components/UserPermissionsDialog').then((mod) => ({

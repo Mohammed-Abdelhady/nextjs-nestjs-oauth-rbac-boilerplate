@@ -5,7 +5,7 @@ import type { AbstractIntlMessages } from 'next-intl';
 import { loadMessages } from '@/i18n/load-messages';
 import { clearBrowserProof } from '@/store/api/browser-proof';
 import { setUser } from '@/modules/auth/store/authSlice';
-import { ErrorCode } from '@/constants/errorCodes';
+import { ErrorCode } from '@app/core';
 import {
   TEST_TRANSACTION,
   TEST_USER,

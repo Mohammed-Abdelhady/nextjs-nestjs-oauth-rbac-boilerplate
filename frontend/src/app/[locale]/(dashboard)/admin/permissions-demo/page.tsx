@@ -1,12 +1,11 @@
+import { PermissionGuard, RoutePermissionGuard } from '@/modules/permissions';
 import {
-  PermissionGuard,
-  RoutePermissionGuard,
   USER_PERMISSIONS,
   ROLE_PERMISSIONS,
   SESSION_PERMISSIONS,
   PERMISSION_PERMISSIONS,
   WILDCARD_PERMISSION,
-} from '@/modules/permissions';
+} from '@app/core';
 import { Button } from '@/components/ui/button';
 import { Shield, Lock, Unlock, Users, Settings, Trash2, Edit, Eye } from 'lucide-react';
 
@@ -233,7 +232,8 @@ export default function PermissionsDemoPage() {
             <div>
               <h3 className="mb-2 text-sm font-semibold">Component-level Guard:</h3>
               <pre className="overflow-x-auto rounded-md bg-muted p-4 text-xs">
-                {`import { PermissionGuard, USER_PERMISSIONS } from '@/modules/permissions';
+                {`import { PermissionGuard } from '@/modules/permissions';
+import { USER_PERMISSIONS } from '@app/core';
 
 <PermissionGuard permission={USER_PERMISSIONS.DELETE_ALL}>
   <Button variant="destructive">Delete User</Button>
@@ -244,7 +244,8 @@ export default function PermissionsDemoPage() {
             <div>
               <h3 className="mb-2 text-sm font-semibold">Route-level Guard:</h3>
               <pre className="overflow-x-auto rounded-md bg-muted p-4 text-xs">
-                {`import { RoutePermissionGuard, ROLE_PERMISSIONS } from '@/modules/permissions';
+                {`import { RoutePermissionGuard } from '@/modules/permissions';
+import { ROLE_PERMISSIONS } from '@app/core';
 
 export default function RolesPage() {
   return (

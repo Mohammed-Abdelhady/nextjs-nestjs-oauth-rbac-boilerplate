@@ -3,7 +3,7 @@
 import type { RefObject } from 'react';
 import { useTranslations } from 'next-intl';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ErrorCode } from '@/constants/errorCodes';
+import { ErrorCode } from '@app/core';
 
 interface NativeAuthorizeDisabledViewProps {
   headingRef: RefObject<HTMLHeadingElement | null>;

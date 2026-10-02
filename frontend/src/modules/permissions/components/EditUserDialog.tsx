@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { useUpdateUserMutation } from '@/store/api/userApi';
 import { toast } from '@/lib/toast';
-import { parseApiError } from '@/lib/apiError';
+import { parseApiError } from '@app/core';
 
 interface EditUserDialogProps {
   userId: string | null;

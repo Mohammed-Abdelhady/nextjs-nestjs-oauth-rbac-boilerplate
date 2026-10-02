@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { zodEmail } from '@/lib/validations';
+import { zodEmail } from '@app/core';
 
 /**
  * Activation form validation schema

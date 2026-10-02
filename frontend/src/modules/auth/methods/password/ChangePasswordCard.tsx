@@ -9,11 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { FormPassword, PasswordRules, SubmitButton } from '@/components/forms';
 import { useChangePasswordMutation } from '@/modules/auth/store';
 import { useAuthMethods } from '@/modules/auth/hooks/useAuthMethods';
-import { parseApiError } from '@/lib/apiError';
-import {
-  createChangePasswordSchema,
-  type ChangePasswordFormData,
-} from '@/lib/validations/changePassword';
+import { parseApiError, createChangePasswordSchema, type ChangePasswordFormData } from '@app/core';
 
 /**
  * Password change, for the settings page.

@@ -1,4 +1,4 @@
-import { parseApiError } from '../../../lib/apiError';
+import { parseApiError } from '@app/core';
 import { routing } from '@/i18n/routing';
 import { NATIVE_AUTHORIZE_PATH, NATIVE_TRANSACTION_PARAM } from '../constants/nativeAuthorize';
 
@@ -188,7 +188,7 @@ export function getRedirectPath(
  * getErrorMessage({ message: 'Invalid credentials' }) // 'Invalid credentials'
  * getErrorMessage('Something went wrong') // 'Something went wrong'
  *
- * @deprecated Use parseApiError from '@/lib/apiError' for better error handling with i18n support
+ * @deprecated Use parseApiError from '@app/core' for better error handling with i18n support
  */
 export function getErrorMessage(error: unknown): string {
   return parseApiError(error).message;

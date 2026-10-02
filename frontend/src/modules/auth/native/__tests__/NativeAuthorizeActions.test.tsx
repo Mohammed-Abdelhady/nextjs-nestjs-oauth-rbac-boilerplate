@@ -3,7 +3,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { act, cleanup, fireEvent, screen, within } from '@testing-library/react';
 import type { AbstractIntlMessages } from 'next-intl';
 import { loadMessages } from '@/i18n/load-messages';
-import { ErrorCode } from '@/constants/errorCodes';
+import { ErrorCode } from '@app/core';
 import { clearBrowserProof, rememberBrowserProof } from '@/store/api/browser-proof';
 import {
   TEST_TRANSACTION,

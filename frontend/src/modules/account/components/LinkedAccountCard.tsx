@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { OAuthProviderIcon } from '@/modules/oauth';
-import { parseApiError } from '@/lib/apiError';
+import { parseApiError } from '@app/core';
 import { useUnlinkProviderMutation, useSetPrimaryProviderMutation } from '../api';
 
 interface LinkedAccountCardProps {

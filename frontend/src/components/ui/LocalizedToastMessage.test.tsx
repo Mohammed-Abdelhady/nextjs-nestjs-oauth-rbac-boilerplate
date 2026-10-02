@@ -5,7 +5,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { LocalizedToastMessage } from './LocalizedToastMessage';
 import { errorInterceptor } from '@/store/middleware/errorInterceptor';
 import { toast } from '@/lib/toast';
-import { ErrorCode } from '@/constants/errorCodes';
+import { ErrorCode } from '@app/core';
 import { loadMessages, type AppLocale } from '@/i18n/load-messages';
 import { lookupMessage } from '@/i18n/__tests__/message-tree';
 

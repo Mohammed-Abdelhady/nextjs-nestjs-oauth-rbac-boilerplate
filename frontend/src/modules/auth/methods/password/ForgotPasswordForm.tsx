@@ -6,12 +6,11 @@ import { FormProvider } from 'react-hook-form';
 import { useFormWithValidation } from '@/hooks/useFormWithValidation';
 import { FormInput, FormRootError, SubmitButton } from '@/components/forms';
 import { useForgotPasswordMutation } from '@/modules/auth/store/authApi';
-import { zodEmail } from '@/lib/validations';
+import { zodEmail, parseApiError } from '@app/core';
 import { Mail } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { toast } from '@/lib/toast';
 import { Link, useRouter } from '@/i18n/navigation';
-import { parseApiError } from '@/lib/apiError';
 import { preventNavigationBlur } from '@/modules/auth/utils/preventNavigationBlur';
 
 /**
