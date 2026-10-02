@@ -92,7 +92,10 @@ export function unwrapOAuth<T extends object>(response: TransportResponse): T {
   }
   const oauthError = isJsonObject(body) ? nonEmptyString(body.error) : undefined;
   if (oauthError !== undefined) {
-    throw new OAuthError({ status, error: oauthError });
+    const errorDescription = isJsonObject(body)
+      ? nonEmptyString(body.error_description)
+      : undefined;
+    throw new OAuthError({ status, error: oauthError, errorDescription });
   }
   throw toApiError(body, status);
 }

@@ -30,17 +30,19 @@ app, which will inject a bearer transport. Until then it is exercised by this
 package's tests and by `backend/test/sdk-contract.e2e-spec.ts`, which drives the
 real server through it.
 
-## Known gaps on a bearer transport
+## Sessions on a bearer transport
 
-The server reads the current session of these calls from the session cookie
-only. A bearer caller gets the following today, and the contract spec pins each
-one so the server change that fixes them has to update it:
+The session calls read the current session from the credential the request
+arrived on, so they behave the same in the browser and on a bearer transport:
 
-- `auth.signOut()` answers 401 `SESSION_INVALID`. Sign out with `oauth.revoke`.
-- `sessions.revokeOthers()` answers 401 `SESSION_INVALID`.
-- `sessions.list()` returns browser sessions only, with `isCurrent` false on
-  every row. The caller's own session is not in the list.
-- `sessions.revoke(id)` does not refuse the caller's own session.
+- `auth.signOut()` signs out the calling session: the cookie session in the
+  browser, the native token family on a bearer transport.
+- `sessions.revokeOthers()` keeps the calling session and revokes the rest.
+- `sessions.list()` returns browser and native sessions, with `isCurrent`
+  true on the row of the calling session. Each row carries
+  `credentialPurpose`, either `browser_session` or `native_access`.
+- `sessions.revoke(id)` refuses the calling session with
+  `CANNOT_REVOKE_CURRENT_SESSION`.
 
 ## Transport
 
@@ -70,8 +72,10 @@ transport untouched. Pass `AbortSignal` as `TSignal` on a platform that has it.
   on a validation error, and `requestId` when the server sent one. A success
   status with a body of the wrong shape is an `ApiError` with `UNKNOWN_ERROR`
   and a message that names what was wrong.
-- `OAuthError`: an OAuth route refused with `{ error }`. It carries `status` and
-  `error`, one of `OAUTH_ERROR`.
+- `OAuthError`: an OAuth route refused with `{ error }`. It carries `status`,
+  `error` (one of `OAUTH_ERROR`), and `errorDescription` when the server sent
+  a string `error_description`. The kill switch sends
+  `error_description: "NATIVE_AUTH_DISABLED"` with `unauthorized_client`.
 - `TransportError`: no response. `reason` is `aborted` when the caller's signal
   aborted, `no_response` otherwise.
 - `TypeError`: a session id that cannot be a path segment (empty, `.` or `..`).

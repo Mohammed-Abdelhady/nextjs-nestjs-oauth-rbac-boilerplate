@@ -28,6 +28,7 @@ export class ApiError extends Error {
 export interface OAuthErrorInit {
   status: number;
   error: string;
+  errorDescription?: string;
 }
 
 /** A raw OAuth route refused the request with `{ error }`. */
@@ -35,11 +36,14 @@ export class OAuthError extends Error {
   readonly status: number;
   /** The OAuth error string, one of `OAUTH_ERROR` for this server. */
   readonly error: string;
+  /** The `error_description` the server sent, when it sent a string. */
+  readonly errorDescription?: string;
 
   constructor(init: OAuthErrorInit) {
     super(init.error);
     this.name = 'OAuthError';
     this.status = init.status;
     this.error = init.error;
+    this.errorDescription = init.errorDescription;
   }
 }
