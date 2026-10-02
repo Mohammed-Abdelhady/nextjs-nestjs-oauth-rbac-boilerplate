@@ -22,7 +22,7 @@ import { PermissionSearchDialog } from './PermissionSearchDialog';
 import { UserPermissionsSummary } from './UserPermissionsSummary';
 import { Loader2, Plus, Trash2, Shield, User } from 'lucide-react';
 import { toast } from '@/lib/toast';
-import { parseApiError } from '@app/core';
+import { reportUnlessHandled } from '@/lib/requestFailure';
 
 export interface UserPermissionsDialogProps {
   open: boolean;
@@ -74,9 +74,8 @@ export function UserPermissionsDialog({
 
       // Refresh data
       refetch();
-    } catch (error: unknown) {
-      const parsed = parseApiError(error);
-      toast.error(parsed.message || t('addError'));
+    } catch (error) {
+      reportUnlessHandled(error);
     }
   };
 
@@ -90,9 +89,8 @@ export function UserPermissionsDialog({
 
       // Refresh data
       refetch();
-    } catch (error: unknown) {
-      const parsed = parseApiError(error);
-      toast.error(parsed.message || t('removeError'));
+    } catch (error) {
+      reportUnlessHandled(error);
     }
   };
 

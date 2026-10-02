@@ -1,15 +1,17 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { toast } from '@/lib/toast';
+import { reportUnlessHandled } from '@/lib/requestFailure';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormPassword, PasswordRules, SubmitButton } from '@/components/forms';
 import { useChangePasswordMutation } from '@/modules/auth/store';
 import { useAuthMethods } from '@/modules/auth/hooks/useAuthMethods';
-import { parseApiError, createChangePasswordSchema, type ChangePasswordFormData } from '@app/core';
+import { useFormFieldTarget, useServerFieldErrors } from '@/hooks/useServerFieldErrors';
+import { createChangePasswordSchema, type ChangePasswordFormData } from '@app/core';
 
 /**
  * Password change, for the settings page.
@@ -32,6 +34,11 @@ export function ChangePasswordCard() {
       confirmPassword: '',
     },
   });
+  const formRef = useRef<HTMLFormElement>(null);
+  const applyServerFieldErrors = useServerFieldErrors(
+    useFormFieldTarget(form.setError, formRef),
+    isLoading,
+  );
 
   const onSubmit = async (data: ChangePasswordFormData) => {
     try {
@@ -43,8 +50,8 @@ export function ChangePasswordCard() {
       toast.success(t('success'));
       form.reset();
     } catch (error) {
-      const parsed = parseApiError(error);
-      toast.error(parsed.message || t('error'));
+      applyServerFieldErrors(error);
+      reportUnlessHandled(error);
     }
   };
 
@@ -61,6 +68,7 @@ export function ChangePasswordCard() {
       <CardContent>
         <FormProvider {...form}>
           <form
+            ref={formRef}
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-4"
             data-testid="change-password-form"

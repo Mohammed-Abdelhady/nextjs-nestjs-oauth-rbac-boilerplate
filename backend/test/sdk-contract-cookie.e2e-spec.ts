@@ -78,11 +78,11 @@ describe('sdk contract over a cookie transport', () => {
 
     expect(error.status).toBe(400);
     expect(error.code).toBe('VALIDATION_ERROR');
-    // The server names the field after the first word of the message: `Name`, not `name`.
+    // The key is the DTO property, not the first word of the message (`Name must be...`).
     expect(Object.keys(required(error.fields, 'field errors'))).toEqual([
-      'Name',
+      'name',
     ]);
-    expect(error.fields?.Name).toHaveLength(1);
+    expect(error.fields?.name).toHaveLength(1);
     expect((await client.profile.get()).name).toBe('Seed User');
   });
 

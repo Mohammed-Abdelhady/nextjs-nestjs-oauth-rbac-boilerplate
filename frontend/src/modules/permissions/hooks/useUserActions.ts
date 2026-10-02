@@ -6,7 +6,7 @@ import {
   useDeleteUserMutation,
 } from '@/modules/users/api/usersApi';
 import { toast } from '@/lib/toast';
-import { getErrorMessage } from '@/modules/auth/utils/authHelpers';
+import { reportUnlessHandled } from '@/lib/requestFailure';
 
 /**
  * Return type for the useUserActions hook.
@@ -63,18 +63,14 @@ export function useUserActions(): UseUserActionsReturn {
   const t = useTranslations('users.actions');
 
   /**
-   * Update user role.
+   * Update user role. A refusal rejects, so the caller knows it failed and
+   * raises the success message itself.
    */
   const handleRoleChange = useCallback(
     async (userId: string, newRole: string) => {
-      try {
-        await updateRole({ userId, role: newRole }).unwrap();
-        toast.success(t('roleUpdateSuccess'));
-      } catch (error) {
-        toast.error(getErrorMessage(error));
-      }
+      await updateRole({ userId, role: newRole }).unwrap();
     },
-    [updateRole, t],
+    [updateRole],
   );
 
   /**
@@ -92,7 +88,7 @@ export function useUserActions(): UseUserActionsReturn {
         );
         return true;
       } catch (error) {
-        toast.error(getErrorMessage(error));
+        reportUnlessHandled(error);
         return false;
       }
     },
@@ -110,7 +106,7 @@ export function useUserActions(): UseUserActionsReturn {
         toast.success(t('deleteSuccess', { name: userName }));
         return true;
       } catch (error) {
-        toast.error(getErrorMessage(error));
+        reportUnlessHandled(error);
         return false;
       }
     },

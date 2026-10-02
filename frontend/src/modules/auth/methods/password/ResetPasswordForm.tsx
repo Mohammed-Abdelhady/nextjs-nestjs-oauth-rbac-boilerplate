@@ -143,7 +143,6 @@ export function ResetPasswordForm() {
           type: 'manual',
           message: errorMessage,
         });
-        toast.error(errorMessage);
 
         setValue('code', '');
       }

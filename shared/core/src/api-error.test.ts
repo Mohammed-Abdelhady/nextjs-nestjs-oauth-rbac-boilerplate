@@ -10,7 +10,7 @@ describe('parseApiError', () => {
         error: {
           code: 'VALIDATION_ERROR',
           message: 'Validation failed',
-          details: { fields: { Name: ['Name must be at least 2 characters'] } },
+          details: { fields: { name: ['Name must be at least 2 characters'] } },
         },
       },
     };
@@ -18,8 +18,8 @@ describe('parseApiError', () => {
     const parsed = parseApiError(error);
 
     expect(parsed.isValidationError).toBe(true);
-    expect(parsed.fieldErrors).toEqual({ Name: ['Name must be at least 2 characters'] });
-    expect(getFieldErrors(error)).toEqual({ Name: ['Name must be at least 2 characters'] });
+    expect(parsed.fieldErrors).toEqual({ name: ['Name must be at least 2 characters'] });
+    expect(getFieldErrors(error)).toEqual({ name: ['Name must be at least 2 characters'] });
   });
 
   it('reports no field errors for a code that is not a validation failure', () => {

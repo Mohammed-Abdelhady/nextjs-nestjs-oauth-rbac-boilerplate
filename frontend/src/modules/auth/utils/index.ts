@@ -1,4 +1,4 @@
-export { isValidEmail, getRedirectPath, getErrorMessage } from './authHelpers';
+export { isValidEmail, getRedirectPath } from './authHelpers';
 export { filterDigits } from './digitFilter';
 export { isFeatureDisabled } from './featureDisabled';
 export { translatableErrorCode } from './errorCodeMessage';

@@ -1,0 +1,59 @@
+// @vitest-environment jsdom
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
+import type { AppLocale } from '@/i18n/load-messages';
+import {
+  SERVER_TEXT,
+  descriptions,
+  refuseWrites,
+  renderForm,
+  registerFormTestLifecycle,
+} from '@/tests/serverRejectionHarness';
+import { ChangePasswordCard } from '../ChangePasswordCard';
+
+vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() } }));
+
+/** The card is not rendered where password sign-in is off. */
+const AUTH_METHODS = { methods: { password: true } };
+
+async function submitPasswordChange(locale: AppLocale) {
+  const form = await renderForm(locale, <ChangePasswordCard />);
+  const label = (key: string) => form.message(`settings.password.${key}`);
+  const currentPassword = screen.getByLabelText(label('currentPassword'));
+  const newPassword = screen.getByLabelText(label('newPassword'));
+
+  fireEvent.change(currentPassword, { target: { value: 'OldPassw0rdLayla' } });
+  fireEvent.change(newPassword, { target: { value: 'NewPassw0rdLayla' } });
+  fireEvent.change(screen.getByLabelText(label('confirmPassword')), {
+    target: { value: 'NewPassw0rdLayla' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: label('submit') }));
+
+  return { ...form, currentPassword, newPassword };
+}
+
+registerFormTestLifecycle();
+
+describe.each([
+  'en',
+  'ar', // feature:locale-ar
+] as const)('ChangePasswordCard refused by the server in %s', (locale) => {
+  it('marks and focuses the rejected field and raises one localized toast', async () => {
+    refuseWrites(['newPassword', 'nickname'], AUTH_METHODS);
+
+    const { currentPassword, newPassword, fieldMessage, generalMessage, errorToasts } =
+      await submitPasswordChange(locale);
+
+    await waitFor(() => {
+      expect(newPassword.getAttribute('aria-invalid')).toBe('true');
+    });
+    expect(descriptions(newPassword)).toEqual([fieldMessage]);
+    expect(currentPassword.getAttribute('aria-invalid')).toBe('false');
+    // The field takes the focus once the form is enabled again.
+    await waitFor(() => {
+      expect(document.activeElement).toBe(newPassword);
+    });
+    expect(errorToasts()).toEqual([generalMessage]);
+    expect(document.body.textContent).not.toContain(SERVER_TEXT);
+  });
+});

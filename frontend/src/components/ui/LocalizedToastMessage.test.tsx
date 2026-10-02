@@ -63,6 +63,48 @@ describe('generated toast fallback messages', () => {
   );
 });
 
+describe('message arguments and the fallback key', () => {
+  const CATALOGUE = {
+    errors: { codes: { ROLE_HAS_USERS: '{count} users still have this role' } },
+    toast: { error: { validationFailed: 'Check the form', unknownError: 'Something failed' } },
+  };
+
+  function show(props: Parameters<typeof LocalizedToastMessage>[0]): string {
+    return renderToStaticMarkup(
+      <NextIntlClientProvider locale="en" messages={CATALOGUE} timeZone="UTC">
+        <LocalizedToastMessage {...props} />
+      </NextIntlClientProvider>,
+    );
+  }
+
+  it('fills in the arguments a message takes', () => {
+    expect(show({ messageKey: 'errors.codes.ROLE_HAS_USERS', values: { count: 3 } })).toBe(
+      '3 users still have this role',
+    );
+  });
+
+  it('shows the fallback when an argument is missing', () => {
+    expect(
+      show({
+        messageKey: 'errors.codes.ROLE_HAS_USERS',
+        fallbackKey: 'toast.error.validationFailed',
+      }),
+    ).toBe('Check the form');
+  });
+
+  it('shows the fallback when the key has no entry', () => {
+    expect(
+      show({ messageKey: 'errors.codes.MISSING', fallbackKey: 'toast.error.validationFailed' }),
+    ).toBe('Check the form');
+  });
+
+  it('shows the generic message when neither key can be shown', () => {
+    expect(
+      show({ messageKey: 'errors.codes.ROLE_HAS_USERS', fallbackKey: 'errors.codes.MISSING' }),
+    ).toBe('Something failed');
+  });
+});
+
 describe('error-code toast handoff', () => {
   it.each([
     'en',

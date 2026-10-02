@@ -23,7 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Shield, ShieldAlert } from 'lucide-react';
 import { useListRolesQuery } from '../api/rolesApi';
 import { toast } from '@/lib/toast';
-import { parseApiError } from '@app/core';
+import { reportUnlessHandled } from '@/lib/requestFailure';
 
 interface UserRoleSelectorProps {
   readonly userId: string;
@@ -77,8 +77,7 @@ export function UserRoleSelector({
       toast.success(t('changeSuccess', { role: roleName }));
       setPendingRole(null);
     } catch (error) {
-      const parsed = parseApiError(error);
-      toast.error(parsed.message || t('changeError'));
+      reportUnlessHandled(error);
     } finally {
       setIsUpdating(false);
     }

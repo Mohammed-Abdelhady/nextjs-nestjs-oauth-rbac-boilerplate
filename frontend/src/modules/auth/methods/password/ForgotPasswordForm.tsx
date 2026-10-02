@@ -87,7 +87,6 @@ export function ForgotPasswordForm() {
           type: 'manual',
           message: errorMessage,
         });
-        toast.error(errorMessage);
       }
     },
     [forgotPassword, router, setError, t, tToast],

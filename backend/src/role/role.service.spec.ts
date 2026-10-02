@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
-import { ForbiddenException } from '@nestjs/common';
 import { RoleService } from './role.service';
 import { Role } from './schemas/role.schema';
 import { User } from '../user/schemas/user.schema';
@@ -78,7 +77,10 @@ describe('RoleService', () => {
 
       await expect(
         service.update('admin', { name: 'Super Admin' }),
-      ).rejects.toThrow(ForbiddenException);
+      ).rejects.toMatchObject({
+        code: 'SYSTEM_ROLE_RENAME_FORBIDDEN',
+        status: 403,
+      });
       expect(admin.save).not.toHaveBeenCalled();
     });
 
@@ -117,7 +119,10 @@ describe('RoleService', () => {
 
       await expect(
         service.update('admin', { permissions: ['users:read:all'] }),
-      ).rejects.toThrow(ForbiddenException);
+      ).rejects.toMatchObject({
+        code: 'ADMIN_WILDCARD_REQUIRED',
+        status: 403,
+      });
       expect(admin.save).not.toHaveBeenCalled();
     });
 
@@ -138,6 +143,43 @@ describe('RoleService', () => {
 
       expect(result.permissions).toEqual(['*', 'reports:read:all']);
       expect(admin.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('name and permission refusals', () => {
+    it('should refuse to create a role whose name is taken', async () => {
+      mockRoleModel.findOne.mockResolvedValueOnce(buildRole());
+
+      await expect(
+        service.create({
+          name: 'Content Editor',
+          permissions: ['posts:read:all'],
+        }),
+      ).rejects.toMatchObject({ code: 'ROLE_NAME_TAKEN', status: 409 });
+    });
+
+    it('should refuse a rename onto the name of another role', async () => {
+      const role = buildRole();
+      mockRoleModel.findOne.mockResolvedValueOnce(role);
+      mockRoleModel.findOne.mockResolvedValueOnce(
+        buildRole({ name: 'Content Lead', slug: 'content-lead' }),
+      );
+
+      await expect(
+        service.update('content-editor', { name: 'Content Lead' }),
+      ).rejects.toMatchObject({ code: 'ROLE_NAME_TAKEN', status: 409 });
+      expect(role.save).not.toHaveBeenCalled();
+    });
+
+    it('should refuse to create a role with a malformed permission', async () => {
+      mockRoleModel.findOne.mockResolvedValueOnce(null);
+
+      await expect(
+        service.create({ name: 'Auditor', permissions: ['not a permission'] }),
+      ).rejects.toMatchObject({
+        code: 'INVALID_PERMISSION_FORMAT',
+        status: 400,
+      });
     });
   });
 
@@ -185,9 +227,10 @@ describe('RoleService', () => {
         }),
       );
 
-      await expect(service.delete('manager')).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(service.delete('manager')).rejects.toMatchObject({
+        code: 'ROLE_PROTECTED',
+        status: 403,
+      });
       expect(mockRoleModel.deleteOne).not.toHaveBeenCalled();
     });
 
@@ -196,9 +239,31 @@ describe('RoleService', () => {
         buildRole({ isProtected: true }),
       );
 
-      await expect(service.delete('content-editor')).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(service.delete('content-editor')).rejects.toMatchObject({
+        code: 'ROLE_PROTECTED',
+        status: 403,
+      });
+    });
+
+    it('should refuse to delete a role users still hold and say how many', async () => {
+      mockRoleModel.findOne.mockResolvedValueOnce(buildRole());
+      mockUserModel.countDocuments.mockResolvedValueOnce(3);
+
+      await expect(service.delete('content-editor')).rejects.toMatchObject({
+        code: 'ROLE_HAS_USERS',
+        status: 400,
+        details: { count: 3 },
+      });
+      expect(mockRoleModel.deleteOne).not.toHaveBeenCalled();
+    });
+
+    it('should answer ROLE_NOT_FOUND for a role that does not exist', async () => {
+      mockRoleModel.findOne.mockResolvedValueOnce(null);
+
+      await expect(service.delete('ghost')).rejects.toMatchObject({
+        code: 'ROLE_NOT_FOUND',
+        status: 404,
+      });
     });
 
     it('should delete an unused custom role', async () => {

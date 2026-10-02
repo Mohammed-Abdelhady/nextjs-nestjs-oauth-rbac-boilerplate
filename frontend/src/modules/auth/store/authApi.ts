@@ -1,5 +1,6 @@
 import { baseApi } from '@/store/api/baseApi';
 import { API_PATHS, unwrapObjectBody } from '@app/sdk';
+import { invalidateOnSuccess } from '@/store/api/invalidateOnSuccess';
 import type { MessageResult, UpdateProfileRequest, User } from '@app/sdk';
 import {
   NATIVE_AUTHORIZE_APPROVE_ENDPOINT,
@@ -159,7 +160,7 @@ export const authApi = baseApi.injectEndpoints({
       }),
       transformResponse: (response: { success: boolean; data: { message: string } }) =>
         response.data,
-      invalidatesTags: ['Sessions'],
+      invalidatesTags: invalidateOnSuccess(['Sessions']),
     }),
 
     /**
@@ -173,7 +174,7 @@ export const authApi = baseApi.injectEndpoints({
         body: data,
       }),
       transformResponse: (response: unknown) => unwrapObjectBody<User>(response),
-      invalidatesTags: ['User'],
+      invalidatesTags: invalidateOnSuccess(['User']),
     }),
 
     /**

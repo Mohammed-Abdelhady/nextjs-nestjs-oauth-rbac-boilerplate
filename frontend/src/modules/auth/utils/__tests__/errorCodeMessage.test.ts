@@ -3,6 +3,7 @@ import type { AbstractIntlMessages } from 'next-intl';
 import { ErrorCode } from '@app/core';
 import { loadMessages } from '@/i18n/load-messages';
 import { isMessageTree } from '@/i18n/__tests__/message-tree';
+import { icuArgNames } from '@/i18n/icu-args';
 import { translatableErrorCode } from '../errorCodeMessage';
 
 function codesOf(messages: AbstractIntlMessages): Record<string, string> {
@@ -22,19 +23,6 @@ function codesOf(messages: AbstractIntlMessages): Record<string, string> {
     flat[code] = message;
   }
   return flat;
-}
-
-function icuArgNames(message: string): string[] {
-  const names = new Set<string>();
-  const pattern = /\{(\w+)(?:\s*,|\s*\})/g;
-  let match: RegExpExecArray | null;
-  while ((match = pattern.exec(message)) !== null) {
-    const name = match[1];
-    if (name !== undefined) {
-      names.add(name);
-    }
-  }
-  return [...names].sort();
 }
 
 function apiError(code: string): unknown {

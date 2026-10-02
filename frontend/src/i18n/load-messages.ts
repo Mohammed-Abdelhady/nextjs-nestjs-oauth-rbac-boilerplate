@@ -35,20 +35,25 @@ export async function loadMessages(locale: AppLocale): Promise<AbstractIntlMessa
   const browserProof = (await import(`./messages/browser-proof.${locale}.json`)).default;
   const nativeAuth = (await import(`./messages/native-auth.${locale}.json`)).default;
   const statusErrors = (await import(`./messages/status-errors.${locale}.json`)).default;
+  const roleErrors = (await import(`./messages/role-errors.${locale}.json`)).default;
   if (
     !isMessageTree(base) ||
     !isMessageTree(sessionAuthority) ||
     !isMessageTree(browserProof) ||
     !isMessageTree(nativeAuth) ||
-    !isMessageTree(statusErrors)
+    !isMessageTree(statusErrors) ||
+    !isMessageTree(roleErrors)
   ) {
     throw new Error(`Locale messages for ${locale} are not objects`);
   }
   return mergeMessageTrees(
     mergeMessageTrees(
-      mergeMessageTrees(mergeMessageTrees(base, sessionAuthority), browserProof),
-      nativeAuth,
+      mergeMessageTrees(
+        mergeMessageTrees(mergeMessageTrees(base, sessionAuthority), browserProof),
+        nativeAuth,
+      ),
+      statusErrors,
     ),
-    statusErrors,
+    roleErrors,
   );
 }

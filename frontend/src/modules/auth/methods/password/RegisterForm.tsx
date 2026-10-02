@@ -5,6 +5,8 @@ import { useRouter } from '@/i18n/navigation';
 import { z } from 'zod';
 import { FormProvider } from 'react-hook-form';
 import { useFormWithValidation } from '@/hooks/useFormWithValidation';
+import { useFormFieldTarget, useServerFieldErrors } from '@/hooks/useServerFieldErrors';
+import { translatableErrorCode } from '@/modules/auth/utils/errorCodeMessage';
 import {
   FormInput,
   FormPassword,
@@ -16,7 +18,7 @@ import { useRegisterMutation } from '@/modules/auth/store/authApi';
 import { zodEmail, zodPassword, zodName, parseApiError } from '@app/core';
 import { UserPlus, LogIn } from 'lucide-react';
 import { IconLinkButton } from '@/components/ui/icon-link-button';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { toast } from '@/lib/toast';
 import { AuthDivider } from '@/components/ui/auth-divider'; // feature:oauth-core
 import { OAuthButtons } from '@/modules/oauth'; // feature:oauth-core
@@ -68,6 +70,7 @@ type RegisterFormData = z.infer<ReturnType<typeof createRegisterSchema>>;
 export function RegisterForm() {
   const t = useTranslations('auth.register');
   const tToast = useTranslations('toast');
+  const tCodes = useTranslations('errors.codes');
   const router = useRouter();
   const [register, { isLoading }] = useRegisterMutation();
   const { methods } = useAuthMethods(); // feature:oauth-core
@@ -92,6 +95,11 @@ export function RegisterForm() {
     formState: { errors },
     setError,
   } = form;
+  const formRef = useRef<HTMLFormElement>(null);
+  const applyServerFieldErrors = useServerFieldErrors(
+    useFormFieldTarget(setError, formRef),
+    isLoading,
+  );
 
   // Memoize submit handler to prevent recreating on every render
   const onSubmit = useCallback(
@@ -107,23 +115,24 @@ export function RegisterForm() {
         toast.success(tToast('success.registrationSuccess'));
         router.push(`/auth/activate?email=${encodeURIComponent(result.data.email)}`);
       } catch (err: unknown) {
+        applyServerFieldErrors(err);
         const parsed = parseApiError(err);
+        const code = translatableErrorCode(err, '');
         let errorMessage = t('errors.serverError');
 
         if (parsed.code === 'EMAIL_ALREADY_EXISTS' || parsed.message?.includes('already')) {
           errorMessage = t('errors.emailExists');
-        } else if (parsed.message) {
-          errorMessage = parsed.message;
+        } else if (code) {
+          errorMessage = tCodes(code);
         }
 
         setError('root', {
           type: 'manual',
           message: errorMessage,
         });
-        toast.error(errorMessage);
       }
     },
-    [register, router, setError, t, tToast],
+    [applyServerFieldErrors, register, router, setError, t, tCodes, tToast],
   );
 
   return (
@@ -166,6 +175,7 @@ export function RegisterForm() {
         {/* Registration Form */}
         <FormProvider {...form}>
           <form
+            ref={formRef}
             className="mx-auto max-w-xs relative"
             onSubmit={handleSubmit(onSubmit)}
             data-testid="register-form"

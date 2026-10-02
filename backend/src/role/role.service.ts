@@ -1,11 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  ConflictException,
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, FilterQuery } from 'mongoose';
 import { Role, RoleDocument } from './schemas/role.schema';
@@ -27,6 +20,8 @@ import {
   mapRoleToResponseDto,
 } from './utils/role.util';
 import { escapeRegex } from '../common/utils/escape-regex';
+import { ErrorCode } from '../common/enums/error-code.enum';
+import { AppException } from '../common/exceptions/app.exception';
 
 @Injectable()
 export class RoleService {
@@ -45,8 +40,10 @@ export class RoleService {
 
     const existing = await this.roleModel.findOne({ slug: { $eq: slug } });
     if (existing) {
-      throw new ConflictException(
+      throw new AppException(
+        ErrorCode.ROLE_NAME_TAKEN,
         `Role with name "${dto.name}" already exists`,
+        HttpStatus.CONFLICT,
       );
     }
 
@@ -128,8 +125,10 @@ export class RoleService {
     const nextSlug = dto.name ? generateSlug(dto.name) : previousSlug;
 
     if (role.isSystemRole && nextSlug !== previousSlug) {
-      throw new ForbiddenException(
+      throw new AppException(
+        ErrorCode.SYSTEM_ROLE_RENAME_FORBIDDEN,
         `System role "${previousSlug}" cannot be renamed to a different slug`,
+        HttpStatus.FORBIDDEN,
       );
     }
 
@@ -170,8 +169,10 @@ export class RoleService {
 
     // System and protected roles are permanent
     if (role.isSystemRole || role.isProtected) {
-      throw new ForbiddenException(
+      throw new AppException(
+        ErrorCode.ROLE_PROTECTED,
         `Role "${role.slug}" is protected and cannot be deleted`,
+        HttpStatus.FORBIDDEN,
       );
     }
 
@@ -181,8 +182,11 @@ export class RoleService {
     });
 
     if (userCount > 0) {
-      throw new BadRequestException(
+      throw new AppException(
+        ErrorCode.ROLE_HAS_USERS,
         `Cannot delete role. ${userCount} user${userCount > 1 ? 's' : ''} assigned. Please reassign users first.`,
+        HttpStatus.BAD_REQUEST,
+        { count: userCount },
       );
     }
 
@@ -226,7 +230,11 @@ export class RoleService {
     }
 
     if (!role) {
-      throw new NotFoundException(`Role "${idOrSlug}" not found`);
+      throw new AppException(
+        ErrorCode.ROLE_NOT_FOUND,
+        `Role "${idOrSlug}" not found`,
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     return role;
@@ -242,7 +250,11 @@ export class RoleService {
     const existing = await this.roleModel.findOne({ slug: { $eq: slug } });
 
     if (existing && existing._id.toString() !== role._id.toString()) {
-      throw new ConflictException(`Role with slug "${slug}" already exists`);
+      throw new AppException(
+        ErrorCode.ROLE_NAME_TAKEN,
+        `Role with slug "${slug}" already exists`,
+        HttpStatus.CONFLICT,
+      );
     }
   }
 
@@ -256,8 +268,10 @@ export class RoleService {
     }
 
     if (!permissions.includes(WILDCARD_PERMISSION)) {
-      throw new ForbiddenException(
+      throw new AppException(
+        ErrorCode.ADMIN_WILDCARD_REQUIRED,
         `The "${WILDCARD_PERMISSION}" permission cannot be removed from the admin role`,
+        HttpStatus.FORBIDDEN,
       );
     }
   }
