@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { writeFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
-import { existsSync, mkdirSync, readFileSync, symlinkSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, symlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listFiles } from '../src/utils/fs.js';
@@ -12,12 +12,16 @@ export const REPO_ROOT = dirname(dirname(PACKAGE_DIR));
 export const CLI = join(PACKAGE_DIR, 'dist', 'index.js');
 export const BUILD_TIMEOUT = 10 * 60 * 1000;
 
+const ROOT_MODULES = 'node_modules';
+const SHARED_SCOPE = '@app';
+const SHARED_DIRECTORY = 'shared';
+
 /** Workspaces whose node_modules the generated project borrows. */
 const LINKED_MODULES = [
-  'node_modules',
   'backend/node_modules',
   'frontend/node_modules',
   'shared/core/node_modules',
+  'shared/sdk/node_modules',
 ];
 
 const TYPESCRIPT_BIN = join(REPO_ROOT, 'node_modules', 'typescript', 'bin', 'tsc');
@@ -79,11 +83,31 @@ export function scaffold(target: string, features: string[]): Promise<CommandRes
 }
 
 /**
+ * Builds the project's root node_modules the way an install would: every
+ * installed package comes from the repository, and each `@app/<name>` links to
+ * the project's own shared/<name>, pruned like the rest of the project.
+ */
+function linkRootModules(project: string): void {
+  const source = join(REPO_ROOT, ROOT_MODULES);
+  const target = join(project, ROOT_MODULES);
+  mkdirSync(join(target, SHARED_SCOPE), { recursive: true });
+
+  for (const entry of readdirSync(source)) {
+    if (entry !== SHARED_SCOPE) symlinkSync(join(source, entry), join(target, entry));
+  }
+  const shared = join(project, SHARED_DIRECTORY);
+  for (const name of existsSync(shared) ? readdirSync(shared) : []) {
+    symlinkSync(join(shared, name), join(target, SHARED_SCOPE, name), 'dir');
+  }
+}
+
+/**
  * Points the generated project at the repository's installed packages. The
  * combinations have to typecheck without an install, which npm would refuse to
  * run offline anyway.
  */
 export function linkDependencies(project: string): void {
+  linkRootModules(project);
   for (const relative of LINKED_MODULES) {
     const source = join(REPO_ROOT, relative);
     // npm hoists to the root, so a workspace may have no node_modules of its own.
@@ -106,11 +130,10 @@ export function typecheck(project: string, workspace: string): Promise<CommandRe
 export const PRUNED_SHARED_TSCONFIG = 'tsconfig.shared-pruned.json';
 
 /**
- * Writes a frontend tsconfig that resolves `@app/core` to the generated
- * project's own (pruned) `shared/core` instead of the repository's copy,
- * which `node_modules/@app/core` still points at through the linked
- * dependencies. Extends the generated `frontend/tsconfig.json`; `paths`
- * replaces the base mapping, so the `@/` alias is repeated here.
+ * Writes a frontend tsconfig that maps `@app/core` and `@app/sdk` straight to
+ * the generated project's own (pruned) `shared/*` sources, without going
+ * through node_modules. Extends the generated `frontend/tsconfig.json`;
+ * `paths` replaces the base mapping, so the `@/` alias is repeated here.
  */
 export async function writePrunedSharedTsconfig(project: string): Promise<void> {
   const config = {
@@ -119,6 +142,8 @@ export async function writePrunedSharedTsconfig(project: string): Promise<void> 
       paths: {
         '@/*': ['./src/*'],
         '@app/core': ['../shared/core/src/index.ts'],
+        '@app/core/*': ['../shared/core/src/*'],
+        '@app/sdk': ['../shared/sdk/src/index.ts'],
       },
     },
   };
@@ -129,7 +154,7 @@ export async function writePrunedSharedTsconfig(project: string): Promise<void> 
   );
 }
 
-/** Typechecks the generated frontend against its own pruned `shared/core`. */
+/** Typechecks the generated frontend against its own pruned `shared/*`. */
 export function typecheckFrontendWithPrunedShared(project: string): Promise<CommandResult> {
   return runTool(
     process.execPath,
@@ -139,7 +164,13 @@ export function typecheckFrontendWithPrunedShared(project: string): Promise<Comm
 }
 
 /** Where the full selection has to match the repository, marker lines aside. */
-const COMPARED_DIRECTORIES = ['backend/src', 'backend/test', 'frontend/src', 'shared/core/src'];
+const COMPARED_DIRECTORIES = [
+  'backend/src',
+  'backend/test',
+  'frontend/src',
+  'shared/core/src',
+  'shared/sdk/src',
+];
 const MAINTAINER_BROWSER_HELPERS = new Set([
   'backend/test/utils/browser-server.ts',
   'backend/test/utils/local-oauth.ts',
