@@ -262,7 +262,7 @@ export class NativeOAuthController {
     const result = await this.tokens.revoke(body);
     response.setHeader('Cache-Control', 'no-store');
     if (!result.ok) {
-      response.status(result.status).json({ error: result.error });
+      this.writeError(response, result);
       return;
     }
     response.status(HttpStatus.OK).json({});
@@ -313,6 +313,13 @@ export class NativeOAuthController {
 
   private writeError(response: Response, result: OauthFailure): void {
     response.setHeader('Cache-Control', 'no-store');
-    response.status(result.status).json({ error: result.error });
+    if (result.error_description === undefined) {
+      response.status(result.status).json({ error: result.error });
+      return;
+    }
+    response.status(result.status).json({
+      error: result.error,
+      error_description: result.error_description,
+    });
   }
 }

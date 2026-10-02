@@ -70,6 +70,7 @@ export class NativeTokenService {
       return oauthFailure(
         HttpStatus.BAD_REQUEST,
         OAUTH_ERROR.UNAUTHORIZED_CLIENT,
+        ErrorCode.NATIVE_AUTH_DISABLED,
       );
     }
     if (body.client_secret) {
@@ -100,6 +101,7 @@ export class NativeTokenService {
       return oauthFailure(
         HttpStatus.BAD_REQUEST,
         OAUTH_ERROR.UNAUTHORIZED_CLIENT,
+        ErrorCode.NATIVE_AUTH_DISABLED,
       );
     }
     if (body.client_secret) {

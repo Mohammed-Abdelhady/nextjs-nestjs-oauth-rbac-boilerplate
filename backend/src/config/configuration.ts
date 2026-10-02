@@ -45,6 +45,7 @@ export interface Configuration {
     epoch: number;
     nativeEnabled: boolean;
     nativeApplications: NativeApplicationConfiguration[];
+    nativeCustomSchemeAllowed: boolean;
   };
   magicLink: {
     enabled: boolean;
@@ -150,8 +151,14 @@ const configuration = (): Configuration => {
       epoch: Number.parseInt(process.env.AUTH_EPOCH || '1', 10),
       nativeEnabled,
       nativeApplications: nativeEnabled
-        ? parseNativeApplications(process.env.AUTH_NATIVE_APPLICATIONS)
+        ? parseNativeApplications(process.env.AUTH_NATIVE_APPLICATIONS, {
+            nodeEnv: process.env.NODE_ENV,
+            allowCustomScheme:
+              process.env.AUTH_NATIVE_ALLOW_CUSTOM_SCHEME === 'true',
+          })
         : [],
+      nativeCustomSchemeAllowed:
+        process.env.AUTH_NATIVE_ALLOW_CUSTOM_SCHEME === 'true',
     },
     magicLink: {
       enabled: process.env.MAGIC_LINK_ENABLED
