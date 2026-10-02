@@ -1,12 +1,16 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { MailService } from '../../mail/mail.service';
-import { AppException } from '../../common/exceptions/app.exception';
-import { ErrorCode } from '../../common/enums/error-code.enum';
+import { currentRequestId } from '../../common/context/request-context';
+import {
+  ACTIVATION_EMAIL_FAILED_MESSAGE,
+  PASSWORD_RESET_EMAIL_FAILED_MESSAGE,
+  REGISTRATION_NOTICE_EMAIL_FAILED_MESSAGE,
+  SIGN_IN_LINK_EMAIL_FAILED_MESSAGE,
+} from '../constants/auth-messages';
 
 /**
- * Mail sent by the authentication flows.
- * A delivery failure becomes EMAIL_SEND_FAILED with the address kept out of
- * the response, so callers cannot read anything from a failed send.
+ * Logs a delivery failure and drops it, so a known and an unknown address get
+ * the same answer.
  */
 @Injectable()
 export class AuthMailService {
@@ -25,10 +29,10 @@ export class AuthMailService {
     email: string,
     code: string,
     name: string,
-  ): Promise<void> {
-    await this.send(
+  ): Promise<boolean> {
+    return this.send(
       () => this.mailService.sendActivationCode(email, code, name),
-      'Failed to send activation email',
+      ACTIVATION_EMAIL_FAILED_MESSAGE,
     );
   }
 
@@ -43,10 +47,10 @@ export class AuthMailService {
     email: string,
     code: string,
     name: string,
-  ): Promise<void> {
-    await this.send(
+  ): Promise<boolean> {
+    return this.send(
       () => this.mailService.sendPasswordResetCode(email, code, name),
-      'Failed to send password reset email',
+      PASSWORD_RESET_EMAIL_FAILED_MESSAGE,
     );
   }
 
@@ -61,10 +65,10 @@ export class AuthMailService {
     email: string,
     link: string,
     expiresInMinutes: number,
-  ): Promise<void> {
-    await this.send(
+  ): Promise<boolean> {
+    return this.send(
       () => this.mailService.sendMagicLink(email, link, expiresInMinutes),
-      'Failed to send sign-in link email',
+      SIGN_IN_LINK_EMAIL_FAILED_MESSAGE,
     );
   }
 
@@ -77,28 +81,28 @@ export class AuthMailService {
   async sendRegistrationAttemptNotice(
     email: string,
     name: string,
-  ): Promise<void> {
-    await this.send(
+  ): Promise<boolean> {
+    return this.send(
       () => this.mailService.sendRegistrationAttemptNotice(email, name),
-      'Failed to send registration notice email',
+      REGISTRATION_NOTICE_EMAIL_FAILED_MESSAGE,
     );
   }
 
+  /** True when the mail was handed over, false when a failure was dropped. */
   private async send(
     action: () => Promise<void>,
     failureMessage: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       await action();
+      return true;
     } catch (error) {
+      const requestId = currentRequestId() ?? 'unknown';
+      const cause = error instanceof Error ? error.name : typeof error;
       this.logger.error(
-        `${failureMessage}: ${error instanceof Error ? error.message : String(error)}`,
+        `${failureMessage} requestId=${requestId} cause=${cause}`,
       );
-      throw new AppException(
-        ErrorCode.EMAIL_SEND_FAILED,
-        failureMessage,
-        HttpStatus.BAD_REQUEST,
-      );
+      return false;
     }
   }
 }
