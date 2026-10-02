@@ -28,10 +28,13 @@ export enum ErrorCode {
   EMAIL_SEND_FAILED = 'EMAIL_SEND_FAILED',
 
   // Magic link errors
+  // feature:magic-link:start
   /** Magic link token is unknown, already used, or expired */
   MAGIC_LINK_INVALID = 'MAGIC_LINK_INVALID',
+  // feature:magic-link:end
 
   // Two-factor errors
+  // feature:totp:start
   /** Submitted TOTP code or recovery code did not match */
   TWO_FACTOR_CODE_INVALID = 'TWO_FACTOR_CODE_INVALID',
   /** Challenge cookie is missing, tampered with, expired, or out of attempts */
@@ -44,18 +47,23 @@ export enum ErrorCode {
   TWO_FACTOR_SETUP_REQUIRED = 'TWO_FACTOR_SETUP_REQUIRED',
   /** TOTP_ENCRYPTION_KEY is missing or not 32 bytes */
   TWO_FACTOR_NOT_CONFIGURED = 'TWO_FACTOR_NOT_CONFIGURED',
+  // feature:totp:end
 
   // Passkey errors
+  // feature:passkeys:start
   /** Challenge cookie is missing, tampered with, expired, or for another step */
   PASSKEY_CHALLENGE_INVALID = 'PASSKEY_CHALLENGE_INVALID',
+  // feature:passkeys:end
   /** Credential is unknown, its signature failed, or its counter went backwards */
   PASSKEY_VERIFICATION_FAILED = 'PASSKEY_VERIFICATION_FAILED',
+  // feature:passkeys:start
   /** No passkey with that id on this account */
   PASSKEY_NOT_FOUND = 'PASSKEY_NOT_FOUND',
   /** Removing it would leave the account with no way to sign in */
   PASSKEY_LAST_SIGN_IN_METHOD = 'PASSKEY_LAST_SIGN_IN_METHOD',
   /** The secret the challenge cookie is signed with is missing */
   PASSKEY_NOT_CONFIGURED = 'PASSKEY_NOT_CONFIGURED',
+  // feature:passkeys:end
 
   // Feature flag errors
   /** Route belongs to an authentication method this deployment turned off */
@@ -129,6 +137,7 @@ export enum ErrorCode {
   USER_ALREADY_DELETED = 'USER_ALREADY_DELETED',
 
   // OAuth errors
+  // feature:oauth-core:start
   /** Provider id is not in the OAuth registry */
   OAUTH_PROVIDER_UNKNOWN = 'OAUTH_PROVIDER_UNKNOWN',
   /** Provider has no credentials configured */
@@ -143,6 +152,7 @@ export enum ErrorCode {
   OAUTH_ACCOUNT_LINKED_ELSEWHERE = 'OAUTH_ACCOUNT_LINKED_ELSEWHERE',
   /** OAuth authentication failed for any other reason */
   OAUTH_AUTHENTICATION_FAILED = 'OAUTH_AUTHENTICATION_FAILED',
+  // feature:oauth-core:end
 
   // User self-service errors
   /** Current password is incorrect */
@@ -167,6 +177,7 @@ export enum ErrorCode {
   USER_NOT_FOUND_FOR_RESET = 'USER_NOT_FOUND_FOR_RESET',
 
   // Account linking errors
+  // feature:oauth-core:start
   /** Provider is already linked to this account */
   PROVIDER_ALREADY_LINKED = 'PROVIDER_ALREADY_LINKED',
   /** Email mismatch when linking provider */
@@ -175,6 +186,7 @@ export enum ErrorCode {
   CANNOT_UNLINK_LAST_PROVIDER = 'CANNOT_UNLINK_LAST_PROVIDER',
   /** Provider is not linked to this account */
   PROVIDER_NOT_LINKED = 'PROVIDER_NOT_LINKED',
+  // feature:oauth-core:end
   /** Re-authentication required for sensitive operation */
   REAUTH_REQUIRED = 'REAUTH_REQUIRED',
 
