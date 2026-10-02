@@ -2,7 +2,7 @@ import { Link } from '@/i18n/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Rocket, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'; // feature:locale-ar
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 
 /**
@@ -12,7 +12,7 @@ import { ThemeSwitcher } from '@/components/ThemeSwitcher';
  * Left: Welcome message and CTAs | Right: Decorative illustration
  *
  * Features:
- * - Fully localized (English/Arabic with RTL support)
+ * - Fully localized with direction-safe utilities
  * - Theme-aware with semantic color tokens
  * - Responsive design (illustration hidden on mobile)
  * - Accessible with proper ARIA attributes
@@ -24,7 +24,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   return (
     <div className="relative min-h-screen bg-background text-foreground flex justify-center">
       <header className="absolute inset-x-0 top-0 z-10 flex items-center justify-end gap-2 p-4">
-        <LanguageSwitcher />
+        <LanguageSwitcher /> {/* feature:locale-ar */}
         <ThemeSwitcher />
       </header>
       <main

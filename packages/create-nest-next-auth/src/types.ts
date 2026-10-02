@@ -50,11 +50,19 @@ export interface Database {
   status?: FeatureStatus;
 }
 
+/** Catalogue keys an option owns, removed from that catalogue when it is off. */
+export interface CatalogueKeyRule {
+  path: string;
+  keys: string[];
+}
+
 export interface ProjectOption {
   label: string;
   default: boolean;
   files: string[];
   requires: string[];
+  docs: string[];
+  catalogueKeys: CatalogueKeyRule[];
   status?: FeatureStatus;
 }
 
@@ -103,16 +111,21 @@ export interface DanglingReference {
   line: number;
   specifier: string;
   target: string;
+  /** Set when the reference is a package.json script, not an import. */
+  script?: string;
 }
 
 export interface PruneResult {
   selected: string[];
   removed: string[];
+  removedOptions: string[];
   deletedFiles: string[];
   strippedEnvVars: string[];
   removedDocLines: number;
   /** Files a `feature:` marker was stripped from, or deleted lines out of. */
   markedFiles: string[];
   removedMarkedLines: number;
+  /** Changed files the pruner reformatted with the project's prettier config. */
+  formattedFiles: string[];
   dangling: DanglingReference[];
 }

@@ -36,7 +36,7 @@ describe('escapeHtml', () => {
   });
 
   it('leaves letters outside the latin alphabet alone', () => {
-    expect(escapeHtml('محمد')).toBe('محمد');
+    expect(escapeHtml('محمد')).toBe('محمد'); // feature:locale-ar
     expect(escapeHtml('日本語')).toBe('日本語');
   });
 });

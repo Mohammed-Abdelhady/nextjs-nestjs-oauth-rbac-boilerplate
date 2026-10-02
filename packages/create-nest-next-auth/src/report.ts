@@ -13,6 +13,10 @@ export function describeSelection(manifest: Manifest, result: PruneResult): stri
   if (removedAvailable.length > 0) {
     lines.push(`Removed: ${removedAvailable.map(label).join(', ')}`);
   }
+  if (result.removedOptions.length > 0) {
+    const optionLabel = (id: string): string => manifest.options[id]?.label ?? id;
+    lines.push(`Removed options: ${result.removedOptions.map(optionLabel).join(', ')}`);
+  }
   if (result.deletedFiles.length > 0) {
     lines.push(`Deleted ${result.deletedFiles.length} files`);
   }
@@ -25,14 +29,20 @@ export function describeSelection(manifest: Manifest, result: PruneResult): stri
   return lines;
 }
 
-/** The message printed when pruning leaves imports pointing at deleted files. */
+/** The message printed when pruning leaves references pointing at deleted files. */
 export function describeDangling(dangling: DanglingReference[]): string[] {
   const lines = [
-    'The generated project imports files that were removed with the unselected features.',
+    'The generated project still references files that were removed with the unselected features and options.',
     'Add the shared files to the manifest, or make the code load providers dynamically.',
     '',
   ];
   for (const reference of dangling) {
+    if (reference.script !== undefined) {
+      lines.push(
+        `${reference.file} runs "${reference.script}", which uses removed ${reference.target}`,
+      );
+      continue;
+    }
     lines.push(`${reference.file}:${reference.line} imports ${reference.specifier}`);
   }
   return lines;

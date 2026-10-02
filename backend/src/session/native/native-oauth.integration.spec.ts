@@ -105,7 +105,23 @@ describe('native authorization (plan 04)', () => {
     ).toBeUndefined();
   });
 
-  it('sends the browser to the localized native authorization page', async () => {
+  it('redirects to the native authorization page with only the transaction', async () => {
+    const verifier = randomBytes(32).toString('base64url');
+    const response = await request(nativeHttpServer(ctx.harness.app))
+      .get('/api/oauth/authorize')
+      .query(nativeAuthorizeQuery(verifier))
+      .set('Accept-Language', 'en')
+      .redirects(0);
+    expect(response.status).toBe(302);
+    const location = new URL(String(response.headers.location));
+    expect(location.origin).toBe('http://localhost:3000');
+    expect(location.pathname).toBe('/en/auth/native/authorize');
+    expect([...location.searchParams.keys()]).toEqual(['transaction']);
+    expect(String(response.headers.location)).not.toContain('myapp://');
+  });
+
+  // feature:locale-ar:start
+  it('sends an Arabic browser to the Arabic native authorization page', async () => {
     const verifier = randomBytes(32).toString('base64url');
     const response = await request(nativeHttpServer(ctx.harness.app))
       .get('/api/oauth/authorize')
@@ -114,11 +130,10 @@ describe('native authorization (plan 04)', () => {
       .redirects(0);
     expect(response.status).toBe(302);
     const location = new URL(String(response.headers.location));
-    expect(location.origin).toBe('http://localhost:3000');
     expect(location.pathname).toBe('/ar/auth/native/authorize');
     expect([...location.searchParams.keys()]).toEqual(['transaction']);
-    expect(String(response.headers.location)).not.toContain('myapp://');
   });
+  // feature:locale-ar:end
 
   it('exchanges a code once and keeps the access token off the cookie session', async () => {
     const granted = await issueNativeGrant(ctx);

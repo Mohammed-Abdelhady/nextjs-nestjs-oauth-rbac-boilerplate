@@ -49,7 +49,7 @@ Configure these in `backend/.env`:
 ```bash
 PORT=5000
 NODE_ENV=development
-MONGO_URI=mongodb://USER:PASS@localhost:27017/authboiler?authSource=admin&directConnection=true
+MONGO_URI=mongodb://localhost:27017/authboiler?replicaSet=rs0
 FRONTEND_URL=http://localhost:3000
 
 # Session and state security
@@ -74,7 +74,23 @@ OAUTH_GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/oauth/google/callback
 SWAGGER_ENABLED=true
 ```
 
-Use this URI when the backend runs on the host and MongoDB runs in Docker Compose. The replica set advertises `mongodb:27017`, which only containers on the Compose network can resolve.
+Sign-in runs in a transaction, so run a single-node replica set locally:
+
+```bash
+mkdir -p ./mongodb-data
+mongod --replSet rs0 --dbpath ./mongodb-data
+```
+
+`mongod` runs in the foreground; leave it running and, in a second terminal:
+
+```bash
+mongosh --eval "rs.initiate()"
+```
+
+<!-- feature:docker:start -->
+
+With Docker Compose the backend runs in a container; from the host use `MONGO_URI=mongodb://USER:PASS@localhost:27017/authboiler?authSource=admin&directConnection=true`. The replica set advertises `mongodb:27017`, which only containers on the Compose network can resolve.
+<!-- feature:docker:end -->
 
 ## Native applications
 

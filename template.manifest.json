@@ -48,18 +48,52 @@
     "docker": {
       "label": "Docker files",
       "default": true,
-      "status": "planned"
+      "files": [
+        "docker-compose.yml",
+        "backend/Dockerfile",
+        "frontend/Dockerfile",
+        ".dockerignore",
+        "backend/.dockerignore",
+        "frontend/.dockerignore",
+        ".env.docker.example",
+        "scripts/config-transforms.ports.test.mjs",
+        "scripts/lib/config-transforms.js"
+      ],
+      "docs": [],
+      "catalogueKeys": []
     },
     "production": {
       "label": "Production nginx and compose",
       "default": true,
-      "status": "planned",
-      "requires": ["docker"]
+      "requires": ["docker"],
+      "files": [
+        "nginx/**",
+        "docker-compose.prod.yml",
+        "scripts/setup-production.js",
+        "scripts/config-transforms.test.mjs",
+        "scripts/lib/failure-diagnostics.mjs",
+        "scripts/verify-docker.mjs",
+        "scripts/lib/docker-http-probes.mjs"
+      ],
+      "docs": ["docs/deployment.md", "docs/PRODUCTION-SETUP.md"],
+      "catalogueKeys": []
     },
     "locale-ar": {
-      "label": "Arabic and right-to-left support",
+      "label": "Arabic locale",
       "default": true,
-      "status": "planned"
+      "files": [
+        "frontend/src/components/LanguageSwitcher.tsx",
+        "frontend/src/components/LanguageSwitcher.test.tsx",
+        "frontend/src/i18n/messages/ar.json",
+        "frontend/src/i18n/messages/*.ar.json"
+      ],
+      "docs": [],
+      "catalogueKeys": [
+        {
+          "path": "frontend/src/i18n/messages/en.json",
+          "keys": ["common.switchToArabic"]
+        }
+      ]
     }
   },
   "presets": {

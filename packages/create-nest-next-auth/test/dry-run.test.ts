@@ -70,6 +70,44 @@ describe('--dry-run', () => {
     expect(readdirSync(target)).toEqual([]);
   });
 
+  it('reports the options a run would remove and writes nothing', async () => {
+    const target = await emptyTarget();
+    const manifest = await loadManifest(REPO_ROOT);
+
+    const { code, output } = await run([
+      target,
+      '--yes',
+      '--dry-run',
+      '--no-install',
+      '--no-git',
+      '--no-docker',
+      '--no-production',
+    ]);
+
+    expect(code).toBe(0);
+    expect(readdirSync(target)).toEqual([]);
+    expect(output).toContain(
+      `Removed    ${manifest.options.docker.label}, ${manifest.options.production.label} (options)`,
+    );
+  });
+
+  it('exits 2 when docker is off but production is still requested', async () => {
+    const target = await emptyTarget();
+
+    const { code, output } = await run([
+      target,
+      '--yes',
+      '--dry-run',
+      '--no-install',
+      '--no-git',
+      '--no-docker',
+    ]);
+
+    expect(code).toBe(2);
+    expect(output).toContain('"production" needs "docker", which was turned off.');
+    expect(readdirSync(target)).toEqual([]);
+  });
+
   it('validates the directory even when it writes nothing', async () => {
     const { code } = await run(['Bad Name!', '--yes', '--dry-run', '--no-install', '--no-git']);
     expect(code).toBe(2);

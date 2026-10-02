@@ -20,7 +20,7 @@ npm test             # Product unit tests
 - **Tailwind CSS 4** - Styling
 - **RTK Query** - API state management
 - **shadcn/ui** - UI components
-- **next-intl** - Internationalization (en/ar)
+- **next-intl** - Internationalization (i18n)
 
 ## Project Structure
 
@@ -46,7 +46,7 @@ src/
 │   └── api/                # RTK Query APIs
 ├── hooks/                  # Custom hooks
 ├── lib/                    # Utilities
-├── i18n/                   # Translations (en.json, ar.json)
+├── i18n/                   # Translations (JSON catalogues)
 └── types/                  # TypeScript types
 ```
 
@@ -168,9 +168,12 @@ vercel --prod    # Production
 
 Set environment variables in Vercel dashboard.
 
+<!-- feature:docker:start -->
+
 ### Docker
 
 Use `docker compose up` from root directory.
+<!-- feature:docker:end -->
 
 ## Resources
 

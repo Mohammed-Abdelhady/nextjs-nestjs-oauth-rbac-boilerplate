@@ -2,6 +2,8 @@
 
 This document describes the request lifecycle, session storage, OAuth provider registry, feature toggles, and security model.
 
+<!-- feature:production:start -->
+
 ## System overview
 
 ```
@@ -24,6 +26,10 @@ This document describes the request lifecycle, session storage, OAuth provider r
                                                          ▼
                                                  MongoDB 7 Container
 ```
+
+The development stack runs the backend, frontend and MongoDB containers with Docker Compose.
+
+<!-- feature:production:end -->
 
 ## Request processing pipeline
 

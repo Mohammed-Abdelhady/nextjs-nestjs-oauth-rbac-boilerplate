@@ -30,6 +30,12 @@ export function buildSummary(manifest: Manifest, plan: Plan): string[] {
   if (plan.options.length > 0) {
     lines.push(`Options    ${labels(manifest, plan.options)}`);
   }
+  const removedOptions = Object.keys(manifest.options).filter(
+    (id) => manifest.options[id].status !== 'planned' && !plan.options.includes(id),
+  );
+  if (removedOptions.length > 0) {
+    lines.push(`Removed    ${labels(manifest, removedOptions)} (options)`);
+  }
   for (const entry of plan.added) {
     lines.push(
       `Added      ${labelFor(manifest, entry.id)}, needed by ${labelFor(manifest, entry.because)}`,

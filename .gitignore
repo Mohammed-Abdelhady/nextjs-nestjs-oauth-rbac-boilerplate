@@ -35,6 +35,9 @@ blob-report/
 .mongodb-binaries/
 mongodb-memory-server/
 
+# Local MongoDB replica set data (created by the local start steps)
+mongodb-data/
+
 # Logs
 *.log
 npm-debug.log*

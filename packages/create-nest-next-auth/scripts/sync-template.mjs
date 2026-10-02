@@ -26,6 +26,7 @@ const EXCLUDED_DIRS = new Set([
   '.auth',
   '.mongodb-binaries',
   'mongodb-memory-server',
+  'mongodb-data',
   '.ssh',
   '.aws',
   '.kube',

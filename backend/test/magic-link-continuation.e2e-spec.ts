@@ -22,7 +22,7 @@ describe('magic-link native continuation (e2e)', () => {
   });
 
   it('carries an allowed continuation from request through verification', async () => {
-    const redirect = '/ar/auth/native/authorize?transaction=abc-123';
+    const redirect = '/en/auth/native/authorize?transaction=abc-123';
     const requester = await browserAgent(e2e.httpServer);
     await requester
       .post('/api/auth/magic-link/request')

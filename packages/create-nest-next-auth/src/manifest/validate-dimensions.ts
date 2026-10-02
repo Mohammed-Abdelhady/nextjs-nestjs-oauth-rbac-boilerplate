@@ -1,4 +1,5 @@
 import type {
+  CatalogueKeyRule,
   Database,
   Preset,
   ProjectOption,
@@ -112,6 +113,24 @@ function emptyDatabase(): Database {
   };
 }
 
+function readCatalogueKeys(value: unknown, where: string, problems: string[]): CatalogueKeyRule[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) {
+    problems.push(`${where} must be an array`);
+    return [];
+  }
+  return value.map((entry, index) => {
+    if (!isRecord(entry)) {
+      problems.push(`${where}[${index}] must be an object`);
+      return { path: '', keys: [] };
+    }
+    return {
+      path: readString(entry.path, `${where}[${index}].path`, problems),
+      keys: readStringArray(entry.keys, `${where}[${index}].keys`, problems),
+    };
+  });
+}
+
 function readOption(id: string, value: unknown, problems: string[]): ProjectOption {
   if (!isRecord(value)) {
     problems.push(`options.${id} must be an object`);
@@ -122,12 +141,26 @@ function readOption(id: string, value: unknown, problems: string[]): ProjectOpti
     default: readBoolean(value.default, `options.${id}.default`, problems),
     files: readPathArray(value.files ?? [], `options.${id}.files`, problems),
     requires: readStringArray(value.requires ?? [], `options.${id}.requires`, problems),
+    docs: readPathArray(value.docs ?? [], `options.${id}.docs`, problems),
+    catalogueKeys: readCatalogueKeys(
+      value.catalogueKeys ?? [],
+      `options.${id}.catalogueKeys`,
+      problems,
+    ),
     status: readStatus(value.status, `options.${id}.status`, problems),
   };
 }
 
 function emptyOption(): ProjectOption {
-  return { label: '', default: false, files: [], requires: [], status: 'planned' };
+  return {
+    label: '',
+    default: false,
+    files: [],
+    requires: [],
+    docs: [],
+    catalogueKeys: [],
+    status: 'planned',
+  };
 }
 
 const PRESET_KEYS = new Set(['targets', 'features', 'options']);

@@ -26,12 +26,18 @@ vi.mock('@/i18n/navigation', () => ({
   useRouter: () => ({ replace: replaceMock, push: vi.fn() }),
 }));
 
-const LOCALES = ['en', 'ar'] as const;
+const LOCALES = [
+  'en',
+  'ar', // feature:locale-ar
+] as const;
 
 let messages: Record<(typeof LOCALES)[number], AbstractIntlMessages>;
 
 beforeAll(async () => {
-  messages = { en: await loadMessages('en'), ar: await loadMessages('ar') };
+  messages = {
+    en: await loadMessages('en'),
+    ar: await loadMessages('ar'), // feature:locale-ar
+  };
 });
 
 beforeEach(() => {

@@ -1,12 +1,58 @@
+import { existsSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { loadManifest } from '../src/manifest/load.js';
 import { availableFeatures, defaultFeatureIds, resolveSelection } from '../src/manifest/select.js';
 import { ManifestError, validateManifest } from '../src/manifest/validate.js';
 import { FEATURE_KIND_ORDER } from '../src/constants/index.js';
-import { listFiles } from '../src/utils/fs.js';
+import { matchesGlob } from '../src/utils/glob.js';
+import { SKIPPED_SCAN_DIRS } from './reference-content.js';
 
 const REPO_ROOT = fileURLToPath(new URL('../../..', import.meta.url));
+
+/**
+ * Repository files as root-relative posix paths. The installer's own `packages/`
+ * workspace is left out by path, so a concurrent packed-build test that rewrites
+ * `packages/create-nest-next-auth/template/` cannot race this walk.
+ */
+function repoFiles(prefix = ''): string[] {
+  const directory = join(REPO_ROOT, prefix);
+  const found: string[] = [];
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const relative = prefix === '' ? entry.name : `${prefix}/${entry.name}`;
+    if (entry.isDirectory()) {
+      if (relative === 'packages' || SKIPPED_SCAN_DIRS.has(entry.name)) continue;
+      found.push(...repoFiles(relative));
+      continue;
+    }
+    if (entry.isFile()) found.push(relative);
+  }
+  return found;
+}
+
+/** Checks one dimension's paths: exact paths must exist, globs must match. */
+function expectDimensionPathsExist(
+  where: string,
+  entries: Record<string, { files: string[]; docs?: string[] }>,
+): void {
+  const present = repoFiles();
+  for (const [id, entry] of Object.entries(entries)) {
+    for (const path of [...entry.files, ...(entry.docs ?? [])]) {
+      if (path.includes('*')) {
+        expect(
+          present.some((file) => matchesGlob(file, path)),
+          `${where}.${id} glob ${path} matches no file`,
+        ).toBe(true);
+        continue;
+      }
+      expect(
+        existsSync(join(REPO_ROOT, path)),
+        `${where}.${id} lists ${path}, which does not exist`,
+      ).toBe(true);
+    }
+  }
+}
 
 function feature(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
@@ -143,18 +189,50 @@ describe('the repository manifest', () => {
 
   it('claims every file that exists, so a delete list is never stale', async () => {
     const manifest = await loadManifest(REPO_ROOT);
-    const present = new Set(await listFiles(REPO_ROOT));
 
-    for (const [id, entry] of Object.entries(manifest.features)) {
-      for (const path of entry.files) {
-        if (path.includes('*')) continue;
-        expect(present.has(path), `features.${id} lists ${path}, which does not exist`).toBe(true);
-      }
-      for (const path of entry.docs) {
-        expect(present.has(path), `features.${id} lists doc ${path}, which does not exist`).toBe(
-          true,
-        );
-      }
+    expectDimensionPathsExist('features', manifest.features);
+  });
+
+  it('claims every option file that exists', async () => {
+    const manifest = await loadManifest(REPO_ROOT);
+
+    expectDimensionPathsExist('options', manifest.options);
+  });
+
+  it('gives every option file a single owner once globs are expanded', async () => {
+    const manifest = await loadManifest(REPO_ROOT);
+    const present = repoFiles();
+
+    for (const file of present) {
+      const owners = Object.entries(manifest.options)
+        .filter(([, option]) =>
+          [...option.files, ...option.docs].some((path) =>
+            path.includes('*') ? matchesGlob(file, path) : path === file,
+          ),
+        )
+        .map(([id]) => id);
+      expect(owners.length, `${file} is claimed by ${owners.join(', ')}`).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('gives every Docker file a docker or production owner once globs are expanded', async () => {
+    const manifest = await loadManifest(REPO_ROOT);
+    const owners = ['docker', 'production'].map((id) => [id, manifest.options[id]] as const);
+    const present = repoFiles().filter(
+      (file) =>
+        /(^|\/)Dockerfile$/.test(file) ||
+        /(^|\/)\.dockerignore$/.test(file) ||
+        /(^|\/)docker-compose[^/]*\.ya?ml$/.test(file),
+    );
+    expect(present.length).toBeGreaterThan(0);
+
+    for (const file of present) {
+      const claimed = owners.some(([, option]) =>
+        [...option.files, ...option.docs].some((path) =>
+          path.includes('*') ? matchesGlob(file, path) : path === file,
+        ),
+      );
+      expect(claimed, `${file} has no docker or production owner`).toBe(true);
     }
   });
 });

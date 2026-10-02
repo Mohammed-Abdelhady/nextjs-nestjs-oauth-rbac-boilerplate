@@ -1,3 +1,4 @@
+// feature:production:start
 function generateApiServerBlock(backendDomain) {
   return `    # API server (${backendDomain})
     server {
@@ -128,12 +129,13 @@ export function configureNginxDomains(content, domains) {
   const apiBlock = `${generateApiServerBlock(domains.backendDomain)}\n    # End API server\n`;
   return content.replace(include, `${apiBlock}    include /etc/nginx/conf.d/*.conf;`);
 }
+// feature:production:end
 
 export function configureBackendPort(content, port) {
   if (!Number.isInteger(Number(port)) || Number(port) < 1 || Number(port) > 65535)
     throw new Error('Backend port must be an integer from 1 to 65535');
   const backend = /^  backend:\n[\s\S]*?(?=^  [a-zA-Z][\w-]*:|^volumes:|^networks:|(?![\s\S]))/m;
-  if (!backend.test(content)) throw new Error('Backend Compose service not found');
+  if (!backend.test(content)) throw new Error('Backend service block not found');
   return content.replace(backend, (service) =>
     service
       .replace(/(ports:\s*\n\s*-\s*')\d+:\d+(')/, `$1${port}:${port}$2`)
@@ -147,7 +149,7 @@ export function configureFrontendPort(content, port) {
   if (!Number.isInteger(Number(port)) || Number(port) < 1 || Number(port) > 65535)
     throw new Error('Frontend host port must be an integer from 1 to 65535');
   const frontend = /^  frontend:\n[\s\S]*?(?=^  [a-zA-Z][\w-]*:|^volumes:|^networks:|(?![\s\S]))/m;
-  if (!frontend.test(content)) throw new Error('Frontend Compose service not found');
+  if (!frontend.test(content)) throw new Error('Frontend service block not found');
   return content.replace(frontend, (service) =>
     service
       .replace(/(ports:\s*\n\s*-\s*')\d+:\d+(')/, `$1${port}:3000$2`)

@@ -50,7 +50,7 @@ afterEach(() => vi.clearAllMocks());
 describe('generated toast fallback messages', () => {
   it.each([
     ['en', 'Check your connection', 'An unexpected error occurred'],
-    ['ar', 'تحقق من اتصالك', 'حدث خطأ غير متوقع'],
+    ['ar', 'تحقق من اتصالك', 'حدث خطأ غير متوقع'], // feature:locale-ar
   ])(
     'renders known and missing keys in %s without exposing a key',
     (locale, networkError, unknownError) => {
@@ -64,7 +64,10 @@ describe('generated toast fallback messages', () => {
 });
 
 describe('error-code toast handoff', () => {
-  it.each(['en', 'ar'] as const)(
+  it.each([
+    'en',
+    'ar', // feature:locale-ar
+  ] as const)(
     'renders the interceptor output for SESSION_LIMIT_REACHED through the %s catalogue',
     async (locale: AppLocale) => {
       const element = runInterceptorForSessionLimit();

@@ -219,7 +219,7 @@ No new environment variables required. Existing `.env` file works with new syste
 # Build production code
 npm run build
 
-# Start production server (or use PM2/Docker)
+# Start the production server
 npm run start:prod
 ```
 
@@ -263,7 +263,7 @@ npm run build
 # Development
 npm run dev
 
-# Production (with PM2 or Docker)
+# Production
 npm run start
 ```
 
