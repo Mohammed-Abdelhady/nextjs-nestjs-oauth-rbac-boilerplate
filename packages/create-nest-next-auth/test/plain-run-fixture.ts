@@ -9,6 +9,7 @@ export const DEFAULT_SELECTION_MUST_EXIST = [
   'package.json',
   'README.md',
   '.gitignore',
+  '.create-nest-next-auth.json',
   'backend/package.json',
   'frontend/package.json',
   'backend/tsconfig.json',
