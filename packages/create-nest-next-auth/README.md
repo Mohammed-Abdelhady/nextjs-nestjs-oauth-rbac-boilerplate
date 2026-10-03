@@ -59,7 +59,9 @@ code 2 before anything is written or asked. This replaces the older behaviour
 where an unknown `--features` id was skipped with a warning. Other usage errors
 (a bad flag value, a missing or invalid config file, a wrong type, an unknown
 key) also exit 2. Exit 1 is for a run that failed after scaffolding, such as a
-leftover import.
+leftover import. Exit 3 means the installed package itself is damaged, for
+example a missing or malformed identity file or package manifest. Reinstall it
+and run again.
 
 ### Config file
 
@@ -122,7 +124,12 @@ and says it is using npm anyway.
 10. Greps the result for imports and scripts that point at deleted files. Any
     hit is printed with `file:line` and the CLI exits 1, leaving the tree in
     place.
-11. Runs `git init` and one commit, then `npm install`.
+11. Writes `.create-nest-next-auth.json` into the project root. It records the
+    installer name and version, a SHA-256 of the template content the project
+    was generated from, and the resolved selection: clients, database,
+    features, options and locales. It holds no secrets, no paths and no
+    machine names, so keep it committed with the project.
+12. Runs `git init` and one commit, then `npm install`.
 
 Git runs before the install on purpose. The boilerplate installs husky hooks
 during `npm install`, and those hooks would run lint-staged over the whole tree
@@ -290,7 +297,10 @@ The full-feature browser suite is maintainer tooling. Generated projects omit `f
 `prebuild` runs `scripts/sync-template.mjs`, which copies the repository into
 `template/` while skipping `node_modules`, `.git`, `dist`, `.next`, `out`,
 `coverage`, logs, real `.env` files, `packages/`, and maintainer folders
-(`.hyperflow`, `.claude`, `openspec`). Build before publishing; a stale or missing
+(`.hyperflow`, `.claude`, `openspec`). The same script writes
+`template.identity.json` beside `template/`: the SHA-256 of the shipped file
+list, contents and executable bits, which every generated project records in
+`.create-nest-next-auth.json`. Build before publishing; a stale or missing
 `template/` produces a package that cannot scaffold anything.
 
 Publish from the package directory after a version bump: `npm run build -w
