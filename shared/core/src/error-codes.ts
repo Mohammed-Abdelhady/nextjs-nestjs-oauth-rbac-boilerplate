@@ -20,6 +20,10 @@ export const ErrorCode = {
   ACTIVATION_CODE_INVALID: 'ACTIVATION_CODE_INVALID',
   NO_PENDING_REGISTRATION: 'NO_PENDING_REGISTRATION',
   EMAIL_SEND_FAILED: 'EMAIL_SEND_FAILED',
+  // The per-address mailed-code cap is in force; retry after the window.
+  EMAIL_SEND_LIMIT_REACHED: 'EMAIL_SEND_LIMIT_REACHED',
+  // A registration body still carries a password or a name: the old contract.
+  REGISTRATION_CONTRACT_OUTDATED: 'REGISTRATION_CONTRACT_OUTDATED',
 
   // feature:magic-link:start
   // Magic link
@@ -89,6 +93,7 @@ export const ErrorCode = {
   CANNOT_MODIFY_HIGHER_ROLE: 'CANNOT_MODIFY_HIGHER_ROLE',
   INVALID_ROLE_ASSIGNMENT: 'INVALID_ROLE_ASSIGNMENT',
   USER_ALREADY_DELETED: 'USER_ALREADY_DELETED',
+  EMAIL_CHANGE_NOT_ALLOWED: 'EMAIL_CHANGE_NOT_ALLOWED',
 
   // feature:oauth-core:start
   // OAuth (provider independent: the backend registry names the provider)

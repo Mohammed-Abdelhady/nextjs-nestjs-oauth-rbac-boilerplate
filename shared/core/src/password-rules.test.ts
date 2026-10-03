@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   areAllPasswordRulesPassed,
   evaluatePasswordRules,
+  isPasswordWithinByteLimit,
+  MAX_PASSWORD_BYTES,
   MIN_PASSWORD_LENGTH,
+  passwordByteLength,
 } from './password-rules';
 
 describe('evaluatePasswordRules', () => {
@@ -64,5 +67,20 @@ describe('areAllPasswordRulesPassed', () => {
 
   it('returns true when all rules pass', () => {
     expect(areAllPasswordRulesPassed('StrongP4ssword', MIN_PASSWORD_LENGTH)).toBe(true);
+  });
+});
+
+describe('password byte limit', () => {
+  it('counts UTF-8 bytes, not characters', () => {
+    expect(passwordByteLength('abc')).toBe(3);
+    // Each of these is two bytes in UTF-8.
+    expect(passwordByteLength('ééé')).toBe(6);
+  });
+
+  it('accepts a password at the ceiling and rejects one past it', () => {
+    expect(isPasswordWithinByteLimit('a'.repeat(MAX_PASSWORD_BYTES))).toBe(true);
+    expect(isPasswordWithinByteLimit('a'.repeat(MAX_PASSWORD_BYTES + 1))).toBe(false);
+    // 37 two-byte characters are 74 bytes even though there are 37 characters.
+    expect(isPasswordWithinByteLimit('é'.repeat(37))).toBe(false);
   });
 });
