@@ -1,8 +1,9 @@
 import type { Manifest, Preset } from '../types.js';
 import {
   DEFAULT_PRESET_ID,
-  LOCALE_AR_OPTION_ID,
   LOCALE_IDS,
+  LOCALE_OPTION_LOCALES,
+  REQUIRED_LOCALE_ID,
   SIGN_IN_SITE_ID,
   WEB_TARGET_ID,
 } from '../constants/index.js';
@@ -129,8 +130,10 @@ function optionOverrides(
     for (const locale of locales) {
       if (!isMember(LOCALE_IDS, locale)) errors.push({ id: locale, reason: 'unknown' });
     }
-    if (!locales.includes('en')) errors.push({ id: 'locales', reason: 'locales' });
-    overrides[LOCALE_AR_OPTION_ID] = locales.includes('ar');
+    if (!locales.includes(REQUIRED_LOCALE_ID)) errors.push({ id: 'locales', reason: 'locales' });
+    for (const [optionId, localeId] of Object.entries(LOCALE_OPTION_LOCALES)) {
+      overrides[optionId] = locales.includes(localeId);
+    }
   }
   return overrides;
 }

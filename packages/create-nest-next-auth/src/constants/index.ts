@@ -30,11 +30,33 @@ export const PRODUCTION_OPTION_ID = 'production';
 
 export const LOCALE_AR_OPTION_ID = 'locale-ar';
 
+/** Locale every generated project ships. Not owned by an option. */
+export const REQUIRED_LOCALE_ID = 'en';
+
+/** Which locale each manifest option switches on, keyed by the option id. */
+export const LOCALE_OPTION_LOCALES: Record<string, string> = {
+  [LOCALE_AR_OPTION_ID]: 'ar',
+};
+
 /** Locales a generated project can carry today. */
-export const LOCALE_IDS = ['en', 'ar'] as const;
+export const LOCALE_IDS: readonly string[] = [
+  REQUIRED_LOCALE_ID,
+  ...Object.values(LOCALE_OPTION_LOCALES),
+];
+
+/**
+ * Frame for errors that mean the published package itself is damaged, and the
+ * hint every one of them ends with.
+ */
+export const BROKEN_PACKAGE = 'This copy of create-nest-next-auth is broken';
+
+export const REINSTALL_HINT = 'Reinstall it and try again.';
 
 /** Exit code for every usage error: bad flags, bad config, bad selection. */
 export const USAGE_EXIT_CODE = 2;
+
+/** Exit code when the installed package itself is damaged, not the input. */
+export const BROKEN_PACKAGE_EXIT_CODE = 3;
 
 /** Preset keywords, kept together so validation and resolution agree. */
 export const PRESET_KEYWORDS = ['available', 'defaults'] as const;
@@ -54,6 +76,18 @@ export const FRONTEND_PACKAGE_JSON = 'frontend/package.json';
 
 /** Env var written into backend/.env.example with the enabled feature ids. */
 export const FEATURE_FLAG_VAR = 'AUTH_FEATURES';
+
+/** File a generated project gets at its root, recording how it was made. */
+export const ANSWERS_FILE_NAME = '.create-nest-next-auth.json';
+
+/** Version of that file's shape. Bumped only when the contract changes. */
+export const ANSWERS_SCHEMA_VERSION = 1;
+
+/** Build artifact next to `template/`: the SHA-256 of the shipped template. */
+export const TEMPLATE_IDENTITY_FILE = 'template.identity.json';
+
+/** Shape of a hex SHA-256 digest, wherever one is read. */
+export const SHA256_HEX_PATTERN = /^[0-9a-f]{64}$/;
 
 /** Names npm strips from a tarball. sync-template.mjs writes the left side. */
 export const RESTORED_FILENAMES: Record<string, string> = {
@@ -115,3 +149,30 @@ export const DEFAULT_COMMIT_MESSAGE = 'chore: scaffold from create-nest-next-aut
 export const GIT_FALLBACK_NAME = CLI_NAME;
 
 export const GIT_FALLBACK_EMAIL = `${CLI_NAME}@users.noreply.github.com`;
+
+/** Repository-local paths and config overrides must not escape the caller. */
+export const GIT_REPOSITORY_ENV_VARS: readonly string[] = [
+  'GIT_DIR',
+  'GIT_WORK_TREE',
+  'GIT_INDEX_FILE',
+  'GIT_OBJECT_DIRECTORY',
+  'GIT_ALTERNATE_OBJECT_DIRECTORIES',
+  'GIT_COMMON_DIR',
+  'GIT_NAMESPACE',
+  'GIT_PREFIX',
+  'GIT_CEILING_DIRECTORIES',
+  'GIT_DISCOVERY_ACROSS_FILESYSTEM',
+  'GIT_IMPLICIT_WORK_TREE',
+  'GIT_SHALLOW_FILE',
+  'GIT_GRAFT_FILE',
+  'GIT_REPLACE_REF_BASE',
+  'GIT_NO_REPLACE_OBJECTS',
+  'GIT_REFERENCE_BACKEND',
+  'GIT_CONFIG',
+  'GIT_CONFIG_GLOBAL',
+  'GIT_CONFIG_SYSTEM',
+  'GIT_CONFIG_COUNT',
+  'GIT_CONFIG_PARAMETERS',
+];
+
+export const GIT_REPOSITORY_ENV_PREFIXES = ['GIT_CONFIG_KEY_', 'GIT_CONFIG_VALUE_'] as const;
