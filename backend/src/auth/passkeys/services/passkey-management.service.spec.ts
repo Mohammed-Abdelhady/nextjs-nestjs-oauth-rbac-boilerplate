@@ -2,6 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { AuthFeaturesService } from '../../services/auth-features.service';
 import { PasskeyManagementService } from './passkey-management.service';
+import { createModelMock } from '../../../common/testing/test-doubles.harness-spec';
 import {
   createMockPasskey,
   MockPasskey,
@@ -59,20 +60,22 @@ function createHarness(state: AccountState = {}): Harness {
     'magicLink.enabled': state.magicLinkEnabled ?? false,
   };
 
-  const authFeaturesService = new AuthFeaturesService({
-    get: jest.fn((key: string, fallback?: boolean) =>
-      key in features ? features[key] : fallback,
-    ),
-  } as unknown as ConfigService);
+  const authFeaturesService = new AuthFeaturesService(
+    Object.assign(new ConfigService(), {
+      get: jest.fn((key: string, fallback?: boolean) =>
+        key in features ? features[key] : fallback,
+      ),
+    }),
+  );
 
   return {
     service: new PasskeyManagementService(
-      passkeyModel as unknown as ConstructorParameters<
-        typeof PasskeyManagementService
-      >[0],
-      userModel as unknown as ConstructorParameters<
-        typeof PasskeyManagementService
-      >[1],
+      createModelMock<
+        ConstructorParameters<typeof PasskeyManagementService>[0]
+      >(passkeyModel),
+      createModelMock<
+        ConstructorParameters<typeof PasskeyManagementService>[1]
+      >(userModel),
       authFeaturesService,
     ),
     passkeyModel,

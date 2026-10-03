@@ -3,6 +3,10 @@ import { SignInService } from '../../services/sign-in.service';
 import { PasskeyAssertionService } from './passkey-assertion.service';
 import { PasskeyLoginService } from './passkey-login.service';
 import {
+  createModelMock,
+  partialMock,
+} from '../../../common/testing/test-doubles.harness-spec';
+import {
   CREDENTIAL_BODY,
   createMockPasskey,
   createMockRequest,
@@ -59,11 +63,11 @@ function createHarness(options: {
 
   return {
     service: new PasskeyLoginService(
-      userModel as unknown as ConstructorParameters<
-        typeof PasskeyLoginService
-      >[0],
-      assertions as unknown as PasskeyAssertionService,
-      signInService as unknown as SignInService,
+      createModelMock<ConstructorParameters<typeof PasskeyLoginService>[0]>(
+        userModel,
+      ),
+      partialMock<PasskeyAssertionService>(assertions),
+      partialMock<SignInService>(signInService),
     ),
     assertions,
     signInService,

@@ -25,6 +25,7 @@ function strategy(): OAuthProviderStrategy {
   return {
     id: 'google',
     displayName: 'Google',
+    envPrefix: 'GOOGLE',
     supportsPkce: true,
     usesOidc: true,
     emailAlwaysVerified: true,
@@ -33,7 +34,7 @@ function strategy(): OAuthProviderStrategy {
     getAuthorizationUrl: () => 'https://example.test',
     exchangeCode: jest.fn().mockResolvedValue({ accessToken: 'token' }),
     fetchProfile: jest.fn().mockResolvedValue(PROFILE),
-  } as unknown as OAuthProviderStrategy;
+  };
 }
 
 describe('OAuthService linking', () => {

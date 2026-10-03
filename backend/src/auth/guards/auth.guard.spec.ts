@@ -10,6 +10,7 @@ import { Public } from '../decorators/public.decorator';
 import { Role } from '../../role/schemas/role.schema';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { NativeAccessService } from '../../session/native/native-access.service';
+import { createExecutionContextMock } from '../../common/testing/test-doubles.harness-spec';
 
 class GuardedRoutes {
   @Public()
@@ -49,14 +50,14 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
       session: undefined,
     };
     const response: Record<string, unknown> = {};
-    const context = {
+    const context = createExecutionContextMock({
       switchToHttp: () => ({
         getRequest: () => request,
         getResponse: () => response,
       }),
       getHandler: () => handler,
       getClass: () => GuardedRoutes,
-    } as unknown as ExecutionContext;
+    });
 
     return { context, request, response };
   };
@@ -144,6 +145,20 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
     const { context } = createMockContext({ sid: 'valid-token' });
     sessionService.validateSession.mockResolvedValue({
       user: null,
+    });
+
+    await expect(guard.canActivate(context)).rejects.toMatchObject({
+      code: ErrorCode.SESSION_INVALID,
+      status: 401,
+    });
+  });
+
+  // Deliberate: a session read that did not populate its user carries only
+  // the id. The guard must refuse it rather than read fields off the id.
+  it('deliberately refuses an unpopulated session user with SESSION_INVALID', async () => {
+    const { context } = createMockContext({ sid: 'valid-token' });
+    sessionService.validateSession.mockResolvedValue({
+      user: new Types.ObjectId(),
     });
 
     await expect(guard.canActivate(context)).rejects.toMatchObject({

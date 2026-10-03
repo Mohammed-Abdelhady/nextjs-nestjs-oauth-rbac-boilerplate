@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { MailService } from './mail.service';
+import { partialMock } from '../common/testing/test-doubles.harness-spec';
 
 jest.mock('nodemailer');
 
@@ -17,7 +18,7 @@ describe('MailService', () => {
   let service: MailService;
   let sendMail: jest.Mock;
 
-  const createTransport = nodemailer.createTransport as unknown as jest.Mock;
+  const createTransport = jest.mocked(nodemailer.createTransport);
   const XSS_NAME = '<script>alert("xss")</script>';
 
   function lastMail(): SentMail {
@@ -26,7 +27,11 @@ describe('MailService', () => {
 
   beforeEach(async () => {
     sendMail = jest.fn().mockResolvedValue(undefined);
-    createTransport.mockReturnValue({ sendMail });
+    createTransport.mockReturnValue(
+      partialMock<ReturnType<typeof nodemailer.createTransport>>({
+        sendMail,
+      }),
+    );
 
     const configService = {
       get: jest.fn((key: string, defaultValue?: unknown) => {
@@ -35,7 +40,7 @@ describe('MailService', () => {
         if (key === 'smtp.port') return 587;
         return defaultValue;
       }),
-    } as unknown as ConfigService;
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

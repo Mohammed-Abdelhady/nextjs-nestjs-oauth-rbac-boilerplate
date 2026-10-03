@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
-import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { MagicLinkService } from './magic-link.service';
 import { PendingMagicLink } from './schemas/pending-magic-link.schema';
@@ -11,6 +10,10 @@ import { User } from '../../user/schemas/user.schema';
 import { AuthProvider } from '../../user/enums/auth-provider.enum';
 import { Clock } from '../../common/services/clock';
 import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
+import {
+  createRequestMock,
+  createResponseMock,
+} from '../../common/testing/test-doubles.harness-spec';
 
 /**
  * Shared setup for the MagicLinkService specs.
@@ -57,18 +60,18 @@ export const MOCK_USER_SUMMARY = {
   permissions: ['read'],
 };
 
-export const MOCK_REQUEST = {
+export const MOCK_REQUEST = createRequestMock({
   ip: '127.0.0.1',
   headers: { 'user-agent': 'test-agent' },
-} as unknown as Request;
+});
 
-export const MOCK_RESPONSE = {
+export const MOCK_RESPONSE = createResponseMock({
   req: {
     headers: { 'user-agent': 'test-agent' },
     ip: '127.0.0.1',
   },
   cookie: jest.fn(),
-} as unknown as Response;
+});
 
 const CONFIG_VALUES: Record<string, string | number> = {
   'magicLink.expiresIn': MAGIC_LINK_EXPIRES_IN,
@@ -89,11 +92,7 @@ export async function createMagicLinkHarness(): Promise<MagicLinkHarness> {
     create: jest.fn().mockResolvedValue(MOCK_USER),
   };
 
-  const configService = {
-    get: jest.fn((key: string, defaultValue?: string | number) =>
-      key in CONFIG_VALUES ? CONFIG_VALUES[key] : defaultValue,
-    ),
-  } as unknown as ConfigService;
+  const configService = new ConfigService(CONFIG_VALUES);
 
   const authMailService = {
     sendMagicLink: jest.fn().mockResolvedValue(undefined),

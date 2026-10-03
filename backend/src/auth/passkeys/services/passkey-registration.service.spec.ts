@@ -4,6 +4,10 @@ import { PasskeyRegistrationService } from './passkey-registration.service';
 import { PasskeyChallengeService } from './passkey-challenge.service';
 import { WebAuthnAdapter } from './webauthn.adapter';
 import {
+  createModelMock,
+  partialMock,
+} from '../../../common/testing/test-doubles.harness-spec';
+import {
   CREDENTIAL_BODY,
   CREDENTIAL_ID,
   createChallengeService,
@@ -82,13 +86,13 @@ function createHarness(options: { alreadyRegistered?: boolean } = {}): Harness {
 
   return {
     service: new PasskeyRegistrationService(
-      passkeyModel as unknown as ConstructorParameters<
-        typeof PasskeyRegistrationService
-      >[0],
-      userModel as unknown as ConstructorParameters<
-        typeof PasskeyRegistrationService
-      >[1],
-      adapter as unknown as WebAuthnAdapter,
+      createModelMock<
+        ConstructorParameters<typeof PasskeyRegistrationService>[0]
+      >(passkeyModel),
+      createModelMock<
+        ConstructorParameters<typeof PasskeyRegistrationService>[1]
+      >(userModel),
+      partialMock<WebAuthnAdapter>(adapter),
       createPasskeyConfig(),
       challenges,
     ),

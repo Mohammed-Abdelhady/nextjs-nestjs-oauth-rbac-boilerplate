@@ -4,6 +4,11 @@ import { Types } from 'mongoose';
 import { PasskeyChallengeService } from './services/passkey-challenge.service';
 import { PasskeyConfigService } from './services/passkey-config.service';
 import { PasskeyCredentialDto } from './dto/passkey-credential.dto';
+import {
+  createModelMock,
+  createRequestMock,
+  createResponseMock,
+} from '../../common/testing/test-doubles.harness-spec';
 
 /**
  * Shared setup for the passkey specs.
@@ -31,10 +36,7 @@ export const PASSKEY_CONFIG: Record<string, string> = {
 export function createConfigService(
   values: Record<string, string> = PASSKEY_CONFIG,
 ): ConfigService {
-  return {
-    get: <T>(key: string, fallback?: T): T | undefined =>
-      (values[key] as T | undefined) ?? fallback,
-  } as unknown as ConfigService;
+  return new ConfigService(values);
 }
 
 export function createChallengeStore(): {
@@ -52,7 +54,9 @@ export function createChallengeService(
   store = createChallengeStore(),
 ): PasskeyChallengeService {
   return new PasskeyChallengeService(
-    store as never,
+    createModelMock<ConstructorParameters<typeof PasskeyChallengeService>[0]>(
+      store,
+    ),
     createConfigService(values),
   );
 }
@@ -116,7 +120,7 @@ export function createMockResponse(): MockResponse {
   const cookies: Record<string, string> = {};
   const cleared: string[] = [];
 
-  const response = {
+  const response = createResponseMock({
     cookie: (name: string, value: string): void => {
       cookies[name] = value;
     },
@@ -124,11 +128,11 @@ export function createMockResponse(): MockResponse {
       cleared.push(name);
     },
     req: { headers: { 'user-agent': 'test-agent' }, ip: '127.0.0.1' },
-  } as unknown as Response;
+  });
 
   return { response, cookies, cleared };
 }
 
 export function createMockRequest(cookies: Record<string, string>): Request {
-  return { cookies } as unknown as Request;
+  return createRequestMock({ cookies });
 }

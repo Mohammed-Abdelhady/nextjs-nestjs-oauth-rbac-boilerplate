@@ -9,6 +9,7 @@ jest.mock('../two-factor/utils/totp.util', () => ({
 // feature:totp:end
 
 import { ExecutionContext } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { FeatureEnabledGuard } from './feature-enabled.guard';
 import { AuthFeaturesService } from '../services/auth-features.service';
@@ -20,16 +21,14 @@ import { TwoFactorController } from '../two-factor/two-factor.controller'; // fe
 import { PasskeysController } from '../passkeys/passkeys.controller'; // feature:passkeys
 import { PasskeyLoginController } from '../passkeys/passkey-login.controller'; // feature:passkeys
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import {
+  createExecutionContextMock,
+  handlerOf,
+  type RouteHandler,
+} from '../../common/testing/test-doubles.harness-spec';
 
 class UngatedController {
   handle(): void {}
-}
-
-type RouteHandler = (...args: never[]) => unknown;
-
-/** Route handler as a plain function, which is what carries the metadata. */
-function handlerOf(prototype: object, name: string): RouteHandler {
-  return (prototype as unknown as Record<string, RouteHandler>)[name];
 }
 
 /** Context that reports the class and handler a request would have hit. */
@@ -37,10 +36,10 @@ function contextFor(
   target: object,
   handler: RouteHandler = () => undefined,
 ): ExecutionContext {
-  return {
+  return createExecutionContextMock({
     getClass: () => target,
     getHandler: () => handler,
-  } as unknown as ExecutionContext;
+  });
 }
 
 /** Configuration key each feature reads, mirroring AuthFeaturesService. */
@@ -55,20 +54,17 @@ describe('FeatureEnabledGuard', () => {
   function createGuard(enabled: Partial<Record<AuthFeature, boolean>>): {
     guard: FeatureEnabledGuard;
   } {
-    const configService = {
-      get: jest.fn((key: string, fallback?: boolean) => {
-        const feature = CONFIG_KEYS[key];
-        return feature ? (enabled[feature] ?? fallback) : fallback;
-      }),
-    };
+    const values: Record<string, boolean> = {};
+    for (const [key, feature] of Object.entries(CONFIG_KEYS)) {
+      const flag = enabled[feature];
+      if (flag !== undefined) {
+        values[key] = flag;
+      }
+    }
 
     const guard = new FeatureEnabledGuard(
       new Reflector(),
-      new AuthFeaturesService(
-        configService as unknown as ConstructorParameters<
-          typeof AuthFeaturesService
-        >[0],
-      ),
+      new AuthFeaturesService(new ConfigService(values)),
     );
 
     return { guard };

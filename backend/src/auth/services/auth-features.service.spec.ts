@@ -8,8 +8,9 @@ jest.mock('../constants/available-auth-features', () => ({
 
 describe('AuthFeaturesService in a generated project', () => {
   it('should refuse removed methods even when their runtime flag is on', () => {
-    const config = { get: jest.fn().mockReturnValue(true) };
-    const service = new AuthFeaturesService(config as unknown as ConfigService);
+    const get = jest.fn().mockReturnValue(true);
+    const config = Object.assign(new ConfigService(), { get });
+    const service = new AuthFeaturesService(config);
 
     for (const feature of [
       AuthFeature.MAGIC_LINK,
@@ -21,19 +22,18 @@ describe('AuthFeaturesService in a generated project', () => {
         'This sign-in method is not available',
       );
     }
-    expect(config.get).not.toHaveBeenCalled();
+    expect(get).not.toHaveBeenCalled();
   });
 
   it.each([true, false])(
     'should respect a retained method flag of %s',
     (enabled) => {
-      const config = { get: jest.fn().mockReturnValue(enabled) };
-      const service = new AuthFeaturesService(
-        config as unknown as ConfigService,
-      );
+      const get = jest.fn().mockReturnValue(enabled);
+      const config = Object.assign(new ConfigService(), { get });
+      const service = new AuthFeaturesService(config);
 
       expect(service.isEnabled(AuthFeature.PASSWORD)).toBe(enabled);
-      expect(config.get).toHaveBeenCalledWith('auth.passwordEnabled', true);
+      expect(get).toHaveBeenCalledWith('auth.passwordEnabled', true);
     },
   );
 });
