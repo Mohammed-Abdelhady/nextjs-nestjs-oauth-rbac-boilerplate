@@ -44,7 +44,6 @@ export interface AuthServiceHarness {
     createOrUpdatePasswordReset: jest.Mock;
     verifyPasswordReset: jest.Mock;
     consumePasswordReset: jest.Mock;
-    clearPasswordReset: jest.Mock;
   };
   sessionCookieService: { set: jest.Mock; clear: jest.Mock; read: jest.Mock };
   signInService: { completeSignIn: jest.Mock; issueSession: jest.Mock };
@@ -146,7 +145,6 @@ export async function createAuthServiceHarness(): Promise<AuthServiceHarness> {
       hashedCode: 'hashed-code',
     }),
     consumePasswordReset: jest.fn().mockResolvedValue(true),
-    clearPasswordReset: jest.fn().mockResolvedValue(undefined),
   };
 
   const sessionCookieService = {

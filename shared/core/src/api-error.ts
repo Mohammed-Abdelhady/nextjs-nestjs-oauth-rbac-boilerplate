@@ -11,6 +11,9 @@ import { extractFieldErrors, getStatusCodeTranslationKey } from './api-error-hel
 
 export type { ApiErrorResponse, ParsedApiError, RtkQueryError };
 
+/** Client-side code for a request that never reached the server. */
+export const NETWORK_ERROR_CODE = 'NETWORK_ERROR';
+
 /**
  * Check if an error is an RTK Query error
  */
@@ -85,7 +88,7 @@ export function parseApiError(error: unknown): ParsedApiError {
     // Handle network errors
     if (error.status === 'FETCH_ERROR') {
       return {
-        code: 'NETWORK_ERROR',
+        code: NETWORK_ERROR_CODE,
         message: 'Network error',
         translationKey: 'toast.error.networkError',
         statusCode: undefined,

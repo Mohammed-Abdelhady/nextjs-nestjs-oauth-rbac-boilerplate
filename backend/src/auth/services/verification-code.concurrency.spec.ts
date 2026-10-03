@@ -13,6 +13,7 @@ import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
 } from '../../../test/utils/session-authority-harness';
+import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
 
 describe('VerificationCodeService concurrency', () => {
   let mongo: MongoMemoryServer;
@@ -34,7 +35,12 @@ describe('VerificationCodeService concurrency', () => {
     hashService = new HashService({
       get: (_key: string, fallback?: number) => fallback ?? 4,
     } as unknown as ConfigService);
-    service = new VerificationCodeService(model, hashService, config);
+    service = new VerificationCodeService(
+      model,
+      hashService,
+      config,
+      new FrozenClock(TEST_NOW),
+    );
   }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   afterAll(async () => {
@@ -79,21 +85,21 @@ describe('VerificationCodeService concurrency', () => {
       ),
     );
 
-    const invalid = results.filter(
-      (result) =>
-        result.status === 'rejected' &&
-        (result.reason as { code?: string }).code ===
-          ErrorCode.ACTIVATION_CODE_INVALID,
-    );
-    const capped = results.filter(
-      (result) =>
-        result.status === 'rejected' &&
-        (result.reason as { code?: string }).code ===
-          ErrorCode.MAX_ATTEMPTS_EXCEEDED,
+    const rejected = results.filter(
+      (result): result is PromiseRejectedResult => result.status === 'rejected',
     );
 
-    expect(invalid.length + capped.length).toBe(8);
-    expect(invalid.length).toBeLessThanOrEqual(5);
+    expect(rejected).toHaveLength(8);
+    for (const result of rejected) {
+      expect(result.reason).toMatchObject({
+        code: ErrorCode.ACTIVATION_CODE_INVALID,
+      });
+    }
+
+    // The limit still bites: five attempts were spent, and the record is
+    // locked, not gone. Read it from the database, not from the answer.
+    const stored = await model.findOne({ email: 'user@example.com' });
+    expect(stored?.attempts).toBe(5);
   });
 
   it('should not consume a reissued code from a compare that started on the old generation', async () => {
@@ -166,7 +172,7 @@ describe('VerificationCodeService concurrency', () => {
     await started;
     await model.updateMany(
       { email: 'user@example.com' },
-      { $set: { expiresAt: new Date(Date.now() - 1000) } },
+      { $set: { expiresAt: new Date(TEST_NOW.getTime() - 1000) } },
     );
     releaseCompare();
 

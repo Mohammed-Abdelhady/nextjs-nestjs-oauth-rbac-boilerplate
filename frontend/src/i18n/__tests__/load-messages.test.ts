@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs'; // feature:locale-ar
 import { fileURLToPath } from 'node:url'; // feature:locale-ar
 import { describe, expect, it } from 'vitest';
-import { mergeMessageTrees } from '../load-messages';
+import { loadMessages, mergeMessageTrees } from '../load-messages';
+import codeVerificationEn from '../messages/code-verification.en.json';
+import { lookupMessage } from './message-tree';
 // feature:locale-ar:start
 import type { MessageTree } from './message-tree';
 import { isMessageTree } from './message-tree';
@@ -39,8 +41,15 @@ const OVERLAYS = [
   'status-errors',
   'role-errors',
   'session-kinds',
+  'code-verification',
 ];
 // feature:locale-ar:end
+
+/** The two code-step keys the code-verification overlay rewrites. */
+const CODE_STEP_KEYS = [
+  'errors.codes.ACTIVATION_CODE_INVALID',
+  'errors.codes.PASSWORD_RESET_CODE_INVALID',
+];
 
 describe('session authority locale overlays', () => {
   it('keeps sibling catalog keys when overlaying nested error codes', () => {
@@ -60,6 +69,14 @@ describe('session authority locale overlays', () => {
     });
   });
 
+  it('resolves the code-step messages to the overlay in English', async () => {
+    const merged = await loadMessages('en');
+
+    for (const key of CODE_STEP_KEYS) {
+      expect(lookupMessage(merged, key)).toBe(lookupMessage(codeVerificationEn, key));
+    }
+  });
+
   // feature:locale-ar:start
   it('ships the same overlay keys in English and Arabic', () => {
     for (const name of OVERLAYS) {
@@ -70,6 +87,15 @@ describe('session authority locale overlays', () => {
     const english = flatten(readOverlay('session-authority', 'en'));
     expect(english).toContain('errors.codes.SESSION_LIMIT_REACHED');
     expect(english).toContain('errors.codes.AUTHORITY_UNAVAILABLE');
+  });
+
+  it('resolves the code-step messages to the overlay in Arabic', async () => {
+    const merged = await loadMessages('ar');
+    const overlay = readOverlay('code-verification', 'ar');
+
+    for (const key of CODE_STEP_KEYS) {
+      expect(lookupMessage(merged, key)).toBe(lookupMessage(overlay, key));
+    }
   });
   // feature:locale-ar:end
 });

@@ -6,6 +6,22 @@
 export const GENERIC_CODE_SENT_MESSAGE =
   'If an account exists, a code has been sent';
 
+/**
+ * Answer for any activation code step that cannot succeed.
+ * Wrong code, no pending record, expired record and a locked record all get
+ * this one body, so the answer cannot tell the cases apart.
+ */
+export const INVALID_ACTIVATION_CODE_MESSAGE =
+  'Invalid or expired activation code';
+
+/**
+ * Answer for any password reset code step that cannot succeed.
+ * Wrong code, no pending record, expired record and a locked record all get
+ * this one body, so the answer cannot tell the cases apart.
+ */
+export const INVALID_PASSWORD_RESET_CODE_MESSAGE =
+  'Invalid or expired password reset code';
+
 /** Logged when an activation email is not handed over. */
 export const ACTIVATION_EMAIL_FAILED_MESSAGE =
   'Failed to send activation email';

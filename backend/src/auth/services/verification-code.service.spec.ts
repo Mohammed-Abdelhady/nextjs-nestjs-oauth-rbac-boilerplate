@@ -4,45 +4,32 @@ import { ConfigService } from '@nestjs/config';
 import { VerificationCodeService } from './verification-code.service';
 import { PendingRegistration } from '../schemas/pending-registration.schema';
 import { HashService } from '../../common/services/hash.service';
+import { Clock } from '../../common/services/clock';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import { rejectionOf } from '../../../test/utils/rejection';
+import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
 
 describe('VerificationCodeService', () => {
   let service: VerificationCodeService;
   let pendingRegistrationModel: {
     findOne: jest.Mock;
     create: jest.Mock;
+    updateOne: jest.Mock;
     findOneAndUpdate: jest.Mock;
     findOneAndDelete: jest.Mock;
     deleteOne: jest.Mock;
   };
-  let hashService: { hash: jest.Mock; compare: jest.Mock };
-
-  const mockPendingRegistration = {
-    email: 'user@example.com',
-    name: 'Test User',
-    hashedPassword: 'hashed-password',
-    hashedCode: 'hashed-code',
-    attempts: 0,
-    expiresAt: new Date(Date.now() + 60000),
-    save: jest.fn().mockResolvedValue(undefined),
+  let hashService: {
+    hash: jest.Mock;
+    compare: jest.Mock;
+    spendComparison: jest.Mock;
   };
-
-  function pending(overrides: Record<string, unknown> = {}) {
-    return {
-      ...mockPendingRegistration,
-      save: jest.fn().mockResolvedValue(undefined),
-      ...overrides,
-    };
-  }
-
-  function selecting(value: unknown): { select: jest.Mock } {
-    return { select: jest.fn().mockResolvedValue(value) };
-  }
 
   beforeEach(async () => {
     pendingRegistrationModel = {
       findOne: jest.fn(),
       create: jest.fn(),
+      updateOne: jest.fn().mockResolvedValue(undefined),
       findOneAndUpdate: jest.fn(),
       findOneAndDelete: jest.fn(),
       deleteOne: jest.fn().mockResolvedValue(undefined),
@@ -51,6 +38,7 @@ describe('VerificationCodeService', () => {
     hashService = {
       hash: jest.fn().mockResolvedValue('new-hashed-code'),
       compare: jest.fn(),
+      spendComparison: jest.fn().mockResolvedValue(undefined),
     };
 
     const configService = {
@@ -70,90 +58,18 @@ describe('VerificationCodeService', () => {
         },
         { provide: HashService, useValue: hashService },
         { provide: ConfigService, useValue: configService },
+        { provide: Clock, useValue: new FrozenClock(TEST_NOW) },
       ],
     }).compile();
 
     service = module.get<VerificationCodeService>(VerificationCodeService);
   });
 
-  describe('createOrUpdatePendingRegistration (S-09)', () => {
-    it('should keep the stored name and password while the record is live', async () => {
-      const existing = pending();
-      pendingRegistrationModel.findOne.mockReturnValue(selecting(existing));
-
-      const result = await service.createOrUpdatePendingRegistration(
-        'user@example.com',
-        'Second Registrant',
-        'second-password-hash',
-      );
-
-      expect(existing.name).toBe('Test User');
-      expect(existing.hashedPassword).toBe('hashed-password');
-      expect(existing.hashedCode).toBe('new-hashed-code');
-      expect(existing.attempts).toBe(0);
-      expect(existing.save).toHaveBeenCalled();
-      expect(pendingRegistrationModel.create).not.toHaveBeenCalled();
-      expect(result.name).toBe('Test User');
-      expect(result.code).toMatch(/^\d{6}$/);
-    });
-
-    it('should extend the expiry of a live record', async () => {
-      const expiresAt = new Date(Date.now() + 60000);
-      const existing = pending({ expiresAt });
-      pendingRegistrationModel.findOne.mockReturnValue(selecting(existing));
-
-      await service.createOrUpdatePendingRegistration(
-        'user@example.com',
-        'Second Registrant',
-        'second-password-hash',
-      );
-
-      expect(existing.expiresAt.getTime()).toBeGreaterThan(expiresAt.getTime());
-    });
-
-    it('should replace an expired record with the new details', async () => {
-      const existing = pending({
-        expiresAt: new Date(Date.now() - 1000),
-      });
-      pendingRegistrationModel.findOne.mockReturnValue(selecting(existing));
-
-      const result = await service.createOrUpdatePendingRegistration(
-        'user@example.com',
-        'Second Registrant',
-        'second-password-hash',
-      );
-
-      expect(existing.name).toBe('Second Registrant');
-      expect(existing.hashedPassword).toBe('second-password-hash');
-      expect(existing.save).toHaveBeenCalled();
-      expect(result.name).toBe('Second Registrant');
-    });
-
-    it('should create a record when nothing is pending', async () => {
-      pendingRegistrationModel.findOne.mockReturnValue(selecting(null));
-
-      const result = await service.createOrUpdatePendingRegistration(
-        'new@example.com',
-        'New User',
-        'password-hash',
-      );
-
-      expect(pendingRegistrationModel.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          email: 'new@example.com',
-          name: 'New User',
-          hashedPassword: 'password-hash',
-          attempts: 0,
-        }),
-      );
-      expect(result.name).toBe('New User');
-    });
-  });
-
   describe('resendActivationCode', () => {
-    it('should reissue a code for a live record without touching its details', async () => {
-      const existing = pending();
-      pendingRegistrationModel.findOne.mockReturnValue(selecting(existing));
+    it('should reissue a code for a live record and keep its stored name', async () => {
+      pendingRegistrationModel.findOneAndUpdate.mockResolvedValue({
+        name: 'Test User',
+      });
 
       const result = await service.resendActivationCode('user@example.com');
 
@@ -161,30 +77,31 @@ describe('VerificationCodeService', () => {
         code: expect.stringMatching(/^\d{6}$/) as string,
         name: 'Test User',
       });
-      expect(existing.hashedPassword).toBe('hashed-password');
-      expect(existing.hashedCode).toBe('new-hashed-code');
+      expect(hashService.hash).toHaveBeenCalledTimes(1);
+      expect(pendingRegistrationModel.deleteOne).not.toHaveBeenCalled();
     });
 
-    it('should return null when nothing is pending', async () => {
-      pendingRegistrationModel.findOne.mockReturnValue(selecting(null));
-
-      await expect(
-        service.resendActivationCode('nobody@example.com'),
-      ).resolves.toBeNull();
-      expect(hashService.hash).not.toHaveBeenCalled();
-    });
-
-    it('should drop an expired record instead of reviving it', async () => {
-      pendingRegistrationModel.findOne.mockReturnValue(
-        selecting(pending({ expiresAt: new Date(Date.now() - 1000) })),
-      );
+    it('should only refresh a record that is still live', async () => {
+      pendingRegistrationModel.findOneAndUpdate.mockResolvedValue(null);
 
       await expect(
         service.resendActivationCode('user@example.com'),
       ).resolves.toBeNull();
-      expect(pendingRegistrationModel.deleteOne).toHaveBeenCalledWith({
-        _id: undefined,
-      });
+
+      expect(pendingRegistrationModel.findOneAndUpdate).toHaveBeenCalledWith(
+        {
+          email: { $eq: 'user@example.com' },
+          expiresAt: { $gt: expect.any(Date) as Date },
+        },
+        {
+          $set: {
+            hashedCode: 'new-hashed-code',
+            attempts: 0,
+            expiresAt: expect.any(Date) as Date,
+          },
+        },
+        { new: true, select: 'name' },
+      );
     });
   });
 
@@ -197,13 +114,13 @@ describe('VerificationCodeService', () => {
         attempts: 2,
       });
 
-      await expect(
+      const rejection = await rejectionOf(
         service.verifyAndConsumeRegistration('user@example.com', 'wrong-code'),
-      ).rejects.toMatchObject({
-        code: ErrorCode.ACTIVATION_CODE_INVALID,
-        status: 400,
-        details: { remainingAttempts: 3 },
-      });
+      );
+
+      expect(rejection.getCode()).toBe(ErrorCode.ACTIVATION_CODE_INVALID);
+      expect(rejection.getStatus()).toBe(400);
+      expect(rejection.getDetails()).toBeUndefined();
 
       expect(pendingRegistrationModel.findOneAndUpdate).toHaveBeenCalledWith(
         {

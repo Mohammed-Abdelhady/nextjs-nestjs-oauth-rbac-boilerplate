@@ -132,7 +132,7 @@ export class AuthService {
     );
 
     if (!pending) {
-      await this.spendCodeHashingTime();
+      // resendActivationCode already spent the code hash on this path.
       return ResendActivationResponseDto.success(dto.email);
     }
 
@@ -271,12 +271,7 @@ export class AuthService {
       reserved.hashedCode,
     );
     if (!consumed) {
-      throw new AppException(
-        ErrorCode.PASSWORD_RESET_CODE_INVALID,
-        'Invalid code. 0 attempts remaining.',
-        HttpStatus.BAD_REQUEST,
-        { remainingAttempts: 0 },
-      );
+      throw this.passwordResetCodeService.invalidCode();
     }
 
     const user = await this.userModel.findOne({

@@ -21,6 +21,7 @@ import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
 } from '../utils/session-authority-harness';
+import { expectSameAnswer } from '../utils/stable-answer';
 
 const PASSWORD = 'Password123!';
 
@@ -29,32 +30,6 @@ interface AddressRequestResponse {
   success: true;
   data: { email: string };
   message: string;
-}
-
-/** Per-request headers two answers are not expected to share. */
-const VOLATILE_HEADERS = new Set([
-  'date',
-  'x-request-id',
-  'x-ratelimit-limit',
-  'x-ratelimit-remaining',
-  'x-ratelimit-reset',
-  'retry-after',
-]);
-
-function expectSameAnswer(actual: Response, expected: Response): void {
-  expect(actual.status).toBe(expected.status);
-  expect(actual.text).toBe(expected.text);
-  expect(actual.headers['set-cookie']).toBeUndefined();
-  expect(expected.headers['set-cookie']).toBeUndefined();
-
-  const stable = (response: Response): Record<string, string> => {
-    const headers: Record<string, string> = {};
-    for (const [name, value] of Object.entries(response.headers)) {
-      if (!VOLATILE_HEADERS.has(name.toLowerCase())) headers[name] = value;
-    }
-    return headers;
-  };
-  expect(stable(actual)).toEqual(stable(expected));
 }
 
 /**

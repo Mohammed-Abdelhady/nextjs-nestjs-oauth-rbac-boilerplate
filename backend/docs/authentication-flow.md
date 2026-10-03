@@ -175,13 +175,14 @@ Also sets HTTP-only cookie: `sid=<session_token>`
 
 **Errors:**
 
-- `400` - Invalid code, expired code, or no pending registration
-- `401` - Max attempts exceeded (5 attempts)
+- `400` - Wrong, missing, expired or locked code; all four answer one
+  `ACTIVATION_CODE_INVALID` body
 
 ### Security Features
 
 - **Code Expiry**: 15 minutes
-- **Max Attempts**: 5 failed attempts, then registration deleted
+- **Max Attempts**: 5 failed attempts, after which the record is locked and
+  cannot be used
 - **Hashed Storage**: Code is hashed, not stored in plain text
 
 ---

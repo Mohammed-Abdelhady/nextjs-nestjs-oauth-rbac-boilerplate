@@ -13,8 +13,9 @@ import { toast } from '@/lib/toast';
 import { reportUnlessHandled } from '@/lib/requestFailure';
 import { useAppDispatch } from '@/store/hooks';
 import { setUser } from '@/modules/auth/store/authSlice';
-import { useRouter } from '@/i18n/navigation';
-import { parseApiError } from '@app/core';
+import { Link, useRouter } from '@/i18n/navigation';
+import { ErrorCode, NETWORK_ERROR_CODE, parseApiError } from '@app/core';
+import { translatableErrorCode } from '../utils/errorCodeMessage';
 import { filterDigits } from '../utils/digitFilter';
 import { WelcomeModal } from './WelcomeModal';
 import { createActivationSchema, type ActivationFormData } from '../utils/activationSchema';
@@ -31,6 +32,7 @@ import { cn } from '@/lib/utils';
 export function ActivationForm() {
   const t = useTranslations('auth.activate');
   const tToast = useTranslations('toast');
+  const tCodes = useTranslations('errors.codes');
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
@@ -39,6 +41,7 @@ export function ActivationForm() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [userName, setUserName] = useState('');
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [showRegisterAgain, setShowRegisterAgain] = useState(false);
 
   // Get email from URL params
   const emailFromUrl = searchParams.get('email') || '';
@@ -101,18 +104,19 @@ export function ActivationForm() {
         setShowWelcome(true);
       } catch (err: unknown) {
         const parsed = parseApiError(err);
+        const code = translatableErrorCode(err, '');
+        // The server answers one code for a wrong, missing, expired or locked
+        // code. The person gets one message and can request a new code below.
         let errorMessage = t('errors.serverError');
 
-        if (parsed.code === 'ACTIVATION_CODE_INVALID' || parsed.message?.includes('Invalid')) {
-          errorMessage = t('errors.codeInvalid');
-        } else if (
-          parsed.code === 'ACTIVATION_CODE_EXPIRED' ||
-          parsed.message?.includes('expired')
-        ) {
-          errorMessage = t('errors.codeExpired');
-          setTimeout(() => router.push('/auth/register'), 2000);
-        } else if (parsed.message) {
-          errorMessage = parsed.message;
+        if (parsed.code === NETWORK_ERROR_CODE) {
+          errorMessage = t('errors.networkError');
+        } else if (code) {
+          errorMessage = tCodes(code);
+        }
+
+        if (parsed.code === ErrorCode.ACTIVATION_CODE_INVALID) {
+          setShowRegisterAgain(true);
         }
 
         setError('root', {
@@ -123,7 +127,7 @@ export function ActivationForm() {
         setValue('code', '');
       }
     },
-    [activate, dispatch, router, setError, setValue, t, tToast],
+    [activate, dispatch, setError, setValue, t, tCodes, tToast],
   );
 
   // Handle resend activation code
@@ -133,12 +137,9 @@ export function ActivationForm() {
       toast.success(tToast('success.resendSuccess'));
       setCooldownSeconds(60);
     } catch (err: unknown) {
-      if (parseApiError(err).code === 'NO_PENDING_REGISTRATION_FOR_RESEND') {
-        setTimeout(() => router.push('/auth/register'), 3000);
-      }
       reportUnlessHandled(err);
     }
-  }, [resendActivation, emailFromUrl, router, tToast]);
+  }, [resendActivation, emailFromUrl, tToast]);
 
   const handleCodeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     e.target.value = filterDigits(e.target.value, 6);
@@ -241,6 +242,19 @@ export function ActivationForm() {
                     : t('resendButton')}
               </span>
             </Button>
+
+            {/* Register again after a rejected code */}
+            {showRegisterAgain && (
+              <div className="mt-4 text-center">
+                <Link
+                  href="/auth/register"
+                  className="text-sm font-semibold text-primary hover:underline transition-colors"
+                  data-testid="register-again-link"
+                >
+                  {t('registerAgain')}
+                </Link>
+              </div>
+            )}
           </form>
         </FormProvider>
       </div>

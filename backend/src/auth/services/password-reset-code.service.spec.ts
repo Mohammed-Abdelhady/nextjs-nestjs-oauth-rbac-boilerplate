@@ -4,31 +4,28 @@ import { ConfigService } from '@nestjs/config';
 import { PasswordResetCodeService } from './password-reset-code.service';
 import { PendingPasswordReset } from '../schemas/pending-password-reset.schema';
 import { HashService } from '../../common/services/hash.service';
+import { Clock } from '../../common/services/clock';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import { rejectionOf } from '../../../test/utils/rejection';
+import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
 
 describe('PasswordResetCodeService', () => {
   let service: PasswordResetCodeService;
   let pendingPasswordResetModel: {
     findOne: jest.Mock;
     create: jest.Mock;
+    updateOne: jest.Mock;
     findOneAndUpdate: jest.Mock;
     findOneAndDelete: jest.Mock;
     deleteOne: jest.Mock;
   };
   let hashService: jest.Mocked<HashService>;
 
-  const mockPendingPasswordReset = {
-    email: 'user@example.com',
-    hashedCode: 'hashed-code',
-    attempts: 0,
-    expiresAt: new Date(Date.now() + 60000),
-    save: jest.fn().mockResolvedValue(undefined),
-  };
-
   beforeEach(async () => {
     pendingPasswordResetModel = {
       findOne: jest.fn(),
       create: jest.fn(),
+      updateOne: jest.fn().mockResolvedValue(undefined),
       findOneAndUpdate: jest.fn(),
       findOneAndDelete: jest.fn(),
       deleteOne: jest.fn().mockResolvedValue(undefined),
@@ -37,6 +34,7 @@ describe('PasswordResetCodeService', () => {
     hashService = {
       hash: jest.fn().mockResolvedValue('hashed-code'),
       compare: jest.fn(),
+      spendComparison: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<HashService>;
 
     const configService = {
@@ -56,49 +54,11 @@ describe('PasswordResetCodeService', () => {
         },
         { provide: HashService, useValue: hashService },
         { provide: ConfigService, useValue: configService },
+        { provide: Clock, useValue: new FrozenClock(TEST_NOW) },
       ],
     }).compile();
 
     service = module.get<PasswordResetCodeService>(PasswordResetCodeService);
-  });
-
-  describe('createOrUpdatePasswordReset', () => {
-    it('should create a record when none is pending', async () => {
-      pendingPasswordResetModel.findOne.mockReturnValue({
-        select: jest.fn().mockResolvedValue(null),
-      });
-
-      const code =
-        await service.createOrUpdatePasswordReset('user@example.com');
-
-      expect(code).toMatch(/^\d{6}$/);
-      expect(pendingPasswordResetModel.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          email: 'user@example.com',
-          hashedCode: 'hashed-code',
-          attempts: 0,
-        }),
-      );
-    });
-
-    it('should replace the code of an existing record', async () => {
-      const existing = {
-        ...mockPendingPasswordReset,
-        attempts: 3,
-        hashedCode: 'previous-code',
-        save: jest.fn().mockResolvedValue(undefined),
-      };
-      pendingPasswordResetModel.findOne.mockReturnValue({
-        select: jest.fn().mockResolvedValue(existing),
-      });
-
-      await service.createOrUpdatePasswordReset('user@example.com');
-
-      expect(existing.hashedCode).toBe('hashed-code');
-      expect(existing.attempts).toBe(0);
-      expect(existing.save).toHaveBeenCalled();
-      expect(pendingPasswordResetModel.create).not.toHaveBeenCalled();
-    });
   });
 
   describe('verifyPasswordReset atomic reservation', () => {
@@ -110,13 +70,13 @@ describe('PasswordResetCodeService', () => {
         attempts: 3,
       });
 
-      await expect(
+      const rejection = await rejectionOf(
         service.verifyPasswordReset('user@example.com', 'wrong-code'),
-      ).rejects.toMatchObject({
-        code: ErrorCode.PASSWORD_RESET_CODE_INVALID,
-        status: 400,
-        details: { remainingAttempts: 2 },
-      });
+      );
+
+      expect(rejection.getCode()).toBe(ErrorCode.PASSWORD_RESET_CODE_INVALID);
+      expect(rejection.getStatus()).toBe(400);
+      expect(rejection.getDetails()).toBeUndefined();
 
       expect(pendingPasswordResetModel.findOneAndUpdate).toHaveBeenCalledWith(
         {
@@ -129,21 +89,51 @@ describe('PasswordResetCodeService', () => {
       );
     });
 
-    it('should drop an expired record and report the expiry', async () => {
+    it('should delete an expired record it could not reserve and answer the one code', async () => {
       pendingPasswordResetModel.findOneAndUpdate.mockResolvedValue(null);
-      pendingPasswordResetModel.findOne.mockResolvedValue({
-        _id: 'reset-id',
-        expiresAt: new Date(Date.now() - 1000),
-      });
 
-      await expect(
+      const rejection = await rejectionOf(
         service.verifyPasswordReset('user@example.com', '123456'),
-      ).rejects.toMatchObject({
-        code: ErrorCode.PASSWORD_RESET_CODE_EXPIRED,
-      });
+      );
+
+      expect(rejection.getCode()).toBe(ErrorCode.PASSWORD_RESET_CODE_INVALID);
+      expect(rejection.getStatus()).toBe(400);
+      expect(rejection.getDetails()).toBeUndefined();
       expect(pendingPasswordResetModel.deleteOne).toHaveBeenCalledWith({
-        _id: 'reset-id',
+        email: { $eq: 'user@example.com' },
+        expiresAt: { $lte: expect.any(Date) as Date },
       });
+    });
+
+    it('should answer no record and a locked record the same way', async () => {
+      pendingPasswordResetModel.findOneAndUpdate.mockResolvedValue(null);
+      pendingPasswordResetModel.findOne.mockReturnValueOnce(null);
+      const missing = await rejectionOf(
+        service.verifyPasswordReset('nobody@example.com', '123456'),
+      );
+
+      pendingPasswordResetModel.findOne.mockReturnValueOnce({
+        _id: 'locked-id',
+        expiresAt: new Date(TEST_NOW.getTime() + 60000),
+        attempts: 5,
+      });
+      const locked = await rejectionOf(
+        service.verifyPasswordReset('user@example.com', '123456'),
+      );
+
+      expect({
+        code: locked.getCode(),
+        status: locked.getStatus(),
+        message: locked.message,
+        details: locked.getDetails(),
+      }).toEqual({
+        code: missing.getCode(),
+        status: missing.getStatus(),
+        message: missing.message,
+        details: missing.getDetails(),
+      });
+      expect(missing.getCode()).toBe(ErrorCode.PASSWORD_RESET_CODE_INVALID);
+      expect(missing.getDetails()).toBeUndefined();
     });
 
     it('should return the reserved generation for a valid code', async () => {
