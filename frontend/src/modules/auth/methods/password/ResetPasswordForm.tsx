@@ -13,12 +13,13 @@ import {
   SubmitButton,
 } from '@/components/forms';
 import { useResetPasswordMutation } from '@/modules/auth/store/authApi';
-import { zodPassword, parseApiError } from '@app/core';
+import { ErrorCode, NETWORK_ERROR_CODE, zodPassword, parseApiError } from '@app/core';
 import { KeyRound } from 'lucide-react';
-import { useCallback, useMemo, useEffect } from 'react';
+import { useCallback, useMemo, useEffect, useState } from 'react';
 import { toast } from '@/lib/toast';
 import { Link, useRouter } from '@/i18n/navigation';
 import { preventNavigationBlur } from '@/modules/auth/utils/preventNavigationBlur';
+import { translatableErrorCode } from '@/modules/auth/utils/errorCodeMessage';
 import { filterDigits } from '@/modules/auth/utils/digitFilter';
 import { CODE_ENTRY_FONT_SIZE } from '@/lib/config/form-styles';
 import { cn } from '@/lib/utils';
@@ -72,9 +73,11 @@ type ResetPasswordFormData = z.infer<ReturnType<typeof createResetPasswordSchema
 export function ResetPasswordForm() {
   const t = useTranslations('auth.resetPassword');
   const tToast = useTranslations('toast');
+  const tCodes = useTranslations('errors.codes');
   const router = useRouter();
   const searchParams = useSearchParams();
   const [resetPassword, { isLoading }] = useResetPasswordMutation();
+  const [showRequestNew, setShowRequestNew] = useState(false);
 
   // Get email from URL params (passed from forgot password page)
   const emailFromUrl = searchParams.get('email') || '';
@@ -129,16 +132,19 @@ export function ResetPasswordForm() {
         }, 1500);
       } catch (err: unknown) {
         const parsed = parseApiError(err);
+        const code = translatableErrorCode(err, '');
+        // The server answers one code for a wrong, missing, expired or locked
+        // code. The person gets one message and can request a new code below.
         let errorMessage = t('errors.serverError');
 
-        if (parsed.code === 'RESET_CODE_INVALID' || parsed.message?.includes('Invalid')) {
-          errorMessage = t('errors.codeInvalid');
-        } else if (parsed.code === 'RESET_CODE_EXPIRED' || parsed.message?.includes('expired')) {
-          errorMessage = t('errors.codeExpired');
-        } else if (parsed.code === 'NETWORK_ERROR') {
+        if (parsed.code === NETWORK_ERROR_CODE) {
           errorMessage = t('errors.networkError');
-        } else if (parsed.message) {
-          errorMessage = parsed.message;
+        } else if (code) {
+          errorMessage = tCodes(code);
+        }
+
+        if (parsed.code === ErrorCode.PASSWORD_RESET_CODE_INVALID) {
+          setShowRequestNew(true);
         }
 
         setError('root', {
@@ -149,7 +155,7 @@ export function ResetPasswordForm() {
         setValue('code', '');
       }
     },
-    [resetPassword, router, setError, setValue, t, tToast],
+    [resetPassword, router, setError, setValue, t, tCodes, tToast],
   );
 
   const handleCodeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -243,6 +249,20 @@ export function ResetPasswordForm() {
             <SubmitButton isLoading={isLoading} icon={KeyRound} testId="reset-password-submit">
               {t('submit')}
             </SubmitButton>
+
+            {/* Request a new code after a rejected one */}
+            {showRequestNew && (
+              <div className="mt-4 text-center">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-sm font-semibold text-primary hover:underline transition-colors"
+                  data-testid="request-new-code-link"
+                  onMouseDown={preventNavigationBlur}
+                >
+                  {t('requestNewCode')}
+                </Link>
+              </div>
+            )}
 
             {/* Back to Login Link */}
             <div className="mt-6 text-center">

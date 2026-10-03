@@ -6,7 +6,7 @@ import { FormProvider } from 'react-hook-form';
 import { useFormWithValidation } from '@/hooks/useFormWithValidation';
 import { FormInput, FormRootError, SubmitButton } from '@/components/forms';
 import { useForgotPasswordMutation } from '@/modules/auth/store/authApi';
-import { zodEmail, parseApiError } from '@app/core';
+import { NETWORK_ERROR_CODE, zodEmail, parseApiError } from '@app/core';
 import { Mail } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { toast } from '@/lib/toast';
@@ -77,7 +77,7 @@ export function ForgotPasswordForm() {
         const parsed = parseApiError(err);
         let errorMessage = t('errors.serverError');
 
-        if (parsed.code === 'NETWORK_ERROR') {
+        if (parsed.code === NETWORK_ERROR_CODE) {
           errorMessage = t('errors.networkError');
         } else if (parsed.message) {
           errorMessage = parsed.message;

@@ -37,6 +37,7 @@ export async function loadMessages(locale: AppLocale): Promise<AbstractIntlMessa
   const statusErrors = (await import(`./messages/status-errors.${locale}.json`)).default;
   const roleErrors = (await import(`./messages/role-errors.${locale}.json`)).default;
   const sessionKinds = (await import(`./messages/session-kinds.${locale}.json`)).default;
+  const codeVerification = (await import(`./messages/code-verification.${locale}.json`)).default;
   if (
     !isMessageTree(base) ||
     !isMessageTree(sessionAuthority) ||
@@ -44,7 +45,8 @@ export async function loadMessages(locale: AppLocale): Promise<AbstractIntlMessa
     !isMessageTree(nativeAuth) ||
     !isMessageTree(statusErrors) ||
     !isMessageTree(roleErrors) ||
-    !isMessageTree(sessionKinds)
+    !isMessageTree(sessionKinds) ||
+    !isMessageTree(codeVerification)
   ) {
     throw new Error(`Locale messages for ${locale} are not objects`);
   }
@@ -52,13 +54,16 @@ export async function loadMessages(locale: AppLocale): Promise<AbstractIntlMessa
     mergeMessageTrees(
       mergeMessageTrees(
         mergeMessageTrees(
-          mergeMessageTrees(mergeMessageTrees(base, sessionAuthority), browserProof),
-          nativeAuth,
+          mergeMessageTrees(
+            mergeMessageTrees(mergeMessageTrees(base, sessionAuthority), browserProof),
+            nativeAuth,
+          ),
+          statusErrors,
         ),
-        statusErrors,
+        roleErrors,
       ),
-      roleErrors,
+      sessionKinds,
     ),
-    sessionKinds,
+    codeVerification,
   );
 }

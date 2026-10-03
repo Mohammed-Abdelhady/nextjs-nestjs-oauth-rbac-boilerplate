@@ -1,0 +1,16 @@
+{
+  "auth": {
+    "activate": {
+      "registerAgain": "Register again"
+    },
+    "resetPassword": {
+      "requestNewCode": "Request a new code"
+    }
+  },
+  "errors": {
+    "codes": {
+      "ACTIVATION_CODE_INVALID": "That code is invalid or has expired. Request a new code, or register again if it does not arrive.",
+      "PASSWORD_RESET_CODE_INVALID": "That code is invalid or has expired. Request a new code and try again."
+    }
+  }
+}

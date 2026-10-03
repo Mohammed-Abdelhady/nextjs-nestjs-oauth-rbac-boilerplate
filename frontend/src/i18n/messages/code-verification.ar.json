@@ -1,0 +1,16 @@
+{
+  "auth": {
+    "activate": {
+      "registerAgain": "التسجيل مرة أخرى"
+    },
+    "resetPassword": {
+      "requestNewCode": "طلب رمز جديد"
+    }
+  },
+  "errors": {
+    "codes": {
+      "ACTIVATION_CODE_INVALID": "هذا الرمز غير صالح أو انتهت صلاحيته. اطلب رمزًا جديدًا، أو سجّل مرة أخرى إذا لم يصل.",
+      "PASSWORD_RESET_CODE_INVALID": "هذا الرمز غير صالح أو انتهت صلاحيته. اطلب رمزًا جديدًا وحاول مرة أخرى."
+    }
+  }
+}
