@@ -85,10 +85,12 @@ All error responses follow this structure:
 {
   "success": false,
   "error": {
-    "code": "ACTIVATION_CODE_INVALID",
-    "message": "Invalid code. 3 attempts remaining.",
+    "code": "VALIDATION_ERROR",
+    "message": "Validation failed",
     "details": {
-      "remainingAttempts": 3
+      "fields": {
+        "email": ["email must be an email"]
+      }
     }
   }
 }
@@ -107,12 +109,25 @@ All error responses follow this structure:
 
 ### Activation Errors
 
-| Code                      | HTTP Status | Description                             |
-| ------------------------- | ----------- | --------------------------------------- |
-| `ACTIVATION_CODE_EXPIRED` | 400         | Activation code has expired             |
-| `ACTIVATION_CODE_INVALID` | 400         | Invalid activation code provided        |
-| `MAX_ATTEMPTS_EXCEEDED`   | 401         | Maximum activation attempts exceeded    |
-| `NO_PENDING_REGISTRATION` | 400         | No pending registration found for email |
+`POST /auth/activate` answers one body whether the code is wrong, no pending
+record exists, the record has expired, or the record is locked. The attempt
+limit and the expiry still decide whether a record can be used; only the answer
+is shared.
+
+| Code                      | HTTP Status | Description                                                |
+| ------------------------- | ----------- | ---------------------------------------------------------- |
+| `ACTIVATION_CODE_INVALID` | 400         | Wrong, missing, expired or locked activation code          |
+| `NO_PENDING_REGISTRATION` | 400         | A verified code had no account and no password to activate |
+
+### Password Reset Errors
+
+`POST /auth/reset-password` answers one body whether the code is wrong, no
+pending request exists, the record has expired, or the record is locked.
+
+| Code                          | HTTP Status | Description                                            |
+| ----------------------------- | ----------- | ------------------------------------------------------ |
+| `PASSWORD_RESET_CODE_INVALID` | 400         | Wrong, missing, expired or locked password reset code  |
+| `USER_NOT_FOUND_FOR_RESET`    | 404         | The reset belonged to an account that no longer exists |
 
 ### Email Errors
 
@@ -251,7 +266,7 @@ function isSuccess<T>(response: ApiResult<T>): response is ApiResponse<T> {
   "data": {
     "email": "user@example.com"
   },
-  "message": "Activation code sent to your email"
+  "message": "If an account exists, a code has been sent"
 }
 ```
 
@@ -287,17 +302,44 @@ function isSuccess<T>(response: ApiResult<T>): response is ApiResponse<T> {
 }
 ```
 
-**Error Response (Invalid code):**
+**Error Response (Wrong, missing, expired or locked code):**
+
+The same body is returned in all four cases.
 
 ```json
 {
   "success": false,
   "error": {
     "code": "ACTIVATION_CODE_INVALID",
-    "message": "Invalid code. 3 attempts remaining.",
-    "details": {
-      "remainingAttempts": 3
-    }
+    "message": "Invalid or expired activation code"
+  }
+}
+```
+
+### POST /auth/reset-password
+
+**Success Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Password reset successful"
+  },
+  "message": "Your password has been reset successfully"
+}
+```
+
+**Error Response (Wrong, missing, expired or locked code):**
+
+The same body is returned in all four cases.
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "PASSWORD_RESET_CODE_INVALID",
+    "message": "Invalid or expired password reset code"
   }
 }
 ```
