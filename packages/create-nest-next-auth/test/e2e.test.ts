@@ -24,6 +24,8 @@ import {
   scaffold,
   sourceFilesWithMarkers,
 } from './packed-cli.js';
+import { checkGeneratedHookHistory } from './generated-hook-history.js';
+import { checkGeneratedGuardrails } from './generated-guardrails.js';
 import {
   DEFAULT_SELECTION_MUST_EXIST,
   DEFAULT_SELECTION_MUST_NOT_EXIST,
@@ -41,6 +43,14 @@ afterAll(() => {
 });
 
 describe('the packed CLI', () => {
+  it('refuses a pre-hook local violation inherited by a clean generated branch', () => {
+    checkGeneratedHookHistory(packed);
+  });
+
+  it('scans a default Git project cleanly', () => {
+    checkGeneratedGuardrails(packed);
+  });
+
   it('excludes runtime artifacts and prohibited names before copying template files', () => {
     const fixture = mkdtempSync(join(tmpdir(), 'cna-template-exclusions-'));
     const script = join(fixture, 'packages/create-nest-next-auth/scripts/sync-template.mjs');
@@ -65,6 +75,12 @@ describe('the packed CLI', () => {
     try {
       mkdirSync(dirname(script), { recursive: true });
       copyFileSync(join(PACKAGE_DIR, 'scripts/sync-template.mjs'), script);
+      const constants = join(fixture, 'packages/create-nest-next-auth/src/constants');
+      mkdirSync(constants, { recursive: true });
+      copyFileSync(
+        join(PACKAGE_DIR, 'src/constants/template-tests.json'),
+        join(constants, 'template-tests.json'),
+      );
       for (const path of [...artifacts, ...kept]) {
         mkdirSync(dirname(join(fixture, path)), { recursive: true });
         writeFileSync(join(fixture, path), 'synthetic sentinel\n');

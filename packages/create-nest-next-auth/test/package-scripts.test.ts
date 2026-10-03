@@ -42,13 +42,76 @@ describe('prunePackageScripts', () => {
     const result = prunePackageScripts(
       packageJson({
         'test:config':
-          'node --test scripts/config-transforms.test.mjs scripts/check-hard-bans.test.mjs',
+          'node --test scripts/config-transforms.test.mjs scripts/check-backend-build.test.mjs',
       }),
       ['scripts/config-transforms.test.mjs'],
     );
 
     expect(result.scripts).toEqual({
-      'test:config': 'node --test scripts/check-hard-bans.test.mjs',
+      'test:config': 'node --test scripts/check-backend-build.test.mjs',
+    });
+  });
+
+  it.each([
+    'scripts/check-hard-bans.test.mjs',
+    'scripts/eslint-policy.test.mjs',
+    'scripts/guardrails/checker.test.mjs',
+    'scripts/guardrails/slow/boundaries.test.mjs',
+    'scripts/guardrails/boundaries.slow.mjs',
+    'scripts/guardrails/*.test.mjs',
+    'scripts/guardrails/*.slow.mjs',
+    './scripts/guardrails/checker.test.mjs',
+  ])('removes excluded repository tests from generated commands: %s', (path) => {
+    const result = prunePackageScripts(
+      packageJson({ 'test:config': `node --test ${path} scripts/check-backend-build.test.mjs` }),
+      [],
+    );
+
+    expect(result.scripts).toEqual({
+      'test:config': 'node --test scripts/check-backend-build.test.mjs',
+    });
+  });
+
+  it('drops an excluded-only slow command and keeps ordinary scripts', () => {
+    const result = prunePackageScripts(
+      packageJson({
+        'test:config:all':
+          'node --test scripts/guardrails/*.test.mjs scripts/guardrails/*.slow.mjs',
+        check: 'node scripts/check-hard-bans.mjs --staged',
+      }),
+      [],
+    );
+
+    expect(result.scripts).toEqual({ check: 'node scripts/check-hard-bans.mjs --staged' });
+  });
+
+  it('removes an all command that becomes identical after template exclusions', () => {
+    const result = prunePackageScripts(
+      packageJson({
+        'test:config': 'node --test scripts/check-backend-build.test.mjs',
+        'test:config:all':
+          'node --test scripts/guardrails/*.slow.mjs scripts/check-backend-build.test.mjs',
+      }),
+      [],
+    );
+
+    expect(result.scripts).toEqual({
+      'test:config': 'node --test scripts/check-backend-build.test.mjs',
+    });
+  });
+
+  it('preserves a genuinely different all command', () => {
+    const result = prunePackageScripts(
+      packageJson({
+        'test:config': 'node --test scripts/check-backend-build.test.mjs',
+        'test:config:all': 'node --test scripts/check-contrast.test.mjs',
+      }),
+      [],
+    );
+
+    expect(result.scripts).toEqual({
+      'test:config': 'node --test scripts/check-backend-build.test.mjs',
+      'test:config:all': 'node --test scripts/check-contrast.test.mjs',
     });
   });
 

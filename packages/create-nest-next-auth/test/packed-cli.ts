@@ -72,9 +72,16 @@ export function scaffold(
   packed: Packed,
   name: string,
   features?: string,
+  options: { git?: boolean; env?: NodeJS.ProcessEnv } = {},
 ): ReturnType<typeof spawnSync> {
   const target = join(packed.workspace, name);
-  const args = [packed.cli, target, '--yes', '--no-install', '--no-git'];
+  const args = [packed.cli, target, '--yes', '--no-install'];
+  if (!options.git) args.push('--no-git');
   if (features !== undefined) args.push('--features', features);
-  return spawnSync(process.execPath, args, { encoding: 'utf8', timeout: BUILD_TIMEOUT });
+  return spawnSync(process.execPath, args, {
+    cwd: packed.workspace,
+    env: options.env,
+    encoding: 'utf8',
+    timeout: BUILD_TIMEOUT,
+  });
 }

@@ -1,52 +1,16 @@
-import { execFileSync, spawnSync } from 'node:child_process';
-import {
-  chmodSync,
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
-import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
+import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 import { SHA256_HEX_PATTERN, TEMPLATE_IDENTITY_FILE } from '../src/constants/index.js';
-
-const PACKAGE_DIR = fileURLToPath(new URL('..', import.meta.url));
-const SCRIPT = join(PACKAGE_DIR, 'scripts/sync-template.mjs');
+import { prunePackageScripts } from '../src/prune/package-scripts.js';
+import { buildTemplate, newFixture, runScript } from './sync-template-fixture.js';
 
 const roots: string[] = [];
 
 afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
-
-function runScript(fixture: string): void {
-  const script = join(fixture, 'packages/create-nest-next-auth/scripts/sync-template.mjs');
-  execFileSync(process.execPath, [script], { timeout: 10_000, stdio: 'pipe' });
-}
-
-/** A fixture with the script and the default manifest in place, not yet run. */
-function newFixture(): string {
-  const fixture = mkdtempSync(join(tmpdir(), 'cna-sync-'));
-  roots.push(fixture);
-  const script = join(fixture, 'packages/create-nest-next-auth/scripts/sync-template.mjs');
-  mkdirSync(dirname(script), { recursive: true });
-  copyFileSync(SCRIPT, script);
-  writeFileSync(join(fixture, 'template.manifest.json'), '{"features":{}}');
-  return fixture;
-}
-
-/** Runs the script against a fixture and returns the template directory it wrote. */
-function buildTemplate(setup: (fixture: string) => void): string {
-  const fixture = newFixture();
-  setup(fixture);
-  runScript(fixture);
-  return join(fixture, 'packages/create-nest-next-auth/template');
-}
 
 /** The fixture root a built template directory belongs to. */
 function fixtureOf(template: string): string {
@@ -64,7 +28,7 @@ function identityOf(template: string): string {
 
 describe('sync-template exclusions', () => {
   it('leaves a .git pointer file out of the template', () => {
-    const template = buildTemplate((fixture) => {
+    const template = buildTemplate(roots, (fixture) => {
       writeFileSync(join(fixture, '.git'), 'gitdir: /elsewhere/worktrees/app\n');
       writeFileSync(join(fixture, 'kept.txt'), 'keep\n');
     });
@@ -73,8 +37,83 @@ describe('sync-template exclusions', () => {
     expect(existsSync(join(template, 'kept.txt'))).toBe(true);
   });
 
+  it('ships runtime guardrails and cheap tests without the repository regression suites', () => {
+    const paths = [
+      'scripts/check-hard-bans.test.mjs',
+      'scripts/eslint-policy.test.mjs',
+      'scripts/guardrails/checker.test.mjs',
+      'scripts/guardrails/slow/boundaries.test.mjs',
+      'scripts/guardrails/boundaries.slow.mjs',
+      'scripts/guardrails/test-repository.mjs',
+      'scripts/guardrails/workspace-policy.mjs',
+      'scripts/check-hard-bans.mjs',
+      'scripts/guardrails/policy.mjs',
+      'scripts/guardrails/checker.mjs',
+      'scripts/guardrails/repository-git.mjs',
+      'scripts/guardrails/git-environment.mjs',
+      'scripts/guardrails/round8-hook-fixture.mjs',
+      'scripts/check-backend-build.test.mjs',
+    ];
+    const template = buildTemplate(roots, (fixture) => {
+      for (const path of paths) {
+        mkdirSync(dirname(join(fixture, path)), { recursive: true });
+        writeFileSync(join(fixture, path), 'export {};\n');
+      }
+    });
+
+    expect(paths.map((path) => existsSync(join(template, path)))).toEqual([
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+    ]);
+  });
+
+  it('runs retained config tests after copying and transforming a no-Git template', () => {
+    const template = buildTemplate(roots, (fixture) => {
+      mkdirSync(join(fixture, 'scripts/guardrails'), { recursive: true });
+      writeFileSync(join(fixture, 'scripts/guardrails/checker.test.mjs'), 'throw new Error();\n');
+      writeFileSync(
+        join(fixture, 'scripts/check-backend-build.test.mjs'),
+        "import test from 'node:test'; test('smoke', () => {});\n",
+      );
+      writeFileSync(
+        join(fixture, 'package.json'),
+        JSON.stringify({
+          scripts: {
+            'test:config':
+              'node --test scripts/guardrails/*.test.mjs scripts/check-backend-build.test.mjs',
+          },
+        }),
+      );
+    });
+    const parsed = JSON.parse(readFileSync(join(template, 'package.json'), 'utf8')) as {
+      scripts: Record<string, string>;
+    };
+    const updated = prunePackageScripts(parsed, []) as { scripts: Record<string, string> };
+
+    expect(updated.scripts).toEqual({
+      'test:config': 'node --test scripts/check-backend-build.test.mjs',
+    });
+    const result = spawnSync(process.execPath, updated.scripts['test:config'].split(' ').slice(1), {
+      cwd: template,
+      encoding: 'utf8',
+    });
+    expect(result.status).toBe(0);
+  });
+
   it('leaves a .git directory out of the template', () => {
-    const template = buildTemplate((fixture) => {
+    const template = buildTemplate(roots, (fixture) => {
       mkdirSync(join(fixture, '.git', 'objects'), { recursive: true });
       writeFileSync(join(fixture, '.git', 'HEAD'), 'ref: refs/heads/main\n');
     });
@@ -85,7 +124,7 @@ describe('sync-template exclusions', () => {
 
 describe('template identity', () => {
   it('ships a hex sha256 next to the template', () => {
-    const template = buildTemplate((fixture) => {
+    const template = buildTemplate(roots, (fixture) => {
       writeFileSync(join(fixture, 'app.txt'), 'one\n');
     });
 
@@ -94,12 +133,12 @@ describe('template identity', () => {
 
   it('changes when a template file changes', () => {
     const first = identityOf(
-      buildTemplate((fixture) => {
+      buildTemplate(roots, (fixture) => {
         writeFileSync(join(fixture, 'app.txt'), 'one\n');
       }),
     );
     const second = identityOf(
-      buildTemplate((fixture) => {
+      buildTemplate(roots, (fixture) => {
         writeFileSync(join(fixture, 'app.txt'), 'two\n');
       }),
     );
@@ -109,13 +148,13 @@ describe('template identity', () => {
 
   it('changes when the manifest changes', () => {
     const first = identityOf(
-      buildTemplate((fixture) => {
+      buildTemplate(roots, (fixture) => {
         writeFileSync(join(fixture, 'app.txt'), 'one\n');
         writeFileSync(join(fixture, 'template.manifest.json'), '{"features":{}}');
       }),
     );
     const second = identityOf(
-      buildTemplate((fixture) => {
+      buildTemplate(roots, (fixture) => {
         writeFileSync(join(fixture, 'app.txt'), 'one\n');
         writeFileSync(join(fixture, 'template.manifest.json'), '{"features":{},"version":2}');
       }),
@@ -125,7 +164,7 @@ describe('template identity', () => {
   });
 
   it('is stable when the same tree is built twice', () => {
-    const template = buildTemplate((fixture) => {
+    const template = buildTemplate(roots, (fixture) => {
       writeFileSync(join(fixture, 'app.txt'), 'one\n');
     });
     const first = identityOf(template);
@@ -140,7 +179,7 @@ describe('template identity', () => {
     // the whole payload is sha256'd. hello.txt = "hi\n" and the manifest is
     // {"features":{}}; neither file carries an executable bit, so both entries
     // hold "0". Payload sha256: 53e23961...d5f81fed (full value asserted).
-    const template = buildTemplate((fixture) => {
+    const template = buildTemplate(roots, (fixture) => {
       writeFileSync(join(fixture, 'hello.txt'), 'hi\n');
     });
 
@@ -151,12 +190,12 @@ describe('template identity', () => {
 
   it('is the same tree built in two different directories', () => {
     const first = identityOf(
-      buildTemplate((fixture) => {
+      buildTemplate(roots, (fixture) => {
         writeFileSync(join(fixture, 'app.txt'), 'one\n');
       }),
     );
     const second = identityOf(
-      buildTemplate((fixture) => {
+      buildTemplate(roots, (fixture) => {
         writeFileSync(join(fixture, 'app.txt'), 'one\n');
       }),
     );
@@ -166,12 +205,12 @@ describe('template identity', () => {
 
   it('changes when a file is renamed', () => {
     const first = identityOf(
-      buildTemplate((fixture) => {
+      buildTemplate(roots, (fixture) => {
         writeFileSync(join(fixture, 'a.txt'), 'same\n');
       }),
     );
     const second = identityOf(
-      buildTemplate((fixture) => {
+      buildTemplate(roots, (fixture) => {
         writeFileSync(join(fixture, 'b.txt'), 'same\n');
       }),
     );
@@ -181,12 +220,12 @@ describe('template identity', () => {
 
   it('changes when an empty file is added', () => {
     const first = identityOf(
-      buildTemplate((fixture) => {
+      buildTemplate(roots, (fixture) => {
         writeFileSync(join(fixture, 'app.txt'), 'one\n');
       }),
     );
     const second = identityOf(
-      buildTemplate((fixture) => {
+      buildTemplate(roots, (fixture) => {
         writeFileSync(join(fixture, 'app.txt'), 'one\n');
         writeFileSync(join(fixture, 'empty.txt'), '');
       }),
@@ -196,7 +235,7 @@ describe('template identity', () => {
   });
 
   it('changes when a file becomes executable', () => {
-    const template = buildTemplate((fixture) => {
+    const template = buildTemplate(roots, (fixture) => {
       writeFileSync(join(fixture, 'hook.sh'), '#!/bin/sh\n');
     });
     const before = identityOf(template);
@@ -211,7 +250,7 @@ describe('template identity', () => {
     // The same recipe as above, with the file name "a\nb" holding "hi\n". The
     // embedded newline stays inside its own NUL-framed entry and never
     // becomes a line break; the payload sorts "a\nb" before the manifest.
-    const template = buildTemplate((fixture) => {
+    const template = buildTemplate(roots, (fixture) => {
       writeFileSync(join(fixture, 'a\nb'), 'hi\n');
     });
 
@@ -221,7 +260,7 @@ describe('template identity', () => {
   });
 
   it('leaves no identity file behind when a build fails', () => {
-    const fixture = newFixture();
+    const fixture = newFixture(roots);
     writeFileSync(join(fixture, '.gitignore'), 'ignored\n');
     writeFileSync(join(fixture, '_gitignore'), 'literal\n');
     const packageDir = join(fixture, 'packages/create-nest-next-auth');
@@ -235,7 +274,7 @@ describe('template identity', () => {
   });
 
   it('refuses two sources that would ship as one path', () => {
-    const fixture = newFixture();
+    const fixture = newFixture(roots);
     writeFileSync(join(fixture, '.gitignore'), 'ignored\n');
     writeFileSync(join(fixture, '_gitignore'), 'literal\n');
     const script = join(fixture, 'packages/create-nest-next-auth/scripts/sync-template.mjs');
