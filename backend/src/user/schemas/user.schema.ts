@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
+import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 import { EMAIL_PROVIDER } from '../../common/constants/oauth-providers';
 import { TwoFactor, TwoFactorSchema } from './two-factor.schema'; // feature:totp
 
@@ -93,6 +93,16 @@ export class User {
 }
 
 export type UserDocument = HydratedDocument<User>;
+
+/**
+ * The user as `toObject()` on a hydrated document returns it: every schema
+ * field except `password`, which `select: false` omits, and the
+ * `linkedProviders` virtual, which `toObject()` never includes, plus the
+ * generated id. Authority reads hand the session's populated user this shape.
+ */
+export type LeanUser = Omit<User, 'password' | 'linkedProviders'> & {
+  _id: Types.ObjectId;
+};
 
 export const UserSchema: MongooseSchema<User> =
   SchemaFactory.createForClass(User);

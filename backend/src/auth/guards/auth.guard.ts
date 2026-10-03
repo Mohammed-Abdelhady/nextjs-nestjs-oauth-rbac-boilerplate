@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Reflector } from '@nestjs/core';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Request, Response } from 'express';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { SessionService } from '../services/session.service';
@@ -15,7 +15,7 @@ import {
   SessionDocument,
   LeanSession,
 } from '../../session/schemas/session.schema';
-import { UserDocument } from '../../user/schemas/user.schema';
+import { LeanUser } from '../../user/schemas/user.schema';
 import { Role, RoleDocument } from '../../role/schemas/role.schema';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
@@ -28,6 +28,16 @@ import {
   REQUEST_CREDENTIAL,
   selectRequestCredential,
 } from '../../session/utils/request-credential';
+
+/**
+ * A lean session read populates `user` with the account; an unpopulated read
+ * leaves the id. The guard can only authenticate against the populated one.
+ */
+export function isPopulatedUser(
+  user: Types.ObjectId | LeanUser,
+): user is LeanUser {
+  return !(user instanceof Types.ObjectId);
+}
 
 export interface RequestWithUser extends Request {
   user?: {
@@ -105,7 +115,7 @@ export class AuthGuard implements CanActivate {
     }
 
     // Attach user and session to request for use in controllers
-    const user = session.user as unknown as UserDocument | null;
+    const user = isPopulatedUser(session.user) ? session.user : null;
 
     if (!user || user.isDeleted) {
       if (cookieSelected) {
