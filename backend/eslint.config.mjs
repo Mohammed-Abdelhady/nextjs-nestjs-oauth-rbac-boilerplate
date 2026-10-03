@@ -5,6 +5,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
+  { linterOptions: { noInlineConfig: true } },
   {
     ignores: ['eslint.config.mjs', 'dist/**'],
   },

@@ -150,6 +150,9 @@ export const GIT_FALLBACK_NAME = CLI_NAME;
 
 export const GIT_FALLBACK_EMAIL = `${CLI_NAME}@users.noreply.github.com`;
 
+export const GIT_PUSH_TIMEOUT_MS = 30_000;
+export const GIT_PUSH_KILL_SIGNAL = 'SIGKILL';
+
 /** Repository-local paths and config overrides must not escape the caller. */
 export const GIT_REPOSITORY_ENV_VARS: readonly string[] = [
   'GIT_DIR',

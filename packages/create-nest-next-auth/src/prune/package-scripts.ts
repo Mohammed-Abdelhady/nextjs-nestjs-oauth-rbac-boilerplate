@@ -1,8 +1,13 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { ROOT_PACKAGE_JSON } from '../constants/index.js';
+import TEMPLATE_TEST_POLICY from '../constants/template-tests.json' with { type: 'json' };
 import { isRecord } from '../manifest/read.js';
 import { readFileIfExists } from '../utils/fs.js';
+
+const REPOSITORY_TEST_PATHS = TEMPLATE_TEST_POLICY.EXCLUDED_PATH_PATTERNS.map(
+  (pattern) => new RegExp(pattern),
+);
 
 /** Removes a leading `./` so a command token matches a manifest path. */
 function asPath(token: string): string {
@@ -18,9 +23,8 @@ function hasTestFile(tokens: string[]): boolean {
 const OTHER_SHELL_OPERATOR = /(\|\||;|\|(?!=)|(?<!&)&(?!&))/;
 
 /**
- * Drops a script that runs a deleted file, and strips deleted files from a
- * `node --test` argument list. Derived from what the pruner actually deleted, so
- * no script name is hardcoded. Pure, so it can be unit tested without a file.
+ * Drops deleted files and repository-only tests from generated commands.
+ * Other tests and scripts keep the feature-pruner's existing behavior.
  */
 export function prunePackageScripts(
   packageJson: Record<string, unknown>,
@@ -29,8 +33,10 @@ export function prunePackageScripts(
   if (!isRecord(packageJson.scripts)) return packageJson;
 
   const deleted = new Set(deletedFiles);
-  const namesDeleted = (command: string): boolean =>
-    command.split(/\s+/).some((token) => deleted.has(asPath(token)));
+  const isDeleted = (token: string): boolean =>
+    deleted.has(asPath(token)) ||
+    REPOSITORY_TEST_PATHS.some((pattern) => pattern.test(asPath(token)));
+  const namesDeleted = (command: string): boolean => command.split(/\s+/).some(isDeleted);
   const scripts: Record<string, unknown> = {};
 
   for (const [name, command] of Object.entries(packageJson.scripts)) {
@@ -41,7 +47,7 @@ export function prunePackageScripts(
 
     const tokens = command.split(/\s+/);
     if (tokens.includes('--test')) {
-      const kept = tokens.filter((token) => !deleted.has(asPath(token)));
+      const kept = tokens.filter((token) => !isDeleted(token));
       if (!hasTestFile(kept)) continue;
       scripts[name] = kept.join(' ');
       continue;
@@ -62,6 +68,12 @@ export function prunePackageScripts(
 
     // A single command that exists to run a deleted file goes with it.
   }
+
+  if (
+    scripts['test:config:all'] !== undefined &&
+    scripts['test:config:all'] === scripts['test:config']
+  )
+    delete scripts['test:config:all'];
 
   return { ...packageJson, scripts };
 }

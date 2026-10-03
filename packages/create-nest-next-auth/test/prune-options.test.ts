@@ -58,8 +58,7 @@ describe('prune options', () => {
     expect(parsed.scripts).toEqual({
       build: 'nest build',
       'docker:up': 'docker compose up -d',
-      'test:config':
-        'node --test scripts/config-transforms.ports.test.mjs scripts/check-hard-bans.test.mjs',
+      'test:config': 'node --test scripts/config-transforms.ports.test.mjs',
     });
   });
 

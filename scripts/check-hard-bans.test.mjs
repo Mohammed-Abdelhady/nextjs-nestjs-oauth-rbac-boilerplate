@@ -107,12 +107,12 @@ test('markdown is not a scan target', () => {
   assert.equal(result.ok, true);
 });
 
-test('checker files are skipped', () => {
+test('checker entry is scanned after data moves to policy', () => {
   const result = evaluateChanges({
     added: [added('scripts/check-hard-bans.mjs', ['const token = "as any";'])],
     lineCounts: [],
   });
-  assert.equal(result.ok, true);
+  assert.equal(result.ok, false);
 });
 
 test('line cap: 350 passes and 351 fails under src', () => {

@@ -1,0 +1,170 @@
+export const LINE_ENDINGS = /\r\n|\r|\n/;
+export const FILE_LINE_LIMIT = 350;
+export const EXIT_CODES = { OK: 0, VIOLATION: 1, ERROR: 2 };
+export const SCAN_EXTENSIONS = [
+  '.ts',
+  '.tsx',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '.cjs',
+  '.sh',
+  '.mts',
+  '.cts',
+];
+export const SKIPPED_DIRECTORY_PARTS = ['node_modules', 'dist', '.next', '.expo'];
+export const SKIPPED_PATH_PREFIXES = ['mobile/expo/ios/', 'mobile/expo/android/', '.husky/_/'];
+export const PROTECTED_FILE_PATTERN =
+  /(?:^|\/)(?:\.ssh\/.+|\.aws\/(?:credentials|config)|\.kube\/config|\.config\/gcloud\/.+)$/;
+export const PROTECTED_EXTENSION = /\.(pem|key|crt)$/;
+export const EXEMPT_PATHS = ['scripts/guardrails/policy.mjs', 'scripts/check-hard-bans.test.mjs'];
+export const GIT_REPOSITORY_VARIABLES = [
+  'GIT_DIR',
+  'GIT_WORK_TREE',
+  'GIT_INDEX_FILE',
+  'GIT_PREFIX',
+  'GIT_COMMON_DIR',
+  'GIT_OBJECT_DIRECTORY',
+  'GIT_ALTERNATE_OBJECT_DIRECTORIES',
+  'GIT_NAMESPACE',
+  'GIT_CEILING_DIRECTORIES',
+  'GIT_SHALLOW_FILE',
+  'GIT_GRAFT_FILE',
+  'GIT_REPLACE_REF_BASE',
+  'GIT_QUARANTINE_PATH',
+  'GIT_IMPLICIT_WORK_TREE',
+  'GIT_NO_REPLACE_OBJECTS',
+];
+export const GIT_CWD_RELATIVE_VARIABLES = ['GIT_DIR', 'GIT_WORK_TREE'];
+export const GIT_BUFFER_LIMIT_MIB = 64;
+export const GIT_MAX_BUFFER_BYTES = GIT_BUFFER_LIMIT_MIB * 1024 * 1024;
+export const GIT_PATH_BATCH_BYTES = 32 * 1024;
+export const BINARY_PROBE_BYTES = 8000;
+export const MAX_EXCERPT_LENGTH = 240;
+export const COMMIT_ABBREVIATION_LENGTH = 7;
+export const EMPTY_PUSH_MESSAGE = 'no ref updates on stdin, nothing to scan';
+export const PUSH_FETCH_FIRST_MESSAGE =
+  'warning: the tracking ref for the pushed branch is out of date; fetch first, then push again.';
+export const EMPTY_TRUSTED_REMOTES_LABEL = '<none>';
+export const UNCAPPED_EXTENSIONS = ['.json', '.snap', '.css'];
+export const UTF16_BOM_BYTES = 2;
+export const UTF16_ENCODINGS = [
+  { bom: [255, 254], encoding: 'utf-16le' },
+  { bom: [254, 255], encoding: 'utf-16be' },
+];
+export const REMOTE_REF_PREFIX = 'refs/remotes/';
+export const BRANCH_REF_PREFIX = 'refs/heads/';
+export const GIT_OBJECT_ID_PATTERN = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
+export const GIT_PUSH_TIMEOUT_MS = 30_000;
+export const PUSH_BASE_CONFIG = 'guardrails.pushBase';
+export const TRUSTED_REMOTES_CONFIG = 'guardrails.trustedRemotes';
+export const DEFAULT_TRUSTED_REMOTES = ['origin'];
+export const GIT_URL_SUFFIX = '.git';
+export const FILE_URL_SCHEME = 'file:';
+export const PUSH_REMOTE_BASE_REFS = [
+  'refs/remotes/origin/main',
+  'refs/remotes/origin/master',
+  'refs/remotes/origin/staging',
+];
+export const PUSH_BASE_REFS = [
+  'refs/heads/main',
+  'refs/heads/master',
+  'refs/heads/staging',
+  ...PUSH_REMOTE_BASE_REFS,
+];
+export const TYPESCRIPT_EXTENSIONS = ['.ts', '.tsx', '.mts', '.cts'];
+export const EXPLICIT_TYPE_RULE = '@typescript-eslint/no-explicit-' + 'a' + 'ny';
+export const GITLINK_MODE = '160000';
+export const BINARY_EXTENSIONS = [
+  '.png',
+  '.bmp',
+  '.tif',
+  '.tiff',
+  '.svg',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.webp',
+  '.avif',
+  '.ico',
+  '.pdf',
+  '.zip',
+  '.gz',
+  '.tgz',
+  '.woff',
+  '.woff2',
+  '.ttf',
+  '.mp4',
+  '.mp3',
+];
+export const CAPPED_PATH =
+  /^(backend\/(src|test)|frontend\/(src|e2e)|packages\/[^/]+\/src|shared\/[^/]+\/src|mobile\/[^/]+\/(src|app)|scripts\/guardrails)\//;
+export const CAPPED_FILES = ['scripts/check-hard-bans.mjs', 'scripts/check-hard-bans.test.mjs'];
+export const DOM_TOKENS = [
+  'dangerouslySetInnerHTML',
+  'insertAdjacentHTML',
+  'document.write',
+  'outerHTML',
+  'innerHTML',
+];
+export const RULE_REASONS = {
+  DOM: 'Markup injection bypasses safe text and children.',
+  TYPE: 'Type escapes bypass compile-time checking.',
+  SUPPRESSION: 'Suppression hides a failing gate instead of fixing its cause.',
+  BYPASS: 'Gate bypass flags disable required verification.',
+};
+export const BANNED_CONSTRUCTS = [
+  { token: 'dangerouslySetInnerHTML', reason: RULE_REASONS.DOM },
+  { token: 'insertAdjacentHTML', reason: RULE_REASONS.DOM },
+  { token: 'eslint-disable-next-line', reason: RULE_REASONS.SUPPRESSION },
+  { token: 'eslint-disable-line', reason: RULE_REASONS.SUPPRESSION },
+  { token: '@SuppressWarnings', reason: RULE_REASONS.SUPPRESSION },
+  {
+    token: 'as unknown as',
+    pattern:
+      /\bas\s+unknown\b|(?<![\w$])(\([^()\r\n]*\bas\s+unknown\b)|(<[^<>\r\n]+>\s*\(\s*<\s*unknown\s*>)/g,
+    followingCast: true,
+    reason: RULE_REASONS.TYPE,
+  },
+  { token: 'satisfies any', reason: RULE_REASONS.TYPE },
+  { token: 'prettier-ignore', reason: RULE_REASONS.SUPPRESSION },
+  { token: 'deno-lint-ignore', reason: RULE_REASONS.SUPPRESSION },
+  { token: 'oxlint-disable', reason: RULE_REASONS.SUPPRESSION },
+  { token: 'stylelint-disable', reason: RULE_REASONS.SUPPRESSION },
+  { token: 'biome-ignore', reason: RULE_REASONS.SUPPRESSION },
+  { token: 'eslint-disable', reason: RULE_REASONS.SUPPRESSION },
+  { token: 'eslint-enable', reason: RULE_REASONS.SUPPRESSION },
+  { token: 'document.write', reason: RULE_REASONS.DOM },
+  { token: '--no-typecheck', reason: RULE_REASONS.BYPASS },
+  { token: '--no-eslint', reason: RULE_REASONS.BYPASS },
+  { token: '--no-verify', reason: RULE_REASONS.BYPASS },
+  { token: '@ts-expect-error', reason: RULE_REASONS.SUPPRESSION },
+  { token: '@ts-nocheck', reason: RULE_REASONS.SUPPRESSION },
+  { token: '@ts-ignore', reason: RULE_REASONS.SUPPRESSION },
+  { token: 'type: ignore', reason: RULE_REASONS.SUPPRESSION },
+  { token: 'pylint: disable', reason: RULE_REASONS.SUPPRESSION },
+  { token: 'ruff: noqa', reason: RULE_REASONS.SUPPRESSION },
+  { token: '# noqa', reason: RULE_REASONS.SUPPRESSION },
+  { token: 'as any', reason: RULE_REASONS.TYPE },
+  { token: 'outerHTML', reason: RULE_REASONS.DOM },
+  { token: 'innerHTML', reason: RULE_REASONS.DOM },
+];
+BANNED_CONSTRUCTS.push(
+  { token: 'document.writeln', reason: RULE_REASONS.DOM },
+  { token: 'document?.write', reason: RULE_REASONS.DOM },
+  { token: "document['write']", reason: RULE_REASONS.DOM },
+  { token: 'document["write"]', reason: RULE_REASONS.DOM },
+  {
+    token: 'inline eslint configuration',
+    pattern: /\/\*\s*eslint\s+['"]?(?:@[\w-]+\/)?[\w][\w/-]*['"]?\s*:/g,
+    reason: RULE_REASONS.SUPPRESSION,
+  },
+);
+export const ATTRIBUTION_PATTERNS = [
+  /Co-authored-by:\s*Cursor/i,
+  /Co-authored-by:\s*cursoragent/i,
+  /Made-with:\s*Cursor/i,
+  /cursoragent@cursor\.com/i,
+  /Generated with.+(Cursor|Claude|ChatGPT|GPT-|Anthropic|OpenAI|Copilot)/i,
+  /Co-Authored-By:.+(Claude|ChatGPT|GPT-|Anthropic|Cursor)/i,
+];

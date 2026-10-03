@@ -5,6 +5,11 @@ import { createHash } from 'node:crypto';
 import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import TEMPLATE_TEST_POLICY from '../src/constants/template-tests.json' with { type: 'json' };
+
+const REPOSITORY_TEST_PATHS = TEMPLATE_TEST_POLICY.EXCLUDED_PATH_PATTERNS.map(
+  (pattern) => new RegExp(pattern),
+);
 
 const PACKAGE_DIR = dirname(dirname(fileURLToPath(import.meta.url)));
 const REPO_ROOT = dirname(dirname(PACKAGE_DIR));
@@ -70,6 +75,8 @@ const RENAMED_FILES = new Map([
 export function isExcluded(relativePath, name, isDirectory) {
   if (name === '.git') return true;
   if (EXCLUDED_PATHS.has(relativePath)) return true;
+  if (REPOSITORY_TEST_PATHS.some((pattern) => pattern.test(relativePath.split(sep).join('/'))))
+    return true;
   if (/(^|[\\/])\.config[\\/]gcloud($|[\\/])/.test(relativePath)) return true;
   if (name === '.env' || name.startsWith('.env.'))
     return isDirectory || !ENV_EXAMPLES.has(relativePath);
@@ -77,6 +84,31 @@ export function isExcluded(relativePath, name, isDirectory) {
   if (isDirectory) return EXCLUDED_DIRS.has(name);
   if (name === '.DS_Store' || name.endsWith('.log') || name.endsWith('.tsbuildinfo')) return true;
   return false;
+}
+
+export function templateContent(relativePath, bytes) {
+  if (relativePath === TEMPLATE_TEST_POLICY.POLICY_PATH) {
+    const content = bytes.toString('utf8');
+    const updated = content.replace(
+      /(export const EXEMPT_PATHS = \[)([^\]]*)(\];)/,
+      (_match, start, values, end) => {
+        const paths = [...values.matchAll(/(['"])([^'"]+)\1/g)]
+          .filter((match) => !REPOSITORY_TEST_PATHS.some((pattern) => pattern.test(match[2])))
+          .map((match) => match[0]);
+        return `${start}${paths.join(', ')}${end}`;
+      },
+    );
+    return Buffer.from(updated);
+  }
+  if (relativePath !== TEMPLATE_TEST_POLICY.DOC_PATH) return bytes;
+  let excluded = false;
+  const kept = [];
+  for (const line of bytes.toString('utf8').split('\n')) {
+    if (line.trim() === TEMPLATE_TEST_POLICY.REPOSITORY_ONLY_START) excluded = true;
+    else if (line.trim() === TEMPLATE_TEST_POLICY.REPOSITORY_ONLY_END) excluded = false;
+    else if (!excluded) kept.push(line);
+  }
+  return Buffer.from(kept.join('\n'));
 }
 
 // One entry: shipped path, executable bit, content digest. Fields are NUL
@@ -113,10 +145,13 @@ async function copyTree(sourceDir, targetDir, counters, hashes, shippedBy) {
     shippedBy.set(shipped, relativePath);
 
     const stats = await stat(source);
+    const original = await readFile(source);
+    const bytes = templateContent(relativePath.split(sep).join('/'), original);
     await cp(source, join(targetDir, targetName));
+    if (!bytes.equals(original)) await writeFile(join(targetDir, targetName), bytes);
     counters.files += 1;
-    counters.bytes += stats.size;
-    hashes.push(entryLine(shipped, stats.mode, await readFile(source)));
+    counters.bytes += bytes.length;
+    hashes.push(entryLine(shipped, stats.mode, bytes));
   }
 }
 

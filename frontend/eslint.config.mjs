@@ -4,6 +4,7 @@ import nextTs from 'eslint-config-next/typescript';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 
 const eslintConfig = defineConfig([
+  { linterOptions: { noInlineConfig: true } },
   ...nextVitals,
   ...nextTs,
   eslintPluginPrettierRecommended,
