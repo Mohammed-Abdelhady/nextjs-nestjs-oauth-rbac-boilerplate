@@ -7,6 +7,7 @@ import { MailService } from '../../mail/mail.service';
 import { User, UserDocument } from '../../user/schemas/user.schema';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { ADMIN_LEVEL, ROLE_HIERARCHY } from '../../common/utils/role-hierarchy';
+import { partialMock } from '../../common/testing/test-doubles.harness-spec';
 
 describe('AdminEmailChangeService', () => {
   let service: AdminEmailChangeService;
@@ -24,13 +25,13 @@ describe('AdminEmailChangeService', () => {
   };
 
   function buildTarget(): UserDocument {
-    return {
+    return partialMock<UserDocument>({
       _id: new Types.ObjectId(),
       email: 'old@example.com',
       name: 'Target User',
       role: 'user',
       isVerified: true,
-    } as unknown as UserDocument;
+    });
   }
 
   beforeEach(async () => {

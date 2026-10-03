@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
+import type { LeanUser } from '../../user/schemas/user.schema';
 import {
   CREDENTIAL_PURPOSE,
   CredentialPurpose,
@@ -127,7 +128,8 @@ export type SessionDocument = HydratedDocument<Session>;
 
 export interface LeanSession extends Omit<Session, 'user'> {
   _id: Types.ObjectId;
-  user: Types.ObjectId | Record<string, unknown>;
+  /** The id the session belongs to; authority reads populate it as LeanUser. */
+  user: Types.ObjectId | LeanUser;
 }
 
 export const SessionSchema: MongooseSchema<Session> =

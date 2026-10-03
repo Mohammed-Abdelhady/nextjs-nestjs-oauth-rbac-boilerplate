@@ -118,7 +118,7 @@ describe('parseUserAgent', () => {
     });
 
     it('should handle invalid user agent', () => {
-      const result = parseUserAgent(null as unknown as string);
+      const result = parseUserAgent(null);
 
       expect(result.device).toBe('Unknown');
       expect(result.browser).toBe('Unknown');

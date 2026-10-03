@@ -161,7 +161,7 @@ function detectOS(ua: string): string {
  *
  * @see getDeviceLabel - For generating human-readable device descriptions
  */
-export function parseUserAgent(userAgent: string): ParsedUserAgent {
+export function parseUserAgent(userAgent: string | null | undefined): ParsedUserAgent {
   if (!userAgent || typeof userAgent !== 'string') {
     return {
       device: 'Unknown',

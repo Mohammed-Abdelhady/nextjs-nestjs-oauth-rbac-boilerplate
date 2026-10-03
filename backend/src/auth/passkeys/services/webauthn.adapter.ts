@@ -21,16 +21,16 @@ export type PasskeyCreationOptions = PublicKeyCredentialCreationOptionsJSON;
 export type PasskeyRequestOptions = PublicKeyCredentialRequestOptionsJSON;
 
 /**
- * A credential as the browser serialises it. Kept deliberately loose: the
- * request DTO checks the envelope, and the library parses and authenticates
- * everything inside `response` itself.
+ * A credential as the browser serialises it. `response` and the client
+ * extensions stay unknown on purpose: the request DTO checks only the
+ * envelope, and the library parses and authenticates everything inside.
  */
 export interface PasskeyCredentialJson {
   id: string;
   rawId: string;
-  response: Record<string, unknown>;
+  response: unknown;
   authenticatorAttachment?: string;
-  clientExtensionResults?: Record<string, unknown>;
+  clientExtensionResults?: unknown;
   type: string;
 }
 
@@ -88,26 +88,28 @@ type LibraryDescriptor = NonNullable<
 function toLibraryDescriptors(
   credentials: CredentialDescriptor[],
 ): LibraryDescriptor[] {
-  return credentials.map(
-    (credential) => credential as unknown as LibraryDescriptor,
-  );
+  return credentials.map((credential) => ({
+    id: credential.id,
+    transports: credential.transports,
+    type: 'public-key',
+  }));
 }
 
 /**
- * The one place a browser payload is handed to the library. `transports` and
- * `type` are open strings on the way in and unions in the library types; the
- * library re-reads and authenticates every field regardless.
+ * The one place a browser payload is handed to the library. Nothing covers
+ * the wire shape for TypeScript: the bytes are read and authenticated by the
+ * library itself, so the envelope is asserted once, here, at the seam.
  */
 function toAttestation(
   credential: PasskeyCredentialJson,
 ): RegistrationResponseJSON {
-  return credential as unknown as RegistrationResponseJSON;
+  return credential as RegistrationResponseJSON;
 }
 
 function toAssertion(
   credential: PasskeyCredentialJson,
 ): AuthenticationResponseJSON {
-  return credential as unknown as AuthenticationResponseJSON;
+  return credential as AuthenticationResponseJSON;
 }
 
 @Injectable()

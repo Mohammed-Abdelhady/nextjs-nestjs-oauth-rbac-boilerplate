@@ -1,5 +1,4 @@
 import {
-  asDocument,
   codeAtOffset,
   createVerificationHarness,
   CURRENT_STEP,
@@ -26,18 +25,18 @@ describe('TwoFactorVerificationService', () => {
 
   describe('verifyTotpCode', () => {
     it('should accept the code for the current step and remember it', async () => {
-      const { service, secret, user } = createVerificationHarness();
+      const { service, secret, user, save } = createVerificationHarness();
 
-      await service.verifyTotpCode(asDocument(user), codeAtOffset(secret, 0));
+      await service.verifyTotpCode(user, codeAtOffset(secret, 0));
 
       expect(user.twoFactor.lastUsedStep).toBe(CURRENT_STEP);
-      expect(user.save).not.toHaveBeenCalled();
+      expect(save).not.toHaveBeenCalled();
     });
 
     it('should accept a code one step behind and record that step', async () => {
       const { service, secret, user } = createVerificationHarness();
 
-      await service.verifyTotpCode(asDocument(user), codeAtOffset(secret, -1));
+      await service.verifyTotpCode(user, codeAtOffset(secret, -1));
 
       expect(user.twoFactor.lastUsedStep).toBe(CURRENT_STEP - 1);
     });
@@ -45,31 +44,28 @@ describe('TwoFactorVerificationService', () => {
     it('should accept a code one step ahead and record that step', async () => {
       const { service, secret, user } = createVerificationHarness();
 
-      await service.verifyTotpCode(asDocument(user), codeAtOffset(secret, 1));
+      await service.verifyTotpCode(user, codeAtOffset(secret, 1));
 
       expect(user.twoFactor.lastUsedStep).toBe(CURRENT_STEP + 1);
     });
 
     it('should reject a code from outside the window', async () => {
-      const { service, secret, user } = createVerificationHarness();
+      const { service, secret, user, save } = createVerificationHarness();
 
       await expect(
-        service.verifyTotpCode(asDocument(user), codeAtOffset(secret, -2)),
+        service.verifyTotpCode(user, codeAtOffset(secret, -2)),
       ).rejects.toMatchObject({
         code: ErrorCode.TWO_FACTOR_CODE_INVALID,
         status: 401,
       });
-      expect(user.save).not.toHaveBeenCalled();
+      expect(save).not.toHaveBeenCalled();
     });
 
     it('should reject a code generated from another secret', async () => {
       const { service, user } = createVerificationHarness();
 
       await expect(
-        service.verifyTotpCode(
-          asDocument(user),
-          codeAtOffset(generateTotpSecret(), 0),
-        ),
+        service.verifyTotpCode(user, codeAtOffset(generateTotpSecret(), 0)),
       ).rejects.toMatchObject({ code: ErrorCode.TWO_FACTOR_CODE_INVALID });
     });
 
@@ -77,11 +73,11 @@ describe('TwoFactorVerificationService', () => {
       const { service, secret, user } = createVerificationHarness();
       const code = codeAtOffset(secret, 0);
 
-      await service.verifyTotpCode(asDocument(user), code);
+      await service.verifyTotpCode(user, code);
 
-      await expect(
-        service.verifyTotpCode(asDocument(user), code),
-      ).rejects.toMatchObject({ code: ErrorCode.TWO_FACTOR_CODE_INVALID });
+      await expect(service.verifyTotpCode(user, code)).rejects.toMatchObject({
+        code: ErrorCode.TWO_FACTOR_CODE_INVALID,
+      });
       expect(user.twoFactor.lastUsedStep).toBe(CURRENT_STEP);
     });
 
@@ -91,7 +87,7 @@ describe('TwoFactorVerificationService', () => {
       });
 
       await expect(
-        service.verifyTotpCode(asDocument(user), codeAtOffset(secret, -1)),
+        service.verifyTotpCode(user, codeAtOffset(secret, -1)),
       ).rejects.toMatchObject({ code: ErrorCode.TWO_FACTOR_CODE_INVALID });
     });
 
@@ -100,7 +96,7 @@ describe('TwoFactorVerificationService', () => {
       userModel.updateOne.mockResolvedValue({ modifiedCount: 0 });
 
       await expect(
-        service.verifyTotpCode(asDocument(user), codeAtOffset(secret, 0)),
+        service.verifyTotpCode(user, codeAtOffset(secret, 0)),
       ).rejects.toMatchObject({ code: ErrorCode.TWO_FACTOR_CODE_INVALID });
     });
 
@@ -109,7 +105,7 @@ describe('TwoFactorVerificationService', () => {
         lastUsedStep: CURRENT_STEP,
       });
 
-      await service.verifyTotpCode(asDocument(user), codeAtOffset(secret, 1));
+      await service.verifyTotpCode(user, codeAtOffset(secret, 1));
 
       expect(user.twoFactor.lastUsedStep).toBe(CURRENT_STEP + 1);
     });
@@ -118,7 +114,7 @@ describe('TwoFactorVerificationService', () => {
       const { service, user } = createVerificationHarness();
 
       await expect(
-        service.verifyTotpCode(asDocument(user), 'not-a-code'),
+        service.verifyTotpCode(user, 'not-a-code'),
       ).rejects.toMatchObject({ code: ErrorCode.TWO_FACTOR_CODE_INVALID });
     });
 
@@ -126,35 +122,35 @@ describe('TwoFactorVerificationService', () => {
       const { service, user } = createVerificationHarness({ secret: null });
 
       await expect(
-        service.verifyTotpCode(asDocument(user), '123456'),
+        service.verifyTotpCode(user, '123456'),
       ).rejects.toMatchObject({ code: ErrorCode.TWO_FACTOR_CODE_INVALID });
     });
   });
 
   describe('verifyRecoveryCode', () => {
     it('should spend a recovery code once', async () => {
-      const { service, user } = createVerificationHarness();
+      const { service, user, save } = createVerificationHarness();
 
-      await service.verifyRecoveryCode(asDocument(user), RECOVERY_CODE);
+      await service.verifyRecoveryCode(user, RECOVERY_CODE);
 
       expect(user.twoFactor.recoveryCodes[0].usedAt).toEqual(expect.any(Date));
-      expect(user.save).not.toHaveBeenCalled();
+      expect(save).not.toHaveBeenCalled();
     });
 
     it('should refuse the same recovery code a second time', async () => {
       const { service, user } = createVerificationHarness();
 
-      await service.verifyRecoveryCode(asDocument(user), RECOVERY_CODE);
+      await service.verifyRecoveryCode(user, RECOVERY_CODE);
 
       await expect(
-        service.verifyRecoveryCode(asDocument(user), RECOVERY_CODE),
+        service.verifyRecoveryCode(user, RECOVERY_CODE),
       ).rejects.toMatchObject({ code: ErrorCode.TWO_FACTOR_CODE_INVALID });
     });
 
     it('should accept a recovery code typed in lower case with dashes', async () => {
       const { service, user } = createVerificationHarness();
 
-      await service.verifyRecoveryCode(asDocument(user), 'k3m7q-rtvwx');
+      await service.verifyRecoveryCode(user, 'k3m7q-rtvwx');
 
       expect(user.twoFactor.recoveryCodes[0].usedAt).toEqual(expect.any(Date));
     });
@@ -164,7 +160,7 @@ describe('TwoFactorVerificationService', () => {
       userModel.updateOne.mockResolvedValue({ modifiedCount: 0 });
 
       await expect(
-        service.verifyRecoveryCode(asDocument(user), RECOVERY_CODE),
+        service.verifyRecoveryCode(user, RECOVERY_CODE),
       ).rejects.toMatchObject({ code: ErrorCode.TWO_FACTOR_CODE_INVALID });
     });
 
@@ -172,7 +168,7 @@ describe('TwoFactorVerificationService', () => {
       const { service, user } = createVerificationHarness();
 
       await expect(
-        service.verifyRecoveryCode(asDocument(user), 'AAAAAAAAAA'),
+        service.verifyRecoveryCode(user, 'AAAAAAAAAA'),
       ).rejects.toMatchObject({ code: ErrorCode.TWO_FACTOR_CODE_INVALID });
     });
   });
@@ -181,7 +177,7 @@ describe('TwoFactorVerificationService', () => {
     it('should take the code when both fields arrive', async () => {
       const { service, secret, user } = createVerificationHarness();
 
-      await service.verifySecondFactor(asDocument(user), {
+      await service.verifySecondFactor(user, {
         code: codeAtOffset(secret, 0),
         recoveryCode: RECOVERY_CODE,
       });
@@ -193,7 +189,7 @@ describe('TwoFactorVerificationService', () => {
     it('should fall back to the recovery code when no code arrives', async () => {
       const { service, user } = createVerificationHarness();
 
-      await service.verifySecondFactor(asDocument(user), {
+      await service.verifySecondFactor(user, {
         recoveryCode: RECOVERY_CODE,
       });
 
@@ -204,9 +200,9 @@ describe('TwoFactorVerificationService', () => {
     it('should refuse an empty body', async () => {
       const { service, user } = createVerificationHarness();
 
-      await expect(
-        service.verifySecondFactor(asDocument(user), {}),
-      ).rejects.toMatchObject({ code: ErrorCode.TWO_FACTOR_CODE_INVALID });
+      await expect(service.verifySecondFactor(user, {})).rejects.toMatchObject({
+        code: ErrorCode.TWO_FACTOR_CODE_INVALID,
+      });
     });
   });
 });

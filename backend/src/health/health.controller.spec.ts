@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus } from '@nestjs/common';
-import { Response } from 'express';
 import { HealthController } from './health.controller';
 import { HealthService, HealthResponse } from './health.service';
+import { createResponseMock } from '../common/testing/test-doubles.harness-spec';
 
 describe('HealthController', () => {
   let controller: HealthController;
@@ -44,7 +44,7 @@ describe('HealthController', () => {
 
       mockHealthService.getHealth.mockReturnValue(healthData);
       const statusMock = jest.fn();
-      const mockRes = { status: statusMock } as unknown as Response;
+      const mockRes = createResponseMock({ status: statusMock });
 
       const result = controller.getHealth(mockRes);
 
@@ -63,7 +63,7 @@ describe('HealthController', () => {
 
       mockHealthService.getHealth.mockReturnValue(healthData);
       const statusMock = jest.fn();
-      const mockRes = { status: statusMock } as unknown as Response;
+      const mockRes = createResponseMock({ status: statusMock });
 
       const result = controller.getHealth(mockRes);
 

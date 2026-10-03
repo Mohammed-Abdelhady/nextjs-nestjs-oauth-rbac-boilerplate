@@ -1,10 +1,11 @@
-import { ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PermissionGuard } from './permission.guard';
 import {
   RequirePermissions,
   RequireAnyPermission,
 } from '../decorators/permissions.decorator';
+import { createExecutionContextMock } from '../testing/test-doubles.harness-spec';
 
 class PermissionRoutes {
   openRoute(this: void): void {}
@@ -23,17 +24,14 @@ interface RequestUser {
 describe('PermissionGuard', () => {
   let guard: PermissionGuard;
 
-  const createContext = (
-    handler: () => void,
-    user?: RequestUser,
-  ): ExecutionContext =>
-    ({
+  const createContext = (handler: () => void, user?: RequestUser) =>
+    createExecutionContextMock({
       switchToHttp: () => ({
         getRequest: () => ({ user }),
       }),
       getHandler: () => handler,
       getClass: () => PermissionRoutes,
-    }) as unknown as ExecutionContext;
+    });
 
   beforeEach(() => {
     guard = new PermissionGuard(new Reflector());

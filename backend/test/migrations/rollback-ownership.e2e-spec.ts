@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import { MongoClient, ObjectId } from 'mongodb';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import {
@@ -5,23 +6,23 @@ import {
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
 } from '../utils/session-authority-harness';
 
-/* eslint-disable @typescript-eslint/no-require-imports */
-const defaultPermissions =
-  require('../../migrations/20260904000001-add-default-permissions-to-users.js') as {
-    up: (db: unknown) => Promise<void>;
-    down: (db: unknown) => Promise<void>;
-  };
-const linkedAccounts =
-  require('../../migrations/20260904000002-linked-accounts.js') as {
-    up: (db: unknown) => Promise<void>;
-    down: (db: unknown) => Promise<void>;
-  };
-const primaryProvider =
-  require('../../migrations/20260904000003-backfill-email-primary-provider.js') as {
-    up: (db: unknown) => Promise<void>;
-    down: (db: unknown) => Promise<void>;
-  };
-/* eslint-enable @typescript-eslint/no-require-imports */
+interface Migration {
+  up: (db: unknown) => Promise<void>;
+  down: (db: unknown) => Promise<void>;
+}
+
+// The migrations are plain CommonJS files the migration CLI loads by
+// filename, so the spec loads them the same way instead of import-form.
+const loadMigration = createRequire(__filename);
+const defaultPermissions = loadMigration(
+  '../../migrations/20260904000001-add-default-permissions-to-users.js',
+) as Migration;
+const linkedAccounts = loadMigration(
+  '../../migrations/20260904000002-linked-accounts.js',
+) as Migration;
+const primaryProvider = loadMigration(
+  '../../migrations/20260904000003-backfill-email-primary-provider.js',
+) as Migration;
 
 describe('migration rollback ownership', () => {
   let mongo: MongoMemoryServer;

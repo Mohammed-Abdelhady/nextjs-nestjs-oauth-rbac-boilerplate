@@ -1,9 +1,9 @@
-import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { RolesGuard } from './roles.guard';
 import { Roles } from '../decorators/roles.decorator';
 import { UserRole } from '../../user/enums/user-role.enum';
 import { ErrorCode } from '../enums/error-code.enum';
+import { createExecutionContextMock } from '../testing/test-doubles.harness-spec';
 
 class RoleRoutes {
   openRoute(this: void): void {}
@@ -18,17 +18,14 @@ class RoleRoutes {
 describe('RolesGuard', () => {
   let guard: RolesGuard;
 
-  const createContext = (
-    handler: () => void,
-    role?: string,
-  ): ExecutionContext =>
-    ({
+  const createContext = (handler: () => void, role?: string) =>
+    createExecutionContextMock({
       switchToHttp: () => ({
         getRequest: () => ({ user: role ? { role } : undefined }),
       }),
       getHandler: () => handler,
       getClass: () => RoleRoutes,
-    }) as unknown as ExecutionContext;
+    });
 
   beforeEach(() => {
     guard = new RolesGuard(new Reflector());

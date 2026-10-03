@@ -24,6 +24,7 @@ import { TwoFactorModule } from '../two-factor/two-factor.module'; // feature:to
 import { AUTH_FEATURE_KEY } from '../decorators/requires-feature.decorator';
 import { AuthFeature } from '../enums/auth-feature.enum';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { handlerOf } from '../../common/testing/test-doubles.harness-spec';
 
 /**
  * The part of the boot check that does not need a database: the module
@@ -33,12 +34,6 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 function metadataOf(module: object, key: string): unknown[] {
   return (Reflect.getMetadata(key, module) as unknown[] | undefined) ?? [];
-}
-
-type RouteHandler = (...args: never[]) => unknown;
-
-function handlerOf(prototype: object, name: string): RouteHandler {
-  return (prototype as unknown as Record<string, RouteHandler>)[name];
 }
 
 describe('Passkeys wiring', () => {

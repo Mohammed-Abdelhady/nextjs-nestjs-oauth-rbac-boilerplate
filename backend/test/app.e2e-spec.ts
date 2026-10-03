@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { bootE2eApp, type E2eApp } from './utils/e2e-app';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
@@ -18,12 +17,10 @@ interface HealthResponse {
 describe('AppController (e2e)', () => {
   let e2e: E2eApp;
   let app: INestApplication;
-  let httpServer: ReturnType<INestApplication['getHttpServer']>;
 
   beforeAll(async () => {
     e2e = await bootE2eApp();
     app = e2e.app;
-    httpServer = app.getHttpServer();
   }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   afterAll(async () => {
@@ -38,7 +35,7 @@ describe('AppController (e2e)', () => {
 
   describe('Health Endpoint', () => {
     it('/health (GET)', async () => {
-      const response: Response = await request(httpServer)
+      const response: Response = await request(e2e.httpServer)
         .get('/health')
         .expect(200);
 
@@ -54,7 +51,7 @@ describe('AppController (e2e)', () => {
     });
 
     it('should return correct health structure', async () => {
-      const response: Response = await request(httpServer)
+      const response: Response = await request(e2e.httpServer)
         .get('/health')
         .expect(200);
 
@@ -67,7 +64,7 @@ describe('AppController (e2e)', () => {
 
   describe('CORS Configuration', () => {
     it('should include CORS headers', async () => {
-      await request(httpServer)
+      await request(e2e.httpServer)
         .get('/health')
         .expect(200)
         .expect('Access-Control-Allow-Origin', /.*/);
@@ -76,7 +73,7 @@ describe('AppController (e2e)', () => {
 
   describe('Security Headers', () => {
     it('should include Helmet security headers', async () => {
-      await request(httpServer)
+      await request(e2e.httpServer)
         .get('/health')
         .expect(200)
         .expect('X-Content-Type-Options', 'nosniff')
@@ -88,7 +85,7 @@ describe('AppController (e2e)', () => {
   describe('Rate Limiting', () => {
     it('should allow requests within limit', async () => {
       const promises: Promise<Response>[] = Array.from({ length: 10 }, () =>
-        request(httpServer).get('/health'),
+        request(e2e.httpServer).get('/health'),
       );
 
       const responses: Response[] = await Promise.all(promises);
@@ -102,7 +99,7 @@ describe('AppController (e2e)', () => {
       // Adjust limit in .env to test this properly
       const limit = 70; // Slightly above default limit of 60
       const promises: Promise<Response>[] = Array.from({ length: limit }, () =>
-        request(httpServer).get('/health'),
+        request(e2e.httpServer).get('/health'),
       );
 
       const responses: Response[] = await Promise.all(promises);
@@ -118,7 +115,7 @@ describe('AppController (e2e)', () => {
 
   describe('Root Endpoint', () => {
     it('/ (GET)', async () => {
-      await request(httpServer).get('/api').expect(200);
+      await request(e2e.httpServer).get('/api').expect(200);
     });
   });
 });

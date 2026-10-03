@@ -2,6 +2,7 @@ import { Model } from 'mongoose';
 import { UserDocument } from '../../user/schemas/user.schema';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { AuthProvider } from '../../user/enums/auth-provider.enum';
+import { createModelMock } from '../../common/testing/test-doubles.harness-spec';
 import { resolveActivatedUser } from './activation.util';
 
 interface MockUserModel {
@@ -15,7 +16,7 @@ describe('resolveActivatedUser', () => {
     create: jest.fn(),
   };
 
-  const userModel = mockUserModel as unknown as Model<UserDocument>;
+  const userModel = createModelMock<Model<UserDocument>>(mockUserModel);
 
   beforeEach(() => {
     jest.clearAllMocks();

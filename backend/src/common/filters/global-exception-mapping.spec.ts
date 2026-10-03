@@ -7,6 +7,7 @@ import { ArgumentsHost } from '@nestjs/common';
 import { RequestWithId } from '../interfaces/request-with-id.interface';
 import { Error as MongooseError } from 'mongoose';
 import { MongoServerError } from 'mongodb';
+import { createArgumentsHostMock } from '../testing/test-doubles.harness-spec';
 
 describe('GlobalExceptionFilter Mapping', () => {
   let filter: GlobalExceptionFilter;
@@ -33,12 +34,12 @@ describe('GlobalExceptionFilter Mapping', () => {
   });
 
   function createMockHost(): ArgumentsHost {
-    return {
+    return createArgumentsHostMock({
       switchToHttp: jest.fn().mockReturnValue({
         getResponse: () => mockResponse,
         getRequest: () => mockRequest,
       }),
-    } as unknown as ArgumentsHost;
+    });
   }
 
   describe('Mongoose CastError handling (D-07)', () => {

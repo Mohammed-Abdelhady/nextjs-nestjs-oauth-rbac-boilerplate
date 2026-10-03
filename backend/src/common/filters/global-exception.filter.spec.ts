@@ -14,6 +14,7 @@ import { ThrottlerException } from '@nestjs/throttler';
 import { Response } from 'express';
 import { ArgumentsHost } from '@nestjs/common';
 import { RequestWithId } from '../interfaces/request-with-id.interface';
+import { createArgumentsHostMock } from '../testing/test-doubles.harness-spec';
 
 describe('GlobalExceptionFilter', () => {
   let filter: GlobalExceptionFilter;
@@ -40,12 +41,12 @@ describe('GlobalExceptionFilter', () => {
   });
 
   function createMockHost(): ArgumentsHost {
-    return {
+    return createArgumentsHostMock({
       switchToHttp: jest.fn().mockReturnValue({
         getResponse: () => mockResponse,
         getRequest: () => mockRequest,
       }),
-    } as unknown as ArgumentsHost;
+    });
   }
 
   describe('AppException handling', () => {
