@@ -14,6 +14,7 @@ export interface FormInputProps<TFieldValues extends FieldValues = FieldValues> 
   name: FieldPath<TFieldValues>;
   label?: string;
   description?: string;
+  containerClassName?: string;
 }
 
 export const FormInput = <TFieldValues extends FieldValues = FieldValues>({
@@ -21,6 +22,7 @@ export const FormInput = <TFieldValues extends FieldValues = FieldValues>({
   label,
   description,
   className,
+  containerClassName,
   onChange: consumerOnChange,
   onBlur: consumerOnBlur,
   ...inputProps
@@ -34,12 +36,18 @@ export const FormInput = <TFieldValues extends FieldValues = FieldValues>({
       name={name}
       label={label}
       description={description}
+      className={containerClassName}
       render={(field) => {
         const { onChange: fieldOnChange, onBlur: fieldOnBlur, ...restField } = field;
         return (
           <Input
             {...restField}
             {...restInputProps}
+            dir={
+              inputProps.type === 'email' || inputProps.autoComplete === 'one-time-code'
+                ? 'ltr'
+                : inputProps.dir
+            }
             onChange={(e) => {
               consumerOnChange?.(e);
               fieldOnChange(e);

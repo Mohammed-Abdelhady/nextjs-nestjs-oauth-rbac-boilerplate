@@ -1,0 +1,13 @@
+{
+  "users": {
+    "actions": {
+      "resendEmailChange": "Resend email confirmation",
+      "resendEmailChangeSuccess": "A new confirmation code was sent to the user's current email address."
+    }
+  },
+  "errors": {
+    "codes": {
+      "EMAIL_CHANGE_NOT_ALLOWED": "Only an administrator can manage another user's email address."
+    }
+  }
+}
