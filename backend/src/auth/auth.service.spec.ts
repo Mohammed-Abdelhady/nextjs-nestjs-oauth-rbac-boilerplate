@@ -122,7 +122,11 @@ describe('AuthService registration and code requests', () => {
       });
 
       expect(result.message).toBe(GENERIC_CODE_SENT_MESSAGE);
-      expect(harness.hashService.hash).toHaveBeenCalledTimes(1);
+      // resendActivationCode spent the code hash; this layer must not add one.
+      expect(
+        harness.verificationCodeService.resendActivationCode,
+      ).toHaveBeenCalledWith('nobody@example.com');
+      expect(harness.hashService.hash).not.toHaveBeenCalled();
       expect(harness.authMailService.sendActivationCode).not.toHaveBeenCalled();
     });
 

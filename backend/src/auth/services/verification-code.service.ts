@@ -7,9 +7,13 @@ import {
   PendingRegistrationDocument,
 } from '../schemas/pending-registration.schema';
 import { HashService } from '../../common/services/hash.service';
+import { Clock } from '../../common/services/clock';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import { isMongoDuplicateKeyError } from '../../common/utils/mongo-error.util';
 import { generateVerificationCode } from '../utils/verification-code.util';
+import { INVALID_ACTIVATION_CODE_MESSAGE } from '../constants/auth-messages';
+import { PENDING_STORE_PASSES } from '../constants/pending-store';
 
 export interface ConsumedRegistration {
   email: string;
@@ -36,6 +40,7 @@ export class VerificationCodeService {
     private readonly pendingRegistrationModel: Model<PendingRegistrationDocument>,
     private readonly hashService: HashService,
     private readonly configService: ConfigService,
+    private readonly clock: Clock,
   ) {
     this.codeExpiresIn = this.configService.get<number>(
       'activation.codeExpiresIn',
@@ -65,42 +70,110 @@ export class VerificationCodeService {
     name: string,
     hashedPassword?: string,
   ): Promise<PendingCodeData> {
-    const existingPending = await this.pendingRegistrationModel
-      .findOne({ email: { $eq: email } })
-      .select('+hashedPassword +hashedCode');
-
-    if (existingPending && existingPending.expiresAt > new Date()) {
-      const code = await this.refreshCode(existingPending);
-      this.logger.log(`Reissued code for pending registration of ${email}`);
-      return { code, name: existingPending.name };
-    }
-
     const code = generateVerificationCode();
     const hashedCode = await this.hashService.hash(code);
-    const expiresAt = new Date(Date.now() + this.codeExpiresIn);
+    const expiresAt = new Date(this.clock.now().getTime() + this.codeExpiresIn);
 
-    if (existingPending) {
-      existingPending.hashedPassword = hashedPassword;
-      existingPending.name = name;
-      existingPending.hashedCode = hashedCode;
-      existingPending.attempts = 0;
-      existingPending.expiresAt = expiresAt;
-      await existingPending.save();
-      this.logger.log(`Replaced expired pending registration for ${email}`);
-      return { code, name };
-    }
-
-    await this.pendingRegistrationModel.create({
+    const storedName = await this.storePendingRegistration({
       email,
-      hashedPassword,
       name,
+      hashedPassword,
       hashedCode,
-      attempts: 0,
       expiresAt,
     });
 
-    this.logger.log(`Created pending registration for ${email}`);
-    return { code, name };
+    this.logger.log(`Opened pending registration for ${email}`);
+    return { code, name: storedName };
+  }
+
+  /**
+   * Store the pending registration with filtered atomic writes.
+   * A live record is refreshed in place and keeps the name and password it was
+   * created with; an expired record is replaced with the new details; an
+   * absent record is created. If a concurrent request wins the insert, the
+   * whole sequence runs once more, so the loser only refreshes the code and
+   * returns the stored name. No write matches a record that is gone, so a
+   * concurrent delete cannot surface as an error: the next pass creates it.
+   * After two full passes without a successful write it gives up.
+   */
+  private async storePendingRegistration(input: {
+    email: string;
+    name: string;
+    hashedPassword?: string;
+    hashedCode: string;
+    expiresAt: Date;
+  }): Promise<string> {
+    for (let pass = 0; pass < PENDING_STORE_PASSES; pass += 1) {
+      const refreshed = await this.refreshLiveRegistration(input);
+      if (refreshed !== null) return refreshed;
+
+      const replaced = await this.replaceExpiredRegistration(input);
+      if (replaced !== null) return replaced;
+
+      try {
+        await this.pendingRegistrationModel.create({
+          email: input.email,
+          hashedPassword: input.hashedPassword,
+          name: input.name,
+          hashedCode: input.hashedCode,
+          attempts: 0,
+          expiresAt: input.expiresAt,
+        });
+        return input.name;
+      } catch (error) {
+        if (!isMongoDuplicateKeyError(error)) throw error;
+      }
+    }
+
+    throw new AppException(
+      ErrorCode.INTERNAL_ERROR,
+      'Could not store the pending registration',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+
+  /** Refresh the code of a live record, leaving its name and password alone. */
+  private async refreshLiveRegistration(input: {
+    email: string;
+    hashedCode: string;
+    expiresAt: Date;
+  }): Promise<string | null> {
+    const live = await this.pendingRegistrationModel.findOneAndUpdate(
+      { email: { $eq: input.email }, expiresAt: { $gt: this.clock.now() } },
+      {
+        $set: {
+          hashedCode: input.hashedCode,
+          attempts: 0,
+          expiresAt: input.expiresAt,
+        },
+      },
+      { new: true, select: 'name' },
+    );
+    return live ? live.name : null;
+  }
+
+  /** Replace an expired record with the details of this request. */
+  private async replaceExpiredRegistration(input: {
+    email: string;
+    name: string;
+    hashedPassword?: string;
+    hashedCode: string;
+    expiresAt: Date;
+  }): Promise<string | null> {
+    const fields = {
+      name: input.name,
+      hashedCode: input.hashedCode,
+      attempts: 0,
+      expiresAt: input.expiresAt,
+    };
+    const replaced = await this.pendingRegistrationModel.findOneAndUpdate(
+      { email: { $eq: input.email }, expiresAt: { $lte: this.clock.now() } },
+      input.hashedPassword === undefined
+        ? { $set: fields, $unset: { hashedPassword: '' } }
+        : { $set: { ...fields, hashedPassword: input.hashedPassword } },
+      { new: true, select: 'name' },
+    );
+    return replaced ? replaced.name : null;
   }
 
   /**
@@ -111,8 +184,8 @@ export class VerificationCodeService {
    * @param email - Address the code was sent to
    * @param code - Code the caller submitted
    * @returns The details the registration was created with
-   * @throws AppException NO_PENDING_REGISTRATION, ACTIVATION_CODE_EXPIRED,
-   * MAX_ATTEMPTS_EXCEEDED or ACTIVATION_CODE_INVALID
+   * @throws AppException ACTIVATION_CODE_INVALID for a wrong code, no pending
+   * record, an expired record or a locked record
    */
   async verifyAndConsumeRegistration(
     email: string,
@@ -121,7 +194,7 @@ export class VerificationCodeService {
     const reserved = await this.pendingRegistrationModel.findOneAndUpdate(
       {
         email: { $eq: email },
-        expiresAt: { $gt: new Date() },
+        expiresAt: { $gt: this.clock.now() },
         attempts: { $lt: this.maxAttempts },
       },
       { $inc: { attempts: 1 } },
@@ -129,7 +202,7 @@ export class VerificationCodeService {
     );
 
     if (!reserved) {
-      return await this.rejectUnreservable(email);
+      return await this.rejectUnreservable(email, code);
     }
 
     const isCodeValid = await this.hashService.compare(
@@ -138,40 +211,17 @@ export class VerificationCodeService {
     );
 
     if (!isCodeValid) {
-      const remainingAttempts = Math.max(
-        0,
-        this.maxAttempts - reserved.attempts,
-      );
-
-      if (reserved.attempts >= this.maxAttempts) {
-        throw new AppException(
-          ErrorCode.MAX_ATTEMPTS_EXCEEDED,
-          'Maximum attempts exceeded. Please register again.',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
-
-      throw new AppException(
-        ErrorCode.ACTIVATION_CODE_INVALID,
-        `Invalid code. ${remainingAttempts} attempts remaining.`,
-        HttpStatus.BAD_REQUEST,
-        { remainingAttempts },
-      );
+      throw this.invalidCode();
     }
 
     const consumed = await this.pendingRegistrationModel.findOneAndDelete({
       _id: reserved._id,
       hashedCode: reserved.hashedCode,
-      expiresAt: { $gt: new Date() },
+      expiresAt: { $gt: this.clock.now() },
     });
 
     if (!consumed) {
-      throw new AppException(
-        ErrorCode.ACTIVATION_CODE_INVALID,
-        'Invalid code. 0 attempts remaining.',
-        HttpStatus.BAD_REQUEST,
-        { remainingAttempts: 0 },
-      );
+      throw this.invalidCode();
     }
 
     return {
@@ -183,73 +233,59 @@ export class VerificationCodeService {
 
   /**
    * Regenerate the activation code of an existing pending registration.
-   * An expired record is dropped instead of revived, so the next registration
+   * The code is generated and hashed first, so every resend path spends the
+   * same one hash. A live record gets the fresh code in one filtered write; an
+   * expired record is dropped instead of revived, so the next registration
    * starts from the details it was given.
    *
    * @param email - Address the code is mailed to
    * @returns The plain code and the stored name, or null when nothing is pending
    */
   async resendActivationCode(email: string): Promise<PendingCodeData | null> {
-    const pending = await this.pendingRegistrationModel
-      .findOne({ email: { $eq: email } })
-      .select('+hashedCode');
+    const code = generateVerificationCode();
+    const hashedCode = await this.hashService.hash(code);
+    const expiresAt = new Date(this.clock.now().getTime() + this.codeExpiresIn);
 
-    if (!pending) {
-      return null;
+    const refreshed = await this.refreshLiveRegistration({
+      email,
+      hashedCode,
+      expiresAt,
+    });
+    if (refreshed !== null) {
+      this.logger.log(`Resent activation code for ${email}`);
+      return { code, name: refreshed };
     }
 
-    if (new Date() > pending.expiresAt) {
-      await this.pendingRegistrationModel.deleteOne({ _id: pending._id });
-      return null;
-    }
-
-    const code = await this.refreshCode(pending);
-    this.logger.log(`Resent activation code for ${email}`);
-    return { code, name: pending.name };
+    await this.pendingRegistrationModel.deleteOne({
+      email: { $eq: email },
+      expiresAt: { $lte: this.clock.now() },
+    });
+    return null;
   }
 
   /**
-   * Put a new code on a pending record, leaving its name and password alone.
+   * The one answer every activation code step that cannot succeed returns.
+   * The attempt limit and the expiry check still decide whether a record can
+   * be used; only the answer they produce is shared.
    */
-  private async refreshCode(
-    pending: PendingRegistrationDocument,
-  ): Promise<string> {
-    const code = generateVerificationCode();
-
-    pending.hashedCode = await this.hashService.hash(code);
-    pending.attempts = 0;
-    pending.expiresAt = new Date(Date.now() + this.codeExpiresIn);
-    await pending.save();
-
-    return code;
+  private invalidCode(): AppException {
+    return new AppException(
+      ErrorCode.ACTIVATION_CODE_INVALID,
+      INVALID_ACTIVATION_CODE_MESSAGE,
+      HttpStatus.BAD_REQUEST,
+    );
   }
 
-  private async rejectUnreservable(email: string): Promise<never> {
-    const pending = await this.pendingRegistrationModel.findOne({
+  private async rejectUnreservable(
+    email: string,
+    code: string,
+  ): Promise<never> {
+    await this.pendingRegistrationModel.deleteOne({
       email: { $eq: email },
+      expiresAt: { $lte: this.clock.now() },
     });
 
-    if (!pending) {
-      throw new AppException(
-        ErrorCode.NO_PENDING_REGISTRATION,
-        'No pending registration found',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (new Date() > pending.expiresAt) {
-      await this.pendingRegistrationModel.deleteOne({ _id: pending._id });
-      throw new AppException(
-        ErrorCode.ACTIVATION_CODE_EXPIRED,
-        'Activation code has expired',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    throw new AppException(
-      ErrorCode.MAX_ATTEMPTS_EXCEEDED,
-      'Maximum attempts exceeded. Please register again.',
-      HttpStatus.UNAUTHORIZED,
-    );
+    await this.hashService.spendComparison(code);
+    throw this.invalidCode();
   }
 }

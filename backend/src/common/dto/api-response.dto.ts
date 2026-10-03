@@ -59,7 +59,7 @@ export class ErrorDetails {
 
   @ApiProperty({
     description: 'Optional additional context (e.g., field errors, retry info)',
-    example: { remainingAttempts: 3 },
+    example: { retryAfter: 60 },
     required: false,
     type: Object,
     additionalProperties: true,

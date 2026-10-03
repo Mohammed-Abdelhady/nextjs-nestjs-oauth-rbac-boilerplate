@@ -75,7 +75,7 @@ describe('GlobalExceptionFilter', () => {
         ErrorCode.ACTIVATION_CODE_INVALID,
         'Invalid code',
         HttpStatus.BAD_REQUEST,
-        { remainingAttempts: 3 },
+        { retryAfter: 60 },
       );
 
       filter.catch(exception, createMockHost());
@@ -83,7 +83,7 @@ describe('GlobalExceptionFilter', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           error: expect.objectContaining({
-            details: { remainingAttempts: 3 },
+            details: { retryAfter: 60 },
           }),
         }),
       );
