@@ -17,10 +17,21 @@ export enum ErrorCode {
   ACTIVATION_CODE_INVALID = 'ACTIVATION_CODE_INVALID',
   /** No pending registration found for email */
   NO_PENDING_REGISTRATION = 'NO_PENDING_REGISTRATION',
+  /**
+   * A registration body still carries a password or a name. The contract
+   * changed: registration takes the address only, activation takes the
+   * password and the name. The answer depends only on the body.
+   */
+  REGISTRATION_CONTRACT_OUTDATED = 'REGISTRATION_CONTRACT_OUTDATED',
 
   // Email errors
   /** Failed to send email */
   EMAIL_SEND_FAILED = 'EMAIL_SEND_FAILED',
+  /**
+   * The per-address mailed-code cap is in force, so no code was sent. Distinct
+   * from a transport failure so an admin knows when to retry.
+   */
+  EMAIL_SEND_LIMIT_REACHED = 'EMAIL_SEND_LIMIT_REACHED',
 
   // Magic link errors
   // feature:magic-link:start

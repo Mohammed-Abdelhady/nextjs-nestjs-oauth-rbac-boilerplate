@@ -1,13 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
+import { Types } from 'mongoose';
 import { PasswordResetCodeService } from './password-reset-code.service';
 import { PendingPasswordReset } from '../schemas/pending-password-reset.schema';
 import { HashService } from '../../common/services/hash.service';
 import { Clock } from '../../common/services/clock';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import { partialMock } from '../../common/testing/test-doubles.harness-spec';
 import { rejectionOf } from '../../../test/utils/rejection';
 import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
+
+const RESET_ID = new Types.ObjectId('507f1f77bcf86cd799439011');
 
 describe('PasswordResetCodeService', () => {
   let service: PasswordResetCodeService;
@@ -19,7 +23,7 @@ describe('PasswordResetCodeService', () => {
     findOneAndDelete: jest.Mock;
     deleteOne: jest.Mock;
   };
-  let hashService: jest.Mocked<HashService>;
+  let compare: jest.Mock;
 
   beforeEach(async () => {
     pendingPasswordResetModel = {
@@ -31,19 +35,16 @@ describe('PasswordResetCodeService', () => {
       deleteOne: jest.fn().mockResolvedValue(undefined),
     };
 
-    hashService = {
+    compare = jest.fn();
+    const hashService = partialMock<HashService>({
       hash: jest.fn().mockResolvedValue('hashed-code'),
-      compare: jest.fn(),
+      compare,
       spendComparison: jest.fn().mockResolvedValue(undefined),
-    } as unknown as jest.Mocked<HashService>;
+    });
 
-    const configService = {
-      get: jest.fn((key: string, defaultValue?: number) => {
-        if (key === 'activation.maxAttempts') return 5;
-        if (key === 'activation.codeExpiresIn') return 900000;
-        return defaultValue;
-      }),
-    } as unknown as jest.Mocked<ConfigService>;
+    const configService = new ConfigService({
+      activation: { maxAttempts: 5, codeExpiresIn: 900000 },
+    });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -63,7 +64,7 @@ describe('PasswordResetCodeService', () => {
 
   describe('verifyPasswordReset atomic reservation', () => {
     it('should reserve an attempt before comparing an invalid code', async () => {
-      hashService.compare.mockResolvedValue(false);
+      compare.mockResolvedValue(false);
       pendingPasswordResetModel.findOneAndUpdate.mockResolvedValue({
         _id: 'reset-id',
         hashedCode: 'hashed-code',
@@ -137,7 +138,7 @@ describe('PasswordResetCodeService', () => {
     });
 
     it('should return the reserved generation for a valid code', async () => {
-      hashService.compare.mockResolvedValue(true);
+      compare.mockResolvedValue(true);
       pendingPasswordResetModel.findOneAndUpdate.mockResolvedValue({
         _id: 'reset-id',
         hashedCode: 'hashed-code',
@@ -160,10 +161,10 @@ describe('PasswordResetCodeService', () => {
       });
 
       await expect(
-        service.consumePasswordReset('reset-id' as never, 'hashed-code'),
+        service.consumePasswordReset(RESET_ID, 'hashed-code'),
       ).resolves.toBe(true);
       expect(pendingPasswordResetModel.findOneAndDelete).toHaveBeenCalledWith({
-        _id: 'reset-id',
+        _id: RESET_ID,
         hashedCode: 'hashed-code',
         expiresAt: { $gt: expect.any(Date) as Date },
       });
@@ -173,7 +174,7 @@ describe('PasswordResetCodeService', () => {
       pendingPasswordResetModel.findOneAndDelete.mockResolvedValue(null);
 
       await expect(
-        service.consumePasswordReset('reset-id' as never, 'hashed-code'),
+        service.consumePasswordReset(RESET_ID, 'hashed-code'),
       ).resolves.toBe(false);
     });
   });

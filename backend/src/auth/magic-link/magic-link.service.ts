@@ -19,6 +19,7 @@ import {
   deriveNameFromEmail,
   hashMagicLinkToken,
 } from './utils/magic-link-token.util';
+import { buildClientUrl } from '../../common/utils/client-url.util';
 import { LoginResponseDto } from '../dto/login-response.dto';
 import { AuthMailService } from '../services/auth-mail.service';
 import { SignInService } from '../services/sign-in.service';
@@ -211,15 +212,9 @@ export class MagicLinkService {
   }
 
   private buildLink(token: string): string {
-    const clientUrl = this.configService.get<string>(
-      'cors.clientUrl',
-      'http://localhost:3000',
-    );
-    const url = new URL(
-      `${clientUrl.replace(/\/$/, '')}${MAGIC_LINK_CLIENT_PATH}`,
-    );
-    url.searchParams.set('token', token);
-    return url.toString();
+    return buildClientUrl(this.configService, MAGIC_LINK_CLIENT_PATH, {
+      token,
+    });
   }
 
   /**

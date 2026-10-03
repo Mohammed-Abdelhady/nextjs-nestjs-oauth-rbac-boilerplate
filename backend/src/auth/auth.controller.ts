@@ -11,8 +11,11 @@ import {
 import { ApiTags, ApiOperation, ApiBody, ApiCookieAuth } from '@nestjs/swagger';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
+import { RegistrationService } from './services/registration.service';
+import { EmailChangeConfirmationService } from './services/email-change-confirmation.service';
 import { RegisterDto } from './dto/register.dto';
 import { ActivateDto } from './dto/activate.dto';
+import { ConfirmEmailChangeDto } from './dto/confirm-email-change.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -49,6 +52,8 @@ import {
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
+    private readonly registrationService: RegistrationService,
+    private readonly emailChangeConfirmationService: EmailChangeConfirmationService,
     private readonly sessionCookieService: SessionCookieService,
     private readonly browserProof: BrowserProofService,
   ) {}
@@ -101,12 +106,14 @@ export class AuthController {
   @ApiOperation({
     summary: 'Register a new user',
     description:
-      'Creates a new user account with email, password, and name. ' +
-      'An activation code will be sent to provided email address.',
+      'Starts a sign-up with the email address only and mails a 6-digit ' +
+      'activation code. The password and name are supplied at activation. A ' +
+      'body that still carries a password or a name is refused with ' +
+      'REGISTRATION_CONTRACT_OUTDATED.',
   })
   @ApiBody({ type: RegisterDto })
   async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+    return this.registrationService.register(dto);
   }
 
   /**
@@ -120,13 +127,34 @@ export class AuthController {
   @ApiOperation({
     summary: 'Activate user account',
     description:
-      'Activates a user account using email address and 6-digit activation code ' +
-      'sent to user during registration.',
+      'Activates a user account with the email address, the 6-digit code ' +
+      'mailed during registration, and the password and name chosen here. ' +
+      'The address must not already have an account.',
   })
   @ApiBody({ type: ActivateDto })
   async activate(@Body() dto: ActivateDto, @Res() response: Response) {
-    const result = await this.authService.activate(dto, response);
+    const result = await this.registrationService.activate(dto, response);
     return response.status(HttpStatus.OK).json(result);
+  }
+
+  /**
+   * Confirm the new address an admin moved an account to
+   * POST /auth/confirm-email-change
+   */
+  @Public()
+  @Throttle(THROTTLE_ACTIVATE)
+  @Post('confirm-email-change')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Confirm an admin-initiated email change',
+    description:
+      'Marks the new address verified on the account an admin moved. It needs ' +
+      'no password and issues no session, so a deployment without password ' +
+      'sign-in still confirms addresses.',
+  })
+  @ApiBody({ type: ConfirmEmailChangeDto })
+  async confirmEmailChange(@Body() dto: ConfirmEmailChangeDto) {
+    return this.emailChangeConfirmationService.confirm(dto);
   }
 
   /**
@@ -145,7 +173,7 @@ export class AuthController {
   })
   @ApiBody({ type: ResendActivationDto })
   async resendActivation(@Body() dto: ResendActivationDto) {
-    return this.authService.resendActivation(dto);
+    return this.registrationService.resendActivation(dto);
   }
 
   /**

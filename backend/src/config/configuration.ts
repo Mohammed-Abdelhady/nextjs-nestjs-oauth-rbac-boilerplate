@@ -1,5 +1,10 @@
 import { createOAuthConfig, OAuthConfig } from './oauth.config';
 import { APP_NAME } from '../common/constants/app';
+import { ACTIVATION_CODE_EXPIRES_IN_DEFAULT } from '../auth/constants/registration';
+import {
+  MAIL_DRAIN_DEADLINE_MS,
+  MAIL_MAX_PENDING_SENDS,
+} from '../mail/constants/mail.constants';
 import type { NativeApplicationConfiguration } from './types/native-application.type';
 import { parseNativeApplications } from './utils/native-application-config.util';
 
@@ -28,6 +33,10 @@ export interface Configuration {
     user?: string;
     pass?: string;
     from?: string;
+  };
+  mail: {
+    maxPendingSends: number;
+    drainDeadlineMs: number;
   };
   bcrypt: {
     rounds: number;
@@ -124,6 +133,16 @@ const configuration = (): Configuration => {
       pass: process.env.SMTP_PASS,
       from: process.env.EMAIL_FROM,
     },
+    mail: {
+      maxPendingSends: Number.parseInt(
+        process.env.MAIL_MAX_PENDING_SENDS || String(MAIL_MAX_PENDING_SENDS),
+        10,
+      ),
+      drainDeadlineMs: Number.parseInt(
+        process.env.MAIL_DRAIN_DEADLINE_MS || String(MAIL_DRAIN_DEADLINE_MS),
+        10,
+      ),
+    },
     bcrypt: {
       rounds: Number.parseInt(process.env.BCRYPT_ROUNDS || '10', 10),
     },
@@ -138,7 +157,8 @@ const configuration = (): Configuration => {
     },
     activation: {
       codeExpiresIn: Number.parseInt(
-        process.env.ACTIVATION_CODE_EXPIRES_IN || '900000',
+        process.env.ACTIVATION_CODE_EXPIRES_IN ||
+          String(ACTIVATION_CODE_EXPIRES_IN_DEFAULT),
         10,
       ),
       maxAttempts: Number.parseInt(

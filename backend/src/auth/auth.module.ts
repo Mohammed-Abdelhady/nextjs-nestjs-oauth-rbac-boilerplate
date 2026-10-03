@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { AuthService } from './auth.service';
+import { RegistrationService } from './services/registration.service';
 import { AuthController } from './auth.controller';
 import {
   PendingRegistration,
@@ -12,6 +13,7 @@ import {
   PendingPasswordReset,
   PendingPasswordResetSchema,
 } from './schemas/pending-password-reset.schema';
+import { MailCounter, MailCounterSchema } from './schemas/mail-counter.schema';
 // feature:totp:start
 import {
   TwoFactorChallenge,
@@ -28,6 +30,8 @@ import { TotpSecretCryptoService } from './two-factor/services/totp-secret-crypt
 import { TwoFactorChallengeService } from './two-factor/services/two-factor-challenge.service'; // feature:totp
 import { TwoFactorVerificationService } from './two-factor/services/two-factor-verification.service'; // feature:totp
 import { VerificationCodeService } from './services/verification-code.service';
+import { MailCounterService } from './services/mail-counter.service';
+import { EmailChangeConfirmationService } from './services/email-change-confirmation.service';
 import { PasswordResetCodeService } from './services/password-reset-code.service';
 import { AuthMailService } from './services/auth-mail.service';
 import { AuthFeaturesService } from './services/auth-features.service';
@@ -45,6 +49,7 @@ import { AuthGuard } from './guards/auth.guard';
     MongooseModule.forFeature([
       { name: PendingRegistration.name, schema: PendingRegistrationSchema },
       { name: PendingPasswordReset.name, schema: PendingPasswordResetSchema },
+      { name: MailCounter.name, schema: MailCounterSchema },
       { name: TwoFactorChallenge.name, schema: TwoFactorChallengeSchema }, // feature:totp
       { name: User.name, schema: UserSchema },
       { name: Session.name, schema: SessionSchema },
@@ -58,9 +63,12 @@ import { AuthGuard } from './guards/auth.guard';
   controllers: [AuthController],
   providers: [
     AuthService,
+    RegistrationService,
     SessionService,
     SessionCookieService,
     VerificationCodeService,
+    MailCounterService,
+    EmailChangeConfirmationService,
     PasswordResetCodeService,
     AuthMailService,
     AuthFeaturesService,

@@ -62,6 +62,14 @@ export class User {
   @Prop({ type: Number, default: 0 })
   issuanceFence!: number;
 
+  /**
+   * Bumped each time an admin moves this account to a new address. An
+   * email-change code is bound to the generation it was issued under, so a
+   * later move cannot be confirmed by an earlier code.
+   */
+  @Prop({ type: Number, default: 0 })
+  addressGeneration!: number;
+
   @Prop()
   credentialsChangedAt?: Date;
 

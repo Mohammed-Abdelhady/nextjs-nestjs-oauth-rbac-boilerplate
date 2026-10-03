@@ -6,6 +6,7 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import * as bcrypt from 'bcrypt';
 import { VerificationCodeService } from './verification-code.service';
 import { PasswordResetCodeService } from './password-reset-code.service';
+import { MailCounterService } from './mail-counter.service';
 import {
   PendingRegistration,
   PendingRegistrationSchema,
@@ -16,9 +17,9 @@ import {
 } from '../schemas/pending-password-reset.schema';
 import { HashService } from '../../common/services/hash.service';
 import { Clock } from '../../common/services/clock';
+import { PENDING_PURPOSE } from '../constants/registration';
 import { rejectionOf } from '../../../test/utils/rejection';
 import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
-import { RaceGate, pauseQuery } from '../../../test/utils/race-gate';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
@@ -80,6 +81,10 @@ describe('code-step comparison count', () => {
           provide: getModelToken(PendingPasswordReset.name),
           useValue: resets,
         },
+        {
+          provide: MailCounterService,
+          useValue: { tryRecord: jest.fn().mockResolvedValue(true) },
+        },
       ],
     }).compile();
     verification = module.get<VerificationCodeService>(VerificationCodeService);
@@ -112,7 +117,7 @@ describe('code-step comparison count', () => {
   ): Promise<void> {
     await registrations.create({
       email,
-      name: 'Pending',
+      purpose: PENDING_PURPOSE.SIGNUP,
       hashedCode: await bcrypt.hash(CODE, ROUNDS),
       attempts: 0,
       expiresAt: live(),
@@ -137,9 +142,10 @@ describe('code-step comparison count', () => {
     it('compares once for a wrong code on a live record', async () => {
       await seedRegistration('wrong@example.test');
       await rejectionOf(
-        verification.verifyAndConsumeRegistration(
+        verification.verifyCode(
           'wrong@example.test',
           WRONG_CODE,
+          PENDING_PURPOSE.SIGNUP,
         ),
       );
       expect(compareSpy).toHaveBeenCalledTimes(1);
@@ -147,7 +153,11 @@ describe('code-step comparison count', () => {
 
     it('compares once when no record exists', async () => {
       await rejectionOf(
-        verification.verifyAndConsumeRegistration('none@example.test', CODE),
+        verification.verifyCode(
+          'none@example.test',
+          CODE,
+          PENDING_PURPOSE.SIGNUP,
+        ),
       );
       expect(compareSpy).toHaveBeenCalledTimes(1);
     });
@@ -157,7 +167,11 @@ describe('code-step comparison count', () => {
         expiresAt: expired(),
       });
       await rejectionOf(
-        verification.verifyAndConsumeRegistration('expired@example.test', CODE),
+        verification.verifyCode(
+          'expired@example.test',
+          CODE,
+          PENDING_PURPOSE.SIGNUP,
+        ),
       );
       expect(compareSpy).toHaveBeenCalledTimes(1);
     });
@@ -167,45 +181,35 @@ describe('code-step comparison count', () => {
         attempts: MAX_ATTEMPTS,
       });
       await rejectionOf(
-        verification.verifyAndConsumeRegistration('locked@example.test', CODE),
+        verification.verifyCode(
+          'locked@example.test',
+          CODE,
+          PENDING_PURPOSE.SIGNUP,
+        ),
       );
       expect(compareSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('compares once per request when a concurrent consume wins the record', async () => {
+    it('compares once per request when two verifications race', async () => {
       await seedRegistration('race@example.test');
-      const gate = new RaceGate();
-      const original = registrations.findOneAndDelete.bind(registrations);
-      let call = 0;
-      const deleteSpy = jest
-        .spyOn(registrations, 'findOneAndDelete')
-        .mockImplementation((...args) => {
-          const query = original(...args);
-          if (call < 2) pauseQuery(query, gate);
-          call += 1;
-          return query;
-        });
-
-      try {
-        const first = verification.verifyAndConsumeRegistration(
+      const results = await Promise.allSettled([
+        verification.verifyCode(
           'race@example.test',
           CODE,
-        );
-        const second = verification.verifyAndConsumeRegistration(
+          PENDING_PURPOSE.SIGNUP,
+        ),
+        verification.verifyCode(
           'race@example.test',
           CODE,
-        );
-        await gate.reached(2);
-        gate.release();
-        const results = await Promise.allSettled([first, second]);
+          PENDING_PURPOSE.SIGNUP,
+        ),
+      ]);
 
-        expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
-        expect(results.filter((r) => r.status === 'rejected')).toHaveLength(1);
-        // Both requests compared before either consumed.
-        expect(compareSpy).toHaveBeenCalledTimes(2);
-      } finally {
-        deleteSpy.mockRestore();
-      }
+      expect(
+        results.filter((result) => result.status === 'fulfilled'),
+      ).toHaveLength(2);
+      // Both requests compared their own reserved generation.
+      expect(compareSpy).toHaveBeenCalledTimes(2);
     });
   });
 
