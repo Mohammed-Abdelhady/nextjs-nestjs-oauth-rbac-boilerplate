@@ -10,11 +10,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Settings, MoreHorizontal, UserCheck, UserX, Trash2, Loader2, Pencil } from 'lucide-react';
+import {
+  Settings,
+  MoreHorizontal,
+  UserCheck,
+  UserX,
+  Trash2,
+  Loader2,
+  Pencil,
+  Mail,
+} from 'lucide-react';
+import { USER_PERMISSIONS } from '@app/core';
 import { cn } from '@/lib/utils';
 import { useUserActions } from '../hooks/useUserActions';
 import { EditUserDialog } from './EditUserDialog';
 import { UserActionConfirmDialog, type UserConfirmAction } from './UserActionConfirmDialog';
+import { PermissionGuard } from './PermissionGuard';
 
 export interface UserActionsMenuUser {
   _id: string;
@@ -22,6 +33,7 @@ export interface UserActionsMenuUser {
   email: string;
   role: string;
   isDeleted: boolean;
+  isVerified: boolean;
 }
 
 export interface UserActionsMenuProps {
@@ -62,7 +74,7 @@ export const UserActionsMenu = memo(function UserActionsMenu({
   const t = useTranslations('users.actions');
   const [confirmAction, setConfirmAction] = useState<UserConfirmAction | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const { handleStatusChange, handleDelete, isLoading } = useUserActions();
+  const { handleStatusChange, handleDelete, handleResendEmailChange, isLoading } = useUserActions();
 
   const isNormalUser = user.role === 'user';
 
@@ -84,6 +96,9 @@ export const UserActionsMenu = memo(function UserActionsMenu({
   }, [confirmAction, handleStatusChange, handleDelete, user._id, user.name]);
 
   const handleCancelConfirm = useCallback(() => setConfirmAction(null), []);
+  const handleResend = useCallback(() => {
+    void handleResendEmailChange(user._id);
+  }, [handleResendEmailChange, user._id]);
 
   return (
     <>
@@ -111,6 +126,18 @@ export const UserActionsMenu = memo(function UserActionsMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-52">
+          {!user.isVerified && !user.isDeleted && (
+            <PermissionGuard permission={USER_PERMISSIONS.UPDATE_ALL}>
+              <DropdownMenuItem
+                onClick={handleResend}
+                disabled={isLoading}
+                data-testid={`resend-email-change-${user._id}`}
+              >
+                <Mail className="me-2 h-4 w-4" aria-hidden="true" />
+                {t('resendEmailChange')}
+              </DropdownMenuItem>
+            </PermissionGuard>
+          )}
           {/* Full menu for non-user roles (support, manager, etc.) */}
           {!isNormalUser && (
             <>

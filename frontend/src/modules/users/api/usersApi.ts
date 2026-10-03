@@ -1,4 +1,5 @@
 import { baseApi } from '@/store/api/baseApi';
+import { unwrapObjectBody, type MessageResult } from '@app/sdk';
 import {
   invalidateOnSuccess,
   invalidateOnSuccessOrUnknownOutcome,
@@ -130,6 +131,14 @@ export const usersApi = baseApi.injectEndpoints({
       ]),
     }),
 
+    resendEmailChange: builder.mutation<MessageResult, string>({
+      query: (userId) => ({
+        url: `/api/admin/users/${userId}/resend-email-change`,
+        method: 'POST',
+      }),
+      transformResponse: (response: unknown) => unwrapObjectBody<MessageResult>(response),
+    }),
+
     /**
      * Update user status (admin)
      */
@@ -199,6 +208,7 @@ export const {
   useGetUserByIdQuery,
   useCreateUserMutation,
   useUpdateUserMutation,
+  useResendEmailChangeMutation,
   useUpdateUserStatusMutation,
   useUpdateUserRoleMutation,
   useDeleteUserMutation,
