@@ -1,15 +1,18 @@
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { main } from '../src/cli.js';
+import { afterAll, afterEach, describe, expect, it } from 'vitest';
+import { fixtureRoot, type RunResult, run as runCli } from './answers-helpers.js';
 
-const REPO_ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 const roots: string[] = [];
+const manifestRoot = fixtureRoot();
 
 afterEach(async () => {
   for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true });
+});
+
+afterAll(async () => {
+  await rm(manifestRoot, { recursive: true, force: true });
 });
 
 async function tempRoot(): Promise<string> {
@@ -18,19 +21,9 @@ async function tempRoot(): Promise<string> {
   return root;
 }
 
-async function run(argv: string[]): Promise<{ code: number; output: string }> {
-  const stdout = vi.spyOn(process.stdout, 'write');
-  const stderr = vi.spyOn(process.stderr, 'write');
-  let code = 1;
-  let output = '';
-  try {
-    code = await main(argv, '0.0.0', REPO_ROOT);
-    output = [...stdout.mock.calls, ...stderr.mock.calls].map((call) => String(call[0])).join('');
-  } finally {
-    stdout.mockRestore();
-    stderr.mockRestore();
-  }
-  return { code, output };
+/** Runs the CLI against this file's manifest root. */
+function run(argv: string[]): Promise<RunResult> {
+  return runCli(manifestRoot, argv);
 }
 
 /** A fresh target directory plus the common no-write flags. */

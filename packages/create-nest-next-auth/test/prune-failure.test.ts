@@ -1,8 +1,10 @@
+import { existsSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ANSWERS_FILE_NAME } from '../src/constants/index.js';
+import { fixtureRoot, run } from './answers-helpers.js';
 
 // The template copy is the only boundary mocked; the pruner and its marker
 // error are the real ones.
@@ -23,9 +25,6 @@ vi.mock('../src/scaffold/copy.js', () => ({
   },
 }));
 
-import { main } from '../src/cli.js';
-
-const REPO_ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 const roots: string[] = [];
 
 afterEach(async () => {
@@ -34,21 +33,12 @@ afterEach(async () => {
 
 describe('prune failure', () => {
   it('names the file and line, stops, prints no next steps and exits 1', async () => {
+    const manifestRoot = fixtureRoot(roots);
     const root = await mkdtemp(join(tmpdir(), 'cna-prune-failure-'));
     roots.push(root);
     const target = join(root, 'my-app');
 
-    const stdout = vi.spyOn(process.stdout, 'write');
-    const stderr = vi.spyOn(process.stderr, 'write');
-    let code = 0;
-    let output = '';
-    try {
-      code = await main([target, '--yes', '--no-install', '--no-git'], '0.0.0', REPO_ROOT);
-      output = [...stdout.mock.calls, ...stderr.mock.calls].map((call) => String(call[0])).join('');
-    } finally {
-      stdout.mockRestore();
-      stderr.mockRestore();
-    }
+    const { code, output } = await run(manifestRoot, [target, '--yes', '--no-install', '--no-git']);
 
     expect(code).toBe(1);
     expect(output).toContain('src/bad.ts:1');
@@ -56,5 +46,6 @@ describe('prune failure', () => {
     expect(output).toContain('Pruning failed');
     expect(output).toContain(`Left the tree at ${target} so you can inspect it.`);
     expect(output).not.toContain('Next steps');
+    expect(existsSync(join(target, ANSWERS_FILE_NAME))).toBe(false);
   });
 });

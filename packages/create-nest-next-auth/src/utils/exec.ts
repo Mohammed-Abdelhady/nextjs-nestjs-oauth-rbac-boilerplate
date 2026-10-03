@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { GIT_REPOSITORY_ENV_PREFIXES, GIT_REPOSITORY_ENV_VARS } from '../constants/index.js';
 
 export interface RunResult {
   code: number;
@@ -9,7 +10,17 @@ export interface RunResult {
 /** Runs a command without a shell and collects its output. Never throws. */
 export function run(command: string, args: string[], cwd: string): Promise<RunResult> {
   return new Promise((resolve) => {
-    const child = spawn(command, args, { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
+    const env = { ...process.env };
+    // npm lifecycle scripts can spawn git too.
+    for (const key of Object.keys(env)) {
+      if (
+        GIT_REPOSITORY_ENV_VARS.includes(key) ||
+        GIT_REPOSITORY_ENV_PREFIXES.some((prefix) => key.startsWith(prefix))
+      ) {
+        delete env[key];
+      }
+    }
+    const child = spawn(command, args, { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
 

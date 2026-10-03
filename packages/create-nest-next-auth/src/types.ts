@@ -1,3 +1,5 @@
+import type { ANSWERS_SCHEMA_VERSION } from './constants/index.js';
+
 /** `hidden` features are never offered; another feature pulls them in. */
 export type FeatureKind = 'credential' | 'oauth' | 'second-factor' | 'passwordless' | 'hidden';
 
@@ -113,6 +115,38 @@ export interface DanglingReference {
   target: string;
   /** Set when the reference is a package.json script, not an import. */
   script?: string;
+}
+
+/** Who generated the project: the installer's own package identity. */
+export interface InstallerIdentity {
+  name: string;
+  version: string;
+}
+
+/** The template content the project was generated from, hashed at build time. */
+export interface TemplateIdentity {
+  sha256: string;
+}
+
+/** The resolved plan as recorded in the generated answers file. Sorted arrays. */
+export interface ResolvedAnswers {
+  targets: string[];
+  database: string;
+  features: string[];
+  options: string[];
+  locales: string[];
+}
+
+/**
+ * The generated `.create-nest-next-auth.json`. Its keys are a contract: a
+ * later tool reads this file, so nothing beyond them is ever written. No
+ * timestamps, paths, environment values or user names.
+ */
+export interface AnswersRecord {
+  schemaVersion: typeof ANSWERS_SCHEMA_VERSION;
+  installer: InstallerIdentity;
+  template: TemplateIdentity;
+  answers: ResolvedAnswers;
 }
 
 export interface PruneResult {

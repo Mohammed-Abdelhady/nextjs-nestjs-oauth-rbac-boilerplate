@@ -1,10 +1,17 @@
 import { readdir } from 'node:fs/promises';
 import { basename, relative, resolve } from 'node:path';
 import { cancel, intro, log, note, outro, spinner } from '@clack/prompts';
-import { CLI_NAME, DOCKER_OPTION_ID, USAGE_EXIT_CODE } from './constants/index.js';
+import { CommanderError } from 'commander';
+import {
+  BROKEN_PACKAGE_EXIT_CODE,
+  CLI_NAME,
+  DOCKER_OPTION_ID,
+  USAGE_EXIT_CODE,
+} from './constants/index.js';
 import { ConfigFileError, readConfigFile } from './flags/config-file.js';
 import { parseCliOptions } from './flags/options.js';
 import { toPlanRequest } from './flags/request.js';
+import { CliError, BrokenPackageError } from './errors.js';
 import { loadManifest } from './manifest/load.js';
 import { type Plan, resolvePlan } from './manifest/plan.js';
 import { packageRoot, templateDir } from './paths.js';
@@ -13,18 +20,22 @@ import { askDirectory, CANCELLED } from './prompts/index.js';
 import { askPlan, type PlanPromptNeeds, planPromptNeeds } from './prompts/plan.js';
 import { describeDangling, describeSelection } from './report.js';
 import { buildSummary, describePlanErrors } from './report/summary.js';
+import {
+  answersRecord,
+  readInstallerIdentity,
+  readTemplateIdentity,
+  recordAnswers,
+} from './scaffold/answers.js';
 import { copyTemplate } from './scaffold/copy.js';
 import { initRepository } from './scaffold/git.js';
 import { detectPackageManager, installDependencies, isSupported } from './scaffold/install.js';
 import { buildDocLinks, buildNextSteps, readWorkspaceStartScripts } from './scaffold/next-steps.js';
 import { setProjectName } from './scaffold/package-json.js';
-import type { CliOptions, Manifest, PruneResult } from './types.js';
+import type { AnswersRecord, CliOptions, Manifest, PruneResult } from './types.js';
 import { isErrnoException } from './utils/fs.js';
 import { validateProjectName } from './utils/project-name.js';
 
 const DEFAULT_DIRECTORY = 'my-app';
-
-class CliError extends Error {}
 
 async function isEmptyDirectory(path: string): Promise<boolean> {
   try {
@@ -82,6 +93,7 @@ async function scaffold(
   manifest: Manifest,
   plan: Plan,
   options: CliOptions,
+  answers: AnswersRecord,
 ): Promise<number> {
   const copying = spinner();
   copying.start('Copying the template');
@@ -110,6 +122,10 @@ async function scaffold(
     return 1;
   }
 
+  // Records how the project was made, before any git commit and on runs that
+  // skip git or install alike. --dry-run never reaches this branch.
+  await recordAnswers(target, answers);
+
   await finishSetup(target, manifest, plan, options);
   return 0;
 }
@@ -122,6 +138,10 @@ async function finishSetup(
 ): Promise<void> {
   if (options.git) {
     const git = await initRepository(target);
+    if (git.enclosingWorkTree !== undefined) {
+      const status = git.ok ? 'Created a separate repository' : 'Separate repository setup failed';
+      log.warn(`Target is inside the git work tree at ${git.enclosingWorkTree}. ${status}.`);
+    }
     if (git.ok) log.step('Created a git repository with a first commit');
     else log.warn(`Skipped git: ${git.reason ?? 'git is not available'}`);
   }
@@ -161,14 +181,19 @@ async function finishSetup(
 
 export async function main(
   argv: string[],
-  version: string,
   manifestRoot = packageRoot(),
+  installerRoot = packageRoot(),
 ): Promise<number> {
-  const options = parseCliOptions(argv, version);
-  intro(`${CLI_NAME} ${version}`);
-
   try {
+    // The installer identifies itself once, before anything is parsed or
+    // written: commander prints this version, the answers file records it,
+    // and a damaged package stops a scaffolding run and a dry run alike.
+    const installer = await readInstallerIdentity(installerRoot);
+    const options = parseCliOptions(argv, installer.version);
+    intro(`${CLI_NAME} ${installer.version}`);
+
     const manifest = await loadManifest(manifestRoot);
+    const template = await readTemplateIdentity(manifestRoot);
     const config = options.config === undefined ? undefined : await readConfigFile(options.config);
     const request = toPlanRequest(options, config);
 
@@ -214,10 +239,22 @@ export async function main(
       return 0;
     }
 
-    const code = await scaffold(target, manifest, plan, options);
+    const code = await scaffold(
+      target,
+      manifest,
+      plan,
+      options,
+      answersRecord(installer, template, plan),
+    );
     if (code === 0) outro('Done.');
     return code;
   } catch (error) {
+    // Commander's own exits (--help, --version, flag syntax) keep its codes.
+    if (error instanceof CommanderError) throw error;
+    if (error instanceof BrokenPackageError) {
+      cancel(error.message);
+      return BROKEN_PACKAGE_EXIT_CODE;
+    }
     if (error instanceof ConfigFileError || error instanceof CliError) {
       cancel(error.message);
       return USAGE_EXIT_CODE;
