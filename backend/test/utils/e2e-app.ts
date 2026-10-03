@@ -1,4 +1,5 @@
 import { INestApplication } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import type { Server } from 'node:http';
 import { mkdtemp, rmdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -31,6 +32,7 @@ import { OAUTH_STRATEGIES } from '../../src/auth/oauth/oauth.constants'; // feat
 import type { MailOptions } from '../../src/mail/interfaces/mail-options.interface';
 import type { NativeApplicationConfiguration } from '../../src/config/types/native-application.type';
 import { FrozenClock, TEST_NOW } from './frozen-clock';
+import { mailedCode as lastMailedCode } from './pending-race';
 
 export type HttpServer = Server;
 export type TestAgent = ReturnType<typeof request.agent>;
@@ -42,6 +44,10 @@ export interface E2eApp {
   mail: MailOptions[];
   clock: FrozenClock;
   reset: () => Promise<void>;
+  /** Await mail the anonymous routes sent off the response path, then read it. */
+  captureMail: () => Promise<MailOptions[]>;
+  /** Await mail, then return the 6-digit code the last captured mail carried. */
+  mailedCode: () => Promise<string>;
   close: () => Promise<void>;
 }
 
@@ -184,10 +190,12 @@ export async function bootE2eApp(
     })
       .overrideProvider(MailService)
       .useFactory({
-        factory: () => {
+        inject: [ConfigService],
+        factory: (configService: ConfigService) => {
           const service = Object.create(MailService.prototype) as InstanceType<
             typeof MailService
           >;
+          Object.assign(service, { configService });
           service.sendMail = (options: MailOptions): Promise<void> => {
             mail.push(options);
             if (failMail) {
@@ -244,7 +252,11 @@ export async function bootE2eApp(
     );
     const throttleStorage =
       nestApp.get<ThrottlerStorageService>(getStorageToken());
+    const { MailDispatcherService } =
+      await import('../../src/mail/mail-dispatcher.service');
+    const mailDispatcher = nestApp.get(MailDispatcherService);
     const reset = async (): Promise<void> => {
+      await mailDispatcher.flush();
       throttleStorage.onApplicationShutdown();
       throttleStorage.storage.clear();
       for (const collection of Object.values(connection.collections))
@@ -263,6 +275,14 @@ export async function bootE2eApp(
       mail,
       clock,
       reset,
+      captureMail: async () => {
+        await mailDispatcher.flush();
+        return mail;
+      },
+      mailedCode: async () => {
+        await mailDispatcher.flush();
+        return lastMailedCode(mail);
+      },
       close,
     };
   } catch (error) {

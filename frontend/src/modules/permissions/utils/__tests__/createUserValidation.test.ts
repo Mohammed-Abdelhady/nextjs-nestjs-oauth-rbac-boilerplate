@@ -8,17 +8,19 @@ describe('validateCreateUserForm', () => {
     const errors = validateCreateUserForm(
       { email: '', name: '', password: '', role: '' },
       mockTranslator,
+      mockTranslator,
     );
 
     expect(errors.email).toBe('emailRequired');
     expect(errors.name).toBe('nameRequired');
-    expect(errors.password).toBe('passwordRequired');
+    expect(errors.password).toBe('required');
     expect(errors.role).toBe('roleRequired');
   });
 
   it('validates invalid email format', () => {
     const errors = validateCreateUserForm(
       { email: 'invalid-email', name: 'Valid Name', password: 'Password1!', role: 'user' },
+      mockTranslator,
       mockTranslator,
     );
 
@@ -29,6 +31,7 @@ describe('validateCreateUserForm', () => {
     const errors = validateCreateUserForm(
       { email: 'user@example.com', name: 'A', password: 'Password1!', role: 'user' },
       mockTranslator,
+      mockTranslator,
     );
 
     expect(errors.name).toBe('nameMinLength');
@@ -38,19 +41,22 @@ describe('validateCreateUserForm', () => {
     const shortErrors = validateCreateUserForm(
       { email: 'user@example.com', name: 'Valid Name', password: 'Pass1', role: 'user' },
       mockTranslator,
+      mockTranslator,
     );
-    expect(shortErrors.password).toBe('passwordMinLength');
+    expect(shortErrors.password).toBe('min');
 
     const weakErrors = validateCreateUserForm(
       { email: 'user@example.com', name: 'Valid Name', password: 'passwordonly', role: 'user' },
       mockTranslator,
+      mockTranslator,
     );
-    expect(weakErrors.password).toBe('passwordStrength');
+    expect(weakErrors.password).toBe('uppercase');
   });
 
   it('returns empty errors object for valid input', () => {
     const errors = validateCreateUserForm(
       { email: 'user@example.com', name: 'Valid Name', password: 'Password1!', role: 'user' },
+      mockTranslator,
       mockTranslator,
     );
 

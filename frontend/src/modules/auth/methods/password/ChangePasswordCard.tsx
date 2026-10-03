@@ -11,7 +11,8 @@ import { FormPassword, PasswordRules, SubmitButton } from '@/components/forms';
 import { useChangePasswordMutation } from '@/modules/auth/store';
 import { useAuthMethods } from '@/modules/auth/hooks/useAuthMethods';
 import { useFormFieldTarget, useServerFieldErrors } from '@/hooks/useServerFieldErrors';
-import { createChangePasswordSchema, type ChangePasswordFormData } from '@app/core';
+import type { ChangePasswordFormData } from '@app/core';
+import { createChangePasswordSchema } from './changePasswordSchema';
 
 /**
  * Password change, for the settings page.
@@ -21,10 +22,11 @@ import { createChangePasswordSchema, type ChangePasswordFormData } from '@app/co
  */
 export function ChangePasswordCard() {
   const t = useTranslations('settings.password');
+  const tPassword = useTranslations('auth.passwordRules.errors');
   const { methods } = useAuthMethods();
   const [changePassword, { isLoading }] = useChangePasswordMutation();
 
-  const schema = useMemo(() => createChangePasswordSchema(t), [t]);
+  const schema = useMemo(() => createChangePasswordSchema(t, tPassword), [t, tPassword]);
 
   const form = useForm<ChangePasswordFormData>({
     resolver: zodResolver(schema),

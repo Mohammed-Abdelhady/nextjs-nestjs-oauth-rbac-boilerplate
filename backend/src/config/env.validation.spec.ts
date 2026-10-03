@@ -223,4 +223,26 @@ describe('validateEnvironment', () => {
 
     expect(result.AUTH_NATIVE_ALLOW_CUSTOM_SCHEME).toBe(true);
   });
+
+  it('parses the mail dispatcher bounds', () => {
+    const result = validateEnvironment({
+      ...baseEnv,
+      MAIL_MAX_PENDING_SENDS: '50',
+      MAIL_DRAIN_DEADLINE_MS: '2500',
+    });
+
+    expect(result.MAIL_MAX_PENDING_SENDS).toBe(50);
+    expect(result.MAIL_DRAIN_DEADLINE_MS).toBe(2500);
+  });
+
+  it.each([
+    { key: 'MAIL_MAX_PENDING_SENDS', value: '0' },
+    { key: 'MAIL_MAX_PENDING_SENDS', value: '10001' },
+    { key: 'MAIL_DRAIN_DEADLINE_MS', value: '99' },
+    { key: 'MAIL_DRAIN_DEADLINE_MS', value: '60001' },
+  ])('rejects $key=$value outside its bounds', ({ key, value }) => {
+    expect(() => validateEnvironment({ ...baseEnv, [key]: value })).toThrow(
+      new RegExp(key),
+    );
+  });
 });

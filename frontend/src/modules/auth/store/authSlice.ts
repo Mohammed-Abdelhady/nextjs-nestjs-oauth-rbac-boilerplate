@@ -1,4 +1,4 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, isAnyOf, type PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '@/store/store';
 import { HTTP_STATUS } from '@/constants/httpStatus';
 import type { AuthState, SignedInUser } from '../types/auth.types';
@@ -9,6 +9,7 @@ import { authApi } from './authApi';
  * Note: Session managed via httpOnly cookies, no token in state
  */
 const initialState: AuthState = {
+  pendingRegistrationEmail: null,
   user: null,
   isAuthenticated: false,
   isLoading: false,
@@ -25,6 +26,9 @@ export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    rememberRegistrationEmail: (state, action: PayloadAction<string | null>) => {
+      state.pendingRegistrationEmail = action.payload;
+    },
     /**
      * Set authenticated user and mark as logged in
      */
@@ -55,6 +59,7 @@ export const authSlice = createSlice({
      * Backend will clear httpOnly cookie
      */
     logout: (state) => {
+      state.pendingRegistrationEmail = null;
       state.user = null;
       state.isAuthenticated = false;
       state.isLoading = false;
@@ -86,17 +91,20 @@ export const authSlice = createSlice({
     });
     // A reply without a user means the account still owes a second factor, so
     // there is no session to record yet.
-    builder.addMatcher(authApi.endpoints.login.matchFulfilled, (state, action) => {
-      state.isLoading = false;
-      state.error = null;
-      if (action.payload.user === null) {
-        return;
-      }
-      state.user = action.payload.user;
-      state.isAuthenticated = true;
-      state.validationStatus = 'succeeded';
-      state.validationErrorStatus = null;
-    });
+    builder.addMatcher(
+      isAnyOf(authApi.endpoints.login.matchFulfilled, authApi.endpoints.activate.matchFulfilled),
+      (state, action) => {
+        state.isLoading = false;
+        state.error = null;
+        if (action.payload.user === null) {
+          return;
+        }
+        state.user = action.payload.user;
+        state.isAuthenticated = true;
+        state.validationStatus = 'succeeded';
+        state.validationErrorStatus = null;
+      },
+    );
     builder.addMatcher(authApi.endpoints.login.matchRejected, (state, action) => {
       state.isLoading = false;
       state.error = action.error.message || 'Login failed';
@@ -149,7 +157,8 @@ export const authSlice = createSlice({
 });
 
 // Export actions
-export const { loginFulfilled, setUser, logout, setLoading, setError } = authSlice.actions;
+export const { loginFulfilled, setUser, logout, setLoading, setError, rememberRegistrationEmail } =
+  authSlice.actions;
 
 // Selectors
 export const selectUser = (state: RootState) => state.auth.user;

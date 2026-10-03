@@ -75,6 +75,8 @@ export function makeStore() {
   return configureStore({
     reducer: { [baseApi.reducerPath]: baseApi.reducer, auth: authReducer },
     middleware: (defaults) => defaults().concat(errorInterceptor).concat(baseApi.middleware),
+    // Keep notifications asynchronous without a frame timer surviving jsdom teardown.
+    enhancers: (defaults) => defaults({ autoBatch: { type: 'tick' } }),
   });
 }
 
@@ -115,10 +117,9 @@ export function formatter(locale: AppLocale, messages: AbstractIntlMessages): Me
 }
 
 /** Renders a form in the app's store and a catalogue, and resolves what it should show. */
-export async function renderForm(locale: AppLocale, form: ReactElement) {
+export async function renderForm(locale: AppLocale, form: ReactElement, store = makeStore()) {
   const messages = await loadMessages(locale);
-  const store = makeStore();
-  render(
+  const view = render(
     <Provider store={store}>
       <NextIntlClientProvider locale={locale} messages={messages} timeZone="UTC">
         {form}
@@ -128,6 +129,7 @@ export async function renderForm(locale: AppLocale, form: ReactElement) {
   const shown = (calls: unknown[][]) =>
     calls.map(([message]) => toastText(message, locale, messages));
   return {
+    unmount: view.unmount,
     store,
     message: (key: string) => lookupMessage(messages, key),
     /** A catalogue message with its arguments filled in. */

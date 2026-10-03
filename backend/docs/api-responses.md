@@ -102,10 +102,16 @@ All error responses follow this structure:
 
 ### Authentication Errors
 
-| Code                   | HTTP Status | Description                         |
-| ---------------------- | ----------- | ----------------------------------- |
-| `INVALID_CREDENTIALS`  | 401         | Invalid email or password provided  |
-| `EMAIL_ALREADY_EXISTS` | 409         | Email address is already registered |
+| Code                   | HTTP Status | Description                             |
+| ---------------------- | ----------- | --------------------------------------- |
+| `INVALID_CREDENTIALS`  | 401         | Invalid email or password provided      |
+| `EMAIL_ALREADY_EXISTS` | 409         | Admin routes only: an address is in use |
+
+### Registration Errors
+
+| Code                             | HTTP Status | Description                                    |
+| -------------------------------- | ----------- | ---------------------------------------------- |
+| `REGISTRATION_CONTRACT_OUTDATED` | 400         | Register body still carries a password or name |
 
 ### Activation Errors
 
@@ -114,10 +120,9 @@ record exists, the record has expired, or the record is locked. The attempt
 limit and the expiry still decide whether a record can be used; only the answer
 is shared.
 
-| Code                      | HTTP Status | Description                                                |
-| ------------------------- | ----------- | ---------------------------------------------------------- |
-| `ACTIVATION_CODE_INVALID` | 400         | Wrong, missing, expired or locked activation code          |
-| `NO_PENDING_REGISTRATION` | 400         | A verified code had no account and no password to activate |
+| Code                      | HTTP Status | Description                                       |
+| ------------------------- | ----------- | ------------------------------------------------- |
+| `ACTIVATION_CODE_INVALID` | 400         | Wrong, missing, expired or locked activation code |
 
 ### Password Reset Errors
 
@@ -131,11 +136,12 @@ pending request exists, the record has expired, or the record is locked.
 
 ### Email Errors
 
-| Code                | HTTP Status | Description                                              |
-| ------------------- | ----------- | -------------------------------------------------------- |
-| `EMAIL_SEND_FAILED` | 400         | Admin email change could not send the verification email |
+| Code                       | HTTP Status | Description                                              |
+| -------------------------- | ----------- | -------------------------------------------------------- |
+| `EMAIL_SEND_FAILED`        | 400         | Admin email change could not send the verification email |
+| `EMAIL_SEND_LIMIT_REACHED` | 429         | Per-address mail cap in force; retry after the window    |
 
-`EMAIL_SEND_FAILED` comes only from the admin email-change route. The signed-out code-request routes (register, resend activation, forgot password, magic link) log a delivery failure and still answer `200`, so none of them can reveal whether an address has an account.
+`EMAIL_SEND_FAILED` and `EMAIL_SEND_LIMIT_REACHED` come only from the admin email-change routes. The signed-out code-request routes (register, resend activation, forgot password, magic link) log a delivery failure and still answer `200`, so none of them can reveal whether an address has an account.
 
 ### Session Errors
 
@@ -270,17 +276,20 @@ function isSuccess<T>(response: ApiResult<T>): response is ApiResponse<T> {
 }
 ```
 
-**Error Response (Email already exists):**
+**Error Response (old-shape body carrying a password or name):**
 
 ```json
 {
   "success": false,
   "error": {
-    "code": "EMAIL_ALREADY_EXISTS",
-    "message": "Email already registered"
+    "code": "REGISTRATION_CONTRACT_OUTDATED",
+    "message": "Registration takes the email address only; send the password and name when activating"
   }
 }
 ```
+
+An address that already has an account answers the same success body as a free
+one; it never answers `EMAIL_ALREADY_EXISTS`.
 
 ### POST /auth/activate
 
@@ -290,6 +299,8 @@ function isSuccess<T>(response: ApiResult<T>): response is ApiResponse<T> {
 {
   "success": true,
   "data": {
+    "requiresTwoFactor": false,
+    "mustSignIn": false,
     "user": {
       "id": "507f1f77bcf86cd799439011",
       "email": "user@example.com",
@@ -302,6 +313,9 @@ function isSuccess<T>(response: ApiResult<T>): response is ApiResponse<T> {
 }
 ```
 
+When the account is committed but the session could not be issued, `user` is
+`null`, `mustSignIn` is `true`, and no session cookie is set.
+
 **Error Response (Wrong, missing, expired or locked code):**
 
 The same body is returned in all four cases.
@@ -312,6 +326,70 @@ The same body is returned in all four cases.
   "error": {
     "code": "ACTIVATION_CODE_INVALID",
     "message": "Invalid or expired activation code"
+  }
+}
+```
+
+### POST /auth/confirm-email-change
+
+**Success Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Email address confirmed. Sign in to continue."
+  }
+}
+```
+
+No session cookie is set; the user signs in normally.
+
+**Error Response (wrong, missing, expired or stale code):**
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ACTIVATION_CODE_INVALID",
+    "message": "Invalid or expired activation code"
+  }
+}
+```
+
+### POST /admin/users/:id/resend-email-change
+
+**Success Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Confirmation email sent"
+  }
+}
+```
+
+**Error Response (per-address mail cap in force):**
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "EMAIL_SEND_LIMIT_REACHED",
+    "message": "Too many confirmation emails sent to this address; try again in 15 minutes"
+  }
+}
+```
+
+**Error Response (mail could not be sent, or no unverified address):**
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "EMAIL_SEND_FAILED",
+    "message": "Failed to send verification email"
   }
 }
 ```

@@ -201,3 +201,7 @@ Current design system values:
 - **Props**: `camelCase` (className, showToggle, applyGlobalStyles)
 
 ---
+
+For auth field spacing, pass `FORM_STYLES.authField` through `FormInput`'s `containerClassName` or `FormPassword`'s `className`. These apply spacing to the whole labeled field. Keep input-specific font and alignment classes in `FormInput`'s `className`.
+
+Email inputs and inputs with `autoComplete="one-time-code"` use left-to-right direction in the shared input component. Other inputs preserve their caller or page direction.

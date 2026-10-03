@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getModelToken } from '@nestjs/mongoose';
+import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Connection, Model, createConnection } from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import * as bcrypt from 'bcrypt';
-import { AuthService } from '../auth.service';
+import { RegistrationService } from './registration.service';
 import { VerificationCodeService } from './verification-code.service';
 import { HashService } from '../../common/services/hash.service';
 import { Clock } from '../../common/services/clock';
@@ -13,11 +13,18 @@ import {
   PendingRegistration,
   PendingRegistrationSchema,
 } from '../schemas/pending-registration.schema';
+import { MailCounter, MailCounterSchema } from '../schemas/mail-counter.schema';
 import { AuthMailService } from './auth-mail.service';
 import { SessionService } from './session.service';
+import { MailCounterService } from './mail-counter.service';
 import { PasswordResetCodeService } from './password-reset-code.service';
 import { SessionCookieService } from './session-cookie.service';
 import { SignInService } from './sign-in.service';
+import {
+  MAIL_COUNTER_PURPOSE,
+  MAILED_CODE_LIMIT_PER_ADDRESS,
+  PENDING_PURPOSE,
+} from '../constants/registration';
 import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
 import { RaceGate } from '../../../test/utils/race-gate';
 import { pauseQueryCall } from '../../../test/utils/pending-race';
@@ -33,7 +40,7 @@ const EXPIRED_EXPIRY = new Date(TEST_NOW.getTime() - 1000);
 
 /**
  * Every resend path must spend exactly one code hash, whether it is the
- * verified-account path in AuthService or one of the three
+ * verified-account path in RegistrationService or one of the three
  * resendActivationCode paths. This counts at the HashService boundary.
  */
 describe('resend activation hash count', () => {
@@ -41,7 +48,8 @@ describe('resend activation hash count', () => {
   let connection: Connection;
   let users: Model<User>;
   let registrations: Model<PendingRegistration>;
-  let authService: AuthService;
+  let counters: Model<MailCounter>;
+  let registrationService: RegistrationService;
   let service: VerificationCodeService;
   let hashSpy: jest.SpyInstance;
 
@@ -53,8 +61,10 @@ describe('resend activation hash count', () => {
       PendingRegistration.name,
       PendingRegistrationSchema,
     );
+    counters = connection.model(MailCounter.name, MailCounterSchema);
     await users.init();
     await registrations.init();
+    await counters.init();
 
     const config = {
       get: (key: string, fallback?: number) =>
@@ -62,11 +72,12 @@ describe('resend activation hash count', () => {
     };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        AuthService,
+        RegistrationService,
         VerificationCodeService,
         HashService,
         { provide: ConfigService, useValue: config },
         { provide: Clock, useValue: new FrozenClock(TEST_NOW) },
+        { provide: getConnectionToken(), useValue: connection },
         { provide: getModelToken(User.name), useValue: users },
         {
           provide: getModelToken(PendingRegistration.name),
@@ -75,20 +86,23 @@ describe('resend activation hash count', () => {
         {
           provide: AuthMailService,
           useValue: {
-            sendActivationCode: jest.fn().mockResolvedValue(undefined),
-            sendRegistrationAttemptNotice: jest
-              .fn()
-              .mockResolvedValue(undefined),
-            sendPasswordResetCode: jest.fn().mockResolvedValue(undefined),
+            deferActivationCode: jest.fn(),
+            deferRegistrationAttemptNotice: jest.fn(),
+            deferPasswordResetCode: jest.fn(),
           },
         },
         { provide: SessionService, useValue: {} },
+        MailCounterService,
+        {
+          provide: getModelToken(MailCounter.name),
+          useValue: counters,
+        },
         { provide: PasswordResetCodeService, useValue: {} },
         { provide: SessionCookieService, useValue: {} },
         { provide: SignInService, useValue: {} },
       ],
     }).compile();
-    authService = module.get<AuthService>(AuthService);
+    registrationService = module.get<RegistrationService>(RegistrationService);
     service = module.get<VerificationCodeService>(VerificationCodeService);
     hashSpy = jest.spyOn(HashService.prototype, 'hash');
   }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
@@ -103,82 +117,117 @@ describe('resend activation hash count', () => {
     hashSpy.mockClear();
     await users.deleteMany({});
     await registrations.deleteMany({});
+    await counters.deleteMany({});
   });
+
+  function pendingRecord(overrides: Record<string, unknown> = {}) {
+    return {
+      email: DTO.email,
+      purpose: PENDING_PURPOSE.SIGNUP,
+      hashedCode: 'old-code',
+      attempts: 0,
+      expiresAt: LIVE_EXPIRY,
+      ...overrides,
+    };
+  }
 
   it('hashes once for a verified account', async () => {
     await users.create({ email: DTO.email, name: 'Known', isVerified: true });
 
-    await authService.resendActivation(DTO);
+    await registrationService.resendActivation(DTO);
 
     expect(hashSpy).toHaveBeenCalledTimes(1);
   });
 
   it('hashes once for an unknown address', async () => {
-    await authService.resendActivation(DTO);
+    await registrationService.resendActivation(DTO);
+
+    expect(hashSpy).toHaveBeenCalledTimes(1);
+    expect(await registrations.countDocuments({ email: DTO.email })).toBe(0);
+  });
+
+  async function capTheCounter(purpose: string): Promise<void> {
+    await counters.create({
+      email: DTO.email,
+      purpose,
+      mailedCodes: MAILED_CODE_LIMIT_PER_ADDRESS,
+      windowStartedAt: TEST_NOW,
+    });
+  }
+
+  it('hashes once for an over-cap register', async () => {
+    await capTheCounter(MAIL_COUNTER_PURPOSE.SIGNUP);
+
+    await registrationService.register(DTO);
+
+    expect(hashSpy).toHaveBeenCalledTimes(1);
+    expect(await registrations.countDocuments({ email: DTO.email })).toBe(0);
+  });
+
+  it('hashes once for an over-cap resend', async () => {
+    await capTheCounter(MAIL_COUNTER_PURPOSE.SIGNUP);
+
+    await registrationService.resendActivation(DTO);
 
     expect(hashSpy).toHaveBeenCalledTimes(1);
     expect(await registrations.countDocuments({ email: DTO.email })).toBe(0);
   });
 
   it('hashes once for an expired record and drops it', async () => {
-    await registrations.create({
-      email: DTO.email,
-      name: 'Expired',
-      hashedCode: await bcrypt.hash('123456', ROUNDS),
-      attempts: 0,
-      expiresAt: EXPIRED_EXPIRY,
-    });
+    await registrations.create(
+      pendingRecord({
+        hashedCode: await bcrypt.hash('123456', ROUNDS),
+        expiresAt: EXPIRED_EXPIRY,
+      }),
+    );
 
-    await authService.resendActivation(DTO);
+    await registrationService.resendActivation(DTO);
 
     expect(hashSpy).toHaveBeenCalledTimes(1);
     expect(await registrations.countDocuments({ email: DTO.email })).toBe(0);
   });
 
   it('hashes once for a live record and refreshes its code', async () => {
-    await registrations.create({
-      email: DTO.email,
-      name: 'Live',
-      hashedCode: await bcrypt.hash('123456', ROUNDS),
-      attempts: 3,
-      expiresAt: LIVE_EXPIRY,
-    });
+    await registrations.create(
+      pendingRecord({
+        hashedCode: await bcrypt.hash('123456', ROUNDS),
+        attempts: 3,
+      }),
+    );
 
-    await authService.resendActivation(DTO);
+    await registrationService.resendActivation(DTO);
 
     expect(hashSpy).toHaveBeenCalledTimes(1);
     const record = await registrations
       .findOne({ email: DTO.email })
       .select('+hashedCode');
     if (!record) throw new Error('expected a stored record');
-    expect(record.name).toBe('Live');
     expect(record.attempts).toBe(0);
     expect(await bcrypt.compare('123456', record.hashedCode)).toBe(false);
   });
 
   it('keeps a record a register replaced before the resend delete ran', async () => {
     const email = 'resend-window@example.test';
-    const replacedPassword = await bcrypt.hash('replaced-password', ROUNDS);
-    await registrations.create({
-      email,
-      name: 'Old Name',
-      hashedPassword: await bcrypt.hash('old-password', ROUNDS),
-      hashedCode: await bcrypt.hash('123456', ROUNDS),
-      attempts: 0,
-      expiresAt: EXPIRED_EXPIRY,
-    });
+    await registrations.create(
+      pendingRecord({
+        email,
+        hashedCode: await bcrypt.hash('123456', ROUNDS),
+        expiresAt: EXPIRED_EXPIRY,
+      }),
+    );
 
     const gate = new RaceGate();
     const restore = pauseQueryCall(registrations, 'deleteOne', gate, 0);
     let resendResult: unknown;
     try {
-      const resend = Promise.resolve(service.resendActivationCode(email));
+      const resend = Promise.resolve(
+        service.resendActivationCode(email, PENDING_PURPOSE.SIGNUP),
+      );
       await gate.reached(1);
       // A register replaces the expired record while the resend's delete waits.
       await service.createOrUpdatePendingRegistration(
         email,
-        'Replaced Name',
-        replacedPassword,
+        PENDING_PURPOSE.SIGNUP,
       );
       gate.release();
       resendResult = await resend;
@@ -187,12 +236,9 @@ describe('resend activation hash count', () => {
     }
 
     expect(resendResult).toBeNull();
-    const record = await registrations
-      .findOne({ email })
-      .select('+hashedPassword +hashedCode');
+    const record = await registrations.findOne({ email }).select('+hashedCode');
     if (!record) throw new Error('expected the replaced record to survive');
-    expect(record.name).toBe('Replaced Name');
-    expect(record.hashedPassword).toBe(replacedPassword);
+    expect(record.purpose).toBe(PENDING_PURPOSE.SIGNUP);
     expect(await registrations.countDocuments({ email })).toBe(1);
   });
 });

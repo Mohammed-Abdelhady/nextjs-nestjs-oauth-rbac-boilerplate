@@ -4,15 +4,18 @@ import type { Response } from 'supertest';
 import * as bcrypt from 'bcrypt';
 import { HashService } from '../../src/common/services/hash.service';
 import { PendingRegistration } from '../../src/auth/schemas/pending-registration.schema';
+import { PENDING_PURPOSE } from '../../src/auth/constants/registration';
 import { bootE2eApp, browserAgent, type E2eApp } from '../utils/e2e-app';
 import { TEST_NOW } from '../utils/frozen-clock';
-import { inWindow, mailedCode, pauseQueryCall } from '../utils/pending-race';
+import { inWindow, pauseQueryCall } from '../utils/pending-race';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
 } from '../utils/session-authority-harness';
 
 const CODE = '123456';
+const PASSWORD = 'Password123!';
+const NAME = 'Test User';
 const LIVE_EXPIRY = new Date(TEST_NOW.getTime() + 15 * 60 * 1000);
 const EXPIRED_EXPIRY = new Date(TEST_NOW.getTime() - 1000);
 
@@ -58,6 +61,16 @@ describe('Resend and expired cleanup windows (e2e)', () => {
     return agent.post(path).send(body);
   }
 
+  function pendingFields(overrides: Record<string, unknown> = {}) {
+    return {
+      purpose: PENDING_PURPOSE.SIGNUP,
+      hashedCode: 'old-code',
+      attempts: 0,
+      expiresAt: LIVE_EXPIRY,
+      ...overrides,
+    };
+  }
+
   async function seedPendingRegistration(
     email: string,
     overrides: Record<string, unknown> = {},
@@ -65,11 +78,7 @@ describe('Resend and expired cleanup windows (e2e)', () => {
     const hashedCode = await bcrypt.hash(CODE, 4);
     await pendingRegistrations.create({
       email,
-      name: 'Pending Account',
-      hashedCode,
-      attempts: 0,
-      expiresAt: LIVE_EXPIRY,
-      ...overrides,
+      ...pendingFields({ hashedCode, ...overrides }),
     });
     return hashedCode;
   }
@@ -77,7 +86,7 @@ describe('Resend and expired cleanup windows (e2e)', () => {
   async function storedRegistration(email: string) {
     const record = await pendingRegistrations
       .findOne({ email })
-      .select('+hashedPassword +hashedCode');
+      .select('+hashedCode');
     if (!record) throw new Error(`expected a stored record for ${email}`);
     return record;
   }
@@ -103,18 +112,13 @@ describe('Resend and expired cleanup windows (e2e)', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ success: true, data: { email } });
-    expect(e2e.mail).toHaveLength(0);
+    expect(await e2e.captureMail()).toHaveLength(0);
     expect(await pendingRegistrations.countDocuments({ email })).toBe(0);
   });
 
-  it('keeps the replaced details when a register replaces the record during a resend', async () => {
+  it('mails the refreshed code when a register replaces the record during a resend', async () => {
     const email = 'resend-replaced@example.test';
-    const replacedPassword = await bcrypt.hash('replaced-password', 4);
-    await seedPendingRegistration(email, {
-      name: 'Old Name',
-      hashedPassword: await bcrypt.hash('old-password', 4),
-      expiresAt: EXPIRED_EXPIRY,
-    });
+    await seedPendingRegistration(email, { expiresAt: EXPIRED_EXPIRY });
 
     const response = await inWindow(
       (gate) => {
@@ -132,50 +136,42 @@ describe('Resend and expired cleanup windows (e2e)', () => {
         pendingRegistrations.updateOne(
           { email },
           {
-            $set: {
-              name: 'Replaced Name',
-              hashedPassword: replacedPassword,
+            $set: pendingFields({
               hashedCode: await bcrypt.hash('654321', 4),
-              attempts: 0,
-              expiresAt: LIVE_EXPIRY,
-            },
+            }),
           },
         ),
     );
 
     expect(response.status).toBe(200);
-    expect(e2e.mail).toHaveLength(1);
+    expect(await e2e.captureMail()).toHaveLength(1);
     const record = await storedRegistration(email);
-    expect(record.name).toBe('Replaced Name');
-    expect(record.hashedPassword).toBe(replacedPassword);
-    expect(await bcrypt.compare(mailedCode(e2e.mail), record.hashedCode)).toBe(
-      true,
-    );
+    expect(record.purpose).toBe(PENDING_PURPOSE.SIGNUP);
+    expect(
+      await bcrypt.compare(await e2e.mailedCode(), record.hashedCode),
+    ).toBe(true);
   });
 
   it('does not delete a replaced record when the expired cleanup runs', async () => {
     const email = 'stale-delete@example.test';
-    const replacedPassword = await bcrypt.hash('replaced-password', 4);
-    await seedPendingRegistration(email, {
-      name: 'Old Name',
-      hashedPassword: await bcrypt.hash('old-password', 4),
-      expiresAt: EXPIRED_EXPIRY,
-    });
+    await seedPendingRegistration(email, { expiresAt: EXPIRED_EXPIRY });
 
     const response = await inWindow(
       (gate) => pauseQueryCall(pendingRegistrations, 'deleteOne', gate, 0),
-      () => post('/api/auth/activate', { email, code: CODE }),
+      () =>
+        post('/api/auth/activate', {
+          email,
+          code: CODE,
+          password: PASSWORD,
+          name: NAME,
+        }),
       async () =>
         pendingRegistrations.updateOne(
           { email },
           {
-            $set: {
-              name: 'Replaced Name',
-              hashedPassword: replacedPassword,
+            $set: pendingFields({
               hashedCode: await bcrypt.hash('654321', 4),
-              attempts: 0,
-              expiresAt: LIVE_EXPIRY,
-            },
+            }),
           },
         ),
     );
@@ -184,8 +180,7 @@ describe('Resend and expired cleanup windows (e2e)', () => {
     expect(response.body).toMatchObject(ACTIVATION_BODY);
     expect(await pendingRegistrations.countDocuments({ email })).toBe(1);
     const record = await storedRegistration(email);
-    expect(record.name).toBe('Replaced Name');
-    expect(record.hashedPassword).toBe(replacedPassword);
+    expect(record.purpose).toBe(PENDING_PURPOSE.SIGNUP);
     expect(await bcrypt.compare('654321', record.hashedCode)).toBe(true);
   });
 });

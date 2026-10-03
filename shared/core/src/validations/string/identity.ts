@@ -9,6 +9,7 @@
 
 import { z } from 'zod';
 import { makeOptional } from '../utils';
+import { isPasswordWithinByteLimit } from '../../password-rules';
 
 export interface EmailMessages {
   required: string;
@@ -21,11 +22,15 @@ export interface PasswordMessages {
   uppercase: string;
   lowercase: string;
   number: string;
+  /** Localized "too long" text; falls back to a default when omitted. */
+  tooLong?: string;
 }
 
-export interface StrongPasswordMessages extends PasswordMessages {
-  special: string;
-}
+/** Fallback used when a caller has not localized the byte-limit message yet. */
+const DEFAULT_PASSWORD_TOO_LONG_MESSAGE = 'Password is too long';
+
+/** The refined password schema, so the overloads match what is returned. */
+type RefinedPasswordSchema = z.ZodEffects<z.ZodString, string, string>;
 
 export interface NameMessages {
   required: string;
@@ -69,59 +74,21 @@ export function zodPassword(options: {
   required?: false;
   min?: number;
   messages: PasswordMessages;
-}): z.ZodOptional<z.ZodString>;
+}): z.ZodOptional<RefinedPasswordSchema>;
 export function zodPassword(options: {
   required: true;
   min?: number;
   messages: PasswordMessages;
-}): z.ZodString;
+}): RefinedPasswordSchema;
 export function zodPassword(options: {
   required?: boolean;
   min?: number;
   messages: PasswordMessages;
-}): z.ZodString | z.ZodOptional<z.ZodString>;
+}): RefinedPasswordSchema | z.ZodOptional<RefinedPasswordSchema>;
 export function zodPassword(options: {
   required?: boolean;
   min?: number;
   messages: PasswordMessages;
-}) {
-  const schema = z
-    .string({ required_error: options.messages.required })
-    .min(1, options.messages.required)
-    .min(options.min ?? 8, options.messages.min)
-    .regex(/[A-Z]/, options.messages.uppercase)
-    .regex(/[a-z]/, options.messages.lowercase)
-    .regex(/\d/, options.messages.number);
-
-  if (options.required === false) {
-    return schema.optional();
-  }
-  return schema;
-}
-
-/**
- * Strong password validator (adds special character requirement)
- * Returns required schema by default, optional when required: false
- */
-export function zodStrongPassword(options: {
-  required?: false;
-  min?: number;
-  messages: StrongPasswordMessages;
-}): z.ZodOptional<z.ZodString>;
-export function zodStrongPassword(options: {
-  required: true;
-  min?: number;
-  messages: StrongPasswordMessages;
-}): z.ZodString;
-export function zodStrongPassword(options: {
-  required?: boolean;
-  min?: number;
-  messages: StrongPasswordMessages;
-}): z.ZodString | z.ZodOptional<z.ZodString>;
-export function zodStrongPassword(options: {
-  required?: boolean;
-  min?: number;
-  messages: StrongPasswordMessages;
 }) {
   const schema = z
     .string({ required_error: options.messages.required })
@@ -130,7 +97,9 @@ export function zodStrongPassword(options: {
     .regex(/[A-Z]/, options.messages.uppercase)
     .regex(/[a-z]/, options.messages.lowercase)
     .regex(/\d/, options.messages.number)
-    .regex(/[!@#$%^&*(),.?":{}|<>]/, options.messages.special);
+    .refine((value) => isPasswordWithinByteLimit(value), {
+      message: options.messages.tooLong ?? DEFAULT_PASSWORD_TOO_LONG_MESSAGE,
+    });
 
   if (options.required === false) {
     return schema.optional();

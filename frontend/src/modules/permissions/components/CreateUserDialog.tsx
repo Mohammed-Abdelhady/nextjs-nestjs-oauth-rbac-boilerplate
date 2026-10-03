@@ -59,6 +59,7 @@ export interface CreateUserDialogProps {
 export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDialogProps) {
   const t = useTranslations('users.createUser');
   const tValidation = useTranslations('validation');
+  const tPassword = useTranslations('auth.passwordRules.errors');
   const tCommon = useTranslations('common');
   const uid = useId();
   const fieldId = (name: string) => fieldElementId(uid, name);
@@ -82,7 +83,11 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
   );
 
   const validateForm = (): boolean => {
-    const newErrors = validateCreateUserForm({ email, name, password, role }, tValidation);
+    const newErrors = validateCreateUserForm(
+      { email, name, password, role },
+      tValidation,
+      tPassword,
+    );
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };

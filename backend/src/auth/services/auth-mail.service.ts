@@ -1,56 +1,68 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MailService } from '../../mail/mail.service';
+import { MailDispatcherService } from '../../mail/mail-dispatcher.service';
 import { currentRequestId } from '../../common/context/request-context';
 import {
   ACTIVATION_EMAIL_FAILED_MESSAGE,
+  EMAIL_CHANGE_EMAIL_FAILED_MESSAGE,
   PASSWORD_RESET_EMAIL_FAILED_MESSAGE,
   REGISTRATION_NOTICE_EMAIL_FAILED_MESSAGE,
   SIGN_IN_LINK_EMAIL_FAILED_MESSAGE,
 } from '../constants/auth-messages';
 
 /**
- * Logs a delivery failure and drops it, so a known and an unknown address get
- * the same answer.
+ * Anonymous mail leaves through the dispatcher, so the response never waits on
+ * SMTP; admin mail is awaited because the admin's answer depends on it. A
+ * delivery failure is logged and dropped, so a known and an unknown address
+ * get the same answer.
  */
 @Injectable()
 export class AuthMailService {
   private readonly logger = new Logger(AuthMailService.name);
 
-  constructor(private readonly mailService: MailService) {}
+  constructor(
+    private readonly mailService: MailService,
+    private readonly dispatcher: MailDispatcherService,
+  ) {}
 
   /**
-   * Mail an activation code.
+   * Start an activation code email for an anonymous caller. The greeting is
+   * neutral: no name is stored before the address is proved.
    *
    * @param email - Recipient address
    * @param code - 6-digit activation code
-   * @param name - Name stored with the pending registration
    */
-  async sendActivationCode(
-    email: string,
-    code: string,
-    name: string,
-  ): Promise<boolean> {
-    return this.send(
-      () => this.mailService.sendActivationCode(email, code, name),
+  deferActivationCode(email: string, code: string): void {
+    this.dispatcher.dispatch(
+      () => this.mailService.sendActivationCode(email, code),
       ACTIVATION_EMAIL_FAILED_MESSAGE,
     );
   }
 
   /**
-   * Mail a password reset code.
+   * Start a password reset code email for an anonymous caller.
    *
    * @param email - Recipient address
    * @param code - 6-digit reset code
    * @param name - Account holder name
    */
-  async sendPasswordResetCode(
-    email: string,
-    code: string,
-    name: string,
-  ): Promise<boolean> {
-    return this.send(
+  deferPasswordResetCode(email: string, code: string, name: string): void {
+    this.dispatcher.dispatch(
       () => this.mailService.sendPasswordResetCode(email, code, name),
       PASSWORD_RESET_EMAIL_FAILED_MESSAGE,
+    );
+  }
+
+  /**
+   * Start a registration-attempt notice for an anonymous caller.
+   *
+   * @param email - Recipient address
+   * @param name - Account holder name
+   */
+  deferRegistrationAttemptNotice(email: string, name: string): void {
+    this.dispatcher.dispatch(
+      () => this.mailService.sendRegistrationAttemptNotice(email, name),
+      REGISTRATION_NOTICE_EMAIL_FAILED_MESSAGE,
     );
   }
 
@@ -73,18 +85,16 @@ export class AuthMailService {
   }
 
   /**
-   * Tell an account holder that their address was used in a registration.
+   * Mail the code that confirms a new address an admin moved an account to.
+   * Awaited: the admin's answer depends on the mail being handed over.
    *
-   * @param email - Recipient address
-   * @param name - Account holder name
+   * @param email - New address
+   * @param code - 6-digit confirmation code
    */
-  async sendRegistrationAttemptNotice(
-    email: string,
-    name: string,
-  ): Promise<boolean> {
+  async sendEmailChangeCode(email: string, code: string): Promise<boolean> {
     return this.send(
-      () => this.mailService.sendRegistrationAttemptNotice(email, name),
-      REGISTRATION_NOTICE_EMAIL_FAILED_MESSAGE,
+      () => this.mailService.sendEmailChangeCode(email, code),
+      EMAIL_CHANGE_EMAIL_FAILED_MESSAGE,
     );
   }
 

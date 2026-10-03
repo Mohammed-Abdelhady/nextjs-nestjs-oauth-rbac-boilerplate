@@ -38,6 +38,9 @@ export async function loadMessages(locale: AppLocale): Promise<AbstractIntlMessa
   const roleErrors = (await import(`./messages/role-errors.${locale}.json`)).default;
   const sessionKinds = (await import(`./messages/session-kinds.${locale}.json`)).default;
   const codeVerification = (await import(`./messages/code-verification.${locale}.json`)).default;
+  const adminEmailConfirmation = (
+    await import(`./messages/admin-email-confirmation.${locale}.json`)
+  ).default;
   if (
     !isMessageTree(base) ||
     !isMessageTree(sessionAuthority) ||
@@ -46,7 +49,8 @@ export async function loadMessages(locale: AppLocale): Promise<AbstractIntlMessa
     !isMessageTree(statusErrors) ||
     !isMessageTree(roleErrors) ||
     !isMessageTree(sessionKinds) ||
-    !isMessageTree(codeVerification)
+    !isMessageTree(codeVerification) ||
+    !isMessageTree(adminEmailConfirmation)
   ) {
     throw new Error(`Locale messages for ${locale} are not objects`);
   }
@@ -64,6 +68,6 @@ export async function loadMessages(locale: AppLocale): Promise<AbstractIntlMessa
       ),
       sessionKinds,
     ),
-    codeVerification,
+    mergeMessageTrees(codeVerification, adminEmailConfirmation),
   );
 }

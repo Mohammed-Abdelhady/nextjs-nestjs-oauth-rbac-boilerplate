@@ -2,7 +2,7 @@ import { ClientSession, Connection } from 'mongoose';
 
 const MAX_TRANSACTION_ATTEMPTS = 3;
 const MAX_COMMIT_ATTEMPTS = 3;
-const UNKNOWN_COMMIT_RESULT_LABEL = 'UnknownTransactionCommitResult';
+export const UNKNOWN_COMMIT_RESULT_LABEL = 'UnknownTransactionCommitResult';
 
 export function hasErrorLabel(error: unknown, label: string): boolean {
   if (typeof error !== 'object' || error === null) {

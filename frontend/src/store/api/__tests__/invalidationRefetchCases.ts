@@ -48,9 +48,14 @@ export const CONVERTED: MutationCase[] = [
     reads: [readProfile],
     write: (store) =>
       store.dispatch(
-        authApi.endpoints.activate.initiate({ email: 'omar@example.com', code: '123456' }),
+        authApi.endpoints.activate.initiate({
+          email: 'omar@example.com',
+          code: '123456',
+          name: 'Omar Nasser',
+          password: 'Passw0rdOmar',
+        }),
       ),
-    accepted: { user: PROFILE },
+    accepted: { requiresTwoFactor: false, user: PROFILE },
     requests: [GET_PROFILE, 'POST /api/auth/activate'],
     refetched: [GET_PROFILE],
   },

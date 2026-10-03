@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { z } from 'zod';
 import { FormProvider } from 'react-hook-form';
+import { FORM_STYLES } from '@/lib/config/form-styles';
 import { LogIn } from 'lucide-react';
 import { useFormWithValidation } from '@/hooks/useFormWithValidation';
 import { FormInput, FormPassword, FormRootError, SubmitButton } from '@/components/forms';
@@ -83,6 +84,7 @@ export function PasswordSignInForm({ redirect }: AuthMethodFormProps) {
         <FormRootError id="login-error" error={errors.root?.message} testId="login-error" />
 
         <FormInput
+          containerClassName={FORM_STYLES.authField}
           name="email"
           type="email"
           label={t('email')}
@@ -100,7 +102,7 @@ export function PasswordSignInForm({ redirect }: AuthMethodFormProps) {
           autoComplete="current-password"
           disabled={isLoading}
           showToggle={false}
-          className="mt-5"
+          className={FORM_STYLES.authField}
           data-testid="login-password-input"
         />
 

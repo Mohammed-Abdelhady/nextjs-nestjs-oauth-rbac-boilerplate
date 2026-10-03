@@ -185,6 +185,34 @@ export class AdminUsersController {
   }
 
   /**
+   * Re-send the confirmation code for a user's current unverified address.
+   *
+   * @example POST /admin/users/:id/resend-email-change
+   */
+  @Post(':id/resend-email-change')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermissions(USER_PERMISSIONS.UPDATE_ALL)
+  @ApiOperation({
+    summary: 'Resend an email change confirmation',
+    description:
+      'Re-sends the confirmation code for the account current unverified ' +
+      'address. The address and its generation are unchanged; a fresh code ' +
+      'is issued up to the per-address mail cap.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'User ID',
+    example: '507f1f77bcf86cd799439011',
+  })
+  async resendEmailChange(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('role') actorRole: string,
+  ): Promise<ApiResponse<{ message: string }>> {
+    return this.adminUsersService.resendEmailChange(id, actorId, actorRole);
+  }
+
+  /**
    * Activate or deactivate a user.
    *
    * @example PATCH /admin/users/:id/status

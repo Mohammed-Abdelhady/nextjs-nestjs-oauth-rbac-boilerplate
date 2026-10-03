@@ -23,8 +23,6 @@ import {
 } from '../utils/session-authority-harness';
 import { expectSameAnswer } from '../utils/stable-answer';
 
-const PASSWORD = 'Password123!';
-
 /** Success body every address-request route returns. */
 interface AddressRequestResponse {
   success: true;
@@ -105,15 +103,15 @@ describe('Address-request routes with a failing mail boundary (e2e)', () => {
   it('answers forgot-password the same for a real address and an unknown one', async () => {
     const email = 'forgot-enum@example.test';
 
-    const unknownBefore = e2e.mail.length;
+    const unknownBefore = (await e2e.captureMail()).length;
     const unknown = await post('/api/auth/forgot-password', { email });
-    expect(e2e.mail.length - unknownBefore).toBe(0);
+    expect((await e2e.captureMail()).length - unknownBefore).toBe(0);
 
     await createVerifiedAccount(email);
 
-    const knownBefore = e2e.mail.length;
+    const knownBefore = (await e2e.captureMail()).length;
     const known = await post('/api/auth/forgot-password', { email });
-    expect(e2e.mail.length - knownBefore).toBe(1);
+    expect((await e2e.captureMail()).length - knownBefore).toBe(1);
 
     expectSameAnswer(known, unknown);
     expect(unknown.body as AddressRequestResponse).toEqual({
@@ -126,21 +124,21 @@ describe('Address-request routes with a failing mail boundary (e2e)', () => {
   it('answers resend-activation the same with and without a pending registration', async () => {
     const email = 'resend-enum@example.test';
 
-    const unknownBefore = e2e.mail.length;
+    const unknownBefore = (await e2e.captureMail()).length;
     const unknown = await post('/api/auth/resend-activation', { email });
-    expect(e2e.mail.length - unknownBefore).toBe(0);
+    expect((await e2e.captureMail()).length - unknownBefore).toBe(0);
 
     await pendingRegistrations.create({
       email,
-      name: 'Pending Account',
+      purpose: 'signup',
       hashedCode: 'a-hashed-code',
       attempts: 0,
       expiresAt: new Date(TEST_NOW.getTime() + 15 * 60 * 1000),
     });
 
-    const pendingBefore = e2e.mail.length;
+    const pendingBefore = (await e2e.captureMail()).length;
     const pending = await post('/api/auth/resend-activation', { email });
-    expect(e2e.mail.length - pendingBefore).toBe(1);
+    expect((await e2e.captureMail()).length - pendingBefore).toBe(1);
 
     expectSameAnswer(pending, unknown);
     expect(unknown.body as AddressRequestResponse).toEqual({
@@ -153,23 +151,17 @@ describe('Address-request routes with a failing mail boundary (e2e)', () => {
   it('answers register the same for a taken address and a free one', async () => {
     const email = 'register-enum@example.test';
 
-    const freeBefore = e2e.mail.length;
-    const free = await post('/api/auth/register', {
-      email,
-      password: PASSWORD,
-      name: 'New Account',
-    });
-    expect(e2e.mail.length - freeBefore).toBe(1);
+    const freeBefore = (await e2e.captureMail()).length;
+    const free = await post('/api/auth/register', { email });
+    expect((await e2e.captureMail()).length - freeBefore).toBe(1);
 
+    // Clear the free sign-up record so the taken path can be checked alone.
+    await pendingRegistrations.deleteMany({ email });
     await createVerifiedAccount(email);
 
-    const takenBefore = e2e.mail.length;
-    const taken = await post('/api/auth/register', {
-      email,
-      password: PASSWORD,
-      name: 'New Account',
-    });
-    expect(e2e.mail.length - takenBefore).toBe(1);
+    const takenBefore = (await e2e.captureMail()).length;
+    const taken = await post('/api/auth/register', { email });
+    expect((await e2e.captureMail()).length - takenBefore).toBe(1);
 
     expectSameAnswer(taken, free);
     expect(free.body as AddressRequestResponse).toEqual({
@@ -177,21 +169,62 @@ describe('Address-request routes with a failing mail boundary (e2e)', () => {
       data: { email },
       message: GENERIC_CODE_SENT_MESSAGE,
     });
+
+    // The taken address gets the notice, not an activation code, and no
+    // sign-up record is created for it.
+    const takenMail = (await e2e.captureMail()).at(-1);
+    expect(takenMail?.subject).toBe(
+      'Someone tried to register with your email address',
+    );
+    expect(takenMail?.html).toBeUndefined();
+    expect(
+      await pendingRegistrations.countDocuments({
+        email,
+        purpose: 'signup',
+      }),
+    ).toBe(0);
+  });
+
+  it('mails nothing for forgot-password on a soft-deleted account', async () => {
+    const email = 'forgot-deleted@example.test';
+    await users.create({
+      email,
+      name: 'Deleted Account',
+      isVerified: true,
+      isDeleted: true,
+    });
+
+    const before = (await e2e.captureMail()).length;
+    const response = await post('/api/auth/forgot-password', { email });
+
+    expect(response.status).toBe(200);
+    expect((await e2e.captureMail()).length - before).toBe(0);
+  });
+
+  it('mails nothing on resend for a verified account', async () => {
+    const email = 'resend-verified@example.test';
+    await createVerifiedAccount(email);
+
+    const before = (await e2e.captureMail()).length;
+    const response = await post('/api/auth/resend-activation', { email });
+
+    expect(response.status).toBe(200);
+    expect((await e2e.captureMail()).length - before).toBe(0);
   });
 
   // feature:magic-link:start
   it('answers a magic-link request the same for a real address and an unknown one', async () => {
     const email = 'magic-enum@example.test';
 
-    const unknownBefore = e2e.mail.length;
+    const unknownBefore = (await e2e.captureMail()).length;
     const unknown = await post('/api/auth/magic-link/request', { email });
-    expect(e2e.mail.length - unknownBefore).toBe(1);
+    expect((await e2e.captureMail()).length - unknownBefore).toBe(1);
 
     await createVerifiedAccount(email);
 
-    const knownBefore = e2e.mail.length;
+    const knownBefore = (await e2e.captureMail()).length;
     const known = await post('/api/auth/magic-link/request', { email });
-    expect(e2e.mail.length - knownBefore).toBe(1);
+    expect((await e2e.captureMail()).length - knownBefore).toBe(1);
 
     expectSameAnswer(known, unknown);
     expect(unknown.body as AddressRequestResponse).toEqual({
@@ -204,15 +237,15 @@ describe('Address-request routes with a failing mail boundary (e2e)', () => {
   it('answers a soft-deleted magic-link request the same as a mailed one', async () => {
     const email = 'magic-deleted-enum@example.test';
 
-    const mailedBefore = e2e.mail.length;
+    const mailedBefore = (await e2e.captureMail()).length;
     const mailed = await post('/api/auth/magic-link/request', { email });
-    expect(e2e.mail.length - mailedBefore).toBe(1);
+    expect((await e2e.captureMail()).length - mailedBefore).toBe(1);
 
     await users.create({ email, name: 'Deleted Account', isDeleted: true });
 
-    const deletedBefore = e2e.mail.length;
+    const deletedBefore = (await e2e.captureMail()).length;
     const deleted = await post('/api/auth/magic-link/request', { email });
-    expect(e2e.mail.length - deletedBefore).toBe(0);
+    expect((await e2e.captureMail()).length - deletedBefore).toBe(0);
 
     expectSameAnswer(deleted, mailed);
     expect(deleted.body as AddressRequestResponse).toEqual({
@@ -225,15 +258,15 @@ describe('Address-request routes with a failing mail boundary (e2e)', () => {
   it('answers a magic-link request over the hourly cap the same as a mailed one', async () => {
     const email = 'magic-cap-enum@example.test';
 
-    const mailedBefore = e2e.mail.length;
+    const mailedBefore = (await e2e.captureMail()).length;
     const mailed = await post('/api/auth/magic-link/request', { email });
-    expect(e2e.mail.length - mailedBefore).toBe(1);
+    expect((await e2e.captureMail()).length - mailedBefore).toBe(1);
 
     await seedCappedMagicLinks(email);
 
-    const cappedBefore = e2e.mail.length;
+    const cappedBefore = (await e2e.captureMail()).length;
     const capped = await post('/api/auth/magic-link/request', { email });
-    expect(e2e.mail.length - cappedBefore).toBe(0);
+    expect((await e2e.captureMail()).length - cappedBefore).toBe(0);
 
     expectSameAnswer(capped, mailed);
     expect(capped.body as AddressRequestResponse).toEqual({
@@ -249,9 +282,9 @@ describe('Address-request routes with a failing mail boundary (e2e)', () => {
       .mockImplementation(() => {});
     const email = 'magic-log-enum@example.test';
 
-    const before = e2e.mail.length;
+    const before = (await e2e.captureMail()).length;
     await post('/api/auth/magic-link/request', { email });
-    expect(e2e.mail.length - before).toBe(1);
+    expect((await e2e.captureMail()).length - before).toBe(1);
 
     const logged = logSpy.mock.calls.map((call) =>
       call.map((argument) => String(argument)).join(' '),
@@ -269,14 +302,14 @@ describe('Address-request routes with a failing mail boundary (e2e)', () => {
     const email = 'log-enum@example.test';
     await createVerifiedAccount(email);
 
-    const before = e2e.mail.length;
+    const before = (await e2e.captureMail()).length;
     const response = await (
       await browserAgent(e2e.httpServer)
     )
       .post('/api/auth/forgot-password')
       .set(REQUEST_ID_HEADER, 'enum-log-request-id')
       .send({ email });
-    expect(e2e.mail.length - before).toBe(1);
+    expect((await e2e.captureMail()).length - before).toBe(1);
 
     expect(response.status).toBe(200);
     const logged = errorSpy.mock.calls.map((call) =>

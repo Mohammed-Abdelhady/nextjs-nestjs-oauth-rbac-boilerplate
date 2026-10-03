@@ -11,7 +11,6 @@ import { RaceGate } from '../utils/race-gate';
 import { expectSameAnswer } from '../utils/stable-answer';
 import {
   inWindow,
-  mailedCode,
   pauseCreateCall,
   pauseQueryCall,
 } from '../utils/pending-race';
@@ -222,9 +221,9 @@ describe('Password reset code step and pending reset windows (e2e)', () => {
 
     const record = await storedReset(email);
     // The loser updated the code last, so the last mail is the live code.
-    expect(await bcrypt.compare(mailedCode(e2e.mail), record.hashedCode)).toBe(
-      true,
-    );
+    expect(
+      await bcrypt.compare(await e2e.mailedCode(), record.hashedCode),
+    ).toBe(true);
   });
 
   it('updates a record inserted between the update and the create', async () => {
@@ -246,9 +245,9 @@ describe('Password reset code step and pending reset windows (e2e)', () => {
     expect(response.status).toBe(200);
     expect(await pendingPasswordResets.countDocuments({ email })).toBe(1);
     const record = await storedReset(email);
-    expect(await bcrypt.compare(mailedCode(e2e.mail), record.hashedCode)).toBe(
-      true,
-    );
+    expect(
+      await bcrypt.compare(await e2e.mailedCode(), record.hashedCode),
+    ).toBe(true);
   });
 
   it('recreates the reset when the winner is deleted after the duplicate key', async () => {
@@ -308,9 +307,9 @@ describe('Password reset code step and pending reset windows (e2e)', () => {
 
     expect(await pendingPasswordResets.countDocuments({ email })).toBe(1);
     const record = await storedReset(email);
-    expect(await bcrypt.compare(mailedCode(e2e.mail), record.hashedCode)).toBe(
-      true,
-    );
+    expect(
+      await bcrypt.compare(await e2e.mailedCode(), record.hashedCode),
+    ).toBe(true);
   });
 
   it('does not delete a replaced reset when the expired cleanup runs', async () => {

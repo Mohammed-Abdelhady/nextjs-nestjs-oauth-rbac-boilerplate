@@ -1,9 +1,10 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   useUpdateUserStatusMutation,
   useUpdateUserRoleMutation,
   useDeleteUserMutation,
+  useResendEmailChangeMutation,
 } from '@/modules/users/api/usersApi';
 import { toast } from '@/lib/toast';
 import { reportUnlessHandled } from '@/lib/requestFailure';
@@ -18,6 +19,7 @@ export interface UseUserActionsReturn {
   handleStatusChange: (userId: string, isActive: boolean, userName: string) => Promise<boolean>;
   /** Delete user */
   handleDelete: (userId: string, userName: string) => Promise<boolean>;
+  handleResendEmailChange: (userId: string) => Promise<void>;
   /** Whether any action is loading */
   isLoading: boolean;
   /** Whether status update is loading */
@@ -60,6 +62,8 @@ export function useUserActions(): UseUserActionsReturn {
   const [updateStatus, { isLoading: isUpdatingStatus }] = useUpdateUserStatusMutation();
   const [updateRole, { isLoading: isUpdatingRole }] = useUpdateUserRoleMutation();
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
+  const [resendEmailChange, { isLoading: isResendingEmailChange }] = useResendEmailChangeMutation();
+  const resendInFlight = useRef(false);
   const t = useTranslations('users.actions');
 
   /**
@@ -113,12 +117,29 @@ export function useUserActions(): UseUserActionsReturn {
     [deleteUser, t],
   );
 
-  const isLoading = isUpdatingStatus || isUpdatingRole || isDeleting;
+  const handleResendEmailChange = useCallback(
+    async (userId: string) => {
+      if (resendInFlight.current) return;
+      resendInFlight.current = true;
+      try {
+        await resendEmailChange(userId).unwrap();
+        toast.success(t('resendEmailChangeSuccess'));
+      } catch (error) {
+        reportUnlessHandled(error);
+      } finally {
+        resendInFlight.current = false;
+      }
+    },
+    [resendEmailChange, t],
+  );
+
+  const isLoading = isUpdatingStatus || isUpdatingRole || isDeleting || isResendingEmailChange;
 
   return {
     handleRoleChange,
     handleStatusChange,
     handleDelete,
+    handleResendEmailChange,
     isLoading,
     isUpdatingStatus,
     isUpdatingRole,

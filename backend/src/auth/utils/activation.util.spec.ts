@@ -1,95 +1,151 @@
-import { Model } from 'mongoose';
-import { UserDocument } from '../../user/schemas/user.schema';
+import { Connection, Model, Types, createConnection } from 'mongoose';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getModelToken } from '@nestjs/mongoose';
+import { User, UserDocument, UserSchema } from '../../user/schemas/user.schema';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { AuthProvider } from '../../user/enums/auth-provider.enum';
-import { createModelMock } from '../../common/testing/test-doubles.harness-spec';
-import { resolveActivatedUser } from './activation.util';
+import { createActivatedAccount, confirmEmailChange } from './activation.util';
+import { withMajorityTransaction } from '../../session/utils/mongo-transaction';
+import { PENDING_PURPOSE } from '../constants/registration';
+import { ReservedCode } from '../interfaces/pending-code.interface';
+import {
+  startMemoryReplSet,
+  MemoryReplSet,
+} from '../../../test/utils/memory-replset';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from '../../../test/utils/session-authority-harness';
 
-interface MockUserModel {
-  findOne: jest.Mock;
-  create: jest.Mock;
+function signupReserved(email: string): ReservedCode {
+  return {
+    id: new Types.ObjectId(),
+    email,
+    purpose: PENDING_PURPOSE.SIGNUP,
+    hashedCode: 'hashed-code',
+  };
 }
 
-describe('resolveActivatedUser', () => {
-  const mockUserModel: MockUserModel = {
-    findOne: jest.fn(),
-    create: jest.fn(),
-  };
+describe('activation account writes', () => {
+  let mongo: MemoryReplSet;
+  let connection: Connection;
+  let users: Model<UserDocument>;
 
-  const userModel = createModelMock<Model<UserDocument>>(mockUserModel);
+  beforeAll(async () => {
+    mongo = await startMemoryReplSet();
+    connection = await createConnection(
+      mongo.uri('activation_util'),
+    ).asPromise();
+    const model = connection.model<User>(User.name, UserSchema);
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [{ provide: getModelToken(User.name), useValue: model }],
+    }).compile();
+    users = module.get<Model<UserDocument>>(getModelToken(User.name));
+    await users.init();
+  }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+  afterAll(async () => {
+    await connection.close();
+    await mongo.stop();
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
+
+  beforeEach(async () => {
+    await users.deleteMany({});
   });
 
-  it('should create the account a registration described', async () => {
-    mockUserModel.findOne.mockResolvedValue(null);
-    mockUserModel.create.mockResolvedValue({ email: 'new@example.com' });
-
-    await resolveActivatedUser(
-      {
-        email: 'new@example.com',
-        name: 'New User',
-        hashedPassword: 'hashed',
-      },
-      userModel,
+  it('creates the account a verified sign-up code describes', async () => {
+    const user = await withMajorityTransaction(connection, (session) =>
+      createActivatedAccount(
+        signupReserved('new@example.com'),
+        'hashed-password',
+        'New User',
+        users,
+        session,
+        new Types.ObjectId(),
+      ),
     );
 
-    expect(mockUserModel.create).toHaveBeenCalledWith({
+    const stored = await users.findById(user._id).select('+password');
+    expect(stored?.email).toBe('new@example.com');
+    expect(stored?.password).toBe('hashed-password');
+    expect(stored?.name).toBe('New User');
+    expect(stored?.isVerified).toBe(true);
+    expect(stored?.authProvider).toBe(AuthProvider.EMAIL);
+  });
+
+  it('refuses a sign-up aimed at an address that already has an account', async () => {
+    await users.create({ email: 'taken@example.com', name: 'Taken' });
+
+    await expect(
+      withMajorityTransaction(connection, (session) =>
+        createActivatedAccount(
+          signupReserved('taken@example.com'),
+          'hashed-password',
+          'Second',
+          users,
+          session,
+          new Types.ObjectId(),
+        ),
+      ),
+    ).rejects.toMatchObject({ code: ErrorCode.ACTIVATION_CODE_INVALID });
+
+    const stored = await users.findOne({ email: 'taken@example.com' });
+    expect(stored?.name).toBe('Taken');
+  });
+
+  it('verifies the moved address when the record still matches the target', async () => {
+    const target = await users.create({
       email: 'new@example.com',
-      password: 'hashed',
-      name: 'New User',
-      isVerified: true,
-      authProvider: AuthProvider.EMAIL,
-      primaryProvider: AuthProvider.EMAIL,
-    });
-  });
-
-  it('should verify an existing account without touching its password', async () => {
-    const existing = {
-      email: 'moved@example.com',
-      password: 'previous-hash',
+      name: 'Target',
       isVerified: false,
-      save: jest.fn().mockResolvedValue(true),
-    };
-    mockUserModel.findOne.mockResolvedValue(existing);
+      addressGeneration: 2,
+    });
 
-    const result = await resolveActivatedUser(
-      { email: 'moved@example.com', name: 'Target User' },
-      userModel,
+    await withMajorityTransaction(connection, (session) =>
+      confirmEmailChange(
+        {
+          id: new Types.ObjectId(),
+          email: 'new@example.com',
+          purpose: PENDING_PURPOSE.EMAIL_CHANGE,
+          hashedCode: 'hashed-code',
+          userId: target._id,
+          addressGeneration: 2,
+        },
+        users,
+        session,
+      ),
     );
 
-    expect(result).toBe(existing);
-    expect(existing.isVerified).toBe(true);
-    expect(existing.password).toBe('previous-hash');
-    expect(existing.save).toHaveBeenCalled();
-    expect(mockUserModel.create).not.toHaveBeenCalled();
+    const stored = await users.findById(target._id);
+    expect(stored?.isVerified).toBe(true);
   });
 
-  it('should refuse a code aimed at an account that is already verified', async () => {
-    mockUserModel.findOne.mockResolvedValue({
-      email: 'taken@example.com',
-      isVerified: true,
-      save: jest.fn(),
+  it('refuses a stale address change and confirms nothing', async () => {
+    const target = await users.create({
+      email: 'new@example.com',
+      name: 'Target',
+      isVerified: false,
+      addressGeneration: 3,
     });
 
     await expect(
-      resolveActivatedUser(
-        { email: 'taken@example.com', name: 'Taken' },
-        userModel,
+      withMajorityTransaction(connection, (session) =>
+        confirmEmailChange(
+          {
+            id: new Types.ObjectId(),
+            email: 'new@example.com',
+            purpose: PENDING_PURPOSE.EMAIL_CHANGE,
+            hashedCode: 'hashed-code',
+            userId: target._id,
+            addressGeneration: 2,
+          },
+          users,
+          session,
+        ),
       ),
-    ).rejects.toMatchObject({ code: ErrorCode.EMAIL_ALREADY_EXISTS });
-  });
+    ).rejects.toMatchObject({ code: ErrorCode.ACTIVATION_CODE_INVALID });
 
-  it('should refuse a pending record with neither account nor password', async () => {
-    mockUserModel.findOne.mockResolvedValue(null);
-
-    await expect(
-      resolveActivatedUser(
-        { email: 'ghost@example.com', name: 'Ghost' },
-        userModel,
-      ),
-    ).rejects.toMatchObject({ code: ErrorCode.NO_PENDING_REGISTRATION });
-    expect(mockUserModel.create).not.toHaveBeenCalled();
+    const stored = await users.findById(target._id);
+    expect(stored?.isVerified).toBe(false);
   });
 });

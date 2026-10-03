@@ -1,3 +1,5 @@
+import { createPasswordSchema } from '@/modules/auth/utils/passwordSchema';
+
 export interface CreateUserFormValues {
   email: string;
   name: string;
@@ -17,6 +19,7 @@ export type ValidationTranslator = (key: string) => string;
 export function validateCreateUserForm(
   values: CreateUserFormValues,
   t: ValidationTranslator,
+  tPassword: ValidationTranslator,
 ): Record<string, string> {
   const errors: Record<string, string> = {};
 
@@ -32,14 +35,9 @@ export function validateCreateUserForm(
     errors.name = t('nameMinLength');
   }
 
-  if (!values.password) {
-    errors.password = t('passwordRequired');
-  } else if (values.password.length < 8) {
-    errors.password = t('passwordMinLength');
-  } else if (
-    !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(values.password)
-  ) {
-    errors.password = t('passwordStrength');
+  const passwordResult = createPasswordSchema(tPassword).safeParse(values.password);
+  if (!passwordResult.success) {
+    errors.password = passwordResult.error.issues[0].message;
   }
 
   if (!values.role) {

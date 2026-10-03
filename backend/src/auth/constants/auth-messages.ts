@@ -37,3 +37,14 @@ export const SIGN_IN_LINK_EMAIL_FAILED_MESSAGE =
 /** Logged when a registration notice email is not handed over. */
 export const REGISTRATION_NOTICE_EMAIL_FAILED_MESSAGE =
   'Failed to send registration notice email';
+
+/** Logged when an email-change confirmation email is not handed over. */
+export const EMAIL_CHANGE_EMAIL_FAILED_MESSAGE =
+  'Failed to send email change confirmation email';
+
+/**
+ * Answer for an old-shape registration that still carries a password or a
+ * name. It depends only on the body, never on the address.
+ */
+export const REGISTRATION_CONTRACT_OUTDATED_MESSAGE =
+  'Registration takes the email address only; send the password and name when activating';

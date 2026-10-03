@@ -1,4 +1,5 @@
 import { authApi } from '@/modules/auth/store/authApi';
+import { usersApi } from '@/modules/users/api/usersApi';
 import type { MutationCase } from './mutationSweepBase';
 import {
   GET_PERMISSIONS,
@@ -24,14 +25,27 @@ const READ_SET = [readProfile, readSessions, readUsers, readRoles, readPermissio
 
 export const UNTAGGED: MutationCase[] = [
   {
+    name: 'resendEmailChange',
+    reads: READ_SET,
+    write: (store) => store.dispatch(usersApi.endpoints.resendEmailChange.initiate('user-2')),
+    accepted: { message: 'Confirmation sent' },
+    requests: [
+      GET_PROFILE,
+      GET_SESSIONS,
+      GET_USERS,
+      GET_ROLES,
+      GET_PERMISSIONS,
+      'POST /api/admin/users/user-2/resend-email-change',
+    ],
+    refetched: [],
+  },
+  {
     name: 'register',
     reads: READ_SET,
     write: (store) =>
       store.dispatch(
         authApi.endpoints.register.initiate({
-          name: 'Omar Nasser',
           email: 'omar@example.com',
-          password: 'Passw0rdOmar',
         }),
       ),
     accepted: { email: 'omar@example.com' },
@@ -42,6 +56,27 @@ export const UNTAGGED: MutationCase[] = [
       GET_ROLES,
       GET_PERMISSIONS,
       'POST /api/auth/register',
+    ],
+    refetched: [],
+  },
+  {
+    name: 'confirmEmailChange',
+    reads: READ_SET,
+    write: (store) =>
+      store.dispatch(
+        authApi.endpoints.confirmEmailChange.initiate({
+          email: 'omar@example.com',
+          code: '123456',
+        }),
+      ),
+    accepted: { message: 'Confirmed' },
+    requests: [
+      GET_PROFILE,
+      GET_SESSIONS,
+      GET_USERS,
+      GET_ROLES,
+      GET_PERMISSIONS,
+      'POST /api/auth/confirm-email-change',
     ],
     refetched: [],
   },

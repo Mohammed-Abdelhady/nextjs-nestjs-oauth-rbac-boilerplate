@@ -144,6 +144,7 @@ export const FORM_STYLES = {
   },
 
   container: 'space-y-2',
+  authField: 'mt-5',
 } as const;
 
 /**

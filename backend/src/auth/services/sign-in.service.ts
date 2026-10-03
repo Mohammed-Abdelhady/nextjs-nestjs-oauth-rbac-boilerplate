@@ -74,6 +74,10 @@ export class SignInService {
     user: UserDocument,
     response: Response,
   ): Promise<AuthenticatedUserSummary> {
+    // Build the summary before anything is issued: a failed role read must not
+    // leave a live session cookie on a response that then answers an error.
+    const summary = await toAuthenticatedUser(user, this.roleModel);
+
     const userAgent = response.req.headers['user-agent'] || 'Unknown';
     const ip = response.req.ip || '127.0.0.1';
     const issued = await this.sessionService.createSession(
@@ -84,7 +88,7 @@ export class SignInService {
 
     this.sessionCookieService.set(response, issued.sessionToken);
     response.setHeader(CSRF_HEADER, issued.csrfToken);
-    return toAuthenticatedUser(user, this.roleModel);
+    return summary;
   }
 
   // feature:totp:start
