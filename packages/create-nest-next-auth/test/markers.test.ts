@@ -166,6 +166,12 @@ describe('stripFeatureMarkers', () => {
     );
   });
 
+  it('rejects a bare block comment marker left in the file', () => {
+    expect(() => strip(['const a = 1;', '/* feature:totp */'], ['totp'])).toThrow(
+      /src\/example\.ts:2 has a feature marker that is not alone at the end of its line/,
+    );
+  });
+
   it('handles every selection through three nested feature blocks', () => {
     const ids = ['totp', 'passkeys', 'magic-link'];
     const source = [

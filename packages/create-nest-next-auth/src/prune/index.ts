@@ -1,8 +1,14 @@
 import type { Manifest, PruneResult } from '../types.js';
+import { ENV_EXAMPLE_FILES, FRONTEND_PACKAGE_JSON, ROOT_PACKAGE_JSON } from '../constants/index.js';
+import { removeDocMarkers } from './doc-markers.js';
 import { removeDocLinks } from './docs.js';
+import { DEPENDABOT_FILE, pruneDependabot } from './dependabot.js';
 import { type EnvRemovals, stripEnvFiles, writeFeatureFlag } from './env.js';
 import { deleteMatchingFiles } from './files.js';
+import { formatChangedFiles } from './format.js';
 import { removeFeatureLines } from './markers.js';
+import { pruneMessageCatalogues } from './messages.js';
+import { pruneRootPackage } from './package-scripts.js';
 import { findDanglingReferences } from './references.js';
 
 /** Env vars only the removed features use, mapped to the words naming them. */
@@ -24,16 +30,21 @@ function removedEnvVars(manifest: Manifest, selected: Set<string>): EnvRemovals 
 }
 
 /**
- * Removes everything the unselected features own, marked lines included, then
- * reports imports that still point at deleted files.
+ * Removes everything the unselected features and options own, marked lines and
+ * sections included, then reports imports and scripts that still point at
+ * deleted files.
  */
 export async function prune(
   root: string,
   manifest: Manifest,
-  selectedIds: string[],
+  selectedFeatures: string[],
+  selectedOptions: string[],
 ): Promise<PruneResult> {
-  const selected = new Set(selectedIds);
+  const selected = new Set(selectedFeatures);
   const removed = Object.keys(manifest.features).filter((id) => !selected.has(id));
+
+  const keptOptions = new Set(selectedOptions);
+  const removedOptions = Object.keys(manifest.options).filter((id) => !keptOptions.has(id));
 
   const doomedFiles: string[] = [];
   const doomedDocs: string[] = [];
@@ -41,6 +52,11 @@ export async function prune(
     const feature = manifest.features[id];
     doomedFiles.push(...feature.files);
     doomedDocs.push(...feature.docs);
+  }
+  for (const id of removedOptions) {
+    const option = manifest.options[id];
+    doomedFiles.push(...option.files);
+    doomedDocs.push(...option.docs);
   }
 
   const deletedFiles = await deleteMatchingFiles(root, [
@@ -50,22 +66,51 @@ export async function prune(
   ]);
 
   // Runs for every selection, not only a partial one: the full project has to
-  // come out without marker comments too.
-  const markers = await removeFeatureLines(root, selectedIds, Object.keys(manifest.features));
+  // come out without marker comments too. Option ids are valid marker names.
+  const markerIds = [...Object.keys(manifest.features), ...Object.keys(manifest.options)];
+  const markers = await removeFeatureLines(
+    root,
+    [...selectedFeatures, ...selectedOptions],
+    markerIds,
+  );
+  const docMarkers = await removeDocMarkers(
+    root,
+    [...selectedFeatures, ...selectedOptions],
+    markerIds,
+  );
 
   const docs = await removeDocLinks(root, doomedDocs);
   const strippedEnvVars = await stripEnvFiles(root, removedEnvVars(manifest, selected));
-  await writeFeatureFlag(root, selectedIds);
+  await writeFeatureFlag(root, selectedFeatures);
+  await pruneRootPackage(root, deletedFiles);
+  await pruneDependabot(root, deletedFiles);
+  const editedCatalogues = await pruneMessageCatalogues(root, manifest, removedOptions);
+
+  // The generated project's own prettier config, applied to every file the
+  // pruner edited, so a fresh scaffold lints without a manual format run.
+  const formattedFiles = await formatChangedFiles(root, [
+    ...markers.editedFiles,
+    ...docMarkers.editedFiles,
+    ...docs.editedFiles,
+    ...ENV_EXAMPLE_FILES,
+    ...editedCatalogues,
+    ROOT_PACKAGE_JSON,
+    FRONTEND_PACKAGE_JSON,
+    DEPENDABOT_FILE,
+  ]);
+
   const dangling = await findDanglingReferences(root, deletedFiles);
 
   return {
-    selected: selectedIds,
+    selected: selectedFeatures,
     removed,
+    removedOptions,
     deletedFiles,
     strippedEnvVars,
     removedDocLines: docs.removedLines,
-    markedFiles: markers.editedFiles,
-    removedMarkedLines: markers.removedLines,
+    markedFiles: [...markers.editedFiles, ...docMarkers.editedFiles],
+    removedMarkedLines: markers.removedLines + docMarkers.removedLines,
+    formattedFiles,
     dangling,
   };
 }

@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-import { configureBackendPort, configureFrontendPort } from './lib/config-transforms.js';
+import { configureBackendPort, configureFrontendPort } from './lib/config-transforms.js'; // feature:docker
+import { buildNextStepLines } from './lib/init-next-steps.js';
 
 /**
  * Project Initialization Script
  *
  * Interactive CLI to configure the boilerplate for your project.
- * Updates app name, env files, package.json, Docker configs, and more.
+ * Updates app name, env files, package.json, Docker configs, and more. // feature:docker
  *
  * Usage: node scripts/init.js
  */
@@ -68,7 +69,7 @@ async function collectBasicInfo(rl) {
 async function collectEnvironmentConfig(rl, dbName) {
   log.step('Environment Configuration');
 
-  const frontendPort = await ask(rl, 'Frontend host port (Docker container stays on 3000)', '3000');
+  const frontendPort = await ask(rl, 'Frontend host port (the web app stays on 3000)', '3000');
   const backendPort = await ask(rl, 'Backend port', '5001');
   const mongoUri = await ask(rl, 'MongoDB URI', `mongodb://localhost:27017/${dbName}`);
 
@@ -238,8 +239,13 @@ NEXT_PUBLIC_API_URL=http://localhost:${env.backendPort}
 `;
 }
 
+// feature:docker:start
 function updateDockerFiles(config) {
-  const files = ['docker-compose.yml', 'docker-compose.prod.yml', '.env.docker.example'];
+  const files = [
+    'docker-compose.yml',
+    'docker-compose.prod.yml', // feature:production
+    '.env.docker.example',
+  ];
 
   for (const file of files) {
     const filePath = path.join(ROOT_DIR, file);
@@ -256,8 +262,10 @@ function updateDockerFiles(config) {
     content = content.replaceAll('authboiler-mongodb', `${config.appSlug}-mongodb`);
     content = content.replaceAll('authboiler-backend', `${config.appSlug}-backend`);
     content = content.replaceAll('authboiler-frontend', `${config.appSlug}-frontend`);
+    // feature:production:start
     content = content.replaceAll('authboiler-nginx', `${config.appSlug}-nginx`);
     content = content.replaceAll('authboiler-certbot', `${config.appSlug}-certbot`);
+    // feature:production:end
     content = content.replaceAll('MONGO_DATABASE:-authboiler', `MONGO_DATABASE:-${config.dbName}`);
     content = content.replaceAll('/authboiler', `/${config.dbName}`);
     content = content.replaceAll(
@@ -296,6 +304,7 @@ function updateDockerFiles(config) {
     log.success(`${file} updated`);
   }
 }
+// feature:docker:end
 
 function updateReadmeFiles(config) {
   // Root README
@@ -374,34 +383,7 @@ function printNextSteps(config) {
 
   log.success(`Project "${colors.cyan}${config.appTitle}${colors.reset}" has been configured!`);
 
-  console.log(`
-${colors.dim}Next steps:${colors.reset}
-
-  1. Review the generated .env files:
-     ${colors.cyan}backend/.env${colors.reset}
-     ${colors.cyan}frontend/.env.local${colors.reset}
-
-  2. Install dependencies:
-     ${colors.cyan}npm install${colors.reset}
-
-  3. Start the development servers:
-     ${colors.cyan}# With Docker (recommended)${colors.reset}
-     docker compose up
-
-     ${colors.cyan}# Or manually${colors.reset}
-     cd backend && npm run start:dev
-     cd frontend && npm run dev
-
-  4. Access your app:
-     Frontend: ${colors.cyan}http://localhost:${config.env.frontendPort}${colors.reset}
-     Backend:  ${colors.cyan}http://localhost:${config.env.backendPort}${colors.reset}
-     API Docs: ${colors.cyan}http://localhost:${config.env.backendPort}/api/docs${colors.reset}
-
-  5. For production deployment:
-     ${colors.cyan}npm run setup:prod${colors.reset}
-
-${colors.dim}Documentation: ./docs/README.md${colors.reset}
-`);
+  console.log(buildNextStepLines(config).join('\n'));
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -475,9 +457,11 @@ async function init() {
     writeFile(frontendEnvPath, generateFrontendEnv(config), { mode: 0o600 });
     log.success('Frontend .env.local created');
 
+    // feature:docker:start
     // Update Docker files
     log.info('Updating Docker configuration...');
     updateDockerFiles(config);
+    // feature:docker:end
 
     // Update README files
     log.info('Updating README files...');

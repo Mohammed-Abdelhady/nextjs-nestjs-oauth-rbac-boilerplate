@@ -8,6 +8,7 @@ import { Response } from 'express';
 import { UserDocument } from '../../user/schemas/user.schema';
 import { Role, RoleDocument } from '../../role/schemas/role.schema';
 import { SessionService } from './session.service';
+import { CSRF_HEADER } from '../../session/constants/browser-proof';
 import { SessionCookieService } from './session-cookie.service';
 import { AuthFeaturesService } from './auth-features.service'; // feature:totp
 import { AuthFeature } from '../enums/auth-feature.enum'; // feature:totp
@@ -73,16 +74,21 @@ export class SignInService {
     user: UserDocument,
     response: Response,
   ): Promise<AuthenticatedUserSummary> {
+    // Build the summary before anything is issued: a failed role read must not
+    // leave a live session cookie on a response that then answers an error.
+    const summary = await toAuthenticatedUser(user, this.roleModel);
+
     const userAgent = response.req.headers['user-agent'] || 'Unknown';
     const ip = response.req.ip || '127.0.0.1';
-    const sessionToken = await this.sessionService.createSession(
+    const issued = await this.sessionService.createSession(
       user._id,
       userAgent,
       ip,
     );
 
-    this.sessionCookieService.set(response, sessionToken);
-    return toAuthenticatedUser(user, this.roleModel);
+    this.sessionCookieService.set(response, issued.sessionToken);
+    response.setHeader(CSRF_HEADER, issued.csrfToken);
+    return summary;
   }
 
   // feature:totp:start

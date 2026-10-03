@@ -1,255 +1,190 @@
-import { Injectable, Logger, HttpStatus } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { ClientSession, Model } from 'mongoose';
 import {
   PendingRegistration,
   PendingRegistrationDocument,
 } from '../schemas/pending-registration.schema';
 import { HashService } from '../../common/services/hash.service';
-import { AppException } from '../../common/exceptions/app.exception';
-import { ErrorCode } from '../../common/enums/error-code.enum';
+import { Clock } from '../../common/services/clock';
+import { currentRequestId } from '../../common/context/request-context';
+import { activationCodeInvalid } from '../utils/activation-error.util';
 import { generateVerificationCode } from '../utils/verification-code.util';
-
-export interface ConsumedRegistration {
-  email: string;
-  name: string;
-  hashedPassword?: string;
-}
-
-export interface PendingCodeData {
-  code: string;
-  name: string;
-}
+import { PendingRegistrationStore } from './pending-registration.store';
+import { MailCounterService } from './mail-counter.service';
+import { PendingPurpose } from '../constants/registration';
+import {
+  IssuedCode,
+  RegistrationDetails,
+  ReservedCode,
+} from '../interfaces/pending-code.interface';
 
 /**
- * Activation codes for pending registrations.
+ * Activation code verification: reserve an attempt, compare the code once,
+ * and consume the exact generation inside the caller's transaction. Opening
+ * and refreshing records is the pending-record store's responsibility, and the
+ * per-address mail cap is the mail counter's.
  */
 @Injectable()
 export class VerificationCodeService {
   private readonly logger = new Logger(VerificationCodeService.name);
-  private readonly codeExpiresIn: number;
   private readonly maxAttempts: number;
+  private readonly store: PendingRegistrationStore;
 
   constructor(
     @InjectModel(PendingRegistration.name)
     private readonly pendingRegistrationModel: Model<PendingRegistrationDocument>,
     private readonly hashService: HashService,
-    private readonly configService: ConfigService,
+    configService: ConfigService,
+    private readonly clock: Clock,
+    private readonly mailCounterService: MailCounterService,
   ) {
-    this.codeExpiresIn = this.configService.get<number>(
-      'activation.codeExpiresIn',
-      900000,
-    );
-    this.maxAttempts = this.configService.get<number>(
-      'activation.maxAttempts',
-      5,
+    this.maxAttempts = configService.get<number>('activation.maxAttempts', 5);
+    this.store = new PendingRegistrationStore(
+      this.pendingRegistrationModel,
+      this.hashService,
+      configService,
+      clock,
     );
   }
 
   /**
-   * Open or refresh the pending registration for an address.
-   * An unexpired pending record keeps the name and password it was created
-   * with, so a later attempt on the same address only gets a fresh code mailed
-   * to that address. Once the record expires the new details replace it.
-   * The password hash is omitted when the code only proves ownership of a new
-   * address for an account that already exists.
-   *
-   * @param email - Address the code is mailed to
-   * @param name - Name to store when the record is created or replaced
-   * @param hashedPassword - Password hash to store, absent for email changes
-   * @returns The plain code to mail and the name the record holds
+   * Open or refresh the pending record for an address and purpose. Returns
+   * null when the address already had its allowance of mailed codes.
    */
   async createOrUpdatePendingRegistration(
     email: string,
-    name: string,
-    hashedPassword?: string,
-  ): Promise<PendingCodeData> {
-    const existingPending = await this.pendingRegistrationModel
-      .findOne({ email: { $eq: email } })
-      .select('+hashedPassword +hashedCode');
-
-    if (existingPending && existingPending.expiresAt > new Date()) {
-      const code = await this.refreshCode(existingPending);
-      this.logger.log(`Reissued code for pending registration of ${email}`);
-      return { code, name: existingPending.name };
+    purpose: PendingPurpose,
+    details: RegistrationDetails = {},
+  ): Promise<IssuedCode | null> {
+    const underCap = await this.mailCounterService.tryRecord(email, purpose);
+    if (!underCap) {
+      await this.spendCodeHashingTime();
+      return null;
     }
 
-    const code = generateVerificationCode();
-    const hashedCode = await this.hashService.hash(code);
-    const expiresAt = new Date(Date.now() + this.codeExpiresIn);
-
-    if (existingPending) {
-      existingPending.hashedPassword = hashedPassword;
-      existingPending.name = name;
-      existingPending.hashedCode = hashedCode;
-      existingPending.attempts = 0;
-      existingPending.expiresAt = expiresAt;
-      await existingPending.save();
-      this.logger.log(`Replaced expired pending registration for ${email}`);
-      return { code, name };
+    const stored = await this.store.createOrUpdate(email, purpose, details);
+    if (stored !== null) {
+      this.logger.log(
+        `Opened ${purpose} code requestId=${currentRequestId() ?? 'unknown'}`,
+      );
     }
-
-    await this.pendingRegistrationModel.create({
-      email,
-      hashedPassword,
-      name,
-      hashedCode,
-      attempts: 0,
-      expiresAt,
-    });
-
-    this.logger.log(`Created pending registration for ${email}`);
-    return { code, name };
+    return stored;
   }
 
   /**
-   * Atomically reserve one attempt, compare the code, then consume only the
-   * generation that was compared. A refresh that lands during the compare
-   * changes hashedCode, so the stale caller cannot delete the new record.
+   * Reissue the code of an existing pending record. Returns null when nothing
+   * was mailed, so every caller answers the generic reply.
+   */
+  async resendActivationCode(
+    email: string,
+    purpose: PendingPurpose,
+    details: RegistrationDetails = {},
+  ): Promise<IssuedCode | null> {
+    const underCap = await this.mailCounterService.tryRecord(email, purpose);
+    if (!underCap) {
+      await this.spendCodeHashingTime();
+      return null;
+    }
+
+    const stored = await this.store.resend(email, purpose, details);
+    if (stored !== null) {
+      this.logger.log(
+        `Resent ${purpose} code requestId=${currentRequestId() ?? 'unknown'}`,
+      );
+    }
+    return stored;
+  }
+
+  /**
+   * Reserve one attempt, then compare the code exactly once on every path.
+   * A wrong, missing, expired, exhausted or superseded code answers the one
+   * shared failure; the dummy comparison keeps the timing the same.
    *
    * @param email - Address the code was sent to
    * @param code - Code the caller submitted
-   * @returns The details the registration was created with
-   * @throws AppException NO_PENDING_REGISTRATION, ACTIVATION_CODE_EXPIRED,
-   * MAX_ATTEMPTS_EXCEEDED or ACTIVATION_CODE_INVALID
+   * @param purpose - Which kind of pending record the code must belong to
+   * @throws AppException ACTIVATION_CODE_INVALID for every failing state
    */
-  async verifyAndConsumeRegistration(
+  async verifyCode(
     email: string,
     code: string,
-  ): Promise<ConsumedRegistration> {
+    purpose: PendingPurpose,
+  ): Promise<ReservedCode> {
+    const now = this.clock.now();
     const reserved = await this.pendingRegistrationModel.findOneAndUpdate(
       {
         email: { $eq: email },
-        expiresAt: { $gt: new Date() },
+        purpose,
+        expiresAt: { $gt: now },
         attempts: { $lt: this.maxAttempts },
       },
       { $inc: { attempts: 1 } },
-      { new: true, select: '+hashedPassword +hashedCode' },
+      { new: true, select: '+hashedCode' },
     );
 
     if (!reserved) {
-      return await this.rejectUnreservable(email);
+      await this.pendingRegistrationModel.deleteOne({
+        email: { $eq: email },
+        purpose,
+        expiresAt: { $lte: now },
+      });
+      await this.hashService.spendComparison(code);
+      throw activationCodeInvalid();
     }
 
     const isCodeValid = await this.hashService.compare(
       code,
       reserved.hashedCode,
     );
-
     if (!isCodeValid) {
-      const remainingAttempts = Math.max(
-        0,
-        this.maxAttempts - reserved.attempts,
-      );
-
-      if (reserved.attempts >= this.maxAttempts) {
-        throw new AppException(
-          ErrorCode.MAX_ATTEMPTS_EXCEEDED,
-          'Maximum attempts exceeded. Please register again.',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
-
-      throw new AppException(
-        ErrorCode.ACTIVATION_CODE_INVALID,
-        `Invalid code. ${remainingAttempts} attempts remaining.`,
-        HttpStatus.BAD_REQUEST,
-        { remainingAttempts },
-      );
-    }
-
-    const consumed = await this.pendingRegistrationModel.findOneAndDelete({
-      _id: reserved._id,
-      hashedCode: reserved.hashedCode,
-      expiresAt: { $gt: new Date() },
-    });
-
-    if (!consumed) {
-      throw new AppException(
-        ErrorCode.ACTIVATION_CODE_INVALID,
-        'Invalid code. 0 attempts remaining.',
-        HttpStatus.BAD_REQUEST,
-        { remainingAttempts: 0 },
-      );
+      throw activationCodeInvalid();
     }
 
     return {
+      id: reserved._id,
       email: reserved.email,
-      name: reserved.name,
-      hashedPassword: reserved.hashedPassword,
+      purpose,
+      hashedCode: reserved.hashedCode,
+      userId: reserved.userId,
+      addressGeneration: reserved.addressGeneration,
     };
   }
 
   /**
-   * Regenerate the activation code of an existing pending registration.
-   * An expired record is dropped instead of revived, so the next registration
-   * starts from the details it was given.
+   * Delete exactly the generation that was compared, inside the caller's
+   * transaction. A resend or a new registration changes hashedCode, so the
+   * stale caller matches nothing and the transaction rolls back.
    *
-   * @param email - Address the code is mailed to
-   * @returns The plain code and the stored name, or null when nothing is pending
+   * @param reserved - The record returned by verifyCode
+   * @param session - Transaction the delete must join
+   * @returns True when this caller consumed the generation
    */
-  async resendActivationCode(email: string): Promise<PendingCodeData | null> {
-    const pending = await this.pendingRegistrationModel
-      .findOne({ email: { $eq: email } })
-      .select('+hashedCode');
-
-    if (!pending) {
-      return null;
-    }
-
-    if (new Date() > pending.expiresAt) {
-      await this.pendingRegistrationModel.deleteOne({ _id: pending._id });
-      return null;
-    }
-
-    const code = await this.refreshCode(pending);
-    this.logger.log(`Resent activation code for ${email}`);
-    return { code, name: pending.name };
+  async consumeCode(
+    reserved: ReservedCode,
+    session: ClientSession,
+  ): Promise<boolean> {
+    const consumed = await this.pendingRegistrationModel.findOneAndDelete(
+      {
+        _id: reserved.id,
+        purpose: reserved.purpose,
+        hashedCode: reserved.hashedCode,
+        expiresAt: { $gt: this.clock.now() },
+      },
+      { session },
+    );
+    return consumed !== null;
   }
 
   /**
-   * Put a new code on a pending record, leaving its name and password alone.
+   * Spend the one code-hash every path through the open and resend methods
+   * costs. The store hashes the code it opens; an over-cap answer never reaches
+   * the store, so it spends the same cost here. Without it an over-cap answer
+   * is milliseconds faster than one that opens a record, which tells an address
+   * with an account from a free one.
    */
-  private async refreshCode(
-    pending: PendingRegistrationDocument,
-  ): Promise<string> {
-    const code = generateVerificationCode();
-
-    pending.hashedCode = await this.hashService.hash(code);
-    pending.attempts = 0;
-    pending.expiresAt = new Date(Date.now() + this.codeExpiresIn);
-    await pending.save();
-
-    return code;
-  }
-
-  private async rejectUnreservable(email: string): Promise<never> {
-    const pending = await this.pendingRegistrationModel.findOne({
-      email: { $eq: email },
-    });
-
-    if (!pending) {
-      throw new AppException(
-        ErrorCode.NO_PENDING_REGISTRATION,
-        'No pending registration found',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (new Date() > pending.expiresAt) {
-      await this.pendingRegistrationModel.deleteOne({ _id: pending._id });
-      throw new AppException(
-        ErrorCode.ACTIVATION_CODE_EXPIRED,
-        'Activation code has expired',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    throw new AppException(
-      ErrorCode.MAX_ATTEMPTS_EXCEEDED,
-      'Maximum attempts exceeded. Please register again.',
-      HttpStatus.UNAUTHORIZED,
-    );
+  private async spendCodeHashingTime(): Promise<void> {
+    await this.hashService.hash(generateVerificationCode());
   }
 }

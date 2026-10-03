@@ -4,14 +4,16 @@ import { useCallback, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { z } from 'zod';
 import { FormProvider } from 'react-hook-form';
+import { FORM_STYLES } from '@/lib/config/form-styles';
 import { LogIn } from 'lucide-react';
 import { useFormWithValidation } from '@/hooks/useFormWithValidation';
 import { FormInput, FormPassword, FormRootError, SubmitButton } from '@/components/forms';
-import { zodEmail } from '@/lib/validations';
+import { zodEmail } from '@app/core';
 import { Link } from '@/i18n/navigation';
 import { useCompleteSignIn } from '@/modules/auth/hooks/useCompleteSignIn';
 import { useLoginMutation } from '@/modules/auth/store/authApi';
 import { translateAuthError } from '@/modules/auth/utils/authHelpers';
+import { translatableErrorCode } from '@/modules/auth/utils/errorCodeMessage';
 import { preventNavigationBlur } from '@/modules/auth/utils/preventNavigationBlur';
 import type { AuthMethodFormProps } from '../types';
 
@@ -36,6 +38,7 @@ type PasswordSignInData = z.infer<ReturnType<typeof createPasswordSignInSchema>>
 /** Email and password sign-in. Hands a challenged account to /auth/2fa. */
 export function PasswordSignInForm({ redirect }: AuthMethodFormProps) {
   const t = useTranslations('auth.login');
+  const tCodes = useTranslations('errors.codes');
   const [login, { isLoading }] = useLoginMutation();
   const completeSignIn = useCompleteSignIn();
 
@@ -58,16 +61,20 @@ export function PasswordSignInForm({ redirect }: AuthMethodFormProps) {
         const response = await login({ email: data.email, password: data.password }).unwrap();
         await completeSignIn(response, redirect);
       } catch (err) {
-        setError('root', { type: 'manual', message: translateAuthError(err, t) });
+        const code = translatableErrorCode(err, '');
+        setError('root', {
+          type: 'manual',
+          message: code ? tCodes(code) : translateAuthError(err, t),
+        });
       }
     },
-    [completeSignIn, login, redirect, setError, t],
+    [completeSignIn, login, redirect, setError, t, tCodes],
   );
 
   return (
     <FormProvider {...form}>
       <form
-        className="relative mx-auto max-w-xs"
+        className="mx-auto max-w-xs"
         onSubmit={handleSubmit(onSubmit)}
         data-testid="login-form"
         noValidate
@@ -77,6 +84,7 @@ export function PasswordSignInForm({ redirect }: AuthMethodFormProps) {
         <FormRootError id="login-error" error={errors.root?.message} testId="login-error" />
 
         <FormInput
+          containerClassName={FORM_STYLES.authField}
           name="email"
           type="email"
           label={t('email')}
@@ -94,7 +102,7 @@ export function PasswordSignInForm({ redirect }: AuthMethodFormProps) {
           autoComplete="current-password"
           disabled={isLoading}
           showToggle={false}
-          className="mt-5"
+          className={FORM_STYLES.authField}
           data-testid="login-password-input"
         />
 
@@ -102,15 +110,17 @@ export function PasswordSignInForm({ redirect }: AuthMethodFormProps) {
           {t('submit')}
         </SubmitButton>
 
-        <Link
-          href="/auth/forgot-password"
-          className="no-underline hover:underline text-primary text-md text-end absolute end-0 mt-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
-          data-testid="forgot-password-link"
-          aria-label={t('forgotPassword')}
-          onMouseDown={preventNavigationBlur}
-        >
-          {t('forgotPassword')}
-        </Link>
+        <div className="mt-2 flex justify-end">
+          <Link
+            href="/auth/forgot-password"
+            className="no-underline hover:underline text-primary text-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
+            data-testid="forgot-password-link"
+            aria-label={t('forgotPassword')}
+            onMouseDown={preventNavigationBlur}
+          >
+            {t('forgotPassword')}
+          </Link>
+        </div>
       </form>
     </FormProvider>
   );

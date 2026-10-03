@@ -1,5 +1,6 @@
-import { ConfigService } from '@nestjs/config';
 import { generateSync } from 'otplib';
+import { ConfigService } from '@nestjs/config';
+import { Types } from 'mongoose';
 import { TwoFactorVerificationService } from './two-factor-verification.service';
 import { TotpSecretCryptoService } from './totp-secret-crypto.service';
 import { generateTotpSecret } from '../utils/totp.util';
@@ -10,6 +11,10 @@ import {
   TOTP_STEP_MS,
   TOTP_STEP_SECONDS,
 } from '../constants/two-factor.constants';
+import {
+  createModelMock,
+  partialMock,
+} from '../../../common/testing/test-doubles.harness-spec';
 
 /**
  * Shared setup for the verification specs, which run against real codes.
@@ -40,7 +45,7 @@ export function codeAtOffset(secret: string, steps: number): string {
 }
 
 export interface MockUser {
-  _id: string;
+  _id: Types.ObjectId;
   twoFactor: {
     enabled: boolean;
     secret: { ciphertext: string; iv: string; tag: string } | null;
@@ -55,46 +60,51 @@ export interface MockUser {
 export interface VerificationHarness {
   service: TwoFactorVerificationService;
   secret: string;
-  user: MockUser;
+  user: UserDocument;
+  save: jest.Mock;
+  markModified: jest.Mock;
   userModel: { updateOne: jest.Mock };
 }
 
 export function createVerificationHarness(
   overrides: Partial<MockUser['twoFactor']> = {},
 ): VerificationHarness {
-  const crypto = new TotpSecretCryptoService({
-    get: <T>(key: string): T | undefined =>
-      key === 'twoFactor.encryptionKey' ? (KEY as T) : undefined,
-  } as unknown as ConfigService);
+  const crypto = new TotpSecretCryptoService(
+    new ConfigService({ 'twoFactor.encryptionKey': KEY }),
+  );
 
   const secret = generateTotpSecret();
-  const userModel = {
-    updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
-  };
+  const updateOne = jest.fn().mockResolvedValue({ modifiedCount: 1 });
+  const userModel = { updateOne };
+  const save = jest.fn().mockResolvedValue(undefined);
+  const markModified = jest.fn();
+
+  /** One document the service and the assertions both hold. */
+  const user = partialMock<UserDocument>({
+    _id: new Types.ObjectId('507f1f77bcf86cd799439011'),
+    twoFactor: {
+      enabled: true,
+      secret: crypto.encrypt(secret),
+      confirmedAt: new Date(),
+      recoveryCodes: [{ hash: hashRecoveryCode(RECOVERY_CODE), usedAt: null }],
+      lastUsedStep: null,
+      ...overrides,
+    },
+    save,
+    markModified,
+  });
 
   return {
-    service: new TwoFactorVerificationService(userModel as never, crypto),
+    service: new TwoFactorVerificationService(
+      createModelMock<
+        ConstructorParameters<typeof TwoFactorVerificationService>[0]
+      >(userModel),
+      crypto,
+    ),
     secret,
+    user,
+    save,
+    markModified,
     userModel,
-    user: {
-      _id: '507f1f77bcf86cd799439011',
-      twoFactor: {
-        enabled: true,
-        secret: crypto.encrypt(secret),
-        confirmedAt: new Date(),
-        recoveryCodes: [
-          { hash: hashRecoveryCode(RECOVERY_CODE), usedAt: null },
-        ],
-        lastUsedStep: null,
-        ...overrides,
-      },
-      save: jest.fn().mockResolvedValue(undefined),
-      markModified: jest.fn(),
-    },
   };
-}
-
-/** The mock user, typed the way the service expects it. */
-export function asDocument(user: MockUser): UserDocument {
-  return user as unknown as UserDocument;
 }

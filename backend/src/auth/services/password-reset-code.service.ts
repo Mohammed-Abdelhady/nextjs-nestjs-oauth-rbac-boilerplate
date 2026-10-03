@@ -7,9 +7,13 @@ import {
   PendingPasswordResetDocument,
 } from '../schemas/pending-password-reset.schema';
 import { HashService } from '../../common/services/hash.service';
+import { Clock } from '../../common/services/clock';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import { isMongoDuplicateKeyError } from '../../common/utils/mongo-error.util';
 import { generateVerificationCode } from '../utils/verification-code.util';
+import { INVALID_PASSWORD_RESET_CODE_MESSAGE } from '../constants/auth-messages';
+import { PENDING_STORE_PASSES } from '../constants/pending-store';
 
 export interface ReservedPasswordReset {
   id: Types.ObjectId;
@@ -30,6 +34,7 @@ export class PasswordResetCodeService {
     private readonly pendingPasswordResetModel: Model<PendingPasswordResetDocument>,
     private readonly hashService: HashService,
     private readonly configService: ConfigService,
+    private readonly clock: Clock,
   ) {
     this.codeExpiresIn = this.configService.get<number>(
       'activation.codeExpiresIn',
@@ -43,6 +48,11 @@ export class PasswordResetCodeService {
 
   /**
    * Store pending password reset code.
+   * A filtered atomic write updates an existing record; when it matches
+   * nothing there is no record, so the create path runs. A concurrent insert
+   * sends the attempt around once more, which updates the record that won. If
+   * a reset consumes that record in the window, the next pass creates it
+   * again, so the mailed code always has a record behind it.
    *
    * @param email - Address the code belongs to
    * @returns The plain code to mail
@@ -50,30 +60,39 @@ export class PasswordResetCodeService {
   async createOrUpdatePasswordReset(email: string): Promise<string> {
     const code = generateVerificationCode();
     const hashedCode = await this.hashService.hash(code);
-    const expiresAt = new Date(Date.now() + this.codeExpiresIn);
+    const expiresAt = new Date(this.clock.now().getTime() + this.codeExpiresIn);
+    const filter = { email: { $eq: email } };
+    const update = { $set: { hashedCode, attempts: 0, expiresAt } };
 
-    const existingReset = await this.pendingPasswordResetModel
-      .findOne({ email: { $eq: email } })
-      .select('+hashedCode');
+    for (let pass = 0; pass < PENDING_STORE_PASSES; pass += 1) {
+      const updated = await this.pendingPasswordResetModel.updateOne(
+        filter,
+        update,
+      );
+      if (updated.matchedCount > 0) {
+        this.logger.log(`Opened pending password reset for ${email}`);
+        return code;
+      }
 
-    if (existingReset) {
-      existingReset.hashedCode = hashedCode;
-      existingReset.attempts = 0;
-      existingReset.expiresAt = expiresAt;
-      await existingReset.save();
-      this.logger.log(`Updated pending password reset for ${email}`);
-      return code;
+      try {
+        await this.pendingPasswordResetModel.create({
+          email,
+          hashedCode,
+          attempts: 0,
+          expiresAt,
+        });
+        this.logger.log(`Opened pending password reset for ${email}`);
+        return code;
+      } catch (error) {
+        if (!isMongoDuplicateKeyError(error)) throw error;
+      }
     }
 
-    await this.pendingPasswordResetModel.create({
-      email,
-      hashedCode,
-      attempts: 0,
-      expiresAt,
-    });
-
-    this.logger.log(`Created pending password reset for ${email}`);
-    return code;
+    throw new AppException(
+      ErrorCode.INTERNAL_ERROR,
+      'Could not store the pending password reset',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 
   /**
@@ -83,8 +102,8 @@ export class PasswordResetCodeService {
    *
    * @param email - Address the code was sent to
    * @param code - Code the caller submitted
-   * @throws AppException NO_PENDING_PASSWORD_RESET, PASSWORD_RESET_CODE_EXPIRED,
-   * MAX_ATTEMPTS_EXCEEDED or PASSWORD_RESET_CODE_INVALID
+   * @throws AppException PASSWORD_RESET_CODE_INVALID for a wrong code, no
+   * pending record, an expired record or a locked record
    */
   async verifyPasswordReset(
     email: string,
@@ -93,7 +112,7 @@ export class PasswordResetCodeService {
     const reserved = await this.pendingPasswordResetModel.findOneAndUpdate(
       {
         email: { $eq: email },
-        expiresAt: { $gt: new Date() },
+        expiresAt: { $gt: this.clock.now() },
         attempts: { $lt: this.maxAttempts },
       },
       { $inc: { attempts: 1 } },
@@ -101,7 +120,7 @@ export class PasswordResetCodeService {
     );
 
     if (!reserved) {
-      return await this.rejectUnreservable(email);
+      return await this.rejectUnreservable(email, code);
     }
 
     const isCodeValid = await this.hashService.compare(
@@ -110,25 +129,7 @@ export class PasswordResetCodeService {
     );
 
     if (!isCodeValid) {
-      const remainingAttempts = Math.max(
-        0,
-        this.maxAttempts - reserved.attempts,
-      );
-
-      if (reserved.attempts >= this.maxAttempts) {
-        throw new AppException(
-          ErrorCode.MAX_ATTEMPTS_EXCEEDED,
-          'Maximum attempts exceeded. Please request a new code.',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
-
-      throw new AppException(
-        ErrorCode.PASSWORD_RESET_CODE_INVALID,
-        `Invalid code. ${remainingAttempts} attempts remaining.`,
-        HttpStatus.BAD_REQUEST,
-        { remainingAttempts },
-      );
+      throw this.invalidCode();
     }
 
     return { id: reserved._id, hashedCode: reserved.hashedCode };
@@ -146,48 +147,34 @@ export class PasswordResetCodeService {
     const deleted = await this.pendingPasswordResetModel.findOneAndDelete({
       _id: id,
       hashedCode,
-      expiresAt: { $gt: new Date() },
+      expiresAt: { $gt: this.clock.now() },
     });
     return deleted !== null;
   }
 
   /**
-   * Remove pending password reset after successful password update.
-   *
-   * @param email - Address the reset belonged to
+   * The one answer every password reset code step that cannot succeed returns.
+   * The attempt limit and the expiry check still decide whether a record can
+   * be used; only the answer they produce is shared.
    */
-  async clearPasswordReset(email: string): Promise<void> {
-    await this.pendingPasswordResetModel.deleteOne({
-      email: { $eq: email },
-    });
+  invalidCode(): AppException {
+    return new AppException(
+      ErrorCode.PASSWORD_RESET_CODE_INVALID,
+      INVALID_PASSWORD_RESET_CODE_MESSAGE,
+      HttpStatus.BAD_REQUEST,
+    );
   }
 
-  private async rejectUnreservable(email: string): Promise<never> {
-    const pending = await this.pendingPasswordResetModel.findOne({
+  private async rejectUnreservable(
+    email: string,
+    code: string,
+  ): Promise<never> {
+    await this.pendingPasswordResetModel.deleteOne({
       email: { $eq: email },
+      expiresAt: { $lte: this.clock.now() },
     });
 
-    if (!pending) {
-      throw new AppException(
-        ErrorCode.NO_PENDING_PASSWORD_RESET,
-        'No password reset request found',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (new Date() > pending.expiresAt) {
-      await this.pendingPasswordResetModel.deleteOne({ _id: pending._id });
-      throw new AppException(
-        ErrorCode.PASSWORD_RESET_CODE_EXPIRED,
-        'Password reset code has expired',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    throw new AppException(
-      ErrorCode.MAX_ATTEMPTS_EXCEEDED,
-      'Maximum attempts exceeded. Please request a new code.',
-      HttpStatus.UNAUTHORIZED,
-    );
+    await this.hashService.spendComparison(code);
+    throw this.invalidCode();
   }
 }

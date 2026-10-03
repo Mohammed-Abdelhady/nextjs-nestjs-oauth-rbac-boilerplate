@@ -18,8 +18,10 @@
   },
   "files": [
     "dist",
+    "docs",
     "template",
     "template.manifest.json",
+    "template.identity.json",
     "README.md"
   ],
   "repository": {
@@ -41,6 +43,7 @@
   "scripts": {
     "sync-template": "node scripts/sync-template.mjs",
     "prebuild": "node scripts/sync-template.mjs",
+    "prepack": "npm run build",
     "build": "tsdown",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -55,9 +58,11 @@
     "commander": "^15.0.0",
     "eslint": "^9.39.5",
     "globals": "^16.5.0",
+    "prettier": "^3.9.9",
     "tsdown": "^0.23.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.70.1",
-    "vitest": "^5.0.2"
+    "vitest": "^5.0.2",
+    "yaml": "^2.9.1"
   }
 }

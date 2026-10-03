@@ -8,7 +8,7 @@ export default defineConfig({
   format: ['esm'],
   platform: 'node',
   target: 'node22.12',
-  noExternal: ['@clack/prompts', 'commander'],
+  noExternal: ['@clack/prompts', 'commander', 'prettier', 'yaml'],
   // platform: 'node' would force .mjs. The package is type: module, so plain
   // .js keeps the bin path in package.json and the README simple.
   fixedExtension: false,

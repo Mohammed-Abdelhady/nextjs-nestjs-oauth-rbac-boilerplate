@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Dialog,
@@ -16,7 +16,12 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { useUpdateUserMutation } from '@/store/api/userApi';
 import { toast } from '@/lib/toast';
-import { parseApiError } from '@/lib/apiError';
+import { reportUnlessHandled } from '@/lib/requestFailure';
+import {
+  fieldElementId,
+  useLocalFieldTarget,
+  useServerFieldErrors,
+} from '@/hooks/useServerFieldErrors';
 
 interface EditUserDialogProps {
   userId: string | null;
@@ -26,11 +31,16 @@ interface EditUserDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface EditUserFormValues {
+  name: string;
+  email: string;
+}
+
 interface EditUserFormProps {
   initialName: string;
   initialEmail: string;
   isLoading: boolean;
-  onSubmit: (data: { name: string; email: string }) => Promise<boolean>;
+  onSubmit: (data: EditUserFormValues, onRejected: (error: unknown) => void) => Promise<boolean>;
   onClose: () => void;
 }
 
@@ -49,6 +59,14 @@ function EditUserForm({
   const [name, setName] = useState(initialName || '');
   const [email, setEmail] = useState(initialEmail || '');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const uid = useId();
+  const fieldId = (field: keyof EditUserFormValues) => fieldElementId(uid, field);
+  const errorId = (field: keyof EditUserFormValues) => `${fieldId(field)}-error`;
+
+  const applyServerFieldErrors = useServerFieldErrors(
+    useLocalFieldTarget(setErrors, uid),
+    isLoading,
+  );
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -76,7 +94,10 @@ function EditUserForm({
       return;
     }
 
-    const success = await onSubmit({ name: name.trim(), email: email.trim() });
+    const success = await onSubmit(
+      { name: name.trim(), email: email.trim() },
+      applyServerFieldErrors,
+    );
     if (success) {
       onClose();
     }
@@ -87,13 +108,13 @@ function EditUserForm({
       {/* Name Field */}
       <div className="space-y-2">
         <Label
-          htmlFor="edit-name"
+          htmlFor={fieldId('name')}
           className="text-xs uppercase tracking-widest text-muted-foreground"
         >
           {t('name')}
         </Label>
         <Input
-          id="edit-name"
+          id={fieldId('name')}
           type="text"
           placeholder={t('namePlaceholder')}
           value={name}
@@ -102,11 +123,13 @@ function EditUserForm({
             if (errors.name) setErrors((prev) => ({ ...prev, name: '' }));
           }}
           disabled={isLoading}
+          aria-invalid={Boolean(errors.name)}
+          aria-describedby={errors.name ? errorId('name') : undefined}
           className={errors.name ? 'border-red-500' : ''}
           data-testid="edit-user-name-input"
         />
         {errors.name && (
-          <p className="text-xs text-red-500" data-testid="name-error">
+          <p id={errorId('name')} className="text-xs text-red-500" data-testid="name-error">
             {errors.name}
           </p>
         )}
@@ -115,13 +138,13 @@ function EditUserForm({
       {/* Email Field */}
       <div className="space-y-2">
         <Label
-          htmlFor="edit-email"
+          htmlFor={fieldId('email')}
           className="text-xs uppercase tracking-widest text-muted-foreground"
         >
           {t('email')}
         </Label>
         <Input
-          id="edit-email"
+          id={fieldId('email')}
           type="email"
           placeholder={t('emailPlaceholder')}
           value={email}
@@ -130,11 +153,13 @@ function EditUserForm({
             if (errors.email) setErrors((prev) => ({ ...prev, email: '' }));
           }}
           disabled={isLoading}
+          aria-invalid={Boolean(errors.email)}
+          aria-describedby={errors.email ? errorId('email') : undefined}
           className={errors.email ? 'border-red-500' : ''}
           data-testid="edit-user-email-input"
         />
         {errors.email && (
-          <p className="text-xs text-red-500" data-testid="email-error">
+          <p id={errorId('email')} className="text-xs text-red-500" data-testid="email-error">
             {errors.email}
           </p>
         )}
@@ -201,7 +226,10 @@ export function EditUserDialog({
   const t = useTranslations('users.editUser');
   const [updateUser, { isLoading }] = useUpdateUserMutation();
 
-  const handleSubmit = async (data: { name: string; email: string }): Promise<boolean> => {
+  const handleSubmit = async (
+    data: EditUserFormValues,
+    onRejected: (error: unknown) => void,
+  ): Promise<boolean> => {
     if (!userId) return false;
 
     // Check if nothing changed
@@ -220,8 +248,8 @@ export function EditUserDialog({
       toast.success(t('success'));
       return true;
     } catch (error) {
-      const parsed = parseApiError(error);
-      toast.error(parsed.message || t('error'));
+      onRejected(error);
+      reportUnlessHandled(error);
       return false;
     }
   };

@@ -1,14 +1,19 @@
 import { NestFactory } from '@nestjs/core';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { Express } from 'express';
 import { useContainer } from 'class-validator';
 import { AppModule } from './app.module';
+import { reconcileStartupApplications } from './session/session.module';
+import { SessionCookieService } from './auth/services/session-cookie.service';
 import { ErrorResponse, ErrorDetails } from './common/dto/api-response.dto';
 import { DEVELOPMENT_CONTENT_SECURITY_POLICY } from './common/security/content-security-policy';
+import { browserCors } from './common/security/browser-cors';
+import { buildOpenApiDocument } from './common/swagger/build-openapi-document';
+import { createValidationPipe } from './common/pipes/validation-pipe.factory';
 
 /**
  * Bootstrap the NestJS application
@@ -46,24 +51,10 @@ async function bootstrap() {
     'CLIENT_URL',
     'http://localhost:3000',
   );
-  app.enableCors({
-    origin: clientUrl,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  });
+  app.enableCors(browserCors(clientUrl));
 
   // 3. Global Validation Pipe - Validate all incoming DTOs
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true, // Strip unknown properties
-      forbidNonWhitelisted: true, // Throw error if unknown properties
-      transform: true, // Transform to DTO instances
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-    }),
-  );
+  app.useGlobalPipes(createValidationPipe());
 
   // 5. Rate Limiting - Applied via ThrottlerGuard in AppModule
 
@@ -74,43 +65,14 @@ async function bootstrap() {
   // 7. Swagger/OpenAPI Documentation
   const swaggerEnabled = configService.get<boolean>('swagger.enabled', false);
   if (swaggerEnabled) {
-    const config = new DocumentBuilder()
-      .setTitle('FULL-MERN-AUTH-Boilerplate API')
-      .setDescription(
-        'Comprehensive authentication and user management API with OAuth support',
-      )
-      .setVersion('1.0')
-      .addTag('auth', 'Authentication endpoints (register, login, logout)')
-      .addTag('oauth', 'OAuth login through the configured providers')
-      .addTag('user', 'User profile and session management')
-      .addTag('admin', 'Admin user management endpoints')
-      .addTag('health', 'Health check endpoint')
-      .addBearerAuth(
-        {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          name: 'JWT-auth',
-          description: 'Enter JWT token',
-          in: 'header',
-        },
-        'JWT-auth',
-      )
-      .addCookieAuth(
-        'sid',
-        {
-          type: 'apiKey',
-          in: 'cookie',
-          name: 'sid',
-          description: 'Session cookie for authentication',
-        },
-        'session-auth',
-      )
-      .build();
-
-    const document = SwaggerModule.createDocument(app, config, {
-      extraModels: [ErrorResponse, ErrorDetails],
-    });
+    const sessionCookieService = app.get(SessionCookieService);
+    const document = SwaggerModule.createDocument(
+      app,
+      buildOpenApiDocument(sessionCookieService.name),
+      {
+        extraModels: [ErrorResponse, ErrorDetails],
+      },
+    );
     SwaggerModule.setup('api/docs', app, document);
 
     logger.log(`Swagger UI at http://localhost:${port}/api/docs`);
@@ -125,6 +87,8 @@ async function bootstrap() {
 
   // 9. Graceful Shutdown
   app.enableShutdownHooks();
+
+  await reconcileStartupApplications(app);
 
   // 10. Start Server
   await app.listen(port);

@@ -1,11 +1,7 @@
-import {
-  CallHandler,
-  ExecutionContext,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { CallHandler, Logger, NotFoundException } from '@nestjs/common';
 import { lastValueFrom, of, throwError } from 'rxjs';
 import { RequestLoggingInterceptor } from './request-logging.interceptor';
+import { createExecutionContextMock } from '../testing/test-doubles.harness-spec';
 
 describe('RequestLoggingInterceptor (X-19)', () => {
   let interceptor: RequestLoggingInterceptor;
@@ -15,8 +11,8 @@ describe('RequestLoggingInterceptor (X-19)', () => {
   const createContext = (
     statusCode: number,
     originalUrl = '/api/user/profile',
-  ): ExecutionContext =>
-    ({
+  ) =>
+    createExecutionContextMock({
       switchToHttp: () => ({
         getRequest: () => ({
           method: 'GET',
@@ -25,7 +21,7 @@ describe('RequestLoggingInterceptor (X-19)', () => {
         }),
         getResponse: () => ({ statusCode }),
       }),
-    }) as unknown as ExecutionContext;
+    });
 
   const handlerOf = (result: unknown): CallHandler => ({
     handle: () => of(result),

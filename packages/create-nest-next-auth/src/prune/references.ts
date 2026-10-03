@@ -1,6 +1,16 @@
 import { readFile } from 'node:fs/promises';
 import { extname, join, posix } from 'node:path';
-import { FRONTEND_ALIAS, FRONTEND_SOURCE, SOURCE_EXTENSIONS } from '../constants/index.js';
+import {
+  FRONTEND_ALIAS,
+  FRONTEND_SOURCE,
+  PACKAGE_MANIFEST,
+  ROOT_EXPORT,
+  SHARED_PACKAGE_ENTRY,
+  SHARED_PACKAGE_SPECIFIER,
+  SHARED_PACKAGES_ROOT,
+  SOURCE_EXTENSIONS,
+} from '../constants/index.js';
+import { isRecord } from '../manifest/read.js';
 import type { DanglingReference } from '../types.js';
 import { listFiles } from '../utils/fs.js';
 
@@ -26,14 +36,67 @@ function workspaceOf(importer: string): string {
   return importer.split('/')[0];
 }
 
+/** Export key (`.`, `./errors`) to the project path it points at, for one shared package. */
+type SharedExports = Map<string, string>;
+type SharedPackages = (name: string) => Promise<SharedExports | undefined>;
+
+/**
+ * Reads what each shared/<name> exports, once per name. A name with no
+ * manifest on disk is not a shared package, unless the pruner just deleted
+ * that manifest: then only the root export is known, by convention.
+ */
+function sharedPackages(root: string, deletedFiles: string[]): SharedPackages {
+  const loaded = new Map<string, Promise<SharedExports | undefined>>();
+
+  async function load(name: string): Promise<SharedExports | undefined> {
+    const directory = posix.join(SHARED_PACKAGES_ROOT, name);
+    const manifest = posix.join(directory, PACKAGE_MANIFEST);
+    const exported: SharedExports = new Map([
+      [ROOT_EXPORT, posix.join(directory, SHARED_PACKAGE_ENTRY)],
+    ]);
+    let declared: unknown;
+    try {
+      const parsed: unknown = JSON.parse(await readFile(join(root, manifest), 'utf8'));
+      declared =
+        typeof parsed === 'object' && parsed !== null ? Reflect.get(parsed, 'exports') : {};
+    } catch {
+      return deletedFiles.includes(manifest) ? exported : undefined;
+    }
+    if (typeof declared !== 'object' || declared === null) return exported;
+    for (const [key, target] of Object.entries(declared)) {
+      if (typeof target === 'string' && isSourceFile(target)) {
+        exported.set(key, withoutExtension(posix.join(directory, target)));
+      }
+    }
+    return exported;
+  }
+
+  return (name) => {
+    const known = loaded.get(name) ?? load(name);
+    loaded.set(name, known);
+    return known;
+  };
+}
+
 /**
  * Turns an import into a project path. Relative specifiers resolve against the
- * importer; `@/x` is the frontend alias for frontend/src/x, and `src/x` is the
- * baseUrl form inside a workspace. Anything else is a package name.
+ * importer; `@/x` is the frontend alias for frontend/src/x, `@app/<name>` and
+ * `@app/<name>/<subpath>` point at what shared/<name> exports under that key,
+ * and `src/x` is the baseUrl form inside a workspace. Anything else, a subpath
+ * the package does not export included, is a package name.
  */
-function resolveSpecifier(importer: string, specifier: string): string | undefined {
+async function resolveSpecifier(
+  importer: string,
+  specifier: string,
+  shared: SharedPackages,
+): Promise<string | undefined> {
   if (specifier.startsWith('.')) {
     return withoutExtension(posix.normalize(posix.join(posix.dirname(importer), specifier)));
+  }
+  const sharedPackage = SHARED_PACKAGE_SPECIFIER.exec(specifier);
+  if (sharedPackage !== null) {
+    const [, name, subpath] = sharedPackage;
+    return (await shared(name))?.get(`${ROOT_EXPORT}${subpath}`);
   }
   if (specifier.startsWith(FRONTEND_ALIAS)) {
     return withoutExtension(posix.join(FRONTEND_SOURCE, specifier.slice(FRONTEND_ALIAS.length)));
@@ -45,36 +108,53 @@ function resolveSpecifier(importer: string, specifier: string): string | undefin
 }
 
 /**
- * Reports imports that point at files the pruner deleted. A non-empty result
- * means the manifest claims a file belongs to one feature while shared code
- * still depends on it.
+ * Reports imports and package scripts that point at files the pruner deleted. A
+ * non-empty result means the manifest claims a file belongs to one feature or
+ * option while shared code still depends on it, or a script still runs it.
  */
 export async function findDanglingReferences(
   root: string,
   deletedFiles: string[],
 ): Promise<DanglingReference[]> {
   const deletedSources = deletedFiles.filter(isSourceFile).map(withoutExtension);
-  if (deletedSources.length === 0) return [];
-
   const byPath = new Map(deletedSources.map((path) => [path, path]));
   for (const path of deletedSources) {
     // An index file is imported through its directory.
     if (path.endsWith('/index')) byPath.set(path.slice(0, -'/index'.length), path);
   }
   const dangling: DanglingReference[] = [];
+  const shared = sharedPackages(root, deletedFiles);
+  const files = await listFiles(root);
 
-  for (const file of (await listFiles(root)).filter(isSourceFile)) {
+  for (const file of files.filter(isSourceFile)) {
     const lines = (await readFile(join(root, file), 'utf8')).split('\n');
 
-    lines.forEach((line, index) => {
+    for (const [index, line] of lines.entries()) {
       for (const match of line.matchAll(SPECIFIER)) {
         const specifier = match[1];
-        const resolved = resolveSpecifier(file, specifier);
+        const resolved = await resolveSpecifier(file, specifier, shared);
         const target = resolved === undefined ? undefined : byPath.get(resolved);
         if (target === undefined) continue;
         dangling.push({ file, line: index + 1, specifier, target });
       }
-    });
+    }
+  }
+
+  for (const file of files.filter((path) => path.endsWith('package.json'))) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(await readFile(join(root, file), 'utf8'));
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      throw new Error(`Could not parse ${file}: ${reason}`);
+    }
+    if (!isRecord(parsed) || !isRecord(parsed.scripts)) continue;
+    for (const [name, command] of Object.entries(parsed.scripts)) {
+      if (typeof command !== 'string') continue;
+      const target = deletedFiles.find((path) => command.includes(path));
+      if (target === undefined) continue;
+      dangling.push({ file, line: 1, specifier: name, target, script: name });
+    }
   }
 
   return dangling;

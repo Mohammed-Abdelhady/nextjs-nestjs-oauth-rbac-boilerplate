@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,28 +37,39 @@ function contrastRatio(rgb1, rgb2) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-function parseTokens(cssContent) {
-  function extractBlock(selector) {
-    const regex = new RegExp(selector + '\\s*\\{([^}]+)\\}', 's');
-    const match = cssContent.match(regex);
-    if (!match) return {};
-    const block = match[1];
-    const tokens = {};
-    const varRegex = /--([a-z0-9-]+)\s*:\s*([0-9.]+)\s+([0-9.]+)%\s+([0-9.]+)%/g;
-    let m;
-    while ((m = varRegex.exec(block)) !== null) {
-      tokens[m[1]] = [parseFloat(m[2]), parseFloat(m[3]), parseFloat(m[4])];
+const THEME_SELECTORS = { light: ':root', dark: '.dark' };
+const CSS_COMMENT = /\/\*[\s\S]*?\*\//g;
+const RULE_BLOCK = /([^{}]+)\{([^{}]*)\}/g;
+const HSL_TOKEN = /--([a-z0-9-]+)\s*:\s*([0-9.]+)\s+([0-9.]+)%\s+([0-9.]+)%/g;
+
+// A theme is every block whose selector is exactly the theme's, merged in
+// source order. `html.dark { color-scheme: dark; }` is not the token block.
+export function parseTokens(cssContent) {
+  const themes = { light: {}, dark: {} };
+
+  for (const [, prelude, body] of cssContent.replace(CSS_COMMENT, '').matchAll(RULE_BLOCK)) {
+    const selectors = prelude
+      .split(';')
+      .pop()
+      .split(',')
+      .map((selector) => selector.trim());
+
+    for (const [theme, selector] of Object.entries(THEME_SELECTORS)) {
+      if (!selectors.includes(selector)) continue;
+      for (const [, name, hue, saturation, lightness] of body.matchAll(HSL_TOKEN)) {
+        themes[theme][name] = [
+          Number.parseFloat(hue),
+          Number.parseFloat(saturation),
+          Number.parseFloat(lightness),
+        ];
+      }
     }
-    return tokens;
   }
 
-  return {
-    light: extractBlock(':root'),
-    dark: extractBlock('\\.dark'),
-  };
+  return themes;
 }
 
-function loadCss() {
+export function loadCss() {
   const globalsPath = path.resolve(__dirname, '../frontend/src/app/globals.css');
   let content = fs.readFileSync(globalsPath, 'utf8');
 
@@ -75,7 +86,9 @@ function loadCss() {
   return content;
 }
 
-const pairs = [
+// Form fields are filled with `background`, bordered with `input`, and sit on
+// either the page (`background`) or a card.
+export const CONTRAST_PAIRS = [
   { token: 'foreground', background: 'background', target: 4.5 },
   { token: 'foreground', background: 'card', target: 4.5 },
   { token: 'card-foreground', background: 'card', target: 4.5 },
@@ -92,6 +105,7 @@ const pairs = [
   { token: 'status-warning', background: 'background', target: 4.5 },
   { token: 'status-danger', background: 'background', target: 4.5 },
   { token: 'input', background: 'background', target: 3.0 },
+  { token: 'input', background: 'card', target: 3.0 },
   { token: 'ring', background: 'background', target: 3.0 },
 ];
 
@@ -109,7 +123,7 @@ function run() {
     );
     console.log('-'.repeat(68));
 
-    for (const { token, background, target } of pairs) {
+    for (const { token, background, target } of CONTRAST_PAIRS) {
       totalCount++;
       const tVal = tokens[token];
       const bgVal = tokens[background];
@@ -151,4 +165,10 @@ function run() {
   }
 }
 
-run();
+const invokedDirectly =
+  process.argv[1] !== undefined &&
+  pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url;
+
+if (invokedDirectly) {
+  run();
+}

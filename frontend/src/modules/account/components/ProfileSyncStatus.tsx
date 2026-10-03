@@ -8,7 +8,7 @@ import { RefreshCw, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/lib/toast';
-import { parseApiError } from '@/lib/apiError';
+import { reportUnlessHandled } from '@/lib/requestFailure';
 import { getRedirectPath } from '@/modules/auth/utils';
 import { startOAuthFlow } from '@/modules/oauth';
 import { useGetSyncStatusQuery, useInitiateProfileSyncMutation } from '../api';
@@ -42,10 +42,8 @@ export function ProfileSyncStatus() {
 
       startOAuthFlow(response.provider, getRedirectPath(pathname));
     } catch (error) {
-      toast.error(t('syncError'), {
-        description: parseApiError(error).message || t('syncErrorDescription'),
-      });
       setIsSyncing(false);
+      reportUnlessHandled(error);
     }
   };
 

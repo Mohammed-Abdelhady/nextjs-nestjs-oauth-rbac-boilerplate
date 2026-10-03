@@ -1,18 +1,19 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslations } from 'next-intl';
 import { toast } from '@/lib/toast';
+import { reportUnlessHandled } from '@/lib/requestFailure';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FormInput, SubmitButton } from '@/components/forms';
 import { useGetCurrentUserQuery, useUpdateProfileMutation } from '@/modules/auth/store';
-import { parseApiError } from '@/lib/apiError';
-import { zodName } from '@/lib/validations/string';
+import { useFormFieldTarget, useServerFieldErrors } from '@/hooks/useServerFieldErrors';
+import { zodName } from '@app/core';
 
 const createUpdateProfileSchema = (t: (key: string) => string) =>
   z.object({
@@ -48,6 +49,11 @@ export function UpdateProfileCard() {
       name: user?.name || '',
     },
   });
+  const formRef = useRef<HTMLFormElement>(null);
+  const applyServerFieldErrors = useServerFieldErrors(
+    useFormFieldTarget(form.setError, formRef),
+    isLoading,
+  );
 
   useEffect(() => {
     if (user?.name) {
@@ -65,8 +71,8 @@ export function UpdateProfileCard() {
       await updateProfile({ name: data.name }).unwrap();
       toast.success(t('success'));
     } catch (error) {
-      const parsed = parseApiError(error);
-      toast.error(parsed.message || t('error'));
+      applyServerFieldErrors(error);
+      reportUnlessHandled(error);
     }
   };
 
@@ -79,6 +85,7 @@ export function UpdateProfileCard() {
       <CardContent>
         <FormProvider {...form}>
           <form
+            ref={formRef}
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-4"
             data-testid="update-profile-form"

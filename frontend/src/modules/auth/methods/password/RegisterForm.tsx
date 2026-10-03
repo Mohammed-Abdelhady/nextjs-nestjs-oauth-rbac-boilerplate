@@ -4,57 +4,44 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { z } from 'zod';
 import { FormProvider } from 'react-hook-form';
+import { FORM_STYLES } from '@/lib/config/form-styles';
 import { useFormWithValidation } from '@/hooks/useFormWithValidation';
-import {
-  FormInput,
-  FormPassword,
-  FormRootError,
-  PasswordRules,
-  SubmitButton,
-} from '@/components/forms';
+import { useFormFieldTarget, useServerFieldErrors } from '@/hooks/useServerFieldErrors';
+import { translatableErrorCode } from '@/modules/auth/utils/errorCodeMessage';
+import { FormInput, FormRootError, SubmitButton } from '@/components/forms';
 import { useRegisterMutation } from '@/modules/auth/store/authApi';
-import { zodEmail, zodPassword, zodName } from '@/lib/validations';
+import { zodEmail } from '@app/core';
 import { UserPlus, LogIn } from 'lucide-react';
 import { IconLinkButton } from '@/components/ui/icon-link-button';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useAppDispatch } from '@/store/hooks';
+import { rememberRegistrationEmail } from '@/modules/auth/store/authSlice';
+import {
+  ACTIVATE_PATH,
+  LOGIN_PATH,
+  REDIRECT_PARAM,
+  AUTH_EMAIL_MAX_LENGTH,
+} from '@/modules/auth/constants/authMethods';
+import { getRedirectPath } from '@/modules/auth/utils/authHelpers';
+import { authPagePath } from '@/modules/auth/utils/signInRouting';
 import { toast } from '@/lib/toast';
-import { parseApiError } from '@/lib/apiError';
-import { AuthDivider } from '@/components/ui/auth-divider';
+import { AuthDivider } from '@/components/ui/auth-divider'; // feature:oauth-core
 import { OAuthButtons } from '@/modules/oauth'; // feature:oauth-core
-import { useAuthMethods } from '@/modules/auth/hooks/useAuthMethods';
+import { useAuthMethods } from '@/modules/auth/hooks/useAuthMethods'; // feature:oauth-core
 
 /**
  * Registration form validation schema using centralized validators
  */
 const createRegisterSchema = (t: (key: string) => string) =>
   z.object({
-    name: zodName({
-      required: true,
-      messages: {
-        required: t('errors.nameRequired'),
-        min: t('errors.nameMinLength'),
-        max: t('errors.nameMaxLength'),
-        pattern: t('errors.namePattern'),
-      },
-    }),
     email: zodEmail({
       required: true,
       messages: {
         required: t('errors.emailRequired'),
         invalid: t('errors.emailInvalid'),
       },
-    }),
-    password: zodPassword({
-      required: true,
-      min: 8,
-      messages: {
-        required: t('errors.passwordRequired'),
-        min: t('errors.passwordMinLength'),
-        uppercase: t('errors.passwordUppercase'),
-        lowercase: t('errors.passwordLowercase'),
-        number: t('errors.passwordNumber'),
-      },
-    }),
+    }).max(AUTH_EMAIL_MAX_LENGTH, t('errors.emailInvalid')),
   });
 
 type RegisterFormData = z.infer<ReturnType<typeof createRegisterSchema>>;
@@ -69,9 +56,12 @@ type RegisterFormData = z.infer<ReturnType<typeof createRegisterSchema>>;
 export function RegisterForm() {
   const t = useTranslations('auth.register');
   const tToast = useTranslations('toast');
+  const tCodes = useTranslations('errors.codes');
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const redirect = getRedirectPath(useSearchParams().get(REDIRECT_PARAM), '');
   const [register, { isLoading }] = useRegisterMutation();
-  const { methods } = useAuthMethods();
+  const { methods } = useAuthMethods(); // feature:oauth-core
   const hasOAuth = (methods?.oauth.length ?? 0) > 0; // feature:oauth-core
 
   // Memoize schema creation when translation function changes
@@ -81,9 +71,7 @@ export function RegisterForm() {
   const form = useFormWithValidation({
     schema: registerSchema,
     defaultValues: {
-      name: '',
       email: '',
-      password: '',
     },
     mode: 'onBlur',
   });
@@ -93,38 +81,43 @@ export function RegisterForm() {
     formState: { errors },
     setError,
   } = form;
+  const formRef = useRef<HTMLFormElement>(null);
+  const inFlight = useRef(false);
+  const applyServerFieldErrors = useServerFieldErrors(
+    useFormFieldTarget(setError, formRef),
+    isLoading,
+  );
 
   // Memoize submit handler to prevent recreating on every render
   const onSubmit = useCallback(
     async (data: RegisterFormData) => {
+      if (inFlight.current) return;
+      inFlight.current = true;
       try {
         const result = await register({
-          name: data.name,
           email: data.email,
-          password: data.password,
         }).unwrap();
 
         // Successful registration - show toast and redirect to activation
         toast.success(tToast('success.registrationSuccess'));
-        router.push(`/auth/activate?email=${encodeURIComponent(result.data.email)}`);
+        dispatch(rememberRegistrationEmail(result.data.email));
+        router.push(authPagePath(ACTIVATE_PATH, redirect));
       } catch (err: unknown) {
-        const parsed = parseApiError(err);
+        applyServerFieldErrors(err);
+        const code = translatableErrorCode(err, '');
         let errorMessage = t('errors.serverError');
 
-        if (parsed.code === 'EMAIL_ALREADY_EXISTS' || parsed.message?.includes('already')) {
-          errorMessage = t('errors.emailExists');
-        } else if (parsed.message) {
-          errorMessage = parsed.message;
-        }
+        if (code) errorMessage = tCodes(code);
 
         setError('root', {
           type: 'manual',
           message: errorMessage,
         });
-        toast.error(errorMessage);
+      } finally {
+        inFlight.current = false;
       }
     },
-    [register, router, setError, t, tToast],
+    [applyServerFieldErrors, dispatch, redirect, register, router, setError, t, tCodes, tToast],
   );
 
   return (
@@ -138,11 +131,15 @@ export function RegisterForm() {
         {t('title')}
       </h1>
 
+      <p className="text-base text-muted-foreground mt-4 text-center max-w-md">
+        {t('description')}
+      </p>
+
       <div className="w-full flex-1 mt-8">
         {/* Sign In Link */}
         <div className="flex flex-col items-center">
           <IconLinkButton
-            href="/auth/login"
+            href={authPagePath(LOGIN_PATH, redirect)}
             icon={LogIn}
             variant="secondary"
             testId="signin-link"
@@ -157,7 +154,7 @@ export function RegisterForm() {
         {hasOAuth && (
           <>
             <div className="my-6">
-              <OAuthButtons />
+              <OAuthButtons redirect={redirect || undefined} />
             </div>
             <AuthDivider />
           </>
@@ -167,6 +164,7 @@ export function RegisterForm() {
         {/* Registration Form */}
         <FormProvider {...form}>
           <form
+            ref={formRef}
             className="mx-auto max-w-xs relative"
             onSubmit={handleSubmit(onSubmit)}
             data-testid="register-form"
@@ -180,43 +178,18 @@ export function RegisterForm() {
               testId="register-error"
             />
 
-            {/* Name Input */}
-            <FormInput
-              name="name"
-              data-testid="register-name-input"
-              type="text"
-              label={t('name')}
-              placeholder={t('namePlaceholder')}
-              autoComplete="name"
-              disabled={isLoading}
-              autoFocus
-            />
-
             {/* Email Input */}
             <FormInput
+              containerClassName={FORM_STYLES.authField}
               name="email"
               data-testid="register-email-input"
               type="email"
               label={t('email')}
-              placeholder="name@example.com"
+              placeholder={t('emailPlaceholder')}
               autoComplete="email"
               disabled={isLoading}
-              className="mt-5"
+              autoFocus
             />
-
-            {/* Password Input */}
-            <FormPassword
-              name="password"
-              data-testid="register-password-input"
-              label={t('password')}
-              placeholder="••••••••"
-              autoComplete="new-password"
-              disabled={isLoading}
-              showToggle={true}
-              className="mt-5"
-            />
-
-            <PasswordRules name="password" className="mt-3" />
 
             {/* Submit Button */}
             <SubmitButton isLoading={isLoading} icon={UserPlus} testId="register-submit">

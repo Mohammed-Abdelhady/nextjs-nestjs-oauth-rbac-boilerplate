@@ -61,7 +61,7 @@ export function usePasskeySignIn(
       await completeSignIn(await verify(ceremony.value), redirect);
     } catch (err) {
       // The gate takes the button off the page once the refetch lands.
-      if (handleFeatureDisabled(err, false)) {
+      if (handleFeatureDisabled(err)) {
         return;
       }
       setError(tCodes(translatableErrorCode(err)));

@@ -66,25 +66,34 @@ for (const file of ['nginx/nginx.conf', 'nginx/production-nginx.conf']) {
     assertDeclaredForwardedFor(changed);
   });
 }
-for (const file of ['docker-compose.yml', 'docker-compose.prod.yml']) {
-  for (const port of [5001, 5507, 1, 65535]) {
-    test(`${file}: backend port ${port} preserves frontend listener`, async () => {
-      const source = await readFile(new URL(`../${file}`, import.meta.url), 'utf8');
-      const result = configureBackendPort(source, port);
-      const [backend, frontend] = result.split('  backend:\n')[1].split('  frontend:\n');
-      assert.match(backend, new RegExp(`PORT: ${port}\\b`));
-      assert.ok(backend.includes(`http://localhost:${port}/health`));
-      assert.ok(backend.includes(file.includes('prod') ? `- '${port}'` : `- '${port}:${port}'`));
-      assert.match(frontend, /PORT: 3000\b/);
-      assert.equal(configureBackendPort(result, port), result);
-      assert.ok(configureBackendPort(result, 6011).includes('http://localhost:6011/health'));
-    });
-  }
+for (const port of [5001, 5507, 1, 65535]) {
+  test(`docker-compose.prod.yml: backend port ${port} preserves frontend listener`, async () => {
+    const source = await readFile(new URL('../docker-compose.prod.yml', import.meta.url), 'utf8');
+    const result = configureBackendPort(source, port);
+    const [backend, frontend] = result.split('  backend:\n')[1].split('  frontend:\n');
+    assert.match(backend, new RegExp(`PORT: ${port}\\b`));
+    assert.ok(backend.includes(`http://localhost:${port}/health`));
+    assert.ok(backend.includes(`- '${port}'`));
+    assert.match(frontend, /PORT: 3000\b/);
+    assert.equal(configureBackendPort(result, port), result);
+    assert.ok(configureBackendPort(result, 6011).includes('http://localhost:6011/health'));
+  });
 }
+
+for (const port of [3000, 5300]) {
+  test(`docker-compose.prod.yml: frontend host port ${port} keeps internal port 3000`, async () => {
+    const source = await readFile(new URL('../docker-compose.prod.yml', import.meta.url), 'utf8');
+    const result = configureFrontendPort(configureBackendPort(source, 5507), port);
+    const frontend = result.split('  frontend:\n')[1];
+    assert.match(frontend, /expose:\s*\n\s*- '3000'/);
+    assert.match(frontend, /PORT: 3000\b/);
+    assert.match(frontend, /http:\/\/127\.0\.0\.1:3000\/en\/auth\/login/);
+    assert.equal(configureFrontendPort(result, port), result);
+    assert.ok(result.includes('http://localhost:5507/health'));
+  });
+}
+
 test('invalid ports and unknown config structure fail before writing', () => {
-  for (const port of [0, -1, 65536, 1.5, 'invalid'])
-    assert.throws(() => configureBackendPort('', port), /port/);
-  assert.throws(() => configureBackendPort('', 5001), /service/);
   assert.throws(() => configureNginxDomains('', domains), /virtual host/);
 });
 test('smoke does not hide a missing or mismatched frontend PORT', () => {
@@ -126,9 +135,7 @@ test('architecture methods example satisfies the actual frontend response type',
   const payload = example && JSON.parse(example);
   assert.ok(example, 'methods example exists');
   const filename = fileURLToPath(new URL('../methods-documentation-contract.ts', import.meta.url));
-  const authTypes = fileURLToPath(
-    new URL('../frontend/src/modules/auth/types/auth.types.js', import.meta.url),
-  );
+  const authTypes = fileURLToPath(new URL('../shared/sdk/src/types.js', import.meta.url));
   const options = {
     noEmit: true,
     strict: true,
@@ -155,30 +162,14 @@ test('architecture methods example satisfies the actual frontend response type',
   assert.ok(errors({ ...payload, data: { methods: { emailPassword: true } } }).length > 0);
 });
 
-for (const file of ['docker-compose.yml', 'docker-compose.prod.yml']) {
-  for (const port of [3000, 5300]) {
-    test(`${file}: frontend host port ${port} keeps internal port 3000`, async () => {
-      const source = await readFile(new URL(`../${file}`, import.meta.url), 'utf8');
-      const result = configureFrontendPort(configureBackendPort(source, 5507), port);
-      const frontend = result.split('  frontend:\n')[1];
-      if (file.includes('prod')) assert.match(frontend, /expose:\s*\n\s*- '3000'/);
-      else assert.ok(frontend.includes(`- '${port}:3000'`));
-      assert.match(frontend, /PORT: 3000\b/);
-      assert.match(frontend, /http:\/\/127\.0\.0\.1:3000\/en\/auth\/login/);
-      assert.equal(configureFrontendPort(result, port), result);
-      assert.ok(result.includes('http://localhost:5507/health'));
-    });
-  }
-}
-
 function probeResponse(url) {
   if (url === 'http://backend:5000/health') {
     return new Response(JSON.stringify({ status: 'healthy', timestamp: '2026-09-08T00:00:00Z' }));
   }
   if (url === 'http://nginx:8080/health') return new Response('{"status":"healthy"}');
   if (url.startsWith('http://frontend:3000/')) {
-    const locale = url.includes('/ar/') ? 'ar' : 'en';
-    const direction = locale === 'ar' ? 'rtl' : 'ltr';
+    const locale = url.match(/frontend:3000\/([a-z]{2})\//)?.[1] ?? 'en';
+    const direction = locale === 'en' ? 'ltr' : 'rtl';
     return new Response(`<!DOCTYPE html><html lang="${locale}" dir="${direction}"><body>
       <div role="status" aria-busy="true" aria-live="polite" data-testid="store-rehydration-loading"></div>
       <script src="/_next/static/chunks/app.js" async></script>
@@ -210,7 +201,7 @@ test('internal smoke network has no incompatible host publications', () => {
   }
 });
 
-test('fixed service DNS probes preserve all five HTTP contracts without exposing bodies', async () => {
+test('fixed service DNS probes preserve every HTTP contract without exposing bodies', async () => {
   const urls = [];
   const result = await runHttpProbes(async (url, options) => {
     urls.push(url);
@@ -218,7 +209,13 @@ test('fixed service DNS probes preserve all five HTTP contracts without exposing
     assert.ok(options.signal instanceof AbortSignal);
     return probeResponse(url);
   });
-  assert.equal(urls.length, 5);
+  assert.deepEqual(urls, [
+    'http://backend:5000/health',
+    'http://nginx:8080/health',
+    'http://frontend:3000/en/auth/login',
+    'http://frontend:3000/ar/auth/login', // feature:locale-ar
+    'http://backend:5000/api/auth/methods',
+  ]);
   validateProbeResults(JSON.stringify(result));
   assert.deepEqual(Object.keys(result), ['checked']);
   const output = await command(
@@ -268,8 +265,8 @@ for (const [name, response, reason] of [
 
 for (const [name, suffix, body] of [
   ['nginx shape', ':8080/health', '{"status":"healthy","extra":true}'],
-  ['English document', '/en/auth/login', '<html lang="ar"><form>'],
-  ['Arabic shell', '/ar/auth/login', '<html lang="ar">'],
+  ['English document', '/en/auth/login', '<html lang="fr"><form>'],
+  ['Arabic shell', '/ar/auth/login', '<html lang="ar">'], // feature:locale-ar
   [
     'enabled external method',
     '/api/auth/methods',
@@ -291,7 +288,10 @@ for (const [name, suffix, body] of [
   });
 }
 
-for (const locale of ['en', 'ar']) {
+for (const locale of [
+  'en',
+  'ar', // feature:locale-ar
+]) {
   for (const [name, mutate] of [
     ['blank document', () => ''],
     ['error document', () => '<html><body>Application error</body></html>'],

@@ -1,0 +1,31 @@
+{
+  "errors": {
+    "codes": {
+      "NATIVE_AUTH_DISABLED": "Mobile sign-in is turned off for now. Please try again later",
+      "NATIVE_TRANSACTION_EXPIRED": "This sign-in request has expired. Go back to the app and try again"
+    }
+  },
+  "auth": {
+    "nativeAuthorize": {
+      "pageTitle": "Approve mobile sign-in",
+      "title": "Continue to {application} on your phone",
+      "accountStatement": "You will be signed in to the mobile app with this account.",
+      "notYou": "Not you?",
+      "approve": "Continue",
+      "deny": "Cancel",
+      "returnNote": "After you continue, this page returns you to the app.",
+      "loading": "Checking this sign-in request",
+      "approving": "Approving this sign-in request",
+      "denying": "Cancelling this sign-in request",
+      "signingOut": "Signing out of this account",
+      "returning": "Returning to the app",
+      "reopen": "Open the app again",
+      "expiredTitle": "This sign-in request has expired",
+      "expiredBody": "Go back to the app and try again.",
+      "disabledTitle": "Mobile sign-in is off",
+      "errorTitle": "We could not finish this request",
+      "errorGeneric": "Something went wrong. Please try again.",
+      "retry": "Try again"
+    }
+  }
+}

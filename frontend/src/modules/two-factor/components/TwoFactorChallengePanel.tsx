@@ -59,7 +59,7 @@ export function TwoFactorChallengePanel({ redirect }: TwoFactorChallengePanelPro
         const response = await verify(toAnswer(data)).unwrap();
         await completeSignIn(response, redirect);
       } catch (err) {
-        handleFeatureDisabled(err, false);
+        handleFeatureDisabled(err);
         setError('root', { type: 'manual', message: tCodes(translatableErrorCode(err)) });
       }
     },

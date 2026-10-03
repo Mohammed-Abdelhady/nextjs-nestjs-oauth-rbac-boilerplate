@@ -5,6 +5,8 @@ import type { FieldPath, FieldValues } from 'react-hook-form';
 import { FormInput } from '@/components/forms';
 import { filterDigits } from '@/modules/auth/utils/digitFilter';
 import { TOTP_CODE_LENGTH } from '../constants';
+import { CODE_ENTRY_FONT_SIZE } from '@/lib/config/form-styles';
+import { cn } from '@/lib/utils';
 
 interface CodeFieldProps<TFieldValues extends FieldValues> {
   name: FieldPath<TFieldValues>;
@@ -41,7 +43,7 @@ export function CodeField<TFieldValues extends FieldValues>({
       disabled={disabled}
       autoFocus={autoFocus}
       onChange={onChange}
-      className="text-center text-2xl tracking-widest"
+      className={cn('text-center tracking-widest', CODE_ENTRY_FONT_SIZE)}
       data-testid={testId}
     />
   );

@@ -35,12 +35,7 @@ function registryWith(
   strategies: OAuthProviderStrategy[],
   config: Record<string, unknown> = {},
 ): OAuthRegistryService {
-  const configService = {
-    get: <T>(key: string, fallback?: T): T | undefined =>
-      (config[key] as T | undefined) ?? fallback,
-  } as unknown as ConfigService;
-
-  return new OAuthRegistryService(strategies, configService);
+  return new OAuthRegistryService(strategies, new ConfigService(config));
 }
 
 describe('OAuthRegistryService', () => {

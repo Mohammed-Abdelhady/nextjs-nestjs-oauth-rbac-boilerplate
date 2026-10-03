@@ -13,7 +13,7 @@ import {
   ApiOperation,
   ApiBody,
   ApiParam,
-  ApiBearerAuth,
+  ApiCookieAuth,
 } from '@nestjs/swagger';
 import { UserProfileService } from './services/user-profile.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -27,13 +27,14 @@ import { AccountLinkingService } from './services/account-linking.service';
 import { ProfileSyncService } from './services/profile-sync.service';
 import { AppException } from '../common/exceptions/app.exception';
 import { ErrorCode } from '../common/enums/error-code.enum';
+import { SESSION_SWAGGER_AUTH_NAME } from '../common/constants/session';
 
 /**
  * Controller for OAuth provider linking and profile synchronization.
  * All endpoints require authentication.
  */
 @ApiTags('user')
-@ApiBearerAuth('JWT-auth')
+@ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
 @Controller('user')
 export class UserProvidersController {
   constructor(

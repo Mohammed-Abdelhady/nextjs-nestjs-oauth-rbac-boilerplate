@@ -4,12 +4,12 @@ import { useCallback } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { useAppDispatch } from '@/store/hooks';
 import { authApi } from '../store/authApi';
-import type { User } from '../types/auth.types';
+import type { SignedInUser } from '../types/auth.types';
 import { signedInPath, twoFactorPath } from '../utils/signInRouting';
 
 export interface SignInOutcome {
   requiresTwoFactor: boolean;
-  user: User | null;
+  user: SignedInUser | null;
 }
 
 /** Finishes a sign-in the same way for the password, link and code flows. */

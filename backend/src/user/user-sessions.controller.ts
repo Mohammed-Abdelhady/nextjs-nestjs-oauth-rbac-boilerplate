@@ -12,14 +12,15 @@ import {
   ApiTags,
   ApiOperation,
   ApiParam,
-  ApiBearerAuth,
+  ApiCookieAuth,
 } from '@nestjs/swagger';
 import { UserSessionsService } from './services/user-sessions.service';
 import { RequestWithUser } from '../auth/guards/auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { SessionListData } from './dto/user-profile.dto';
 import { ApiResponse } from '../common/dto/api-response.dto';
-import { SessionCookieService } from '../auth/services/session-cookie.service';
+import { SESSION_SWAGGER_AUTH_NAME } from '../common/constants/session';
+import { requestSessionId } from '../session/utils/request-session';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 
 /**
@@ -27,13 +28,10 @@ import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
  * All endpoints require authentication.
  */
 @ApiTags('user')
-@ApiBearerAuth('JWT-auth')
+@ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
 @Controller('user')
 export class UserSessionsController {
-  constructor(
-    private readonly userSessionsService: UserSessionsService,
-    private readonly sessionCookieService: SessionCookieService,
-  ) {}
+  constructor(private readonly userSessionsService: UserSessionsService) {}
 
   /**
    * Get all active sessions for current user.
@@ -51,8 +49,10 @@ export class UserSessionsController {
     @CurrentUser('id') userId: string,
     @Req() request: RequestWithUser,
   ): Promise<ApiResponse<SessionListData>> {
-    const currentSessionToken = this.sessionCookieService.read(request) || '';
-    return this.userSessionsService.getSessions(userId, currentSessionToken);
+    return this.userSessionsService.getSessions(
+      userId,
+      requestSessionId(request),
+    );
   }
 
   /**
@@ -77,11 +77,10 @@ export class UserSessionsController {
     @Param('sessionId', ParseObjectIdPipe) sessionId: string,
     @Req() request: RequestWithUser,
   ): Promise<ApiResponse<{ message: string }>> {
-    const currentSessionToken = this.sessionCookieService.read(request) || '';
     return this.userSessionsService.revokeSession(
       userId,
       sessionId,
-      currentSessionToken,
+      requestSessionId(request),
     );
   }
 
@@ -101,10 +100,9 @@ export class UserSessionsController {
     @CurrentUser('id') userId: string,
     @Req() request: RequestWithUser,
   ): Promise<ApiResponse<{ revokedCount: number }>> {
-    const currentSessionToken = this.sessionCookieService.read(request) || '';
     return this.userSessionsService.revokeAllOtherSessions(
       userId,
-      currentSessionToken,
+      requestSessionId(request),
     );
   }
 }

@@ -1,8 +1,10 @@
 import { execFile } from 'node:child_process';
+import { writeFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
-import { existsSync, mkdirSync, readFileSync, symlinkSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, symlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { format, getFileInfo, resolveConfig } from 'prettier';
 import { listFiles } from '../src/utils/fs.js';
 import { stripFeatureMarkers } from '../src/prune/markers.js';
 
@@ -11,8 +13,17 @@ export const REPO_ROOT = dirname(dirname(PACKAGE_DIR));
 export const CLI = join(PACKAGE_DIR, 'dist', 'index.js');
 export const BUILD_TIMEOUT = 10 * 60 * 1000;
 
+const ROOT_MODULES = 'node_modules';
+const SHARED_SCOPE = '@app';
+const SHARED_DIRECTORY = 'shared';
+
 /** Workspaces whose node_modules the generated project borrows. */
-const LINKED_MODULES = ['node_modules', 'backend/node_modules', 'frontend/node_modules'];
+const LINKED_MODULES = [
+  'backend/node_modules',
+  'frontend/node_modules',
+  'shared/core/node_modules',
+  'shared/sdk/node_modules',
+];
 
 const TYPESCRIPT_BIN = join(REPO_ROOT, 'node_modules', 'typescript', 'bin', 'tsc');
 
@@ -61,15 +72,47 @@ export function buildCli(): Promise<CommandResult> {
   return runTool('npm', ['run', 'build'], { cwd: PACKAGE_DIR });
 }
 
-export function scaffold(target: string, features: string[]): Promise<CommandResult> {
+export function scaffold(
+  target: string,
+  features: string[],
+  flags: string[] = [],
+): Promise<CommandResult> {
   return runTool(process.execPath, [
     CLI,
     target,
+    '--yes',
     '--features',
     features.join(','),
+    ...flags,
     '--no-install',
     '--no-git',
   ]);
+}
+
+/** Installs a generated project the way a user would, without lifecycle scripts. */
+export function installProject(project: string): Promise<CommandResult> {
+  return runTool('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], {
+    cwd: project,
+  });
+}
+
+/**
+ * Builds the project's root node_modules the way an install would: every
+ * installed package comes from the repository, and each `@app/<name>` links to
+ * the project's own shared/<name>, pruned like the rest of the project.
+ */
+function linkRootModules(project: string): void {
+  const source = join(REPO_ROOT, ROOT_MODULES);
+  const target = join(project, ROOT_MODULES);
+  mkdirSync(join(target, SHARED_SCOPE), { recursive: true });
+
+  for (const entry of readdirSync(source)) {
+    if (entry !== SHARED_SCOPE) symlinkSync(join(source, entry), join(target, entry));
+  }
+  const shared = join(project, SHARED_DIRECTORY);
+  for (const name of existsSync(shared) ? readdirSync(shared) : []) {
+    symlinkSync(join(shared, name), join(target, SHARED_SCOPE, name), 'dir');
+  }
 }
 
 /**
@@ -78,6 +121,7 @@ export function scaffold(target: string, features: string[]): Promise<CommandRes
  * run offline anyway.
  */
 export function linkDependencies(project: string): void {
+  linkRootModules(project);
   for (const relative of LINKED_MODULES) {
     const source = join(REPO_ROOT, relative);
     // npm hoists to the root, so a workspace may have no node_modules of its own.
@@ -93,8 +137,54 @@ export function typecheck(project: string, workspace: string): Promise<CommandRe
   return runTool(process.execPath, [TYPESCRIPT_BIN, '--noEmit', '-p', workspace], { cwd: project });
 }
 
+/**
+ * Name of the temporary tsconfig the combinations write into each generated
+ * frontend. It is test scaffolding, never shipped with the template.
+ */
+export const PRUNED_SHARED_TSCONFIG = 'tsconfig.shared-pruned.json';
+
+/**
+ * Writes a frontend tsconfig that maps `@app/core` and `@app/sdk` straight to
+ * the generated project's own (pruned) `shared/*` sources, without going
+ * through node_modules. Extends the generated `frontend/tsconfig.json`;
+ * `paths` replaces the base mapping, so the `@/` alias is repeated here.
+ */
+export async function writePrunedSharedTsconfig(project: string): Promise<void> {
+  const config = {
+    extends: './tsconfig.json',
+    compilerOptions: {
+      paths: {
+        '@/*': ['./src/*'],
+        '@app/core': ['../shared/core/src/index.ts'],
+        '@app/core/*': ['../shared/core/src/*'],
+        '@app/sdk': ['../shared/sdk/src/index.ts'],
+      },
+    },
+  };
+  await writeFile(
+    join(project, 'frontend', PRUNED_SHARED_TSCONFIG),
+    `${JSON.stringify(config, null, 2)}\n`,
+    'utf8',
+  );
+}
+
+/** Typechecks the generated frontend against its own pruned `shared/*`. */
+export function typecheckFrontendWithPrunedShared(project: string): Promise<CommandResult> {
+  return runTool(
+    process.execPath,
+    [TYPESCRIPT_BIN, '--noEmit', '-p', `frontend/${PRUNED_SHARED_TSCONFIG}`],
+    { cwd: project },
+  );
+}
+
 /** Where the full selection has to match the repository, marker lines aside. */
-const COMPARED_DIRECTORIES = ['backend/src', 'backend/test', 'frontend/src'];
+const COMPARED_DIRECTORIES = [
+  'backend/src',
+  'backend/test',
+  'frontend/src',
+  'shared/core/src',
+  'shared/sdk/src',
+];
 const MAINTAINER_BROWSER_HELPERS = new Set([
   'backend/test/utils/browser-server.ts',
   'backend/test/utils/local-oauth.ts',
@@ -105,6 +195,16 @@ export interface MarkerDifference {
   reason: string;
 }
 
+/** Formats with the repository config, the way the CLI formats a generated tree. */
+async function formatLikeRepository(content: string, relative: string): Promise<string | null> {
+  const path = join(REPO_ROOT, relative);
+  const info = await getFileInfo(path);
+  if (info.inferredParser === null) return null;
+
+  const config = await resolveConfig(path);
+  return format(content, { ...config, filepath: path });
+}
+
 /**
  * Compares a project scaffolded with everything selected against the
  * repository: retained files differ only by markers, and the two maintainer
@@ -113,9 +213,10 @@ export interface MarkerDifference {
 export async function compareWithRepository(
   project: string,
   featureIds: string[],
+  markerIds: string[],
 ): Promise<MarkerDifference[]> {
   const kept = new Set(featureIds);
-  const known = new Set(featureIds);
+  const known = new Set(markerIds);
   const differences: MarkerDifference[] = [];
 
   for (const directory of COMPARED_DIRECTORIES) {
@@ -127,7 +228,9 @@ export async function compareWithRepository(
         continue;
       }
       const source = readFileSync(join(REPO_ROOT, relative), 'utf8');
-      const expected = stripFeatureMarkers(source, relative, kept, known).content;
+      const stripped = stripFeatureMarkers(source, relative, kept, known).content;
+      const formatted = await formatLikeRepository(stripped, relative);
+      const expected = formatted ?? stripped;
 
       let generated: string;
       try {

@@ -40,15 +40,21 @@ Create a `.env` file in the backend directory:
 
 ```bash
 # backend/.env
-MONGO_URI=mongodb://localhost:27017/authboiler
+MONGO_URI=mongodb://localhost:27017/authboiler?replicaSet=rs0
 NODE_ENV=development
 ```
 
 Or use the default connection string:
 
 ```
-mongodb://localhost:27017/authboiler
+mongodb://localhost:27017/authboiler?replicaSet=rs0
 ```
+
+<!-- feature:docker:start -->
+
+When the backend runs on the host and MongoDB runs in Docker Compose, use `MONGO_URI=mongodb://USER:PASS@localhost:27017/authboiler?authSource=admin&directConnection=true`.
+The replica set advertises `mongodb:27017`, which the host cannot resolve.
+<!-- feature:docker:end -->
 
 ### 2. Install Dependencies
 
@@ -61,15 +67,31 @@ npm install
 
 ### 3. Start MongoDB
 
-Ensure MongoDB is running:
+<!-- feature:docker:start -->
+
+With Docker Compose:
 
 ```bash
-# Using Docker
 docker-compose up -d mongodb
-
-# Or local installation
-mongod
 ```
+
+Or start a local single-node replica set:
+<!-- feature:docker:end -->
+
+```bash
+mkdir -p ./mongodb-data
+mongod --replSet rs0 --dbpath ./mongodb-data
+```
+
+`mongod` runs in the foreground, so leave it running and, once, in a second
+shell:
+
+```bash
+mongosh --eval "rs.initiate()"
+```
+
+Sign-in runs in a transaction, so the server has to be a replica set; a
+standalone `mongod` refuses transactions.
 
 ---
 
@@ -299,12 +321,22 @@ Error: connect ECONNREFUSED 127.0.0.1:27017
 # Check if MongoDB is running
 ps aux | grep mongod
 
-# Start MongoDB
-mongod
+# Start a single-node replica set (sign-in uses transactions)
+mkdir -p ./mongodb-data
+mongod --replSet rs0 --dbpath ./mongodb-data
+# then, in a second terminal, once:
+mongosh --eval "rs.initiate()"
+```
 
-# Or using Docker
+<!-- feature:docker:start -->
+
+Or start it with Docker:
+
+```bash
 docker-compose up -d mongodb
 ```
+
+<!-- feature:docker:end -->
 
 #### Migration State Desync
 

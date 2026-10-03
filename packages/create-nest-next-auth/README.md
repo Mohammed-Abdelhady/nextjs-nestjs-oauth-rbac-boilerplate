@@ -22,17 +22,25 @@ directory and the `name` in the generated root `package.json`. The directory
 must not exist, or must be empty. With `--yes` and no directory the CLI uses
 `my-app`.
 
-| Option             | What it does                                      |
-| ------------------ | ------------------------------------------------- |
-| `-y, --yes`        | Take the default methods and skip the prompts     |
-| `--features a,b,c` | Use these feature ids and skip the feature prompt |
-| `--no-install`     | Skip `npm install`                                |
-| `--no-git`         | Skip `git init` and the first commit              |
-| `-v, --version`    | Print the CLI version                             |
+| Option             | What it does                                                         |
+| ------------------ | -------------------------------------------------------------------- |
+| `-y, --yes`        | Take the defaults and skip the prompts                               |
+| `--features a,b,c` | Use these feature ids and skip the feature prompt                    |
+| `--targets a,b,c`  | Client ids; only `web` is available today                            |
+| `--database <id>`  | Database id; only `mongodb` is available today                       |
+| `--preset <id>`    | Apply a preset: `minimal`, `standard`, `everything`                  |
+| `--config <file>`  | JSON file with the same selection keys                               |
+| `--locales <list>` | Locale ids; `en` is required, `en,ar` adds Arabic                    |
+| `--no-docker`      | Leave out the Docker files and the commands that run them            |
+| `--no-production`  | Leave out nginx, the production compose file and the production docs |
+| `--dry-run`        | Print the resolved plan and write nothing                            |
+| `--no-install`     | Skip `npm install`                                                   |
+| `--no-git`         | Skip `git init` and the first commit                                 |
+| `-v, --version`    | Print the CLI version                                                |
 
-Without `--yes` or `--features` the CLI asks for a directory and shows the
-methods grouped by kind. It needs a terminal for that; in CI, pass a directory
-plus `--yes` or `--features`.
+Without `--yes`, `--features`, `--targets`, `--database`, `--preset` or `--config`
+the CLI asks for a directory and shows the methods grouped by kind. It needs a
+terminal for that.
 
 Feature ids: `email-password`, `magic-link`, `totp`, `passkeys`, and the
 providers `google`, `github`, `facebook`, `microsoft`, `apple`, `discord`,
@@ -43,6 +51,52 @@ in `oauth-core`, which is not offered on its own.
 npx create-nest-next-auth my-app --features email-password,google --no-install
 ```
 
+### Ids and exit codes
+
+An unknown id, or an id that is not available yet, in `--features`, `--targets`,
+`--database`, `--locales`, `--preset` or the config file stops the run with exit
+code 2 before anything is written or asked. This replaces the older behaviour
+where an unknown `--features` id was skipped with a warning. Other usage errors
+(a bad flag value, a missing or invalid config file, a wrong type, an unknown
+key) also exit 2. Exit 1 is for a run that failed after scaffolding, such as a
+leftover import. Exit 3 means the installed package itself is damaged, for
+example a missing or malformed identity file or package manifest. Reinstall it
+and run again.
+
+### Config file
+
+`--config` reads a JSON object with these keys, all optional:
+
+```json
+{
+  "targets": ["web"],
+  "database": "mongodb",
+  "features": ["email-password", "google"],
+  "locales": ["en", "ar"],
+  "docker": true,
+  "production": true,
+  "preset": "standard"
+}
+```
+
+A flag overrides the config file, the config file overrides the preset, and the
+preset overrides the manifest defaults. A UTF-8 byte order mark is accepted and
+stripped.
+
+### Presets
+
+- `minimal`: `web`, `email-password`, no options.
+- `standard` (the default): `web`, the default features, every option.
+- `everything`: every available client, feature and option.
+
+A preset never makes an unavailable id available. Planned targets, databases and
+options stay as the manifest defines them.
+
+### Dry run
+
+`--dry-run` resolves the selection, prints the summary and exits 0 without
+copying, pruning, installing or committing anything.
+
 npm is the only package manager for now. The boilerplate uses npm workspaces and
 ships an npm lockfile. The CLI notices when you launch it with pnpm, yarn or bun
 and says it is using npm anyway.
@@ -52,19 +106,30 @@ and says it is using npm anyway.
 1. Copies the bundled `template/` into the target directory and restores the
    file names npm strips from a tarball (`.gitignore`, `package-lock.json`).
 2. Sets the `name` in the root `package.json`.
-3. Deletes the `files` and `docs` of every method you did not pick, plus
-   `core.alwaysRemoveFiles`.
-4. Deletes the lines and blocks shared files marked for those methods, then
-   takes the marker comments off the lines that stay.
+3. Deletes the `files` and `docs` of every method and option you did not pick,
+   plus `core.alwaysRemoveFiles`.
+4. Deletes the lines and blocks shared files marked for those methods and
+   options, then takes the marker comments off the lines that stay.
 5. Removes the env lines those methods own from `backend/.env.example`,
    `.env.docker.example` and `frontend/.env.example`, including the comment
    above a line when it names the method. An env var kept by another selected
    method stays.
 6. Drops list items and table rows that link to a deleted doc.
 7. Writes `AUTH_FEATURES=<ids>` into `backend/.env.example`.
-8. Greps the result for imports of deleted files. Any hit is printed with
-   `file:line` and the CLI exits 1, leaving the tree in place.
-9. Runs `git init` and one commit, then `npm install`.
+8. Removes the root scripts that run a deleted file, strips deleted files from
+   `node --test` lists, drops dependabot docker entries whose Dockerfile is gone
+   and removes the catalogue keys an option owns.
+9. Formats every file it changed with the generated project's own prettier
+   configuration, so a fresh scaffold passes its own lint.
+10. Greps the result for imports and scripts that point at deleted files. Any
+    hit is printed with `file:line` and the CLI exits 1, leaving the tree in
+    place.
+11. Writes `.create-nest-next-auth.json` into the project root. It records the
+    installer name and version, a SHA-256 of the template content the project
+    was generated from, and the resolved selection: clients, database,
+    features, options and locales. It holds no secrets, no paths and no
+    machine names, so keep it committed with the project.
+12. Runs `git init` and one commit, then `npm install`.
 
 Git runs before the install on purpose. The boilerplate installs husky hooks
 during `npm install`, and those hooks would run lint-staged over the whole tree
@@ -76,20 +141,81 @@ and the markers; the runtime switches are the `*_ENABLED` variables next to it.
 ## The manifest
 
 `template.manifest.json` lives at the repository root and is copied next to
-`template/` when the package is built. It maps each sign-in method to the files
-that exist only for it.
+`template/` when the package is built. Version 2 maps five dimensions: `targets`
+(clients), `shared` modules, `databases`, `options` and `features` (sign-in
+methods), plus `presets`. A version 1 file still loads and is read as version 2
+with `web`, `mongodb` and no options.
 
 ```json
 {
+  "version": 2,
+  "targets": {
+    "web": { "label": "Web app (Next.js)", "default": true, "files": ["frontend/**"] },
+    "native-expo": {
+      "label": "Mobile app, Expo",
+      "default": false,
+      "status": "planned",
+      "requires": { "shared": ["native-core"], "targets": [] },
+      "needsSignInSite": true
+    }
+  },
+  "shared": {
+    "native-core": { "files": ["mobile/core/**"], "workspaces": ["mobile/core"] }
+  },
+  "databases": {
+    "mongodb": { "label": "MongoDB", "default": true, "files": [], "envVars": ["MONGO_URI"] },
+    "postgres": { "label": "PostgreSQL", "default": false, "status": "planned" }
+  },
+  "options": {
+    "docker": {
+      "label": "Docker files",
+      "default": true,
+      "files": [
+        "docker-compose.yml",
+        "backend/Dockerfile",
+        "frontend/Dockerfile",
+        ".dockerignore",
+        ".env.docker.example"
+      ],
+      "catalogueKeys": []
+    },
+    "production": {
+      "label": "Production nginx and compose",
+      "default": true,
+      "requires": ["docker"],
+      "files": ["nginx/**", "docker-compose.prod.yml", "docs/deployment.md"],
+      "catalogueKeys": []
+    },
+    "locale-ar": {
+      "label": "Arabic locale",
+      "default": true,
+      "files": ["frontend/src/i18n/messages/**/*.ar.json"],
+      "catalogueKeys": [
+        {
+          "path": "frontend/src/i18n/messages/en.json",
+          "keys": ["common.switchToArabic"]
+        }
+      ]
+    }
+  },
+  "presets": {
+    "minimal": { "targets": ["web"], "features": ["email-password"], "options": [] },
+    "standard": {
+      "targets": ["web"],
+      "features": "defaults",
+      "options": ["docker", "production", "locale-ar"]
+    },
+    "everything": { "targets": "available", "features": "available", "options": "available" }
+  },
   "features": {
     "google": {
       "label": "Google",
       "description": "Sign in with a Google account.",
       "kind": "oauth",
       "default": true,
-      "files": ["backend/src/auth/strategies/google-oauth.strategy.ts"],
+      "files": ["backend/src/auth/oauth/strategies/google-oauth.strategy.ts"],
       "envVars": ["OAUTH_GOOGLE_CLIENT_ID"],
-      "requires": [],
+      "requires": ["oauth-core"],
       "docs": ["docs/setup-google-oauth.md"]
     }
   },
@@ -97,85 +223,56 @@ that exist only for it.
 }
 ```
 
-| Field         | Meaning                                                                                                                      |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `label`       | Shown in the prompt                                                                                                          |
-| `description` | The hint next to the label                                                                                                   |
-| `kind`        | `credential`, `oauth`, `second-factor`, `passwordless`, or `hidden` for an entry another feature requires; groups the prompt |
-| `default`     | Preselected in the prompt and picked by `--yes`                                                                              |
-| `files`       | Globs, relative to the project root, for files only this method needs                                                        |
-| `envVars`     | Env var names stripped from the examples when the method is dropped                                                          |
-| `requires`    | Other feature ids pulled in with this one                                                                                    |
-| `docs`        | Markdown files deleted with the method, along with links to them                                                             |
-| `status`      | `planned` hides the entry from the prompt; omit it for a working method                                                      |
+| Field           | Meaning                                                                                                                      |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `label`         | Shown in the prompt                                                                                                          |
+| `description`   | The hint next to the label                                                                                                   |
+| `kind`          | `credential`, `oauth`, `second-factor`, `passwordless`, or `hidden` for an entry another feature requires; groups the prompt |
+| `default`       | Preselected in the prompt and picked by `--yes`                                                                              |
+| `files`         | Globs, relative to the project root, for files only this method needs                                                        |
+| `envVars`       | Env var names stripped from the examples when the method is dropped                                                          |
+| `requires`      | Other feature ids pulled in with this one                                                                                    |
+| `docs`          | Markdown files deleted with the method, along with links to them                                                             |
+| `catalogueKeys` | For an option: catalogue paths and dotted keys removed when it is off                                                        |
+| `status`        | `planned` hides the entry from the prompt and from `--features`; omit it for a working method                                |
+
+`targets`, `databases` and `options` share `label`, `default` and `status`. A
+target also has `files`, `workspaces`, `envFiles`, `requires` (with `shared` and
+`targets` lists) and `needsSignInSite`. A database has `files`, `envVars` and
+`composeServices`. An option has `files`, `requires`, `docs` and
+`catalogueKeys`.
+
+A preset says which ids to start from. Each field is a list of ids, `"available"`
+for every available id, or `"defaults"` for the manifest defaults.
 
 Globs support `?`, `*` and `**`. A path may not start with `/` or contain `..`.
 
-Planned entries exist so the roadmap is visible in one place. They are never
-offered and their files, if any are ever listed, are removed from every
-generated project.
+`status: "planned"` marks an id the manifest knows but the CLI does not offer
+yet. A planned id is never prompted and is an error if a flag or the config file
+names it. Planned targets, databases and options do not list files; the change
+that makes one available adds its files at the same time. A planned database or
+option still has a fixed state, its `default`. Asking for that same state is
+accepted, and asking for the opposite is an error. All three options ship today:
+`docker`, `production` and `locale-ar` each list the files they own, and turning
+one off removes those files, its markers and its root scripts.
 
-A `hidden` entry is never shown and never a default. It arrives through another
-feature's `requires`, which is how `oauth-core` follows any provider.
+Options own their lines the same way features do: a `// feature:docker` marker,
+a markdown `<!-- feature:docker:start -->` block, or a root `package.json`
+script that runs Docker. `production` requires `docker`; asking for
+`--no-docker` while production is still on is a usage error, not a silent drop.
+
+Turning Arabic off removes the `ar` locale, the Arabic catalogues and their
+tests. The `rtl:` utility variants, the direction provider and the `lint:rtl`
+direction-safe check stay, because the English UI still uses them; the option is
+about the language, not about stripping direction support.
+
+A `hidden` feature is never shown, never a default and cannot be requested by
+id. It arrives through another feature's `requires`, which is how `oauth-core`
+follows any provider.
 
 ## Markers
 
-Deleting a method's files is not enough: the module that registers it, the page
-that renders it and the barrel that re-exports it all live in shared files. Those
-lines carry a marker naming the feature they belong to, and the CLI deletes them
-for a method that was not picked. The markers of the methods that stay are
-stripped, so a generated project carries none.
-
-```ts
-import { PasskeysModule } from './auth/passkeys/passkeys.module'; // feature:passkeys
-
-// feature:totp:start
-import {
-  TwoFactorChallenge,
-  TwoFactorChallengeSchema,
-} from './two-factor/schemas/two-factor-challenge.schema';
-// feature:totp:end
-```
-
-Rules:
-
-- `// feature:<id>` at the end of a line marks that one line.
-- `// feature:<id>:start` and `// feature:<id>:end`, each on a line of its own,
-  mark everything between them. A block marker may not share a line with code.
-- In JSX use `{/* feature:<id> */}` and `{/* feature:<id>:start */}` /
-  `{/* feature:<id>:end */}`. Both forms work in any file; the JSX form is there
-  for places where `//` would land inside markup.
-- Several ids on one marker, `// feature:totp,passkeys`, mean **any of them**:
-  the line stays if at least one is selected. For **all of them**, nest blocks.
-- Blocks nest. The `:end` has to name the block it closes.
-- Every id has to exist in the manifest, and a marker that names something else
-  fails the run with the file and line. That is on purpose: a typo would
-  otherwise delete the line from every project.
-- Markers are read in `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs` and `.cjs` files.
-  JSON and markdown are left alone.
-
-Mark the smallest thing that compiles on its own. An import that only one method
-uses, the provider line in a module, the JSX element, the assertion in a spec.
-Where removing a line would leave an unused variable or an empty block, mark the
-variable and the block too, or move the shared part out of the feature's reach,
-the way `TWO_FACTOR_CLIENT_PATH` sits in `common/constants/client-paths.ts`.
-
-### Adding a method
-
-1. Land the code in the boilerplate, keeping everything the method owns inside
-   its own directory.
-2. Add the entry, listing every file that belongs to that method alone and every
-   env var it reads.
-3. Mark the lines shared files needed for it.
-4. Add the combination to `test/combinations.slow.test.ts` and run
-   `npm run test:combinations -w packages/create-nest-next-auth`. It scaffolds a
-   project per combination and typechecks both workspaces, and it checks that a
-   project with everything selected matches the repository with the markers
-   taken off.
-
-The reference check is the other honest signal. If dropping a method leaves an
-import pointing at a deleted file, either the file is shared and does not belong
-in `files`, or the line needed a marker.
+Marker rules, and how to add a method, live in [docs/markers.md](docs/markers.md).
 
 ## Maintainer notes
 
@@ -200,7 +297,10 @@ The full-feature browser suite is maintainer tooling. Generated projects omit `f
 `prebuild` runs `scripts/sync-template.mjs`, which copies the repository into
 `template/` while skipping `node_modules`, `.git`, `dist`, `.next`, `out`,
 `coverage`, logs, real `.env` files, `packages/`, and maintainer folders
-(`.hyperflow`, `.claude`, `openspec`). Build before publishing; a stale or missing
+(`.hyperflow`, `.claude`, `openspec`). The same script writes
+`template.identity.json` beside `template/`: the SHA-256 of the shipped file
+list, contents and executable bits, which every generated project records in
+`.create-nest-next-auth.json`. Build before publishing; a stale or missing
 `template/` produces a package that cannot scaffold anything.
 
 Publish from the package directory after a version bump: `npm run build -w

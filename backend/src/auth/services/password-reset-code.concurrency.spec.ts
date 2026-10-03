@@ -1,42 +1,58 @@
 import { ConfigService } from '@nestjs/config';
+import { getModelToken } from '@nestjs/mongoose';
+import { Test, TestingModule } from '@nestjs/testing';
 import { Connection, createConnection, Model } from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { PasswordResetCodeService } from './password-reset-code.service';
 import {
   PendingPasswordReset,
-  PendingPasswordResetDocument,
   PendingPasswordResetSchema,
 } from '../schemas/pending-password-reset.schema';
 import { HashService } from '../../common/services/hash.service';
+import { Clock } from '../../common/services/clock';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from '../../../test/utils/session-authority-harness';
+import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
+
+const ROUNDS = 4;
 
 describe('PasswordResetCodeService concurrency', () => {
   let mongo: MongoMemoryServer;
   let connection: Connection;
-  let model: Model<PendingPasswordResetDocument>;
+  let model: Model<PendingPasswordReset>;
   let service: PasswordResetCodeService;
-  let hashService: HashService;
 
   beforeAll(async () => {
     mongo = await MongoMemoryServer.create({ instance: { ip: '127.0.0.1' } });
     connection = await createConnection(mongo.getUri()).asPromise();
-    model = connection.model(
+    model = connection.model<PendingPasswordReset>(
       PendingPasswordReset.name,
       PendingPasswordResetSchema,
-    ) as unknown as Model<PendingPasswordResetDocument>;
-    const config = {
-      get: (_key: string, fallback?: number) => fallback ?? 4,
-    } as unknown as ConfigService;
-    hashService = new HashService({
-      get: (_key: string, fallback?: number) => fallback ?? 4,
-    } as unknown as ConfigService);
-    service = new PasswordResetCodeService(model, hashService, config);
-  });
+    );
+    await model.init();
+    const config = new ConfigService({ bcrypt: { rounds: ROUNDS } });
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        PasswordResetCodeService,
+        HashService,
+        { provide: ConfigService, useValue: config },
+        { provide: Clock, useValue: new FrozenClock(TEST_NOW) },
+        {
+          provide: getModelToken(PendingPasswordReset.name),
+          useValue: model,
+        },
+      ],
+    }).compile();
+    service = module.get<PasswordResetCodeService>(PasswordResetCodeService);
+  }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   afterAll(async () => {
     await connection.close();
     await mongo.stop();
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   beforeEach(async () => {
     await model.deleteMany({});
@@ -68,22 +84,21 @@ describe('PasswordResetCodeService concurrency', () => {
       ),
     );
 
-    const invalid = results.filter(
-      (result) =>
-        result.status === 'rejected' &&
-        (result.reason as { code?: string }).code ===
-          ErrorCode.PASSWORD_RESET_CODE_INVALID,
-    );
-    const capped = results.filter(
-      (result) =>
-        result.status === 'rejected' &&
-        (result.reason as { code?: string }).code ===
-          ErrorCode.MAX_ATTEMPTS_EXCEEDED,
+    const rejected = results.filter(
+      (result): result is PromiseRejectedResult => result.status === 'rejected',
     );
 
-    expect(invalid.length + capped.length).toBe(8);
-    expect(invalid.length).toBeLessThanOrEqual(5);
-    expect(capped.length).toBeGreaterThanOrEqual(3);
+    expect(rejected).toHaveLength(8);
+    for (const result of rejected) {
+      expect(result.reason).toMatchObject({
+        code: ErrorCode.PASSWORD_RESET_CODE_INVALID,
+      });
+    }
+
+    // The limit still bites: five attempts were spent, and the record is
+    // locked, not gone. Read it from the database, not from the answer.
+    const stored = await model.findOne({ email: 'user@example.com' });
+    expect(stored?.attempts).toBe(5);
   });
 
   it('should refuse consume after the reserved generation expires', async () => {
@@ -95,7 +110,7 @@ describe('PasswordResetCodeService concurrency', () => {
 
     await model.updateOne(
       { _id: reserved.id },
-      { $set: { expiresAt: new Date(Date.now() - 1000) } },
+      { $set: { expiresAt: new Date(TEST_NOW.getTime() - 1000) } },
     );
 
     await expect(

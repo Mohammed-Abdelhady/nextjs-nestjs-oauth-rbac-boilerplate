@@ -1,0 +1,10 @@
+{
+  "errors": {
+    "codes": {
+      "CSRF_REQUIRED": "Refresh the page and try again",
+      "CSRF_INVALID": "This request expired. Refresh the page and try again",
+      "ORIGIN_REJECTED": "This site is not allowed to make this request",
+      "MIXED_CREDENTIALS": "Send one sign-in method at a time"
+    }
+  }
+}

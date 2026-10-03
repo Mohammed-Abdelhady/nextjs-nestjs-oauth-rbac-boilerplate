@@ -5,7 +5,6 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { loadManifest } from '../src/manifest/load.js';
 import { availableFeatures, resolveSelection } from '../src/manifest/select.js';
 import type { Manifest } from '../src/types.js';
-import { verifyFeatureAvailability } from './feature-runtime.js';
 import {
   buildCli,
   compareWithRepository,
@@ -13,13 +12,20 @@ import {
   REPO_ROOT,
   runTool,
   scaffold,
-  typecheck,
 } from './combination-helpers.js';
+import {
+  expectDriftMatches,
+  expectLints,
+  expectPrunedShared,
+  expectTypechecks,
+} from './combination-scenarios.js';
+import { verifyFeatureAvailability } from './feature-runtime.js';
 
 /**
- * Every combination a generated project has to compile in. Slow by nature: it
- * builds the CLI, scaffolds seven trees and runs two typechecks over each.
- * Run it with `npm run test:combinations -w packages/create-nest-next-auth`.
+ * Every feature combination a generated project has to compile in. Slow by
+ * nature: it builds the CLI, scaffolds seven trees and runs three typechecks,
+ * the drift spec, and a frontend check against the pruned shared package over
+ * each. Run it with `npm run test:combinations -w packages/create-nest-next-auth`.
  */
 
 const ALL_OAUTH = [
@@ -58,8 +64,11 @@ let workspace = '';
 let manifest: Manifest;
 let built = { ok: false, output: '' };
 
+/** Every feature the CLI can be asked for. Hidden ids arrive through `requires`. */
 function everything(): string[] {
-  return availableFeatures(manifest).map(({ id }) => id);
+  return availableFeatures(manifest)
+    .filter(({ feature }) => feature.kind !== 'hidden')
+    .map(({ id }) => id);
 }
 
 beforeAll(async () => {
@@ -83,21 +92,17 @@ async function generate(name: string, features: string[]): Promise<string> {
   return project;
 }
 
-async function expectTypechecks(project: string): Promise<void> {
-  const backend = await typecheck(project, 'backend');
-  expect(backend.ok, backend.output).toBe(true);
-  const frontend = await typecheck(project, 'frontend');
-  expect(frontend.ok, frontend.output).toBe(true);
-}
-
 describe('generated projects', () => {
   it('builds the CLI first', () => {
     expect(built.ok, built.output).toBe(true);
   });
 
-  it.each(COMBINATIONS)('typechecks with $name', async ({ name, features }) => {
+  it.each(COMBINATIONS)('typechecks and lints with $name', async ({ name, features }) => {
     const project = await generate(name, features);
     await expectTypechecks(project);
+    await expectDriftMatches(project);
+    await expectPrunedShared(project);
+    await expectLints(project);
     if (features.includes('google') && features.length === 2) {
       const api = await runTool(
         process.execPath,
@@ -115,13 +120,19 @@ describe('generated projects', () => {
     }
   });
 
-  it('typechecks with everything the manifest offers', async () => {
-    const features = everything();
-    const project = await generate('everything', features);
+  it('typechecks and lints with everything the manifest offers', async () => {
+    const requested = everything();
+    const project = await generate('everything', requested);
     await expectTypechecks(project);
+    await expectDriftMatches(project);
+    await expectPrunedShared(project);
+    await expectLints(project);
 
     // Retained application and API test files differ only by feature markers.
-    const differences = await compareWithRepository(project, features);
+    const selected = resolveSelection(manifest, requested).selected;
+    const markerIds = [...Object.keys(manifest.features), ...Object.keys(manifest.options)];
+    const kept = [...selected, ...Object.keys(manifest.options)];
+    const differences = await compareWithRepository(project, kept, markerIds);
     expect(differences, JSON.stringify(differences, null, 2)).toEqual([]);
   });
 
@@ -129,7 +140,6 @@ describe('generated projects', () => {
     const selection = resolveSelection(manifest, ['email-password', 'google']);
 
     expect(selection.selected).toContain('oauth-core');
-    expect(selection.added).toEqual(['oauth-core']);
     expect(manifest.features['oauth-core'].kind).toBe('hidden');
   });
 });

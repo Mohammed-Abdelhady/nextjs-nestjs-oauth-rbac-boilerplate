@@ -1,5 +1,11 @@
-import { IsString, MinLength, MaxLength, Matches } from 'class-validator';
+import { IsString, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import {
+  PASSWORD_MAX_BYTES,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_POLICY_DESCRIPTION,
+} from '../../common/constants/password';
+import { PasswordPolicy } from '../../common/decorators/password-policy.decorator';
 
 /**
  * DTO for changing user password.
@@ -15,18 +21,12 @@ export class ChangePasswordDto {
   currentPassword!: string;
 
   @ApiProperty({
-    description:
-      'New password (min 8 chars, must contain lowercase, uppercase, and number)',
+    description: PASSWORD_POLICY_DESCRIPTION,
     example: 'NewPassword123',
-    minLength: 8,
-    maxLength: 128,
+    minLength: PASSWORD_MIN_LENGTH,
+    maxLength: PASSWORD_MAX_BYTES,
   })
   @IsString()
-  @MinLength(8, { message: 'New password must be at least 8 characters' })
-  @MaxLength(128, { message: 'New password must not exceed 128 characters' })
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
-    message:
-      'New password must contain at least one lowercase letter, one uppercase letter, and one number',
-  })
+  @PasswordPolicy()
   newPassword!: string;
 }

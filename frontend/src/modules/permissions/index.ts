@@ -1,9 +1,3 @@
-// Constants
-export * from './constants/permissions';
-
-// Utils
-export * from './utils/permissionUtils';
-
 // Hooks
 export * from './hooks/usePermission';
 

@@ -6,6 +6,7 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useRouter } from '@/i18n/navigation';
 import { authApi } from '@/modules/auth/store/authApi';
+import { translatableErrorCode } from '@/modules/auth/utils/errorCodeMessage';
 import { useAppDispatch } from '@/store/hooks';
 import { useGetEnabledProvidersQuery } from '../api';
 import { OAUTH_DEFAULT_ERROR_CODE } from '../constants';
@@ -53,7 +54,9 @@ export function OAuthCallbackPanel({
     dispatch(authApi.endpoints.getCurrentUser.initiate(undefined, { forceRefetch: true }))
       .unwrap()
       .then(() => router.replace(redirect))
-      .catch(() => setFailureCode(OAUTH_DEFAULT_ERROR_CODE));
+      .catch((error: unknown) =>
+        setFailureCode(translatableErrorCode(error, OAUTH_DEFAULT_ERROR_CODE)),
+      );
   }, [dispatch, redirect, router, status]);
 
   if (failureCode === null) {

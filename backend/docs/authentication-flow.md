@@ -38,19 +38,18 @@ POST /api/auth/register
 
 ```json
 {
-  "email": "user@example.com",
-  "password": "SecurePass123",
-  "name": "John Doe"
+  "email": "user@example.com"
 }
 ```
 
 ### Validation Rules
 
-| Field    | Rules                                     |
-| -------- | ----------------------------------------- |
-| email    | Valid email format, max 255 chars, unique |
-| password | 8-128 chars, must contain letter + number |
-| name     | 2-50 chars                                |
+| Field | Rules                                     |
+| ----- | ----------------------------------------- |
+| email | Valid email format, max 255 chars, unique |
+
+A body that still carries `password` or `name` is an old client and is refused
+with `REGISTRATION_CONTRACT_OUTDATED`, before any address look-up.
 
 ### Flow Diagram
 
@@ -58,14 +57,13 @@ POST /api/auth/register
 Client                     Server                      Email Service
    │                          │                              │
    │  POST /register          │                              │
-   │  {email, password, name} │                              │
+   │  {email}                 │                              │
    │─────────────────────────>│                              │
    │                          │                              │
    │                          │ 1. Check email not exists    │
-   │                          │ 2. Hash password (bcrypt)    │
-   │                          │ 3. Generate 6-digit code     │
-   │                          │ 4. Hash code                 │
-   │                          │ 5. Store pending registration│
+   │                          │ 2. Generate 6-digit code     │
+   │                          │ 3. Hash code                 │
+   │                          │ 4. Store pending registration│
    │                          │                              │
    │                          │  Send activation email       │
    │                          │─────────────────────────────>│
@@ -88,20 +86,22 @@ Client                     Server                      Email Service
 
 **Errors:**
 
-- `400` - Validation error (invalid email, weak password)
-- `409` - Email already registered
-- `429` - Rate limit exceeded (3 per hour per IP)
+- `400` - Validation error (invalid email)
+- `400` - `REGISTRATION_CONTRACT_OUTDATED` for a body carrying a password or name
+- `429` - Rate limit exceeded (5 per 15 minutes per IP)
 
 ### What Happens Behind the Scenes
 
-1. **Email Check**: Verify email doesn't exist in User collection
-2. **Password Hashing**: Hash password with bcrypt (10 rounds)
-3. **Code Generation**: Generate cryptographically secure 6-digit code
-4. **Code Hashing**: Hash the code before storing
-5. **Pending Storage**: Store in `pending_registrations` collection with 15-min TTL
-6. **Email Delivery**: Send code via Nodemailer
+1. **Email Check**: Verify the address does not already have an account
+2. **Code Generation**: Generate cryptographically secure 6-digit code
+3. **Code Hashing**: Hash the code before storing
+4. **Pending Storage**: Store in `pending_registrations` collection with the
+   configured code lifetime
+5. **Email Delivery**: Send code via Nodemailer
 
-**Important**: No user record is created yet. User is only created after activation.
+**Important**: No credential is stored before the address is proved. The
+password and name arrive with the code at activation. No user record is created
+yet.
 
 ---
 
@@ -118,7 +118,9 @@ POST /api/auth/activate
 ```json
 {
   "email": "user@example.com",
-  "code": "123456"
+  "code": "123456",
+  "password": "SecurePass123",
+  "name": "John Doe"
 }
 ```
 
@@ -128,29 +130,26 @@ POST /api/auth/activate
 Client                     Server                      Database
    │                          │                            │
    │  POST /activate          │                            │
-   │  {email, code}           │                            │
+   │  {email, code, password, │                            │
+   │   name}                  │                            │
    │─────────────────────────>│                            │
    │                          │                            │
-   │                          │ 1. Find pending registration│
-   │                          │───────────────────────────>│
-   │                          │<───────────────────────────│
+   │                          │ 1. Reserve one attempt     │
+   │                          │ 2. Verify code hash once   │
+   │                          │ 3. Hash password           │
    │                          │                            │
-   │                          │ 2. Check not expired       │
-   │                          │ 3. Check attempts < 5      │
-   │                          │ 4. Verify code hash        │
-   │                          │                            │
-   │                          │ 5. Create User             │
+   │                          │ 4. One transaction:        │
+   │                          │    consume the generation  │
+   │                          │    and create the User     │
    │                          │───────────────────────────>│
    │                          │                            │
-   │                          │ 6. Create Session          │
-   │                          │───────────────────────────>│
-   │                          │                            │
-   │                          │ 7. Delete pending          │
+   │                          │ 5. Create Session          │
    │                          │───────────────────────────>│
    │                          │                            │
    │  200 OK                  │                            │
    │  Set-Cookie: sid=xxx     │                            │
-   │  {message, user}         │                            │
+   │  {requiresTwoFactor,     │                            │
+   │   mustSignIn, user}      │                            │
    │<─────────────────────────│                            │
 ```
 
@@ -161,6 +160,8 @@ Client                     Server                      Database
 ```json
 {
   "message": "Account activated successfully",
+  "requiresTwoFactor": false,
+  "mustSignIn": false,
   "user": {
     "id": "507f1f77bcf86cd799439011",
     "email": "user@example.com",
@@ -173,16 +174,57 @@ Client                     Server                      Database
 
 Also sets HTTP-only cookie: `sid=<session_token>`
 
+If the account is committed but the session could not be issued, the body is
+`{requiresTwoFactor: false, mustSignIn: true, user: null}` with no cookie: the
+client sends the user to sign in normally.
+
 **Errors:**
 
-- `400` - Invalid code, expired code, or no pending registration
-- `401` - Max attempts exceeded (5 attempts)
+- `400` - Wrong, missing, expired or locked code; all four answer one
+  `ACTIVATION_CODE_INVALID` body
 
 ### Security Features
 
-- **Code Expiry**: 15 minutes
-- **Max Attempts**: 5 failed attempts, then registration deleted
+- **Code Expiry**: the configured `ACTIVATION_CODE_EXPIRES_IN` (default 15
+  minutes)
+- **Max Attempts**: 5 failed attempts, after which the record is locked and
+  cannot be used
 - **Hashed Storage**: Code is hashed, not stored in plain text
+
+### Confirming an Admin Email Change
+
+An administrator can move an account to a new address. The server mails a code
+to the new address and the user confirms it without a password; no session is
+issued.
+
+```
+POST /api/auth/confirm-email-change
+```
+
+Request body:
+
+```json
+{
+  "email": "new@example.com",
+  "code": "123456"
+}
+```
+
+The mail links to the web page `/auth/confirm-email-change`, which collects the
+address and the code. The code must still match the account and the address
+generation the change was issued under, so a superseded change confirms
+nothing. A wrong, missing, expired or stale code answers `400`
+`ACTIVATION_CODE_INVALID`.
+
+An administrator can re-issue the code from the admin API:
+
+```
+POST /api/admin/users/:id/resend-email-change
+```
+
+It answers `429` `EMAIL_SEND_LIMIT_REACHED` when the address is over its
+per-window mail cap, and `400` `EMAIL_SEND_FAILED` when the mail could not be
+sent.
 
 ---
 
@@ -333,6 +375,7 @@ On each protected request:
 ```
 POST /api/auth/register
 POST /api/auth/activate
+POST /api/auth/confirm-email-change
 POST /api/auth/login
 GET  /api/health
 ```
@@ -395,9 +438,34 @@ Thank you for registering! Please use the following
 
         {code}
 
-This code will expire in 15 minutes.
+This code will expire in {N} minutes.
 
 If you didn't request this code, you can safely ignore this email.
+
+Best regards,
+The Team
+```
+
+`{N}` is the configured `ACTIVATION_CODE_EXPIRES_IN` in minutes (15 with the
+default lifetime).
+
+### Email-Change Confirmation Email
+
+```
+Subject: Confirm your new email address
+
+Hi,
+
+An administrator changed the email address on your account. Open the
+confirmation page and enter this code to finish the change:
+
+{link to /auth/confirm-email-change}
+
+Code: {code}
+
+This code will expire in {N} minutes.
+
+If you didn't expect this change, contact your administrator.
 
 Best regards,
 The Team

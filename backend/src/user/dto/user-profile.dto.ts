@@ -154,6 +154,13 @@ export class SessionDto {
     example: true,
   })
   isCurrent!: boolean;
+
+  @ApiProperty({
+    description:
+      'Credential kind behind this session: browser_session or native_access',
+    example: 'browser_session',
+  })
+  credentialPurpose!: string;
 }
 
 /**

@@ -19,6 +19,7 @@ import {
   deriveNameFromEmail,
   hashMagicLinkToken,
 } from './utils/magic-link-token.util';
+import { buildClientUrl } from '../../common/utils/client-url.util';
 import { LoginResponseDto } from '../dto/login-response.dto';
 import { AuthMailService } from '../services/auth-mail.service';
 import { SignInService } from '../services/sign-in.service';
@@ -28,8 +29,11 @@ import { ApiResponse } from '../../common/dto/api-response.dto';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { isMongoDuplicateKeyError } from '../../common/utils/mongo-error.util';
+import { Clock } from '../../common/services/clock';
+import { getAllowedNativeAuthorizeContinuation } from './utils/magic-link-continuation.util';
 
 const MILLISECONDS_PER_MINUTE = 60000;
+type MagicLinkLoginResponseData = LoginResponseDto & { redirect?: string };
 
 /**
  * Passwordless sign-in. A request mails a one-time link; verifying it creates
@@ -48,6 +52,7 @@ export class MagicLinkService {
     private readonly configService: ConfigService,
     private readonly authMailService: AuthMailService,
     private readonly signInService: SignInService,
+    private readonly clock: Clock,
   ) {
     this.expiresIn = this.configService.get<number>(
       'magicLink.expiresIn',
@@ -65,6 +70,7 @@ export class MagicLinkService {
     dto: RequestMagicLinkDto,
     request: Request,
   ): Promise<ApiResponse<MagicLinkRequestResponseDto>> {
+    const now = this.clock.now();
     const user = await this.userModel.findOne({ email: { $eq: dto.email } });
 
     if (user?.isDeleted) {
@@ -75,7 +81,7 @@ export class MagicLinkService {
 
     const recentLinks = await this.pendingMagicLinkModel.countDocuments({
       email: { $eq: dto.email },
-      createdAt: { $gte: new Date(Date.now() - MAGIC_LINK_RATE_WINDOW_MS) },
+      createdAt: { $gte: new Date(now.getTime() - MAGIC_LINK_RATE_WINDOW_MS) },
     });
 
     if (recentLinks >= this.maxPerHour) {
@@ -85,22 +91,26 @@ export class MagicLinkService {
     }
 
     const token = createMagicLinkToken();
+    const redirect = getAllowedNativeAuthorizeContinuation(dto.redirect);
     await this.pendingMagicLinkModel.create({
       email: dto.email,
       tokenHash: hashMagicLinkToken(token),
-      expiresAt: new Date(Date.now() + this.expiresIn),
+      expiresAt: new Date(now.getTime() + this.expiresIn),
       consumedAt: null,
       requestIp: request.ip,
       userAgent: request.headers['user-agent'],
+      ...(redirect ? { redirect } : {}),
     });
 
-    await this.authMailService.sendMagicLink(
+    const sent = await this.authMailService.sendMagicLink(
       dto.email,
       this.buildLink(token),
       Math.round(this.expiresIn / MILLISECONDS_PER_MINUTE),
     );
 
-    this.logger.log(`Magic link sent to ${dto.email}`);
+    if (sent) {
+      this.logger.log(`Magic link sent to ${dto.email}`);
+    }
     return MagicLinkRequestResponseDto.success(dto.email);
   }
 
@@ -114,10 +124,11 @@ export class MagicLinkService {
   async verify(
     dto: VerifyMagicLinkDto,
     response: Response,
-  ): Promise<ApiResponse<LoginResponseDto>> {
+  ): Promise<ApiResponse<MagicLinkLoginResponseData>> {
+    const now = this.clock.now();
     const link = await this.pendingMagicLinkModel.findOneAndUpdate(
       { tokenHash: hashMagicLinkToken(dto.token), consumedAt: null },
-      { $set: { consumedAt: new Date() } },
+      { $set: { consumedAt: now } },
       { new: true },
     );
 
@@ -125,20 +136,27 @@ export class MagicLinkService {
       throw this.invalidLink('token is unknown or already used');
     }
 
-    if (link.expiresAt.getTime() <= Date.now()) {
+    if (link.expiresAt.getTime() <= this.clock.now().getTime()) {
       throw this.invalidLink('token has expired');
     }
 
     const user = await this.resolveUser(link.email);
     const outcome = await this.signInService.completeSignIn(user, response);
 
+    let loginResponse: ApiResponse<LoginResponseDto>;
     if (outcome.requiresTwoFactor) {
       this.logger.log(`Link spent, second factor owed: ${user.email}`);
-      return LoginResponseDto.twoFactorRequired();
+      loginResponse = LoginResponseDto.twoFactorRequired();
+    } else {
+      this.logger.log(`User signed in with a magic link: ${user.email}`);
+      loginResponse = LoginResponseDto.success(outcome.user);
     }
 
-    this.logger.log(`User signed in with a magic link: ${user.email}`);
-    return LoginResponseDto.success(outcome.user);
+    const data: MagicLinkLoginResponseData = {
+      ...loginResponse.data,
+      ...(link.redirect ? { redirect: link.redirect } : {}),
+    };
+    return ApiResponse.success(data, loginResponse.message);
   }
 
   /**
@@ -194,15 +212,9 @@ export class MagicLinkService {
   }
 
   private buildLink(token: string): string {
-    const clientUrl = this.configService.get<string>(
-      'cors.clientUrl',
-      'http://localhost:3000',
-    );
-    const url = new URL(
-      `${clientUrl.replace(/\/$/, '')}${MAGIC_LINK_CLIENT_PATH}`,
-    );
-    url.searchParams.set('token', token);
-    return url.toString();
+    return buildClientUrl(this.configService, MAGIC_LINK_CLIENT_PATH, {
+      token,
+    });
   }
 
   /**

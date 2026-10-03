@@ -168,7 +168,11 @@ export async function expectAppException(
   throw new Error(`expected the call to reject with ${code}`);
 }
 
-/** ConfigService that only answers `oauth.providers.<id>`. */
+/**
+ * Real ConfigService seeded with only `oauth.providers.<id>` internal values;
+ * ConfigService reads internal config before validated env and process.env,
+ * so lookups outside the seeded key fall back to a clean environment answer.
+ */
 export function configFor(
   providerId: string,
   config: Partial<OAuthProviderConfig>,
@@ -181,8 +185,5 @@ export function configFor(
     },
   };
 
-  return {
-    get: <T>(key: string, fallback?: T): T | undefined =>
-      (values[key] as T | undefined) ?? fallback,
-  } as unknown as ConfigService;
+  return new ConfigService(values);
 }

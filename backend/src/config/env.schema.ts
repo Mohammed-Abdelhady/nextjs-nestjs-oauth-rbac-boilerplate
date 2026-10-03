@@ -16,6 +16,14 @@ import {
   OAuthEnvironmentConfig,
   OAuthEnvironmentVariables,
 } from './env.oauth.schema';
+import {
+  ACTIVATION_CODE_EXPIRES_IN_DEFAULT,
+  ACTIVATION_CODE_EXPIRES_IN_MAX,
+} from '../auth/constants/registration';
+import {
+  MAIL_DRAIN_DEADLINE_MS,
+  MAIL_MAX_PENDING_SENDS,
+} from '../mail/constants/mail.constants';
 
 export interface EnvironmentConfig extends OAuthEnvironmentConfig {
   NODE_ENV: 'development' | 'production' | 'test';
@@ -32,11 +40,18 @@ export interface EnvironmentConfig extends OAuthEnvironmentConfig {
   SMTP_USER?: string;
   SMTP_PASS?: string;
   EMAIL_FROM?: string;
+  MAIL_MAX_PENDING_SENDS?: number;
+  MAIL_DRAIN_DEADLINE_MS?: number;
 
   BCRYPT_ROUNDS?: number;
 
   SESSION_COOKIE_NAME?: string;
   SESSION_COOKIE_MAX_AGE?: number;
+
+  AUTH_EPOCH?: number;
+  AUTH_NATIVE_ENABLED?: boolean;
+  AUTH_NATIVE_APPLICATIONS?: string;
+  AUTH_NATIVE_ALLOW_CUSTOM_SCHEME?: boolean;
 
   ACTIVATION_CODE_EXPIRES_IN?: number;
   ACTIVATION_MAX_ATTEMPTS?: number;
@@ -165,6 +180,20 @@ export class EnvironmentVariables extends OAuthEnvironmentVariables {
 
   @Type(() => Number)
   @IsInt()
+  @Min(1)
+  @Max(10000)
+  @IsOptional()
+  MAIL_MAX_PENDING_SENDS: number = MAIL_MAX_PENDING_SENDS;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(100)
+  @Max(60000)
+  @IsOptional()
+  MAIL_DRAIN_DEADLINE_MS: number = MAIL_DRAIN_DEADLINE_MS;
+
+  @Type(() => Number)
+  @IsInt()
   @Min(4)
   @Max(12)
   @IsOptional()
@@ -180,11 +209,41 @@ export class EnvironmentVariables extends OAuthEnvironmentVariables {
   @IsOptional()
   SESSION_COOKIE_MAX_AGE: number = 604800000;
 
+  @Transform(({ value }: { value: unknown }): unknown => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+    if (value.trim() !== value || !/^[0-9]+$/.test(value)) {
+      return value;
+    }
+    return Number(value);
+  })
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  AUTH_EPOCH: number = 1;
+
+  @Transform(transformBoolean(false))
+  @IsBoolean()
+  @IsOptional()
+  AUTH_NATIVE_ENABLED: boolean = false;
+
+  @Transform(transformOptionalString)
+  @IsString()
+  @IsOptional()
+  AUTH_NATIVE_APPLICATIONS?: string;
+
+  @Transform(transformBoolean(false))
+  @IsBoolean()
+  @IsOptional()
+  AUTH_NATIVE_ALLOW_CUSTOM_SCHEME: boolean = false;
+
   @Type(() => Number)
   @IsInt()
   @Min(60000)
+  @Max(ACTIVATION_CODE_EXPIRES_IN_MAX)
   @IsOptional()
-  ACTIVATION_CODE_EXPIRES_IN: number = 900000;
+  ACTIVATION_CODE_EXPIRES_IN: number = ACTIVATION_CODE_EXPIRES_IN_DEFAULT;
 
   @Type(() => Number)
   @IsInt()

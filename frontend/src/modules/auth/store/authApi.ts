@@ -1,6 +1,15 @@
 import { baseApi } from '@/store/api/baseApi';
+import { API_PATHS, unwrapObjectBody } from '@app/sdk';
+import { invalidateOnSuccess } from '@/store/api/invalidateOnSuccess';
+import type { MessageResult, UpdateProfileRequest, User } from '@app/sdk';
+import {
+  NATIVE_AUTHORIZE_APPROVE_ENDPOINT,
+  NATIVE_AUTHORIZE_DENY_ENDPOINT,
+  nativeAuthorizeTransactionEndpoint,
+} from '../constants/nativeAuthorize';
+import { CONFIRM_EMAIL_CHANGE_ENDPOINT } from '../constants/authMethods';
 import type {
-  User,
+  EmailCodeRequest,
   LoginRequest,
   LoginResponse,
   RegisterRequest,
@@ -14,6 +23,11 @@ import type {
   ResetPasswordRequest,
   ResetPasswordResponse,
 } from '../types/auth.types';
+import type {
+  NativeAuthorizeActionRequest,
+  NativeAuthorizeRedirect,
+  NativeAuthorizeTransaction,
+} from '../types/nativeAuthorize.types';
 
 /**
  * Auth API slice with authentication endpoints
@@ -33,18 +47,21 @@ export const authApi = baseApi.injectEndpoints({
       }),
       transformResponse: (response: { success: boolean; data: LoginResponse; message: string }) =>
         response.data,
-      invalidatesTags: ['Auth', 'User'],
+      invalidatesTags: invalidateOnSuccess(['Auth', 'User']),
     }),
 
     /**
      * Logout mutation
      * Clears user session and auth cookies
      */
-    logout: builder.mutation<{ message: string }, void>({
+    logout: builder.mutation<MessageResult, void>({
       query: () => ({
-        url: '/api/auth/logout',
+        url: API_PATHS.auth.logout,
         method: 'POST',
       }),
+      transformResponse: (response: unknown) => unwrapObjectBody<MessageResult>(response),
+      // Sign-out: the server may have ended the session even when the answer
+      // was lost, so the UI must stop showing a signed-in user either way.
       invalidatesTags: [
         'Auth',
         'User',
@@ -56,24 +73,12 @@ export const authApi = baseApi.injectEndpoints({
     }),
 
     /**
-     * Refresh token mutation
-     * Refreshes the auth token using refresh cookie
-     */
-    refreshToken: builder.mutation<{ token: string }, void>({
-      query: () => ({
-        url: '/api/auth/refresh',
-        method: 'POST',
-      }),
-      invalidatesTags: ['Auth'],
-    }),
-
-    /**
      * Get current user query
      * Fetches the currently authenticated user's data
      */
     getCurrentUser: builder.query<User, void>({
-      query: () => '/api/user/profile',
-      transformResponse: (response: { success: boolean; data: User }) => response.data,
+      query: () => API_PATHS.user.profile,
+      transformResponse: (response: unknown) => unwrapObjectBody<User>(response),
       providesTags: ['User'],
     }),
 
@@ -91,7 +96,7 @@ export const authApi = baseApi.injectEndpoints({
 
     /**
      * Activate mutation
-     * Verifies email with activation code and logs user in
+     * Confirms the account and returns its sign-in outcome
      */
     activate: builder.mutation<ActivateResponse, ActivateRequest>({
       query: (data) => ({
@@ -104,7 +109,13 @@ export const authApi = baseApi.injectEndpoints({
         data: ActivateResponse;
         message: string;
       }) => response.data,
-      invalidatesTags: ['Auth', 'User'],
+      invalidatesTags: (result, error, arg) =>
+        result?.user ? invalidateOnSuccess(['Auth', 'User'])(result, error, arg) : [],
+    }),
+
+    confirmEmailChange: builder.mutation<MessageResult, EmailCodeRequest>({
+      query: (body) => ({ url: CONFIRM_EMAIL_CHANGE_ENDPOINT, method: 'POST', body }),
+      transformResponse: (response: unknown) => unwrapObjectBody<MessageResult>(response),
     }),
 
     /**
@@ -159,21 +170,62 @@ export const authApi = baseApi.injectEndpoints({
       }),
       transformResponse: (response: { success: boolean; data: { message: string } }) =>
         response.data,
-      invalidatesTags: ['Sessions'],
+      invalidatesTags: invalidateOnSuccess(['Sessions']),
     }),
 
     /**
      * Update profile mutation
      * Updates user profile information (name)
      */
-    updateProfile: builder.mutation<User, { name: string }>({
+    updateProfile: builder.mutation<User, UpdateProfileRequest>({
       query: (data) => ({
-        url: '/api/user/profile',
+        url: API_PATHS.user.profile,
         method: 'PATCH',
         body: data,
       }),
-      transformResponse: (response: { success: boolean; data: User }) => response.data,
-      invalidatesTags: ['User'],
+      transformResponse: (response: unknown) => unwrapObjectBody<User>(response),
+      invalidatesTags: invalidateOnSuccess(['User']),
+    }),
+
+    /**
+     * Read a native authorize transaction.
+     * Answers whether the signed-in browser may approve it, and withholds the
+     * redirect address, the PKCE challenge and the state.
+     */
+    getNativeAuthorizeTransaction: builder.query<NativeAuthorizeTransaction, string>({
+      query: (transactionId) => nativeAuthorizeTransactionEndpoint(transactionId),
+      transformResponse: (response: { success: boolean; data: NativeAuthorizeTransaction }) =>
+        response.data,
+    }),
+
+    /**
+     * Approve a native authorize transaction.
+     * Ends it once and answers with the redirect address carrying the code.
+     */
+    approveNativeAuthorize: builder.mutation<NativeAuthorizeRedirect, NativeAuthorizeActionRequest>(
+      {
+        query: (body) => ({
+          url: NATIVE_AUTHORIZE_APPROVE_ENDPOINT,
+          method: 'POST',
+          body,
+        }),
+        transformResponse: (response: { success: boolean; data: NativeAuthorizeRedirect }) =>
+          response.data,
+      },
+    ),
+
+    /**
+     * Deny a native authorize transaction.
+     * Ends it once and answers with the redirect address carrying access_denied.
+     */
+    denyNativeAuthorize: builder.mutation<NativeAuthorizeRedirect, NativeAuthorizeActionRequest>({
+      query: (body) => ({
+        url: NATIVE_AUTHORIZE_DENY_ENDPOINT,
+        method: 'POST',
+        body,
+      }),
+      transformResponse: (response: { success: boolean; data: NativeAuthorizeRedirect }) =>
+        response.data,
     }),
   }),
 });
@@ -182,13 +234,16 @@ export const authApi = baseApi.injectEndpoints({
 export const {
   useLoginMutation,
   useLogoutMutation,
-  useRefreshTokenMutation,
   useGetCurrentUserQuery,
   useRegisterMutation,
   useActivateMutation,
+  useConfirmEmailChangeMutation,
   useResendActivationMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,
   useChangePasswordMutation,
   useUpdateProfileMutation,
+  useGetNativeAuthorizeTransactionQuery,
+  useApproveNativeAuthorizeMutation,
+  useDenyNativeAuthorizeMutation,
 } = authApi;

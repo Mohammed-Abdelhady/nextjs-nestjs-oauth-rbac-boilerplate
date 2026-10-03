@@ -17,7 +17,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiQuery,
-  ApiBearerAuth,
+  ApiCookieAuth,
 } from '@nestjs/swagger';
 import { RoleService } from './role.service';
 import { CreateRoleDto } from './dto/create-role.dto';
@@ -31,6 +31,7 @@ import {
 import { PermissionGuard } from '../common/guards/permission.guard';
 import { RequirePermissions } from '../common/decorators/permissions.decorator';
 import { ROLE_PERMISSIONS } from '../common/constants/permissions';
+import { SESSION_SWAGGER_AUTH_NAME } from '../common/constants/session';
 import { ApiResponse as ApiResponseDto } from '../common/dto/api-response.dto';
 
 /**
@@ -38,7 +39,7 @@ import { ApiResponse as ApiResponseDto } from '../common/dto/api-response.dto';
  * All endpoints require authentication and admin-level permissions.
  */
 @ApiTags('roles')
-@ApiBearerAuth('JWT-auth')
+@ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
 @Controller('roles')
 @UseGuards(PermissionGuard)
 export class RoleController {

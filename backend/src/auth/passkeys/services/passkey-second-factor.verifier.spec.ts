@@ -1,5 +1,5 @@
-import { Request, Response } from 'express';
 import { Types } from 'mongoose';
+import { ConfigService } from '@nestjs/config';
 import { UserDocument } from '../../../user/schemas/user.schema';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { AuthFeaturesService } from '../../services/auth-features.service';
@@ -10,10 +10,15 @@ import {
   OTHER_USER_ID,
   USER_ID,
 } from '../passkeys.harness-spec';
+import {
+  createRequestMock,
+  createResponseMock,
+  partialMock,
+} from '../../../common/testing/test-doubles.harness-spec';
 
-const MOCK_REQUEST = { cookies: {} } as unknown as Request;
-const MOCK_RESPONSE = {} as unknown as Response;
-const USER = { _id: USER_ID } as unknown as UserDocument;
+const MOCK_REQUEST = createRequestMock({ cookies: {} });
+const MOCK_RESPONSE = createResponseMock({});
+const USER = partialMock<UserDocument>({ _id: USER_ID });
 
 interface Harness {
   verifier: PasskeySecondFactorVerifier;
@@ -31,16 +36,18 @@ function createHarness(
     }),
   };
 
-  const authFeaturesService = new AuthFeaturesService({
-    get: jest.fn((key: string, fallback?: boolean) =>
-      key === 'passkeys.enabled' ? passkeysEnabled : fallback,
-    ),
-  } as unknown as ConstructorParameters<typeof AuthFeaturesService>[0]);
+  const authFeaturesService = new AuthFeaturesService(
+    Object.assign(new ConfigService(), {
+      get: jest.fn((key: string, fallback?: boolean) =>
+        key === 'passkeys.enabled' ? passkeysEnabled : fallback,
+      ),
+    }),
+  );
 
   return {
     verifier: new PasskeySecondFactorVerifier(
       authFeaturesService,
-      assertions as unknown as PasskeyAssertionService,
+      partialMock<PasskeyAssertionService>(assertions),
     ),
     assertions,
   };

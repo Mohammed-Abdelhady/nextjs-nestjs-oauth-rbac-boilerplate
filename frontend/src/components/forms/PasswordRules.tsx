@@ -5,19 +5,13 @@ import { useTranslations } from 'next-intl';
 import { Check, Circle } from 'lucide-react';
 import { useWatch } from 'react-hook-form';
 import { cn } from '@/lib/utils';
-import {
-  evaluatePasswordRules,
-  MIN_PASSWORD_LENGTH,
-  type PasswordRuleId,
-} from '@/lib/validations/passwordRules';
+import { evaluatePasswordRules, isPasswordWithinByteLimit } from '@app/core';
 
 export interface PasswordRulesProps {
   /** Explicit password value if controlled directly */
   value?: string;
   /** Field name in react-hook-form context to watch */
   name?: string;
-  /** Minimum length threshold */
-  minLength?: number;
   /** Additional CSS class names */
   className?: string;
 }
@@ -25,7 +19,6 @@ export interface PasswordRulesProps {
 export function PasswordRules({
   value: controlledValue,
   name,
-  minLength = MIN_PASSWORD_LENGTH,
   className,
 }: PasswordRulesProps): React.JSX.Element {
   const t = useTranslations('auth.passwordRules');
@@ -43,23 +36,10 @@ export function PasswordRules({
         ? watchedValue
         : '';
 
-  const results = React.useMemo(
-    () => evaluatePasswordRules(password, minLength),
-    [password, minLength],
-  );
-
-  const getRuleLabel = (id: PasswordRuleId): string => {
-    switch (id) {
-      case 'minLength':
-        return t('minLength');
-      case 'uppercase':
-        return t('uppercase');
-      case 'lowercase':
-        return t('lowercase');
-      case 'number':
-        return t('number');
-    }
-  };
+  const results = [
+    ...evaluatePasswordRules(password),
+    { id: 'byteLimit', passed: isPasswordWithinByteLimit(password) },
+  ];
 
   return (
     <div
@@ -84,7 +64,7 @@ export function PasswordRules({
             ) : (
               <Circle className="h-3.5 w-3.5 shrink-0 opacity-40" aria-hidden="true" />
             )}
-            <span>{getRuleLabel(rule.id)}</span>
+            <span>{t(rule.id)}</span>
             <span className="sr-only">
               {rule.passed ? ` (${t('passed')})` : ` (${t('failed')})`}
             </span>

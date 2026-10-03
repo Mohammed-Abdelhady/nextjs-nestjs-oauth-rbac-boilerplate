@@ -5,6 +5,7 @@ import { MagicLinkService } from './magic-link.service';
 import { FeatureEnabledGuard } from '../guards/feature-enabled.guard';
 import { AuthFeaturesService } from '../services/auth-features.service';
 import { MOCK_REQUEST, MOCK_RESPONSE } from './magic-link.harness-spec';
+import { createResponseMock } from '../../common/testing/test-doubles.harness-spec';
 
 describe('MagicLinkController', () => {
   let controller: MagicLinkController;
@@ -43,10 +44,10 @@ describe('MagicLinkController', () => {
 
   it('should answer verify on the response that carries the session cookie', async () => {
     const json = jest.fn();
-    const response = {
+    const response = createResponseMock({
       ...MOCK_RESPONSE,
-      status: jest.fn().mockReturnValue({ json }),
-    } as unknown as typeof MOCK_RESPONSE;
+      status: jest.fn().mockReturnValue(createResponseMock({ json })),
+    });
 
     await controller.verify({ token: 'token' }, response);
 

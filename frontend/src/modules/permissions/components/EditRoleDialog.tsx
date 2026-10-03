@@ -5,7 +5,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useUpdateRoleMutation, type Role } from '../api/rolesApi';
 import { EditRoleForm, type EditRoleFormValues } from './EditRoleForm';
 import { toast } from '@/lib/toast';
-import { parseApiError } from '@/lib/apiError';
+import { reportUnlessHandled } from '@/lib/requestFailure';
 
 export interface EditRoleDialogProps {
   /**
@@ -67,9 +67,8 @@ export function EditRoleDialog({ open, onOpenChange, role, onSuccess }: EditRole
       toast.success(t('updateSuccess', { name: data.name.trim() || role.name }));
       onOpenChange(false);
       onSuccess?.();
-    } catch (error: unknown) {
-      const parsed = parseApiError(error);
-      toast.error(parsed.message || t('error'));
+    } catch (error) {
+      reportUnlessHandled(error);
     }
   };
 

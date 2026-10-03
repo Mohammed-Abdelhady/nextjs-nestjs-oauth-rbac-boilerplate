@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Reflector } from '@nestjs/core';
-import { Model } from 'mongoose';
-import { Request } from 'express';
+import { Model, Types } from 'mongoose';
+import { Request, Response } from 'express';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { SessionService } from '../services/session.service';
 import { SessionCookieService } from '../services/session-cookie.service';
@@ -15,11 +15,29 @@ import {
   SessionDocument,
   LeanSession,
 } from '../../session/schemas/session.schema';
-import { UserDocument } from '../../user/schemas/user.schema';
+import { LeanUser } from '../../user/schemas/user.schema';
 import { Role, RoleDocument } from '../../role/schemas/role.schema';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { getEffectivePermissions } from '../utils/permissions.util';
+import {
+  NativeAccessService,
+  readBearerToken,
+} from '../../session/native/native-access.service';
+import {
+  REQUEST_CREDENTIAL,
+  selectRequestCredential,
+} from '../../session/utils/request-credential';
+
+/**
+ * A lean session read populates `user` with the account; an unpopulated read
+ * leaves the id. The guard can only authenticate against the populated one.
+ */
+export function isPopulatedUser(
+  user: Types.ObjectId | LeanUser,
+): user is LeanUser {
+  return !(user instanceof Types.ObjectId);
+}
 
 export interface RequestWithUser extends Request {
   user?: {
@@ -35,13 +53,17 @@ export interface RequestWithUser extends Request {
 
 /**
  * Runs on every route as a global guard. Routes marked with `@Public()` pass
- * through without a session; everything else needs a valid session cookie.
+ * through without a session. A bearer token wins when one is sent, even when
+ * a session cookie is also present. A bearer token that is invalid fails the
+ * request; it never falls back to the cookie. Refusing a bearer never clears
+ * the session cookie: only a refused cookie does.
  */
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private readonly sessionService: SessionService,
     private readonly sessionCookieService: SessionCookieService,
+    private readonly nativeAccess: NativeAccessService,
     @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
     private readonly reflector: Reflector,
   ) {}
@@ -57,9 +79,23 @@ export class AuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<RequestWithUser>();
+    const response = context.switchToHttp().getResponse<Response>();
     const sessionToken = this.sessionCookieService.read(request);
+    const bearer = readBearerToken(request);
+    const credential = selectRequestCredential(
+      bearer !== null,
+      sessionToken !== undefined,
+    );
+    // Only the selected credential was evaluated. Refusing a bearer must
+    // never clear the session cookie: the cookie still names a live session.
+    const cookieSelected = credential === REQUEST_CREDENTIAL.COOKIE;
+    let session: LeanSession | null;
 
-    if (!sessionToken) {
+    if (credential === REQUEST_CREDENTIAL.BEARER && bearer) {
+      session = await this.nativeAccess.validate(bearer);
+    } else if (cookieSelected && sessionToken) {
+      session = await this.sessionService.validateSession(sessionToken);
+    } else {
       throw new AppException(
         ErrorCode.SESSION_REQUIRED,
         'Authentication required',
@@ -67,9 +103,10 @@ export class AuthGuard implements CanActivate {
       );
     }
 
-    const session = await this.sessionService.validateSession(sessionToken);
-
     if (!session) {
+      if (cookieSelected) {
+        this.sessionCookieService.clear(response);
+      }
       throw new AppException(
         ErrorCode.SESSION_INVALID,
         'Invalid or expired session',
@@ -78,9 +115,12 @@ export class AuthGuard implements CanActivate {
     }
 
     // Attach user and session to request for use in controllers
-    const user = session.user as unknown as UserDocument | null;
+    const user = isPopulatedUser(session.user) ? session.user : null;
 
     if (!user || user.isDeleted) {
+      if (cookieSelected) {
+        this.sessionCookieService.clear(response);
+      }
       throw new AppException(
         ErrorCode.SESSION_INVALID,
         'Invalid or expired session',

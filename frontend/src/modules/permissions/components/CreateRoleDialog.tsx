@@ -18,7 +18,7 @@ import { FieldError, SubmitButton } from '@/components/forms';
 import { useCreateRoleMutation } from '../api/rolesApi';
 import { PermissionSelector } from './PermissionSelector';
 import { toast } from '@/lib/toast';
-import { parseApiError } from '@/lib/apiError';
+import { reportUnlessHandled } from '@/lib/requestFailure';
 
 export interface CreateRoleDialogProps {
   /**
@@ -99,9 +99,8 @@ export function CreateRoleDialog({ open, onOpenChange, onSuccess }: CreateRoleDi
       resetForm();
       onOpenChange(false);
       onSuccess?.();
-    } catch (error: unknown) {
-      const parsed = parseApiError(error);
-      toast.error(parsed.message || t('error'));
+    } catch (error) {
+      reportUnlessHandled(error);
     }
   };
 

@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
-import { ErrorCode } from '@/constants/errorCodes';
+import { ErrorCode } from '@app/core';
 import { useCompleteSignIn } from '@/modules/auth/hooks/useCompleteSignIn';
 import { useFeatureDisabledHandler } from '@/modules/auth/hooks/useFeatureDisabled';
 import { translatableErrorCode } from '@/modules/auth/utils/errorCodeMessage';
@@ -43,9 +43,9 @@ export function MagicLinkVerifyPanel({ token, redirect }: MagicLinkVerifyPanelPr
 
     verifyMagicLink({ token })
       .unwrap()
-      .then((response) => completeSignIn(response, redirect))
+      .then((response) => completeSignIn(response, response.redirect ?? redirect))
       .catch((error: unknown) => {
-        handleFeatureDisabled(error, false);
+        handleFeatureDisabled(error);
         setFailureCode(translatableErrorCode(error, ErrorCode.MAGIC_LINK_INVALID));
       });
   }, [completeSignIn, handleFeatureDisabled, redirect, token, verifyMagicLink]);

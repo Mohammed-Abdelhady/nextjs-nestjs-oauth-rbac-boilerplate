@@ -1,20 +1,18 @@
 import {
   IsEmail,
   IsNotEmpty,
+  IsOptional,
   IsString,
   MaxLength,
-  MinLength,
-  Matches,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  NAME_MAX_LENGTH,
-  NAME_MESSAGE,
-  NAME_MIN_LENGTH,
-  NAME_REGEX,
-} from '../../common/constants/name';
 
+/**
+ * Registration takes the address only. `password` and `name` stay declared so
+ * an old client's body can be recognised and refused with a stable contract
+ * error instead of a generic unknown-property failure.
+ */
 export class RegisterDto {
   @ApiProperty({
     description: 'User email address',
@@ -28,35 +26,20 @@ export class RegisterDto {
   email!: string;
 
   @ApiProperty({
-    description: 'User password (min 8 chars, must contain letter and number)',
-    example: 'Password123',
-    minLength: 8,
-    maxLength: 128,
+    description: 'Removed from registration; belongs on activation now',
+    required: false,
+    deprecated: true,
   })
+  @IsOptional()
   @IsString({ message: 'Password must be a string' })
-  @IsNotEmpty({ message: 'Password is required' })
-  @MinLength(8, { message: 'Password must be at least 8 characters' })
-  @MaxLength(128, { message: 'Password must not exceed 128 characters' })
-  @Matches(/^(?=.*[A-Za-z])(?=.*\d)/, {
-    message: 'Password must contain at least one letter and one number',
-  })
-  password!: string;
+  password?: string;
 
   @ApiProperty({
-    description: 'User full name',
-    example: 'John Doe',
-    minLength: NAME_MIN_LENGTH,
-    maxLength: NAME_MAX_LENGTH,
+    description: 'Removed from registration; belongs on activation now',
+    required: false,
+    deprecated: true,
   })
+  @IsOptional()
   @IsString({ message: 'Name must be a string' })
-  @IsNotEmpty({ message: 'Name is required' })
-  @MinLength(NAME_MIN_LENGTH, {
-    message: `Name must be at least ${NAME_MIN_LENGTH} characters`,
-  })
-  @MaxLength(NAME_MAX_LENGTH, {
-    message: `Name must not exceed ${NAME_MAX_LENGTH} characters`,
-  })
-  @Matches(NAME_REGEX, { message: NAME_MESSAGE })
-  @Transform(({ value }: { value: string }) => value?.trim())
-  name!: string;
+  name?: string;
 }

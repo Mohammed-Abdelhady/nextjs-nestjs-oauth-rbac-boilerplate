@@ -1,4 +1,5 @@
 import { baseApi } from '@/store/api/baseApi';
+import { invalidateOnSuccess } from '@/store/api/invalidateOnSuccess';
 import type { OAuthProvider } from '@/modules/oauth';
 import type { LinkedProvidersResponse, SetPrimaryProviderRequest, AccountUser } from '../types';
 
@@ -30,7 +31,7 @@ export const accountLinkingApi = baseApi.injectEndpoints({
         method: 'DELETE',
       }),
       transformResponse: (response: { success: boolean; data: AccountUser }) => response.data,
-      invalidatesTags: ['Auth', 'User', 'LinkedProviders'],
+      invalidatesTags: invalidateOnSuccess(['Auth', 'User', 'LinkedProviders']),
     }),
 
     /**
@@ -43,7 +44,7 @@ export const accountLinkingApi = baseApi.injectEndpoints({
         body: data,
       }),
       transformResponse: (response: { success: boolean; data: AccountUser }) => response.data,
-      invalidatesTags: ['Auth', 'User', 'LinkedProviders'],
+      invalidatesTags: invalidateOnSuccess(['Auth', 'User', 'LinkedProviders']),
     }),
   }),
 });

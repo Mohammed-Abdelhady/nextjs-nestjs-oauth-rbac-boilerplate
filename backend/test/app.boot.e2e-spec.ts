@@ -1,6 +1,11 @@
 import request from 'supertest';
 import type { Response } from 'supertest';
 import { bootE2eApp, type E2eApp } from './utils/e2e-app';
+import { browserAgent } from './utils/e2e-app'; // feature:magic-link,totp,passkeys
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from './utils/session-authority-harness';
 // feature:oauth-core:start
 import {
   OAUTH_BOOT_PROVIDER_IDS,
@@ -65,12 +70,12 @@ describe('AppModule boot (e2e)', () => {
   beforeAll(async () => {
     restoreEnv = applyOAuthBootEnv(); // feature:oauth-core
     e2e = await bootE2eApp();
-  });
+  }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   afterAll(async () => {
     await e2e?.close();
     restoreEnv(); // feature:oauth-core
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   it('should answer the health check', async () => {
     const response: Response = await request(e2e.httpServer).get('/health');
@@ -136,7 +141,9 @@ describe('AppModule boot (e2e)', () => {
       return;
     }
 
-    const response: Response = await request(e2e.httpServer)
+    const response: Response = await (
+      await browserAgent(e2e.httpServer)
+    )
       .post('/api/auth/magic-link/request')
       .send({ email: 'nobody@example.com' })
       .expect(404);
@@ -152,7 +159,9 @@ describe('AppModule boot (e2e)', () => {
       .expect(200);
 
     const magicLinkOn = (methods.body as MethodsBody).data.methods.magicLink;
-    const response: Response = await request(e2e.httpServer)
+    const response: Response = await (
+      await browserAgent(e2e.httpServer)
+    )
       .post('/api/auth/magic-link/verify')
       .send({ token: 'not-a-token' });
 
@@ -170,7 +179,9 @@ describe('AppModule boot (e2e)', () => {
       .expect(200);
 
     const twoFactorOn = (methods.body as MethodsBody).data.methods.twoFactor;
-    const response: Response = await request(e2e.httpServer)
+    const response: Response = await (
+      await browserAgent(e2e.httpServer)
+    )
       .post('/api/auth/2fa/verify')
       .send({ code: '123456' });
 
@@ -203,7 +214,9 @@ describe('AppModule boot (e2e)', () => {
       .expect(200);
 
     const passkeysOn = (methods.body as MethodsBody).data.methods.passkeys;
-    const response: Response = await request(e2e.httpServer)
+    const response: Response = await (
+      await browserAgent(e2e.httpServer)
+    )
       .post('/api/auth/passkeys/login/options')
       .send({});
 
@@ -231,7 +244,9 @@ describe('AppModule boot (e2e)', () => {
       .expect(200);
 
     const passkeysOn = (methods.body as MethodsBody).data.methods.passkeys;
-    const response: Response = await request(e2e.httpServer)
+    const response: Response = await (
+      await browserAgent(e2e.httpServer)
+    )
       .post('/api/auth/passkeys/login/verify')
       .send({
         response: {

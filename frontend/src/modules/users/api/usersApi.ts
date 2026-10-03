@@ -1,4 +1,9 @@
 import { baseApi } from '@/store/api/baseApi';
+import { unwrapObjectBody, type MessageResult } from '@app/sdk';
+import {
+  invalidateOnSuccess,
+  invalidateOnSuccessOrUnknownOutcome,
+} from '@/store/api/invalidateOnSuccess';
 import type {
   AdminUser,
   GetUsersParams,
@@ -85,7 +90,7 @@ export const usersApi = baseApi.injectEndpoints({
         const { id, ...rest } = response.data;
         return { ...rest, _id: id };
       },
-      invalidatesTags: [{ type: 'User', id: 'LIST' }],
+      invalidatesTags: invalidateOnSuccess([{ type: 'User', id: 'LIST' }]),
     }),
 
     /**
@@ -120,10 +125,18 @@ export const usersApi = baseApi.injectEndpoints({
         const { id, ...rest } = response.data;
         return { ...rest, _id: id };
       },
-      invalidatesTags: (result, error, { userId }) => [
+      invalidatesTags: invalidateOnSuccess(({ userId }: UpdateUserRequest) => [
         { type: 'User', id: userId },
         { type: 'User', id: 'LIST' },
-      ],
+      ]),
+    }),
+
+    resendEmailChange: builder.mutation<MessageResult, string>({
+      query: (userId) => ({
+        url: `/api/admin/users/${userId}/resend-email-change`,
+        method: 'POST',
+      }),
+      transformResponse: (response: unknown) => unwrapObjectBody<MessageResult>(response),
     }),
 
     /**
@@ -143,10 +156,12 @@ export const usersApi = baseApi.injectEndpoints({
         data: { id: string; isDeleted: boolean; deletedAt?: string };
         message: string;
       }) => response.data,
-      invalidatesTags: (result, error, { userId }) => [
-        { type: 'User', id: userId },
-        { type: 'User', id: 'LIST' },
-      ],
+      invalidatesTags: invalidateOnSuccessOrUnknownOutcome(
+        ({ userId }: UpdateUserStatusRequest) => [
+          { type: 'User', id: userId },
+          { type: 'User', id: 'LIST' },
+        ],
+      ),
     }),
 
     /**
@@ -166,10 +181,10 @@ export const usersApi = baseApi.injectEndpoints({
         const { id, ...rest } = response.data;
         return { ...rest, _id: id };
       },
-      invalidatesTags: (result, error, { userId }) => [
+      invalidatesTags: invalidateOnSuccessOrUnknownOutcome(({ userId }: UpdateUserRoleRequest) => [
         { type: 'User', id: userId },
         { type: 'User', id: 'LIST' },
-      ],
+      ]),
     }),
 
     /**
@@ -180,10 +195,10 @@ export const usersApi = baseApi.injectEndpoints({
         url: `/api/admin/users/${userId}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (result, error, userId) => [
+      invalidatesTags: invalidateOnSuccessOrUnknownOutcome((userId: string) => [
         { type: 'User', id: userId },
         { type: 'User', id: 'LIST' },
-      ],
+      ]),
     }),
   }),
 });
@@ -193,6 +208,7 @@ export const {
   useGetUserByIdQuery,
   useCreateUserMutation,
   useUpdateUserMutation,
+  useResendEmailChangeMutation,
   useUpdateUserStatusMutation,
   useUpdateUserRoleMutation,
   useDeleteUserMutation,

@@ -107,19 +107,45 @@ describe('MagicLinkService', () => {
 
       expect(harness.authMailService.sendMagicLink).toHaveBeenCalledTimes(1);
     });
+
+    it('stores an allowed native continuation with the pending link', async () => {
+      const redirect = '/en/auth/native/authorize?transaction=abc-123';
+
+      await harness.service.request({ email: EMAIL, redirect }, MOCK_REQUEST);
+
+      expect(harness.pendingModel.create).toHaveBeenCalledWith(
+        expect.objectContaining({ email: EMAIL, redirect }),
+      );
+    });
+
+    it('ignores a disallowed continuation without rejecting the request', async () => {
+      const result = await harness.service.request(
+        {
+          email: EMAIL,
+          redirect: '/en/auth/native/authorize?transaction=abc&extra=yes',
+        },
+        MOCK_REQUEST,
+      );
+      const createPayload = harness.pendingModel.create.mock.calls[0]?.[0] as
+        Record<string, unknown> | undefined;
+
+      expect(result.data.email).toBe(EMAIL);
+      expect(createPayload).not.toHaveProperty('redirect');
+    });
   });
 
   describe('verify', () => {
     function pendingLink(expiresAt: Date): {
       email: string;
       expiresAt: Date;
+      redirect?: string;
     } {
       return { email: EMAIL, expiresAt };
     }
 
     it('should spend the link once and sign the account in', async () => {
       harness.pendingModel.findOneAndUpdate.mockResolvedValueOnce(
-        pendingLink(new Date(Date.now() + 60000)),
+        pendingLink(new Date(harness.clock.now().getTime() + 60000)),
       );
       harness.userModel.findOne.mockResolvedValueOnce(MOCK_USER);
 
@@ -146,7 +172,7 @@ describe('MagicLinkService', () => {
 
     it('should hold the sign-in when the account owes a second factor', async () => {
       harness.pendingModel.findOneAndUpdate.mockResolvedValueOnce(
-        pendingLink(new Date(Date.now() + 60000)),
+        pendingLink(new Date(harness.clock.now().getTime() + 60000)),
       );
       harness.userModel.findOne.mockResolvedValueOnce(MOCK_USER);
       harness.signInService.completeSignIn.mockResolvedValueOnce({
@@ -161,9 +187,32 @@ describe('MagicLinkService', () => {
       expect(result.data).toEqual({ requiresTwoFactor: true, user: null });
     });
 
+    it('returns the stored continuation when a second factor is required', async () => {
+      const redirect = '/en/auth/native/authorize?transaction=abc-123';
+      harness.pendingModel.findOneAndUpdate.mockResolvedValueOnce({
+        ...pendingLink(new Date(harness.clock.now().getTime() + 60000)),
+        redirect,
+      });
+      harness.userModel.findOne.mockResolvedValueOnce(MOCK_USER);
+      harness.signInService.completeSignIn.mockResolvedValueOnce({
+        requiresTwoFactor: true,
+      });
+
+      const result = await harness.service.verify(
+        { token: TOKEN },
+        MOCK_RESPONSE,
+      );
+
+      expect(result.data).toEqual({
+        requiresTwoFactor: true,
+        user: null,
+        redirect,
+      });
+    });
+
     it('should create a verified account without a password for a new address', async () => {
       harness.pendingModel.findOneAndUpdate.mockResolvedValueOnce(
-        pendingLink(new Date(Date.now() + 60000)),
+        pendingLink(new Date(harness.clock.now().getTime() + 60000)),
       );
 
       await harness.service.verify({ token: TOKEN }, MOCK_RESPONSE);
@@ -189,9 +238,39 @@ describe('MagicLinkService', () => {
       expect(harness.signInService.completeSignIn).not.toHaveBeenCalled();
     });
 
+    it('returns the stored continuation after sign-in', async () => {
+      const redirect = '/en/auth/native/authorize?transaction=abc-123';
+      harness.pendingModel.findOneAndUpdate.mockResolvedValueOnce({
+        ...pendingLink(new Date(harness.clock.now().getTime() + 60000)),
+        redirect,
+      });
+      harness.userModel.findOne.mockResolvedValueOnce(MOCK_USER);
+
+      const result = await harness.service.verify(
+        { token: TOKEN },
+        MOCK_RESPONSE,
+      );
+
+      expect(result.data.redirect).toBe(redirect);
+    });
+
+    it('does not add a continuation when none was stored', async () => {
+      harness.pendingModel.findOneAndUpdate.mockResolvedValueOnce(
+        pendingLink(new Date(harness.clock.now().getTime() + 60000)),
+      );
+      harness.userModel.findOne.mockResolvedValueOnce(MOCK_USER);
+
+      const result = await harness.service.verify(
+        { token: TOKEN },
+        MOCK_RESPONSE,
+      );
+
+      expect(result.data).not.toHaveProperty('redirect');
+    });
+
     it('should reject an expired token', async () => {
       harness.pendingModel.findOneAndUpdate.mockResolvedValueOnce(
-        pendingLink(new Date(Date.now() - 1000)),
+        pendingLink(new Date(harness.clock.now().getTime() - 1000)),
       );
 
       await expect(
@@ -204,7 +283,7 @@ describe('MagicLinkService', () => {
 
     it('should reject a link that belongs to a soft-deleted account', async () => {
       harness.pendingModel.findOneAndUpdate.mockResolvedValueOnce(
-        pendingLink(new Date(Date.now() + 60000)),
+        pendingLink(new Date(harness.clock.now().getTime() + 60000)),
       );
       harness.userModel.findOne.mockResolvedValueOnce({
         ...MOCK_USER,
@@ -226,7 +305,7 @@ describe('MagicLinkService', () => {
         save: jest.fn().mockResolvedValue(undefined),
       };
       harness.pendingModel.findOneAndUpdate.mockResolvedValueOnce(
-        pendingLink(new Date(Date.now() + 60000)),
+        pendingLink(new Date(harness.clock.now().getTime() + 60000)),
       );
       harness.userModel.findOne.mockResolvedValueOnce(unverified);
 

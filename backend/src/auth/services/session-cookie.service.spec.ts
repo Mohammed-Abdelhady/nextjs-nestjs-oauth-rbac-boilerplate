@@ -1,7 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { Request, Response } from 'express';
 import { SessionCookieService } from './session-cookie.service';
+import {
+  createRequestMock,
+  createResponseMock,
+} from '../../common/testing/test-doubles.harness-spec';
 
 describe('SessionCookieService (X-13, D-29)', () => {
   let service: SessionCookieService;
@@ -92,9 +95,7 @@ describe('SessionCookieService (X-13, D-29)', () => {
       });
 
       const cookieMock = jest.fn();
-      const mockResponse = {
-        cookie: cookieMock,
-      } as unknown as Response;
+      const mockResponse = createResponseMock({ cookie: cookieMock });
 
       service.set(mockResponse, 'token-abc');
 
@@ -119,9 +120,7 @@ describe('SessionCookieService (X-13, D-29)', () => {
       });
 
       const clearCookieMock = jest.fn();
-      const mockResponse = {
-        clearCookie: clearCookieMock,
-      } as unknown as Response;
+      const mockResponse = createResponseMock({ clearCookie: clearCookieMock });
 
       service.clear(mockResponse);
 
@@ -143,11 +142,11 @@ describe('SessionCookieService (X-13, D-29)', () => {
         NODE_ENV: 'development',
       });
 
-      const mockRequest = {
+      const mockRequest = createRequestMock({
         cookies: {
           sid: 'raw-token-123',
         },
-      } as unknown as Request;
+      });
 
       expect(service.read(mockRequest)).toBe('raw-token-123');
     });
@@ -157,9 +156,7 @@ describe('SessionCookieService (X-13, D-29)', () => {
         NODE_ENV: 'development',
       });
 
-      const mockRequest = {
-        cookies: {},
-      } as unknown as Request;
+      const mockRequest = createRequestMock({ cookies: {} });
 
       expect(service.read(mockRequest)).toBeUndefined();
     });
@@ -169,7 +166,7 @@ describe('SessionCookieService (X-13, D-29)', () => {
         NODE_ENV: 'development',
       });
 
-      const mockRequest = {} as Request;
+      const mockRequest = createRequestMock({});
 
       expect(service.read(mockRequest)).toBeUndefined();
     });

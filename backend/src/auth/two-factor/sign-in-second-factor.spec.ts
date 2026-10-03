@@ -1,5 +1,4 @@
 import { ConfigService } from '@nestjs/config';
-import { Response } from 'express';
 import { Types } from 'mongoose';
 import { SignInService } from '../services/sign-in.service';
 import { SessionService } from '../services/session.service';
@@ -8,6 +7,11 @@ import { AuthFeaturesService } from '../services/auth-features.service';
 import { TwoFactorChallengeService } from './services/two-factor-challenge.service';
 import { UserDocument } from '../../user/schemas/user.schema';
 import { AuthProvider } from '../../user/enums/auth-provider.enum';
+import {
+  createModelMock,
+  createResponseMock,
+  partialMock,
+} from '../../common/testing/test-doubles.harness-spec';
 
 /**
  * What the shared sign-in path does for an account that owes a code. The rest
@@ -16,9 +20,10 @@ import { AuthProvider } from '../../user/enums/auth-provider.enum';
 
 const USER_ID = new Types.ObjectId('507f1f77bcf86cd799439011');
 
-const MOCK_RESPONSE = {
+const MOCK_RESPONSE = createResponseMock({
   req: { headers: { 'user-agent': 'test-agent' }, ip: '127.0.0.1' },
-} as unknown as Response;
+  setHeader: jest.fn(),
+});
 
 interface Harness {
   service: SignInService;
@@ -36,33 +41,38 @@ function createHarness(twoFactorFeatureOn = true): Harness {
     }),
   };
 
-  const sessionService = {
-    createSession: jest.fn().mockResolvedValue('session-token-123'),
-  };
-  const sessionCookieService = { set: jest.fn() };
-  const challengeService = { issue: jest.fn().mockResolvedValue(undefined) };
+  const createSession = jest.fn().mockResolvedValue({
+    sessionToken: 'session-token-123',
+    csrfToken: 'csrf-token-123',
+  });
+  const sessionService = partialMock<SessionService>({ createSession });
+  const set = jest.fn();
+  const sessionCookieService = partialMock<SessionCookieService>({ set });
+  const issue = jest.fn().mockResolvedValue(undefined);
+  const challengeService = partialMock<TwoFactorChallengeService>({ issue });
 
-  const configService = {
-    get: <T>(key: string, fallback?: T): T | undefined =>
-      key === 'twoFactor.enabled' ? (twoFactorFeatureOn as T) : fallback,
-  } as unknown as ConfigService;
+  const configService = new ConfigService({
+    'twoFactor.enabled': twoFactorFeatureOn,
+  });
 
   return {
     service: new SignInService(
-      roleModel as unknown as ConstructorParameters<typeof SignInService>[0],
-      sessionService as unknown as SessionService,
-      sessionCookieService as unknown as SessionCookieService,
+      createModelMock<ConstructorParameters<typeof SignInService>[0]>(
+        roleModel,
+      ),
+      sessionService,
+      sessionCookieService,
       new AuthFeaturesService(configService),
-      challengeService as unknown as TwoFactorChallengeService,
+      challengeService,
     ),
-    sessionService,
-    sessionCookieService,
-    challengeService,
+    sessionService: { createSession },
+    sessionCookieService: { set },
+    challengeService: { issue },
   };
 }
 
 function userWith(twoFactorEnabled: boolean): UserDocument {
-  return {
+  return partialMock<UserDocument>({
     _id: USER_ID,
     email: 'user@example.com',
     name: 'Test User',
@@ -71,8 +81,14 @@ function userWith(twoFactorEnabled: boolean): UserDocument {
     authProvider: AuthProvider.EMAIL,
     isVerified: true,
     isDeleted: false,
-    twoFactor: { enabled: twoFactorEnabled },
-  } as unknown as UserDocument;
+    twoFactor: {
+      enabled: twoFactorEnabled,
+      secret: null,
+      confirmedAt: null,
+      recoveryCodes: [],
+      lastUsedStep: null,
+    },
+  });
 }
 
 describe('SignInService with a second factor', () => {

@@ -1,4 +1,5 @@
 import { baseApi } from '@/store/api/baseApi';
+import { invalidateOnSuccess } from '@/store/api/invalidateOnSuccess';
 import type { LoginResponse } from '@/modules/auth/types/auth.types';
 
 const REQUEST_PATH = '/api/auth/magic-link/request';
@@ -18,7 +19,10 @@ export interface MagicLinkRequestResult {
  */
 export const magicLinkApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    requestMagicLink: builder.mutation<MagicLinkRequestResult, { email: string }>({
+    requestMagicLink: builder.mutation<
+      MagicLinkRequestResult,
+      { email: string; redirect?: string }
+    >({
       query: (body) => ({ url: REQUEST_PATH, method: 'POST', body }),
       transformResponse: (response: { success: boolean; data: MagicLinkRequestResult }) =>
         response.data,
@@ -27,7 +31,7 @@ export const magicLinkApi = baseApi.injectEndpoints({
     verifyMagicLink: builder.mutation<LoginResponse, { token: string }>({
       query: (body) => ({ url: VERIFY_PATH, method: 'POST', body }),
       transformResponse: (response: { success: boolean; data: LoginResponse }) => response.data,
-      invalidatesTags: ['Auth', 'User'],
+      invalidatesTags: invalidateOnSuccess(['Auth', 'User']),
     }),
   }),
 });

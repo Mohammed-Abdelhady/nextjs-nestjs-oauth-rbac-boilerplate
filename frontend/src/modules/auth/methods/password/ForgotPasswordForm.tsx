@@ -6,12 +6,11 @@ import { FormProvider } from 'react-hook-form';
 import { useFormWithValidation } from '@/hooks/useFormWithValidation';
 import { FormInput, FormRootError, SubmitButton } from '@/components/forms';
 import { useForgotPasswordMutation } from '@/modules/auth/store/authApi';
-import { zodEmail } from '@/lib/validations';
+import { NETWORK_ERROR_CODE, zodEmail, parseApiError } from '@app/core';
 import { Mail } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { toast } from '@/lib/toast';
 import { Link, useRouter } from '@/i18n/navigation';
-import { parseApiError } from '@/lib/apiError';
 import { preventNavigationBlur } from '@/modules/auth/utils/preventNavigationBlur';
 
 /**
@@ -78,7 +77,7 @@ export function ForgotPasswordForm() {
         const parsed = parseApiError(err);
         let errorMessage = t('errors.serverError');
 
-        if (parsed.code === 'NETWORK_ERROR') {
+        if (parsed.code === NETWORK_ERROR_CODE) {
           errorMessage = t('errors.networkError');
         } else if (parsed.message) {
           errorMessage = parsed.message;
@@ -88,7 +87,6 @@ export function ForgotPasswordForm() {
           type: 'manual',
           message: errorMessage,
         });
-        toast.error(errorMessage);
       }
     },
     [forgotPassword, router, setError, t, tToast],

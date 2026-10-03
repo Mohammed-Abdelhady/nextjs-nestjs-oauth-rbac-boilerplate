@@ -8,7 +8,7 @@ import { type z } from 'zod';
  * @example
  * ```tsx
  * import { useFormWithValidation } from '@/hooks/useFormWithValidation';
- * import { zodEmail, zodPassword } from '@/lib/validations';
+ * import { zodEmail, zodPassword } from '@app/core';
  * import { z } from 'zod';
  *
  * const loginSchema = z.object({

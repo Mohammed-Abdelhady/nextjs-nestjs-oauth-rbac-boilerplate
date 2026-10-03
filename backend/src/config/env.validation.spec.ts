@@ -177,4 +177,72 @@ describe('validateEnvironment', () => {
       }),
     ).toThrow(/TOTP_ENCRYPTION_KEY/);
   });
+
+  it('AUTH_EPOCH defaults to 1 and AUTH_NATIVE_ENABLED defaults to false', () => {
+    const result = validateEnvironment(baseEnv);
+
+    expect(result.AUTH_EPOCH).toBe(1);
+    expect(result.AUTH_NATIVE_ENABLED).toBe(false);
+  });
+
+  it.each(['0x10', '1e3', '0', '-1', ' 2 '])(
+    'rejects AUTH_EPOCH=%j',
+    (epoch) => {
+      expect(() =>
+        validateEnvironment({ ...baseEnv, AUTH_EPOCH: epoch }),
+      ).toThrow(/AUTH_EPOCH/);
+    },
+  );
+
+  it("accepts AUTH_EPOCH='7' as the number 7", () => {
+    const result = validateEnvironment({ ...baseEnv, AUTH_EPOCH: '7' });
+
+    expect(result.AUTH_EPOCH).toBe(7);
+  });
+
+  it("AUTH_NATIVE_ENABLED='true' yields true", () => {
+    const result = validateEnvironment({
+      ...baseEnv,
+      AUTH_NATIVE_ENABLED: 'true',
+    });
+
+    expect(result.AUTH_NATIVE_ENABLED).toBe(true);
+  });
+
+  it('AUTH_NATIVE_ALLOW_CUSTOM_SCHEME defaults to false', () => {
+    expect(validateEnvironment(baseEnv).AUTH_NATIVE_ALLOW_CUSTOM_SCHEME).toBe(
+      false,
+    );
+  });
+
+  it("AUTH_NATIVE_ALLOW_CUSTOM_SCHEME='true' yields true", () => {
+    const result = validateEnvironment({
+      ...baseEnv,
+      AUTH_NATIVE_ALLOW_CUSTOM_SCHEME: 'true',
+    });
+
+    expect(result.AUTH_NATIVE_ALLOW_CUSTOM_SCHEME).toBe(true);
+  });
+
+  it('parses the mail dispatcher bounds', () => {
+    const result = validateEnvironment({
+      ...baseEnv,
+      MAIL_MAX_PENDING_SENDS: '50',
+      MAIL_DRAIN_DEADLINE_MS: '2500',
+    });
+
+    expect(result.MAIL_MAX_PENDING_SENDS).toBe(50);
+    expect(result.MAIL_DRAIN_DEADLINE_MS).toBe(2500);
+  });
+
+  it.each([
+    { key: 'MAIL_MAX_PENDING_SENDS', value: '0' },
+    { key: 'MAIL_MAX_PENDING_SENDS', value: '10001' },
+    { key: 'MAIL_DRAIN_DEADLINE_MS', value: '99' },
+    { key: 'MAIL_DRAIN_DEADLINE_MS', value: '60001' },
+  ])('rejects $key=$value outside its bounds', ({ key, value }) => {
+    expect(() => validateEnvironment({ ...baseEnv, [key]: value })).toThrow(
+      new RegExp(key),
+    );
+  });
 });

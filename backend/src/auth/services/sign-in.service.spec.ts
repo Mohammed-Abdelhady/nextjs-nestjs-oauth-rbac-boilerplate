@@ -1,5 +1,4 @@
 import { ConfigService } from '@nestjs/config'; // feature:totp
-import { Response } from 'express';
 import { Types } from 'mongoose';
 import { SignInService } from './sign-in.service';
 import { SessionService } from './session.service';
@@ -8,12 +7,18 @@ import { AuthFeaturesService } from './auth-features.service'; // feature:totp
 import { TwoFactorChallengeService } from '../two-factor/services/two-factor-challenge.service'; // feature:totp
 import { UserDocument } from '../../user/schemas/user.schema';
 import { AuthProvider } from '../../user/enums/auth-provider.enum';
+import {
+  createModelMock,
+  createResponseMock,
+  partialMock,
+} from '../../common/testing/test-doubles.harness-spec';
 
 const USER_ID = new Types.ObjectId('507f1f77bcf86cd799439011');
 
-const MOCK_RESPONSE = {
+const MOCK_RESPONSE = createResponseMock({
   req: { headers: { 'user-agent': 'test-agent' }, ip: '127.0.0.1' },
-} as unknown as Response;
+  setHeader: jest.fn(),
+});
 
 interface Harness {
   service: SignInService;
@@ -31,35 +36,38 @@ function createHarness(): Harness {
     }),
   };
 
-  const sessionService = {
-    createSession: jest.fn().mockResolvedValue('session-token-123'),
-  };
-  const sessionCookieService = { set: jest.fn() };
+  const createSession = jest.fn().mockResolvedValue({
+    sessionToken: 'session-token-123',
+    csrfToken: 'csrf-token-123',
+  });
+  const sessionService = partialMock<SessionService>({ createSession });
+  const set = jest.fn();
+  const sessionCookieService = partialMock<SessionCookieService>({ set });
   // feature:totp:start
-  const challengeService = { issue: jest.fn().mockResolvedValue(undefined) };
+  const issue = jest.fn().mockResolvedValue(undefined);
+  const challengeService = partialMock<TwoFactorChallengeService>({ issue });
 
-  const configService = {
-    get: <T>(key: string, fallback?: T): T | undefined =>
-      key === 'twoFactor.enabled' ? (true as T) : fallback,
-  } as unknown as ConfigService;
+  const configService = new ConfigService({ 'twoFactor.enabled': true });
   // feature:totp:end
 
   return {
     service: new SignInService(
-      roleModel as unknown as ConstructorParameters<typeof SignInService>[0],
-      sessionService as unknown as SessionService,
-      sessionCookieService as unknown as SessionCookieService,
+      createModelMock<ConstructorParameters<typeof SignInService>[0]>(
+        roleModel,
+      ),
+      sessionService,
+      sessionCookieService,
       new AuthFeaturesService(configService), // feature:totp
-      challengeService as unknown as TwoFactorChallengeService, // feature:totp
+      challengeService, // feature:totp
     ),
-    sessionService,
-    sessionCookieService,
-    challengeService, // feature:totp
+    sessionService: { createSession },
+    sessionCookieService: { set },
+    challengeService: { issue }, // feature:totp
   };
 }
 
 function plainUser(): UserDocument {
-  return {
+  const draft = {
     _id: USER_ID,
     email: 'user@example.com',
     name: 'Test User',
@@ -68,8 +76,15 @@ function plainUser(): UserDocument {
     authProvider: AuthProvider.EMAIL,
     isVerified: true,
     isDeleted: false,
-    twoFactor: { enabled: false },
-  } as unknown as UserDocument;
+    twoFactor: {
+      enabled: false,
+      secret: null,
+      confirmedAt: null,
+      recoveryCodes: [],
+      lastUsedStep: null,
+    },
+  };
+  return partialMock<UserDocument>(draft);
 }
 
 describe('SignInService', () => {

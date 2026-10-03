@@ -1,4 +1,4 @@
-import { readdir, rm, rmdir } from 'node:fs/promises';
+import { readdir, readFile, rm, rmdir } from 'node:fs/promises';
 import { dirname, join, posix, relative, sep } from 'node:path';
 import { SKIPPED_DIRS } from '../constants/index.js';
 
@@ -27,6 +27,25 @@ export function toPosix(path: string): string {
   return path.split(sep).join(posix.sep);
 }
 
+/** Narrows an unknown thrown value to one that carries an errno `code`. */
+export function isErrnoException(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && 'code' in error;
+}
+
+/**
+ * Reads a UTF-8 file, or returns undefined when it does not exist. Any other
+ * read error is rethrown naming the path.
+ */
+export async function readFileIfExists(path: string): Promise<string | undefined> {
+  try {
+    return await readFile(path, 'utf8');
+  } catch (error) {
+    if (isErrnoException(error) && error.code === 'ENOENT') return undefined;
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(`Could not read ${path}: ${reason}`);
+  }
+}
+
 /** Removes a file and any directories it leaves empty, stopping at `root`. */
 export async function removeFile(root: string, relativePath: string): Promise<void> {
   const target = join(root, relativePath);
@@ -36,8 +55,13 @@ export async function removeFile(root: string, relativePath: string): Promise<vo
   while (directory.startsWith(root) && directory !== root) {
     try {
       await rmdir(directory);
-    } catch {
-      return;
+    } catch (error) {
+      // A directory that still has entries (or is already gone) stops the walk;
+      // anything else is a real failure.
+      if (isErrnoException(error) && (error.code === 'ENOTEMPTY' || error.code === 'ENOENT')) {
+        return;
+      }
+      throw error;
     }
     directory = dirname(directory);
   }

@@ -1,10 +1,13 @@
-import { Response } from 'express';
 import { RequestIdMiddleware } from './request-id.middleware';
 import { RequestWithId } from '../interfaces/request-with-id.interface';
 import {
   REQUEST_ID_HEADER,
   REQUEST_ID_MAX_LENGTH,
 } from '../constants/request-id';
+import {
+  createRequestMock,
+  createResponseMock,
+} from '../testing/test-doubles.harness-spec';
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -15,13 +18,13 @@ describe('RequestIdMiddleware (X-19)', () => {
   const run = (
     incoming?: string,
   ): { request: RequestWithId; setHeader: jest.Mock; next: jest.Mock } => {
-    const request = {
+    const request = createRequestMock({
       header: jest.fn().mockReturnValue(incoming),
-    } as unknown as RequestWithId;
+    });
     const setHeader = jest.fn();
     const next = jest.fn();
 
-    middleware.use(request, { setHeader } as unknown as Response, next);
+    middleware.use(request, createResponseMock({ setHeader }), next);
 
     return { request, setHeader, next };
   };

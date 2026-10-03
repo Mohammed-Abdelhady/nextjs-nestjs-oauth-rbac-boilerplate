@@ -17,7 +17,7 @@ import {
   ApiQuery,
   ApiBody,
   ApiParam,
-  ApiBearerAuth,
+  ApiCookieAuth,
 } from '@nestjs/swagger';
 import { AdminUsersService } from './services/admin-users.service';
 import { AdminUserQueriesService } from './services/admin-user-queries.service';
@@ -32,6 +32,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { ApiResponse } from '../common/dto/api-response.dto';
 import { AdminUserDto, UserListData } from './dto/admin-user-response.dto';
 import { USER_PERMISSIONS } from '../common/constants/permissions';
+import { SESSION_SWAGGER_AUTH_NAME } from '../common/constants/session';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 
 /**
@@ -40,7 +41,7 @@ import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
  * needs the actor's level to exceed the target's level.
  */
 @ApiTags('admin')
-@ApiBearerAuth('JWT-auth')
+@ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
 @Controller('admin/users')
 @UseGuards(PermissionGuard)
 export class AdminUsersController {
@@ -181,6 +182,34 @@ export class AdminUsersController {
     @CurrentUser('role') actorRole: string,
   ): Promise<ApiResponse<AdminUserDto>> {
     return this.adminUsersService.updateUser(id, dto, actorId, actorRole);
+  }
+
+  /**
+   * Re-send the confirmation code for a user's current unverified address.
+   *
+   * @example POST /admin/users/:id/resend-email-change
+   */
+  @Post(':id/resend-email-change')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermissions(USER_PERMISSIONS.UPDATE_ALL)
+  @ApiOperation({
+    summary: 'Resend an email change confirmation',
+    description:
+      'Re-sends the confirmation code for the account current unverified ' +
+      'address. The address and its generation are unchanged; a fresh code ' +
+      'is issued up to the per-address mail cap.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'User ID',
+    example: '507f1f77bcf86cd799439011',
+  })
+  async resendEmailChange(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('role') actorRole: string,
+  ): Promise<ApiResponse<{ message: string }>> {
+    return this.adminUsersService.resendEmailChange(id, actorId, actorRole);
   }
 
   /**

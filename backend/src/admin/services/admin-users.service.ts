@@ -114,6 +114,31 @@ export class AdminUsersService {
   }
 
   /**
+   * Re-send the confirmation code for the account's current unverified
+   * address, without changing the address or its generation.
+   */
+  async resendEmailChange(
+    id: string,
+    actorId: string,
+    actorRole: string,
+  ): Promise<ApiResponse<{ message: string }>> {
+    const targetUser = await this.accessService.loadActiveUser(id);
+
+    this.accessService.assertNotSelf(
+      id,
+      actorId,
+      'Cannot modify your own account through admin panel',
+    );
+    await this.accessService.assertCanModify(actorRole, targetUser.role);
+
+    const actorLevel = await this.accessService.getActorLevel(actorRole);
+    await this.emailChangeService.resend(targetUser, actorLevel);
+
+    this.logger.log(`Email change confirmation resent for ${id} by ${actorId}`);
+    return ApiResponse.success({ message: 'Confirmation email sent' });
+  }
+
+  /**
    * Activate or deactivate an account.
    */
   async updateUserStatus(

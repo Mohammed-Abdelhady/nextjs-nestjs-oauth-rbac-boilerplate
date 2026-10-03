@@ -1,6 +1,5 @@
 import { ConfigService } from '@nestjs/config';
 import { Types } from 'mongoose';
-import { UserDocument } from '../../user/schemas/user.schema';
 import { AuthProvider } from '../../user/enums/auth-provider.enum';
 import { HashService } from '../../common/services/hash.service';
 import { TwoFactorService } from './two-factor.service';
@@ -8,6 +7,10 @@ import { TotpSecretCryptoService } from './services/totp-secret-crypto.service';
 import { TwoFactorVerificationService } from './services/two-factor-verification.service';
 import { TwoFactorReauthService } from './services/two-factor-reauth.service';
 import { hashRecoveryCode } from './utils/recovery-code.util';
+import {
+  createModelMock,
+  partialMock,
+} from '../../common/testing/test-doubles.harness-spec';
 
 /**
  * Shared setup for the two-factor specs.
@@ -51,10 +54,9 @@ export interface TwoFactorHarness {
 }
 
 export function createCrypto(): TotpSecretCryptoService {
-  return new TotpSecretCryptoService({
-    get: <T>(key: string): T | undefined =>
-      key === 'twoFactor.encryptionKey' ? (ENCRYPTION_KEY as T) : undefined,
-  } as unknown as ConfigService);
+  return new TotpSecretCryptoService(
+    new ConfigService({ 'twoFactor.encryptionKey': ENCRYPTION_KEY }),
+  );
 }
 
 /** A signed-in account, by default with a password and no second factor. */
@@ -98,11 +100,6 @@ export function createEnabledUser(
   });
 }
 
-/** The mock user, typed the way the services expect it. */
-export function asDocument(user: MockUser): UserDocument {
-  return user as unknown as UserDocument;
-}
-
 export function createHarness(user: MockUser | null): TwoFactorHarness {
   const query = {
     select: jest.fn(),
@@ -123,15 +120,17 @@ export function createHarness(user: MockUser | null): TwoFactorHarness {
 
   return {
     service: new TwoFactorService(
-      userModel as unknown as ConstructorParameters<typeof TwoFactorService>[0],
+      createModelMock<ConstructorParameters<typeof TwoFactorService>[0]>(
+        userModel,
+      ),
       crypto,
       new TwoFactorVerificationService(
-        userModel as unknown as ConstructorParameters<
-          typeof TwoFactorVerificationService
-        >[0],
+        createModelMock<
+          ConstructorParameters<typeof TwoFactorVerificationService>[0]
+        >(userModel),
         crypto,
       ),
-      new TwoFactorReauthService(hashService as unknown as HashService),
+      new TwoFactorReauthService(partialMock<HashService>(hashService)),
     ),
     crypto,
     userModel,

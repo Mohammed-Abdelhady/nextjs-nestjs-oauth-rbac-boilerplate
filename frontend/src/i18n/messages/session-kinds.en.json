@@ -1,0 +1,9 @@
+{
+  "sessions": {
+    "kind": {
+      "browser": "Browser",
+      "nativeApp": "Mobile app"
+    },
+    "unknownDevice": "Unknown device"
+  }
+}

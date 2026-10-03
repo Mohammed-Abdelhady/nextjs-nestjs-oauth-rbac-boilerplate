@@ -10,7 +10,7 @@ import {
   PERMISSION_PERMISSIONS,
   SESSION_PERMISSIONS,
   REPORT_PERMISSIONS,
-} from '../constants/permissions';
+} from '@app/core';
 
 export interface PermissionGroup {
   /** Tab value and key of the group name under permissions.selector.groups */

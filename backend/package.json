@@ -10,7 +10,7 @@
     "npm": ">=10.9.0"
   },
   "scripts": {
-    "build": "nest build",
+    "build": "nest build && node ../scripts/check-backend-build.mjs",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -55,6 +55,7 @@
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
+    "@app/sdk": "*",
     "@eslint/eslintrc": "^3.3.7",
     "@eslint/js": "^9.39.5",
     "@nestjs/cli": "^11.0.24",

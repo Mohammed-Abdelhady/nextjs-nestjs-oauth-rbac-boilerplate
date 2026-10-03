@@ -1,0 +1,72 @@
+{
+  "auth": {
+    "activate": {
+      "registerAgain": "Register again",
+      "description": "Enter your code and choose your name and password to finish your account. If no email arrives and you already have an account, sign in or reset your password.",
+      "name": "Full Name",
+      "namePlaceholder": "Jane Doe",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "emailPlaceholder": "name@example.com",
+      "codePlaceholder": "123456",
+      "errors": {
+        "nameRequired": "Name is required",
+        "nameMinLength": "Name must be at least 2 characters",
+        "nameMaxLength": "Name must not exceed 80 characters",
+        "namePattern": "Name may contain letters, digits, spaces, apostrophes, hyphens and dots",
+        "confirmRequired": "Confirm your password",
+        "passwordMismatch": "Passwords do not match"
+      },
+      "signInRequired": "Your account has been created. Sign in to continue.",
+      "signIn": "Sign in",
+      "accountCreated": "Account created"
+    },
+    "resetPassword": {
+      "requestNewCode": "Request a new code"
+    },
+    "register": {
+      "description": "Confirm your email address, then finish your account with your name and password.",
+      "submit": "Send confirmation code",
+      "emailPlaceholder": "name@example.com"
+    },
+    "passwordRules": {
+      "byteLimit": "Not longer than 72 characters. Accented letters, non-Latin letters and emoji count as more than one.",
+      "errors": {
+        "required": "Password is required",
+        "min": "Password must be at least 8 characters",
+        "uppercase": "Password must include an uppercase letter from A to Z",
+        "lowercase": "Password must include a lowercase letter from a to z",
+        "number": "Password must include a digit from 0 to 9",
+        "tooLong": "Not longer than 72 characters. Accented letters, non-Latin letters and emoji count as more than one."
+      },
+      "uppercase": "At least one uppercase letter from A to Z",
+      "lowercase": "At least one lowercase letter from a to z",
+      "number": "At least one digit from 0 to 9"
+    },
+    "confirmEmailChange": {
+      "title": "Confirm Your Email Address",
+      "description": "Enter your new email address and the code sent to it. You can sign in after confirmation.",
+      "submit": "Confirm Email Address",
+      "success": "Your email address is confirmed. Sign in to continue.",
+      "signIn": "Sign in",
+      "successTitle": "Email address confirmed"
+    },
+    "login": {
+      "confirmNewEmail": "Confirm a new email address"
+    }
+  },
+  "errors": {
+    "codes": {
+      "EMAIL_SEND_LIMIT_REACHED": "Too many email confirmation requests. Try again later.",
+      "ACTIVATION_CODE_INVALID": "That code is invalid or has expired.",
+      "PASSWORD_RESET_CODE_INVALID": "That code is invalid or has expired. Request a new code and try again.",
+      "REGISTRATION_CONTRACT_OUTDATED": "This sign-up form is out of date. Reload the page and register again."
+    }
+  },
+  "toast": {
+    "success": {
+      "resendSuccess": "If this address can receive a code and the request limit has not been reached, one will be sent. Repeated requests are limited.",
+      "registrationSuccess": "If this address can receive a code, one is on its way. Check your email."
+    }
+  }
+}

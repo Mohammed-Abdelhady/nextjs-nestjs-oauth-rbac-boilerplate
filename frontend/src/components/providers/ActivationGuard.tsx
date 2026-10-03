@@ -1,6 +1,9 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { REDIRECT_PARAM } from '@/modules/auth/constants/authMethods';
+import { signedInPath } from '@/modules/auth/utils/signInRouting';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { LoadingRegion } from '@/components/layout/LoadingRegion';
@@ -10,7 +13,6 @@ import {
   selectUser,
   selectAuthLoading,
 } from '@/modules/auth/store/authSlice';
-import { WelcomeModal } from '@/modules/auth/components/WelcomeModal';
 
 interface ActivationGuardProps {
   readonly children: React.ReactNode;
@@ -18,7 +20,7 @@ interface ActivationGuardProps {
 
 /**
  * ActivationGuard component to protect activation route
- * Shows welcome modal if user is already activated
+ * Sends an already signed-in user through the normal continuation
  * Allows unauthenticated users to proceed with activation
  * Relies on AuthProvider for global session validation
  *
@@ -38,22 +40,17 @@ export function ActivationGuard({ children }: Readonly<ActivationGuardProps>) {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const user = useAppSelector(selectUser);
   const isAuthLoading = useAppSelector(selectAuthLoading);
-  const [showWelcome, setShowWelcome] = useState(true);
+  const redirect = useSearchParams().get(REDIRECT_PARAM);
 
-  // Dismissing the modal navigates to dashboard since the user is signed in
-  const handleCloseWelcome = useCallback(() => {
-    setShowWelcome(false);
-    router.push('/dashboard');
-  }, [router]);
+  useEffect(() => {
+    if (isAuthenticated && user) router.replace(signedInPath(user, redirect));
+  }, [isAuthenticated, user, redirect, router]);
 
   if (isAuthLoading) {
     return <LoadingRegion label={t('loading')} testId="activation-guard-loading" />;
   }
 
-  // If authenticated, show welcome modal
-  if (isAuthenticated && user) {
-    return <WelcomeModal isOpen={showWelcome} userName={user.name} onClose={handleCloseWelcome} />;
-  }
+  if (isAuthenticated && user) return null;
 
   // User is not authenticated, render activation form
   return <>{children}</>;

@@ -24,12 +24,12 @@ describe('AuthMethodsController', () => {
       get: jest.fn((key: string, fallback?: boolean) =>
         key in values ? values[key] : fallback,
       ),
-    } as unknown as ConfigService;
+    };
 
     // feature:oauth-core:start
     const registry = {
       listEnabled: jest.fn().mockReturnValue(providers),
-    } as unknown as OAuthRegistryService;
+    };
     // feature:oauth-core:end
 
     const module: TestingModule = await Test.createTestingModule({

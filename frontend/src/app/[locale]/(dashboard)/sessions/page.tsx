@@ -12,7 +12,7 @@ import {
   SessionTimelineSkeleton,
 } from '@/modules/sessions';
 import { useGetSessionsQuery } from '@/modules/sessions';
-import { parseApiError } from '@/lib/apiError';
+import { parseApiError } from '@app/core';
 
 /**
  * Sessions management page - Redesigned with timeline view

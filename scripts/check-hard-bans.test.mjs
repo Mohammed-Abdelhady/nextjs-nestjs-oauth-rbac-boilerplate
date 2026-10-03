@@ -58,7 +58,11 @@ test('has any does not match as any', () => {
 
 test('added dangerouslySetInnerHTML fails', () => {
   const result = evaluateChanges({
-    added: [added('frontend/src/ui/Html.tsx', ['return <div dangerouslySetInnerHTML={{ __html: html }} />;'])],
+    added: [
+      added('frontend/src/ui/Html.tsx', [
+        'return <div dangerouslySetInnerHTML={{ __html: html }} />;',
+      ]),
+    ],
     lineCounts: [{ path: 'frontend/src/ui/Html.tsx', lines: 10 }],
   });
   assert.equal(result.ok, false);
@@ -172,4 +176,128 @@ test('packages src is capped and husky hooks are scanned', () => {
   assert.equal(isCappedPath('packages/create-nest-next-auth/src/cli.ts'), true);
   assert.equal(isScanTarget('.husky/pre-commit'), true);
   assert.equal(isScanTarget('package.json'), true);
+});
+
+test('shared core src is capped', () => {
+  assert.equal(isCappedPath('shared/core/src/index.ts'), true);
+  const atLimit = evaluateChanges({
+    added: [added('shared/core/src/index.ts', ['export {};'])],
+    lineCounts: [{ path: 'shared/core/src/index.ts', lines: FILE_LINE_LIMIT }],
+  });
+  assert.equal(atLimit.ok, true);
+
+  const over = evaluateChanges({
+    added: [added('shared/core/src/index.ts', ['export {};'])],
+    lineCounts: [{ path: 'shared/core/src/index.ts', lines: FILE_LINE_LIMIT + 1 }],
+  });
+  assert.equal(over.ok, false);
+  assert.equal(over.caps[0].lines, FILE_LINE_LIMIT + 1);
+});
+
+test('mobile core src is capped', () => {
+  assert.equal(isCappedPath('mobile/core/src/index.ts'), true);
+  const atLimit = evaluateChanges({
+    added: [added('mobile/core/src/index.ts', ['export {};'])],
+    lineCounts: [{ path: 'mobile/core/src/index.ts', lines: FILE_LINE_LIMIT }],
+  });
+  assert.equal(atLimit.ok, true);
+
+  const over = evaluateChanges({
+    added: [added('mobile/core/src/index.ts', ['export {};'])],
+    lineCounts: [{ path: 'mobile/core/src/index.ts', lines: FILE_LINE_LIMIT + 1 }],
+  });
+  assert.equal(over.ok, false);
+  assert.equal(over.caps[0].lines, FILE_LINE_LIMIT + 1);
+});
+
+test('mobile expo app is capped', () => {
+  assert.equal(isCappedPath('mobile/expo/app/index.tsx'), true);
+  const atLimit = evaluateChanges({
+    added: [added('mobile/expo/app/index.tsx', ['export {};'])],
+    lineCounts: [{ path: 'mobile/expo/app/index.tsx', lines: FILE_LINE_LIMIT }],
+  });
+  assert.equal(atLimit.ok, true);
+
+  const over = evaluateChanges({
+    added: [added('mobile/expo/app/index.tsx', ['export {};'])],
+    lineCounts: [{ path: 'mobile/expo/app/index.tsx', lines: FILE_LINE_LIMIT + 1 }],
+  });
+  assert.equal(over.ok, false);
+  assert.equal(over.caps[0].lines, FILE_LINE_LIMIT + 1);
+});
+
+test('expo prebuild output is not scanned', () => {
+  assert.equal(isScanTarget('mobile/expo/ios/Pods/helper.js'), false);
+  assert.equal(isScanTarget('mobile/expo/android/app/build.js'), false);
+  assert.equal(isScanTarget('mobile/expo/.expo/cache.js'), false);
+  const ios = evaluateChanges({
+    added: [added('mobile/expo/ios/Pods/helper.js', ['/* eslint-disable no-console */'])],
+    lineCounts: [{ path: 'mobile/expo/ios/Pods/helper.js', lines: 10 }],
+  });
+  assert.equal(ios.ok, true);
+  const android = evaluateChanges({
+    added: [added('mobile/expo/android/app/build.js', ['/* eslint-disable no-console */'])],
+    lineCounts: [{ path: 'mobile/expo/android/app/build.js', lines: 10 }],
+  });
+  assert.equal(android.ok, true);
+  const cache = evaluateChanges({
+    added: [added('mobile/expo/.expo/cache.js', ['/* eslint-disable no-console */'])],
+    lineCounts: [{ path: 'mobile/expo/.expo/cache.js', lines: 10 }],
+  });
+  assert.equal(cache.ok, true);
+});
+
+test('hand-written native source is still scanned', () => {
+  assert.equal(isScanTarget('mobile/cli/ios/scripts/bundle.sh'), true);
+  assert.equal(isScanTarget('mobile/device-key/android/scripts/gen.js'), true);
+  assert.equal(isScanTarget('frontend/src/modules/android/install.ts'), true);
+  assert.equal(isScanTarget('frontend/mobile/expo/ios/Pods/helper.js'), true);
+  const cli = evaluateChanges({
+    added: [added('mobile/cli/ios/scripts/bundle.sh', ['/* eslint-disable no-console */'])],
+    lineCounts: [{ path: 'mobile/cli/ios/scripts/bundle.sh', lines: 10 }],
+  });
+  assert.equal(cli.ok, false);
+  assert.equal(cli.bans[0].token, 'eslint-disable');
+  const module = evaluateChanges({
+    added: [added('mobile/device-key/android/scripts/gen.js', ['/* eslint-disable no-console */'])],
+    lineCounts: [{ path: 'mobile/device-key/android/scripts/gen.js', lines: 10 }],
+  });
+  assert.equal(module.ok, false);
+  assert.equal(module.bans[0].token, 'eslint-disable');
+  const frontend = evaluateChanges({
+    added: [added('frontend/src/modules/android/install.ts', ['/* eslint-disable no-console */'])],
+    lineCounts: [{ path: 'frontend/src/modules/android/install.ts', lines: 10 }],
+  });
+  assert.equal(frontend.ok, false);
+  assert.equal(frontend.bans[0].token, 'eslint-disable');
+  const nested = evaluateChanges({
+    added: [added('frontend/mobile/expo/ios/Pods/helper.js', ['/* eslint-disable no-console */'])],
+    lineCounts: [{ path: 'frontend/mobile/expo/ios/Pods/helper.js', lines: 10 }],
+  });
+  assert.equal(nested.ok, false);
+  assert.equal(nested.bans[0].token, 'eslint-disable');
+});
+
+test('mobile readme and shared scripts are not capped', () => {
+  assert.equal(isCappedPath('mobile/core/README.md'), false);
+  assert.equal(isCappedPath('shared/core/scripts/generate.ts'), false);
+  const readme = evaluateChanges({
+    added: [added('mobile/core/README.md', ['docs'])],
+    lineCounts: [{ path: 'mobile/core/README.md', lines: FILE_LINE_LIMIT + 1 }],
+  });
+  assert.equal(readme.ok, true);
+  const script = evaluateChanges({
+    added: [added('shared/core/scripts/generate.ts', ['export {};'])],
+    lineCounts: [{ path: 'shared/core/scripts/generate.ts', lines: FILE_LINE_LIMIT + 1 }],
+  });
+  assert.equal(script.ok, true);
+});
+
+test('added as any under mobile src fails', () => {
+  const result = evaluateChanges({
+    added: [added('mobile/core/src/parse.ts', ['const value = data as any;'])],
+    lineCounts: [{ path: 'mobile/core/src/parse.ts', lines: 10 }],
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.bans[0].token, 'as any');
 });

@@ -54,7 +54,6 @@ describe('ParseObjectIdPipe', () => {
   });
 
   it('throws AppException 400 INVALID_INPUT for non-string input', () => {
-    const notAString = 12345 as unknown as string;
-    expect(() => pipe.transform(notAString)).toThrow(AppException);
+    expect(() => pipe.transform(12345)).toThrow(AppException);
   });
 });

@@ -2,16 +2,13 @@ import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { AuthLayout } from '@/modules/auth/components/AuthLayout';
 import { TwoFactorChallengePanel } from '@/modules/two-factor';
+import { firstValue } from '@/lib/searchParams';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
 interface TwoFactorPageProps {
   params: Promise<{ locale: string }>;
   searchParams: Promise<SearchParams>;
-}
-
-function firstValue(value: string | string[] | undefined): string {
-  return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
 }
 
 export async function generateMetadata({ params }: TwoFactorPageProps): Promise<Metadata> {

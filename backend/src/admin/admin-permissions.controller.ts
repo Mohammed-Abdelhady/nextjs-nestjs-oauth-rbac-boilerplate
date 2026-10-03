@@ -14,7 +14,7 @@ import {
   ApiOperation,
   ApiBody,
   ApiParam,
-  ApiBearerAuth,
+  ApiCookieAuth,
 } from '@nestjs/swagger';
 import { AdminPermissionsService } from './services/admin-permissions.service';
 import { PermissionGuard } from '../common/guards/permission.guard';
@@ -23,6 +23,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ApiResponse } from '../common/dto/api-response.dto';
 import { AddPermissionDto } from '../user/dto/add-permission.dto';
 import { PERMISSION_PERMISSIONS } from '../common/constants/permissions';
+import { SESSION_SWAGGER_AUTH_NAME } from '../common/constants/session';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 
 /**
@@ -30,7 +31,7 @@ import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
  * Grants and revokes need the actor's level to exceed the target's level.
  */
 @ApiTags('admin')
-@ApiBearerAuth('JWT-auth')
+@ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
 @Controller('admin/users')
 @UseGuards(PermissionGuard)
 export class AdminPermissionsController {

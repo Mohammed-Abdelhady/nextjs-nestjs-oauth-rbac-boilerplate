@@ -10,6 +10,7 @@ import {
 } from './schemas/pending-magic-link.schema';
 import { User, UserSchema } from '../../user/schemas/user.schema';
 import { Role, RoleSchema } from '../../role/schemas/role.schema';
+import { CommonModule } from '../../common/common.module';
 
 /**
  * Passwordless sign-in. Sessions, mail and the feature switch come from
@@ -17,6 +18,7 @@ import { Role, RoleSchema } from '../../role/schemas/role.schema';
  */
 @Module({
   imports: [
+    CommonModule,
     ConfigModule,
     MongooseModule.forFeature([
       { name: PendingMagicLink.name, schema: PendingMagicLinkSchema },

@@ -1,52 +1,68 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { MailService } from '../../mail/mail.service';
-import { AppException } from '../../common/exceptions/app.exception';
-import { ErrorCode } from '../../common/enums/error-code.enum';
+import { MailDispatcherService } from '../../mail/mail-dispatcher.service';
+import { currentRequestId } from '../../common/context/request-context';
+import {
+  ACTIVATION_EMAIL_FAILED_MESSAGE,
+  EMAIL_CHANGE_EMAIL_FAILED_MESSAGE,
+  PASSWORD_RESET_EMAIL_FAILED_MESSAGE,
+  REGISTRATION_NOTICE_EMAIL_FAILED_MESSAGE,
+  SIGN_IN_LINK_EMAIL_FAILED_MESSAGE,
+} from '../constants/auth-messages';
 
 /**
- * Mail sent by the authentication flows.
- * A delivery failure becomes EMAIL_SEND_FAILED with the address kept out of
- * the response, so callers cannot read anything from a failed send.
+ * Anonymous mail leaves through the dispatcher, so the response never waits on
+ * SMTP; admin mail is awaited because the admin's answer depends on it. A
+ * delivery failure is logged and dropped, so a known and an unknown address
+ * get the same answer.
  */
 @Injectable()
 export class AuthMailService {
   private readonly logger = new Logger(AuthMailService.name);
 
-  constructor(private readonly mailService: MailService) {}
+  constructor(
+    private readonly mailService: MailService,
+    private readonly dispatcher: MailDispatcherService,
+  ) {}
 
   /**
-   * Mail an activation code.
+   * Start an activation code email for an anonymous caller. The greeting is
+   * neutral: no name is stored before the address is proved.
    *
    * @param email - Recipient address
    * @param code - 6-digit activation code
-   * @param name - Name stored with the pending registration
    */
-  async sendActivationCode(
-    email: string,
-    code: string,
-    name: string,
-  ): Promise<void> {
-    await this.send(
-      () => this.mailService.sendActivationCode(email, code, name),
-      'Failed to send activation email',
+  deferActivationCode(email: string, code: string): void {
+    this.dispatcher.dispatch(
+      () => this.mailService.sendActivationCode(email, code),
+      ACTIVATION_EMAIL_FAILED_MESSAGE,
     );
   }
 
   /**
-   * Mail a password reset code.
+   * Start a password reset code email for an anonymous caller.
    *
    * @param email - Recipient address
    * @param code - 6-digit reset code
    * @param name - Account holder name
    */
-  async sendPasswordResetCode(
-    email: string,
-    code: string,
-    name: string,
-  ): Promise<void> {
-    await this.send(
+  deferPasswordResetCode(email: string, code: string, name: string): void {
+    this.dispatcher.dispatch(
       () => this.mailService.sendPasswordResetCode(email, code, name),
-      'Failed to send password reset email',
+      PASSWORD_RESET_EMAIL_FAILED_MESSAGE,
+    );
+  }
+
+  /**
+   * Start a registration-attempt notice for an anonymous caller.
+   *
+   * @param email - Recipient address
+   * @param name - Account holder name
+   */
+  deferRegistrationAttemptNotice(email: string, name: string): void {
+    this.dispatcher.dispatch(
+      () => this.mailService.sendRegistrationAttemptNotice(email, name),
+      REGISTRATION_NOTICE_EMAIL_FAILED_MESSAGE,
     );
   }
 
@@ -61,44 +77,42 @@ export class AuthMailService {
     email: string,
     link: string,
     expiresInMinutes: number,
-  ): Promise<void> {
-    await this.send(
+  ): Promise<boolean> {
+    return this.send(
       () => this.mailService.sendMagicLink(email, link, expiresInMinutes),
-      'Failed to send sign-in link email',
+      SIGN_IN_LINK_EMAIL_FAILED_MESSAGE,
     );
   }
 
   /**
-   * Tell an account holder that their address was used in a registration.
+   * Mail the code that confirms a new address an admin moved an account to.
+   * Awaited: the admin's answer depends on the mail being handed over.
    *
-   * @param email - Recipient address
-   * @param name - Account holder name
+   * @param email - New address
+   * @param code - 6-digit confirmation code
    */
-  async sendRegistrationAttemptNotice(
-    email: string,
-    name: string,
-  ): Promise<void> {
-    await this.send(
-      () => this.mailService.sendRegistrationAttemptNotice(email, name),
-      'Failed to send registration notice email',
+  async sendEmailChangeCode(email: string, code: string): Promise<boolean> {
+    return this.send(
+      () => this.mailService.sendEmailChangeCode(email, code),
+      EMAIL_CHANGE_EMAIL_FAILED_MESSAGE,
     );
   }
 
+  /** True when the mail was handed over, false when a failure was dropped. */
   private async send(
     action: () => Promise<void>,
     failureMessage: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       await action();
+      return true;
     } catch (error) {
+      const requestId = currentRequestId() ?? 'unknown';
+      const cause = error instanceof Error ? error.name : typeof error;
       this.logger.error(
-        `${failureMessage}: ${error instanceof Error ? error.message : String(error)}`,
+        `${failureMessage} requestId=${requestId} cause=${cause}`,
       );
-      throw new AppException(
-        ErrorCode.EMAIL_SEND_FAILED,
-        failureMessage,
-        HttpStatus.BAD_REQUEST,
-      );
+      return false;
     }
   }
 }

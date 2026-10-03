@@ -6,6 +6,7 @@ export interface SecurityHeader {
 export interface SecurityHeadersOptions {
   apiUrl?: string;
   isProduction?: boolean;
+  isDevelopment?: boolean;
 }
 
 export function extractOrigin(rawUrl?: string): string | null {
@@ -27,14 +28,18 @@ export function extractOrigin(rawUrl?: string): string | null {
   }
 }
 
-export function buildContentSecurityPolicy(apiUrl?: string): string {
+export function buildContentSecurityPolicy(apiUrl?: string, isDevelopment = false): string {
   const origin = extractOrigin(apiUrl);
   const connectSrc = origin ? `'self' ${origin}` : "'self'";
   const formAction = origin ? `'self' ${origin}` : "'self'";
+  // React's development build rebuilds call stacks with eval().
+  const scriptSrc = isDevelopment
+    ? "'self' 'unsafe-inline' 'unsafe-eval'"
+    : "'self' 'unsafe-inline'";
 
   const directives: string[] = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline'",
+    `script-src ${scriptSrc}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: https:",
     "font-src 'self' data:",
@@ -51,11 +56,14 @@ export function buildContentSecurityPolicy(apiUrl?: string): string {
 export function buildSecurityHeaders(options: SecurityHeadersOptions = {}): SecurityHeader[] {
   const isProduction = options.isProduction ?? process.env.NODE_ENV === 'production';
   const apiUrl = options.apiUrl ?? process.env.NEXT_PUBLIC_API_URL;
+  // Production wins over a conflicting flag, and test or staging count as neither.
+  const isDevelopment =
+    !isProduction && (options.isDevelopment ?? process.env.NODE_ENV === 'development');
 
   const headers: SecurityHeader[] = [
     {
       key: 'Content-Security-Policy',
-      value: buildContentSecurityPolicy(apiUrl),
+      value: buildContentSecurityPolicy(apiUrl, isDevelopment),
     },
     {
       key: 'X-Content-Type-Options',

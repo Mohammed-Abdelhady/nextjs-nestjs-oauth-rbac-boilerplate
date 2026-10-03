@@ -1,155 +1,182 @@
 /**
  * Error Interceptor Middleware
  *
- * Redux middleware that intercepts RTK Query errors and automatically
- * triggers toast notifications with intelligent error classification.
+ * Owns what a person is told when a request is rejected: one localized toast,
+ * or a session check for a 401. Forms do not raise a toast of their own.
  *
  * EXECUTION ORDER: Must run AFTER RTK Query middleware to access error metadata
  */
 
-import { createElement, type ReactNode } from 'react';
-import { LocalizedToastMessage } from '@/components/ui/LocalizedToastMessage';
-import { isRejectedWithValue, type Middleware } from '@reduxjs/toolkit';
+import { createElement } from 'react';
+import {
+  isRejected,
+  type Middleware,
+  type ThunkDispatch,
+  type UnknownAction,
+} from '@reduxjs/toolkit';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import { getErrorCodeTranslationKey, getStatusCodeTranslationKey, parseApiError } from '@app/core';
+import {
+  LocalizedToastMessage,
+  type LocalizedToastMessageProps,
+} from '@/components/ui/LocalizedToastMessage';
+import {
+  HTTP_STATUS,
+  SUCCESS_STATUS_MAX_EXCLUSIVE,
+  SUCCESS_STATUS_MIN,
+} from '@/constants/httpStatus';
+import { ERROR_MESSAGES, STATUS_CODE_MESSAGES, TOAST_DURATION } from '@/constants/toastMessages';
+import { toMessageValues } from '@/i18n/icu-args';
 import { toast } from '@/lib/toast';
-import type { ToastType } from '@/types/toast.types';
-import { STATUS_CODE_MESSAGES, ERROR_MESSAGES, TOAST_DURATION } from '@/constants/toastMessages';
+import { authApi } from '@/modules/auth/store/authApi';
+import { translatableErrorCode } from '@/modules/auth/utils/errorCodeMessage';
+
+/** The query that answers whether the session is still valid. */
+const SESSION_CHECK_ENDPOINT = 'getCurrentUser';
+
+interface Announcement extends LocalizedToastMessageProps {
+  duration: number;
+}
+
+interface RejectionMeta {
+  aborted: boolean;
+  condition: boolean;
+  rejectedWithValue: boolean;
+  endpointName?: string;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function readMeta(meta: unknown): RejectionMeta {
+  const record = isRecord(meta) ? meta : {};
+  const arg = isRecord(record.arg) ? record.arg : {};
+  return {
+    aborted: record.aborted === true,
+    condition: record.condition === true,
+    rejectedWithValue: record.rejectedWithValue === true,
+    endpointName: typeof arg.endpointName === 'string' ? arg.endpointName : undefined,
+  };
+}
+
+function isSignedIn(state: unknown): boolean {
+  return isRecord(state) && isRecord(state.auth) && state.auth.isAuthenticated === true;
+}
 
 /**
- * Check if error should be silent (no toast)
+ * The HTTP status of a rejection. A proxy answers with HTML the query layer
+ * cannot parse, and that rejection still carries the status it came with.
  */
-const isSilentError = (error: FetchBaseQueryError): boolean => {
-  // Silent all 401 errors (unauthorized is expected when not authenticated)
-  if (error.status === 401) {
-    return true;
+function httpStatus(error: FetchBaseQueryError): number | undefined {
+  if (typeof error.status === 'number') return error.status;
+  return error.status === 'PARSING_ERROR' ? error.originalStatus : undefined;
+}
+
+function isSuccessStatus(status: number | undefined): boolean {
+  return (
+    status === undefined || (status >= SUCCESS_STATUS_MIN && status < SUCCESS_STATUS_MAX_EXCLUSIVE)
+  );
+}
+
+function statusMessageKey(status: number | undefined): string {
+  return (
+    (status === undefined ? undefined : STATUS_CODE_MESSAGES[status]) ??
+    getStatusCodeTranslationKey(status)
+  );
+}
+
+function durationFor(status: number | undefined): number {
+  const isCritical =
+    status === HTTP_STATUS.INTERNAL_SERVER_ERROR || status === HTTP_STATUS.SERVICE_UNAVAILABLE;
+  return isCritical ? TOAST_DURATION.CRITICAL_ERROR : TOAST_DURATION.ERROR;
+}
+
+/** What to tell the person about a rejection the server or the network returned. */
+function announcementFor(error: FetchBaseQueryError): Announcement | null {
+  const status = httpStatus(error);
+
+  if (error.status === 'PARSING_ERROR' && isSuccessStatus(status)) {
+    return null;
+  }
+  if (
+    error.status === 'TIMEOUT_ERROR' ||
+    status === HTTP_STATUS.REQUEST_TIMEOUT ||
+    status === HTTP_STATUS.GATEWAY_TIMEOUT
+  ) {
+    return { messageKey: ERROR_MESSAGES.TIMEOUT_ERROR, duration: TOAST_DURATION.TIMEOUT_ERROR };
+  }
+  if (error.status === 'FETCH_ERROR') {
+    return { messageKey: ERROR_MESSAGES.NETWORK_ERROR, duration: TOAST_DURATION.NETWORK_ERROR };
   }
 
-  // User-cancelled requests (AbortError)
-  if ('name' in error && error.name === 'AbortError') {
-    return true;
+  const fallbackKey = statusMessageKey(status);
+  const code = translatableErrorCode(error, '');
+  if (!code) {
+    // The server's own text is English only, so an unknown code shows the status message.
+    return { messageKey: fallbackKey, duration: durationFor(status) };
   }
+  return {
+    messageKey: getErrorCodeTranslationKey(code),
+    fallbackKey,
+    values: toMessageValues(parseApiError(error).details),
+    duration: durationFor(status),
+  };
+}
 
-  // CORS preflight requests
-  if (error.status === 'PARSING_ERROR') {
-    return true;
-  }
+function announce({ duration, ...message }: Announcement): void {
+  toast.show('error', createElement(LocalizedToastMessage, message), { duration });
+}
 
-  return false;
-};
-
-/**
- * Classify error and determine toast type and duration
- */
-const classifyError = (
-  error: FetchBaseQueryError,
-): { type: ToastType; duration: number } | null => {
-  const status = typeof error.status === 'number' ? error.status : 0;
-
-  // Critical server errors - require manual dismissal
-  if (status === 500 || status === 503) {
-    return { type: 'error', duration: TOAST_DURATION.CRITICAL_ERROR };
-  }
-
-  // Network errors - longer duration for user to check connectivity
-  if (!status || error.status === 'FETCH_ERROR') {
-    return { type: 'error', duration: 10000 };
-  }
-
-  // Timeout errors
-  if (status === 408 || status === 504) {
-    return { type: 'error', duration: 8000 };
-  }
-
-  // Client errors - standard duration
-  if (status >= 400 && status < 500) {
-    return { type: 'error', duration: TOAST_DURATION.ERROR };
-  }
-
-  return { type: 'error', duration: TOAST_DURATION.ERROR };
-};
-
-/**
- * Extract user-friendly error message from error object
- */
-const fallbackMessage = (messageKey: string): ReactNode =>
-  createElement(LocalizedToastMessage, { messageKey });
-
-const getErrorMessage = (error: FetchBaseQueryError): ReactNode => {
-  const status = typeof error.status === 'number' ? error.status : 0;
-
-  // Check if error has custom message in response data
-  if (error.data && typeof error.data === 'object') {
-    const data = error.data as {
-      message?: string;
-      error?: string | { code?: string; message?: string };
-    };
-
-    // Check for direct message field
-    if (data.message && typeof data.message === 'string') {
-      return data.message;
-    }
-
-    // Check for nested error object (backend format: { error: { code, message } })
-    if (data.error) {
-      if (typeof data.error === 'string') {
-        return data.error;
-      }
-      if (typeof data.error === 'object' && data.error.message) {
-        return data.error.message;
-      }
-    }
-  }
-
-  // Network errors
-  if (!status || error.status === 'FETCH_ERROR') {
-    return fallbackMessage(ERROR_MESSAGES.NETWORK_ERROR);
-  }
-
-  // Timeout errors
-  if (status === 408 || status === 504) {
-    return fallbackMessage(ERROR_MESSAGES.TIMEOUT_ERROR);
-  }
-
-  // Use status code mapping
-  if (STATUS_CODE_MESSAGES[status]) {
-    return fallbackMessage(STATUS_CODE_MESSAGES[status]);
-  }
-
-  // Fallback to generic error
-  return fallbackMessage(ERROR_MESSAGES.UNKNOWN_ERROR);
-};
+type InterceptorDispatch = ThunkDispatch<unknown, unknown, UnknownAction>;
 
 /**
  * Error interceptor middleware
  *
- * Catches all RTK Query rejected actions and triggers toasts automatically.
- * Uses deduplication in toast slice to prevent spam.
+ * Sees every rejected request once. A 401 while signed in starts the session
+ * check, so the guards sign the person out. Everything else that is not an
+ * abort raises one toast.
  */
-export const errorInterceptor: Middleware = () => (next) => (action) => {
-  // Check if action is a rejected RTK Query action
-  if (isRejectedWithValue(action)) {
+export const errorInterceptor: Middleware<object, unknown, InterceptorDispatch> =
+  ({ dispatch, getState }) =>
+  (next) =>
+  (action) => {
+    if (!isRejected(action)) {
+      return next(action);
+    }
+    const meta = readMeta(action.meta);
+    // A request that was skipped or cancelled did not fail.
+    if (meta.condition || meta.aborted) {
+      return next(action);
+    }
+
+    if (!meta.rejectedWithValue) {
+      // Thrown instead of returned, for example a reply the client could not read.
+      announce({ messageKey: ERROR_MESSAGES.UNKNOWN_ERROR, duration: TOAST_DURATION.ERROR });
+      return next(action);
+    }
+
     const error = action.payload as FetchBaseQueryError;
 
-    // Skip silent errors
-    if (isSilentError(error)) {
+    if ('name' in error && error.name === 'AbortError') {
       return next(action);
     }
-
-    // Classify error
-    const classification = classifyError(error);
-    if (!classification) {
-      return next(action);
+    if (httpStatus(error) === HTTP_STATUS.UNAUTHORIZED) {
+      const result = next(action);
+      if (meta.endpointName !== SESSION_CHECK_ENDPOINT && isSignedIn(getState())) {
+        void dispatch(
+          authApi.endpoints.getCurrentUser.initiate(undefined, {
+            forceRefetch: true,
+            subscribe: false,
+          }),
+        );
+      }
+      return result;
     }
 
-    // Get user-friendly message
-    const message = getErrorMessage(error);
-
-    // Show toast notification using Sonner
-    toast.show(classification.type, message, {
-      duration: classification.duration,
-    });
-  }
-
-  // Continue processing action
-  return next(action);
-};
+    const announcement = announcementFor(error);
+    if (announcement) {
+      announce(announcement);
+    }
+    return next(action);
+  };

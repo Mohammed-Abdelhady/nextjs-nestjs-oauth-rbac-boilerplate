@@ -5,6 +5,11 @@ import { Types } from 'mongoose';
 import { TwoFactorChallengeService } from './two-factor-challenge.service';
 import { TotpSecretCryptoService } from './totp-secret-crypto.service';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
+import { createModelMock } from '../../../common/testing/test-doubles.harness-spec';
+import {
+  createRequestMock,
+  createResponseMock,
+} from '../../../common/testing/test-doubles.harness-spec';
 import {
   TWO_FACTOR_CHALLENGE_COOKIE,
   TWO_FACTOR_CHALLENGE_TTL_MS,
@@ -33,16 +38,16 @@ function createHarness(): Harness {
     deleteOne: jest.fn().mockResolvedValue({ deletedCount: 1 }),
   };
 
-  const configService = {
-    get: <T>(key: string): T | undefined =>
-      key === 'twoFactor.encryptionKey' ? (KEY as T) : undefined,
-  } as unknown as ConfigService;
+  const configService = new ConfigService({
+    'twoFactor.encryptionKey': KEY,
+    NODE_ENV: 'test',
+  });
 
   return {
     service: new TwoFactorChallengeService(
-      model as unknown as ConstructorParameters<
-        typeof TwoFactorChallengeService
-      >[0],
+      createModelMock<
+        ConstructorParameters<typeof TwoFactorChallengeService>[0]
+      >(model),
       configService,
       new TotpSecretCryptoService(configService),
     ),
@@ -53,15 +58,15 @@ function createHarness(): Harness {
 function responseSpy(): { response: Response; cookie: jest.Mock } {
   const cookie = jest.fn();
   return {
-    response: { cookie, clearCookie: jest.fn() } as unknown as Response,
+    response: createResponseMock({ cookie, clearCookie: jest.fn() }),
     cookie,
   };
 }
 
 function requestWith(token: string): Request {
-  return {
+  return createRequestMock({
     cookies: { [TWO_FACTOR_CHALLENGE_COOKIE]: token },
-  } as unknown as Request;
+  });
 }
 
 /** Issues a challenge and hands back the cookie value it wrote. */
@@ -148,7 +153,7 @@ describe('TwoFactorChallengeService', () => {
       const harness = createHarness();
 
       await expectChallengeInvalid(() =>
-        harness.service.read({ cookies: {} } as unknown as Request),
+        harness.service.read(createRequestMock({ cookies: {} })),
       );
     });
 

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from '@/lib/toast';
+import { reportUnlessHandled } from '@/lib/requestFailure';
 import { Loader2, CheckCircle2, Link as LinkIcon, Unlink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,7 +19,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { OAuthProviderIcon } from '@/modules/oauth';
-import { parseApiError } from '@/lib/apiError';
 import { useUnlinkProviderMutation, useSetPrimaryProviderMutation } from '../api';
 
 interface LinkedAccountCardProps {
@@ -52,9 +52,8 @@ export function LinkedAccountCard({
       toast.success(t('unlinkSuccess', { provider: displayName }));
       onChange?.();
       setShowUnlinkDialog(false);
-    } catch (error: unknown) {
-      const parsed = parseApiError(error);
-      toast.error(parsed.message || t('unlinkError', { provider: displayName }));
+    } catch (error) {
+      reportUnlessHandled(error);
     }
   };
 
@@ -63,9 +62,8 @@ export function LinkedAccountCard({
       await setPrimaryProvider({ provider: providerId }).unwrap();
       toast.success(t('setPrimarySuccess', { provider: displayName }));
       onChange?.();
-    } catch (error: unknown) {
-      const parsed = parseApiError(error);
-      toast.error(parsed.message || t('setPrimaryError', { provider: displayName }));
+    } catch (error) {
+      reportUnlessHandled(error);
     }
   };
 

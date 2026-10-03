@@ -1,4 +1,8 @@
 import { baseApi } from '@/store/api/baseApi';
+import {
+  invalidateOnSuccess,
+  invalidateOnSuccessOrUnknownOutcome,
+} from '@/store/api/invalidateOnSuccess';
 import type {
   Role,
   CreateRoleRequest,
@@ -6,6 +10,12 @@ import type {
   ListRolesQuery,
   ListRolesResponse,
 } from '../types';
+
+/** Argument of the update-role mutation: which role and what to change. */
+export interface UpdateRoleArgs {
+  idOrSlug: string;
+  data: UpdateRoleRequest;
+}
 
 /**
  * Roles API slice with role management endpoints
@@ -66,13 +76,13 @@ export const rolesApi = baseApi.injectEndpoints({
       }),
       transformResponse: (response: { success: boolean; data: Role; message: string }) =>
         response.data,
-      invalidatesTags: ['Roles'],
+      invalidatesTags: invalidateOnSuccess(['Roles']),
     }),
 
     /**
      * Update existing role
      */
-    updateRole: builder.mutation<Role, { idOrSlug: string; data: UpdateRoleRequest }>({
+    updateRole: builder.mutation<Role, UpdateRoleArgs>({
       query: ({ idOrSlug, data }) => ({
         url: `/api/roles/${idOrSlug}`,
         method: 'PATCH',
@@ -80,7 +90,10 @@ export const rolesApi = baseApi.injectEndpoints({
       }),
       transformResponse: (response: { success: boolean; data: Role; message: string }) =>
         response.data,
-      invalidatesTags: (result, error, { idOrSlug }) => ['Roles', { type: 'Roles', id: idOrSlug }],
+      invalidatesTags: invalidateOnSuccessOrUnknownOutcome(({ idOrSlug }: UpdateRoleArgs) => [
+        'Roles',
+        { type: 'Roles', id: idOrSlug },
+      ]),
     }),
 
     /**
@@ -91,7 +104,7 @@ export const rolesApi = baseApi.injectEndpoints({
         url: `/api/roles/${idOrSlug}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Roles'],
+      invalidatesTags: invalidateOnSuccess(['Roles']),
     }),
   }),
 });

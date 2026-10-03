@@ -49,7 +49,7 @@ Configure these in `backend/.env`:
 ```bash
 PORT=5000
 NODE_ENV=development
-MONGO_URI=mongodb://localhost:27017/authboiler
+MONGO_URI=mongodb://localhost:27017/authboiler?replicaSet=rs0
 FRONTEND_URL=http://localhost:3000
 
 # Session and state security
@@ -73,6 +73,71 @@ OAUTH_GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/oauth/google/callback
 # Swagger API docs
 SWAGGER_ENABLED=true
 ```
+
+Sign-in runs in a transaction, so run a single-node replica set locally:
+
+```bash
+mkdir -p ./mongodb-data
+mongod --replSet rs0 --dbpath ./mongodb-data
+```
+
+`mongod` runs in the foreground; leave it running and, in a second terminal:
+
+```bash
+mongosh --eval "rs.initiate()"
+```
+
+<!-- feature:docker:start -->
+
+With Docker Compose the backend runs in a container; from the host use `MONGO_URI=mongodb://USER:PASS@localhost:27017/authboiler?authSource=admin&directConnection=true`. The replica set advertises `mongodb:27017`, which only containers on the Compose network can resolve.
+<!-- feature:docker:end -->
+
+## Native applications
+
+Set `AUTH_NATIVE_ENABLED=true` to enable native sign-in. Declare clients in
+`AUTH_NATIVE_APPLICATIONS` as a JSON array with `clientId`, `displayName`, and
+one or more `redirectUris`. You can add `allowedScopes`; when omitted, the
+application gets the same `api` scope as the first-party web application.
+
+```bash
+AUTH_NATIVE_APPLICATIONS='[{"clientId":"com.example.mobile","displayName":"Example Mobile","redirectUris":["com.example.mobile://oauth/callback"]}]'
+```
+
+Each client ID must use letters, numbers, periods, underscores, hyphens, or
+tildes, and can be at most 128 characters. Redirect addresses use the native
+redirect rules. Custom schemes are allowed. HTTP addresses must use a loopback
+host, and fragments are rejected.
+
+At startup, the backend reconciles the list for the current environment. It
+creates or updates listed clients and disables native clients that are missing
+from the list. While native sign-in is enabled, this list is the only source of
+truth. An empty or missing list disables every native application in the current
+environment. A native application created by hand or by another process is also
+disabled at the next start if it is missing from the list. Disabled applications
+no longer authorize their existing sessions. Those users must sign in again
+after the application is registered and enabled.
+
+The backend does not delete application records. When native sign-in is
+disabled, startup ignores this list and does not write native application
+records.
+
+Reconciliation runs when the HTTP server starts, not when the application
+module is created, so `npm run seed` never changes native applications. Every
+server process reconciles on boot and the last one to start decides. During a
+rolling deploy, start all instances with the same list; a rollback must also
+restore the previous list, otherwise the rolled-back server disables the new
+clients and signs their users out.
+
+### Native OAuth error shapes
+
+The token, revoke and authorize routes answer failures in three shapes. They
+are intentionally not unified, so a client parser must handle all three.
+
+| Shape                | When                                                                 | Status | Body                                                                                                                                                                |
+| -------------------- | -------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OAuth                | Token, revoke and authorize validation and OAuth failures            | `400`  | `{"error":"invalid_grant"}`. When native sign-in is turned off the reason is included: `{"error":"unauthorized_client","error_description":"NATIVE_AUTH_DISABLED"}` |
+| Application envelope | Browser authorize actions (read, approve, deny) and other API routes | `4xx`  | `{"success":false,"error":{"code":"NATIVE_TRANSACTION_EXPIRED","message":"..."},"requestId":"..."}`                                                                 |
+| Throttling answer    | Any route over the rate limit                                        | `429`  | `{"success":false,"error":{"code":"RATE_LIMIT_EXCEEDED","message":"Too many requests","details":{"retryAfter":60}},"requestId":"..."}`                              |
 
 ## API endpoints
 
@@ -177,6 +242,8 @@ npm run migration:status         # Show migration history
 npm run seed                     # Seed roles and development accounts
 npm run seed:reset               # Wipe database and reseed
 ```
+
+Run this release's ObjectId reference migration before deploying the code that uses the typed schemas, or deploy them together. Existing passkeys with string user IDs are not found by passkey management until the migration converts them.
 
 ### Seed accounts
 

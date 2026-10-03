@@ -16,7 +16,7 @@ Install hooks with `npm install` (`prepare` runs husky). Confirm they are execut
 
 The checker looks at added lines only (`git diff --cached` on commit, the push range on push). Existing lines are left alone, including older `as unknown as` casts.
 
-It scans `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`, `.sh`, `package.json`, and `.husky` hook scripts. Markdown is skipped so this guide can name the tokens. The checker and its test are skipped because they must mention the tokens.
+It scans `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`, `.sh`, `package.json`, and `.husky` hook scripts. Markdown is skipped so this guide can name the tokens. The checker and its test are skipped because they must mention the tokens. Generated Expo output under `mobile/expo/ios/`, `mobile/expo/android/`, and any `.expo/` directory is skipped. Hand-written native source under `mobile/cli/` and `mobile/device-key/` is still scanned.
 
 A hit fails the hook:
 
@@ -27,7 +27,7 @@ A hit fails the hook:
 
 A test file (`*.spec.*`, `*.test.*`) may mention a banned token only on a `not.toContain` or `not.toMatch` line, to prove it was stripped.
 
-Human-maintained files under `backend/src`, `backend/test`, `frontend/src`, `frontend/e2e`, and `packages/*/src` must stay at 350 lines or fewer. Root scripts already over that cap are not gated yet.
+Human-maintained files under `backend/src`, `backend/test`, `frontend/src`, `frontend/e2e`, `packages/*/src`, `shared/*/src`, and `mobile/*/(src|app)` must stay at 350 lines or fewer. Root scripts already over that cap are not gated yet.
 
 ## Manual commands
 
@@ -62,7 +62,7 @@ Messages follow [Conventional Commits](https://conventionalcommits.org/):
 
 Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `revert`.
 
-Scopes: `backend`, `frontend`, `root`, `docs`, `husky`, `lint-staged`.
+Scopes: `backend`, `frontend`, `shared`, `mobile`, `packages`, `root`, `docs`, `husky`, `lint-staged`.
 
 ```
 feat(backend): add session cookie rotation
