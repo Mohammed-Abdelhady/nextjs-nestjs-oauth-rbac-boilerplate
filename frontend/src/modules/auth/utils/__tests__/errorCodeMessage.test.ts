@@ -30,6 +30,16 @@ function apiError(code: string): unknown {
 }
 
 describe('translatableErrorCode', () => {
+  it.each([
+    'en',
+    'ar', // feature:locale-ar
+  ] as const)('recognizes the server email-change refusal with a message in %s', async (locale) => {
+    const selectedCode = translatableErrorCode(apiError('EMAIL_CHANGE_NOT_ALLOWED'));
+    expect(selectedCode).toBe('EMAIL_CHANGE_NOT_ALLOWED');
+    const messages = codesOf(await loadMessages(locale));
+    expect(messages[selectedCode]?.trim()).toEqual(expect.stringMatching(/\S/u));
+  });
+
   it('returns the code the backend sent when it has a message', () => {
     // feature:magic-link:start
     expect(translatableErrorCode(apiError(ErrorCode.MAGIC_LINK_INVALID))).toBe(

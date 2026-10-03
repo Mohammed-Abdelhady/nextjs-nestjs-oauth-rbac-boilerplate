@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
-import * as React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { fillActivation } from './registrationHarness';
+import { navigation } from './registrationHarness';
+import { describe, expect, it } from 'vitest';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { ErrorCode } from '@app/core';
 import type { AppLocale } from '@/i18n/load-messages';
@@ -12,19 +13,12 @@ import {
   stubNetwork,
   success,
 } from '@/tests/serverRejectionHarness';
-import { ActivationForm } from '../ActivationForm';
+import { ActivationForm } from '@/modules/auth/components/ActivationForm';
+import { beforeEach } from 'vitest';
 
-vi.mock('next/navigation', () => ({
-  useSearchParams: () => new URLSearchParams('email=layla@example.com'),
-}));
-vi.mock('@/i18n/navigation', () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
-  Link: ({ children, ...props }: { children?: React.ReactNode }) =>
-    React.createElement('a', props, children),
-}));
-vi.mock('sonner', () => ({
-  toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() },
-}));
+beforeEach(() => {
+  navigation.search = '';
+});
 
 registerFormTestLifecycle();
 
@@ -40,8 +34,7 @@ async function submitCode(locale: AppLocale) {
   // The way out appears only once a code has been rejected.
   expect(screen.queryByTestId('register-again-link')).toBeNull();
 
-  const code = await screen.findByTestId('activate-code-input');
-  fireEvent.change(code, { target: { value: '000000' } });
+  fillActivation();
   fireEvent.submit(screen.getByTestId('activate-form'));
   return form;
 }
@@ -73,9 +66,7 @@ describe.each([
     stubNetwork((request) => (request.method === 'POST' ? refusalWith(status, code) : success({})));
 
     const form = await renderForm(locale, <ActivationForm />);
-    fireEvent.change(await screen.findByTestId('activate-code-input'), {
-      target: { value: '000000' },
-    });
+    fillActivation();
     fireEvent.submit(screen.getByTestId('activate-form'));
 
     await waitFor(() => {

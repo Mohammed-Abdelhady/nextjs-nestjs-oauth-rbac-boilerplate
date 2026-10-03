@@ -10,6 +10,9 @@ import { OAuthButtons } from '@/modules/oauth'; // feature:oauth-core
 import { enabledAuthMethods } from '../methods/registry';
 import type { AuthMethods } from '@app/sdk';
 import { AuthMethodsGate } from './AuthMethodsGate';
+import { REGISTER_PATH, REDIRECT_PARAM, CONFIRM_EMAIL_CHANGE_PATH } from '../constants/authMethods';
+import { authPagePath } from '../utils/signInRouting';
+import { Link } from '@/i18n/navigation';
 
 interface SignInMethodsProps {
   methods: AuthMethods;
@@ -30,7 +33,7 @@ function SignInMethods({ methods, redirect }: SignInMethodsProps) {
       {methods.password && (
         <div className="flex flex-col items-center">
           <IconLinkButton
-            href="/auth/register"
+            href={authPagePath(REGISTER_PATH, redirect)}
             icon={UserPlus}
             variant="secondary"
             testId="signup-link"
@@ -66,7 +69,7 @@ function SignInMethods({ methods, redirect }: SignInMethodsProps) {
 export function LoginForm() {
   const t = useTranslations('auth.login');
   const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect');
+  const redirect = searchParams.get(REDIRECT_PARAM);
 
   return (
     <section className="mt-12 flex flex-col items-center" aria-labelledby="login-heading">
@@ -82,6 +85,15 @@ export function LoginForm() {
         <AuthMethodsGate>
           {(methods) => <SignInMethods methods={methods} redirect={redirect} />}
         </AuthMethodsGate>
+        <div className="mt-6 text-center">
+          <Link
+            href={CONFIRM_EMAIL_CHANGE_PATH}
+            className="text-sm font-semibold text-primary hover:underline"
+            data-testid="confirm-new-email-link"
+          >
+            {t('confirmNewEmail')}
+          </Link>
+        </div>
       </div>
     </section>
   );

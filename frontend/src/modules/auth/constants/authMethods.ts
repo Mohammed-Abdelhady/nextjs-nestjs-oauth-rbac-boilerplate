@@ -27,3 +27,17 @@ export const ADMIN_PERMISSIONS = [
 export const DEFAULT_SIGNED_IN_PATH = '/dashboard';
 
 export const ADMIN_SIGNED_IN_PATH = '/admin/dashboard';
+
+export const REGISTER_PATH = '/auth/register';
+export const ACTIVATE_PATH = '/auth/activate';
+export const LOGIN_PATH = '/auth/login';
+export const CONFIRM_EMAIL_CHANGE_PATH = '/auth/confirm-email-change';
+export const CONFIRM_EMAIL_CHANGE_ENDPOINT = '/api/auth/confirm-email-change';
+export const VERIFICATION_CODE_LENGTH = 6;
+export const AUTH_EMAIL_MAX_LENGTH = 255;
+export const RESEND_COOLDOWN_SECONDS = 60;
+
+// Activation mirrors the server until the shared identity validators align.
+export const SIGNUP_NAME_MIN_LENGTH = 2;
+export const SIGNUP_NAME_MAX_LENGTH = 80;
+export const SIGNUP_NAME_PATTERN = /^[\p{L}\p{M}0-9 '’.-]+$/u;

@@ -30,3 +30,9 @@ export function twoFactorPath(redirect?: string | null): string {
   }
   return `${TWO_FACTOR_PATH}?${REDIRECT_PARAM}=${encodeURIComponent(redirect)}`;
 }
+
+/** Carries only a validated internal continuation between auth screens. */
+export function authPagePath(path: string, redirect?: string | null): string {
+  const continuation = getRedirectPath(redirect, '');
+  return continuation ? `${path}?${REDIRECT_PARAM}=${encodeURIComponent(continuation)}` : path;
+}

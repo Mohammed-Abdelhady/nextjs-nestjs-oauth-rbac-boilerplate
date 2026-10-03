@@ -7,7 +7,9 @@ import {
   NATIVE_AUTHORIZE_DENY_ENDPOINT,
   nativeAuthorizeTransactionEndpoint,
 } from '../constants/nativeAuthorize';
+import { CONFIRM_EMAIL_CHANGE_ENDPOINT } from '../constants/authMethods';
 import type {
+  EmailCodeRequest,
   LoginRequest,
   LoginResponse,
   RegisterRequest,
@@ -94,7 +96,7 @@ export const authApi = baseApi.injectEndpoints({
 
     /**
      * Activate mutation
-     * Verifies email with activation code and logs user in
+     * Confirms the account and returns its sign-in outcome
      */
     activate: builder.mutation<ActivateResponse, ActivateRequest>({
       query: (data) => ({
@@ -107,7 +109,13 @@ export const authApi = baseApi.injectEndpoints({
         data: ActivateResponse;
         message: string;
       }) => response.data,
-      invalidatesTags: invalidateOnSuccess(['Auth', 'User']),
+      invalidatesTags: (result, error, arg) =>
+        result?.user ? invalidateOnSuccess(['Auth', 'User'])(result, error, arg) : [],
+    }),
+
+    confirmEmailChange: builder.mutation<MessageResult, EmailCodeRequest>({
+      query: (body) => ({ url: CONFIRM_EMAIL_CHANGE_ENDPOINT, method: 'POST', body }),
+      transformResponse: (response: unknown) => unwrapObjectBody<MessageResult>(response),
     }),
 
     /**
@@ -229,6 +237,7 @@ export const {
   useGetCurrentUserQuery,
   useRegisterMutation,
   useActivateMutation,
+  useConfirmEmailChangeMutation,
   useResendActivationMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,

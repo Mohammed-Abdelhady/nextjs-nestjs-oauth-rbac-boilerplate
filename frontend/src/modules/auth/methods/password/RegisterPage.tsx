@@ -1,12 +1,15 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { LOGIN_PATH, REDIRECT_PARAM } from '@/modules/auth/constants/authMethods';
+import { authPagePath, signedInPath } from '@/modules/auth/utils/signInRouting';
 import { useTranslations } from 'next-intl';
 import { LogIn } from 'lucide-react';
 import { IconLinkButton } from '@/components/ui/icon-link-button';
 import { useRouter } from '@/i18n/navigation';
 import { useAppSelector } from '@/store/hooks';
-import { selectIsAuthenticated } from '@/modules/auth/store/authSlice';
+import { selectIsAuthenticated, selectUser } from '@/modules/auth/store/authSlice';
 import { AuthLayout } from '@/modules/auth/components/AuthLayout';
 import { AuthMethodsGate } from '@/modules/auth/components/AuthMethodsGate';
 import { RegisterForm } from './RegisterForm';
@@ -22,6 +25,7 @@ interface NoPasswordHintProps {
  */
 function NoPasswordHint({ createsAccountByLink }: NoPasswordHintProps) {
   const t = useTranslations('auth.register');
+  const redirect = useSearchParams().get(REDIRECT_PARAM);
   const suffix = createsAccountByLink ? 'magicLinkOnly' : 'providerOnly';
 
   return (
@@ -29,7 +33,7 @@ function NoPasswordHint({ createsAccountByLink }: NoPasswordHintProps) {
       <h2 className="text-lg font-semibold">{t(`${suffix}Title`)}</h2>
       <p className="mt-2 text-sm text-muted-foreground">{t(`${suffix}Body`)}</p>
       <IconLinkButton
-        href="/auth/login"
+        href={authPagePath(LOGIN_PATH, redirect)}
         icon={LogIn}
         variant="secondary"
         testId="register-sign-in-link"
@@ -52,12 +56,14 @@ function NoPasswordHint({ createsAccountByLink }: NoPasswordHintProps) {
 export function RegisterPage() {
   const router = useRouter();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const user = useAppSelector(selectUser);
+  const redirect = useSearchParams().get(REDIRECT_PARAM);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/dashboard');
+    if (isAuthenticated && user) {
+      router.replace(signedInPath(user, redirect));
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, redirect, router]);
 
   if (isAuthenticated) {
     return null;

@@ -13,21 +13,25 @@ import {
   SubmitButton,
 } from '@/components/forms';
 import { useResetPasswordMutation } from '@/modules/auth/store/authApi';
-import { ErrorCode, NETWORK_ERROR_CODE, zodPassword, parseApiError } from '@app/core';
+import { ErrorCode, NETWORK_ERROR_CODE, parseApiError } from '@app/core';
 import { KeyRound } from 'lucide-react';
 import { useCallback, useMemo, useEffect, useState } from 'react';
 import { toast } from '@/lib/toast';
 import { Link, useRouter } from '@/i18n/navigation';
 import { preventNavigationBlur } from '@/modules/auth/utils/preventNavigationBlur';
 import { translatableErrorCode } from '@/modules/auth/utils/errorCodeMessage';
+import { createPasswordSchema } from '@/modules/auth/utils/passwordSchema';
 import { filterDigits } from '@/modules/auth/utils/digitFilter';
-import { CODE_ENTRY_FONT_SIZE } from '@/lib/config/form-styles';
+import { CODE_ENTRY_FONT_SIZE, FORM_STYLES } from '@/lib/config/form-styles';
 import { cn } from '@/lib/utils';
 
 /**
  * Reset password form validation schema
  */
-const createResetPasswordSchema = (t: (key: string) => string) =>
+const createResetPasswordSchema = (
+  t: (key: string) => string,
+  tPassword: (key: string) => string,
+) =>
   z
     .object({
       email: z
@@ -40,20 +44,9 @@ const createResetPasswordSchema = (t: (key: string) => string) =>
         .trim()
         .length(6, t('errors.codeLength'))
         .regex(/^\d{6}$/, t('errors.codeInvalid')),
-      password: zodPassword({
-        required: true,
-        min: 8,
-        messages: {
-          required: t('errors.passwordRequired'),
-          min: t('errors.passwordMinLength'),
-          uppercase: t('errors.passwordUppercase'),
-          lowercase: t('errors.passwordLowercase'),
-          number: t('errors.passwordNumber'),
-        },
-      }),
+      password: createPasswordSchema(tPassword),
       confirmPassword: z
         .string({ required_error: t('errors.confirmRequired') })
-        .trim()
         .min(1, t('errors.confirmRequired')),
     })
     .refine((data) => data.password === data.confirmPassword, {
@@ -72,6 +65,7 @@ type ResetPasswordFormData = z.infer<ReturnType<typeof createResetPasswordSchema
  */
 export function ResetPasswordForm() {
   const t = useTranslations('auth.resetPassword');
+  const tPassword = useTranslations('auth.passwordRules.errors');
   const tToast = useTranslations('toast');
   const tCodes = useTranslations('errors.codes');
   const router = useRouter();
@@ -83,7 +77,10 @@ export function ResetPasswordForm() {
   const emailFromUrl = searchParams.get('email') || '';
 
   // Memoize schema creation when translation function changes
-  const resetPasswordSchema = useMemo(() => createResetPasswordSchema(t), [t]);
+  const resetPasswordSchema = useMemo(
+    () => createResetPasswordSchema(t, tPassword),
+    [t, tPassword],
+  );
 
   // Initialize form with validation
   const form = useFormWithValidation({
@@ -194,6 +191,7 @@ export function ResetPasswordForm() {
 
             {/* Email Input (readonly, pre-filled) */}
             <FormInput
+              containerClassName={FORM_STYLES.authField}
               name="email"
               data-testid="reset-password-email-input"
               type="email"
@@ -207,6 +205,7 @@ export function ResetPasswordForm() {
 
             {/* Code Input */}
             <FormInput
+              containerClassName={FORM_STYLES.authField}
               name="code"
               data-testid="reset-password-code-input"
               type="text"
@@ -216,7 +215,7 @@ export function ResetPasswordForm() {
               autoComplete="one-time-code"
               disabled={isLoading}
               maxLength={6}
-              className={cn('mt-5 text-center tracking-widest', CODE_ENTRY_FONT_SIZE)}
+              className={cn('text-center tracking-widest', CODE_ENTRY_FONT_SIZE)}
               autoFocus
               onChange={handleCodeChange}
             />
@@ -229,7 +228,7 @@ export function ResetPasswordForm() {
               placeholder="••••••••"
               autoComplete="new-password"
               disabled={isLoading}
-              className="mt-5"
+              className={FORM_STYLES.authField}
             />
 
             <PasswordRules name="password" className="mt-3" />
@@ -242,7 +241,7 @@ export function ResetPasswordForm() {
               placeholder="••••••••"
               autoComplete="new-password"
               disabled={isLoading}
-              className="mt-5"
+              className={FORM_STYLES.authField}
             />
 
             {/* Submit Button */}

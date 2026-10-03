@@ -11,6 +11,7 @@ export type SignedInUser = Pick<User, 'id' | 'email' | 'name' | 'role' | 'permis
  * Session tokens stored in httpOnly cookies (not in Redux state)
  */
 export interface AuthState {
+  pendingRegistrationEmail?: string | null;
   user: SignedInUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -53,9 +54,7 @@ export interface AuthError {
  * Registration request payload
  */
 export interface RegisterRequest {
-  name: string;
   email: string;
-  password: string;
 }
 
 /**
@@ -72,17 +71,22 @@ export interface RegisterResponse {
 /**
  * Account activation request payload
  */
-export interface ActivateRequest {
+export interface EmailCodeRequest {
   email: string;
   code: string;
+}
+
+export interface ActivateRequest extends EmailCodeRequest {
+  password: string;
+  name: string;
 }
 
 /**
  * Account activation response from API
  * Uses httpOnly cookies for session management (no token in response)
  */
-export interface ActivateResponse {
-  user: SignedInUser;
+export interface ActivateResponse extends LoginResponse {
+  mustSignIn: boolean;
 }
 
 /**
