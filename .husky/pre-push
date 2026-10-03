@@ -1,4 +1,4 @@
 #!/bin/sh
 set -e
-node scripts/check-hard-bans.mjs --push
+node scripts/check-hard-bans.mjs --push --hook "$1" "$2"
 npm run lint && npm run typecheck && npm run test
