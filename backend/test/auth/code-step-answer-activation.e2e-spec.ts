@@ -4,11 +4,11 @@ import type { Response } from 'supertest';
 import * as bcrypt from 'bcrypt';
 import { REQUEST_ID_HEADER } from '../../src/common/constants/request-id';
 import { PendingRegistration } from '../../src/auth/schemas/pending-registration.schema';
+import { PENDING_PURPOSE } from '../../src/auth/constants/registration';
 import { bootE2eApp, browserAgent, type E2eApp } from '../utils/e2e-app';
 import { TEST_NOW } from '../utils/frozen-clock';
 import { RaceGate } from '../utils/race-gate';
 import { expectSameAnswer } from '../utils/stable-answer';
-import { mailedCode } from '../utils/pending-race';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
@@ -17,6 +17,8 @@ import {
 const CODE = '123456';
 const WRONG_CODE = '000000';
 const MAX_ATTEMPTS = 5;
+const PASSWORD = 'Password123!';
+const NAME = 'Test User';
 const LIVE_EXPIRY = new Date(TEST_NOW.getTime() + 15 * 60 * 1000);
 const EXPIRED_EXPIRY = new Date(TEST_NOW.getTime() - 1000);
 
@@ -76,7 +78,7 @@ describe('Activation code step and pending registration windows (e2e)', () => {
     const hashedCode = await bcrypt.hash(CODE, 4);
     await pendingRegistrations.create({
       email,
-      name: 'Pending Account',
+      purpose: PENDING_PURPOSE.SIGNUP,
       hashedCode,
       attempts: 0,
       expiresAt: LIVE_EXPIRY,
@@ -88,20 +90,13 @@ describe('Activation code step and pending registration windows (e2e)', () => {
   async function storedRegistration(email: string) {
     const record = await pendingRegistrations
       .findOne({ email })
-      .select('+hashedPassword +hashedCode');
+      .select('+hashedCode');
     if (!record) throw new Error(`expected a stored record for ${email}`);
     return record;
   }
 
-  function passwordHash(record: { hashedPassword?: string }): string {
-    if (!record.hashedPassword) {
-      throw new Error('expected a stored password hash');
-    }
-    return record.hashedPassword;
-  }
-
-  function register(email: string, name: string, password: string) {
-    return { email, password, name };
+  function activationBody(email: string, code: string) {
+    return { email, code, password: PASSWORD, name: NAME };
   }
 
   /** Start two registers, release the first, then the second, so it loses. */
@@ -138,32 +133,32 @@ describe('Activation code step and pending registration windows (e2e)', () => {
   }
 
   it('answers every failing activation code the same way', async () => {
-    const noPending = await postWithId('/api/auth/activate', {
-      email: 'activate-none@example.test',
-      code: WRONG_CODE,
-    });
+    const noPending = await postWithId(
+      '/api/auth/activate',
+      activationBody('activate-none@example.test', WRONG_CODE),
+    );
 
     await seedPendingRegistration('activate-wrong@example.test');
-    const wrong = await postWithId('/api/auth/activate', {
-      email: 'activate-wrong@example.test',
-      code: WRONG_CODE,
-    });
+    const wrong = await postWithId(
+      '/api/auth/activate',
+      activationBody('activate-wrong@example.test', WRONG_CODE),
+    );
 
     await seedPendingRegistration('activate-expired@example.test', {
       expiresAt: EXPIRED_EXPIRY,
     });
-    const expired = await postWithId('/api/auth/activate', {
-      email: 'activate-expired@example.test',
-      code: CODE,
-    });
+    const expired = await postWithId(
+      '/api/auth/activate',
+      activationBody('activate-expired@example.test', CODE),
+    );
 
     await seedPendingRegistration('activate-locked@example.test', {
       attempts: MAX_ATTEMPTS,
     });
-    const locked = await postWithId('/api/auth/activate', {
-      email: 'activate-locked@example.test',
-      code: CODE,
-    });
+    const locked = await postWithId(
+      '/api/auth/activate',
+      activationBody('activate-locked@example.test', CODE),
+    );
 
     expectSameAnswer(wrong, noPending);
     expectSameAnswer(expired, noPending);
@@ -181,10 +176,13 @@ describe('Activation code step and pending registration windows (e2e)', () => {
     const hashedCode = await seedPendingRegistration(email);
 
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
-      await post('/api/auth/activate', { email, code: WRONG_CODE });
+      await post('/api/auth/activate', activationBody(email, WRONG_CODE));
     }
 
-    const refused = await post('/api/auth/activate', { email, code: CODE });
+    const refused = await post(
+      '/api/auth/activate',
+      activationBody(email, CODE),
+    );
     expect(refused.status).toBe(400);
     expect(refused.body).toMatchObject(ACTIVATION_BODY);
 
@@ -193,16 +191,14 @@ describe('Activation code step and pending registration windows (e2e)', () => {
     expect(record.hashedCode).toBe(hashedCode);
   });
 
-  it('keeps the winner name and password when a concurrent register loses the insert', async () => {
+  it('keeps one credential-free record when two registers race', async () => {
     const email = 'register-race@example.test';
     const firstAgent = await browserAgent(e2e.httpServer);
     const secondAgent = await browserAgent(e2e.httpServer);
-    const firstBody = register(email, 'First User', 'FirstPassword123');
-    const secondBody = register(email, 'Second User', 'SecondPassword123');
 
     const [first, second] = await raceCreateFirstWins(
-      () => firstAgent.post('/api/auth/register').send(firstBody),
-      () => secondAgent.post('/api/auth/register').send(secondBody),
+      () => firstAgent.post('/api/auth/register').send({ email }),
+      () => secondAgent.post('/api/auth/register').send({ email }),
     );
 
     expect(first.status).toBe(200);
@@ -211,16 +207,12 @@ describe('Activation code step and pending registration windows (e2e)', () => {
     expect(await pendingRegistrations.countDocuments({ email })).toBe(1);
 
     const record = await storedRegistration(email);
-    expect(record.name).toBe('First User');
-    expect(await bcrypt.compare('FirstPassword123', passwordHash(record))).toBe(
-      true,
-    );
+    expect(record.purpose).toBe(PENDING_PURPOSE.SIGNUP);
     expect(
-      await bcrypt.compare('SecondPassword123', passwordHash(record)),
-    ).toBe(false);
-    // The loser refreshed the code last, so the last mail is the live code.
-    expect(await bcrypt.compare(mailedCode(e2e.mail), record.hashedCode)).toBe(
-      true,
-    );
+      await bcrypt.compare(await e2e.mailedCode(), record.hashedCode),
+    ).toBe(true);
+    const raw = await pendingRegistrations.collection.findOne({ email });
+    expect(raw).not.toHaveProperty('hashedPassword');
+    expect(raw).not.toHaveProperty('name');
   });
 });

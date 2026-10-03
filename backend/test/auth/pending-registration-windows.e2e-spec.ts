@@ -3,12 +3,16 @@ import type { Model } from 'mongoose';
 import type { Response } from 'supertest';
 import * as bcrypt from 'bcrypt';
 import { PendingRegistration } from '../../src/auth/schemas/pending-registration.schema';
+import { MailCounter } from '../../src/auth/schemas/mail-counter.schema';
+import {
+  MAIL_COUNTER_PURPOSE,
+  PENDING_PURPOSE,
+} from '../../src/auth/constants/registration';
 import { bootE2eApp, browserAgent, type E2eApp } from '../utils/e2e-app';
 import { TEST_NOW } from '../utils/frozen-clock';
 import { RaceGate } from '../utils/race-gate';
 import {
   inWindow,
-  mailedCode,
   pauseCreateCall,
   pauseQueryCall,
 } from '../utils/pending-race';
@@ -17,7 +21,6 @@ import {
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
 } from '../utils/session-authority-harness';
 
-const PASSWORD = 'Password123!';
 const CODE = '123456';
 const LIVE_EXPIRY = new Date(TEST_NOW.getTime() + 15 * 60 * 1000);
 const EXPIRED_EXPIRY = new Date(TEST_NOW.getTime() - 1000);
@@ -25,11 +28,15 @@ const EXPIRED_EXPIRY = new Date(TEST_NOW.getTime() - 1000);
 describe('Pending registration windows (e2e)', () => {
   let e2e: E2eApp;
   let pendingRegistrations: Model<PendingRegistration>;
+  let mailCounters: Model<MailCounter>;
 
   beforeAll(async () => {
     e2e = await bootE2eApp();
     pendingRegistrations = e2e.app.get<Model<PendingRegistration>>(
       getModelToken('PendingRegistration'),
+    );
+    mailCounters = e2e.app.get<Model<MailCounter>>(
+      getModelToken('MailCounter'),
     );
   }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
@@ -54,6 +61,16 @@ describe('Pending registration windows (e2e)', () => {
     return agent.post(path).send(body);
   }
 
+  function pendingFields(overrides: Record<string, unknown> = {}) {
+    return {
+      purpose: PENDING_PURPOSE.SIGNUP,
+      hashedCode: 'old-code',
+      attempts: 0,
+      expiresAt: LIVE_EXPIRY,
+      ...overrides,
+    };
+  }
+
   async function seedPendingRegistration(
     email: string,
     overrides: Record<string, unknown> = {},
@@ -61,11 +78,7 @@ describe('Pending registration windows (e2e)', () => {
     const hashedCode = await bcrypt.hash(CODE, 4);
     await pendingRegistrations.create({
       email,
-      name: 'Pending Account',
-      hashedCode,
-      attempts: 0,
-      expiresAt: LIVE_EXPIRY,
-      ...overrides,
+      ...pendingFields({ hashedCode, ...overrides }),
     });
     return hashedCode;
   }
@@ -73,81 +86,64 @@ describe('Pending registration windows (e2e)', () => {
   async function storedRegistration(email: string) {
     const record = await pendingRegistrations
       .findOne({ email })
-      .select('+hashedPassword +hashedCode');
+      .select('+hashedCode');
     if (!record) throw new Error(`expected a stored record for ${email}`);
     return record;
   }
 
-  function passwordHash(record: { hashedPassword?: string }): string {
-    if (!record.hashedPassword) {
-      throw new Error('expected a stored password hash');
-    }
-    return record.hashedPassword;
-  }
-
-  function register(email: string, name: string, password: string) {
-    return { email, password, name };
-  }
-
   it('recreates the registration when it is deleted between the live refresh and the expired replace', async () => {
     const email = 'window-replace@example.test';
-    await seedPendingRegistration(email, {
-      name: 'Old Name',
-      hashedPassword: await bcrypt.hash('old-password', 4),
-      expiresAt: EXPIRED_EXPIRY,
-    });
+    await seedPendingRegistration(email, { expiresAt: EXPIRED_EXPIRY });
 
     const response = await inWindow(
       (gate) =>
         pauseQueryCall(pendingRegistrations, 'findOneAndUpdate', gate, 1),
-      () => post('/api/auth/register', register(email, 'New Name', PASSWORD)),
+      () => post('/api/auth/register', { email }),
       () => pendingRegistrations.deleteOne({ email }),
     );
 
     expect(response.status).toBe(200);
     expect(await pendingRegistrations.countDocuments({ email })).toBe(1);
     const record = await storedRegistration(email);
-    expect(record.name).toBe('New Name');
-    expect(await bcrypt.compare(PASSWORD, passwordHash(record))).toBe(true);
-    expect(await bcrypt.compare(mailedCode(e2e.mail), record.hashedCode)).toBe(
-      true,
-    );
+    expect(record.purpose).toBe(PENDING_PURPOSE.SIGNUP);
+    expect(
+      await bcrypt.compare(await e2e.mailedCode(), record.hashedCode),
+    ).toBe(true);
   });
 
   it('refreshes a record inserted between the replace and the create', async () => {
     const email = 'window-create@example.test';
-    const insertedPassword = await bcrypt.hash('inserted-password', 4);
 
     const response = await inWindow(
       (gate) => pauseCreateCall(pendingRegistrations, gate, 0),
-      () => post('/api/auth/register', register(email, 'New Name', PASSWORD)),
-      async () =>
+      () => post('/api/auth/register', { email }),
+      () =>
         pendingRegistrations.create({
           email,
-          name: 'Inserted Name',
-          hashedPassword: insertedPassword,
-          hashedCode: await bcrypt.hash('654321', 4),
-          attempts: 0,
-          expiresAt: LIVE_EXPIRY,
+          ...pendingFields({
+            hashedCode: 'inserted-code',
+          }),
         }),
     );
 
     expect(response.status).toBe(200);
     expect(await pendingRegistrations.countDocuments({ email })).toBe(1);
     const record = await storedRegistration(email);
-    expect(record.name).toBe('Inserted Name');
-    expect(record.hashedPassword).toBe(insertedPassword);
-    expect(await bcrypt.compare(mailedCode(e2e.mail), record.hashedCode)).toBe(
-      true,
-    );
+    expect(record.purpose).toBe(PENDING_PURPOSE.SIGNUP);
+    const counter = await mailCounters.findOne({
+      email,
+      purpose: MAIL_COUNTER_PURPOSE.SIGNUP,
+    });
+    expect(counter?.mailedCodes).toBe(1);
+    expect(
+      await bcrypt.compare(await e2e.mailedCode(), record.hashedCode),
+    ).toBe(true);
   });
 
   it('recreates the registration when the winner is deleted after the duplicate key', async () => {
     const email = 'window-retry@example.test';
     const firstAgent = await browserAgent(e2e.httpServer);
     const secondAgent = await browserAgent(e2e.httpServer);
-    const firstBody = register(email, 'First User', 'FirstPassword123');
-    const secondBody = register(email, 'Second User', 'SecondPassword123');
 
     const firstGate = new RaceGate();
     const secondGate = new RaceGate();
@@ -173,11 +169,11 @@ describe('Pending registration windows (e2e)', () => {
 
     try {
       const first = Promise.resolve(
-        firstAgent.post('/api/auth/register').send(firstBody),
+        firstAgent.post('/api/auth/register').send({ email }),
       );
       await firstGate.reached(1);
       const second = Promise.resolve(
-        secondAgent.post('/api/auth/register').send(secondBody),
+        secondAgent.post('/api/auth/register').send({ email }),
       );
       await secondGate.reached(1);
 
@@ -197,12 +193,9 @@ describe('Pending registration windows (e2e)', () => {
 
     expect(await pendingRegistrations.countDocuments({ email })).toBe(1);
     const record = await storedRegistration(email);
-    expect(record.name).toBe('Second User');
+    expect(record.purpose).toBe(PENDING_PURPOSE.SIGNUP);
     expect(
-      await bcrypt.compare('SecondPassword123', passwordHash(record)),
+      await bcrypt.compare(await e2e.mailedCode(), record.hashedCode),
     ).toBe(true);
-    expect(await bcrypt.compare(mailedCode(e2e.mail), record.hashedCode)).toBe(
-      true,
-    );
   });
 });
