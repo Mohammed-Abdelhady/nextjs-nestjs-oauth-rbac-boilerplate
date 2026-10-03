@@ -8,7 +8,7 @@ import {
   resetNativeClient,
   startNativeOauth,
   stopNativeOauth,
-} from './native-oauth.fixture';
+} from './native-oauth.harness-spec';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,

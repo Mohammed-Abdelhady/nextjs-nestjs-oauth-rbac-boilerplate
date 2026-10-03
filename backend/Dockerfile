@@ -16,6 +16,7 @@ RUN npm ci --workspace backend
 FROM deps AS builder
 
 COPY backend ./backend
+COPY scripts/check-backend-build.mjs ./scripts/
 
 RUN npm run build --workspace backend
 

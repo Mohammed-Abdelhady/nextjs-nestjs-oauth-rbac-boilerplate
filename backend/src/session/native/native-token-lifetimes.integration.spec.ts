@@ -6,7 +6,7 @@ import {
   resetNativeClient,
   startNativeOauth,
   stopNativeOauth,
-} from './native-oauth.fixture';
+} from './native-oauth.harness-spec';
 import { getModelToken } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CREDENTIAL_PURPOSE } from '../constants/credential-purpose';

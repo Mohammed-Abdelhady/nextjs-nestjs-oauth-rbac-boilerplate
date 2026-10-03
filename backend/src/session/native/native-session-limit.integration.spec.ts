@@ -23,7 +23,7 @@ import {
   resetNativeClient,
   startNativeOauth,
   stopNativeOauth,
-} from './native-oauth.fixture';
+} from './native-oauth.harness-spec';
 import {
   createTestUser,
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,

@@ -24,7 +24,7 @@ import {
 import {
   NATIVE_CLIENT_ID,
   nativeAuthorizeQuery,
-} from '../src/session/native/native-oauth.fixture';
+} from '../src/session/native/native-oauth.harness-spec';
 import { SEED_USER } from './constants/seed-users';
 import { bootE2eApp, loginAs, type E2eApp } from './utils/e2e-app';
 import {

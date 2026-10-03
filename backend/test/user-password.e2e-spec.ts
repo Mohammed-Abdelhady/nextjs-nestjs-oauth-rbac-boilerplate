@@ -11,7 +11,7 @@ import {
   NATIVE_META,
   NATIVE_REDIRECT,
   nativeAuthorizeQuery,
-} from '../src/session/native/native-oauth.fixture';
+} from '../src/session/native/native-oauth.harness-spec';
 import { User, UserDocument } from '../src/user/schemas/user.schema';
 import { SEED_USER } from './constants/seed-users';
 import { bootE2eApp, loginAs, type E2eApp } from './utils/e2e-app';
