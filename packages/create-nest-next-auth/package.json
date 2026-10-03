@@ -21,6 +21,7 @@
     "docs",
     "template",
     "template.manifest.json",
+    "template.identity.json",
     "README.md"
   ],
   "repository": {
@@ -42,6 +43,7 @@
   "scripts": {
     "sync-template": "node scripts/sync-template.mjs",
     "prebuild": "node scripts/sync-template.mjs",
+    "prepack": "npm run build",
     "build": "tsdown",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
