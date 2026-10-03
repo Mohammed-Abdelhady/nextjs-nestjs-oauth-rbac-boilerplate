@@ -23,7 +23,7 @@ import {
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
 } from './utils/session-authority-harness';
 import { TEST_NOW } from './utils/frozen-clock';
-import { nativeAuthorizeQuery } from '../src/session/native/native-oauth.fixture';
+import { nativeAuthorizeQuery } from '../src/session/native/native-oauth.harness-spec';
 import type { AuthorizeQuery } from '../src/session/native/native-oauth.types';
 
 interface ApiErrorBody {

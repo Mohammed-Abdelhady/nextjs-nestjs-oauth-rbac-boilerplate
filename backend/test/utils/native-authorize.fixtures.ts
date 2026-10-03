@@ -21,7 +21,7 @@ import {
   NATIVE_CLIENT_ID,
   NATIVE_REDIRECT,
   nativeAuthorizeQuery,
-} from '../../src/session/native/native-oauth.fixture';
+} from '../../src/session/native/native-oauth.harness-spec';
 import type { E2eApp } from './e2e-app';
 
 export { NATIVE_CLIENT_ID, NATIVE_REDIRECT };
