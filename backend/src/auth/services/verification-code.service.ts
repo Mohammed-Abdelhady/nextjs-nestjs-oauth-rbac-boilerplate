@@ -10,6 +10,7 @@ import { HashService } from '../../common/services/hash.service';
 import { Clock } from '../../common/services/clock';
 import { currentRequestId } from '../../common/context/request-context';
 import { activationCodeInvalid } from '../utils/activation-error.util';
+import { generateVerificationCode } from '../utils/verification-code.util';
 import { PendingRegistrationStore } from './pending-registration.store';
 import { MailCounterService } from './mail-counter.service';
 import { PendingPurpose } from '../constants/registration';
@@ -59,6 +60,7 @@ export class VerificationCodeService {
   ): Promise<IssuedCode | null> {
     const underCap = await this.mailCounterService.tryRecord(email, purpose);
     if (!underCap) {
+      await this.spendCodeHashingTime();
       return null;
     }
 
@@ -82,6 +84,7 @@ export class VerificationCodeService {
   ): Promise<IssuedCode | null> {
     const underCap = await this.mailCounterService.tryRecord(email, purpose);
     if (!underCap) {
+      await this.spendCodeHashingTime();
       return null;
     }
 
@@ -172,5 +175,16 @@ export class VerificationCodeService {
       { session },
     );
     return consumed !== null;
+  }
+
+  /**
+   * Spend the one code-hash every path through the open and resend methods
+   * costs. The store hashes the code it opens; an over-cap answer never reaches
+   * the store, so it spends the same cost here. Without it an over-cap answer
+   * is milliseconds faster than one that opens a record, which tells an address
+   * with an account from a free one.
+   */
+  private async spendCodeHashingTime(): Promise<void> {
+    await this.hashService.hash(generateVerificationCode());
   }
 }

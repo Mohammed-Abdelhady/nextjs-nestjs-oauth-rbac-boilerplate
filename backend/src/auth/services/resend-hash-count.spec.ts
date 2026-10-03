@@ -13,13 +13,18 @@ import {
   PendingRegistration,
   PendingRegistrationSchema,
 } from '../schemas/pending-registration.schema';
+import { MailCounter, MailCounterSchema } from '../schemas/mail-counter.schema';
 import { AuthMailService } from './auth-mail.service';
 import { SessionService } from './session.service';
 import { MailCounterService } from './mail-counter.service';
 import { PasswordResetCodeService } from './password-reset-code.service';
 import { SessionCookieService } from './session-cookie.service';
 import { SignInService } from './sign-in.service';
-import { PENDING_PURPOSE } from '../constants/registration';
+import {
+  MAIL_COUNTER_PURPOSE,
+  MAILED_CODE_LIMIT_PER_ADDRESS,
+  PENDING_PURPOSE,
+} from '../constants/registration';
 import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
 import { RaceGate } from '../../../test/utils/race-gate';
 import { pauseQueryCall } from '../../../test/utils/pending-race';
@@ -43,6 +48,7 @@ describe('resend activation hash count', () => {
   let connection: Connection;
   let users: Model<User>;
   let registrations: Model<PendingRegistration>;
+  let counters: Model<MailCounter>;
   let registrationService: RegistrationService;
   let service: VerificationCodeService;
   let hashSpy: jest.SpyInstance;
@@ -55,8 +61,10 @@ describe('resend activation hash count', () => {
       PendingRegistration.name,
       PendingRegistrationSchema,
     );
+    counters = connection.model(MailCounter.name, MailCounterSchema);
     await users.init();
     await registrations.init();
+    await counters.init();
 
     const config = {
       get: (key: string, fallback?: number) =>
@@ -84,9 +92,10 @@ describe('resend activation hash count', () => {
           },
         },
         { provide: SessionService, useValue: {} },
+        MailCounterService,
         {
-          provide: MailCounterService,
-          useValue: { tryRecord: jest.fn().mockResolvedValue(true) },
+          provide: getModelToken(MailCounter.name),
+          useValue: counters,
         },
         { provide: PasswordResetCodeService, useValue: {} },
         { provide: SessionCookieService, useValue: {} },
@@ -108,6 +117,7 @@ describe('resend activation hash count', () => {
     hashSpy.mockClear();
     await users.deleteMany({});
     await registrations.deleteMany({});
+    await counters.deleteMany({});
   });
 
   function pendingRecord(overrides: Record<string, unknown> = {}) {
@@ -130,6 +140,33 @@ describe('resend activation hash count', () => {
   });
 
   it('hashes once for an unknown address', async () => {
+    await registrationService.resendActivation(DTO);
+
+    expect(hashSpy).toHaveBeenCalledTimes(1);
+    expect(await registrations.countDocuments({ email: DTO.email })).toBe(0);
+  });
+
+  async function capTheCounter(purpose: string): Promise<void> {
+    await counters.create({
+      email: DTO.email,
+      purpose,
+      mailedCodes: MAILED_CODE_LIMIT_PER_ADDRESS,
+      windowStartedAt: TEST_NOW,
+    });
+  }
+
+  it('hashes once for an over-cap register', async () => {
+    await capTheCounter(MAIL_COUNTER_PURPOSE.SIGNUP);
+
+    await registrationService.register(DTO);
+
+    expect(hashSpy).toHaveBeenCalledTimes(1);
+    expect(await registrations.countDocuments({ email: DTO.email })).toBe(0);
+  });
+
+  it('hashes once for an over-cap resend', async () => {
+    await capTheCounter(MAIL_COUNTER_PURPOSE.SIGNUP);
+
     await registrationService.resendActivation(DTO);
 
     expect(hashSpy).toHaveBeenCalledTimes(1);
