@@ -1,6 +1,7 @@
 # AI Assistant Files
 .kilocode
 .claude
+.hyperflow/
 AGENTS.md
 CLAUDE.md
 
