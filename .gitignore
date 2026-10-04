@@ -15,7 +15,7 @@ build/
 out/
 
 # Scaffolding CLI build inputs, produced by
-# npm run build -w packages/create-nest-next-auth
+# pnpm --filter create-nest-next-auth run build
 packages/create-nest-next-auth/template/
 packages/create-nest-next-auth/template.manifest.json
 packages/create-nest-next-auth/template.identity.json
