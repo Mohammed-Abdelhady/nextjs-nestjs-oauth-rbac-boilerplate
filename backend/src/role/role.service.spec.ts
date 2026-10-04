@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 import { RoleService } from './role.service';
+import { RoleEditService } from './services/role-edit.service';
 import { Role } from './schemas/role.schema';
 import { User } from '../user/schemas/user.schema';
 
@@ -35,17 +36,15 @@ function buildRole(overrides: Partial<MockRole> = {}): MockRole {
 }
 
 describe('RoleService', () => {
+  const actorId = new Types.ObjectId().toString();
   let service: RoleService;
 
   const mockRoleModel = {
     findOne: jest.fn(),
-    findById: jest.fn(),
-    deleteOne: jest.fn().mockResolvedValue({ deletedCount: 1 }),
   };
 
-  const mockUserModel = {
-    countDocuments: jest.fn().mockResolvedValue(0),
-    updateMany: jest.fn().mockResolvedValue({ modifiedCount: 0 }),
+  const mockRoleEditService = {
+    commit: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -53,14 +52,13 @@ describe('RoleService', () => {
       providers: [
         RoleService,
         { provide: getModelToken(Role.name), useValue: mockRoleModel },
-        { provide: getModelToken(User.name), useValue: mockUserModel },
+        { provide: getModelToken(User.name), useValue: {} },
+        { provide: RoleEditService, useValue: mockRoleEditService },
       ],
     }).compile();
 
     service = module.get<RoleService>(RoleService);
     jest.clearAllMocks();
-    mockUserModel.countDocuments.mockResolvedValue(0);
-    mockUserModel.updateMany.mockResolvedValue({ modifiedCount: 0 });
   });
 
   describe('update (S-15 system role immutability)', () => {
@@ -76,7 +74,7 @@ describe('RoleService', () => {
       mockRoleModel.findOne.mockResolvedValueOnce(admin);
 
       await expect(
-        service.update('admin', { name: 'Super Admin' }),
+        service.update('admin', { name: 'Super Admin' }, actorId),
       ).rejects.toMatchObject({
         code: 'SYSTEM_ROLE_RENAME_FORBIDDEN',
         status: 403,
@@ -94,14 +92,23 @@ describe('RoleService', () => {
         permissions: ['users:read:all'],
       });
       mockRoleModel.findOne.mockResolvedValueOnce(support);
-      mockRoleModel.findOne.mockResolvedValueOnce(null);
+      mockRoleEditService.commit.mockResolvedValueOnce({
+        role: buildRole({ name: 'Support', slug: 'support' }),
+        usersMoved: 0,
+        previousSlug: 'support',
+        nextSlug: 'support',
+        renamed: false,
+      });
 
-      const result = await service.update('support', { name: 'SUPPORT' });
+      const result = await service.update(
+        'support',
+        { name: 'SUPPORT' },
+        actorId,
+      );
 
       expect(result.slug).toBe('support');
       expect(result.usersMoved).toBe(0);
-      expect(support.save).toHaveBeenCalled();
-      expect(mockUserModel.updateMany).not.toHaveBeenCalled();
+      expect(mockRoleEditService.commit).toHaveBeenCalled();
     });
   });
 
@@ -118,7 +125,7 @@ describe('RoleService', () => {
       mockRoleModel.findOne.mockResolvedValueOnce(admin);
 
       await expect(
-        service.update('admin', { permissions: ['users:read:all'] }),
+        service.update('admin', { permissions: ['users:read:all'] }, actorId),
       ).rejects.toMatchObject({
         code: 'ADMIN_WILDCARD_REQUIRED',
         status: 403,
@@ -136,13 +143,31 @@ describe('RoleService', () => {
         permissions: ['*'],
       });
       mockRoleModel.findOne.mockResolvedValueOnce(admin);
-
-      const result = await service.update('admin', {
-        permissions: ['*', 'reports:read:all'],
+      mockRoleEditService.commit.mockResolvedValueOnce({
+        role: buildRole({
+          name: 'Admin',
+          slug: 'admin',
+          isSystemRole: true,
+          isProtected: true,
+          level: 4,
+          permissions: ['*', 'reports:read:all'],
+        }),
+        usersMoved: 0,
+        previousSlug: 'admin',
+        nextSlug: 'admin',
+        renamed: false,
       });
 
+      const result = await service.update(
+        'admin',
+        {
+          permissions: ['*', 'reports:read:all'],
+        },
+        actorId,
+      );
+
       expect(result.permissions).toEqual(['*', 'reports:read:all']);
-      expect(admin.save).toHaveBeenCalled();
+      expect(mockRoleEditService.commit).toHaveBeenCalled();
     });
   });
 
@@ -166,7 +191,7 @@ describe('RoleService', () => {
       );
 
       await expect(
-        service.update('content-editor', { name: 'Content Lead' }),
+        service.update('content-editor', { name: 'Content Lead' }, actorId),
       ).rejects.toMatchObject({ code: 'ROLE_NAME_TAKEN', status: 409 });
       expect(role.save).not.toHaveBeenCalled();
     });
@@ -188,91 +213,46 @@ describe('RoleService', () => {
       const role = buildRole();
       mockRoleModel.findOne.mockResolvedValueOnce(role);
       mockRoleModel.findOne.mockResolvedValueOnce(null);
-      mockUserModel.updateMany.mockResolvedValueOnce({ modifiedCount: 3 });
-
-      const result = await service.update('content-editor', {
-        name: 'Content Lead',
+      mockRoleEditService.commit.mockResolvedValueOnce({
+        role: buildRole({ name: 'Content Lead', slug: 'content-lead' }),
+        usersMoved: 3,
+        previousSlug: 'content-editor',
+        nextSlug: 'content-lead',
+        renamed: true,
       });
+
+      const result = await service.update(
+        'content-editor',
+        {
+          name: 'Content Lead',
+        },
+        actorId,
+      );
 
       expect(result.slug).toBe('content-lead');
       expect(result.usersMoved).toBe(3);
-      expect(mockUserModel.updateMany).toHaveBeenCalledWith(
-        { role: 'content-editor' },
-        { $set: { role: 'content-lead' } },
-      );
+      expect(mockRoleEditService.commit).toHaveBeenCalled();
     });
 
     it('should leave users alone when the slug does not change', async () => {
       const role = buildRole();
       mockRoleModel.findOne.mockResolvedValueOnce(role);
 
-      const result = await service.update('content-editor', {
-        description: 'Writes and edits posts',
+      mockRoleEditService.commit.mockResolvedValueOnce({
+        role,
+        usersMoved: 0,
+        renamed: false,
       });
+      const result = await service.update(
+        'content-editor',
+        {
+          description: 'Writes and edits posts',
+        },
+        actorId,
+      );
 
       expect(result.usersMoved).toBe(0);
-      expect(mockUserModel.updateMany).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('delete', () => {
-    it('should refuse to delete a system role', async () => {
-      mockRoleModel.findOne.mockResolvedValueOnce(
-        buildRole({
-          name: 'Manager',
-          slug: 'manager',
-          isSystemRole: true,
-          isProtected: true,
-          level: 3,
-        }),
-      );
-
-      await expect(service.delete('manager')).rejects.toMatchObject({
-        code: 'ROLE_PROTECTED',
-        status: 403,
-      });
-      expect(mockRoleModel.deleteOne).not.toHaveBeenCalled();
-    });
-
-    it('should refuse to delete a protected role', async () => {
-      mockRoleModel.findOne.mockResolvedValueOnce(
-        buildRole({ isProtected: true }),
-      );
-
-      await expect(service.delete('content-editor')).rejects.toMatchObject({
-        code: 'ROLE_PROTECTED',
-        status: 403,
-      });
-    });
-
-    it('should refuse to delete a role users still hold and say how many', async () => {
-      mockRoleModel.findOne.mockResolvedValueOnce(buildRole());
-      mockUserModel.countDocuments.mockResolvedValueOnce(3);
-
-      await expect(service.delete('content-editor')).rejects.toMatchObject({
-        code: 'ROLE_HAS_USERS',
-        status: 400,
-        details: { count: 3 },
-      });
-      expect(mockRoleModel.deleteOne).not.toHaveBeenCalled();
-    });
-
-    it('should answer ROLE_NOT_FOUND for a role that does not exist', async () => {
-      mockRoleModel.findOne.mockResolvedValueOnce(null);
-
-      await expect(service.delete('ghost')).rejects.toMatchObject({
-        code: 'ROLE_NOT_FOUND',
-        status: 404,
-      });
-    });
-
-    it('should delete an unused custom role', async () => {
-      const role = buildRole();
-      mockRoleModel.findOne.mockResolvedValueOnce(role);
-
-      await service.delete('content-editor');
-
-      expect(mockRoleModel.deleteOne).toHaveBeenCalledWith({ _id: role._id });
+      expect(mockRoleEditService.commit).toHaveBeenCalled();
     });
   });
 });

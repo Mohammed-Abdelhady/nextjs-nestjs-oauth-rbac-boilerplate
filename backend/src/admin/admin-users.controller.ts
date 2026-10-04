@@ -20,6 +20,7 @@ import {
   ApiCookieAuth,
 } from '@nestjs/swagger';
 import { AdminUsersService } from './services/admin-users.service';
+import { AdminUserCreateService } from './services/admin-user-create.service';
 import { AdminUserQueriesService } from './services/admin-user-queries.service';
 import { PermissionGuard } from '../common/guards/permission.guard';
 import { RequirePermissions } from '../common/decorators/permissions.decorator';
@@ -47,6 +48,7 @@ import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 export class AdminUsersController {
   constructor(
     private readonly adminUsersService: AdminUsersService,
+    private readonly adminUserCreateService: AdminUserCreateService,
     private readonly adminUserQueriesService: AdminUserQueriesService,
   ) {}
 
@@ -68,8 +70,9 @@ export class AdminUsersController {
   async createUser(
     @Body() dto: CreateUserDto,
     @CurrentUser('role') actorRole: string,
+    @CurrentUser('id') actorId: string,
   ): Promise<ApiResponse<AdminUserDto>> {
-    return this.adminUsersService.createUser(dto, actorRole);
+    return this.adminUserCreateService.createUser(dto, actorRole, actorId);
   }
 
   /**
@@ -235,11 +238,10 @@ export class AdminUsersController {
     @Param('id', ParseObjectIdPipe) id: string,
     @Body() dto: UpdateUserStatusDto,
     @CurrentUser('id') actorId: string,
-    @CurrentUser('role') actorRole: string,
   ): Promise<
     ApiResponse<{ id: string; isDeleted: boolean; deletedAt?: Date }>
   > {
-    return this.adminUsersService.updateUserStatus(id, dto, actorId, actorRole);
+    return this.adminUsersService.updateUserStatus(id, dto, actorId);
   }
 
   /**
@@ -292,8 +294,7 @@ export class AdminUsersController {
   async deleteUser(
     @Param('id', ParseObjectIdPipe) id: string,
     @CurrentUser('id') actorId: string,
-    @CurrentUser('role') actorRole: string,
   ): Promise<void> {
-    return this.adminUsersService.deleteUser(id, actorId, actorRole);
+    return this.adminUsersService.deleteUser(id, actorId);
   }
 }

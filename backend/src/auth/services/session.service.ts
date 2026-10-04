@@ -6,7 +6,10 @@ import {
   IssuedBrowserSession,
 } from '../../session/services/session-issuance.service';
 import { SessionAuthorityService } from '../../session/services/session-authority.service';
-import { SessionRevocationService } from '../../session/services/session-revocation.service';
+import {
+  RevocationContext,
+  SessionRevocationService,
+} from '../../session/services/session-revocation.service';
 import { NativeSessionRevocationService } from '../../session/services/native-session-revocation.service';
 import { hashToken } from '../../session/utils/token-hash';
 
@@ -53,11 +56,19 @@ export class SessionService {
     return revoked;
   }
 
-  async invalidateAllSessions(userId: Types.ObjectId): Promise<number> {
-    const count = await this.revocation.revokeAllForUser(userId);
-    this.logger.log(
-      `All sessions invalidated for user ${userId.toString()}: ${count} document(s)`,
-    );
+  async invalidateAllSessions(
+    userId: Types.ObjectId,
+    db?: ClientSession,
+    context?: RevocationContext,
+  ): Promise<number> {
+    const count = await this.revocation.revokeAllForUser(userId, db, context);
+    // An in-transaction caller logs after its commit, so an aborted attempt
+    // cannot report a revocation that never landed.
+    if (!db) {
+      this.logger.log(
+        `All sessions invalidated for user ${userId.toString()}: ${count} document(s)`,
+      );
+    }
     return count;
   }
 

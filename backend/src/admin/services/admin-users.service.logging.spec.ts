@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
-import { AdminUsersService } from './admin-users.service';
+import { AdminUserCreateService } from './admin-user-create.service';
+import { UserRole } from '../../user/enums/user-role.enum';
 import {
   bootLoggingServices,
   LoggingServices,
@@ -28,18 +29,25 @@ describe('AdminUsersService logging with real repositories', () => {
   }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   it('logs a created user with the user id, never the address', async () => {
+    const actor = await fixture.users.create({
+      name: 'Admin',
+      email: 'admin@example.test',
+      role: UserRole.ADMIN,
+      isVerified: true,
+    });
     jest
       .spyOn(Types.ObjectId, 'generate')
       .mockReturnValue(Buffer.from(LOGGING_USER_ID, 'hex'));
     const log = captureLogs();
-    await fixture.module.get(AdminUsersService).createUser(
+    await fixture.module.get(AdminUserCreateService).createUser(
       {
         name: 'New User',
         email: 'new@example.com',
         password: 'Password123!',
-        role: 'user',
+        role: UserRole.USER,
       },
-      'admin',
+      UserRole.ADMIN,
+      actor._id.toString(),
     );
     expect(loggedCalls(log)).toContain('userId=507f1f77bcf86cd799439011');
     expect(loggedCalls(log)).not.toContain('new@example.com');

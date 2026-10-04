@@ -22,6 +22,7 @@ const MOCK_RESPONSE = createResponseMock({
 
 interface Harness {
   service: SignInService;
+  roleModel: { findOne: jest.Mock };
   sessionService: { createSession: jest.Mock };
   sessionCookieService: { set: jest.Mock };
   challengeService: { issue: jest.Mock }; // feature:totp
@@ -60,6 +61,7 @@ function createHarness(): Harness {
       new AuthFeaturesService(configService), // feature:totp
       challengeService, // feature:totp
     ),
+    roleModel,
     sessionService: { createSession },
     sessionCookieService: { set },
     challengeService: { issue }, // feature:totp
@@ -128,6 +130,33 @@ describe('SignInService', () => {
 
       expect(summary.email).toBe('user@example.com');
       expect(harness.sessionCookieService.set).toHaveBeenCalled();
+    });
+
+    it('should not create a session or set a cookie when the role lookup fails', async () => {
+      const harness = createHarness();
+      harness.roleModel.findOne.mockReturnValue({
+        exec: jest.fn().mockRejectedValue(new Error('role read failed')),
+      });
+
+      await expect(
+        harness.service.issueSession(plainUser(), MOCK_RESPONSE),
+      ).rejects.toThrow('role read failed');
+
+      expect(harness.sessionService.createSession).not.toHaveBeenCalled();
+      expect(harness.sessionCookieService.set).not.toHaveBeenCalled();
+    });
+
+    it('should not set a cookie when session creation fails', async () => {
+      const harness = createHarness();
+      harness.sessionService.createSession.mockRejectedValueOnce(
+        new Error('issuance failed'),
+      );
+
+      await expect(
+        harness.service.issueSession(plainUser(), MOCK_RESPONSE),
+      ).rejects.toThrow('issuance failed');
+
+      expect(harness.sessionCookieService.set).not.toHaveBeenCalled();
     });
   });
 });

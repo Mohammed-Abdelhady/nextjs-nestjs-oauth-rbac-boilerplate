@@ -1,19 +1,26 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import * as bcrypt from 'bcrypt';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Connection, Model, Types } from 'mongoose';
 import { User, UserDocument } from '../../user/schemas/user.schema';
-import { AuthProvider } from '../../user/enums/auth-provider.enum';
+import { Role, RoleDocument } from '../../role/schemas/role.schema';
+import { SecurityEventService } from '../../session/services/security-event.service';
 import { SessionService } from '../../auth/services/session.service';
+import { withMajorityTransaction } from '../../session/utils/mongo-transaction';
+import {
+  loadAuthorizedUser,
+  logSessionRevocation,
+  rethrowOrUnavailable,
+} from '../utils/admin-transaction.util';
+import { reconcileAssignedRole } from '../utils/admin-role-reconcile.util';
+import { REVOKED_REASON } from '../../session/constants/revoked-reason';
 import { AdminUserDto } from '../dto/admin-user-response.dto';
 import { UpdateUserStatusDto } from '../dto/update-user-status.dto';
 import { UpdateUserRoleDto } from '../dto/update-user-role.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { CreateUserDto } from '../dto/create-user.dto';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { ApiResponse } from '../../common/dto/api-response.dto';
-import { ADMIN_PASSWORD_SALT_ROUNDS } from '../constants/admin-user.constants';
+import { ADMIN_ROLE_CHANGED } from '../constants/admin-user.constants';
 import { mapToAdminUserDto } from '../mappers/admin-user.mapper';
 import { AdminUserAccessService } from './admin-user-access.service';
 import { AdminEmailChangeService } from './admin-email-change.service';
@@ -28,54 +35,13 @@ export class AdminUsersService {
 
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    @InjectModel(Role.name) private readonly roleModel: Model<RoleDocument>,
     private readonly sessionService: SessionService,
+    private readonly events: SecurityEventService,
     private readonly accessService: AdminUserAccessService,
     private readonly emailChangeService: AdminEmailChangeService,
+    @InjectConnection() private readonly connection: Connection,
   ) {}
-
-  /**
-   * Create a user. The role must exist and sit below the actor's level.
-   */
-  async createUser(
-    dto: CreateUserDto,
-    actorRole: string,
-  ): Promise<ApiResponse<AdminUserDto>> {
-    const { email, name, password, role } = dto;
-
-    const existingUser = await this.userModel
-      .findOne({ email: { $eq: email } })
-      .exec();
-    if (existingUser) {
-      throw new AppException(
-        ErrorCode.EMAIL_ALREADY_EXISTS,
-        'Email already in use',
-        HttpStatus.CONFLICT,
-      );
-    }
-
-    await this.accessService.assertCanAssignRole(actorRole, role);
-
-    const newUser = new this.userModel({
-      email,
-      name,
-      password: await bcrypt.hash(password, ADMIN_PASSWORD_SALT_ROUNDS),
-      role,
-      isVerified: true, // Admin-created users are auto-verified
-      permissions: [],
-      authProvider: AuthProvider.EMAIL,
-      primaryProvider: AuthProvider.EMAIL,
-    });
-
-    await newUser.save();
-    this.logger.log(
-      `User created by admin: userId=${newUser._id.toString()} as ${role}`,
-    );
-
-    return ApiResponse.success(
-      mapToAdminUserDto(newUser),
-      'User created successfully',
-    );
-  }
 
   /**
    * Update name and email. Changing the email is admin-only and sends the
@@ -147,37 +113,60 @@ export class AdminUsersService {
     id: string,
     dto: UpdateUserStatusDto,
     actorId: string,
-    actorRole: string,
   ): Promise<
     ApiResponse<{ id: string; isDeleted: boolean; deletedAt?: Date }>
   > {
     const { isActive } = dto;
-    const targetUser = await this.accessService.loadActiveUser(id);
+    const userId = new Types.ObjectId(id);
+    await this.accessService.loadActiveUser(id);
 
     this.accessService.assertNotSelf(
       id,
       actorId,
       'Cannot modify your own account',
     );
-    await this.accessService.assertCanModify(actorRole, targetUser.role);
 
-    targetUser.isDeleted = !isActive;
-    targetUser.deletedAt = isActive ? undefined : new Date();
-    await targetUser.save();
+    try {
+      const outcome = await withMajorityTransaction(
+        this.connection,
+        async (session) => {
+          const current = await loadAuthorizedUser(
+            this.userModel,
+            this.accessService,
+            session,
+            id,
+            actorId,
+          );
 
-    if (!isActive) {
-      await this.sessionService.invalidateAllSessions(new Types.ObjectId(id));
+          current.isDeleted = !isActive;
+          current.deletedAt = isActive ? undefined : new Date();
+          await current.save({ session });
+
+          const revoked = isActive
+            ? 0
+            : await this.sessionService.invalidateAllSessions(userId, session, {
+                actorId,
+                reasonCode: REVOKED_REASON.ADMIN_FORCED,
+              });
+          return { current, revoked };
+        },
+      );
+
+      if (!isActive) {
+        logSessionRevocation(this.logger, userId, outcome.revoked);
+      }
+      this.logger.log(
+        `User ${id} set ${isActive ? 'active' : 'inactive'} by ${actorId}`,
+      );
+
+      return ApiResponse.success({
+        id: outcome.current._id.toString(),
+        isDeleted: outcome.current.isDeleted,
+        deletedAt: outcome.current.deletedAt,
+      });
+    } catch (error) {
+      rethrowOrUnavailable(error);
     }
-
-    this.logger.log(
-      `User ${id} set ${isActive ? 'active' : 'inactive'} by ${actorId}`,
-    );
-
-    return ApiResponse.success({
-      id: targetUser._id.toString(),
-      isDeleted: targetUser.isDeleted,
-      deletedAt: targetUser.deletedAt,
-    });
   }
 
   /**
@@ -190,40 +179,116 @@ export class AdminUsersService {
     actorRole: string,
   ): Promise<ApiResponse<{ id: string; role: string }>> {
     const { role: newRole } = dto;
-    const targetUser = await this.accessService.loadActiveUser(id);
+    const userId = new Types.ObjectId(id);
+    await this.accessService.loadActiveUser(id);
 
     this.accessService.assertNotSelf(
       id,
       actorId,
       'Cannot modify your own role',
     );
-    await this.accessService.assertCanModify(actorRole, targetUser.role);
     await this.accessService.assertCanAssignRole(actorRole, newRole);
 
-    targetUser.role = newRole;
-    await targetUser.save();
+    try {
+      const outcome = await withMajorityTransaction(
+        this.connection,
+        async (session) => {
+          const current = await loadAuthorizedUser(
+            this.userModel,
+            this.accessService,
+            session,
+            id,
+            actorId,
+          );
 
-    // Permissions travel with the role, so existing sessions must be rebuilt
-    await this.sessionService.invalidateAllSessions(new Types.ObjectId(id));
-    this.logger.log(`User ${id} role changed to ${newRole} by ${actorId}`);
+          const assignedRole = await this.roleModel
+            .findOne({ slug: newRole })
+            .session(session)
+            .exec();
+          if (!assignedRole) {
+            throw new AppException(
+              ErrorCode.ROLE_NOT_FOUND,
+              `Role "${newRole}" does not exist`,
+              HttpStatus.NOT_FOUND,
+            );
+          }
 
-    return ApiResponse.success({
-      id: targetUser._id.toString(),
-      role: newRole,
-    });
+          await this.accessService.assertFreshActorCanModify(
+            actorId,
+            assignedRole.slug,
+            session,
+          );
+          const previousRole = await this.roleModel
+            .findOne({ slug: current.role })
+            .session(session)
+            .exec();
+          current.role = newRole;
+          await current.save({ session });
+
+          // Permissions travel with the role, so existing sessions must be
+          // rebuilt in the same transaction as the change.
+          const revoked = await this.sessionService.invalidateAllSessions(
+            userId,
+            session,
+            {
+              actorId,
+              reasonCode: REVOKED_REASON.ADMIN_FORCED,
+              roleAssignment: {
+                assignedRoleId: assignedRole._id.toString(),
+                sessionVersion: current.sessionVersion + 1,
+                previousRoleId: previousRole?._id.toString(),
+              },
+            },
+          );
+          return {
+            current,
+            revoked,
+            roleId: assignedRole._id,
+            previousRoleId: previousRole?._id,
+          };
+        },
+      );
+
+      const liveSlug = await reconcileAssignedRole({
+        connection: this.connection,
+        roleModel: this.roleModel,
+        userModel: this.userModel,
+        events: this.events,
+        logger: this.logger,
+        actorId,
+        userId,
+        ref: {
+          roleId: outcome.roleId,
+          assignedSlug: newRole,
+          previousRoleId: outcome.previousRoleId,
+        },
+      });
+
+      logSessionRevocation(this.logger, userId, outcome.revoked);
+      this.logger.log({
+        event: ADMIN_ROLE_CHANGED,
+        userId: id,
+        role: liveSlug,
+        actorId,
+      });
+
+      return ApiResponse.success({
+        id: outcome.current._id.toString(),
+        role: liveSlug,
+      });
+    } catch (error) {
+      rethrowOrUnavailable(error);
+    }
   }
 
   /**
    * Soft delete a user.
    */
-  async deleteUser(
-    id: string,
-    actorId: string,
-    actorRole: string,
-  ): Promise<void> {
-    const targetUser = await this.userModel.findById(id).exec();
+  async deleteUser(id: string, actorId: string): Promise<void> {
+    const userId = new Types.ObjectId(id);
+    const existing = await this.userModel.findById(id).exec();
 
-    if (!targetUser || targetUser.isDeleted) {
+    if (!existing || existing.isDeleted) {
       throw new AppException(
         ErrorCode.USER_ALREADY_DELETED,
         'User not found or already deleted',
@@ -236,17 +301,34 @@ export class AdminUsersService {
       actorId,
       'Cannot delete your own account',
     );
-    await this.accessService.assertCanModify(
-      actorRole,
-      targetUser.role,
-      'Cannot delete user with higher or equal role',
-    );
 
-    targetUser.isDeleted = true;
-    targetUser.deletedAt = new Date();
-    await targetUser.save();
+    try {
+      const revoked = await withMajorityTransaction(
+        this.connection,
+        async (session) => {
+          const current = await loadAuthorizedUser(
+            this.userModel,
+            this.accessService,
+            session,
+            id,
+            actorId,
+            'Cannot delete user with higher or equal role',
+          );
 
-    await this.sessionService.invalidateAllSessions(new Types.ObjectId(id));
-    this.logger.log(`User ${id} deleted by ${actorId}`);
+          current.isDeleted = true;
+          current.deletedAt = new Date();
+          await current.save({ session });
+          return this.sessionService.invalidateAllSessions(userId, session, {
+            actorId,
+            reasonCode: REVOKED_REASON.ADMIN_FORCED,
+          });
+        },
+      );
+
+      logSessionRevocation(this.logger, userId, revoked);
+      this.logger.log(`User ${id} deleted by ${actorId}`);
+    } catch (error) {
+      rethrowOrUnavailable(error);
+    }
   }
 }

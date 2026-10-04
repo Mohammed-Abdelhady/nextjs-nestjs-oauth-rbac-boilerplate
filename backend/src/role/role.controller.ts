@@ -19,6 +19,7 @@ import {
   ApiQuery,
   ApiCookieAuth,
 } from '@nestjs/swagger';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RoleService } from './role.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
@@ -173,8 +174,9 @@ export class RoleController {
   async update(
     @Param('idOrSlug') idOrSlug: string,
     @Body() dto: UpdateRoleDto,
+    @CurrentUser('id') actorId: string,
   ): Promise<ApiResponseDto<RoleUpdateResponseDto>> {
-    const data = await this.roleService.update(idOrSlug, dto);
+    const data = await this.roleService.update(idOrSlug, dto, actorId);
     return {
       success: true,
       message: 'Role updated successfully',
@@ -214,7 +216,10 @@ export class RoleController {
     status: 404,
     description: 'Role not found',
   })
-  async delete(@Param('idOrSlug') idOrSlug: string): Promise<void> {
-    await this.roleService.delete(idOrSlug);
+  async delete(
+    @Param('idOrSlug') idOrSlug: string,
+    @CurrentUser('id') actorId: string,
+  ): Promise<void> {
+    await this.roleService.delete(idOrSlug, actorId);
   }
 }

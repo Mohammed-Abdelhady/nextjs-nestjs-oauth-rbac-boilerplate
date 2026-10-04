@@ -51,6 +51,37 @@ export function assertValidPermissions(permissions: string[]): void {
 }
 
 /**
+ * Compare two permission lists as sets: equal size and membership both ways.
+ * Duplicates are ignored, so `[a, b]` and `[a, a]` differ (b is dropped).
+ *
+ * @param current - Permissions stored on the role
+ * @param next - Permissions in the update
+ */
+export function samePermissions(current: string[], next: string[]): boolean {
+  const stored = new Set(current);
+  const incoming = new Set(next);
+  if (stored.size !== incoming.size) {
+    return false;
+  }
+  for (const permission of stored) {
+    if (!incoming.has(permission)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Drop duplicate permission entries before they are stored, so the stored
+ * permission set is canonical.
+ *
+ * @param permissions - Permissions from the request
+ */
+export function dedupePermissions(permissions: string[]): string[] {
+  return [...new Set(permissions)];
+}
+
+/**
  * Hierarchy level of a role document.
  * Falls back to the seed map for documents written before the level field,
  * then to the level shared by custom roles.

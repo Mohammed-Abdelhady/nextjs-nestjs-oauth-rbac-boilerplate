@@ -1,21 +1,25 @@
+import { SecurityEventService } from '../../session/services/security-event.service';
 import { Test, TestingModule } from '@nestjs/testing';
-import { getModelToken } from '@nestjs/mongoose';
+import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
-import { AdminUsersService } from './admin-users.service';
+import { AdminUserCreateService } from './admin-user-create.service';
 import { AdminUserAccessService } from './admin-user-access.service';
-import { AdminEmailChangeService } from './admin-email-change.service';
-import { SessionService } from '../../auth/services/session.service';
 import { User } from '../../user/schemas/user.schema';
+import { Role } from '../../role/schemas/role.schema';
 import { AuthProvider } from '../../user/enums/auth-provider.enum';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import {
+  createConnectionMock,
+  createChainableQueryMock,
+} from '../../common/testing/test-doubles.harness-spec';
 
 interface CreatedDoc extends Record<string, unknown> {
   _id: Types.ObjectId;
   save: jest.Mock;
 }
 
-describe('AdminUsersService.createUser (D-12)', () => {
-  let service: AdminUsersService;
+describe('AdminUserCreateService.createUser (D-12)', () => {
+  let service: AdminUserCreateService;
   let created: CreatedDoc[];
   let findOne: jest.Mock;
 
@@ -28,13 +32,12 @@ describe('AdminUsersService.createUser (D-12)', () => {
 
   const mockAccessService = {
     assertCanAssignRole: jest.fn().mockResolvedValue(undefined),
+    assertFreshActorCanModify: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
     created = [];
-    findOne = jest.fn().mockReturnValue({
-      exec: jest.fn().mockResolvedValue(null),
-    });
+    findOne = jest.fn().mockReturnValue(createChainableQueryMock(null));
 
     const userModel = Object.assign(
       jest.fn((doc: Record<string, unknown>) => {
@@ -49,29 +52,45 @@ describe('AdminUsersService.createUser (D-12)', () => {
         created.push(instance);
         return instance;
       }),
-      { findOne },
+      {
+        findOne,
+        findById: jest
+          .fn()
+          .mockImplementation(() => createChainableQueryMock(created[0])),
+      },
     );
+
+    const roleQuery = createChainableQueryMock({
+      _id: new Types.ObjectId(),
+      slug: 'user',
+    });
+    const roleModel = {
+      findOne: jest.fn().mockReturnValue(roleQuery),
+      findById: jest.fn().mockReturnValue(roleQuery),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        AdminUsersService,
+        AdminUserCreateService,
+        { provide: getConnectionToken(), useValue: createConnectionMock() },
+        { provide: SecurityEventService, useValue: { recordMany: jest.fn() } },
         { provide: getModelToken(User.name), useValue: userModel },
-        {
-          provide: SessionService,
-          useValue: { invalidateAllSessions: jest.fn() },
-        },
+        { provide: getModelToken(Role.name), useValue: roleModel },
         { provide: AdminUserAccessService, useValue: mockAccessService },
-        { provide: AdminEmailChangeService, useValue: { apply: jest.fn() } },
       ],
     }).compile();
 
-    service = module.get<AdminUsersService>(AdminUsersService);
+    service = module.get<AdminUserCreateService>(AdminUserCreateService);
     jest.clearAllMocks();
     mockAccessService.assertCanAssignRole.mockResolvedValue(undefined);
   });
 
   it('should record email as the provider the account was created with', async () => {
-    await service.createUser(createUserDto, 'admin');
+    await service.createUser(
+      createUserDto,
+      'admin',
+      new Types.ObjectId().toString(),
+    );
 
     expect(created).toHaveLength(1);
     expect(created[0].authProvider).toBe(AuthProvider.EMAIL);
@@ -80,7 +99,11 @@ describe('AdminUsersService.createUser (D-12)', () => {
   });
 
   it('should hash the password instead of storing it', async () => {
-    await service.createUser(createUserDto, 'admin');
+    await service.createUser(
+      createUserDto,
+      'admin',
+      new Types.ObjectId().toString(),
+    );
 
     expect(created[0].password).not.toBe(createUserDto.password);
     expect(String(created[0].password)).toMatch(/^\$2[aby]\$/);
@@ -92,7 +115,11 @@ describe('AdminUsersService.createUser (D-12)', () => {
     });
 
     await expect(
-      service.createUser(createUserDto, 'admin'),
+      service.createUser(
+        createUserDto,
+        'admin',
+        new Types.ObjectId().toString(),
+      ),
     ).rejects.toMatchObject({
       code: ErrorCode.EMAIL_ALREADY_EXISTS,
       status: 409,
