@@ -1,0 +1,8 @@
+{
+  "settings": {
+    "profile": {
+      "namePattern": "Name can only contain letters, digits, spaces, apostrophes, hyphens and dots",
+      "nameNoLetter": "Name must include at least one letter"
+    }
+  }
+}

@@ -22,6 +22,7 @@ import {
   useLocalFieldTarget,
   useServerFieldErrors,
 } from '@/hooks/useServerFieldErrors';
+import { zodName } from '@app/core';
 
 interface EditUserDialogProps {
   userId: string | null;
@@ -32,7 +33,8 @@ interface EditUserDialogProps {
 }
 
 interface EditUserFormValues {
-  name: string;
+  /** Present only when the admin changed the name. */
+  name?: string;
   email: string;
 }
 
@@ -77,10 +79,21 @@ function EditUserForm({
       newErrors.email = t('errors.emailInvalid');
     }
 
-    if (!name.trim()) {
-      newErrors.name = t('errors.nameRequired');
-    } else if (name.trim().length < 2) {
-      newErrors.name = t('errors.nameMinLength');
+    // Provider names stored before this rule must not block email-only edits.
+    if (name !== initialName) {
+      const nameResult = zodName({
+        required: true,
+        messages: {
+          required: t('errors.nameRequired'),
+          min: t('errors.nameMinLength'),
+          max: t('errors.nameMaxLength'),
+          pattern: t('errors.namePattern'),
+          noLetter: t('errors.nameNoLetter'),
+        },
+      }).safeParse(name);
+      if (!nameResult.success) {
+        newErrors.name = nameResult.error.issues[0].message;
+      }
     }
 
     setErrors(newErrors);
@@ -94,8 +107,12 @@ function EditUserForm({
       return;
     }
 
+    const nameChanged = name !== initialName;
     const success = await onSubmit(
-      { name: name.trim(), email: email.trim() },
+      {
+        email: email.trim(),
+        ...(nameChanged ? { name: name.trim().normalize('NFC') } : {}),
+      },
       applyServerFieldErrors,
     );
     if (success) {
@@ -233,7 +250,7 @@ export function EditUserDialog({
     if (!userId) return false;
 
     // Check if nothing changed
-    if (data.name === currentName && data.email === currentEmail) {
+    if ((data.name === undefined || data.name === currentName) && data.email === currentEmail) {
       toast.info(t('noChanges'));
       return true;
     }
@@ -241,7 +258,7 @@ export function EditUserDialog({
     try {
       await updateUser({
         userId,
-        name: data.name,
+        ...(data.name === undefined ? {} : { name: data.name }),
         email: data.email,
       }).unwrap();
 

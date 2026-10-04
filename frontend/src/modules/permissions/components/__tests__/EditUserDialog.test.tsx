@@ -8,6 +8,8 @@ import {
   refuseWrites,
   renderForm,
   registerFormTestLifecycle,
+  stubNetwork,
+  success,
 } from '@/tests/serverRejectionHarness';
 import { EditUserDialog } from '../EditUserDialog';
 
@@ -56,6 +58,70 @@ describe.each([
     });
     expect(errorToasts()).toEqual([generalMessage]);
     expect(document.body.textContent).not.toContain(SERVER_TEXT);
+  });
+
+  it('edits only the email of a user whose stored name fails the rule and sends no name', async () => {
+    const bodies: unknown[] = [];
+    stubNetwork(async (request) => {
+      if (request.method !== 'GET') {
+        bodies.push(JSON.parse(await request.text()));
+      }
+      return success({});
+    });
+
+    const form = await renderForm(
+      locale,
+      <EditUserDialog
+        userId="user-1"
+        currentName="john_doe"
+        currentEmail="layla@example.com"
+        open
+        onOpenChange={vi.fn()}
+      />,
+    );
+    const email = screen.getByRole('textbox', { name: form.message('users.editUser.email') });
+    fireEvent.change(email, { target: { value: 'layla.haddad@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: form.message('users.editUser.save') }));
+
+    await waitFor(() => {
+      expect(form.successToasts()).toEqual([form.message('users.editUser.success')]);
+    });
+    expect(bodies).toHaveLength(1);
+    expect(bodies[0]).not.toHaveProperty('name');
+    expect(bodies[0]).toEqual({ email: 'layla.haddad@example.com' });
+  });
+
+  it.each([
+    { name: '  Jose\u0301  ', stored: 'Jos\u00e9' },
+    { name: 'john_doe', stored: undefined },
+    { name: '12', stored: undefined },
+  ])('validates a changed name and sends its NFC value $name', async ({ name, stored }) => {
+    const bodies: unknown[] = [];
+    stubNetwork(async (request) => {
+      if (request.method !== 'GET') bodies.push(JSON.parse(await request.text()));
+      return success({});
+    });
+    const form = await renderForm(
+      locale,
+      <EditUserDialog
+        userId="user-1"
+        currentName="Layla Haddad"
+        currentEmail="layla@example.com"
+        open
+        onOpenChange={vi.fn()}
+      />,
+    );
+    const input = screen.getByRole('textbox', { name: form.message('users.editUser.name') });
+    fireEvent.change(input, { target: { value: name } });
+    fireEvent.click(screen.getByRole('button', { name: form.message('users.editUser.save') }));
+    if (stored === undefined) {
+      await waitFor(() => expect(input.getAttribute('aria-invalid')).toBe('true'));
+      expect(bodies).toEqual([]);
+      if (name === '12')
+        expect(descriptions(input)).toEqual([form.message('users.editUser.errors.nameNoLetter')]);
+      return;
+    }
+    await waitFor(() => expect(bodies).toEqual([{ email: 'layla@example.com', name: stored }]));
   });
 
   it('gives two dialogs on one page their own controls', async () => {

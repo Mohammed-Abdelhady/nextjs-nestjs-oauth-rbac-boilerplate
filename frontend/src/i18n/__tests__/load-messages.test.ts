@@ -42,6 +42,9 @@ const OVERLAYS = [
   'role-errors',
   'session-kinds',
   'code-verification',
+  'admin-users',
+  'admin-email-confirmation',
+  'profile-settings',
 ];
 // feature:locale-ar:end
 
@@ -74,6 +77,28 @@ describe('session authority locale overlays', () => {
 
     for (const key of CODE_STEP_KEYS) {
       expect(lookupMessage(merged, key)).toBe(lookupMessage(codeVerificationEn, key));
+    }
+  });
+
+  it.each([
+    'en',
+    'ar', // feature:locale-ar
+  ] as const)('resolves name errors from overlays in %s', async (locale) => {
+    const merged = await loadMessages(locale);
+    const admin = (await import(`../messages/admin-users.${locale}.json`)).default;
+    const profile = (await import(`../messages/profile-settings.${locale}.json`)).default;
+    for (const key of ['nameMaxLength', 'namePattern', 'nameNoLetter']) {
+      expect(lookupMessage(merged, `users.editUser.errors.${key}`)).toBe(
+        lookupMessage(admin, `users.editUser.errors.${key}`),
+      );
+      expect(lookupMessage(merged, `validation.${key}`)).toBe(
+        lookupMessage(admin, `validation.${key}`),
+      );
+    }
+    for (const key of ['namePattern', 'nameNoLetter']) {
+      expect(lookupMessage(merged, `settings.profile.${key}`)).toBe(
+        lookupMessage(profile, `settings.profile.${key}`),
+      );
     }
   });
 

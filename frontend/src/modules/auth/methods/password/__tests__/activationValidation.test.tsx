@@ -98,20 +98,50 @@ describe.each([
     },
   );
 
-  it.each(['', ' ', 'L', 'L'.repeat(81), '<Layla>', 'Layla\tHaddad'])(
-    'rejects the server-invalid name %s without a write',
-    async (name) => {
-      const bodies: unknown[] = [];
-      acceptActivation(bodies);
-      await renderForm(locale, <ActivationForm />);
-      fillActivation('Passw0rdLayla', name);
-      fireEvent.submit(screen.getByTestId('activate-form'));
-      await waitFor(() =>
-        expect(screen.getByTestId('activate-name-input').getAttribute('aria-invalid')).toBe('true'),
-      );
-      expect(bodies).toEqual([]);
-    },
-  );
+  it('sends a trimmed NFC name to activation', async () => {
+    const bodies: unknown[] = [];
+    acceptActivation(bodies);
+    await renderForm(locale, <ActivationForm />);
+    fillActivation('Passw0rdLayla', '  Jose\u0301  ');
+    fireEvent.submit(screen.getByTestId('activate-form'));
+    await waitFor(() =>
+      expect(bodies).toEqual([
+        {
+          email: 'layla@example.com',
+          code: '000000',
+          name: 'Jos\u00e9',
+          password: 'Passw0rdLayla',
+        },
+      ]),
+    );
+  });
+
+  it.each([
+    '',
+    ' ',
+    'L',
+    'L'.repeat(101),
+    '<Layla>',
+    'La\u0004yla',
+    // Every line-break and invisible character the rule refuses:
+    // Rows a text input can carry. The DOM strips \n and \r\n from an
+    // input's value before the form sees it, so those two names are
+    // asserted at the schema level in nameRule.table.test.ts instead.
+    'Layla\tHaddad',
+    'Bob\u2028Lee',
+    'Bo\ufeffb',
+    'Bo\u000b\u000cb',
+  ])('rejects the server-invalid name %s without a write', async (name) => {
+    const bodies: unknown[] = [];
+    acceptActivation(bodies);
+    await renderForm(locale, <ActivationForm />);
+    fillActivation('Passw0rdLayla', name);
+    fireEvent.submit(screen.getByTestId('activate-form'));
+    await waitFor(() =>
+      expect(screen.getByTestId('activate-name-input').getAttribute('aria-invalid')).toBe('true'),
+    );
+    expect(bodies).toEqual([]);
+  });
 
   it('requires an exact password confirmation without trimming pasted spaces', async () => {
     const bodies: unknown[] = [];
