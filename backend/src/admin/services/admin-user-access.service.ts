@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { ClientSession, Model } from 'mongoose';
 import { User, UserDocument } from '../../user/schemas/user.schema';
 import { RoleHierarchyService } from '../../role/services/role-hierarchy.service';
 import { AppException } from '../../common/exceptions/app.exception';
@@ -124,6 +124,50 @@ export class AdminUserAccessService {
       throw new AppException(
         ErrorCode.CANNOT_MODIFY_HIGHER_ROLE,
         'Cannot assign a role at or above your own level',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+  }
+
+  /**
+   * Re-read the acting account inside the caller's transaction and repeat the
+   * write check from the role it holds now. A demotion or deactivation that
+   * landed after the request was admitted cannot be acted on.
+   *
+   * @throws AppException SESSION_INVALID when the actor is gone or deleted,
+   * CANNOT_MODIFY_HIGHER_ROLE when the fresh rank is not above the target
+   */
+  async assertFreshActorCanModify(
+    actorId: string,
+    targetRole: string,
+    session: ClientSession,
+    message = 'Cannot modify user with higher or equal role',
+  ): Promise<void> {
+    const actor = await this.userModel
+      .findById(actorId)
+      .session(session)
+      .exec();
+    if (!actor || actor.isDeleted) {
+      throw new AppException(
+        ErrorCode.SESSION_INVALID,
+        'Actor is no longer active',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const actorLevel = await this.roleHierarchyService.getLevel(
+      actor.role,
+      session,
+    );
+    const targetLevel = await this.roleHierarchyService.getLevel(
+      targetRole,
+      session,
+    );
+
+    if (!canModifyLevel(actorLevel, targetLevel)) {
+      throw new AppException(
+        ErrorCode.CANNOT_MODIFY_HIGHER_ROLE,
+        message,
         HttpStatus.FORBIDDEN,
       );
     }
