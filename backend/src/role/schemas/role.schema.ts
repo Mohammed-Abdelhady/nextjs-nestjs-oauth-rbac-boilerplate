@@ -1,5 +1,22 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
+import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
+
+@Schema({ _id: false })
+export class PendingRoleSweep {
+  @Prop({ type: MongooseSchema.Types.ObjectId, required: true })
+  roleId!: Types.ObjectId;
+
+  @Prop({ required: true })
+  previousSlug!: string;
+
+  @Prop({ required: true })
+  actorId!: string;
+
+  @Prop()
+  sweepId?: string;
+}
+
+const PendingRoleSweepSchema = SchemaFactory.createForClass(PendingRoleSweep);
 
 /**
  * Role schema for dynamic role management system.
@@ -32,6 +49,9 @@ export class Role {
 
   @Prop({ type: [String], default: [] })
   permissions!: string[];
+
+  @Prop({ type: [PendingRoleSweepSchema], default: [] })
+  pendingHolderSweeps!: PendingRoleSweep[];
 
   // Timestamp fields (automatically managed by Mongoose with timestamps: true)
   createdAt!: Date;

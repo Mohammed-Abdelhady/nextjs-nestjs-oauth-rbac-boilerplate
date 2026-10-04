@@ -67,7 +67,7 @@ export class RoleResponseDto {
 export class RoleUpdateResponseDto extends RoleResponseDto {
   @ApiProperty({
     description:
-      'Users moved to the new slug by this rename. Zero when the slug is unchanged.',
+      'Users moved by this rename or by a pending holder repair during the edit.',
     example: 0,
   })
   usersMoved!: number;
