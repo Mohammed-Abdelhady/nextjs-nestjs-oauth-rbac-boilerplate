@@ -177,7 +177,8 @@
       "kind": "oauth",
       "default": true,
       "files": [
-        "backend/src/auth/oauth/strategies/github-oauth.strategy.ts"
+        "backend/src/auth/oauth/strategies/github-oauth.strategy.ts",
+        "backend/src/auth/oauth/strategies/github-oauth.strategy.spec.ts"
       ],
       "envVars": [
         "OAUTH_GITHUB_CLIENT_ID",

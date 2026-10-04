@@ -19,13 +19,12 @@ const createUpdateProfileSchema = (t: (key: string) => string) =>
   z.object({
     name: zodName({
       required: true,
-      min: 2,
-      max: 100,
       messages: {
         required: t('nameRequired'),
         min: t('nameMinLength'),
         max: t('nameMaxLength'),
         pattern: t('namePattern'),
+        noLetter: t('nameNoLetter'),
       },
     }),
   });

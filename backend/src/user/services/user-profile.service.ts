@@ -60,7 +60,7 @@ export class UserProfileService {
 
     assertActiveUser(user);
 
-    this.logger.log(`Profile retrieved for user: ${user.email}`);
+    this.logger.log(`Profile retrieved: userId=${user._id.toString()}`);
     const profileDto = await this.mapToProfileDto(user);
     return ApiResponse.success(profileDto);
   }
@@ -84,7 +84,7 @@ export class UserProfileService {
 
     await user.save();
 
-    this.logger.log(`Profile updated for user: ${user.email}`);
+    this.logger.log(`Profile updated: userId=${user._id.toString()}`);
     const profileDto = await this.mapToProfileDto(user);
     return ApiResponse.success(profileDto, 'Profile updated successfully');
   }
@@ -163,7 +163,7 @@ export class UserProfileService {
       );
     });
 
-    this.logger.log(`Password changed for user: ${user.email}`);
+    this.logger.log(`Password changed: userId=${user._id.toString()}`);
     return ApiResponse.success({
       message:
         'Password changed successfully. Other sessions have been logged out.',
@@ -185,7 +185,7 @@ export class UserProfileService {
 
     await this.sessionService.invalidateAllSessions(new Types.ObjectId(userId));
 
-    this.logger.log(`Account deactivated for user: ${user.email}`);
+    this.logger.log(`Account deactivated: userId=${user._id.toString()}`);
     return ApiResponse.success({
       message: 'Account deactivated successfully',
     });

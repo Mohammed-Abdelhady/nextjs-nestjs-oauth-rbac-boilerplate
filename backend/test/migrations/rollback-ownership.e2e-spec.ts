@@ -11,6 +11,17 @@ interface Migration {
   down: (db: unknown) => Promise<void>;
 }
 
+/** Shape the migration spec writes; the migrations themselves are untyped. */
+interface LinkedAccountsUserDocument {
+  googleId?: string;
+  authProvider?: string;
+  linkedAccounts?: Array<{
+    provider: string;
+    providerId: string;
+    linkedAt: Date;
+  }>;
+}
+
 // The migrations are plain CommonJS files the migration CLI loads by
 // filename, so the spec loads them the same way instead of import-form.
 const loadMigration = createRequire(__filename);
@@ -69,7 +80,7 @@ describe('migration rollback ownership', () => {
   });
 
   it('should refuse to roll back a non-legacy linked provider', async () => {
-    const users = client.db().collection('users');
+    const users = client.db().collection<LinkedAccountsUserDocument>('users');
     await users.insertOne({
       googleId: 'g-1',
       authProvider: 'google',
@@ -84,7 +95,7 @@ describe('migration rollback ownership', () => {
             providerId: 'ms-1',
             linkedAt: new Date(),
           },
-        } as never,
+        },
       },
     );
 

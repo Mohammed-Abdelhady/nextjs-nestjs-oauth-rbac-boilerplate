@@ -67,7 +67,9 @@ export class AdminUsersService {
     });
 
     await newUser.save();
-    this.logger.log(`User created by admin: ${newUser.email} as ${role}`);
+    this.logger.log(
+      `User created by admin: userId=${newUser._id.toString()} as ${role}`,
+    );
 
     return ApiResponse.success(
       mapToAdminUserDto(newUser),

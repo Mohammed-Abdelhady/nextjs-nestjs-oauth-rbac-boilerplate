@@ -118,8 +118,6 @@
       "errors": {
         "nameRequired": "Name is required",
         "nameMinLength": "Name must be at least 2 characters",
-        "nameMaxLength": "Name must not exceed 50 characters",
-        "namePattern": "Name can only contain letters, spaces, hyphens and apostrophes",
         "emailRequired": "Email is required",
         "emailInvalid": "Please enter a valid email address",
         "emailExists": "Email already registered",
@@ -511,7 +509,6 @@
       "nameRequired": "Name is required",
       "nameMinLength": "Name must be at least 2 characters",
       "nameMaxLength": "Name must not exceed 100 characters",
-      "namePattern": "Name can only contain letters, spaces, hyphens and apostrophes",
       "noChanges": "No changes to save",
       "error": "Failed to update profile"
     },

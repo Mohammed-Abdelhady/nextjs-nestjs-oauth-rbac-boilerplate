@@ -78,3 +78,32 @@ export function isDuplicateEmailError(exception: unknown): boolean {
 
   return false;
 }
+
+/**
+ * The loggable facts about a driver error: its name and code. Driver
+ * messages embed the offending value, so a log line names the error
+ * instead of quoting it.
+ */
+const LOGGABLE_ERROR_TOKEN_PATTERN = /^[A-Za-z0-9_.]{1,60}$/;
+const UNPRINTABLE_ERROR_TOKEN = 'unprintable';
+
+export function errorToken(value: unknown, allowNumber = false): string {
+  if (allowNumber && typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+  return typeof value === 'string' && LOGGABLE_ERROR_TOKEN_PATTERN.test(value)
+    ? value
+    : UNPRINTABLE_ERROR_TOKEN;
+}
+
+export function describeDriverError(error: unknown): string {
+  if (typeof error === 'object' && error !== null) {
+    const facts = error as { name?: unknown; code?: unknown };
+    const name = errorToken(facts.name);
+    if (typeof facts.code === 'undefined') {
+      return `name=${name}`;
+    }
+    return `name=${name} code=${errorToken(facts.code, true)}`;
+  }
+  return `non-object ${typeof error}`;
+}

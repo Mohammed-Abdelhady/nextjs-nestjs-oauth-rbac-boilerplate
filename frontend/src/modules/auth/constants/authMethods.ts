@@ -36,8 +36,3 @@ export const CONFIRM_EMAIL_CHANGE_ENDPOINT = '/api/auth/confirm-email-change';
 export const VERIFICATION_CODE_LENGTH = 6;
 export const AUTH_EMAIL_MAX_LENGTH = 255;
 export const RESEND_COOLDOWN_SECONDS = 60;
-
-// Activation mirrors the server until the shared identity validators align.
-export const SIGNUP_NAME_MIN_LENGTH = 2;
-export const SIGNUP_NAME_MAX_LENGTH = 80;
-export const SIGNUP_NAME_PATTERN = /^[\p{L}\p{M}0-9 '’.-]+$/u;

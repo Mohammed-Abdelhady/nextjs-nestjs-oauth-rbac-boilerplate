@@ -1,8 +1,10 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { OAuthFailureReason } from '../oauth.constants';
+import { describeDriverError } from '../../../common/utils/mongo-error.util';
 import { GENERIC_OIDC_PROVIDER } from '../../../common/constants/oauth-providers';
 import { OAuthProviderConfig } from '../../../config/oauth.config';
-import { BaseOAuthStrategy } from '../base-oauth.strategy';
+import { BaseOAuthStrategy, joseCodeOf } from '../base-oauth.strategy';
 import {
   AuthorizationUrlParams,
   ExchangeCodeParams,
@@ -11,6 +13,7 @@ import {
 } from '../oauth-provider.interface';
 import { IdTokenClaims, verifyIdToken } from '../utils/id-token.util';
 import {
+  DiscoveryFailure,
   OidcEndpoints,
   discoverEndpoints,
   resolveManualEndpoints,
@@ -113,9 +116,18 @@ export class OidcOAuthStrategy
         `Read the OpenID Connect discovery document of ${issuer}`,
       );
     } catch (error) {
+      // The discovery failure's closed reason and status go to the log; its
+      // message can quote a document a third party published.
+      const facts =
+        error instanceof DiscoveryFailure
+          ? `reason=${error.reason}${
+              error.httpStatus === undefined
+                ? ''
+                : ` status=${error.httpStatus}`
+            }`
+          : `reason=${OAuthFailureReason.UNEXPECTED}`;
       this.logger.warn(
-        `Discovery failed for ${issuer}, so '${this.id}' stays disabled: ` +
-          `${error instanceof Error ? error.message : String(error)}`,
+        `Discovery failed for '${this.id}': ${describeDriverError(error)} ${facts}`,
       );
     }
   }
@@ -164,12 +176,14 @@ export class OidcOAuthStrategy
     );
 
     if (response.error || !response.access_token) {
-      throw this.codeExchangeFailed(
-        response.error_description ?? response.error ?? 'no access token',
-      );
+      throw response.error
+        ? this.codeExchangeFailed(OAuthFailureReason.PROVIDER_ERROR, {
+            providerCode: response.error,
+          })
+        : this.codeExchangeFailed(OAuthFailureReason.NO_ACCESS_TOKEN);
     }
     if (!response.id_token) {
-      throw this.codeExchangeFailed('token response carried no id_token');
+      throw this.codeExchangeFailed(OAuthFailureReason.NO_ID_TOKEN);
     }
 
     await this.verifyClaims(response.id_token, params.nonce);
@@ -186,7 +200,7 @@ export class OidcOAuthStrategy
 
   async fetchProfile(tokens: OAuthTokens): Promise<OAuthProfile> {
     if (!tokens.idToken) {
-      throw this.profileFetchFailed('no id_token to read claims from');
+      throw this.profileFetchFailed(OAuthFailureReason.NO_ID_TOKEN);
     }
 
     const claims = await this.verifyClaims(tokens.idToken);
@@ -196,14 +210,12 @@ export class OidcOAuthStrategy
     );
 
     if (userInfo.sub !== claims.sub) {
-      throw this.profileFetchFailed(
-        'userinfo answered for a different subject than the id_token',
-      );
+      throw this.profileFetchFailed(OAuthFailureReason.SUBJECT_MISMATCH);
     }
 
     const email = userInfo.email ?? claims.email;
     if (!email) {
-      throw this.profileFetchFailed('userinfo returned no email');
+      throw this.profileFetchFailed(OAuthFailureReason.NO_EMAIL);
     }
 
     return {
@@ -233,9 +245,9 @@ export class OidcOAuthStrategy
         nonce,
       });
     } catch (error) {
-      throw this.profileFetchFailed(
-        `id_token rejected: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      throw this.profileFetchFailed(OAuthFailureReason.INVALID_TOKEN, {
+        joseCode: joseCodeOf(error),
+      });
     }
   }
 

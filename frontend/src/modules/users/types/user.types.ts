@@ -68,6 +68,7 @@ export interface UpdateUserStatusRequest {
  */
 export interface UpdateUserRequest {
   userId: string;
-  name: string;
+  /** Absent when the admin only changed the email. */
+  name?: string;
   email: string;
 }

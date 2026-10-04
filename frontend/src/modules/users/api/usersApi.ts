@@ -115,7 +115,7 @@ export const usersApi = baseApi.injectEndpoints({
       query: ({ userId, name, email }) => ({
         url: `/api/admin/users/${userId}`,
         method: 'PATCH',
-        body: { name, email },
+        body: { ...(name === undefined ? {} : { name }), email },
       }),
       transformResponse: (response: {
         success: boolean;

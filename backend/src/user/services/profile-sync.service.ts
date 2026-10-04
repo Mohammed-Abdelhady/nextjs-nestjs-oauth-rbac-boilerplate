@@ -7,6 +7,7 @@ import { User, UserDocument } from '../schemas/user.schema';
 import { EMAIL_PROVIDER } from '../../common/constants/oauth-providers';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import { describeDriverError } from '../../common/utils/mongo-error.util';
 import { OAuthProfile } from '../../auth/oauth/oauth-provider.interface';
 
 /**
@@ -76,9 +77,7 @@ export class ProfileSyncService {
     ) {
       user.name = profile.name;
       updated = true;
-      this.logger.log(
-        `Updated name for user ${userId} from ${provider}: ${profile.name}`,
-      );
+      this.logger.log(`Updated name for user ${userId} from ${provider}`);
     }
 
     // Email is never synced: the account email only changes through a verified flow
@@ -232,7 +231,7 @@ export class ProfileSyncService {
       this.logger.log('Automatic profile sync completed');
     } catch (error) {
       this.logger.error(
-        `Automatic profile sync failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Automatic profile sync failed: ${describeDriverError(error)}`,
       );
     }
   }

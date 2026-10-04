@@ -73,11 +73,13 @@ export class AuthService {
     const outcome = await this.signInService.completeSignIn(user, response);
 
     if (outcome.requiresTwoFactor) {
-      this.logger.log(`Password accepted, second factor owed: ${user.email}`);
+      this.logger.log(
+        `Password accepted, second factor owed: userId=${user._id.toString()}`,
+      );
       return LoginResponseDto.twoFactorRequired();
     }
 
-    this.logger.log(`User logged in: ${user.email}`);
+    this.logger.log(`User logged in: userId=${user._id.toString()}`);
     return LoginResponseDto.success(outcome.user);
   }
 
@@ -194,7 +196,7 @@ export class AuthService {
     await user.save();
 
     await this.sessionService.invalidateAllSessions(user._id);
-    this.logger.log(`Password reset successful for: ${user.email}`);
+    this.logger.log(`Password reset successful: userId=${user._id.toString()}`);
 
     return ResetPasswordResponseDto.success();
   }

@@ -1,9 +1,5 @@
 import { z } from 'zod';
-import {
-  SIGNUP_NAME_MIN_LENGTH,
-  SIGNUP_NAME_MAX_LENGTH,
-  SIGNUP_NAME_PATTERN,
-} from '../constants/authMethods';
+import { zodName } from '@app/core';
 import { createEmailCodeSchema } from './emailCodeSchema';
 import { createPasswordSchema } from './passwordSchema';
 
@@ -13,19 +9,16 @@ export const createActivationSchema = (
 ) =>
   createEmailCodeSchema(t)
     .extend({
-      name: z
-        .string({ required_error: t('errors.nameRequired') })
-        .trim()
-        .min(1, t('errors.nameRequired'))
-        .regex(SIGNUP_NAME_PATTERN, t('errors.namePattern'))
-        .refine(
-          (value) => Array.from(value).length >= SIGNUP_NAME_MIN_LENGTH,
-          t('errors.nameMinLength'),
-        )
-        .refine(
-          (value) => Array.from(value).length <= SIGNUP_NAME_MAX_LENGTH,
-          t('errors.nameMaxLength'),
-        ),
+      name: zodName({
+        required: true,
+        messages: {
+          required: t('errors.nameRequired'),
+          min: t('errors.nameMinLength'),
+          max: t('errors.nameMaxLength'),
+          pattern: t('errors.namePattern'),
+          noLetter: t('errors.nameNoLetter'),
+        },
+      }),
       password: createPasswordSchema(tPassword),
       confirmPassword: z
         .string({ required_error: t('errors.confirmRequired') })

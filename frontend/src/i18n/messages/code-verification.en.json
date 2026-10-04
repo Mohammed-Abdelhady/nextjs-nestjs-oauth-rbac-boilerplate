@@ -12,10 +12,11 @@
       "errors": {
         "nameRequired": "Name is required",
         "nameMinLength": "Name must be at least 2 characters",
-        "nameMaxLength": "Name must not exceed 80 characters",
+        "nameMaxLength": "Name must not exceed 100 characters",
         "namePattern": "Name may contain letters, digits, spaces, apostrophes, hyphens and dots",
         "confirmRequired": "Confirm your password",
-        "passwordMismatch": "Passwords do not match"
+        "passwordMismatch": "Passwords do not match",
+        "nameNoLetter": "Name must include at least one letter"
       },
       "signInRequired": "Your account has been created. Sign in to continue.",
       "signIn": "Sign in",
