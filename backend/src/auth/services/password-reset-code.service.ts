@@ -14,6 +14,7 @@ import { isMongoDuplicateKeyError } from '../../common/utils/mongo-error.util';
 import { generateVerificationCode } from '../utils/verification-code.util';
 import { INVALID_PASSWORD_RESET_CODE_MESSAGE } from '../constants/auth-messages';
 import { PENDING_STORE_PASSES } from '../constants/pending-store';
+import { currentRequestId } from '../../common/context/request-context';
 
 export interface ReservedPasswordReset {
   id: Types.ObjectId;
@@ -70,7 +71,9 @@ export class PasswordResetCodeService {
         update,
       );
       if (updated.matchedCount > 0) {
-        this.logger.log(`Opened pending password reset for ${email}`);
+        this.logger.log(
+          `Opened pending password reset requestId=${currentRequestId() ?? 'unknown'}`,
+        );
         return code;
       }
 
@@ -81,7 +84,9 @@ export class PasswordResetCodeService {
           attempts: 0,
           expiresAt,
         });
-        this.logger.log(`Opened pending password reset for ${email}`);
+        this.logger.log(
+          `Opened pending password reset requestId=${currentRequestId() ?? 'unknown'}`,
+        );
         return code;
       } catch (error) {
         if (!isMongoDuplicateKeyError(error)) throw error;

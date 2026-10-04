@@ -1,5 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { OAuthFailureReason } from '../oauth.constants';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { BaseOAuthStrategy } from '../base-oauth.strategy';
@@ -106,9 +107,11 @@ export class XOAuthStrategy extends BaseOAuthStrategy {
     );
 
     if (response.error || !response.access_token) {
-      throw this.codeExchangeFailed(
-        response.error_description ?? response.error ?? 'no access token',
-      );
+      throw response.error
+        ? this.codeExchangeFailed(OAuthFailureReason.PROVIDER_ERROR, {
+            providerCode: response.error,
+          })
+        : this.codeExchangeFailed(OAuthFailureReason.NO_ACCESS_TOKEN);
     }
 
     return {
@@ -128,7 +131,8 @@ export class XOAuthStrategy extends BaseOAuthStrategy {
 
     const user = response.data;
     if (!user) {
-      throw this.profileFetchFailed(response.detail ?? 'no user in response');
+      // X's `detail` is free text; the log carries the closed reason only.
+      throw this.profileFetchFailed(OAuthFailureReason.PROVIDER_ERROR);
     }
 
     // X hands out confirmed_email only for an address the account confirmed, so

@@ -4,6 +4,7 @@ import { Response } from 'express';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { OAUTH_CLIENT_CALLBACK_PATH } from './oauth.constants';
+import { describeDriverError } from '../../common/utils/mongo-error.util';
 import {
   DEFAULT_REDIRECT_PATH,
   TWO_FACTOR_CLIENT_PATH,
@@ -53,8 +54,11 @@ export class OAuthRedirectService {
         : ErrorCode.OAUTH_AUTHENTICATION_FAILED;
 
     this.logger.warn(
-      `OAuth flow failed for ${provider}: ${code} - ${
-        error instanceof Error ? error.message : String(error)
+      // The provider's own text can carry anything; the code already says
+      // what went wrong, and the redirect tells the client. A non-code
+      // failure is named, not quoted.
+      `OAuth flow failed for ${provider}: ${code}${
+        error instanceof AppException ? '' : ` ${describeDriverError(error)}`
       }`,
     );
 

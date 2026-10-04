@@ -1,4 +1,5 @@
 import { WebAuthnAdapter } from './webauthn.adapter';
+import { Logger } from '@nestjs/common';
 import {
   CREDENTIAL_BODY,
   CREDENTIAL_ID,
@@ -28,6 +29,24 @@ const STORED = {
 
 describe('WebAuthnAdapter', () => {
   const adapter = new WebAuthnAdapter();
+
+  it('names a refused check by error name and code, never its message', async () => {
+    const warnSpy = jest
+      .spyOn(Logger.prototype, 'warn')
+      .mockImplementation(() => {});
+
+    // The real library throws for a payload it cannot parse; its message
+    // quotes the client-supplied payload.
+    await adapter.verifyAttestation(CREDENTIAL_BODY, EXPECTED);
+
+    const logged = warnSpy.mock.calls
+      .map((call: unknown[]) => call.map((v) => String(v)).join(' '))
+      .join('\n');
+    expect(logged).toMatch(
+      /^WebAuthn check refused: name=[A-Za-z0-9_]+( code=[^\s]+)?$/,
+    );
+    warnSpy.mockRestore();
+  });
 
   it('should build registration options for the configured relying party', async () => {
     const options = await adapter.createRegistrationOptions({

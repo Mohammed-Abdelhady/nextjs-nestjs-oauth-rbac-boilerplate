@@ -12,6 +12,7 @@ import { AuthProvider } from '../../user/enums/auth-provider.enum';
 import { getSeedUsers, printSeedCredentials } from './user.seed';
 import { RoleSeedService } from './role.seed';
 import { ApplicationRegistryService } from '../../session/services/application-registry.service';
+import { describeDriverError } from '../../common/utils/mongo-error.util';
 
 function getChangelogCollectionName(): string {
   const possiblePaths = [
@@ -93,7 +94,9 @@ export class SeedService {
         });
 
         if (existingUser) {
-          this.logger.log(`User already exists: ${userData.email}`);
+          this.logger.log(
+            `Seed user already exists (role: ${userData.role}) userId=${existingUser._id.toString()}`,
+          );
           continue;
         }
 
@@ -102,7 +105,7 @@ export class SeedService {
           this.configService.get<number>('bcrypt.rounds', 10),
         );
 
-        await this.userModel.create({
+        const created = await this.userModel.create({
           _id: new Types.ObjectId(),
           ...userData,
           password: hashedPassword,
@@ -112,12 +115,13 @@ export class SeedService {
         });
 
         this.logger.log(
-          `Created seed user: ${userData.email} (${userData.role})`,
+          `Created seed user (role: ${userData.role}) userId=${created._id.toString()}`,
         );
         createdCount++;
       } catch (error) {
+        // The message quotes input; the error's name and code identify it.
         this.logger.error(
-          `Failed to create seed user ${userData.email}: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to create a seed user (role: ${userData.role}): error ${describeDriverError(error)}`,
         );
       }
     }

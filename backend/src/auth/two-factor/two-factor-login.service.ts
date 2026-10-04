@@ -70,7 +70,7 @@ export class TwoFactorLoginService {
     await this.discard(challenge.challengeId, response);
     const summary = await this.signInService.issueSession(user, response);
 
-    this.logger.log(`Second factor accepted for ${user.email}`);
+    this.logger.log(`Second factor accepted: userId=${user._id.toString()}`);
     return LoginResponseDto.success(summary);
   }
 

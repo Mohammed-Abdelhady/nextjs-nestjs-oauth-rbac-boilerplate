@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { BaseOAuthStrategy } from '../base-oauth.strategy';
+import { OAuthFailureReason } from '../oauth.constants';
+import { BaseOAuthStrategy, joseCodeOf } from '../base-oauth.strategy';
 import {
   AuthorizationUrlParams,
   ExchangeCodeParams,
@@ -89,9 +90,11 @@ export class GoogleOAuthStrategy extends BaseOAuthStrategy {
     );
 
     if (response.error || !response.access_token) {
-      throw this.codeExchangeFailed(
-        response.error_description ?? response.error ?? 'no access token',
-      );
+      throw response.error
+        ? this.codeExchangeFailed(OAuthFailureReason.PROVIDER_ERROR, {
+            providerCode: response.error,
+          })
+        : this.codeExchangeFailed(OAuthFailureReason.NO_ACCESS_TOKEN);
     }
 
     if (response.id_token) {
@@ -114,7 +117,7 @@ export class GoogleOAuthStrategy extends BaseOAuthStrategy {
     });
 
     if (!profile.email) {
-      throw this.profileFetchFailed('userinfo returned no email');
+      throw this.profileFetchFailed(OAuthFailureReason.NO_EMAIL);
     }
 
     return {
@@ -140,9 +143,9 @@ export class GoogleOAuthStrategy extends BaseOAuthStrategy {
         nonce,
       });
     } catch (error) {
-      throw this.profileFetchFailed(
-        `id_token rejected: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      throw this.profileFetchFailed(OAuthFailureReason.INVALID_TOKEN, {
+        joseCode: joseCodeOf(error),
+      });
     }
   }
 }

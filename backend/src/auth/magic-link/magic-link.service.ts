@@ -30,6 +30,7 @@ import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { isMongoDuplicateKeyError } from '../../common/utils/mongo-error.util';
 import { Clock } from '../../common/services/clock';
+import { currentRequestId } from '../../common/context/request-context';
 import { getAllowedNativeAuthorizeContinuation } from './utils/magic-link-continuation.util';
 
 const MILLISECONDS_PER_MINUTE = 60000;
@@ -86,7 +87,9 @@ export class MagicLinkService {
 
     if (recentLinks >= this.maxPerHour) {
       this.spendTokenHashingTime();
-      this.logger.warn(`Magic link hourly cap reached for ${dto.email}`);
+      this.logger.warn(
+        `Magic link hourly cap reached requestId=${currentRequestId() ?? 'unknown'}`,
+      );
       return MagicLinkRequestResponseDto.success(dto.email);
     }
 
@@ -109,7 +112,9 @@ export class MagicLinkService {
     );
 
     if (sent) {
-      this.logger.log(`Magic link sent to ${dto.email}`);
+      this.logger.log(
+        `Magic link sent requestId=${currentRequestId() ?? 'unknown'}`,
+      );
     }
     return MagicLinkRequestResponseDto.success(dto.email);
   }
@@ -145,10 +150,14 @@ export class MagicLinkService {
 
     let loginResponse: ApiResponse<LoginResponseDto>;
     if (outcome.requiresTwoFactor) {
-      this.logger.log(`Link spent, second factor owed: ${user.email}`);
+      this.logger.log(
+        `Link spent, second factor owed: userId=${user._id.toString()}`,
+      );
       loginResponse = LoginResponseDto.twoFactorRequired();
     } else {
-      this.logger.log(`User signed in with a magic link: ${user.email}`);
+      this.logger.log(
+        `User signed in with a magic link: userId=${user._id.toString()}`,
+      );
       loginResponse = LoginResponseDto.success(outcome.user);
     }
 

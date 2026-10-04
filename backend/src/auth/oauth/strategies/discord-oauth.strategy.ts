@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { OAuthFailureReason } from '../oauth.constants';
 import { BaseOAuthStrategy } from '../base-oauth.strategy';
 import {
   AuthorizationUrlParams,
@@ -86,9 +87,11 @@ export class DiscordOAuthStrategy extends BaseOAuthStrategy {
     );
 
     if (response.error || !response.access_token) {
-      throw this.codeExchangeFailed(
-        response.error_description ?? response.error ?? 'no access token',
-      );
+      throw response.error
+        ? this.codeExchangeFailed(OAuthFailureReason.PROVIDER_ERROR, {
+            providerCode: response.error,
+          })
+        : this.codeExchangeFailed(OAuthFailureReason.NO_ACCESS_TOKEN);
     }
 
     return {
@@ -107,7 +110,7 @@ export class DiscordOAuthStrategy extends BaseOAuthStrategy {
 
     // Discord returns email: null for accounts that never confirmed an address.
     if (!user.email) {
-      throw this.profileFetchFailed('account has no email');
+      throw this.profileFetchFailed(OAuthFailureReason.NO_EMAIL);
     }
 
     return {

@@ -64,6 +64,34 @@ export function normalizeIssuer(issuer: string): string {
   return issuer.trim().replace(/\/$/, '');
 }
 
+/** Closed reasons a failed discovery log may name. */
+export const DISCOVERY_FAILURE_REASONS = [
+  'http_status',
+  'network',
+  'malformed',
+  'issuer_mismatch',
+  'missing_endpoint',
+] as const;
+
+export type DiscoveryFailureReason = (typeof DISCOVERY_FAILURE_REASONS)[number];
+
+/**
+ * A failed discovery read with a closed reason. The message keeps the
+ * detail (the contract the tests read); log lines quote the reason and
+ * status instead, since the message can embed a published document's
+ * issuer.
+ */
+export class DiscoveryFailure extends Error {
+  constructor(
+    readonly reason: DiscoveryFailureReason,
+    readonly httpStatus?: number,
+    message?: string,
+  ) {
+    super(message ?? `discovery failed: ${reason}`);
+    this.name = 'DiscoveryFailure';
+  }
+}
+
 export function discoveryUrl(issuer: string): string {
   return `${normalizeIssuer(issuer)}${DISCOVERY_PATH}`;
 }
@@ -108,7 +136,9 @@ export async function discoverEndpoints(
   const document = await fetchDiscoveryDocument(expectedIssuer);
 
   if (!document.issuer || normalizeIssuer(document.issuer) !== expectedIssuer) {
-    throw new Error(
+    throw new DiscoveryFailure(
+      'issuer_mismatch',
+      undefined,
       `discovery document is issued for '${document.issuer ?? 'nothing'}', not '${expectedIssuer}'`,
     );
   }
@@ -120,7 +150,9 @@ export async function discoverEndpoints(
   const jwksUri = overrides.jwksUri ?? document.jwks_uri;
 
   if (!authorizationUrl || !tokenUrl || !userInfoUrl || !jwksUri) {
-    throw new Error(
+    throw new DiscoveryFailure(
+      'missing_endpoint',
+      undefined,
       'discovery document is missing an authorization, token, userinfo or JWKS endpoint',
     );
   }
@@ -140,19 +172,30 @@ export async function discoverEndpoints(
 async function fetchDiscoveryDocument(
   issuer: string,
 ): Promise<OidcDiscoveryDocument> {
-  const response = await fetch(discoveryUrl(issuer), {
-    method: 'GET',
-    headers: { Accept: 'application/json' },
-    signal: AbortSignal.timeout(DISCOVERY_TIMEOUT_MS),
-  });
+  let response: Response;
+  try {
+    response = await fetch(discoveryUrl(issuer), {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(DISCOVERY_TIMEOUT_MS),
+    });
+  } catch {
+    throw new DiscoveryFailure('network');
+  }
 
   if (!response.ok) {
-    throw new Error(
+    throw new DiscoveryFailure(
+      'http_status',
+      response.status,
       `discovery request failed: ${response.status} ${response.statusText}`,
     );
   }
 
-  return (await response.json()) as OidcDiscoveryDocument;
+  try {
+    return (await response.json()) as OidcDiscoveryDocument;
+  } catch {
+    throw new DiscoveryFailure('malformed');
+  }
 }
 
 function readSigningAlgorithms(document: OidcDiscoveryDocument): string[] {

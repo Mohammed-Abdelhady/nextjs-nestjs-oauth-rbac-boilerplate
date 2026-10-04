@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { BaseOAuthStrategy } from '../base-oauth.strategy';
+import { OAuthFailureReason } from '../oauth.constants';
+import { BaseOAuthStrategy, joseCodeOf } from '../base-oauth.strategy';
 import {
   AuthorizationUrlParams,
   ExchangeCodeParams,
@@ -14,6 +15,25 @@ const TOKEN_URL = 'https://slack.com/api/openid.connect.token';
 const USERINFO_URL = 'https://slack.com/api/openid.connect.userInfo';
 const JWKS_URI = 'https://slack.com/openid/connect/keys';
 const ISSUERS = ['https://slack.com'];
+const SLACK_OAUTH_ERROR_CODES = [
+  'bad_client_secret',
+  'bad_redirect_uri',
+  'invalid_client_id',
+  'invalid_code',
+  'invalid_grant_type',
+  'invalid_refresh_token',
+  'oauth_authorization_url_mismatch',
+  'invalid_auth',
+  'not_authed',
+  'account_inactive',
+  'token_expired',
+  'token_revoked',
+  'missing_scope',
+  'ratelimited',
+  'internal_error',
+  'fatal_error',
+  'service_unavailable',
+] as const;
 const SCOPES = ['openid', 'profile', 'email'];
 
 /** Slack answers 200 with `ok: false` instead of an HTTP error status. */
@@ -49,6 +69,7 @@ interface SlackUserInfo extends SlackApiResponse {
  */
 @Injectable()
 export class SlackOAuthStrategy extends BaseOAuthStrategy {
+  protected readonly providerErrorCodes = SLACK_OAUTH_ERROR_CODES;
   readonly id = 'slack';
   readonly displayName = 'Slack';
   readonly supportsPkce = false;
@@ -79,7 +100,7 @@ export class SlackOAuthStrategy extends BaseOAuthStrategy {
 
   async exchangeCode(params: ExchangeCodeParams): Promise<OAuthTokens> {
     if (!params.nonce) {
-      throw this.codeExchangeFailed('the flow started without a nonce');
+      throw this.codeExchangeFailed(OAuthFailureReason.MISSING_NONCE);
     }
 
     const { clientId, clientSecret } = this.credentials();
@@ -92,10 +113,14 @@ export class SlackOAuthStrategy extends BaseOAuthStrategy {
     });
 
     if (response.ok === false || !response.access_token) {
-      throw this.codeExchangeFailed(response.error ?? 'no access token');
+      throw response.ok === false || response.error
+        ? this.codeExchangeFailed(OAuthFailureReason.PROVIDER_ERROR, {
+            providerCode: response.error,
+          })
+        : this.codeExchangeFailed(OAuthFailureReason.NO_ACCESS_TOKEN);
     }
     if (!response.id_token) {
-      throw this.codeExchangeFailed('token response carried no id_token');
+      throw this.codeExchangeFailed(OAuthFailureReason.NO_ID_TOKEN);
     }
 
     await this.verifyClaims(response.id_token, params.nonce);
@@ -109,7 +134,7 @@ export class SlackOAuthStrategy extends BaseOAuthStrategy {
 
   async fetchProfile(tokens: OAuthTokens): Promise<OAuthProfile> {
     if (!tokens.idToken) {
-      throw this.profileFetchFailed('no id_token to read claims from');
+      throw this.profileFetchFailed(OAuthFailureReason.NO_ID_TOKEN);
     }
 
     const claims = await this.verifyClaims(tokens.idToken);
@@ -118,12 +143,14 @@ export class SlackOAuthStrategy extends BaseOAuthStrategy {
     });
 
     if (userInfo.ok === false) {
-      throw this.profileFetchFailed(userInfo.error ?? 'userinfo refused');
+      throw this.profileFetchFailed(OAuthFailureReason.PROVIDER_ERROR, {
+        providerCode: userInfo.error,
+      });
     }
 
     const email = userInfo.email ?? claims.email;
     if (!email) {
-      throw this.profileFetchFailed('userinfo returned no email');
+      throw this.profileFetchFailed(OAuthFailureReason.NO_EMAIL);
     }
 
     return {
@@ -152,9 +179,9 @@ export class SlackOAuthStrategy extends BaseOAuthStrategy {
         nonce,
       });
     } catch (error) {
-      throw this.profileFetchFailed(
-        `id_token rejected: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      throw this.profileFetchFailed(OAuthFailureReason.INVALID_TOKEN, {
+        joseCode: joseCodeOf(error),
+      });
     }
   }
 }

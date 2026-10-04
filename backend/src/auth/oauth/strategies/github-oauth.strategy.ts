@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { OAuthFailureReason } from '../oauth.constants';
 import { BaseOAuthStrategy } from '../base-oauth.strategy';
 import {
   AuthorizationUrlParams,
@@ -12,6 +13,12 @@ const AUTH_URL = 'https://github.com/login/oauth/authorize';
 const TOKEN_URL = 'https://github.com/login/oauth/access_token';
 const USER_URL = 'https://api.github.com/user';
 const USER_EMAILS_URL = 'https://api.github.com/user/emails';
+const GITHUB_OAUTH_ERROR_CODES = [
+  'incorrect_client_credentials',
+  'redirect_uri_mismatch',
+  'bad_verification_code',
+  'unverified_user_email',
+] as const;
 const SCOPES = ['read:user', 'user:email'];
 const API_HEADERS = {
   Accept: 'application/vnd.github+json',
@@ -46,6 +53,7 @@ interface GitHubEmail {
  */
 @Injectable()
 export class GitHubOAuthStrategy extends BaseOAuthStrategy {
+  protected readonly providerErrorCodes = GITHUB_OAUTH_ERROR_CODES;
   readonly id = 'github';
   readonly displayName = 'GitHub';
   readonly supportsPkce = false;
@@ -78,9 +86,11 @@ export class GitHubOAuthStrategy extends BaseOAuthStrategy {
     });
 
     if (response.error || !response.access_token) {
-      throw this.codeExchangeFailed(
-        response.error_description ?? response.error ?? 'no access token',
-      );
+      throw response.error
+        ? this.codeExchangeFailed(OAuthFailureReason.PROVIDER_ERROR, {
+            providerCode: response.error,
+          })
+        : this.codeExchangeFailed(OAuthFailureReason.NO_ACCESS_TOKEN);
     }
 
     return {
@@ -100,7 +110,7 @@ export class GitHubOAuthStrategy extends BaseOAuthStrategy {
     const email = await this.primaryVerifiedEmail(headers);
 
     if (!email) {
-      throw this.profileFetchFailed('account has no verified email');
+      throw this.profileFetchFailed(OAuthFailureReason.NO_EMAIL);
     }
 
     return {

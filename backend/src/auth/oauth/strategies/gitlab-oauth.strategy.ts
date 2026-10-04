@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { BaseOAuthStrategy } from '../base-oauth.strategy';
+import { OAuthFailureReason } from '../oauth.constants';
+import { BaseOAuthStrategy, joseCodeOf } from '../base-oauth.strategy';
 import {
   AuthorizationUrlParams,
   ExchangeCodeParams,
@@ -97,12 +98,14 @@ export class GitLabOAuthStrategy extends BaseOAuthStrategy {
     );
 
     if (response.error || !response.access_token) {
-      throw this.codeExchangeFailed(
-        response.error_description ?? response.error ?? 'no access token',
-      );
+      throw response.error
+        ? this.codeExchangeFailed(OAuthFailureReason.PROVIDER_ERROR, {
+            providerCode: response.error,
+          })
+        : this.codeExchangeFailed(OAuthFailureReason.NO_ACCESS_TOKEN);
     }
     if (!response.id_token) {
-      throw this.codeExchangeFailed('token response carried no id_token');
+      throw this.codeExchangeFailed(OAuthFailureReason.NO_ID_TOKEN);
     }
 
     await this.verifyClaims(response.id_token, params.nonce);
@@ -119,7 +122,7 @@ export class GitLabOAuthStrategy extends BaseOAuthStrategy {
 
   async fetchProfile(tokens: OAuthTokens): Promise<OAuthProfile> {
     if (!tokens.idToken) {
-      throw this.profileFetchFailed('no id_token to read claims from');
+      throw this.profileFetchFailed(OAuthFailureReason.NO_ID_TOKEN);
     }
 
     const claims = await this.verifyClaims(tokens.idToken);
@@ -130,7 +133,7 @@ export class GitLabOAuthStrategy extends BaseOAuthStrategy {
 
     const email = userInfo.email ?? claims.email;
     if (!email) {
-      throw this.profileFetchFailed('userinfo returned no email');
+      throw this.profileFetchFailed(OAuthFailureReason.NO_EMAIL);
     }
 
     return {
@@ -172,9 +175,9 @@ export class GitLabOAuthStrategy extends BaseOAuthStrategy {
         nonce,
       });
     } catch (error) {
-      throw this.profileFetchFailed(
-        `id_token rejected: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      throw this.profileFetchFailed(OAuthFailureReason.INVALID_TOKEN, {
+        joseCode: joseCodeOf(error),
+      });
     }
   }
 

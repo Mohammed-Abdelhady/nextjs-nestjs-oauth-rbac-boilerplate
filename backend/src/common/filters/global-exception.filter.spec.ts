@@ -14,7 +14,10 @@ import { ThrottlerException } from '@nestjs/throttler';
 import { Response } from 'express';
 import { ArgumentsHost } from '@nestjs/common';
 import { RequestWithId } from '../interfaces/request-with-id.interface';
-import { createArgumentsHostMock } from '../testing/test-doubles.harness-spec';
+import {
+  createArgumentsHostMock,
+  createRequestMock,
+} from '../testing/test-doubles.harness-spec';
 
 describe('GlobalExceptionFilter', () => {
   let filter: GlobalExceptionFilter;
@@ -33,7 +36,7 @@ describe('GlobalExceptionFilter', () => {
       json: jest.fn().mockReturnThis(),
     };
 
-    mockRequest = {} as RequestWithId;
+    mockRequest = createRequestMock({});
   });
 
   afterEach(() => {
@@ -152,7 +155,7 @@ describe('GlobalExceptionFilter', () => {
 
         expect(warn.mock.calls).toEqual([
           [
-            'AppException: VALIDATION_ERROR - Validation failed (fields: name, email; omitted: 1) [req-1]',
+            'AppException (400): VALIDATION_ERROR (fields: name, email; omitted: 1) [req-1]',
           ],
         ]);
         const line = String(warn.mock.calls[0]?.[0]);
@@ -160,7 +163,7 @@ describe('GlobalExceptionFilter', () => {
         expect(line).not.toContain('must be');
       });
 
-      it('leaves the line of any other AppException as it was', () => {
+      it('logs other AppExceptions by status and code', () => {
         mockRequest.requestId = 'req-2';
 
         filter.catch(
@@ -174,9 +177,7 @@ describe('GlobalExceptionFilter', () => {
         );
 
         expect(warn.mock.calls).toEqual([
-          [
-            'AppException: EMAIL_ALREADY_EXISTS - Email already registered [req-2]',
-          ],
+          ['AppException (409): EMAIL_ALREADY_EXISTS [req-2]'],
         ]);
       });
     });

@@ -1,8 +1,9 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { OAuthFailureReason } from '../oauth.constants';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
-import { BaseOAuthStrategy } from '../base-oauth.strategy';
+import { BaseOAuthStrategy, joseCodeOf } from '../base-oauth.strategy';
 import {
   AuthorizationUrlParams,
   ExchangeCodeParams,
@@ -99,9 +100,11 @@ export class AppleOAuthStrategy extends BaseOAuthStrategy {
     });
 
     if (response.error || !response.id_token) {
-      throw this.codeExchangeFailed(
-        response.error_description ?? response.error ?? 'no id_token',
-      );
+      throw response.error
+        ? this.codeExchangeFailed(OAuthFailureReason.PROVIDER_ERROR, {
+            providerCode: response.error,
+          })
+        : this.codeExchangeFailed(OAuthFailureReason.NO_ID_TOKEN);
     }
 
     await this.verifyClaims(response.id_token, params.nonce);
@@ -121,12 +124,12 @@ export class AppleOAuthStrategy extends BaseOAuthStrategy {
     callbackParams?: OAuthCallbackParams,
   ): Promise<OAuthProfile> {
     if (!tokens.idToken) {
-      throw this.profileFetchFailed('no id_token to read claims from');
+      throw this.profileFetchFailed(OAuthFailureReason.NO_ID_TOKEN);
     }
 
     const claims = await this.verifyClaims(tokens.idToken);
     if (!claims.email) {
-      throw this.profileFetchFailed('id_token carried no email');
+      throw this.profileFetchFailed(OAuthFailureReason.NO_EMAIL);
     }
 
     return {
@@ -151,9 +154,9 @@ export class AppleOAuthStrategy extends BaseOAuthStrategy {
         nonce,
       });
     } catch (error) {
-      throw this.profileFetchFailed(
-        `id_token rejected: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      throw this.profileFetchFailed(OAuthFailureReason.INVALID_TOKEN, {
+        joseCode: joseCodeOf(error),
+      });
     }
   }
 
@@ -168,9 +171,9 @@ export class AppleOAuthStrategy extends BaseOAuthStrategy {
         clientId: this.clientId(),
       });
     } catch (error) {
-      throw this.codeExchangeFailed(
-        `client secret could not be signed: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      throw this.codeExchangeFailed(OAuthFailureReason.CLIENT_SECRET_SIGNING, {
+        joseCode: joseCodeOf(error),
+      });
     }
   }
 

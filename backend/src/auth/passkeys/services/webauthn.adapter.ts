@@ -10,6 +10,7 @@ import {
   type RegistrationResponseJSON,
 } from '@simplewebauthn/server';
 import { PASSKEY_CEREMONY_TIMEOUT_MS } from '../constants/passkeys.constants';
+import { describeDriverError } from '../../../common/utils/mongo-error.util';
 
 /**
  * The only file that talks to @simplewebauthn/server. Everything else works
@@ -228,8 +229,9 @@ export class WebAuthnAdapter {
     try {
       return await verify();
     } catch (error) {
-      const reason = error instanceof Error ? error.message : 'unknown error';
-      this.logger.warn(`WebAuthn check refused: ${reason}`);
+      // The library's message quotes the client's origin, challenge and RP
+      // id; the log names the failure instead.
+      this.logger.warn(`WebAuthn check refused: ${describeDriverError(error)}`);
       return null;
     }
   }
