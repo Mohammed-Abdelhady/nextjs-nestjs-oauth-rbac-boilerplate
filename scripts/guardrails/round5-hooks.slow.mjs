@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, readFileSync, symlinkSync } from 'node:fs';
+import { chmodSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { installChecker, repository } from './test-repository.mjs';
+import { installHookTools } from './workspace-tool-fixture.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const TOKEN = 'inner' + 'HTML';
@@ -114,7 +115,7 @@ test('an unknown remote tip reaches Git fetch guidance but a dirty force push is
 
 test('a real commit-msg hook strips attribution and commits the valid author subject', (t) => {
   const repo = fixture(t, 'commit-msg');
-  symlinkSync(join(ROOT, 'node_modules'), join(repo.root, 'node_modules'), 'dir');
+  installHookTools(repo.root);
   repo.write('.gitignore', 'node_modules\n');
   repo.write('commitlint.config.cjs', readFileSync(join(ROOT, 'commitlint.config.cjs'), 'utf8'));
   const footer = ['Co-authored', 'by'].join('-') + ': ' + ['Cur', 'sor'].join('');

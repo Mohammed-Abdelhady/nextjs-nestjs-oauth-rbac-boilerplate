@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, readFileSync, symlinkSync } from 'node:fs';
+import { chmodSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { gitEnvironment } from './git-environment.mjs';
 import { installChecker, repository } from './test-repository.mjs';
+import { installHookTools } from './workspace-tool-fixture.mjs';
 
 const REPO_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const TOKEN = 'inner' + 'HTML';
@@ -147,7 +148,7 @@ test('real pre-push trusts destination tracking history after its server ref is 
 
 test('real pre-commit checks the final index after lint-staged and Prettier rewrite', (t) => {
   const repo = fixture(t, 'pre-commit');
-  symlinkSync(join(REPO_ROOT, 'node_modules'), join(repo.root, 'node_modules'), 'dir');
+  installHookTools(repo.root);
   repo.write('.gitignore', 'node_modules\n');
   repo.write('.lintstagedrc.json', JSON.stringify({ '*.ts': ['prettier --write'] }));
   repo.commit();

@@ -17,11 +17,13 @@ export function declaredWorkspaces(root) {
 }
 
 function filesystemTypeFiles(root) {
-  const ignore = createRequire(createRequire(import.meta.url).resolve('eslint'))('ignore');
   function rulesAt(directory) {
     const file = resolve(directory, '.gitignore');
     return existsSync(file)
-      ? [{ directory, matcher: ignore().add(readFileSync(file, 'utf8')) }]
+      ? [{
+          directory,
+          matcher: createRequire(import.meta.url)('ignore')().add(readFileSync(file, 'utf8')),
+        }]
       : [];
   }
   const ancestors = [];
