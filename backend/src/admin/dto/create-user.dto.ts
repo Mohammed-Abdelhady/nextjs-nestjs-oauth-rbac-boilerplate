@@ -1,22 +1,16 @@
-import {
-  IsEmail,
-  IsString,
-  MinLength,
-  MaxLength,
-  Matches,
-} from 'class-validator';
+import { IsEmail, IsString, MaxLength, Matches } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   ROLE_SLUG_MAX_LENGTH,
   ROLE_SLUG_MESSAGE,
   ROLE_SLUG_REGEX,
 } from '../../common/constants/roles';
+import { NAME_MAX_LENGTH, NAME_MIN_LENGTH } from '../../common/constants/name';
 import {
-  NAME_MAX_LENGTH,
-  NAME_MESSAGE,
-  NAME_MIN_LENGTH,
-  NAME_REGEX,
-} from '../../common/constants/name';
+  NamePolicy,
+  transformTrimmedName,
+} from '../../common/decorators/name-policy.decorator';
 import {
   PASSWORD_MAX_BYTES,
   PASSWORD_MIN_LENGTH,
@@ -43,14 +37,8 @@ export class CreateUserDto {
     minLength: NAME_MIN_LENGTH,
     maxLength: NAME_MAX_LENGTH,
   })
-  @IsString()
-  @MinLength(NAME_MIN_LENGTH, {
-    message: `Name must be at least ${NAME_MIN_LENGTH} characters long`,
-  })
-  @MaxLength(NAME_MAX_LENGTH, {
-    message: `Name must not exceed ${NAME_MAX_LENGTH} characters`,
-  })
-  @Matches(NAME_REGEX, { message: NAME_MESSAGE })
+  @Transform(transformTrimmedName)
+  @NamePolicy()
   name!: string;
 
   @ApiProperty({

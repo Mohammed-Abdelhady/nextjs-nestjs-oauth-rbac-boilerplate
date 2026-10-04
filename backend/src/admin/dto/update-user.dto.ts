@@ -1,18 +1,11 @@
-import {
-  IsEmail,
-  IsString,
-  MinLength,
-  MaxLength,
-  IsOptional,
-  Matches,
-} from 'class-validator';
+import { IsEmail, IsOptional, ValidateIf } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { NAME_MAX_LENGTH, NAME_MIN_LENGTH } from '../../common/constants/name';
 import {
-  NAME_MAX_LENGTH,
-  NAME_MESSAGE,
-  NAME_MIN_LENGTH,
-  NAME_REGEX,
-} from '../../common/constants/name';
+  NamePolicy,
+  transformTrimmedName,
+} from '../../common/decorators/name-policy.decorator';
 
 /**
  * DTO for updating user basic information.
@@ -24,15 +17,9 @@ export class UpdateUserDto {
     minLength: NAME_MIN_LENGTH,
     maxLength: NAME_MAX_LENGTH,
   })
-  @IsOptional()
-  @IsString()
-  @MinLength(NAME_MIN_LENGTH, {
-    message: `Name must be at least ${NAME_MIN_LENGTH} characters long`,
-  })
-  @MaxLength(NAME_MAX_LENGTH, {
-    message: `Name must not exceed ${NAME_MAX_LENGTH} characters`,
-  })
-  @Matches(NAME_REGEX, { message: NAME_MESSAGE })
+  @ValidateIf((_, value) => value !== undefined)
+  @Transform(transformTrimmedName)
+  @NamePolicy()
   name?: string;
 
   @ApiPropertyOptional({

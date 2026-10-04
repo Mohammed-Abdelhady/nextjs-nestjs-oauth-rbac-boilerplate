@@ -5,16 +5,14 @@ import {
   Length,
   Matches,
   MaxLength,
-  MinLength,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { NAME_MAX_LENGTH, NAME_MIN_LENGTH } from '../../common/constants/name';
 import {
-  NAME_MAX_LENGTH,
-  NAME_MESSAGE,
-  NAME_MIN_LENGTH,
-  NAME_REGEX,
-} from '../../common/constants/name';
+  NamePolicy,
+  transformTrimmedName,
+} from '../../common/decorators/name-policy.decorator';
 import {
   PASSWORD_MAX_BYTES,
   PASSWORD_MIN_LENGTH,
@@ -68,15 +66,7 @@ export class ActivateDto {
     minLength: NAME_MIN_LENGTH,
     maxLength: NAME_MAX_LENGTH,
   })
-  @IsString({ message: 'Name must be a string' })
-  @IsNotEmpty({ message: 'Name is required' })
-  @MinLength(NAME_MIN_LENGTH, {
-    message: `Name must be at least ${NAME_MIN_LENGTH} characters`,
-  })
-  @MaxLength(NAME_MAX_LENGTH, {
-    message: `Name must not exceed ${NAME_MAX_LENGTH} characters`,
-  })
-  @Matches(NAME_REGEX, { message: NAME_MESSAGE })
-  @Transform(({ value }: { value: string }) => value?.trim())
+  @Transform(transformTrimmedName)
+  @NamePolicy()
   name!: string;
 }
