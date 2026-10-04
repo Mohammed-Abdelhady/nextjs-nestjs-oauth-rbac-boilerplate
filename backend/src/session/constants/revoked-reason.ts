@@ -5,6 +5,7 @@ export const REVOKED_REASON = {
   ALL_OTHER: 'all_other',
   GRANT_BLOCKED: 'grant_blocked',
   APPLICATION_DISABLED: 'application_disabled',
+  ADMIN_FORCED: 'admin_forced',
 } as const;
 
 export type RevokedReason =

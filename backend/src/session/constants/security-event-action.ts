@@ -1,4 +1,5 @@
 export const SECURITY_EVENT_ACTION = {
+  ROLE_DELETED: 'role_deleted',
   SESSION_ISSUED: 'session_issued',
   SESSION_REVOKED: 'session_revoked',
   SESSIONS_REVOKED_ALL: 'sessions_revoked_all',
@@ -14,3 +15,5 @@ export const SECURITY_EVENT_OUTCOME = {
   SUCCEEDED: 'succeeded',
   FAILED: 'failed',
 } as const;
+
+export const ROLE_DELETION_EVENT_PREFIX = 'role-deletion:';

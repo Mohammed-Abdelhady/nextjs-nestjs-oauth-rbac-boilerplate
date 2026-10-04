@@ -1,6 +1,24 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 import { SECURITY_EVENT_PURGE_MS } from '../constants/session-policy';
+import { RoleDeletionSweep } from '../types/role-deletion-sweep';
+import { RoleAssignmentEvent } from '../types/role-assignment-event';
+
+const RoleAssignmentEventSchema = new MongooseSchema<RoleAssignmentEvent>(
+  { assignedRoleId: String, previousRoleId: String, sessionVersion: Number },
+  { _id: false },
+);
+
+const RoleDeletionSweepSchema = new MongooseSchema<RoleDeletionSweep>(
+  {
+    roleId: String,
+    previousSlug: String,
+    actorId: String,
+    pending: Boolean,
+    sweepId: String,
+  },
+  { _id: false },
+);
 
 @Schema({ timestamps: true })
 export class SecurityEvent {
@@ -27,6 +45,12 @@ export class SecurityEvent {
 
   @Prop()
   requestId?: string;
+
+  @Prop({ type: RoleAssignmentEventSchema })
+  roleAssignment?: RoleAssignmentEvent;
+
+  @Prop({ type: RoleDeletionSweepSchema })
+  roleDeletionSweep?: RoleDeletionSweep;
 
   @Prop({ required: true })
   outcome!: string;

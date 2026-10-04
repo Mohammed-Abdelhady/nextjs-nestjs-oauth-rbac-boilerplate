@@ -12,6 +12,17 @@ import { asAuthorityUnavailable } from '../utils/authority-unavailable';
 import { withMajorityTransaction } from '../utils/mongo-transaction';
 import { hashToken } from '../utils/token-hash';
 import { SecurityEventService } from './security-event.service';
+import { RoleAssignmentEvent } from '../types/role-assignment-event';
+
+/**
+ * Who forced a session revocation and why, carried onto the security event so
+ * an admin-forced sign-out is not mistaken for the user's own.
+ */
+export interface RevocationContext {
+  actorId?: string;
+  reasonCode?: string;
+  roleAssignment?: RoleAssignmentEvent;
+}
 
 @Injectable()
 export class SessionRevocationService {
@@ -58,34 +69,48 @@ export class SessionRevocationService {
     ).then((count) => count > 0);
   }
 
-  async revokeAllForUser(userId: Types.ObjectId): Promise<number> {
-    return this.run(async (session) => {
-      const user = await this.userModel
-        .findById(userId)
-        .session(session)
-        .exec();
-      if (!user) {
-        return 0;
-      }
-      const count = await this.countActive(
-        session,
-        userId,
-        user.sessionVersion ?? 0,
-      );
-      await this.userModel
-        .updateOne({ _id: userId }, { $inc: { sessionVersion: 1 } })
-        .session(session)
-        .exec();
-      await this.events.record(
-        {
-          targetUserId: userId.toString(),
-          action: SECURITY_EVENT_ACTION.SESSIONS_REVOKED_ALL,
-          reasonCode: REVOKED_REASON.ALL_USER,
-        },
-        session,
-      );
-      return count;
-    });
+  async revokeAllForUser(
+    userId: Types.ObjectId,
+    db?: ClientSession,
+    context?: RevocationContext,
+  ): Promise<number> {
+    if (db) {
+      return this.revokeAllForUserIn(db, userId, context);
+    }
+    return this.run((session) =>
+      this.revokeAllForUserIn(session, userId, context),
+    );
+  }
+
+  private async revokeAllForUserIn(
+    session: ClientSession,
+    userId: Types.ObjectId,
+    context?: RevocationContext,
+  ): Promise<number> {
+    const user = await this.userModel.findById(userId).session(session).exec();
+    if (!user) {
+      return 0;
+    }
+    const count = await this.countActive(
+      session,
+      userId,
+      user.sessionVersion ?? 0,
+    );
+    await this.userModel
+      .updateOne({ _id: userId }, { $inc: { sessionVersion: 1 } })
+      .session(session)
+      .exec();
+    await this.events.record(
+      {
+        actorId: context?.actorId,
+        targetUserId: userId.toString(),
+        action: SECURITY_EVENT_ACTION.SESSIONS_REVOKED_ALL,
+        reasonCode: context?.reasonCode ?? REVOKED_REASON.ALL_USER,
+        roleAssignment: context?.roleAssignment,
+      },
+      session,
+    );
+    return count;
   }
 
   async revokeAllOthersExceptSession(
