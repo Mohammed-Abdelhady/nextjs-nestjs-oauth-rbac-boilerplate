@@ -7,7 +7,10 @@ import { ArgumentsHost } from '@nestjs/common';
 import { RequestWithId } from '../interfaces/request-with-id.interface';
 import { Error as MongooseError } from 'mongoose';
 import { MongoServerError } from 'mongodb';
-import { createArgumentsHostMock } from '../testing/test-doubles.harness-spec';
+import {
+  createArgumentsHostMock,
+  createRequestMock,
+} from '../testing/test-doubles.harness-spec';
 
 describe('GlobalExceptionFilter Mapping', () => {
   let filter: GlobalExceptionFilter;
@@ -26,7 +29,7 @@ describe('GlobalExceptionFilter Mapping', () => {
       json: jest.fn().mockReturnThis(),
     };
 
-    mockRequest = {} as RequestWithId;
+    mockRequest = createRequestMock({});
   });
 
   afterEach(() => {
