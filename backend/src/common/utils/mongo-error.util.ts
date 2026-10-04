@@ -1,5 +1,55 @@
 import { Error as MongooseError } from 'mongoose';
-import { MongoServerError } from 'mongodb';
+import {
+  MongoNetworkError,
+  MongoServerSelectionError,
+  MongoServerError,
+  MongoNotConnectedError,
+  MongoTopologyClosedError,
+  MongoWriteConcernError,
+} from 'mongodb';
+import {
+  MONGO_DUPLICATE_KEY_CODE,
+  MONGO_UNAVAILABLE_CODES,
+  MONGO_TRANSIENT_TRANSACTION_LABEL,
+} from '../constants/mongo-errors';
+
+/**
+ * True for connectivity, primary loss, interrupted work and exhausted write
+ * conflicts; database rejections and application errors keep their own status.
+ */
+export function isDatabaseUnavailableError(exception: unknown): boolean {
+  if (
+    typeof exception === 'object' &&
+    exception !== null &&
+    'errorLabels' in exception &&
+    Array.isArray(exception.errorLabels) &&
+    exception.errorLabels.includes(MONGO_TRANSIENT_TRANSACTION_LABEL)
+  ) {
+    return true;
+  }
+  if (
+    exception instanceof MongoNetworkError ||
+    exception instanceof MongoServerSelectionError ||
+    exception instanceof MongoNotConnectedError ||
+    exception instanceof MongoTopologyClosedError ||
+    exception instanceof MongoWriteConcernError
+  ) {
+    return true;
+  }
+  if (exception instanceof MongoServerError) {
+    return (
+      typeof exception.code === 'number' &&
+      MONGO_UNAVAILABLE_CODES.has(exception.code)
+    );
+  }
+  if (exception instanceof MongooseError.MongooseServerSelectionError) {
+    return true;
+  }
+  return (
+    exception instanceof MongooseError &&
+    /buffering timed out/i.test(exception.message)
+  );
+}
 
 /**
  * Checks whether an exception is a Mongoose CastError.
@@ -30,14 +80,17 @@ export function isCastError(
 export function isMongoDuplicateKeyError(
   exception: unknown,
 ): exception is MongoServerError {
-  if (exception instanceof MongoServerError && exception.code === 11000) {
+  if (
+    exception instanceof MongoServerError &&
+    exception.code === MONGO_DUPLICATE_KEY_CODE
+  ) {
     return true;
   }
   return (
     typeof exception === 'object' &&
     exception !== null &&
     'code' in exception &&
-    exception.code === 11000
+    exception.code === MONGO_DUPLICATE_KEY_CODE
   );
 }
 
