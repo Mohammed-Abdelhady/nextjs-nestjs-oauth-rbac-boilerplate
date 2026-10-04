@@ -2,7 +2,7 @@ import { join } from 'node:path';
 import { expect } from 'vitest';
 import {
   installProject,
-  REPO_ROOT,
+  JEST_BIN,
   runTool,
   typecheck,
   typecheckFrontendWithPrunedShared,
@@ -28,12 +28,7 @@ export async function expectTypechecks(project: string): Promise<void> {
 export async function expectDriftMatches(project: string): Promise<void> {
   const drift = await runTool(
     process.execPath,
-    [
-      join(REPO_ROOT, 'node_modules/jest/bin/jest.js'),
-      '--runInBand',
-      '--runTestsByPath',
-      'src/common/constants/shared-core-drift.spec.ts',
-    ],
+    [JEST_BIN, '--runInBand', '--runTestsByPath', 'src/common/constants/shared-core-drift.spec.ts'],
     { cwd: join(project, 'backend') },
   );
   expect(drift.ok, drift.output).toBe(true);
@@ -77,12 +72,7 @@ export async function expectConfigTests(project: string): Promise<void> {
 export async function expectBackendUnitTests(project: string): Promise<void> {
   const tests = await runTool(
     process.execPath,
-    [
-      join(REPO_ROOT, 'node_modules/jest/bin/jest.js'),
-      '--runInBand',
-      '--testPathIgnorePatterns',
-      '(integration|concurrency)\\.spec\\.ts$',
-    ],
+    [JEST_BIN, '--runInBand', '--testPathIgnorePatterns', '(integration|concurrency)\\.spec\\.ts$'],
     { cwd: join(project, 'backend') },
   );
   expect(tests.ok, tests.output).toBe(true);

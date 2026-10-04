@@ -5,13 +5,20 @@ import { createHash } from 'node:crypto';
 import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import TEMPLATE_TEST_POLICY from '../src/constants/template-tests.json' with { type: 'json' };
+import TEMPLATE_SYNC_INPUTS from './template-sync-inputs.json' with { type: 'json' };
+const { npmTemplateContent } = await import(
+  new URL(TEMPLATE_SYNC_INPUTS.commands, new URL('../', import.meta.url)).href
+);
+
+const PACKAGE_DIR = dirname(dirname(fileURLToPath(import.meta.url)));
+const TEMPLATE_TEST_POLICY = JSON.parse(
+  await readFile(join(PACKAGE_DIR, TEMPLATE_SYNC_INPUTS.policy), 'utf8'),
+);
 
 const REPOSITORY_TEST_PATHS = TEMPLATE_TEST_POLICY.EXCLUDED_PATH_PATTERNS.map(
   (pattern) => new RegExp(pattern),
 );
 
-const PACKAGE_DIR = dirname(dirname(fileURLToPath(import.meta.url)));
 const REPO_ROOT = dirname(dirname(PACKAGE_DIR));
 const TEMPLATE_DIR = join(PACKAGE_DIR, 'template');
 const MANIFEST_NAME = 'template.manifest.json';
@@ -55,6 +62,8 @@ const EXCLUDED_PATHS = new Set([
   'CLAUDE.md',
   'AGENTS.md',
   MANIFEST_NAME,
+  'pnpm-workspace.yaml',
+  'pnpm-lock.yaml',
   join('.husky', '_'),
 ]);
 
@@ -87,6 +96,7 @@ export function isExcluded(relativePath, name, isDirectory) {
 }
 
 export function templateContent(relativePath, bytes) {
+  bytes = npmTemplateContent(relativePath, bytes);
   if (relativePath === TEMPLATE_TEST_POLICY.POLICY_PATH) {
     const content = bytes.toString('utf8');
     const updated = content.replace(

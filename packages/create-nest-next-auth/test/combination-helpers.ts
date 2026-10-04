@@ -4,6 +4,7 @@ import { promisify } from 'node:util';
 import { existsSync, mkdirSync, readdirSync, readFileSync, symlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import { format, getFileInfo, resolveConfig } from 'prettier';
 import { listFiles } from '../src/utils/fs.js';
 import { matchesAnyGlob } from '../src/utils/glob.js';
@@ -26,7 +27,10 @@ const LINKED_MODULES = [
   'shared/sdk/node_modules',
 ];
 
-const TYPESCRIPT_BIN = join(REPO_ROOT, 'node_modules', 'typescript', 'bin', 'tsc');
+const TYPESCRIPT_BIN = createRequire(import.meta.url).resolve('typescript/bin/tsc');
+export const JEST_BIN = createRequire(join(REPO_ROOT, 'backend/package.json')).resolve(
+  'jest/bin/jest',
+);
 
 export interface CommandResult {
   ok: boolean;
@@ -70,7 +74,7 @@ export async function runTool(
 
 /** Yield while child tools run so Vitest can process worker messages. */
 export function buildCli(): Promise<CommandResult> {
-  return runTool('npm', ['run', 'build'], { cwd: PACKAGE_DIR });
+  return runTool('pnpm', ['run', 'build'], { cwd: PACKAGE_DIR });
 }
 
 export function scaffold(
@@ -98,8 +102,10 @@ export function installProject(project: string): Promise<CommandResult> {
  * the project's own shared/<name>, pruned like the rest of the project.
  */
 function linkRootModules(project: string): void {
-  const source = join(REPO_ROOT, ROOT_MODULES);
-  const target = join(project, ROOT_MODULES);
+  linkModuleDirectory(join(REPO_ROOT, ROOT_MODULES), join(project, ROOT_MODULES), project);
+}
+
+function linkModuleDirectory(source: string, target: string, project: string): void {
   mkdirSync(join(target, SHARED_SCOPE), { recursive: true });
 
   for (const entry of readdirSync(source)) {
@@ -120,12 +126,12 @@ export function linkDependencies(project: string): void {
   linkRootModules(project);
   for (const relative of LINKED_MODULES) {
     const source = join(REPO_ROOT, relative);
-    // npm hoists to the root, so a workspace may have no node_modules of its own.
+    // A workspace without dependencies may have no local module directory.
     if (!existsSync(source)) continue;
 
     const link = join(project, relative);
     mkdirSync(dirname(link), { recursive: true });
-    symlinkSync(source, link, 'dir');
+    linkModuleDirectory(source, link, project);
   }
 }
 

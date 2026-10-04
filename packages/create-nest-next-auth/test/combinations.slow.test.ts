@@ -9,6 +9,7 @@ import {
   buildCli,
   compareWithRepository,
   linkDependencies,
+  JEST_BIN,
   REPO_ROOT,
   runTool,
   scaffold,
@@ -107,7 +108,7 @@ describe('generated projects', () => {
       const api = await runTool(
         process.execPath,
         [
-          join(REPO_ROOT, 'node_modules/jest/bin/jest.js'),
+          JEST_BIN,
           '--config',
           'test/jest-e2e.json',
           '--runInBand',

@@ -1,0 +1,6 @@
+{
+  "script": "scripts/sync-template.mjs",
+  "commands": "scripts/npm-template.mjs",
+  "inputs": "scripts/template-sync-inputs.json",
+  "policy": "src/constants/template-tests.json"
+}

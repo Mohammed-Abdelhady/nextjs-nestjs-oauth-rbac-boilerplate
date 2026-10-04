@@ -1,13 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process';
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -20,10 +12,10 @@ import {
   BUILD_TIMEOUT,
   buildAndPack,
   type Packed,
-  PACKAGE_DIR,
   scaffold,
   sourceFilesWithMarkers,
 } from './packed-cli.js';
+import { copySyncTemplateInputs } from './sync-template-fixture.js';
 import { checkGeneratedHookHistory } from './generated-hook-history.js';
 import { checkGeneratedGuardrails } from './generated-guardrails.js';
 import {
@@ -82,14 +74,7 @@ describe('the packed CLI', () => {
       'frontend/.env.example',
     ];
     try {
-      mkdirSync(dirname(script), { recursive: true });
-      copyFileSync(join(PACKAGE_DIR, 'scripts/sync-template.mjs'), script);
-      const constants = join(fixture, 'packages/create-nest-next-auth/src/constants');
-      mkdirSync(constants, { recursive: true });
-      copyFileSync(
-        join(PACKAGE_DIR, 'src/constants/template-tests.json'),
-        join(constants, 'template-tests.json'),
-      );
+      copySyncTemplateInputs(fixture);
       for (const path of [...artifacts, ...kept]) {
         mkdirSync(dirname(join(fixture, path)), { recursive: true });
         writeFileSync(join(fixture, path), 'synthetic sentinel\n');
