@@ -29,6 +29,18 @@ export interface PasswordMessages {
 /** Fallback used when a caller has not localized the byte-limit message yet. */
 const DEFAULT_PASSWORD_TOO_LONG_MESSAGE = 'Password is too long';
 
+/** The name charset, shared with the server's NAME_REGEX. */
+const NAME_ZONE_CHARS = /^[\p{L}\p{M}0-9 ’'.-]+$/u;
+
+/** A name without a single letter is not a person name. */
+const NAME_HAS_LETTER = /\p{L}/u;
+
+const NAME_MIN_LENGTH = 2;
+const NAME_MAX_LENGTH = 100;
+
+/** The name schema both forms consume; output is always the NFC string. */
+type NameSchema = z.ZodType<string>;
+
 /** The refined password schema, so the overloads match what is returned. */
 type RefinedPasswordSchema = z.ZodEffects<z.ZodString, string, string>;
 
@@ -37,6 +49,8 @@ export interface NameMessages {
   min: string;
   max: string;
   pattern: string;
+  /** For input with allowed characters but no letter; falls back to pattern. */
+  noLetter?: string;
 }
 
 /**
@@ -107,37 +121,41 @@ export function zodPassword(options: {
   return schema;
 }
 
-/**
- * Person name validator (2-50 chars, letters, spaces, hyphens, apostrophes)
- * Returns required schema by default, optional when required: false
- */
+/** Trims and normalises to NFC before checking code points, matching NamePolicy. */
 export function zodName(options: {
   required?: false;
   min?: number;
   max?: number;
   messages: NameMessages;
-}): z.ZodOptional<z.ZodString>;
+}): z.ZodOptional<NameSchema>;
 export function zodName(options: {
   required: true;
   min?: number;
   max?: number;
   messages: NameMessages;
-}): z.ZodString;
+}): NameSchema;
 export function zodName(options: {
   required?: boolean;
   min?: number;
   max?: number;
   messages: NameMessages;
-}): z.ZodString | z.ZodOptional<z.ZodString> {
-  const schema = z
-    .string({ required_error: options.messages.required })
-    .trim()
-    .min(1, options.messages.required)
-    .min(options.min ?? 2, options.messages.min)
-    .max(options.max ?? 50, options.messages.max)
-    .regex(/^[\p{L}\s'-]+$/u, options.messages.pattern);
+}): NameSchema | z.ZodOptional<NameSchema> {
+  const min = options.min ?? NAME_MIN_LENGTH;
+  const max = options.max ?? NAME_MAX_LENGTH;
 
-  return makeOptional(schema, options.required);
+  const rule = z
+    .string({ required_error: options.messages.required })
+    .transform((value) => value.trim().normalize('NFC'))
+    .refine((value) => Array.from(value).length >= 1, options.messages.required)
+    .refine((value) => Array.from(value).length >= min, options.messages.min)
+    .refine((value) => Array.from(value).length <= max, options.messages.max)
+    .refine((value) => NAME_ZONE_CHARS.test(value), options.messages.pattern)
+    .refine(
+      (value) => NAME_HAS_LETTER.test(value),
+      options.messages.noLetter ?? options.messages.pattern,
+    );
+
+  return makeOptional(rule, options.required);
 }
 
 /**
