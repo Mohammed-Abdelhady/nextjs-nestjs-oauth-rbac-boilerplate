@@ -49,10 +49,10 @@
     "helmet": "^8.3.0",
     "jose": "^6.2.12",
     "mongoose": "^8.24.4",
-    "nodemailer": "^10.0.3",
+    "nodemailer": "^10.0.13",
     "otplib": "^13.5.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.7",
@@ -82,7 +82,7 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.70.1"
+    "typescript-eslint": "^8.71.0"
   },
   "overrides": {
     "diff": ">=8.0.3"
