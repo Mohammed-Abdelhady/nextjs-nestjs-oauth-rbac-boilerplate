@@ -11,6 +11,6 @@ module.exports = {
   'shared/core/**/*.ts': ['pnpm --filter @app/core exec eslint --fix --max-warnings 0'],
   'shared/sdk/**/*.ts': ['pnpm --filter @app/sdk exec eslint --fix --max-warnings 0'],
   'mobile/**/*.{ts,tsx,js,jsx,json}': ['prettier --write'],
-  'mobile/auth/**/*.ts': ['eslint --fix --max-warnings 0 --config mobile/auth/eslint.config.mjs'],
+  'mobile/auth/**/*.ts': ['pnpm --filter @app/native-auth exec eslint --fix --max-warnings 0'],
   '*.{md,yml,yaml}': ['prettier --write'],
 };

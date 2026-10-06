@@ -1,5 +1,6 @@
 version: 2
 updates:
+  # Dependabot uses the npm ecosystem for pnpm lockfiles.
   - package-ecosystem: npm
     directory: /
     schedule:
