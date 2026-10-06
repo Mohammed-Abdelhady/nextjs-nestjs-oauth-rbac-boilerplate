@@ -65,6 +65,8 @@ export async function bootSessionAuthority(
             auth: {
               epoch: 1,
               nativeEnabled: options?.nativeEnabled ?? false,
+              nativeDpopRequired:
+                process.env.AUTH_NATIVE_DPOP_REQUIRED === 'true',
               nativeDpopNonceSecret: process.env.AUTH_NATIVE_DPOP_NONCE_SECRET,
               passwordEnabled: true,
             },
