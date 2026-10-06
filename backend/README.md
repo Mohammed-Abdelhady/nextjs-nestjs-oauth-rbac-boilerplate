@@ -105,6 +105,8 @@ one or more `redirectUris`. You can add `allowedScopes`; when omitted, the
 application gets the same `api` scope as the first-party web application.
 When enabled, also set `AUTH_NATIVE_DPOP_NONCE_SECRET` to a random value of at
 least 32 characters. Generate one with `openssl rand -hex 32`.
+Keep `AUTH_NATIVE_DPOP_REQUIRED=false` while clients still use bearer refresh
+tokens. Set it to `true` after every supported client can bind tokens with DPoP.
 
 ```bash
 AUTH_NATIVE_APPLICATIONS='[{"clientId":"com.example.mobile","displayName":"Example Mobile","redirectUris":["com.example.mobile://oauth/callback"]}]'
@@ -134,6 +136,27 @@ server process reconciles on boot and the last one to start decides. During a
 rolling deploy, start all instances with the same list; a rollback must also
 restore the previous list, otherwise the rolled-back server disables the new
 clients and signs their users out.
+
+### Device-bound native sessions
+
+DPoP binds a token family to the app's public key. Each refresh and revocation
+of a bound family needs a fresh proof from the same key. Refresh and revocation
+proofs include a hash of the presented token. A copied refresh token alone
+cannot rotate the family. Code running inside the app can still ask the key to
+sign, so device binding does not protect a compromised app.
+
+If a refresh response is lost, the same spent refresh token can issue one
+replacement within five minutes while its successor pair remains unused. Send a
+fresh proof for the retry. The server revokes the first successor pair before
+issuing the replacement at the same generation. A spent token cannot issue a
+second replacement. If that replacement response is lost, another retry during
+the original window returns `invalid_dpop_proof` with
+`NATIVE_DPOP_RETRY_IN_PROGRESS`. After the window, or after either successor
+credential is used, the server ends the family and the user must sign in again.
+
+`AUTH_NATIVE_DPOP_REQUIRED` is false by default. When true, code exchanges need
+a DPoP proof and unbound families cannot refresh. Access tokens remain bearer
+credentials for up to five minutes; API requests do not need DPoP proofs.
 
 ### Native OAuth error shapes
 

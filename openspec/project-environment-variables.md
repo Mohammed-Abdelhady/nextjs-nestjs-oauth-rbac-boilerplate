@@ -27,6 +27,7 @@ OAUTH_STATE_SECRET=your-super-secret-oauth-state-key-min-32-chars
 
 # Native DPoP nonce signing (required when AUTH_NATIVE_ENABLED=true; generate with: openssl rand -hex 32)
 AUTH_NATIVE_ENABLED=false
+AUTH_NATIVE_DPOP_REQUIRED=false
 AUTH_NATIVE_DPOP_NONCE_SECRET=your-secure-native-dpop-nonce-secret
 
 # Email Service (SendGrid)
