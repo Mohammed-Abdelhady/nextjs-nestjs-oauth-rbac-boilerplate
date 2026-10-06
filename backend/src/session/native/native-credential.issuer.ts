@@ -56,6 +56,7 @@ export class NativeCredentialIssuer {
     generation: number,
     existing?: SessionDocument,
     familyId = randomSecret(),
+    proofKeyThumbprint?: string,
   ): Promise<TokenSuccess> {
     const absoluteExpiresAt = existing
       ? existing.expiresAt
@@ -97,6 +98,7 @@ export class NativeCredentialIssuer {
             idleExpiresAt,
             lastActivityAt: now,
             credentialPurpose: CREDENTIAL_PURPOSE.NATIVE_ACCESS,
+            ...(proofKeyThumbprint ? { proofKeyThumbprint } : {}),
           },
         ],
         { session: db },
@@ -130,6 +132,7 @@ export class NativeCredentialIssuer {
           issuedAt: now,
           expiresAt: accessExpiresAt,
           spent: false,
+          ...(proofKeyThumbprint ? { proofKeyThumbprint } : {}),
         },
         {
           tokenHash: hashToken(refreshToken),
@@ -141,6 +144,7 @@ export class NativeCredentialIssuer {
           issuedAt: now,
           expiresAt: absoluteExpiresAt,
           spent: false,
+          ...(proofKeyThumbprint ? { proofKeyThumbprint } : {}),
         },
       ],
       { session: db, ordered: true },
@@ -151,6 +155,7 @@ export class NativeCredentialIssuer {
       refreshToken,
       expiresIn: Math.floor((accessExpiresAt.getTime() - now.getTime()) / 1000),
       scope: pending.requestedScopes.join(' '),
+      tokenType: proofKeyThumbprint ? 'DPoP' : 'Bearer',
     };
   }
 

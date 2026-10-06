@@ -1,12 +1,18 @@
-import { applyDecorators } from '@nestjs/common';
+import { HttpStatus, applyDecorators } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiForbiddenResponse,
+  ApiHeader,
   ApiNotFoundResponse,
   ApiOperation,
   ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger';
+import {
+  NATIVE_DPOP_NONCE_HEADER,
+  NATIVE_DPOP_PROOF_HEADER,
+} from '../constants/session-policy';
+import { OAUTH_ERROR } from './native-oauth.types';
 
 const AUTHORIZE_QUERY_DOCUMENTATION: Array<{
   name: string;
@@ -70,6 +76,30 @@ export function ApiNativeAuthorizeStart(): MethodDecorator {
     ApiBadRequestResponse({
       description:
         'Invalid authorize request. The body is OAuth JSON, for example {"error":"invalid_request"}.',
+    }),
+  );
+}
+
+export function ApiNativeTokenExchange(): MethodDecorator {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Exchange a native authorization code or refresh token',
+      description: `For authorization-code exchanges, a valid DPoP proof binds the token pair to its key. Invalid or reused proofs return ${OAUTH_ERROR.INVALID_DPOP_PROOF}. Missing or invalid nonces return ${OAUTH_ERROR.USE_DPOP_NONCE} with a fresh DPoP-Nonce header. Replaying a successfully exchanged code returns ${OAUTH_ERROR.INVALID_GRANT} because the code is consumed.`,
+    }),
+    ApiHeader({
+      name: NATIVE_DPOP_PROOF_HEADER,
+      required: false,
+      description: 'ES256 proof for the authorization-code exchange',
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description: `${OAUTH_ERROR.INVALID_DPOP_PROOF} identifies a refused proof. ${OAUTH_ERROR.USE_DPOP_NONCE} includes a fresh nonce response header. Unknown or consumed codes return ${OAUTH_ERROR.INVALID_GRANT}.`,
+      headers: {
+        [NATIVE_DPOP_NONCE_HEADER]: {
+          description: 'Fresh server nonce for the next signed proof',
+          schema: { type: 'string' },
+        },
+      },
     }),
   );
 }

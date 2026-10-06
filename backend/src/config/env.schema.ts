@@ -11,6 +11,8 @@ import {
   Matches,
   Max,
   Min,
+  MinLength,
+  ValidateIf,
 } from 'class-validator';
 import {
   OAuthEnvironmentConfig,
@@ -24,6 +26,7 @@ import {
   MAIL_DRAIN_DEADLINE_MS,
   MAIL_MAX_PENDING_SENDS,
 } from '../mail/constants/mail.constants';
+import { NATIVE_DPOP_SECRET_MIN_LENGTH } from '../session/constants/session-policy';
 
 export interface EnvironmentConfig extends OAuthEnvironmentConfig {
   NODE_ENV: 'development' | 'production' | 'test';
@@ -50,6 +53,7 @@ export interface EnvironmentConfig extends OAuthEnvironmentConfig {
 
   AUTH_EPOCH?: number;
   AUTH_NATIVE_ENABLED?: boolean;
+  AUTH_NATIVE_DPOP_NONCE_SECRET?: string;
   AUTH_NATIVE_APPLICATIONS?: string;
   AUTH_NATIVE_ALLOW_CUSTOM_SCHEME?: boolean;
 
@@ -227,7 +231,10 @@ export class EnvironmentVariables extends OAuthEnvironmentVariables {
   @IsBoolean()
   @IsOptional()
   AUTH_NATIVE_ENABLED: boolean = false;
-
+  @ValidateIf((value: EnvironmentVariables) => value.AUTH_NATIVE_ENABLED)
+  @IsString()
+  @MinLength(NATIVE_DPOP_SECRET_MIN_LENGTH)
+  AUTH_NATIVE_DPOP_NONCE_SECRET?: string;
   @Transform(transformOptionalString)
   @IsString()
   @IsOptional()

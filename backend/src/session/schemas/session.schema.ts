@@ -107,6 +107,9 @@ export class Session {
   })
   credentialPurpose!: CredentialPurpose;
 
+  @Prop()
+  proofKeyThumbprint?: string;
+
   /** Session CSRF secret. Not a credential; the browser reads it back after reload. */
   @Prop()
   csrfToken?: string;

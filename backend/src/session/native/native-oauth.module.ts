@@ -6,6 +6,7 @@ import { NativeCredentialIssuer } from './native-credential.issuer';
 import { NativeOAuthController } from './native-oauth.controller';
 import { NativeRefreshService } from './native-refresh.service';
 import { NativeTokenService } from './native-token.service';
+import { NativeDpopService } from './native-dpop.service';
 
 @Module({
   imports: [SessionModule],
@@ -16,6 +17,7 @@ import { NativeTokenService } from './native-token.service';
     NativeCredentialIssuer,
     NativeRefreshService,
     NativeTokenService,
+    NativeDpopService,
   ],
 })
 export class NativeOAuthModule {}

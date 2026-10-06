@@ -7,7 +7,10 @@ import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { User, UserDocument } from '../../user/schemas/user.schema';
 import { APPLICATION_PLATFORM } from '../constants/client-ids';
-import { SECURITY_EVENT_ACTION } from '../constants/security-event-action';
+import {
+  SECURITY_EVENT_ACTION,
+  SECURITY_EVENT_OUTCOME,
+} from '../constants/security-event-action';
 import {
   Application,
   ApplicationDocument,
@@ -31,6 +34,12 @@ import { hashToken } from '../utils/token-hash';
 import { NativeCredentialIssuer } from './native-credential.issuer';
 import { NativeRefreshService } from './native-refresh.service';
 import { SessionIssuanceService } from '../services/session-issuance.service';
+import { SecurityEventService } from '../services/security-event.service';
+import { NativeDpopProofResult } from './native-dpop-proof';
+import {
+  isNativeDpopProofIdConflict,
+  NativeDpopService,
+} from './native-dpop.service';
 import {
   ClientMeta,
   OAUTH_ERROR,
@@ -58,6 +67,8 @@ export class NativeTokenService {
     private readonly issuer: NativeCredentialIssuer,
     private readonly refreshes: NativeRefreshService,
     private readonly sessionIssuance: SessionIssuanceService,
+    private readonly dpop: NativeDpopService,
+    private readonly events: SecurityEventService,
     private readonly clock: Clock,
     private readonly authEpoch: AuthEpochService,
   ) {}
@@ -65,6 +76,7 @@ export class NativeTokenService {
   async grant(
     body: TokenRequest,
     meta: ClientMeta,
+    dpopProof?: string,
   ): Promise<TokenSuccess | OauthFailure> {
     if (!this.authEpoch.nativeEnabled()) {
       return oauthFailure(
@@ -78,7 +90,7 @@ export class NativeTokenService {
     }
     try {
       if (body.grant_type === 'authorization_code') {
-        return await this.exchange(body, meta);
+        return await this.exchange(body, meta, dpopProof);
       }
       if (body.grant_type === 'refresh_token') {
         return await this.refreshes.rotate(
@@ -141,6 +153,7 @@ export class NativeTokenService {
   private async exchange(
     body: TokenRequest,
     meta: ClientMeta,
+    dpopProof?: string,
   ): Promise<TokenSuccess | OauthFailure> {
     const code = body.code?.trim() ?? '';
     const clientId = body.client_id?.trim() ?? '';
@@ -148,6 +161,29 @@ export class NativeTokenService {
     const verifier = body.code_verifier ?? '';
     if (!code || !clientId || !redirectUri || !verifier) {
       return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_REQUEST);
+    }
+    let verifiedProof: Extract<NativeDpopProofResult, { ok: true }> | undefined;
+    if (dpopProof !== undefined) {
+      const proofNow = this.clock.now();
+      const verification = this.dpop.verifyExchangeProof(dpopProof, proofNow);
+      if (!verification.result.ok) {
+        await this.recordProofRefusal(
+          code,
+          verification.result.reason,
+          proofNow,
+        );
+        const failure = oauthFailure(
+          HttpStatus.BAD_REQUEST,
+          verification.challengeNonce
+            ? OAUTH_ERROR.USE_DPOP_NONCE
+            : OAUTH_ERROR.INVALID_DPOP_PROOF,
+          verification.result.reason,
+        );
+        return verification.challengeNonce
+          ? { ...failure, dpopNonce: verification.challengeNonce }
+          : failure;
+      }
+      verifiedProof = verification.result;
     }
     const pending = await this.transactions
       .findOne({ codeHash: hashToken(code), consumed: false })
@@ -171,9 +207,21 @@ export class NativeTokenService {
     }
     try {
       return await withMajorityTransaction(this.connection, (db) =>
-        this.consumeCode(db, pending._id, meta),
+        this.consumeCode(db, pending._id, meta, verifiedProof),
       );
     } catch (error) {
+      if (isNativeDpopProofIdConflict(error)) {
+        await this.recordProofRefusal(
+          code,
+          ErrorCode.NATIVE_DPOP_PROOF_REPLAYED,
+          this.clock.now(),
+        );
+        return oauthFailure(
+          HttpStatus.BAD_REQUEST,
+          OAUTH_ERROR.INVALID_DPOP_PROOF,
+          ErrorCode.NATIVE_DPOP_PROOF_REPLAYED,
+        );
+      }
       if (
         error instanceof AppException &&
         error.getCode() === ErrorCode.SESSION_LIMIT_REACHED
@@ -188,6 +236,7 @@ export class NativeTokenService {
     db: ClientSession,
     transactionId: Types.ObjectId,
     meta: ClientMeta,
+    proof?: Extract<NativeDpopProofResult, { ok: true }>,
   ): Promise<TokenSuccess | OauthFailure> {
     const now = this.clock.now();
     const pending = await this.transactions
@@ -249,6 +298,9 @@ export class NativeTokenService {
     ) {
       return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_GRANT);
     }
+    if (proof) {
+      await this.dpop.reserveProofId(db, proof.jti, now);
+    }
     return this.issuer.issuePair(
       db,
       user,
@@ -258,6 +310,34 @@ export class NativeTokenService {
       meta,
       now,
       1,
+      undefined,
+      undefined,
+      proof?.thumbprint,
     );
+  }
+
+  private async recordProofRefusal(
+    code: string,
+    reason: string,
+    now: Date,
+  ): Promise<void> {
+    const pending = await this.transactions
+      .findOne({
+        codeHash: hashToken(code),
+        consumed: false,
+        codeExpiresAt: { $gt: now },
+      })
+      .select({ clientId: 1, userId: 1 })
+      .exec();
+    if (!pending) {
+      return;
+    }
+    await this.events.record({
+      targetUserId: pending.userId?.toString(),
+      clientId: pending.clientId,
+      action: SECURITY_EVENT_ACTION.NATIVE_DPOP_PROOF_REFUSED,
+      reasonCode: reason,
+      outcome: SECURITY_EVENT_OUTCOME.FAILED,
+    });
   }
 }

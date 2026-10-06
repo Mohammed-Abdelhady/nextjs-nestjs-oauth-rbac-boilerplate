@@ -20,6 +20,10 @@ import {
   BrowserProof,
   BrowserProofSchema,
 } from './schemas/browser-proof.schema';
+import {
+  NativeDpopProofId,
+  NativeDpopProofIdSchema,
+} from './schemas/native-dpop-proof-id.schema';
 import { Session, SessionSchema } from './schemas/session.schema';
 import {
   StepUpChallenge,
@@ -45,6 +49,7 @@ import { NativeAccessService } from './native/native-access.service';
     MongooseModule.forFeature([
       { name: Session.name, schema: SessionSchema },
       { name: BrowserProof.name, schema: BrowserProofSchema },
+      { name: NativeDpopProofId.name, schema: NativeDpopProofIdSchema },
       { name: Application.name, schema: ApplicationSchema },
       { name: UserApplicationGrant.name, schema: UserApplicationGrantSchema },
       { name: NativeCredential.name, schema: NativeCredentialSchema },
@@ -93,6 +98,7 @@ export class SessionModule implements OnModuleInit {
       [
         Session.name,
         BrowserProof.name,
+        NativeDpopProofId.name,
         Application.name,
         UserApplicationGrant.name,
         NativeCredential.name,
