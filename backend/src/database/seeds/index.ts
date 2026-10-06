@@ -6,19 +6,19 @@ import { SeedService } from './seed.service';
  * Seed CLI Entry Point
  *
  * This script provides a command-line interface for database seeding.
- * It can be run directly with ts-node or via npm scripts.
+ * It can be run directly with ts-node or via pnpm scripts.
  *
  * Usage:
- * - Seed database: `npm run seed`
- * - Reset database: `npm run seed:reset`
+ * - Seed database: `pnpm run seed`
+ * - Reset database: `pnpm run seed:reset`
  *
  * @example
  * ```bash
  * # Run seed directly
- * npx ts-node -r tsconfig-paths/register src/database/seeds/index.ts
+ * pnpm exec ts-node -r tsconfig-paths/register src/database/seeds/index.ts
  *
  * # Run with reset flag
- * npx ts-node -r tsconfig-paths/register src/database/seeds/index.ts --reset
+ * pnpm exec ts-node -r tsconfig-paths/register src/database/seeds/index.ts --reset
  * ```
  */
 async function bootstrap() {
