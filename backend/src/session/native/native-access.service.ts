@@ -57,18 +57,54 @@ export class NativeAccessService {
         HttpStatus.FORBIDDEN,
       );
     }
+    const now = this.clock.now();
     const credential = await linearizable(
       this.credentials.findOne({
         tokenHash: hashToken(rawToken),
         purpose: CREDENTIAL_PURPOSE.NATIVE_ACCESS,
         spent: false,
         revokedAt: { $exists: false },
-        expiresAt: { $gt: this.clock.now() },
+        expiresAt: { $gt: now },
       }),
     ).exec();
     if (!credential) {
       return null;
     }
-    return this.authority.validateById(credential.sessionId, true);
+    const session = await this.authority.validateById(
+      credential.sessionId,
+      true,
+    );
+    if (!session) {
+      return null;
+    }
+    if (credential.proofKeyThumbprint || session.proofKeyThumbprint) {
+      const marked = await this.credentials
+        .updateOne(
+          {
+            _id: credential._id,
+            spent: false,
+            revokedAt: { $exists: false },
+            firstUsedAt: { $exists: false },
+          },
+          { $set: { firstUsedAt: now } },
+        )
+        .exec();
+      if (marked.matchedCount === 0) {
+        const active = await linearizable(
+          this.credentials.findOne({
+            _id: credential._id,
+            spent: false,
+            revokedAt: { $exists: false },
+            expiresAt: { $gt: this.clock.now() },
+          }),
+        )
+          .select('_id')
+          .exec();
+        if (!active) {
+          return null;
+        }
+      }
+    }
+    return session;
   }
 }

@@ -53,6 +53,7 @@ export interface Configuration {
     passwordEnabled: boolean;
     epoch: number;
     nativeEnabled: boolean;
+    nativeDpopRequired: boolean;
     nativeDpopNonceSecret?: string;
     nativeApplications: NativeApplicationConfiguration[];
     nativeCustomSchemeAllowed: boolean;
@@ -171,6 +172,7 @@ const configuration = (): Configuration => {
       passwordEnabled: process.env.AUTH_PASSWORD_ENABLED !== 'false',
       epoch: Number.parseInt(process.env.AUTH_EPOCH || '1', 10),
       nativeEnabled,
+      nativeDpopRequired: process.env.AUTH_NATIVE_DPOP_REQUIRED === 'true',
       nativeDpopNonceSecret: process.env.AUTH_NATIVE_DPOP_NONCE_SECRET,
       nativeApplications: nativeEnabled
         ? parseNativeApplications(process.env.AUTH_NATIVE_APPLICATIONS, {

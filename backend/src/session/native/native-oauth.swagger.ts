@@ -9,6 +9,7 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 import {
+  NATIVE_DPOP_FAILURE_REASON,
   NATIVE_DPOP_NONCE_HEADER,
   NATIVE_DPOP_PROOF_HEADER,
 } from '../constants/session-policy';
@@ -84,16 +85,44 @@ export function ApiNativeTokenExchange(): MethodDecorator {
   return applyDecorators(
     ApiOperation({
       summary: 'Exchange a native authorization code or refresh token',
-      description: `For authorization-code exchanges, a valid DPoP proof binds the token pair to its key. Invalid or reused proofs return ${OAUTH_ERROR.INVALID_DPOP_PROOF}. Missing or invalid nonces return ${OAUTH_ERROR.USE_DPOP_NONCE} with a fresh DPoP-Nonce header. Replaying a successfully exchanged code returns ${OAUTH_ERROR.INVALID_GRANT} because the code is consumed.`,
+      description: `A valid DPoP proof binds an authorization-code token pair to its key. Bound refresh tokens need a fresh proof from that key with ath set to the presented token. Unbound families ignore a DPoP header and remain unbound. When AUTH_NATIVE_DPOP_REQUIRED is enabled, an exchange without proof and a refresh of an unbound family return ${OAUTH_ERROR.INVALID_DPOP_PROOF} with ${NATIVE_DPOP_FAILURE_REASON.REQUIRED}. A lost refresh response can be retried once within five minutes with a fresh proof while the successor pair is unused. If that replacement response is also lost, another retry during the original window returns ${OAUTH_ERROR.INVALID_DPOP_PROOF} with ${NATIVE_DPOP_FAILURE_REASON.RETRY_IN_PROGRESS}; after the window, or if the successor was used, the family ends with ${OAUTH_ERROR.INVALID_GRANT} and the user must sign in again. A completed code exchange replay returns ${OAUTH_ERROR.INVALID_GRANT} because the code is consumed. Access tokens remain bearer credentials with a five-minute maximum lifetime; API calls do not require DPoP proofs.`,
     }),
     ApiHeader({
       name: NATIVE_DPOP_PROOF_HEADER,
       required: false,
-      description: 'ES256 proof for the authorization-code exchange',
+      description:
+        'ES256 proof for an authorization-code or bound refresh request',
     }),
     ApiResponse({
       status: HttpStatus.BAD_REQUEST,
-      description: `${OAUTH_ERROR.INVALID_DPOP_PROOF} identifies a refused proof. ${OAUTH_ERROR.USE_DPOP_NONCE} includes a fresh nonce response header. Unknown or consumed codes return ${OAUTH_ERROR.INVALID_GRANT}.`,
+      description: `${OAUTH_ERROR.INVALID_DPOP_PROOF} identifies a refused proof or a required-mode refusal. ${OAUTH_ERROR.USE_DPOP_NONCE} includes a fresh nonce response header. Unknown or consumed codes return ${OAUTH_ERROR.INVALID_GRANT}.`,
+      headers: {
+        [NATIVE_DPOP_NONCE_HEADER]: {
+          description: 'Fresh server nonce for the next signed proof',
+          schema: { type: 'string' },
+        },
+      },
+    }),
+  );
+}
+
+export function ApiNativeRevoke(): MethodDecorator {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Revoke a native token family',
+      description: `Revoking a bound token requires a fresh DPoP proof from its bound key with ath set to the presented token. Unbound families ignore a DPoP header. Invalid proofs return ${OAUTH_ERROR.INVALID_DPOP_PROOF}; ${OAUTH_ERROR.USE_DPOP_NONCE} includes a fresh DPoP-Nonce response header.`,
+    }),
+    ApiHeader({
+      name: NATIVE_DPOP_PROOF_HEADER,
+      required: false,
+      description: 'ES256 proof for a bound token revocation',
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'The token family was revoked, or the token was unknown.',
+    }),
+    ApiBadRequestResponse({
+      description: `${OAUTH_ERROR.INVALID_DPOP_PROOF} identifies a refused proof.`,
       headers: {
         [NATIVE_DPOP_NONCE_HEADER]: {
           description: 'Fresh server nonce for the next signed proof',

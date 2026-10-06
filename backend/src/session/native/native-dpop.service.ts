@@ -8,6 +8,7 @@ import {
   NATIVE_DPOP_FAILURE_REASON,
   NATIVE_DPOP_PROOF_ID_TTL_MS,
   NATIVE_DPOP_SECRET_MIN_LENGTH,
+  NATIVE_DPOP_REVOKE_PATH,
   NATIVE_DPOP_TOKEN_PATH,
 } from '../constants/session-policy';
 import {
@@ -29,6 +30,8 @@ export interface NativeDpopExchangeVerification {
   challengeNonce?: string;
 }
 
+export type NativeDpopVerification = NativeDpopExchangeVerification;
+
 @Injectable()
 export class NativeDpopService {
   constructor(
@@ -41,6 +44,63 @@ export class NativeDpopService {
     proof: string,
     now: Date,
   ): NativeDpopExchangeVerification {
+    return this.verifyRequestProof(proof, NATIVE_DPOP_TOKEN_PATH, now);
+  }
+
+  verifyBoundTokenProof(
+    proof: string | undefined,
+    token: string,
+    expectedThumbprint: string,
+    endpointPath:
+      typeof NATIVE_DPOP_TOKEN_PATH | typeof NATIVE_DPOP_REVOKE_PATH,
+    now: Date,
+  ): NativeDpopVerification {
+    const configuration = this.readProofConfiguration(endpointPath);
+    if (typeof proof !== 'string') {
+      return {
+        result: {
+          ok: false,
+          reason: NATIVE_DPOP_FAILURE_REASON.PROOF_REQUIRED,
+        },
+      };
+    }
+    const result = verifyNativeDpopProof({
+      proof,
+      expectedMethod: 'POST',
+      expectedAddress: configuration.expectedAddress,
+      now,
+      expectedNonces: nativeDpopNonceCandidates(configuration.secret, now),
+      token,
+    });
+    if (result.ok && result.thumbprint !== expectedThumbprint) {
+      return {
+        result: { ok: false, reason: NATIVE_DPOP_FAILURE_REASON.KEY_MISMATCH },
+      };
+    }
+    return this.withNonceChallenge(result, configuration.secret, now);
+  }
+
+  private verifyRequestProof(
+    proof: string,
+    endpointPath:
+      typeof NATIVE_DPOP_TOKEN_PATH | typeof NATIVE_DPOP_REVOKE_PATH,
+    now: Date,
+  ): NativeDpopVerification {
+    const configuration = this.readProofConfiguration(endpointPath);
+    const result = verifyNativeDpopProof({
+      proof,
+      expectedMethod: 'POST',
+      expectedAddress: configuration.expectedAddress,
+      now,
+      expectedNonces: nativeDpopNonceCandidates(configuration.secret, now),
+    });
+    return this.withNonceChallenge(result, configuration.secret, now);
+  }
+
+  private readProofConfiguration(
+    endpointPath:
+      typeof NATIVE_DPOP_TOKEN_PATH | typeof NATIVE_DPOP_REVOKE_PATH,
+  ): { secret: string; expectedAddress: string } {
     const secret = requireNativeDpopNonceSecret(
       this.config.get<unknown>('auth.nativeDpopNonceSecret'),
     );
@@ -52,7 +112,7 @@ export class NativeDpopService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-    const expectedAddress = resolveNativeDpopTokenAddress(apiOrigin);
+    const expectedAddress = resolveNativeDpopAddress(apiOrigin, endpointPath);
     if (!expectedAddress) {
       throw new AppException(
         ErrorCode.NATIVE_DPOP_CONFIGURATION_INVALID,
@@ -60,14 +120,14 @@ export class NativeDpopService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-    const expectedNonces = nativeDpopNonceCandidates(secret, now);
-    const result = verifyNativeDpopProof({
-      proof,
-      expectedMethod: 'POST',
-      expectedAddress,
-      now,
-      expectedNonces,
-    });
+    return { secret, expectedAddress };
+  }
+
+  private withNonceChallenge(
+    result: NativeDpopProofResult,
+    secret: string,
+    now: Date,
+  ): NativeDpopVerification {
     const challengeNonce =
       !result.ok &&
       (result.reason === NATIVE_DPOP_FAILURE_REASON.NONCE_REQUIRED ||
@@ -111,6 +171,13 @@ export function requireNativeDpopNonceSecret(value: unknown): string {
 export function resolveNativeDpopTokenAddress(
   apiOrigin: string,
 ): string | undefined {
+  return resolveNativeDpopAddress(apiOrigin, NATIVE_DPOP_TOKEN_PATH);
+}
+
+export function resolveNativeDpopAddress(
+  apiOrigin: string,
+  endpointPath: typeof NATIVE_DPOP_TOKEN_PATH | typeof NATIVE_DPOP_REVOKE_PATH,
+): string | undefined {
   try {
     const apiUrl = new URL(apiOrigin);
     if (
@@ -122,7 +189,7 @@ export function resolveNativeDpopTokenAddress(
       return undefined;
     }
     const pathPrefix = apiUrl.pathname.replace(/\/+$/, '');
-    apiUrl.pathname = `${pathPrefix}${NATIVE_DPOP_TOKEN_PATH}`;
+    apiUrl.pathname = `${pathPrefix}${endpointPath}`;
     apiUrl.search = '';
     apiUrl.hash = '';
     return apiUrl.toString();
