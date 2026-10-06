@@ -71,6 +71,8 @@ export const ENV_EXAMPLE_FILES = [
 /** Root manifest whose scripts can belong to a project option. */
 export const ROOT_PACKAGE_JSON = 'package.json';
 
+export const ROOT_PACKAGE_LOCK = 'package-lock.json';
+
 /** Frontend manifest whose scripts the scaffold rewrites. */
 export const FRONTEND_PACKAGE_JSON = 'frontend/package.json';
 

@@ -1,5 +1,10 @@
 import type { Manifest, PruneResult } from '../types.js';
-import { ENV_EXAMPLE_FILES, FRONTEND_PACKAGE_JSON, ROOT_PACKAGE_JSON } from '../constants/index.js';
+import {
+  ENV_EXAMPLE_FILES,
+  FRONTEND_PACKAGE_JSON,
+  ROOT_PACKAGE_JSON,
+  ROOT_PACKAGE_LOCK,
+} from '../constants/index.js';
 import { removeDocMarkers } from './doc-markers.js';
 import { removeDocLinks } from './docs.js';
 import { DEPENDABOT_FILE, pruneDependabot } from './dependabot.js';
@@ -9,6 +14,7 @@ import { formatChangedFiles } from './format.js';
 import { removeFeatureLines } from './markers.js';
 import { pruneMessageCatalogues } from './messages.js';
 import { pruneRootPackage } from './package-scripts.js';
+import { pruneRootPackageLock } from './package-lock.js';
 import { findDanglingReferences } from './references.js';
 
 /** Env vars only the removed features use, mapped to the words naming them. */
@@ -83,6 +89,7 @@ export async function prune(
   const strippedEnvVars = await stripEnvFiles(root, removedEnvVars(manifest, selected));
   await writeFeatureFlag(root, selectedFeatures);
   await pruneRootPackage(root, deletedFiles);
+  await pruneRootPackageLock(root);
   await pruneDependabot(root, deletedFiles);
   const editedCatalogues = await pruneMessageCatalogues(root, manifest, removedOptions);
 
@@ -95,6 +102,7 @@ export async function prune(
     ...ENV_EXAMPLE_FILES,
     ...editedCatalogues,
     ROOT_PACKAGE_JSON,
+    ROOT_PACKAGE_LOCK,
     FRONTEND_PACKAGE_JSON,
     DEPENDABOT_FILE,
   ]);
