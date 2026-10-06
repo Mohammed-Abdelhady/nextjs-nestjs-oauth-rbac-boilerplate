@@ -1,9 +1,23 @@
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
-import { extname, join } from 'node:path';
+import { delimiter, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MARKER_EXTENSIONS, SKIPPED_DIRS } from '../src/constants/index.js';
+import {
+  MARKER_EXTENSIONS,
+  PACKAGE_MANAGER_VERSION,
+  SKIPPED_DIRS,
+} from '../src/constants/index.js';
+import { assertWorkspaceEdgesResolve } from './workspace-assertions.js';
 
 export const PACKAGE_DIR = fileURLToPath(new URL('..', import.meta.url));
 export const BUILD_TIMEOUT = 10 * 60 * 1000;
@@ -13,12 +27,21 @@ export interface Packed {
   reason?: string;
   cli: string;
   workspace: string;
+  pnpmDirectory: string;
 }
 
 /** Builds the package, packs it, and unpacks the tarball into a temp directory. */
 export function buildAndPack(): Packed {
   const workspace = mkdtempSync(join(tmpdir(), 'cna-e2e-'));
-  const packed: Packed = { ok: false, cli: '', workspace };
+  const pnpmDirectory = join(workspace, 'pnpm-bin');
+  mkdirSync(pnpmDirectory);
+  const pnpm = join(pnpmDirectory, 'pnpm');
+  writeFileSync(
+    pnpm,
+    `#!${process.execPath}\nconst args = process.argv.slice(2).join(' ');\nif (args === '--version') process.stdout.write(${JSON.stringify(PACKAGE_MANAGER_VERSION)} + '\\n');\n`,
+  );
+  chmodSync(pnpm, 0o755);
+  const packed: Packed = { ok: false, cli: '', workspace, pnpmDirectory };
 
   try {
     // prepack runs the build, so packing alone ships a fresh template,
@@ -72,16 +95,25 @@ export function scaffold(
   packed: Packed,
   name: string,
   features?: string,
-  options: { git?: boolean; env?: NodeJS.ProcessEnv } = {},
+  options: { git?: boolean; env?: NodeJS.ProcessEnv; flags?: string[] } = {},
 ): ReturnType<typeof spawnSync> {
   const target = join(packed.workspace, name);
   const args = [packed.cli, target, '--yes', '--no-install'];
   if (!options.git) args.push('--no-git');
   if (features !== undefined) args.push('--features', features);
-  return spawnSync(process.execPath, args, {
+  args.push(...(options.flags ?? []));
+  const env = { ...process.env, ...options.env };
+  if (!Object.hasOwn(options.env ?? {}, 'PATH')) {
+    env.PATH = [packed.pnpmDirectory, env.PATH ?? ''].filter(Boolean).join(delimiter);
+  } else if (env.PATH) {
+    env.PATH = [packed.pnpmDirectory, env.PATH].join(delimiter);
+  }
+  const result = spawnSync(process.execPath, args, {
     cwd: packed.workspace,
-    env: options.env,
+    env,
     encoding: 'utf8',
     timeout: BUILD_TIMEOUT,
   });
+  if (result.status === 0) assertWorkspaceEdgesResolve(target);
+  return result;
 }

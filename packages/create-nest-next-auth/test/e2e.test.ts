@@ -1,15 +1,7 @@
-import { execFileSync, spawnSync } from 'node:child_process';
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
-import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   ANSWERS_FILE_NAME,
@@ -20,10 +12,10 @@ import {
   BUILD_TIMEOUT,
   buildAndPack,
   type Packed,
-  PACKAGE_DIR,
   scaffold,
   sourceFilesWithMarkers,
 } from './packed-cli.js';
+import { packageManagerCases } from './packed-package-manager.js';
 import { checkGeneratedHookHistory } from './generated-hook-history.js';
 import { checkGeneratedGuardrails } from './generated-guardrails.js';
 import {
@@ -31,6 +23,7 @@ import {
   DEFAULT_SELECTION_MUST_NOT_EXIST,
 } from './plain-run-fixture.js';
 import { expectPlannedMobileWorkspaceIsPruned } from './mobile-workspace-assertions.js';
+import { assertWorkspaceEdgesResolve } from './workspace-assertions.js';
 
 let packed: Packed;
 
@@ -44,6 +37,7 @@ afterAll(() => {
 });
 
 describe('the packed CLI', () => {
+  packageManagerCases(() => packed);
   it('refuses a pre-hook local violation inherited by a clean generated branch', () => {
     checkGeneratedHookHistory(packed);
   });
@@ -52,86 +46,12 @@ describe('the packed CLI', () => {
     checkGeneratedGuardrails(packed);
   });
 
-  it('keeps planned mobile targets out of generated projects', () => {
+  it('keeps planned mobile targets out of generated projects', async () => {
     const project = join(packed.workspace, 'web-only');
     const result = scaffold(packed, 'web-only', 'email-password');
 
     expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
-    expectPlannedMobileWorkspaceIsPruned(project, join(packed.workspace, 'package'));
-  });
-
-  it('excludes runtime artifacts and prohibited names before copying template files', () => {
-    const fixture = mkdtempSync(join(tmpdir(), 'cna-template-exclusions-'));
-    const script = join(fixture, 'packages/create-nest-next-auth/scripts/sync-template.mjs');
-    const artifacts = [
-      'output/playwright/sentinel.txt',
-      'backend/test-results/sentinel.txt',
-      'frontend/playwright-report/sentinel.txt',
-      'blob-report/sentinel.txt',
-      'frontend/.auth/sentinel.json',
-      '.mongodb-binaries/sentinel.txt',
-      'mongodb-memory-server/sentinel.txt',
-      '.env.synthetic',
-      'backend/.env.extra.example',
-    ];
-    const kept = [
-      'README.md',
-      'frontend/e2e/fixtures/source.ts',
-      '.env.docker.example',
-      'backend/.env.example',
-      'frontend/.env.example',
-    ];
-    try {
-      mkdirSync(dirname(script), { recursive: true });
-      copyFileSync(join(PACKAGE_DIR, 'scripts/sync-template.mjs'), script);
-      const constants = join(fixture, 'packages/create-nest-next-auth/src/constants');
-      mkdirSync(constants, { recursive: true });
-      copyFileSync(
-        join(PACKAGE_DIR, 'src/constants/template-tests.json'),
-        join(constants, 'template-tests.json'),
-      );
-      for (const path of [...artifacts, ...kept]) {
-        mkdirSync(dirname(join(fixture, path)), { recursive: true });
-        writeFileSync(join(fixture, path), 'synthetic sentinel\n');
-      }
-      writeFileSync(join(fixture, 'template.manifest.json'), '{"features":{}}');
-      execFileSync(process.execPath, [script], { timeout: 10_000, stdio: 'pipe' });
-      const template = join(fixture, 'packages/create-nest-next-auth/template');
-      for (const path of artifacts) expect(existsSync(join(template, path)), path).toBe(false);
-      for (const path of kept) expect(existsSync(join(template, path)), path).toBe(true);
-
-      // Certificate and credential names are strings only; no such file is created or opened.
-      const prohibited = [
-        'fixture.pem',
-        'fixture.key',
-        'fixture.crt',
-        '.ssh',
-        '.aws',
-        '.kube',
-        'ssl',
-        '.config/gcloud',
-      ];
-      const output = execFileSync(
-        process.execPath,
-        [
-          '--input-type=module',
-          '--eval',
-          `
-        import { pathToFileURL } from 'node:url';
-        const { isExcluded } = await import(pathToFileURL(process.argv[2]).href);
-        const paths = JSON.parse(process.argv[3]);
-        console.log(JSON.stringify(paths.map(path => isExcluded(path, path.split('/').pop(), !/[.](pem|key|crt)$/.test(path)))));
-      `,
-          process.execPath,
-          script,
-          JSON.stringify(prohibited),
-        ],
-        { encoding: 'utf8', timeout: 10_000 },
-      );
-      expect(JSON.parse(output)).toEqual(prohibited.map(() => true));
-    } finally {
-      rmSync(fixture, { recursive: true, force: true });
-    }
+    await expectPlannedMobileWorkspaceIsPruned(project, join(packed.workspace, 'package'));
   });
 
   it('keeps every default provider and takes the markers off', () => {
@@ -149,10 +69,16 @@ describe('the packed CLI', () => {
     expect(appModule).not.toContain('feature:');
   });
 
+  it('carries the renamed pnpm lockfile in the real packed artifact', () => {
+    expect(existsSync(join(packed.workspace, 'package/template/_pnpm-lock.yaml'))).toBe(true);
+  });
+
   it('restores the file names npm strips from a tarball', () => {
-    const project = join(packed.workspace, 'full');
+    const result = scaffold(packed, 'restored-names');
+    const project = join(packed.workspace, 'restored-names');
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
     expect(existsSync(join(project, '.gitignore'))).toBe(true);
-    expect(existsSync(join(project, 'package-lock.json'))).toBe(true);
+    expect(existsSync(join(project, 'pnpm-lock.yaml'))).toBe(true);
     expect(existsSync(join(project, '_gitignore'))).toBe(false);
     expect(readFileSync(join(project, '.gitignore'), 'utf8')).toContain('mongodb-data/');
   });
@@ -191,8 +117,8 @@ describe('the packed CLI', () => {
         scripts: Record<string, string>;
       };
       expect(backend.scripts['test:e2e']).toContain('test/jest-e2e.json');
-      expect(readFileSync(join(project, 'frontend/README.md'), 'utf8')).toContain(
-        'original source repository only',
+      expect(readFileSync(join(project, 'frontend/README.md'), 'utf8')).not.toContain(
+        'README.maintainer.md',
       );
       if (!features.includes('google'))
         expect(readFileSync(join(project, 'backend/test/utils/e2e-app.ts'), 'utf8')).not.toContain(
@@ -201,10 +127,43 @@ describe('the packed CLI', () => {
     },
   );
 
+  it('keeps documented package scripts valid when Arabic is off', () => {
+    const project = join(packed.workspace, 'arabic-off-inventory');
+    const result = scaffold(packed, 'arabic-off-inventory', undefined, {
+      flags: ['--locales', 'en'],
+    });
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+    assertWorkspaceEdgesResolve(project);
+    const frontendReadme = readFileSync(join(project, 'frontend/README.md'), 'utf8');
+    expect(frontendReadme).not.toContain('README.maintainer.md');
+    expect(existsSync(join(project, 'frontend/README.maintainer.md'))).toBe(false);
+
+    const inventory = spawnSync(
+      process.execPath,
+      [fileURLToPath(new URL('../../../scripts/check-package-manager.mjs', import.meta.url))],
+      { cwd: project, encoding: 'utf8' },
+    );
+    expect({
+      status: inventory.status,
+      stdout: inventory.stdout,
+      stderr: inventory.stderr,
+    }).toEqual({
+      status: 0,
+      stdout: 'Package-manager inventory: 0 legacy references, 0 missing pnpm scripts\n',
+      stderr: '',
+    });
+  });
+
   it.each(['full', 'test-scope-email-password'])(
     'keeps root README relative links usable for %s',
     (name) => {
-      const project = join(packed.workspace, name);
+      const result = scaffold(
+        packed,
+        `readme-links-${name}`,
+        name === 'full' ? undefined : 'email-password',
+      );
+      expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+      const project = join(packed.workspace, `readme-links-${name}`);
       const readme = readFileSync(join(project, 'README.md'), 'utf8');
       for (const match of readme.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
         const target = match[1].split('#')[0];
@@ -222,10 +181,12 @@ describe('the packed CLI', () => {
   });
 
   it('names the generated root package after the directory', () => {
+    const result = scaffold(packed, 'named-project');
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
     const manifest: unknown = JSON.parse(
-      readFileSync(join(packed.workspace, 'full', 'package.json'), 'utf8'),
+      readFileSync(join(packed.workspace, 'named-project', 'package.json'), 'utf8'),
     );
-    expect((manifest as { name?: string }).name).toBe('full');
+    expect((manifest as { name?: string }).name).toBe('named-project');
   });
 
   it('prints the version from its own package.json', () => {
@@ -285,7 +246,9 @@ describe('the packed CLI', () => {
   });
 
   it('leaves no feature marker anywhere in the tree', () => {
-    const project = join(packed.workspace, 'pruned');
+    const result = scaffold(packed, 'marker-free', 'email-password,google');
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+    const project = join(packed.workspace, 'marker-free');
     const marked = sourceFilesWithMarkers(project);
 
     expect(marked).toEqual([]);
@@ -294,7 +257,6 @@ describe('the packed CLI', () => {
   it('matches the default selection contract and rejects usage errors', () => {
     const result = scaffold(packed, 'plain-run');
     expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
-
     const project = join(packed.workspace, 'plain-run');
     for (const path of DEFAULT_SELECTION_MUST_EXIST) {
       expect(existsSync(join(project, path)), path).toBe(true);

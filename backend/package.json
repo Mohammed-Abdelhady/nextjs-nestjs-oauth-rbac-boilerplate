@@ -6,8 +6,8 @@
   "private": true,
   "license": "UNLICENSED",
   "engines": {
-    "node": ">=22.12.0",
-    "npm": ">=10.9.0"
+    "node": ">=22.12.0 <23",
+    "pnpm": "12.6.0"
   },
   "scripts": {
     "build": "nest build && node ../scripts/check-backend-build.mjs",
@@ -22,9 +22,9 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/jest/bin/jest.js --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "ci": "npm run lint && npm run build && npm test",
+    "ci": "pnpm run lint && pnpm run build && pnpm run test",
     "migration:create": "migrate-mongo create",
     "migration:up": "migrate-mongo up",
     "migration:down": "migrate-mongo down",
@@ -52,11 +52,13 @@
     "nodemailer": "^10.0.3",
     "otplib": "^13.5.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "express": "5.2.1",
+    "mongodb": "6.20.0"
   },
   "devDependencies": {
-    "@app/native-auth": "*",
-    "@app/sdk": "*",
+    "@app/native-auth": "workspace:*",
+    "@app/sdk": "workspace:*",
     "@eslint/eslintrc": "^3.3.7",
     "@eslint/js": "^9.39.5",
     "@nestjs/cli": "^11.0.24",
@@ -85,9 +87,6 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.70.1"
-  },
-  "overrides": {
-    "diff": ">=8.0.3"
   },
   "jest": {
     "moduleFileExtensions": [

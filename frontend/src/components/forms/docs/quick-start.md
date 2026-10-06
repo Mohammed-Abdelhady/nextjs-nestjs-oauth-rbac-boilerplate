@@ -3,7 +3,7 @@
 All dependencies are already installed in this project:
 
 ```bash
-npm install react-hook-form@^7.71.1 zod@^3.25.76 @hookform/resolvers@^3.10.0
+pnpm add react-hook-form@^7.71.1 zod@^3.25.76 @hookform/resolvers@^3.10.0
 ```
 
 ---

@@ -9,7 +9,7 @@ This guide covers deploying the FULL-MERN-AUTH-Boilerplate application using Doc
 - [Docker Production Setup](#docker-production-setup)
 - [Dependency Overrides](#dependency-overrides)
 - [Vercel Deployment](#vercel-deployment)
-- [Troubleshooting](#troubleshooting)
+- [Troubleshooting](deployment-custom-domain.md#troubleshooting)
 
 ---
 
@@ -19,7 +19,8 @@ Before deploying, ensure you have:
 
 - **Docker** (v20.10 or later) - [Install Docker](https://docs.docker.com/get-docker/)
 - **Docker Compose** (v2.0 or later) - Included with Docker Desktop
-- **Node.js** (v20 LTS) - [Install Node.js](https://nodejs.org/)
+- **Node.js** (22.12 through 22.x) - [Install Node.js](https://nodejs.org/)
+- **pnpm** 12.6.0, enabled with `corepack enable` and `corepack prepare pnpm@12.6.0 --activate`
 - **Git** - For cloning the repository
 
 ### Verify Installation
@@ -201,35 +202,31 @@ Adjust these in [`docker-compose.prod.yml`](../docker-compose.prod.yml) as neede
 
 ## Dependency Overrides
 
-The root `package.json` pins `@nestjs/platform-express`'s `multer` dependency to an exact
-`2.3.0`:
+`pnpm-workspace.yaml` carries the repository's security overrides:
 
-```json
-"overrides": {
-  "@nestjs/platform-express": { "multer": "2.3.0" }
-}
+```yaml
+overrides:
+  diff: '>=8.0.3'
+  lodash: ^4.18.1
+  '@nestjs/platform-express>multer': 2.4.0
 ```
 
-multer 2.2.0 carries four high-severity advisories (GHSA-wc9g-mqfw-jrwm,
-GHSA-qfvm-cv95-jqjf, GHSA-qvfw-j98x-7q72, GHSA-535w-7cp7-47q4) and no released
-`@nestjs/platform-express` declares a range that reaches 2.3.0, so the override supplies
-the fixed copy rather than waiting for the framework.
+The nested selector replaces only the framework's `multer` dependency. The backend's
+former local `diff` override is covered by the root selector. The committed lockfile
+records the resolved graph, verified by `pnpm install --frozen-lockfile`.
 
-- **Removal condition:** drop the override once `@nestjs/platform-express` declares
-  `multer >= 2.3.0` in its own dependency range. `npm audit` reports zero either way
-  once upstream catches up, so the override will not announce that it went stale.
-- **Exact pin, not a caret range:** 2.3.0 is the reviewed artifact and the committed
-  lockfile already fixes what `npm ci` installs. Widen it deliberately, with a fresh
-  `npm audit`, rather than as a side effect of an unrelated `npm install`.
-- **Residual advisory:** GHSA-535w-7cp7-47q4 is only half closed by the version bump.
-  multer 2.3.0 adds `limits.fieldArrayIndexLimit` as an opt-in limit, so the
-  sparse-array DoS path stays open until an upload route sets it. Nothing under
-  `backend/src` parses multipart today (no `MulterModule`, `FileInterceptor` or
-  `FileFieldsInterceptor`), so there is no call site to configure yet; the module that
-  first adds file uploads must set `limits.fieldArrayIndexLimit` to the largest field
-  index the app uses, and both this pin and that limit should be revisited together.
-  Both halves are tracked in
-  [#127](https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/issues/127).
+Revisit these entries when upstream dependencies accept the reviewed versions.
+Compare advisories and dependency paths per workspace before dropping an override.
+`pnpm audit --json` audits the shared graph; its importer paths identify the affected
+workspaces.
+
+The images enable Corepack and activate pnpm 12.6.0. They fetch the complete locked
+graph before copying sources and running an offline frozen install. The backend
+deploy step runs `pnpm --filter backend deploy --prod --frozen-lockfile /out/backend`.
+It reads registry metadata for the generated lockfile check, while package files
+come from the store populated by `pnpm fetch`. The compiled `dist` directory is
+copied into the backend runtime. The frontend runtime keeps Next.js standalone
+output. The test-only MongoDB binary download is disabled inside image builds.
 
 ---
 
@@ -238,7 +235,7 @@ the fixed copy rather than waiting for the framework.
 ### Prerequisites
 
 - Vercel account (free tier available)
-- Vercel CLI installed: `npm i -g vercel`
+- Vercel CLI installed: `pnpm add -g vercel`
 
 ### Deploy Frontend to Vercel
 
@@ -277,10 +274,17 @@ vercel --prod
 
 ### Vercel Configuration
 
+Use Node 22, set the Root Directory to `frontend`, and include source files outside
+that directory in the Build Step so the root workspace config and `shared/*` are
+available. Enable Corepack with the project variable `ENABLE_EXPERIMENTAL_COREPACK=1`.
+The install command activates pnpm 12.6.0 and uses `corepack pnpm` for a frozen install.
+See [Vercel package managers](https://vercel.com/docs/package-managers) and
+[shared monorepo files](https://vercel.com/docs/monorepos/monorepo-faq).
+
 The [`vercel.json`](../frontend/vercel.json) file includes:
 
 - **Framework**: Next.js (optimized)
-- **Build Command**: `npm run build`
+- **Build Command**: `corepack pnpm run build`
 - **Output Directory**: `.next`
 - **Security Headers**: X-Content-Type-Options, X-Frame-Options, etc.
 - **Caching**: Optimized for static assets
@@ -298,134 +302,6 @@ Connect your Git repository to Vercel for automatic deployments:
 
 Now every push to `main` will trigger a production deployment, and every PR will create a preview deployment.
 
-### Custom Domain
+## More sections
 
-1. Go to project settings in Vercel
-2. Navigate to "Domains"
-3. Add your custom domain
-4. Update DNS records as instructed
-
----
-
-## Troubleshooting
-
-### Docker Issues
-
-#### Port Already in Use
-
-```bash
-# Check what's using the port
-lsof -i :3000
-lsof -i :5000
-lsof -i :27017
-
-# Kill the process or change ports in docker-compose.yml
-```
-
-#### Container Won't Start
-
-```bash
-# Check logs
-docker compose logs backend
-
-# Rebuild without cache
-docker compose build --no-cache backend
-
-# Check container status
-docker compose ps
-```
-
-#### MongoDB Connection Issues
-
-```bash
-# Check MongoDB logs
-docker compose logs mongodb
-
-# Verify MongoDB is healthy
-docker compose exec mongodb mongosh --eval "db.adminCommand('ping')"
-
-# Reset MongoDB volume (WARNING: deletes data)
-docker compose down -v
-docker compose up -d
-```
-
-#### Hot Reload Not Working
-
-```bash
-# Restart the service
-docker compose restart backend
-
-# Check volume mounts
-docker compose config
-```
-
-### Vercel Issues
-
-#### Build Fails
-
-```bash
-# Check build logs in Vercel dashboard
-# Verify environment variables are set
-# Test locally: npm run build
-```
-
-#### Environment Variables Not Working
-
-- Ensure variables start with `NEXT_PUBLIC_` for client-side access
-- Re-deploy after changing variables: `vercel --prod`
-- Check variable scope (Production, Preview, Development)
-
-#### API Calls Failing
-
-- Verify `NEXT_PUBLIC_API_URL` is correct
-- Check CORS configuration in backend
-- Verify backend is accessible from Vercel
-
-### Performance Issues
-
-#### Slow Build Times
-
-```bash
-# Use Docker layer caching
-# Ensure .dockerignore is properly configured
-# Use buildkit: DOCKER_BUILDKIT=1 docker build
-```
-
-#### High Memory Usage
-
-```bash
-# Check container resource usage
-docker stats
-
-# Adjust limits in docker-compose.prod.yml
-```
-
-### Common Errors
-
-| Error               | Solution                                         |
-| ------------------- | ------------------------------------------------ |
-| `EADDRINUSE`        | Port already in use, kill process or change port |
-| `MongoNetworkError` | MongoDB not ready, check health status           |
-| `Module not found`  | Run `npm install` in affected directory          |
-| `Permission denied` | Check file permissions, use non-root user        |
-
----
-
-## Additional Resources
-
-- [Docker Documentation](https://docs.docker.com/)
-- [Docker Compose Documentation](https://docs.docker.com/compose/)
-- [Vercel Documentation](https://vercel.com/docs)
-- [Next.js Deployment](https://nextjs.org/docs/deployment)
-- [NestJS Deployment](https://docs.nestjs.com/faq/deployment)
-
----
-
-## Support
-
-For issues or questions:
-
-1. Check this guide's troubleshooting section
-2. Review logs: `docker compose logs -f`
-3. Check the project's GitHub issues
-4. Consult official documentation
+- [Custom domains and deployment troubleshooting](deployment-custom-domain.md)

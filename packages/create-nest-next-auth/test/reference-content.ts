@@ -23,7 +23,7 @@ export const SKIPPED_SCAN_DIRS = new Set([
 ]);
 
 /** Lockfiles skipped when scanning generated content. */
-export const SKIPPED_SCAN_FILES = new Set(['package-lock.json']);
+export const SKIPPED_SCAN_FILES = new Set(['pnpm-lock.yaml']);
 
 /** Files, relative to `root`, that contain one of `patterns`. */
 export function findForbiddenContent(root: string, patterns: readonly RegExp[]): string[] {

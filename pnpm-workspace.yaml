@@ -1,0 +1,23 @@
+packages:
+  - backend
+  - frontend
+  - mobile/*
+  - packages/*
+  - shared/*
+
+overrides:
+  diff: '>=8.0.3'
+  lodash: ^4.18.1
+  '@nestjs/platform-express>multer': 2.4.0
+
+allowBuilds:
+  '@parcel/watcher': true
+  '@scarf/scarf': false
+  '@swc/core': true
+  bcrypt: true
+  fsevents: true
+  mongodb-memory-server: true
+  unrs-resolver: true
+
+# The installer builds its template in prebuild before bundling the CLI.
+enablePrePostScripts: true

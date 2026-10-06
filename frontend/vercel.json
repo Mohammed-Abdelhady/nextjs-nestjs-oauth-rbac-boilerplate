@@ -1,9 +1,9 @@
 {
   "framework": "nextjs",
-  "buildCommand": "npm run build",
+  "buildCommand": "corepack pnpm run build",
   "outputDirectory": ".next",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
+  "devCommand": "corepack pnpm run dev",
+  "installCommand": "corepack prepare pnpm@12.6.0 --activate && corepack pnpm install --frozen-lockfile",
   "regions": ["iad1"],
   "headers": [
     {

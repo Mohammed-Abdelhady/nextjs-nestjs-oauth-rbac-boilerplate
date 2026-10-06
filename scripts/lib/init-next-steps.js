@@ -13,7 +13,7 @@ export function buildNextStepLines(config) {
     `     ${colors.cyan}frontend/.env.local${colors.reset}`,
     '',
     '  2. Install dependencies:',
-    `     ${colors.cyan}npm install${colors.reset}`,
+    `     ${colors.cyan}pnpm install --frozen-lockfile${colors.reset}`,
     '',
     '  3. Start the development servers:',
     // feature:docker:start
@@ -27,8 +27,8 @@ export function buildNextStepLines(config) {
     '     mongod --replSet rs0 --dbpath ./mongodb-data',
     `     ${colors.cyan}# leave mongod running, then in a second terminal:${colors.reset}`,
     '     mongosh --eval "rs.initiate()"',
-    '     cd backend && npm run start:dev',
-    '     cd frontend && npm run dev',
+    '     pnpm --filter backend run start:dev',
+    '     pnpm --filter frontend run dev',
     '',
     '  4. Access your app:',
     `     Frontend: ${colors.cyan}http://localhost:${config.env.frontendPort}${colors.reset}`,
@@ -37,7 +37,7 @@ export function buildNextStepLines(config) {
     '',
     // feature:production:start
     '  5. For production deployment:',
-    `     ${colors.cyan}npm run setup:prod${colors.reset}`,
+    `     ${colors.cyan}pnpm run setup:prod${colors.reset}`,
     '',
     // feature:production:end
     `${colors.dim}Documentation: ./docs/README.md${colors.reset}`,

@@ -1,7 +1,7 @@
 {
   "EXCLUDED_PATH_PATTERNS": [
     "^scripts/guardrails/.*\\.(?:test|slow)\\.mjs$",
-    "^scripts/guardrails/(?:test-repository|workspace-policy|round8-hook-fixture)\\.mjs$",
+    "^scripts/guardrails/(?:test-repository|workspace-policy|workspace-tool-fixture|round8-hook-fixture)\\.mjs$",
     "^scripts/(?:check-hard-bans|eslint-policy)\\.test\\.mjs$"
   ],
   "POLICY_PATH": "scripts/guardrails/policy.mjs",

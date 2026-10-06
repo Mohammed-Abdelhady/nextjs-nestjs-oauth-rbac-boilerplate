@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     include: ['test/**/*.test.ts'],
     // The combination suite builds and typechecks generated projects, which
-    // takes minutes. `npm run test:combinations` runs it.
+    // takes minutes. `pnpm run test:combinations` runs it.
     exclude: ['node_modules/**', 'test/**/*.slow.test.ts'],
     environment: 'node',
     testTimeout: 180_000,

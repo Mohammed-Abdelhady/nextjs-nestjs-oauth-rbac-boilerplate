@@ -30,7 +30,7 @@ Production boilerplate with a NestJS 11 backend and a Next.js 16 frontend. Uses 
 To scaffold a project with only the authentication methods you want:
 
 ```bash
-npx create-nest-next-auth my-app
+pnpm dlx create-nest-next-auth my-app
 ```
 
 The CLI prompts for the sign-in methods to keep. It removes unused strategy files, controller endpoints, frontend UI modules, environment variables, and setup docs. See [CLI options and flags](https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate/blob/master/packages/create-nest-next-auth/README.md).
@@ -60,12 +60,21 @@ At runtime, the frontend calls `GET /api/auth/methods` to learn which authentica
 
 ## Quick start
 
+Use Node 22 (22.12 or newer) and pnpm 12.6.0. Node 22 includes Corepack. Enable the pinned manager before cloning or scaffolding:
+
+```bash
+nvm use 22
+corepack enable
+corepack prepare pnpm@12.6.0 --activate
+pnpm --version
+```
+
 Clone the repository and install dependencies:
 
 ```bash
 git clone https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate.git
 cd nextjs-nestjs-oauth-rbac-boilerplate
-npm install
+pnpm install
 ```
 
 <!-- feature:docker:start -->
@@ -83,10 +92,10 @@ docker compose --env-file .env.docker up --build
 
 ```bash
 # In one terminal, start the backend:
-npm run start:dev -w backend
+pnpm --filter backend run start:dev
 
 # In another terminal, start the frontend:
-npm run dev -w frontend
+pnpm --filter frontend run dev
 ```
 
 Endpoints:
@@ -133,7 +142,7 @@ Run the database seed script from the backend directory:
 
 ```bash
 cd backend
-npm run seed
+pnpm run seed
 ```
 
 The script runs only when `NODE_ENV` is `development` or `test`. It creates four system roles (`user`, `support`, `manager`, `admin`) and two seed accounts:
@@ -148,7 +157,7 @@ To set explicit passwords for seed accounts, set `SEED_ADMIN_PASSWORD` and `SEED
 To wipe and reseed the database:
 
 ```bash
-npm run seed:reset
+pnpm --filter backend run seed:reset
 ```
 
 ## Documentation
@@ -169,7 +178,7 @@ npm run seed:reset
 
 1. Create a feature branch: `git checkout -b feat/feature-name`
 2. Follow [Conventional Commits](https://conventionalcommits.org) format for commit messages.
-3. Verify that tests and lint checks pass: `npm run lint && npm run test`
+3. Verify that tests and lint checks pass: `pnpm run lint && pnpm run test`
 4. Submit a pull request.
 
 ## License

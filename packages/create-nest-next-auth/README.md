@@ -4,7 +4,7 @@ Scaffolds the NestJS + Next.js authentication boilerplate with only the sign-in
 methods you pick.
 
 ```bash
-npx create-nest-next-auth my-app
+pnpm dlx create-nest-next-auth my-app
 ```
 
 The CLI copies the boilerplate it ships with, deletes the files, env vars and
@@ -14,7 +14,7 @@ dependencies.
 ## Usage
 
 ```bash
-npx create-nest-next-auth [directory] [options]
+pnpm dlx create-nest-next-auth [directory] [options]
 ```
 
 The directory can be a name or a path. Its last segment becomes the project
@@ -22,21 +22,21 @@ directory and the `name` in the generated root `package.json`. The directory
 must not exist, or must be empty. With `--yes` and no directory the CLI uses
 `my-app`.
 
-| Option             | What it does                                                         |
-| ------------------ | -------------------------------------------------------------------- |
-| `-y, --yes`        | Take the defaults and skip the prompts                               |
-| `--features a,b,c` | Use these feature ids and skip the feature prompt                    |
-| `--targets a,b,c`  | Client ids; only `web` is available today                            |
-| `--database <id>`  | Database id; only `mongodb` is available today                       |
-| `--preset <id>`    | Apply a preset: `minimal`, `standard`, `everything`                  |
-| `--config <file>`  | JSON file with the same selection keys                               |
-| `--locales <list>` | Locale ids; `en` is required, `en,ar` adds Arabic                    |
-| `--no-docker`      | Leave out the Docker files and the commands that run them            |
-| `--no-production`  | Leave out nginx, the production compose file and the production docs |
-| `--dry-run`        | Print the resolved plan and write nothing                            |
-| `--no-install`     | Skip `npm install`                                                   |
-| `--no-git`         | Skip `git init` and the first commit                                 |
-| `-v, --version`    | Print the CLI version                                                |
+| Option             | What it does                                                                       |
+| ------------------ | ---------------------------------------------------------------------------------- |
+| `-y, --yes`        | Take the defaults and skip the prompts                                             |
+| `--features a,b,c` | Use these feature ids and skip the feature prompt                                  |
+| `--targets a,b,c`  | Client ids; only `web` is available today                                          |
+| `--database <id>`  | Database id; only `mongodb` is available today                                     |
+| `--preset <id>`    | Apply a preset: `minimal`, `standard`, `everything`                                |
+| `--config <file>`  | JSON file with the same selection keys                                             |
+| `--locales <list>` | Locale ids; `en` is required, `en,ar` adds Arabic                                  |
+| `--no-docker`      | Leave out the Docker files and the commands that run them                          |
+| `--no-production`  | Leave out nginx, the production compose file and the production docs               |
+| `--dry-run`        | Print the resolved plan and write nothing                                          |
+| `--no-install`     | Skip dependency installation; the lockfile is still updated when pnpm is available |
+| `--no-git`         | Skip `git init` and the first commit                                               |
+| `-v, --version`    | Print the CLI version                                                              |
 
 Without `--yes`, `--features`, `--targets`, `--database`, `--preset` or `--config`
 the CLI asks for a directory and shows the methods grouped by kind. It needs a
@@ -48,7 +48,7 @@ providers `google`, `github`, `facebook`, `microsoft`, `apple`, `discord`,
 in `oauth-core`, which is not offered on its own.
 
 ```bash
-npx create-nest-next-auth my-app --features email-password,google --no-install
+pnpm dlx create-nest-next-auth my-app --features email-password,google --no-install
 ```
 
 ### Ids and exit codes
@@ -97,14 +97,16 @@ options stay as the manifest defines them.
 `--dry-run` resolves the selection, prints the summary and exits 0 without
 copying, pruning, installing or committing anything.
 
-npm is the only package manager for now. The boilerplate uses npm workspaces and
-ships an npm lockfile. The CLI notices when you launch it with pnpm, yarn or bun
-and says it is using npm anyway.
+Generated projects use pnpm 12.6.0 with an isolated dependency layout. On Node 22,
+run `corepack enable` and `corepack prepare pnpm@12.6.0 --activate`. When pnpm is
+available, the installer updates the lockfile before the first commit. Without the
+pinned pnpm version, it removes the bundled lockfile and prints `pnpm install` as
+the next step.
 
 ## What the CLI does
 
 1. Copies the bundled `template/` into the target directory and restores the
-   file names npm strips from a tarball (`.gitignore`, `package-lock.json`).
+   file names npm strips from a tarball (`.gitignore`, `pnpm-lock.yaml`).
 2. Sets the `name` in the root `package.json`.
 3. Deletes the `files` and `docs` of every method and option you did not pick,
    plus `core.alwaysRemoveFiles`.
@@ -119,21 +121,28 @@ and says it is using npm anyway.
 8. Removes the root scripts that run a deleted file, strips deleted files from
    `node --test` lists, drops dependabot docker entries whose Dockerfile is gone
    and removes the catalogue keys an option owns.
-9. Formats every file it changed with the generated project's own prettier
+9. Renders `pnpm-workspace.yaml` with only the workspaces that remain, keeping
+   overrides and build-script approvals. Formats every file it changed with the generated project's own prettier
    configuration, so a fresh scaffold passes its own lint.
 10. Greps the result for imports and scripts that point at deleted files. Any
     hit is printed with `file:line` and the CLI exits 1, leaving the tree in
     place.
-11. Writes `.create-nest-next-auth.json` into the project root. It records the
-    installer name and version, a SHA-256 of the template content the project
+11. Runs `pnpm install --lockfile-only` before the first commit. If pnpm is
+    unavailable or the update fails, it removes `pnpm-lock.yaml`, reports that
+    in the summary and prints `pnpm install` as the next step.
+12. Writes `.create-nest-next-auth.json` into the project root. It records the
+    installer name and version, the pinned package manager, a SHA-256 of the template content the project
     was generated from, and the resolved selection: clients, database,
     features, options and locales. It holds no secrets, no paths and no
     machine names, so keep it committed with the project.
-12. Runs `git init` and one commit, then `npm install`.
+13. Runs `git init` and one commit with the updated lockfile, or without one if
+    pnpm could not update it.
+14. When installation is requested, runs `pnpm install --frozen-lockfile` after
+    the commit. A failed install exits 1 and leaves the scaffold for inspection.
 
-Git runs before the install on purpose. The boilerplate installs husky hooks
-during `npm install`, and those hooks would run lint-staged over the whole tree
-on the first commit.
+The lockfile-only update runs before git and creates no `node_modules`. Frozen
+installation runs after the first commit, so installed husky hooks cannot run
+lint-staged over the whole tree during that commit.
 
 `AUTH_FEATURES` records what was picked. What ships is decided by the file list
 and the markers; the runtime switches are the `*_ENABLED` variables next to it.
@@ -281,16 +290,19 @@ directory is generated, gitignored, and rebuilt from the repository on every
 build.
 
 ```bash
-npm run build -w packages/create-nest-next-auth   # sync-template.mjs, then tsdown
-npm run test -w packages/create-nest-next-auth
-npm run test:combinations -w packages/create-nest-next-auth   # slow
+pnpm --filter create-nest-next-auth run build   # sync-template.mjs, then tsdown
+pnpm --filter create-nest-next-auth run test
+pnpm --filter create-nest-next-auth run test:combinations   # slow
 npm pack -w packages/create-nest-next-auth --dry-run
 npm publish -w packages/create-nest-next-auth --dry-run
 ```
 
 `test:combinations` scaffolds one project per feature combination into a temp
-directory, borrows the repository's `node_modules` through a symlink and runs
-`tsc --noEmit` over both workspaces.
+directory. It updates each pruned lockfile, verifies a frozen pnpm install with
+build scripts enabled, and checks the generated workspaces. All combinations
+share an explicit store under the test temp root. A separate warm-store offline
+case retains the store and MongoDB binary cache. The shipped lockfile alone
+does not make a fresh install work offline.
 
 The full-feature browser suite is maintainer tooling. Generated projects omit `frontend/e2e`, both Playwright configurations and the backend browser/consent helpers. Their frontend package omits the corresponding `test:e2e` scripts. Product unit tests and the disposable backend functional API suite remain available. The source repository retains all browser coverage.
 
@@ -303,8 +315,10 @@ list, contents and executable bits, which every generated project records in
 `.create-nest-next-auth.json`. Build before publishing; a stale or missing
 `template/` produces a package that cannot scaffold anything.
 
-Publish from the package directory after a version bump: `npm run build -w
-packages/create-nest-next-auth`, then `npm publish --access public` from
+Publish from the package directory after a version bump: `pnpm --filter create-nest-next-auth run build`, then `npm publish --access public` from
 `packages/create-nest-next-auth`.
 
-Requires Node 22.12 or newer, for both the CLI and the generated project.
+Supports Node 22.12 through Node 22.x for both the CLI and generated project.
+Corepack is not bundled from Node 25. The installer is still packed and published
+with npm. Its template carries `_pnpm-lock.yaml`, restored to `pnpm-lock.yaml`
+before pruning and installation.

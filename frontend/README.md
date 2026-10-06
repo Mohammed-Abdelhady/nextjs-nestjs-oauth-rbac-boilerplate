@@ -5,11 +5,11 @@ Next.js 16 application with React 19, TypeScript, and Tailwind CSS.
 ## Quick Start
 
 ```bash
-npm install
-npm run dev          # Development (http://localhost:3000)
-npm run build        # Production build
-npm run lint         # ESLint check
-npm test             # Product unit tests
+pnpm install
+pnpm run dev          # Development (http://localhost:3000)
+pnpm run build        # Production build
+pnpm run lint         # ESLint check
+pnpm test             # Product unit tests
 ```
 
 ## Tech Stack
@@ -140,21 +140,14 @@ Use `'use client'` only when using hooks, event handlers, or browser APIs.
 ### Adding UI Components
 
 ```bash
-npx shadcn@latest add button dialog
+pnpm dlx shadcn@latest add button dialog
 ```
 
 ## Testing
 
-Run `npm test` for product unit tests. The following browser commands are for the original source repository only. Its full-feature Playwright harness is maintainer tooling; generated projects omit that harness, its configurations and these commands. Generated projects retain product unit tests and the backend functional API suite (`npm run test:e2e -w backend` from the project root).
+Run `pnpm test` for product unit tests. Generated projects retain the backend functional API suite (`pnpm --filter backend run test:e2e` from the project root).
 
-```bash
-npm run test:e2e          # Run all E2E tests
-npm run test:e2e:ui       # Interactive UI mode
-npm run test:e2e:headed   # See browser
-npm run test:e2e:debug    # Debug mode
-```
-
-Source repository browser files: `e2e/*.spec.ts`.
+- [Source repository browser tests](README.maintainer.md)
 
 ## Deployment
 

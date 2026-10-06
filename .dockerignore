@@ -25,5 +25,6 @@ coverage
 **/*.log
 **/*.tgz
 **/*.tsbuildinfo
-packages
+packages/*/template
 **/test
+.pnpm-store

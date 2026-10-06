@@ -1,4 +1,5 @@
 #!/bin/sh
 set -e
-npx lint-staged
+sh scripts/lib/require-package-manager.sh pnpm
+pnpm exec lint-staged
 node scripts/check-hard-bans.mjs --staged

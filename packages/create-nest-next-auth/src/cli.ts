@@ -6,6 +6,7 @@ import {
   BROKEN_PACKAGE_EXIT_CODE,
   CLI_NAME,
   DOCKER_OPTION_ID,
+  INSTALL_COMMAND,
   USAGE_EXIT_CODE,
 } from './constants/index.js';
 import { ConfigFileError, readConfigFile } from './flags/config-file.js';
@@ -28,7 +29,7 @@ import {
 } from './scaffold/answers.js';
 import { copyTemplate } from './scaffold/copy.js';
 import { initRepository } from './scaffold/git.js';
-import { detectPackageManager, installDependencies, isSupported } from './scaffold/install.js';
+import { installDependencies, prepareLockfile } from './scaffold/install.js';
 import { buildDocLinks, buildNextSteps, readWorkspaceStartScripts } from './scaffold/next-steps.js';
 import { setProjectName } from './scaffold/package-json.js';
 import type { AnswersRecord, CliOptions, Manifest, PruneResult } from './types.js';
@@ -115,7 +116,28 @@ async function scaffold(
   }
   pruning.stop('Pruned');
   log.message(describeSelection(manifest, result).join('\n'));
-
+  const lockfileUpdating = spinner();
+  lockfileUpdating.start('Updating pnpm lockfile');
+  let lockfile: Awaited<ReturnType<typeof prepareLockfile>>;
+  try {
+    lockfile = await prepareLockfile(target);
+  } catch (error) {
+    lockfileUpdating.stop('pnpm lockfile update failed');
+    const reason = error instanceof Error ? error.message : String(error);
+    log.error(`Could not prepare the pnpm lockfile: ${reason}`);
+    outro(`Left the tree at ${target} so you can inspect it.`);
+    return 1;
+  }
+  lockfileUpdating.stop(lockfile.ok ? 'pnpm lockfile updated' : 'pnpm lockfile update failed');
+  if (!lockfile.ok && options.install) {
+    log.error(
+      `pnpm-lock.yaml removed; dependency installation was skipped. ${lockfile.reason ?? 'The lockfile could not be updated.'}`,
+    );
+  } else if (!lockfile.ok) {
+    log.message(
+      `pnpm-lock.yaml removed. ${lockfile.reason ?? 'The lockfile could not be updated.'}`,
+    );
+  }
   if (result.dangling.length > 0) {
     log.error(describeDangling(result.dangling).join('\n'));
     outro(`Left the tree at ${target} so you can inspect it.`);
@@ -126,8 +148,7 @@ async function scaffold(
   // skip git or install alike. --dry-run never reaches this branch.
   await recordAnswers(target, answers);
 
-  await finishSetup(target, manifest, plan, options);
-  return 0;
+  return (await finishSetup(target, manifest, plan, options, lockfile.ok)) ? 0 : 1;
 }
 
 async function finishSetup(
@@ -135,7 +156,8 @@ async function finishSetup(
   manifest: Manifest,
   plan: Plan,
   options: CliOptions,
-): Promise<void> {
+  lockfileReady: boolean,
+): Promise<boolean> {
   if (options.git) {
     const git = await initRepository(target);
     if (git.enclosingWorkTree !== undefined) {
@@ -146,22 +168,17 @@ async function finishSetup(
     else log.warn(`Skipped git: ${git.reason ?? 'git is not available'}`);
   }
 
-  const manager = detectPackageManager();
-  if (options.install && !isSupported(manager)) {
-    log.warn(`${manager} is not supported yet, using npm.`);
-  }
-
   let installed = false;
-  if (options.install) {
+  if (options.install && lockfileReady) {
     const installing = spinner();
-    installing.start('Installing dependencies with npm');
+    installing.start('Installing dependencies with pnpm');
     const install = await installDependencies(target);
     installed = install.ok;
     if (install.ok) {
       installing.stop('Dependencies installed');
     } else {
-      installing.stop('npm install failed');
-      log.error(install.reason ?? 'Run npm install in the project directory.');
+      installing.stop('pnpm install failed');
+      log.error(install.reason ?? `Run ${INSTALL_COMMAND} in the project directory.`);
     }
   }
 
@@ -177,6 +194,7 @@ async function finishSetup(
     'Next steps',
   );
   note(buildDocLinks(manifest, plan.features).join('\n'), 'Docs');
+  return !options.install || (lockfileReady && installed);
 }
 
 export async function main(

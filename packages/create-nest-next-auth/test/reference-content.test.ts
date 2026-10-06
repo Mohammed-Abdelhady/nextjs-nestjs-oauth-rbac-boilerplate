@@ -31,7 +31,7 @@ describe('findForbiddenContent', () => {
     const root = await tree({
       'note.md': 'Run docker compose up.\n',
       'node_modules/ignored.md': 'nginx\n',
-      'package-lock.json': 'docker-compose\n',
+      'pnpm-lock.yaml': 'docker-compose\n',
     });
 
     expect(findForbiddenContent(root, DOCKER_FORBIDDEN)).toEqual(['note.md']);
@@ -45,7 +45,7 @@ describe('findForbiddenContent', () => {
 
   it('finds each planted docker leftover', async () => {
     const root = await tree({
-      'a.txt': 'npm run setup:prod\n',
+      'a.txt': 'pnpm run setup:prod\n',
       'b.txt': 'node scripts/verify-docker.mjs\n',
       'c.txt': 'See docs/deployment.md.\n',
       'd.txt': 'The word nginx alone.\n',

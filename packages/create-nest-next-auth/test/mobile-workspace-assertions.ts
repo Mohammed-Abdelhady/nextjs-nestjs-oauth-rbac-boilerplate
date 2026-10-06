@@ -1,8 +1,13 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect } from 'vitest';
+import { parse } from 'yaml';
+import { listFiles } from '../src/utils/fs.js';
 
-export function expectPlannedMobileWorkspaceIsPruned(project: string, templateRoot: string): void {
+export async function expectPlannedMobileWorkspaceIsPruned(
+  project: string,
+  templateRoot: string,
+): Promise<void> {
   expect(existsSync(join(project, 'mobile'))).toBe(false);
   expect(existsSync(join(project, 'backend/test/native-auth-engine.e2e-spec.ts'))).toBe(false);
   expect(existsSync(join(project, 'backend/test/utils/native-auth-engine-harness.ts'))).toBe(false);
@@ -17,13 +22,19 @@ export function expectPlannedMobileWorkspaceIsPruned(project: string, templateRo
   };
   expect(backend.devDependencies?.['@app/native-auth']).toBeUndefined();
 
-  const lock = JSON.parse(readFileSync(join(project, 'package-lock.json'), 'utf8')) as {
-    packages?: Record<string, { devDependencies?: Record<string, string>; workspaces?: string[] }>;
+  const workspace = parse(readFileSync(join(project, 'pnpm-workspace.yaml'), 'utf8')) as {
+    packages: string[];
   };
-  expect(lock.packages?.['']?.workspaces).not.toContain('mobile/*');
-  expect(lock.packages?.['mobile/auth']).toBeUndefined();
-  expect(lock.packages?.['node_modules/@app/native-auth']).toBeUndefined();
-  expect(lock.packages?.backend?.devDependencies?.['@app/native-auth']).toBeUndefined();
+  const packageFiles = (await listFiles(project)).filter(
+    (file) => file === 'package.json' || file.endsWith('/package.json'),
+  );
+  const nativeAuthManifests = packageFiles.filter((file) =>
+    readFileSync(join(project, file), 'utf8').includes('@app/native-auth'),
+  );
+  expect({
+    mobileWorkspaces: workspace.packages.filter((pattern) => pattern.startsWith('mobile/')),
+    nativeAuthManifests,
+  }).toEqual({ mobileWorkspaces: [], nativeAuthManifests: [] });
 
   const manifest = JSON.parse(
     readFileSync(join(templateRoot, 'template.manifest.json'), 'utf8'),

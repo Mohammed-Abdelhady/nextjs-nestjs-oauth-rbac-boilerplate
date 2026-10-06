@@ -1,16 +1,16 @@
 import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { loadManifest } from '../src/manifest/load.js';
 import { availableFeatures, resolveSelection } from '../src/manifest/select.js';
 import type { Manifest } from '../src/types.js';
 import {
   buildCli,
   compareWithRepository,
-  linkDependencies,
+  installProject,
+  installFromWarmStore,
   REPO_ROOT,
-  runTool,
+  runBackendBoot,
   scaffold,
 } from './combination-helpers.js';
 import {
@@ -25,7 +25,7 @@ import { verifyFeatureAvailability } from './feature-runtime.js';
  * Every feature combination a generated project has to compile in. Slow by
  * nature: it builds the CLI, scaffolds seven trees and runs three typechecks,
  * the drift spec, and a frontend check against the pruned shared package over
- * each. Run it with `npm run test:combinations -w packages/create-nest-next-auth`.
+ * each. Run it with `pnpm --filter create-nest-next-auth run test:combinations`.
  */
 
 const ALL_OAUTH = [
@@ -72,7 +72,7 @@ function everything(): string[] {
 }
 
 beforeAll(async () => {
-  workspace = mkdtempSync(join(tmpdir(), 'cna-combinations-'));
+  workspace = mkdtempSync(join(inject('combinationRoot'), 'features-'));
   manifest = await loadManifest(REPO_ROOT);
   built = await buildCli();
 });
@@ -86,7 +86,8 @@ async function generate(name: string, features: string[]): Promise<string> {
   const project = join(workspace, name.replace(/\W+/g, '-'));
   const result = await scaffold(project, features);
   expect(result.ok, result.output).toBe(true);
-  linkDependencies(project);
+  const install = await installProject(project, inject('pnpmStore'));
+  expect(install.ok, install.output).toBe(true);
   const availability = verifyFeatureAvailability(project, features);
   expect(availability.ok, availability.output).toBe(true);
   return project;
@@ -104,18 +105,7 @@ describe('generated projects', () => {
     await expectPrunedShared(project);
     await expectLints(project);
     if (features.includes('google') && features.length === 2) {
-      const api = await runTool(
-        process.execPath,
-        [
-          join(REPO_ROOT, 'node_modules/jest/bin/jest.js'),
-          '--config',
-          'test/jest-e2e.json',
-          '--runInBand',
-          '--runTestsByPath',
-          'test/app.boot.e2e-spec.ts',
-        ],
-        { cwd: join(project, 'backend') },
-      );
+      const api = await runBackendBoot(project);
       expect(api.ok, api.output).toBe(true);
     }
   });
@@ -139,6 +129,22 @@ describe('generated projects', () => {
       manifest.core.alwaysRemoveFiles,
     );
     expect(differences, JSON.stringify(differences, null, 2)).toEqual([]);
+  });
+
+  it('installs offline from a warm pnpm store and retained build-artifact cache', async () => {
+    const project = await generate('warm-store', ['email-password']);
+    for (const path of [
+      'node_modules',
+      'backend/node_modules',
+      'frontend/node_modules',
+      'shared/core/node_modules',
+      'shared/sdk/node_modules',
+    ]) {
+      rmSync(join(project, path), { recursive: true, force: true });
+    }
+    const offline = await installFromWarmStore(project, inject('pnpmStore'));
+    expect(offline.ok, offline.output).toBe(true);
+    await expectTypechecks(project);
   });
 
   it('pulls OAuth core in behind a provider without offering it', () => {

@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsdown';
 
-// Everything ships in one ESM file so `npx create-nest-next-auth` installs no
+// Everything ships in one ESM file so `pnpm dlx create-nest-next-auth` installs no
 // dependencies. @clack/prompts and commander are devDependencies for that reason.
 export default defineConfig({
   entry: ['src/index.ts'],

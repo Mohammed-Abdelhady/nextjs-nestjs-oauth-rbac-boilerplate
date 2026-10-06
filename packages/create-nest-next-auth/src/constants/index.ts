@@ -1,3 +1,4 @@
+import PACKAGE_MANAGER_CONFIG from './package-manager.json' with { type: 'json' };
 import type { FeatureKind } from '../types.js';
 
 /** Every kind a user can pick from the prompt. */
@@ -71,10 +72,15 @@ export const ENV_EXAMPLE_FILES = [
 /** Root manifest whose scripts can belong to a project option. */
 export const ROOT_PACKAGE_JSON = 'package.json';
 
-export const ROOT_PACKAGE_LOCK = 'package-lock.json';
-
 /** Frontend manifest whose scripts the scaffold rewrites. */
 export const FRONTEND_PACKAGE_JSON = 'frontend/package.json';
+
+export const PACKAGE_DEPENDENCY_GROUPS = [
+  'dependencies',
+  'devDependencies',
+  'optionalDependencies',
+  'peerDependencies',
+] as const;
 
 /** Env var written into backend/.env.example with the enabled feature ids. */
 export const FEATURE_FLAG_VAR = 'AUTH_FEATURES';
@@ -83,7 +89,7 @@ export const FEATURE_FLAG_VAR = 'AUTH_FEATURES';
 export const ANSWERS_FILE_NAME = '.create-nest-next-auth.json';
 
 /** Version of that file's shape. Bumped only when the contract changes. */
-export const ANSWERS_SCHEMA_VERSION = 1;
+export const ANSWERS_SCHEMA_VERSION = 2;
 
 /** Build artifact next to `template/`: the SHA-256 of the shipped template. */
 export const TEMPLATE_IDENTITY_FILE = 'template.identity.json';
@@ -95,7 +101,7 @@ export const SHA256_HEX_PATTERN = /^[0-9a-f]{64}$/;
 export const RESTORED_FILENAMES: Record<string, string> = {
   _gitignore: '.gitignore',
   _npmrc: '.npmrc',
-  '_package-lock.json': 'package-lock.json',
+  [PACKAGE_MANAGER_CONFIG.PACKED_PNPM_LOCKFILE]: PACKAGE_MANAGER_CONFIG.PNPM_LOCKFILE,
 };
 
 /** Kinds shown in the prompt, in order. `hidden` is deliberately absent. */
@@ -181,3 +187,17 @@ export const GIT_REPOSITORY_ENV_VARS: readonly string[] = [
 ];
 
 export const GIT_REPOSITORY_ENV_PREFIXES = ['GIT_CONFIG_KEY_', 'GIT_CONFIG_VALUE_'] as const;
+
+export const {
+  PACKAGE_MANAGER,
+  PACKAGE_MANAGER_VERSION,
+  PNPM_WORKSPACE_FILE,
+  PNPM_LOCKFILE,
+  PACKED_PNPM_LOCKFILE,
+} = PACKAGE_MANAGER_CONFIG;
+export const PACKAGE_MANAGER_SPEC = `${PACKAGE_MANAGER}@${PACKAGE_MANAGER_VERSION}`;
+export const LOCKFILE_UPDATE_COMMAND = 'pnpm install --lockfile-only';
+export const FROZEN_INSTALL_COMMAND = 'pnpm install --frozen-lockfile';
+export const INSTALL_COMMAND = 'pnpm install';
+export const INSTALL_DIAGNOSTIC_LINES = 5;
+export const MISSING_PNPM_MESSAGE = `pnpm@${PACKAGE_MANAGER_VERSION} is required to update the lockfile. Enable pnpm with Corepack and run ${INSTALL_COMMAND} to regenerate it.`;

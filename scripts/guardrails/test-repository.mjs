@@ -15,6 +15,16 @@ import { fileURLToPath } from 'node:url';
 import { gitEnvironment } from './git-environment.mjs';
 
 export function installChecker(root, { directory: target = '.guardrails-runner' } = {}) {
+  if (target === 'scripts') {
+    // These synthetic projects borrow installed tools without installing packages.
+    writeFileSync(join(root, 'pnpm-workspace.yaml'), 'verifyDepsBeforeRun: false\n');
+    const library = join(root, 'scripts/lib');
+    mkdirSync(library, { recursive: true });
+    copyFileSync(
+      fileURLToPath(new URL('../lib/require-package-manager.sh', import.meta.url)),
+      join(library, 'require-package-manager.sh'),
+    );
+  }
   const directory = join(root, target, 'guardrails');
   mkdirSync(directory, { recursive: true });
   copyFileSync(
@@ -25,7 +35,7 @@ export function installChecker(root, { directory: target = '.guardrails-runner' 
     if (
       file.endsWith('.mjs') &&
       !/\.(?:test|slow)\.mjs$/.test(file) &&
-      !['test-repository.mjs', 'workspace-policy.mjs'].includes(file)
+      !['test-repository.mjs', 'workspace-policy.mjs', 'workspace-tool-fixture.mjs'].includes(file)
     )
       copyFileSync(fileURLToPath(new URL(file, import.meta.url)), join(directory, file));
   }

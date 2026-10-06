@@ -1,20 +1,24 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { symlinkSync, rmSync, readdirSync, readFileSync, copyFileSync, mkdirSync } from 'node:fs';
+import { rmSync, readdirSync, readFileSync, copyFileSync, mkdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { repository } from './test-repository.mjs';
 import { workspacePolicyProblems, trackedTypeFiles } from './workspace-policy.mjs';
+import { installWorkspaceTools } from './workspace-tool-fixture.mjs';
 
 const RULE = '@typescript-eslint/no-explicit-' + 'a' + 'ny';
-const MODULES = fileURLToPath(new URL('../../node_modules', import.meta.url));
 
 function workspace(repo, path, extra = '') {
   repo.write(
     `${path}/package.json`,
-    JSON.stringify({ name: path.replaceAll('/', '-'), type: 'module' }),
+    JSON.stringify({
+      name: path.replaceAll('/', '-'), type: 'module',
+      devDependencies: { eslint: '^9.39.5', 'typescript-eslint': '^8.70.1' },
+    }),
   );
+  installWorkspaceTools(repo.root, path);
   repo.write(
     `${path}/eslint.config.mjs`,
     `
@@ -28,7 +32,6 @@ function workspace(repo, path, extra = '') {
 function fixture(t, extra = '') {
   const repo = repository(t);
   repo.write('package.json', JSON.stringify({ workspaces: ['apps/*', 'absent'] }));
-  symlinkSync(MODULES, join(repo.root, 'node_modules'));
   workspace(repo, 'apps/one', extra);
   for (const file of [
     'src/a.ts',
@@ -106,7 +109,6 @@ test('workspace inventory falls back to files without repository metadata', asyn
 test('nested project inventory is relative to the project instead of its parent repository', async (t) => {
   const repo = repository(t);
   repo.write('apps/project/package.json', JSON.stringify({ workspaces: ['packages/*'] }));
-  symlinkSync(MODULES, join(repo.root, 'apps/project/node_modules'));
   workspace(repo, 'apps/project/packages/one', `{ rules: { '${RULE}': 'off' } }`);
   repo.write('apps/project/packages/one/src/a.ts', 'export {};\n');
   repo.write('outside/src/decoy.ts', 'export {};\n');

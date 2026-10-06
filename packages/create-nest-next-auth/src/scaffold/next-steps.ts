@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { INSTALL_COMMAND } from '../constants/index.js';
 import { isRecord } from '../manifest/read.js';
 import type { Manifest } from '../types.js';
 
@@ -26,9 +27,9 @@ async function workspaceScript(
     const parsed: unknown = JSON.parse(await readFile(path, 'utf8'));
     const scripts = isRecord(parsed) && isRecord(parsed.scripts) ? parsed.scripts : {};
     const name = preferred in scripts ? preferred : fallback;
-    return `npm run ${name} -w ${workspace}`;
+    return `pnpm --filter ${workspace} run ${name}`;
   } catch {
-    return `npm run ${preferred} -w ${workspace}`;
+    return `pnpm --filter ${workspace} run ${preferred}`;
   }
 }
 
@@ -43,7 +44,7 @@ export async function readWorkspaceStartScripts(root: string): Promise<Workspace
 /** The commands printed after a successful scaffold. */
 export function buildNextSteps(input: NextStepsInput): string[] {
   const steps = [`cd ${input.directoryLabel}`];
-  if (!input.installed) steps.push('npm install');
+  if (!input.installed) steps.push(INSTALL_COMMAND);
   if (input.docker) {
     steps.push('cp .env.docker.example .env.docker', 'docker compose --env-file .env.docker up -d');
     return steps;

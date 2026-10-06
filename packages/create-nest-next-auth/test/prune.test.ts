@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { parse } from 'yaml';
 import { stripEnvVars } from '../src/prune/env.js';
 import { prune } from '../src/prune/index.js';
 import { findDanglingReferences } from '../src/prune/references.js';
@@ -103,6 +104,44 @@ describe('prune', () => {
     expect(docsIndex).toContain('setup-alpha.md');
     expect(readme).not.toContain('docs/setup-beta.md');
     expect(readme).toContain('| Guide');
+  });
+
+  it('renders and formats the pruned workspace while retaining pnpm settings', async () => {
+    const root = await fixture();
+    await writeSource(
+      root,
+      'pnpm-workspace.yaml',
+      "packages: [backend, mobile/*]\noverrides: {diff: '>=8.0.3'}\nallowBuilds: {bcrypt: true}\nenablePrePostScripts: true\n",
+    );
+    await writeSource(root, 'backend/package.json', '{"name":"backend"}\n');
+    await writeSource(root, 'mobile/auth/package.json', '{"name":"@app/native-auth"}\n');
+    const manifest = {
+      ...FIXTURE_MANIFEST,
+      core: { alwaysRemoveFiles: ['mobile/**'] },
+    };
+
+    const result = await prune(root, manifest, ['email-password', 'alpha'], []);
+
+    expect(result.formattedFiles).toContain('pnpm-workspace.yaml');
+    expect(parse(await readFile(join(root, 'pnpm-workspace.yaml'), 'utf8'))).toEqual({
+      packages: ['backend'],
+      overrides: { diff: '>=8.0.3' },
+      allowBuilds: { bcrypt: true },
+      enablePrePostScripts: true,
+    });
+  });
+
+  it('leaves a workspace file byte-identical when pruning removes no workspace', async () => {
+    const root = await fixture();
+    const workspaceFile =
+      '# keep the original patterns and settings\npackages: [backend, shared/*]\noverrides: {diff: ">=8.0.3"}\nenablePrePostScripts: true\n';
+    await writeSource(root, 'pnpm-workspace.yaml', workspaceFile);
+    await writeSource(root, 'backend/package.json', '{"name":"backend"}\n');
+    await writeSource(root, 'shared/core/package.json', '{"name":"@app/core"}\n');
+
+    await prune(root, FIXTURE_MANIFEST, ['email-password', 'alpha', 'beta'], []);
+
+    expect(await readFile(join(root, 'pnpm-workspace.yaml'), 'utf8')).toBe(workspaceFile);
   });
 
   it('reports imports left pointing at deleted files', async () => {

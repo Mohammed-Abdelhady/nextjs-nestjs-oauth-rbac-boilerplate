@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { copyFileSync, symlinkSync } from 'node:fs';
+import { copyFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { installChecker, repository } from './test-repository.mjs';
 import { trackedTypeFiles } from './workspace-policy.mjs';
+import { installWorkspaceTools, installPolicyTestDependencies } from './workspace-tool-fixture.mjs';
 
 test('filesystem inventory stops ancestor ignores at the nearest repository', (t) => {
   const repo = repository(t);
@@ -64,7 +65,9 @@ test('the repository policy test succeeds without launching Git', (t) => {
     join(repo.root, 'scripts/guardrails/workspace-policy.mjs'),
   );
   repo.write('package.json', JSON.stringify({ workspaces: ['apps/*'] }));
-  repo.write('apps/one/package.json', JSON.stringify({ type: 'module' }));
+  repo.write('apps/one/package.json', JSON.stringify({
+    type: 'module', devDependencies: { eslint: '^9.39.5', 'typescript-eslint': '^8.70.1' },
+  }));
   repo.write('apps/one/src/a.ts', 'export {};\n');
   repo.write(
     'apps/one/eslint.config.mjs',
@@ -72,10 +75,8 @@ test('the repository policy test succeeds without launching Git', (t) => {
 export default tseslint.config(...tseslint.configs.recommended,
   { linterOptions: { noInlineConfig: true } });\n`,
   );
-  symlinkSync(
-    fileURLToPath(new URL('../../node_modules', import.meta.url)),
-    join(repo.root, 'node_modules'),
-  );
+  installWorkspaceTools(repo.root, 'apps/one');
+  installPolicyTestDependencies(repo.root);
   const result = spawnSync(process.execPath, ['--test', 'scripts/eslint-policy.test.mjs'], {
     cwd: repo.root,
     env: repo.env,

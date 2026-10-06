@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Types } from 'mongoose';
+import type { Request } from 'express';
 import { MagicLinkService } from './magic-link.service';
 import { PendingMagicLink } from './schemas/pending-magic-link.schema';
 import { AuthMailService } from '../services/auth-mail.service';
@@ -60,7 +61,7 @@ export const MOCK_USER_SUMMARY = {
   permissions: ['read'],
 };
 
-export const MOCK_REQUEST = createRequestMock({
+export const MOCK_REQUEST: Request = createRequestMock({
   ip: '127.0.0.1',
   headers: { 'user-agent': 'test-agent' },
 });
