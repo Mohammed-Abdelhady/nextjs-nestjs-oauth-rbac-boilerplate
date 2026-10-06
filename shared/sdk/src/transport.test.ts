@@ -1,0 +1,13 @@
+import { describe, expect, it } from 'vitest';
+import { createApiClient } from './client';
+import { answering } from './test-support';
+
+describe('Transport headers', () => {
+  it('leaves header selection to the injected transport', async () => {
+    const transport = answering(200, {});
+
+    await createApiClient(transport).oauth.revoke({ token: 'refresh-token' });
+
+    expect(transport.sent[0].headers).toBeUndefined();
+  });
+});

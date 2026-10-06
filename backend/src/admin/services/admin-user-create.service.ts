@@ -1,7 +1,10 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Connection, Model } from 'mongoose';
-import { withMajorityTransaction } from '../../session/utils/mongo-transaction';
+import { Connection, Model, Types } from 'mongoose';
+import {
+  isUnknownTransactionOutcome,
+  withMajorityTransaction,
+} from '../../session/utils/mongo-transaction';
 import { rethrowOrUnavailable } from '../utils/admin-transaction.util';
 import { isMongoDuplicateKeyError } from '../../common/utils/mongo-error.util';
 import * as bcrypt from 'bcrypt';
@@ -18,6 +21,7 @@ import { ADMIN_PASSWORD_SALT_ROUNDS } from '../constants/admin-user.constants';
 import { mapToAdminUserDto } from '../mappers/admin-user.mapper';
 import { AdminUserAccessService } from './admin-user-access.service';
 import { reconcileAssignedRole } from '../utils/admin-role-reconcile.util';
+import type { AssignedRoleRef } from '../types/assigned-role-ref';
 
 /**
  * Creating an account from the admin area. The role must exist and sit below
@@ -63,6 +67,9 @@ export class AdminUserCreateService {
       password,
       ADMIN_PASSWORD_SALT_ROUNDS,
     );
+    let createdUserId: Types.ObjectId | undefined;
+    let assignmentRef: AssignedRoleRef | undefined;
+    let transactionAcknowledged = false;
     try {
       const outcome = await withMajorityTransaction(
         this.connection,
@@ -94,9 +101,19 @@ export class AdminUserCreateService {
             primaryProvider: AuthProvider.EMAIL,
           });
           await newUser.save({ session });
+          createdUserId = newUser._id;
+          assignmentRef = {
+            roleId: assignedRole._id,
+            assignedSlug: assignedRole.slug,
+            created: {
+              updatedAt: newUser.updatedAt,
+              sessionVersion: newUser.sessionVersion ?? 0,
+            },
+          };
           return { newUser, roleId: assignedRole._id };
         },
       );
+      transactionAcknowledged = true;
       const { newUser } = outcome;
       newUser.role = await reconcileAssignedRole({
         connection: this.connection,
@@ -129,6 +146,27 @@ export class AdminUserCreateService {
           'Email already in use',
           HttpStatus.CONFLICT,
         );
+      }
+      if (
+        !transactionAcknowledged &&
+        isUnknownTransactionOutcome(error) &&
+        createdUserId &&
+        assignmentRef
+      ) {
+        try {
+          await reconcileAssignedRole({
+            connection: this.connection,
+            roleModel: this.roleModel,
+            userModel: this.userModel,
+            events: this.events,
+            logger: this.logger,
+            actorId,
+            userId: createdUserId,
+            ref: assignmentRef,
+          });
+        } catch {
+          // A role rename or deletion also records its own durable sweep.
+        }
       }
       rethrowOrUnavailable(error);
     }

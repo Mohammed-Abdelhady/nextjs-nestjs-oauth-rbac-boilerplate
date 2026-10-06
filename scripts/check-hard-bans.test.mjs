@@ -130,6 +130,10 @@ test('line cap: 350 passes and 351 fails under src', () => {
   assert.equal(over.caps[0].lines, FILE_LINE_LIMIT + 1);
 });
 
+test('mobile test files use the same line cap as source files', () => {
+  assert.equal(isCappedPath('mobile/auth/test/long.test.ts'), true);
+});
+
 test('root scripts over the cap are not gated', () => {
   assert.equal(isCappedPath('scripts/init.js'), false);
   const result = evaluateChanges({

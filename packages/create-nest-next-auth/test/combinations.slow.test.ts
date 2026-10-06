@@ -132,7 +132,12 @@ describe('generated projects', () => {
     const selected = resolveSelection(manifest, requested).selected;
     const markerIds = [...Object.keys(manifest.features), ...Object.keys(manifest.options)];
     const kept = [...selected, ...Object.keys(manifest.options)];
-    const differences = await compareWithRepository(project, kept, markerIds);
+    const differences = await compareWithRepository(
+      project,
+      kept,
+      markerIds,
+      manifest.core.alwaysRemoveFiles,
+    );
     expect(differences, JSON.stringify(differences, null, 2)).toEqual([]);
   });
 

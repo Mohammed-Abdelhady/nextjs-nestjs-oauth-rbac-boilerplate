@@ -90,6 +90,7 @@ export enum ErrorCode {
   SESSION_LIMIT_REACHED = 'SESSION_LIMIT_REACHED',
   /** Authoritative session state could not be read */
   AUTHORITY_UNAVAILABLE = 'AUTHORITY_UNAVAILABLE',
+  TRANSACTION_OUTCOME_UNKNOWN = 'TRANSACTION_OUTCOME_UNKNOWN',
   /** Registered application is missing */
   APPLICATION_NOT_FOUND = 'APPLICATION_NOT_FOUND',
   /** Registered application is disabled */

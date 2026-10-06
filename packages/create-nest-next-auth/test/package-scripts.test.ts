@@ -2,7 +2,12 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { prunePackageScripts, pruneRootPackage } from '../src/prune/package-scripts.js';
+import {
+  prunePackageScripts,
+  prunePackageDependencies,
+  prunePackageWorkspaces,
+  pruneRootPackage,
+} from '../src/prune/package-scripts.js';
 
 function packageJson(scripts: Record<string, string>): Record<string, unknown> {
   return { name: 'app', private: true, scripts };
@@ -160,6 +165,32 @@ describe('prunePackageScripts', () => {
     const result = prunePackageScripts({ name: 'app' }, ['scripts/setup-production.js']);
 
     expect(result).toEqual({ name: 'app' });
+  });
+});
+
+describe('prunePackageWorkspaces', () => {
+  it('removes a workspace glob when pruning leaves no package manifest under it', () => {
+    const result = prunePackageWorkspaces({ workspaces: ['backend', 'mobile/*', 'shared/*'] }, [
+      'backend/package.json',
+      'shared/core/package.json',
+      'shared/sdk/package.json',
+    ]);
+
+    expect(result.workspaces).toEqual(['backend', 'shared/*']);
+  });
+});
+
+describe('prunePackageDependencies', () => {
+  it('removes references to workspace packages that were removed', () => {
+    const packageJson = {
+      devDependencies: { '@app/native-auth': '*', eslint: '^9.0.0' },
+      optionalDependencies: { '@app/native-auth': '*' },
+    };
+
+    expect(prunePackageDependencies(packageJson, new Set(['@app/native-auth']))).toEqual({
+      devDependencies: { eslint: '^9.0.0' },
+      optionalDependencies: {},
+    });
   });
 });
 

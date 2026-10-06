@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "$comment": "Feature map read by packages/create-nest-next-auth. Entries with \"status\": \"planned\" are not offered by the CLI. Entries with \"kind\": \"hidden\" come in through another feature's \"requires\" instead of being picked directly. Files and env vars listed here are deleted from a generated project when the feature is not selected. A path may sit under a directory another feature claims, as the provider strategies do under oauth-core; what a path may not do is belong to a feature that is still needed once this one is gone. Lines shared code needs only for one feature carry a `// feature:<id>` marker instead; see the CLI README.",
+  "$comment": "Feature map read by packages/create-nest-next-auth. Entries with \"status\": \"planned\" are not offered by the CLI. Entries with \"kind\": \"hidden\" come in through another feature's \"requires\" instead of being picked directly. Files and env vars listed here are deleted from a generated project when the feature is not selected. A path may sit under a directory another feature claims, as the provider strategies do under oauth-core; what a path may not do is belong to a feature that is still needed once this one is gone. Lines shared code needs only for one feature carry a `// feature:<id>` marker instead; see the CLI README. While native targets are planned, mobile/** stays in alwaysRemoveFiles. Remove that entry when a native target becomes available so native-core can ship its mobile workspaces.",
   "targets": {
     "web": {
       "label": "Web app (Next.js)",
@@ -26,8 +26,8 @@
   },
   "shared": {
     "native-core": {
-      "files": ["mobile/core/**", "mobile/device-key/**"],
-      "workspaces": ["mobile/core", "mobile/device-key"]
+      "files": ["mobile/auth/**", "mobile/device-key/**"],
+      "workspaces": ["mobile/auth", "mobile/device-key"]
     }
   },
   "databases": {
@@ -452,6 +452,9 @@
   "core": {
     "alwaysRemoveFiles": [
       "frontend/e2e/**",
+      "mobile/**",
+      "backend/test/native-auth-engine.e2e-spec.ts",
+      "backend/test/utils/native-auth-engine-harness.ts",
       "frontend/playwright.config.ts",
       "frontend/playwright.frontend.config.ts",
       "backend/test/utils/browser-server.ts",

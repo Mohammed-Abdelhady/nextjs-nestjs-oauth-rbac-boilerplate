@@ -12,12 +12,16 @@ import {
   MONGO_UNAVAILABLE_CODES,
   MONGO_TRANSIENT_TRANSACTION_LABEL,
 } from '../constants/mongo-errors';
+import { isUnknownTransactionOutcome } from '../exceptions/unknown-transaction-outcome.error';
 
 /**
- * True for connectivity, primary loss, interrupted work and exhausted write
- * conflicts; database rejections and application errors keep their own status.
+ * True for outages, unknown commits and exhausted write conflicts; ordinary
+ * database rejections and application errors keep their own status.
  */
 export function isDatabaseUnavailableError(exception: unknown): boolean {
+  if (isUnknownTransactionOutcome(exception)) {
+    return true;
+  }
   if (
     typeof exception === 'object' &&
     exception !== null &&
@@ -132,11 +136,7 @@ export function isDuplicateEmailError(exception: unknown): boolean {
   return false;
 }
 
-/**
- * The loggable facts about a driver error: its name and code. Driver
- * messages embed the offending value, so a log line names the error
- * instead of quoting it.
- */
+/** Names an error and one cause by sanitized name and code, never by message. */
 const LOGGABLE_ERROR_TOKEN_PATTERN = /^[A-Za-z0-9_.]{1,60}$/;
 const UNPRINTABLE_ERROR_TOKEN = 'unprintable';
 
@@ -154,9 +154,31 @@ export function describeDriverError(error: unknown): string {
     const facts = error as { name?: unknown; code?: unknown };
     const name = errorToken(facts.name);
     if (typeof facts.code === 'undefined') {
-      return `name=${name}`;
+      return describeCause(error, `name=${name}`);
     }
-    return `name=${name} code=${errorToken(facts.code, true)}`;
+    return describeCause(
+      error,
+      `name=${name} code=${errorToken(facts.code, true)}`,
+    );
   }
   return `non-object ${typeof error}`;
+}
+
+function describeCause(error: object, summary: string): string {
+  if (
+    !('cause' in error) ||
+    error.cause === undefined ||
+    error.cause === error
+  ) {
+    return summary;
+  }
+  const cause = error.cause;
+  if (typeof cause !== 'object' || cause === null) {
+    return `${summary} cause=non-object ${typeof cause}`;
+  }
+  const facts = cause as { name?: unknown; code?: unknown };
+  const name = errorToken(facts.name);
+  return typeof facts.code === 'undefined'
+    ? `${summary} cause=name=${name}`
+    : `${summary} cause=name=${name} code=${errorToken(facts.code, true)}`;
 }

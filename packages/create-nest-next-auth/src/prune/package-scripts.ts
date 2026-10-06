@@ -1,9 +1,10 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { ROOT_PACKAGE_JSON } from '../constants/index.js';
+import { ROOT_PACKAGE_JSON, ROOT_PACKAGE_LOCK } from '../constants/index.js';
 import TEMPLATE_TEST_POLICY from '../constants/template-tests.json' with { type: 'json' };
 import { isRecord } from '../manifest/read.js';
-import { readFileIfExists } from '../utils/fs.js';
+import { listFiles, readFileIfExists } from '../utils/fs.js';
+import { matchesGlob } from '../utils/glob.js';
 
 const REPOSITORY_TEST_PATHS = TEMPLATE_TEST_POLICY.EXCLUDED_PATH_PATTERNS.map(
   (pattern) => new RegExp(pattern),
@@ -78,6 +79,43 @@ export function prunePackageScripts(
   return { ...packageJson, scripts };
 }
 
+export function prunePackageWorkspaces(
+  packageJson: Record<string, unknown>,
+  existingFiles: readonly string[],
+): Record<string, unknown> {
+  if (!Array.isArray(packageJson.workspaces)) return packageJson;
+  const workspaces = packageJson.workspaces.filter((workspace) => {
+    if (typeof workspace !== 'string') return true;
+    return existingFiles.some((file) => matchesGlob(file, `${workspace}/package.json`));
+  });
+  return { ...packageJson, workspaces };
+}
+
+export function prunePackageDependencies(
+  packageJson: Record<string, unknown>,
+  unavailableWorkspaceNames: ReadonlySet<string>,
+): Record<string, unknown> {
+  let changed = false;
+  const updated = { ...packageJson };
+  for (const group of [
+    'dependencies',
+    'devDependencies',
+    'optionalDependencies',
+    'peerDependencies',
+  ]) {
+    const dependencies = packageJson[group];
+    if (!isRecord(dependencies)) continue;
+    const kept = Object.fromEntries(
+      Object.entries(dependencies).filter(([name]) => !unavailableWorkspaceNames.has(name)),
+    );
+    if (Object.keys(kept).length !== Object.keys(dependencies).length) {
+      updated[group] = kept;
+      changed = true;
+    }
+  }
+  return changed ? updated : packageJson;
+}
+
 /** Applies the typed transform to a generated root package.json. */
 export async function pruneRootPackage(
   root: string,
@@ -96,9 +134,41 @@ export async function pruneRootPackage(
   }
   if (!isRecord(parsed)) return false;
 
-  const updated = prunePackageScripts(parsed, deletedFiles);
-  if (JSON.stringify(updated) === JSON.stringify(parsed)) return false;
+  const existingFiles = await listFiles(root);
+  const unavailableWorkspaceNames = await findUnavailableWorkspaceNames(root, existingFiles);
+  const withScripts = prunePackageScripts(parsed, deletedFiles);
+  const withWorkspaces = prunePackageWorkspaces(withScripts, existingFiles);
+  const updated = prunePackageDependencies(withWorkspaces, unavailableWorkspaceNames);
+  let changed = JSON.stringify(updated) !== JSON.stringify(parsed);
+  if (changed) await writeFile(path, `${JSON.stringify(updated, null, 2)}\n`, 'utf8');
 
-  await writeFile(path, `${JSON.stringify(updated, null, 2)}\n`, 'utf8');
-  return true;
+  for (const file of existingFiles.filter((entry) => entry.endsWith('/package.json'))) {
+    const nestedPath = join(root, file);
+    const nestedRaw = await readFileIfExists(nestedPath);
+    if (nestedRaw === undefined) continue;
+    const nested: unknown = JSON.parse(nestedRaw);
+    if (!isRecord(nested)) continue;
+    const pruned = prunePackageDependencies(nested, unavailableWorkspaceNames);
+    if (pruned === nested) continue;
+    await writeFile(nestedPath, `${JSON.stringify(pruned, null, 2)}\n`, 'utf8');
+    changed = true;
+  }
+  return changed;
+}
+
+async function findUnavailableWorkspaceNames(
+  root: string,
+  files: readonly string[],
+): Promise<Set<string>> {
+  const raw = await readFileIfExists(join(root, ROOT_PACKAGE_LOCK));
+  if (raw === undefined) return new Set();
+  const lock: unknown = JSON.parse(raw);
+  if (!isRecord(lock) || !isRecord(lock.packages)) return new Set();
+  const names = new Set<string>();
+  for (const [path, entry] of Object.entries(lock.packages)) {
+    if (!path || path.startsWith('node_modules/') || !isRecord(entry)) continue;
+    if (typeof entry.resolved === 'string' || files.includes(`${path}/package.json`)) continue;
+    if (typeof entry.name === 'string') names.add(entry.name);
+  }
+  return names;
 }

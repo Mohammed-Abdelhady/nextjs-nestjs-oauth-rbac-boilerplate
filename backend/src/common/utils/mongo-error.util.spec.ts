@@ -15,6 +15,7 @@ import {
   isDatabaseUnavailableError,
 } from './mongo-error.util';
 import { MONGO_TRANSIENT_TRANSACTION_LABEL } from '../constants/mongo-errors';
+import { UnknownTransactionOutcomeError } from '../exceptions/unknown-transaction-outcome.error';
 
 const mongoose = new Mongoose();
 const document = new (mongoose.model(
@@ -35,6 +36,7 @@ const labelledServerError = new MongoServerError({
   code: 2,
 });
 labelledServerError.addErrorLabel(MONGO_TRANSIENT_TRANSACTION_LABEL);
+const unknownCommitCause = new MongoTopologyClosedError();
 
 const CASES: Array<{ label: string; error: unknown; unavailable: boolean }> = [
   {
@@ -63,6 +65,11 @@ const CASES: Array<{ label: string; error: unknown; unavailable: boolean }> = [
   {
     label: 'label on a non-driver error',
     error: { errorLabels: [MONGO_TRANSIENT_TRANSACTION_LABEL] },
+    unavailable: true,
+  },
+  {
+    label: 'unknown commit outcome',
+    error: new UnknownTransactionOutcomeError(unknownCommitCause),
     unavailable: true,
   },
   ...[
@@ -188,6 +195,13 @@ describe('driver error descriptions omit personal values', () => {
         'connection failed for private@example.test',
       ),
       expected: 'name=MongoNetworkError',
+    },
+    {
+      error: new UnknownTransactionOutcomeError(
+        new MongoServerError({ message: 'sensitive driver text', code: 91 }),
+      ),
+      expected:
+        'name=UnknownTransactionOutcomeError cause=name=MongoServerError code=91',
     },
     {
       error: {

@@ -6,8 +6,27 @@ export interface ApiErrorInit {
   requestId?: string;
 }
 
+const SDK_ERROR_BRAND = Symbol.for('@app/sdk/SdkError');
+
+export function isSdkError(error: unknown): error is SdkError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    Object.prototype.hasOwnProperty.call(error, SDK_ERROR_BRAND)
+  );
+}
+
+/** Base class for errors the SDK client preserves across transport boundaries. */
+export class SdkError extends Error {
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = 'SdkError';
+    Object.defineProperty(this, SDK_ERROR_BRAND, { value: true });
+  }
+}
+
 /** A response arrived and it was not a success. */
-export class ApiError extends Error {
+export class ApiError extends SdkError {
   readonly status: number;
   /** An `@app/core` error code from the body, or one mapped from the status. */
   readonly code: string;
@@ -32,7 +51,7 @@ export interface OAuthErrorInit {
 }
 
 /** A raw OAuth route refused the request with `{ error }`. */
-export class OAuthError extends Error {
+export class OAuthError extends SdkError {
   readonly status: number;
   /** The OAuth error string, one of `OAUTH_ERROR` for this server. */
   readonly error: string;

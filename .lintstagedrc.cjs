@@ -11,5 +11,6 @@ module.exports = {
   'shared/core/**/*.ts': ['eslint --fix --max-warnings 0 --config shared/core/eslint.config.mjs'],
   'shared/sdk/**/*.ts': ['eslint --fix --max-warnings 0 --config shared/sdk/eslint.config.mjs'],
   'mobile/**/*.{ts,tsx,js,jsx,json}': ['prettier --write'],
+  'mobile/auth/**/*.ts': ['eslint --fix --max-warnings 0 --config mobile/auth/eslint.config.mjs'],
   '*.{md,yml,yaml}': ['prettier --write'],
 };

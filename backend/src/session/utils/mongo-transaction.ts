@@ -1,10 +1,17 @@
 import { ClientSession, Connection } from 'mongoose';
+import { UnknownTransactionOutcomeError } from '../../common/exceptions/unknown-transaction-outcome.error';
+
+export {
+  isUnknownTransactionOutcome,
+  UnknownTransactionOutcomeError,
+} from '../../common/exceptions/unknown-transaction-outcome.error';
 
 const MAX_TRANSACTION_ATTEMPTS = 3;
 const MAX_COMMIT_ATTEMPTS = 3;
 export const UNKNOWN_COMMIT_RESULT_LABEL = 'UnknownTransactionCommitResult';
+const TRANSIENT_TRANSACTION_ERROR_LABEL = 'TransientTransactionError';
 
-export function hasErrorLabel(error: unknown, label: string): boolean {
+function hasErrorLabel(error: unknown, label: string): boolean {
   if (typeof error !== 'object' || error === null) {
     return false;
   }
@@ -12,9 +19,9 @@ export function hasErrorLabel(error: unknown, label: string): boolean {
   return Array.isArray(labels) && labels.includes(label);
 }
 
-export function isTransientTransactionError(error: unknown): boolean {
+function isTransientTransactionError(error: unknown): boolean {
   return (
-    hasErrorLabel(error, 'TransientTransactionError') ||
+    hasErrorLabel(error, TRANSIENT_TRANSACTION_ERROR_LABEL) ||
     isCatalogRetry(error, new Set())
   );
 }
@@ -56,15 +63,20 @@ export async function withMajorityTransaction<T>(
           commitAttempt += 1
         ) {
           try {
+            commitOutcomeUnknown = true;
             await session.commitTransaction();
+            commitOutcomeUnknown = false;
             return result;
           } catch (error) {
-            if (!hasErrorLabel(error, UNKNOWN_COMMIT_RESULT_LABEL)) {
+            if (hasErrorLabel(error, TRANSIENT_TRANSACTION_ERROR_LABEL)) {
+              commitOutcomeUnknown = false;
               throw error;
             }
             commitOutcomeUnknown = true;
+            if (!hasErrorLabel(error, UNKNOWN_COMMIT_RESULT_LABEL))
+              throw new UnknownTransactionOutcomeError(error);
             if (commitAttempt === MAX_COMMIT_ATTEMPTS - 1) {
-              throw error;
+              throw new UnknownTransactionOutcomeError(error);
             }
           }
         }

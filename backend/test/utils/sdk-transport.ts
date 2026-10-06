@@ -35,8 +35,11 @@ export function supertestTransport(
   bearer?: string,
 ): Transport {
   return {
-    request: async ({ method, path, body }) => {
+    request: async ({ method, path, body, headers }) => {
       let call = caller()[VERBS[method]](path);
+      for (const [name, value] of Object.entries(headers ?? {})) {
+        if (name.toLowerCase() !== 'content-type') call = call.set(name, value);
+      }
       if (bearer) call = call.set('Authorization', `Bearer ${bearer}`);
       if (typeof body === 'object' && body !== null) call = call.send(body);
       const response = await call;

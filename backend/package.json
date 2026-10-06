@@ -55,6 +55,7 @@
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
+    "@app/native-auth": "*",
     "@app/sdk": "*",
     "@eslint/eslintrc": "^3.3.7",
     "@eslint/js": "^9.39.5",

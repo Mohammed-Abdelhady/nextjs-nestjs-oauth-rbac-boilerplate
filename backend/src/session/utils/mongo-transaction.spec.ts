@@ -1,6 +1,9 @@
 import { createConnection } from 'mongoose';
-import { MongoClient } from 'mongodb';
-import { withMajorityTransaction } from './mongo-transaction';
+import { MongoClient, MongoServerError } from 'mongodb';
+import {
+  UnknownTransactionOutcomeError,
+  withMajorityTransaction,
+} from './mongo-transaction';
 
 class LabeledTransactionError extends Error {
   constructor(
@@ -29,11 +32,7 @@ describe('withMajorityTransaction', () => {
     jest.spyOn(session, 'commitTransaction').mockImplementation(() => {
       commitCalls += 1;
       if (commitCalls === 1) {
-        return Promise.reject(
-          new LabeledTransactionError('lost commit reply', [
-            'UnknownTransactionCommitResult',
-          ]),
-        );
+        return Promise.reject(unknownCommitError());
       }
       inTransaction = false;
       return Promise.resolve();
@@ -64,9 +63,7 @@ describe('withMajorityTransaction', () => {
     let workCalls = 0;
     let commitCalls = 0;
     let abortCalls = 0;
-    const failure = new LabeledTransactionError('lost commit reply', [
-      'UnknownTransactionCommitResult',
-    ]);
+    const failure = unknownCommitError();
     jest.spyOn(connection, 'startSession').mockResolvedValue(session);
     jest.spyOn(session, 'startTransaction').mockImplementation(() => {
       inTransaction = true;
@@ -95,9 +92,64 @@ describe('withMajorityTransaction', () => {
       );
 
       expect({ outcome, workCalls, commitCalls, abortCalls }).toEqual({
-        outcome: { error: failure },
+        outcome: {
+          error: expect.objectContaining({
+            name: 'UnknownTransactionOutcomeError',
+            driverError: failure,
+          }),
+        },
         workCalls: 1,
         commitCalls: 3,
+        abortCalls: 0,
+      });
+    } finally {
+      await connection.close();
+      await client.close();
+    }
+  });
+
+  it('keeps a later commit failure ambiguous after an unknown commit reply', async () => {
+    const client = new MongoClient('mongodb://127.0.0.1:27017');
+    const session = client.startSession();
+    const connection = createConnection();
+    let inTransaction = false;
+    let commitCalls = 0;
+    let abortCalls = 0;
+    const laterFailure = new MongoServerError({
+      message: 'commit retry lost connection',
+    });
+    jest.spyOn(connection, 'startSession').mockResolvedValue(session);
+    jest.spyOn(session, 'startTransaction').mockImplementation(() => {
+      inTransaction = true;
+    });
+    jest
+      .spyOn(session, 'inTransaction')
+      .mockImplementation(() => inTransaction);
+    jest.spyOn(session, 'commitTransaction').mockImplementation(() => {
+      commitCalls += 1;
+      return Promise.reject(
+        commitCalls === 1 ? unknownCommitError() : laterFailure,
+      );
+    });
+    jest.spyOn(session, 'endSession').mockResolvedValue(undefined);
+    jest.spyOn(session, 'abortTransaction').mockImplementation(() => {
+      abortCalls += 1;
+      return Promise.resolve();
+    });
+
+    try {
+      const outcome = await withMajorityTransaction(connection, () =>
+        Promise.resolve('committed'),
+      ).then(
+        (result) => ({ result }),
+        (error: unknown) => ({ error }),
+      );
+
+      const failure = 'error' in outcome ? outcome.error : undefined;
+      expect(failure).toBeInstanceOf(UnknownTransactionOutcomeError);
+      expect(failure).toMatchObject({ driverError: laterFailure });
+      expect({ commitCalls, abortCalls }).toEqual({
+        commitCalls: 2,
         abortCalls: 0,
       });
     } finally {
@@ -207,3 +259,9 @@ describe('withMajorityTransaction', () => {
     }
   });
 });
+
+function unknownCommitError(): MongoServerError {
+  const error = new MongoServerError({ message: 'lost commit reply' });
+  error.addErrorLabel('UnknownTransactionCommitResult');
+  return error;
+}

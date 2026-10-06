@@ -51,22 +51,30 @@ interface Transport<TSignal> {
   request(request: {
     method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
     path: string;
+    headers?: Readonly<Record<string, string>>;
     body?: unknown;
     signal?: TSignal;
   }): Promise<{ status: number; body: unknown }>;
 }
 ```
 
-The transport owns the base URL, credentials, and JSON. It serialises `body`,
-sets `Content-Type: application/json`, and answers with the parsed JSON or
+The transport owns the base URL, credentials, and JSON. It forwards `headers`,
+serialises `body`, and sets `Content-Type: application/json` for JSON bodies.
+Caller headers cannot override that content type. It answers with the parsed JSON or
 `undefined` when the response has none. It resolves for every HTTP status and
-rejects only when no response was received.
+rejects when it cannot produce a response. A transport may reject with an
+`SdkError` when it has a typed failure to report. The client preserves that
+error by identity. It converts any other rejection to `TransportError`, keeps
+the original value in `cause`, and reports `aborted` when the supplied signal
+has been aborted.
 
 Every client method takes `{ signal }` as its last argument and hands it to the
 transport untouched. Pass `AbortSignal` as `TSignal` on a platform that has it.
 
 ## Errors
 
+- `SdkError`: the base class for typed errors from this package. The client
+  preserves any `SdkError` thrown by a transport.
 - `ApiError`: a response arrived and was not usable. It carries `status`, `code`
   (from the body, or mapped from the status by `@app/core`), `message`, `fields`
   on a validation error, and `requestId` when the server sent one. A success
