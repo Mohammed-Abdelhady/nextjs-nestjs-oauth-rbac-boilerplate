@@ -97,6 +97,12 @@ options stay as the manifest defines them.
 `--dry-run` resolves the selection, prints the summary and exits 0 without
 copying, pruning, installing or committing anything.
 
+## Generated instructions
+
+Each project gets an `AGENTS.md` with its code rules, commit types and scopes,
+check list, and package manager. `CLAUDE.md` points to it. The generated
+`.gitignore` tracks both files.
+
 Generated projects use pnpm 12.6.0 with an isolated dependency layout. On Node 22,
 run `corepack enable` and `corepack prepare pnpm@12.6.0 --activate`. When pnpm is
 available, the installer updates the lockfile before the first commit. Without the
