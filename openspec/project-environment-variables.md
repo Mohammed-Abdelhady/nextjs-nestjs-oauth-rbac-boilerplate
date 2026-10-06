@@ -25,6 +25,10 @@ SESSION_COOKIE_MAX_AGE=604800000
 # OAuth / passkey state signing (generate with: openssl rand -base64 48)
 OAUTH_STATE_SECRET=your-super-secret-oauth-state-key-min-32-chars
 
+# Native DPoP nonce signing (required when AUTH_NATIVE_ENABLED=true; generate with: openssl rand -hex 32)
+AUTH_NATIVE_ENABLED=false
+AUTH_NATIVE_DPOP_NONCE_SECRET=your-secure-native-dpop-nonce-secret
+
 # Email Service (SendGrid)
 MAIL_KEY=SG.your-sendgrid-api-key          # SendGrid API key
 EMAIL_FROM=noreply@yourdomain.com           # Sender email address

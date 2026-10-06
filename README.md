@@ -116,15 +116,16 @@ cp frontend/.env.example frontend/.env.local
 
 ### Key backend variables (`backend/.env`)
 
-| Variable              | Description                                | Default                                               |
-| --------------------- | ------------------------------------------ | ----------------------------------------------------- |
-| `PORT`                | API server port                            | `5000`                                                |
-| `NODE_ENV`            | Environment name                           | `development`                                         |
-| `MONGO_URI`           | MongoDB URI                                | `mongodb://localhost:27017/authboiler?replicaSet=rs0` |
-| `FRONTEND_URL`        | Frontend origin for CORS and cookie domain | `http://localhost:3000`                               |
-| `SESSION_SECRET`      | Secret used to sign session cookies        | Required in production                                |
-| `OAUTH_STATE_SECRET`  | Secret used to sign OAuth state cookies    | Required in production                                |
-| `TOTP_ENCRYPTION_KEY` | 32-byte hex key to encrypt TOTP secrets    | Required for 2FA                                      |
+| Variable                        | Description                                                           | Default                                               |
+| ------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------- |
+| `PORT`                          | API server port                                                       | `5000`                                                |
+| `NODE_ENV`                      | Environment name                                                      | `development`                                         |
+| `MONGO_URI`                     | MongoDB URI                                                           | `mongodb://localhost:27017/authboiler?replicaSet=rs0` |
+| `FRONTEND_URL`                  | Frontend origin for CORS and cookie domain                            | `http://localhost:3000`                               |
+| `SESSION_SECRET`                | Secret used to sign session cookies                                   | Required in production                                |
+| `OAUTH_STATE_SECRET`            | Secret used to sign OAuth state cookies                               | Required in production                                |
+| `AUTH_NATIVE_DPOP_NONCE_SECRET` | HMAC secret for DPoP nonces; required when `AUTH_NATIVE_ENABLED=true` | At least 32 characters when native sign-in is enabled |
+| `TOTP_ENCRYPTION_KEY`           | 32-byte hex key to encrypt TOTP secrets                               | Required for 2FA                                      |
 
 ### Key frontend variables (`frontend/.env.local`)
 
