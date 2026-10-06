@@ -244,6 +244,7 @@ describe('the packed CLI', () => {
     const env = readFileSync(join(project, 'backend/.env.example'), 'utf8');
     expect(env).toContain('OAUTH_STATE_SECRET');
     expect(env).toContain('AUTH_NATIVE_ENABLED=false');
+    expect(env).toContain('AUTH_NATIVE_DPOP_REQUIRED=false');
     expect(env).toContain('AUTH_NATIVE_DPOP_NONCE_SECRET=');
     expect(env).toContain('AUTH_FEATURES=passkeys');
     const schema = readFileSync(join(project, 'backend/src/config/env.oauth.schema.ts'), 'utf8');
@@ -288,6 +289,9 @@ describe('the packed CLI', () => {
     );
     expect(readFileSync(join(project, 'backend/.env.example'), 'utf8')).toContain(
       'AUTH_NATIVE_DPOP_NONCE_SECRET=',
+    );
+    expect(readFileSync(join(project, 'backend/.env.example'), 'utf8')).toContain(
+      'AUTH_NATIVE_DPOP_REQUIRED=false',
     );
     expect(readFileSync(join(project, 'backend/src/app.module.ts'), 'utf8')).toContain(
       'GoogleOAuthStrategy',
