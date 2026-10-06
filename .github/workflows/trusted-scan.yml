@@ -1,0 +1,42 @@
+name: Trusted scan
+
+on:
+  pull_request_target:
+    branches: [staging, master]
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  trusted-range:
+    name: Trusted hard-ban range
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Fetch PR and current base objects without checking them out
+        id: fetch
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/ci.mjs --fetch
+      - name: Scan with the base branch policy
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          CURRENT_BASE_SHA: ${{ steps.fetch.outputs.base }}
+        run: node scripts/ci.mjs --range "$BASE_SHA" "$HEAD_SHA" "$CURRENT_BASE_SHA"
