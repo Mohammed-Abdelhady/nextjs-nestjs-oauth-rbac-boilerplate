@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createApiClient, type ApiClient } from './client';
 import { ApiError, OAuthError } from './errors';
+import { SdkError } from './index';
 import { answering, rejecting, type FakeTransport } from './test-support';
 import { TransportError, type TransportSignal } from './transport';
 
@@ -95,10 +96,39 @@ describe('createApiClient without a response', () => {
     const client = createApiClient(rejecting(offline));
 
     await expect(client.profile.get()).rejects.toBe(offline);
+    expect(offline).toBeInstanceOf(SdkError);
     expect(offline.reason).toBe('no_response');
   });
 
-  it('wraps any other rejection as a network failure that keeps the cause', async () => {
+  it.each([
+    ['ApiError', new ApiError({ status: 409, code: 'CONFLICT', message: 'Conflict' })],
+    ['OAuthError', new OAuthError({ status: 400, error: 'invalid_grant' })],
+  ])('preserves a transport-thrown %s by identity', async (_name, typedError) => {
+    const received = await createApiClient(rejecting(typedError))
+      .profile.get()
+      .then(
+        () => undefined,
+        (error: unknown) => error,
+      );
+
+    expect(received).toBe(typedError);
+    expect(typedError).toBeInstanceOf(SdkError);
+  });
+
+  it('preserves a branded SDK error created by a second package copy', async () => {
+    const duplicateCopyError = new Error('session is required');
+    Object.defineProperty(duplicateCopyError, Symbol.for('@app/sdk/SdkError'), { value: true });
+    const received = await createApiClient(rejecting(duplicateCopyError))
+      .profile.get()
+      .then(
+        () => undefined,
+        (error: unknown) => error,
+      );
+
+    expect(received).toBe(duplicateCopyError);
+  });
+
+  it('wraps an untyped rejection as a network failure that keeps the cause', async () => {
     const cause = new TypeError('Network request failed');
     const failure = createApiClient(rejecting(cause)).sessions.list();
 
@@ -151,7 +181,7 @@ describe('createApiClient without a response', () => {
     await expect(failure).rejects.toMatchObject({ reason: 'aborted', cause: abortError });
   });
 
-  it('reports an abort as aborted even when the transport called it a network failure', async () => {
+  it('reports abort when a no-response transport error follows the signal abort', async () => {
     const signal = { aborted: false };
     const mislabelled = new TransportError('no_response');
     const client = createApiClient({
