@@ -26,11 +26,13 @@ export const OAUTH_ERROR = {
   INVALID_REQUEST: 'invalid_request',
   INVALID_CLIENT: 'invalid_client',
   INVALID_GRANT: 'invalid_grant',
+  INVALID_DPOP_PROOF: 'invalid_dpop_proof',
   UNAUTHORIZED_CLIENT: 'unauthorized_client',
   UNSUPPORTED_GRANT_TYPE: 'unsupported_grant_type',
   UNSUPPORTED_RESPONSE_TYPE: 'unsupported_response_type',
   INVALID_SCOPE: 'invalid_scope',
   ACCESS_DENIED: 'access_denied',
+  USE_DPOP_NONCE: 'use_dpop_nonce',
 } as const;
 
 export type OAuthErrorCode = (typeof OAUTH_ERROR)[keyof typeof OAUTH_ERROR];
