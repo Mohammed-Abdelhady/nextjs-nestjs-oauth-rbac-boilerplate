@@ -1,5 +1,6 @@
+import { existsSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
-import { basename, relative, resolve } from 'node:path';
+import { basename, join, relative, resolve } from 'node:path';
 import { cancel, intro, log, note, outro, spinner } from '@clack/prompts';
 import { CommanderError } from 'commander';
 import {
@@ -32,6 +33,7 @@ import { initRepository } from './scaffold/git.js';
 import { installDependencies, prepareLockfile } from './scaffold/install.js';
 import { buildDocLinks, buildNextSteps, readWorkspaceStartScripts } from './scaffold/next-steps.js';
 import { setProjectName } from './scaffold/package-json.js';
+import { writeRulesText } from './scaffold/rules-text.js';
 import type { AnswersRecord, CliOptions, Manifest, PruneResult } from './types.js';
 import { isErrnoException } from './utils/fs.js';
 import { validateProjectName } from './utils/project-name.js';
@@ -115,6 +117,17 @@ async function scaffold(
     return 1;
   }
   pruning.stop('Pruned');
+  await writeRulesText({
+    projectRoot: target,
+    level: 'strict',
+    delivery: {
+      hooks:
+        existsSync(join(target, '.husky/pre-commit')) &&
+        existsSync(join(target, '.husky/commit-msg')) &&
+        existsSync(join(target, '.husky/pre-push')),
+      actions: existsSync(join(target, '.github/workflows/ci.yml')),
+    },
+  });
   log.message(describeSelection(manifest, result).join('\n'));
   const lockfileUpdating = spinner();
   lockfileUpdating.start('Updating pnpm lockfile');

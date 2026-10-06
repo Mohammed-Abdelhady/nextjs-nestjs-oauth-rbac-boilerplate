@@ -455,6 +455,8 @@
   "core": {
     "alwaysRemoveFiles": [
       ".github/CODEOWNERS",
+      "AGENTS.md",
+      "CLAUDE.md",
       "frontend/e2e/**",
       "mobile/**",
       "backend/test/native-auth-engine.e2e-spec.ts",
