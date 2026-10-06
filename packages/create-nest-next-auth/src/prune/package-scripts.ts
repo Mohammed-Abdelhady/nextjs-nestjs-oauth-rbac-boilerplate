@@ -116,13 +116,7 @@ export async function pruneRootPackage(
   const raw = await readFileIfExists(path);
   if (raw === undefined) return false;
 
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch (error) {
-    const reason = error instanceof Error ? error.message : String(error);
-    throw new Error(`Could not parse ${ROOT_PACKAGE_JSON}: ${reason}`);
-  }
+  const parsed = parsePackageJson(raw, ROOT_PACKAGE_JSON);
   if (!isRecord(parsed)) return false;
 
   const existingFiles = await listFiles(root);
@@ -142,7 +136,7 @@ export async function pruneRootPackage(
     const nestedPath = join(root, file);
     const nestedRaw = await readFileIfExists(nestedPath);
     if (nestedRaw === undefined) continue;
-    const nested: unknown = JSON.parse(nestedRaw);
+    const nested = parsePackageJson(nestedRaw, file);
     if (!isRecord(nested)) continue;
     const pruned = prunePackageDependencies(nested, unavailableWorkspaceNames);
     if (pruned === nested) continue;
@@ -166,7 +160,7 @@ async function findUnavailableWorkspaceNames(
   )) {
     const raw = await readFileIfExists(join(root, file));
     if (raw === undefined) continue;
-    const value: unknown = JSON.parse(raw);
+    const value = parsePackageJson(raw, file);
     if (!isRecord(value)) continue;
 
     if (workspaceManifests.has(file)) {
@@ -182,4 +176,13 @@ async function findUnavailableWorkspaceNames(
   }
 
   return new Set([...referenced].filter((name) => !available.has(name)));
+}
+
+function parsePackageJson(raw: string, file: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(`Could not parse ${file}: ${reason}`);
+  }
 }

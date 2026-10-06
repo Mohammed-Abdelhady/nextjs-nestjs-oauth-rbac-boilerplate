@@ -69,11 +69,20 @@ corepack prepare pnpm@12.6.0 --activate
 pnpm --version
 ```
 
-Clone the repository and install dependencies:
+<!-- repository-only:start -->
+
+Clone the repository:
 
 ```bash
 git clone https://github.com/Mohammed-Abdelhady/nextjs-nestjs-oauth-rbac-boilerplate.git
 cd nextjs-nestjs-oauth-rbac-boilerplate
+```
+
+<!-- repository-only:end -->
+
+Install dependencies from the project folder:
+
+```bash
 pnpm install
 ```
 

@@ -207,6 +207,18 @@ describe('pruneRootPackage', () => {
     await expect(pruneRootPackage(root, [])).rejects.toThrow(/Could not parse package\.json/);
   });
 
+  it.each(['backend/package.json', 'tools/package.json'])(
+    'names malformed nested JSON at %s',
+    async (file) => {
+      const root = await tempRoot();
+      await writeFile(join(root, 'package.json'), '{}');
+      await writeFile(join(root, 'pnpm-workspace.yaml'), 'packages: [backend]\n');
+      await mkdir(join(root, file.split('/')[0]));
+      await writeFile(join(root, file), '{ broken');
+      await expect(pruneRootPackage(root, [])).rejects.toThrow(`Could not parse ${file}:`);
+    },
+  );
+
   it('uses pnpm workspace folders to prune root workspace edges', async () => {
     const root = await tempRoot();
     await writeFile(join(root, 'pnpm-workspace.yaml'), 'packages: [backend]\n', 'utf8');

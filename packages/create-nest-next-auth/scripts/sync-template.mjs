@@ -149,7 +149,8 @@ export function templateContent(relativePath, bytes) {
         .toString('utf8')
         .replaceAll('branches: [staging, master]', 'branches: [staging, master, main]'),
     );
-  if (!workflow && relativePath !== TEMPLATE_TEST_POLICY.DOC_PATH) return bytes;
+  if (!workflow && relativePath !== TEMPLATE_TEST_POLICY.DOC_PATH && relativePath !== 'README.md')
+    return bytes;
   const start = workflow
     ? TEMPLATE_TEST_POLICY.WORKFLOW_ONLY_START
     : TEMPLATE_TEST_POLICY.REPOSITORY_ONLY_START;

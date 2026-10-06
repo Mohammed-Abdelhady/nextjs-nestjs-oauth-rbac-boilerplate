@@ -37,7 +37,7 @@ async function resolvePrettierConfig(
   root: string,
   relative: string,
 ): Promise<Record<string, unknown>> {
-  let directory = dirname(join(root, relative));
+  let directory = dirname(resolve(root, relative));
   const boundary = resolve(root);
 
   for (;;) {

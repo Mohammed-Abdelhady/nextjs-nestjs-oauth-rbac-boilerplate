@@ -75,6 +75,19 @@ export const ROOT_PACKAGE_JSON = 'package.json';
 /** Frontend manifest whose scripts the scaffold rewrites. */
 export const FRONTEND_PACKAGE_JSON = 'frontend/package.json';
 
+export const PLAYWRIGHT_SCRIPT_NAMES = [
+  'test:e2e',
+  'test:e2e:ui',
+  'test:e2e:headed',
+  'test:e2e:debug',
+] as const;
+
+export const BROWSER_STACK_PACKAGES = [
+  '@playwright/test',
+  'playwright',
+  '@axe-core/playwright',
+] as const;
+
 export const PACKAGE_DEPENDENCY_GROUPS = [
   'dependencies',
   'devDependencies',

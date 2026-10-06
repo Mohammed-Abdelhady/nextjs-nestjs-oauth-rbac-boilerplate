@@ -37,8 +37,8 @@ function removedEnvVars(manifest: Manifest, selected: Set<string>): EnvRemovals 
 
 /**
  * Removes everything the unselected features and options own, marked lines and
- * sections included, then reports imports and scripts that still point at
- * deleted files.
+ * sections included, then reports imports and scripts into deleted files and
+ * missing relative documentation links.
  */
 export async function prune(
   root: string,
