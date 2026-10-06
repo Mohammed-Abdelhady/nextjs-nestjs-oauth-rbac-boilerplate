@@ -8,14 +8,14 @@ Local Husky hooks run format, lint, and hard-ban scans on commit. Unit tests run
 
 `.husky/commit-msg` runs commitlint, then strips matching tool-attribution lines and exits 0 after rewriting the message. A remaining attribution match is an error.
 
-`.husky/pre-push` runs `node scripts/check-hard-bans.mjs --push --hook "$1" "$2"`, then `npm run lint`, `npm run typecheck`, and `npm test`. The checker is the first process to read Git's ref updates from stdin.
+`.husky/pre-push` runs `node scripts/check-hard-bans.mjs --push --hook "$1" "$2"`, then `pnpm run lint`, `pnpm run typecheck`, and `pnpm test`. The checker is the first process to read Git's ref updates from stdin.
 
 <!-- repository-only:start -->
 
 Playwright frontend e2e and CLI combination tests are outside the hook.
 <!-- repository-only:end -->
 
-Install hooks with `npm install` (`prepare` runs husky). Confirm they are executable with `ls -la .husky/`.
+Install hooks with `pnpm install --frozen-lockfile` (`prepare` runs husky). Confirm they are executable with `ls -la .husky/`.
 
 ## Hard-ban scan
 
@@ -67,15 +67,15 @@ Known token-scan gaps include identifier escapes, dynamically computed keys, ali
 ## Manual commands
 
 ```bash
-npm run check:bans
+pnpm run check:bans
 node scripts/check-hard-bans.mjs --range <base-commit> <head-commit>
 node scripts/check-hard-bans.mjs --all
-npm run check
-npm run format
-npm run lint
-npm run lint:fix
-npm run typecheck
-npm test
+pnpm run check
+pnpm run format
+pnpm run lint
+pnpm run lint:fix
+pnpm run typecheck
+pnpm test
 ```
 
 `--range` resolves both commits, finds their merge base and scans added lines from that commit to the head and checks changed-file lengths at the head commit. Missing or unresolvable commits return exit code 2. `--all` scans tracked and unignored current files for local inventory, without following symlinks or opening protected files. Git modes restrict scanned paths to the project containing the installed script. Invoke them from that project or its enclosing Git repository; the enclosing repository root still produces project-relative paths. A project with its own nested Git repository must instead be invoked in that repository; selecting the outer repository is an error. Production scanning preserves hook repository variables so linked worktrees and detached Git directories retain their context. Relative index paths resolve from the repository root.
@@ -97,18 +97,18 @@ For manual `--push` with empty stdin, the checker compares merge bases for the u
 
 Git metadata is diffed without path arguments. Content diffs use only eligible changed paths, grouped in bounded literal-path batches, then one blob batch. An edited rename whose old filename becomes a directory uses a separate object-ID diff to avoid selecting excluded descendants. This avoids argument-limit failures without reading protected files or known non-source images. The output buffer is bounded at 64 MiB; overflow returns 2 and asks for a smaller change. An operating-system argument/environment limit failure also returns 2 with instructions to reduce inherited environment size or split the change. Excerpts are capped at 240 characters and centered on the reported token. An overlong filesystem path is skipped with one warning; a tracked file deleted on disk is skipped during a full scan. CR line endings count in both reported lines and the ceiling.
 
-`npm run check` is the staged ban scan plus lint and typecheck, without tests. `npm test` runs workspace unit tests and retained config checks.
+`pnpm run check` is the staged ban scan plus lint and typecheck, without tests. `pnpm test` runs workspace unit tests and retained config checks.
 
 <!-- repository-only:start -->
 
-This repository's default config command includes listed root suites and fast `scripts/guardrails/*.test.mjs` suites. `npm run test:config:all` additionally runs every `scripts/guardrails/*.slow.mjs` suite, including real Git histories, hooks and large fixtures. CI should run that complete command. Generated projects retain the runtime checker and inexpensive config checks, and exclude these regression suites and fixture helpers.
+This repository's default config command includes listed root suites and fast `scripts/guardrails/*.test.mjs` suites. `pnpm run test:config:all` additionally runs every `scripts/guardrails/*.slow.mjs` suite, including real Git histories, hooks and large fixtures. CI should run that complete command. Generated projects retain the runtime checker and inexpensive config checks, and exclude these regression suites and fixture helpers.
 <!-- repository-only:end -->
 
 Workspace lint:
 
 ```bash
-npm run lint -w backend
-npm run lint -w frontend
+pnpm --filter backend run lint
+pnpm --filter frontend run lint
 ```
 
 Frontend lint also runs the RTL check. Backend uses TypeScript ESLint with `@typescript-eslint/no-explicit-any` as an error. Frontend uses the same `any` rule.
@@ -138,24 +138,24 @@ Do not add `Co-authored-by: Cursor`, `Made-with: Cursor`, `cursoragent@cursor.co
 
 ## Tests
 
-Backend unit tests use Jest (`npm test -w backend`). Frontend unit tests use Vitest (`npm test -w frontend`). Backend end-to-end tests use `npm run test:e2e -w backend` and run manually, outside commit and push.
+Backend unit tests use Jest (`pnpm --filter backend test`). Frontend unit tests use Vitest (`pnpm --filter frontend test`). Backend end-to-end tests use `pnpm --filter backend run test:e2e` and run manually, outside commit and push.
 
 <!-- repository-only:start -->
 
-Frontend end-to-end tests use Playwright (`npm run test:e2e -w frontend`). They run manually, outside commit and push, and are omitted from generated projects.
+Frontend end-to-end tests use Playwright (`pnpm --filter frontend run test:e2e`). They run manually, outside commit and push, and are omitted from generated projects.
 <!-- repository-only:end -->
 
 ## Troubleshooting
 
-If hooks do not run, run `npm run prepare` and check that `.husky/pre-commit` is executable.
+If hooks do not run, run `pnpm run prepare` and check that `.husky/pre-commit` is executable.
 
 If commitlint rejects the message, use `<type>(<scope>): <subject>` with an allowed type and scope.
 
-If ESLint blocks the commit, run `npm run lint:fix` and fix what remains. Do not add `eslint-disable` comments.
+If ESLint blocks the commit, run `pnpm run lint:fix` and fix what remains. Do not add `eslint-disable` comments.
 
-If typecheck fails on push, run `npm run typecheck` and fix the types. Use `unknown` with a narrowing check instead of `any`.
+If typecheck fails on push, run `pnpm run typecheck` and fix the types. Use `unknown` with a narrowing check instead of `any`.
 
-If tests fail on push, run `npm test` and fix the failures before pushing again.
+If tests fail on push, run `pnpm test` and fix the failures before pushing again.
 
 If the ban scan fails, remove the token from the added line. Fix the underlying issue instead of silencing the checker.
 
@@ -163,9 +163,9 @@ Prettier lives in `.prettierrc` at the repo root. `eslint-config-prettier` turns
 
 ## FAQ
 
-Run `npx lint-staged` followed by `node scripts/check-hard-bans.mjs --staged` to exercise the commit gate without creating a commit.
+Run `pnpm exec lint-staged` followed by `node scripts/check-hard-bans.mjs --staged` to exercise the commit gate without creating a commit.
 
-`npm run lint` reports. `npm run lint:fix` applies fixes ESLint can make safely.
+`pnpm run lint` reports. `pnpm run lint:fix` applies fixes ESLint can make safely.
 
 Change commit types or scopes in `commitlint.config.cjs`.
 

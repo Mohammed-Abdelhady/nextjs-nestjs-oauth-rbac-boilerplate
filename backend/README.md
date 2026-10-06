@@ -5,12 +5,12 @@ NestJS 11 API with MongoDB, cookie-based sessions, dynamic RBAC, two-factor auth
 ## Quick start
 
 ```bash
-npm install
-npm run migration:up     # Apply migrations
-npm run seed             # Seed roles and test accounts
-npm run start:dev        # Development server (http://localhost:5000)
-npm run build            # Production build
-npm run start:prod       # Production server
+pnpm install
+pnpm run migration:up     # Apply migrations
+pnpm run seed             # Seed roles and test accounts
+pnpm run start:dev        # Development server (http://localhost:5000)
+pnpm run build            # Production build
+pnpm run start:prod       # Production server
 ```
 
 ## Tech stack
@@ -90,6 +90,10 @@ mongosh --eval "rs.initiate()"
 <!-- feature:docker:start -->
 
 With Docker Compose the backend runs in a container; from the host use `MONGO_URI=mongodb://USER:PASS@localhost:27017/authboiler?authSource=admin&directConnection=true`. The replica set advertises `mongodb:27017`, which only containers on the Compose network can resolve.
+
+The backend image runs `pnpm --filter backend deploy --prod --frozen-lockfile /out/backend`.
+pnpm reads registry metadata for the generated lockfile check; package files come
+from the store populated by `pnpm fetch`.
 <!-- feature:docker:end -->
 
 ## Native applications
@@ -122,7 +126,7 @@ disabled, startup ignores this list and does not write native application
 records.
 
 Reconciliation runs when the HTTP server starts, not when the application
-module is created, so `npm run seed` never changes native applications. Every
+module is created, so `pnpm run seed` never changes native applications. Every
 server process reconciles on boot and the last one to start decides. During a
 rolling deploy, start all instances with the same list; a rollback must also
 restore the previous list, otherwise the rolled-back server disables the new
@@ -235,12 +239,12 @@ are intentionally not unified, so a client parser must handle all three.
 ## Database management
 
 ```bash
-npm run migration:create <name>  # Create migration script
-npm run migration:up             # Apply pending migrations
-npm run migration:down           # Revert last migration batch
-npm run migration:status         # Show migration history
-npm run seed                     # Seed roles and development accounts
-npm run seed:reset               # Wipe database and reseed
+pnpm run migration:create <name>  # Create migration script
+pnpm run migration:up             # Apply pending migrations
+pnpm run migration:down           # Revert last migration batch
+pnpm run migration:status         # Show migration history
+pnpm run seed                     # Seed roles and development accounts
+pnpm run seed:reset               # Wipe database and reseed
 ```
 
 Run this release's ObjectId reference migration before deploying the code that uses the typed schemas, or deploy them together. Existing passkeys with string user IDs are not found by passkey management until the migration converts them.

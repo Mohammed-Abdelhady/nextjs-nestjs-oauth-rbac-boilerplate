@@ -158,7 +158,7 @@ Always pair background and foreground tokens correctly for WCAG compliance:
 | `bg-secondary`   | `text-secondary-foreground` | 15.8:1 (AAA)   |
 | `bg-destructive` | `text-primary-foreground`   | 4.5:1 (AA)     |
 
-A form field is `bg-background` with `text-foreground`, the first row above. Its `border-input` border needs 3:1 against the page and the card. `npm run check:contrast` checks both in light and dark.
+A form field is `bg-background` with `text-foreground`, the first row above. Its `border-input` border needs 3:1 against the page and the card. Run `pnpm run check:contrast` from the repository root to check both in light and dark.
 
 ---
 
@@ -241,7 +241,7 @@ The project includes automated checks to prevent hardcoded color regression:
 
 ```bash
 # Run color validation
-npm run check:colors
+pnpm run check:contrast
 
 # This checks for:
 # - Hardcoded gray colors: bg-gray-*, text-gray-*, border-gray-*
