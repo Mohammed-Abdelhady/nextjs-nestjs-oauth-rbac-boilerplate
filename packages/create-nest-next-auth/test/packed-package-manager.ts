@@ -51,6 +51,9 @@ export function packageManagerCases(getPacked: () => Packed): void {
         timeout: BUILD_TIMEOUT,
       });
       expect(result.status, `${result.stdout}${result.stderr}`).toBe(0);
+      expect(result.stderr).toBe('');
+      expect(result.stdout).toContain('Updating pnpm lockfile');
+      expect(result.stdout).toContain('pnpm lockfile updated');
       expect(readFileSync(join(binaryDirectory, 'calls'), 'utf8')).toBe(
         '--version\ninstall --lockfile-only\ninstall --frozen-lockfile\n',
       );
@@ -114,6 +117,7 @@ export function packageManagerCases(getPacked: () => Packed): void {
       expect(result.status, `${result.stdout}${result.stderr}`).toBe(0);
       expect(existsSync(join(project, 'pnpm-lock.yaml'))).toBe(false);
       expect(`${result.stdout}${result.stderr}`).toContain('pnpm-lock.yaml removed');
+      expect(`${result.stdout}${result.stderr}`).toContain('pnpm lockfile update failed');
       expect(`${result.stdout}${result.stderr}`).toContain('pnpm install');
       assertWorkspaceEdgesResolve(project);
       expect(readFileSync(join(binaryDirectory, 'calls'), 'utf8')).toBe(
@@ -184,6 +188,34 @@ export function packageManagerCases(getPacked: () => Packed): void {
     expect(existsSync(join(project, 'pnpm-lock.yaml'))).toBe(false);
     expect(`${result.stdout}${result.stderr}`).toContain('pnpm-lock.yaml removed');
     expect(`${result.stdout}${result.stderr}`).toContain('pnpm install');
+    expect(`${result.stdout}${result.stderr}`).toContain('dependency installation was skipped');
+    expect(`${result.stdout}${result.stderr}`).not.toContain('pnpm install failed');
     assertWorkspaceEdgesResolve(project);
+  });
+
+  it('skips a requested installation when the lockfile update fails', async () => {
+    const packed = getPacked();
+    const binaryDirectory = mkdtempSync(join(packed.workspace, 'pnpm-boundary-'));
+    const project = join(packed.workspace, 'failed-update-install-requested');
+    try {
+      await writePnpmBoundary(binaryDirectory, 'lockfile');
+      const result = spawnSync(process.execPath, [packed.cli, project, '--yes', '--no-git'], {
+        cwd: packed.workspace,
+        env: { ...process.env, PATH: binaryDirectory },
+        encoding: 'utf8',
+        timeout: BUILD_TIMEOUT,
+      });
+      expect(result.status, `${result.stdout}${result.stderr}`).toBe(1);
+      expect(existsSync(join(project, 'pnpm-lock.yaml'))).toBe(false);
+      expect(`${result.stdout}${result.stderr}`).toContain('pnpm lockfile update failed');
+      expect(`${result.stdout}${result.stderr}`).toContain('dependency installation was skipped');
+      expect(`${result.stdout}${result.stderr}`).toContain('pnpm install');
+      expect(`${result.stdout}${result.stderr}`).not.toContain('pnpm install failed');
+      expect(readFileSync(join(binaryDirectory, 'calls'), 'utf8')).toBe(
+        '--version\ninstall --lockfile-only\n',
+      );
+    } finally {
+      rmSync(binaryDirectory, { recursive: true, force: true });
+    }
   });
 }

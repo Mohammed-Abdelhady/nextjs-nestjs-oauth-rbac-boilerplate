@@ -47,3 +47,28 @@ it('keeps links when a filename appears only as link text or in a different targ
     '- [Fix for setup-smtp.md](docs/other.md)\n1. [Archive](archive/setup-smtp.md)\n',
   );
 });
+
+it.each([
+  [
+    'backtick fences',
+    '````markdown\n- [Removed](docs/removed.md)\n```\n- [Still fenced](docs/removed.md)\n````\n',
+    '````markdown\n- [Removed](docs/removed.md)\n```\n- [Still fenced](docs/removed.md)\n````\n',
+  ],
+  [
+    'tilde fences',
+    '~~~markdown\n1. [Removed](docs/removed.md)\n~~~\n',
+    '~~~markdown\n1. [Removed](docs/removed.md)\n~~~\n',
+  ],
+  [
+    'reference definition fences',
+    '~~~markdown\n[removed]: docs/removed.md\n~~~\n- [Example][removed]\n',
+    '~~~markdown\n[removed]: docs/removed.md\n~~~\n- [Example][removed]\n',
+  ],
+])('leaves removed-file links inside %s unchanged', async (_name, content, expected) => {
+  await fixture(content);
+
+  const result = await removeDocLinks(root, ['docs/removed.md']);
+
+  expect(result.removedLines).toBe(0);
+  expect(await readFile(join(root, 'README.md'), 'utf8')).toBe(expected);
+});
