@@ -56,6 +56,7 @@ FRONTEND_URL=http://localhost:3000
 SESSION_SECRET=your-secure-session-secret
 OAUTH_STATE_SECRET=your-secure-oauth-state-secret
 TOTP_ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+AUTH_NATIVE_DPOP_NONCE_SECRET=your-secure-native-dpop-nonce-secret
 
 # SMTP email service
 SMTP_HOST=smtp.gmail.com
@@ -102,6 +103,8 @@ Set `AUTH_NATIVE_ENABLED=true` to enable native sign-in. Declare clients in
 `AUTH_NATIVE_APPLICATIONS` as a JSON array with `clientId`, `displayName`, and
 one or more `redirectUris`. You can add `allowedScopes`; when omitted, the
 application gets the same `api` scope as the first-party web application.
+When enabled, also set `AUTH_NATIVE_DPOP_NONCE_SECRET` to a random value of at
+least 32 characters. Generate one with `openssl rand -hex 32`.
 
 ```bash
 AUTH_NATIVE_APPLICATIONS='[{"clientId":"com.example.mobile","displayName":"Example Mobile","redirectUris":["com.example.mobile://oauth/callback"]}]'

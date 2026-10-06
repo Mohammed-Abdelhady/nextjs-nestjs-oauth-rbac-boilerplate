@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { execFile, resolveOptionalDomain, writeFile as writeOwnedFile } from './lib/cli-utils.js';
+import { createSetupSecrets, generateBackendEnv } from './lib/init-environment.js';
 
 test('execFile does not interpret shell metacharacters in arguments', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'execfile-'));
@@ -42,14 +43,48 @@ test('owned env files are written mode 0600 even when they already exist', async
   }
 });
 
-test('init writes backend OAuth callbacks and a generated state secret', async () => {
+test('init writes OAuth and native DPoP secrets into backend configuration', async () => {
   const source = await readFile(new URL('./init.js', import.meta.url), 'utf8');
-  assert.match(
-    source,
-    /OAUTH_CALLBACK_BASE_URL=http:\/\/localhost:\$\{env\.backendPort\}\/api\/auth\/oauth/,
+  const randomSizes = [];
+  const secrets = createSetupSecrets((size) => {
+    randomSizes.push(size);
+    return Buffer.from(randomSizes.length === 1 ? 'A'.repeat(size) : 'B'.repeat(size));
+  });
+  const backendEnv = generateBackendEnv({
+    appTitle: 'Test Application',
+    env: { backendPort: 5001, frontendPort: 3000, mongoUri: 'mongodb://localhost/test' },
+    smtp: { host: '', port: '587', secure: 'false', user: '', pass: '', from: '' },
+    oauth: {
+      google: { clientId: '', clientSecret: '' },
+      facebook: { clientId: '', clientSecret: '' },
+      github: { clientId: '', clientSecret: '' },
+    },
+    ...secrets,
+  });
+
+  assert.deepEqual(randomSizes, [48, 48]);
+  assert.equal(
+    secrets.stateSecret,
+    'QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFB',
   );
-  assert.match(source, /OAUTH_STATE_SECRET=\$\{config\.stateSecret\}/);
-  assert.match(source, /randomBytes\(48\)\.toString\('base64url'\)/);
+  assert.equal(
+    secrets.nativeDpopNonceSecret,
+    'QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJC',
+  );
+  assert.notEqual(secrets.stateSecret, secrets.nativeDpopNonceSecret);
+  assert.match(backendEnv, /OAUTH_CALLBACK_BASE_URL=http:\/\/localhost:5001\/api\/auth\/oauth/);
+  assert.ok(
+    backendEnv.includes(
+      'OAUTH_STATE_SECRET=QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFB',
+    ),
+  );
+  assert.ok(
+    backendEnv.includes(
+      'AUTH_NATIVE_DPOP_NONCE_SECRET=QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJC',
+    ),
+  );
+  assert.match(backendEnv, /AUTH_NATIVE_ENABLED=false/);
+  assert.match(source, /\.\.\.createSetupSecrets\(\)/);
   assert.match(source, /mode: 0o600/);
-  assert.doesNotMatch(source, /frontendPort\}\/auth\/oauth\/callback/);
+  assert.doesNotMatch(backendEnv, /frontendPort\}\/auth\/oauth\/callback/);
 });

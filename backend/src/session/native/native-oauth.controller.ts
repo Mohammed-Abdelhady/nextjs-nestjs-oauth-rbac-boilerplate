@@ -35,12 +35,17 @@ import {
 } from '../../common/constants/client-paths';
 import { SESSION_SWAGGER_AUTH_NAME } from '../../common/constants/session';
 import { CREDENTIAL_PURPOSE } from '../constants/credential-purpose';
+import {
+  NATIVE_DPOP_NONCE_HEADER,
+  NATIVE_DPOP_PROOF_HEADER,
+} from '../constants/session-policy';
 import { AuthEpochService } from '../../common/services/auth-epoch.service';
 import { NativeAuthorizeBrowserService } from './native-authorize-browser.service';
 import { NativeAuthorizeService } from './native-authorize.service';
 import { NativeTokenService } from './native-token.service';
 import { NativeAuthorizeActionDto } from './dto/native-authorize.dto';
 import {
+  ApiNativeTokenExchange,
   ApiNativeAuthorizeApproveErrors,
   ApiNativeAuthorizeStart,
 } from './native-oauth.swagger';
@@ -222,6 +227,7 @@ export class NativeOAuthController {
 
   @Public()
   @SkipBrowserProof()
+  @ApiNativeTokenExchange()
   @Post('token')
   async token(
     @Body() body: TokenRequest,
@@ -236,10 +242,14 @@ export class NativeOAuthController {
       });
       return;
     }
-    const result = await this.tokens.grant(body, {
-      ip: requestIp(request),
-      userAgent: requestUserAgent(request),
-    });
+    const result = await this.tokens.grant(
+      body,
+      {
+        ip: requestIp(request),
+        userAgent: requestUserAgent(request),
+      },
+      request.get(NATIVE_DPOP_PROOF_HEADER),
+    );
     this.writeToken(response, result);
   }
 
@@ -299,12 +309,15 @@ export class NativeOAuthController {
     response.setHeader('Cache-Control', 'no-store');
     response.setHeader('Pragma', 'no-cache');
     if (!result.ok) {
+      if (result.dpopNonce) {
+        response.setHeader(NATIVE_DPOP_NONCE_HEADER, result.dpopNonce);
+      }
       this.writeError(response, result);
       return;
     }
     response.status(HttpStatus.OK).json({
       access_token: result.accessToken,
-      token_type: 'Bearer',
+      token_type: result.tokenType,
       expires_in: result.expiresIn,
       refresh_token: result.refreshToken,
       scope: result.scope,

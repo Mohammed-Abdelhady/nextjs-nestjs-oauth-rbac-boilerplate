@@ -9,6 +9,7 @@ export const SECURITY_EVENT_ACTION = {
   APPLICATION_ENABLED: 'application_enabled',
   REFRESH_REPLAYED: 'refresh_replayed',
   NATIVE_CLIENT_REVOKED: 'native_client_revoked',
+  NATIVE_DPOP_PROOF_REFUSED: 'native_dpop_proof_refused',
 } as const;
 
 export const SECURITY_EVENT_OUTCOME = {

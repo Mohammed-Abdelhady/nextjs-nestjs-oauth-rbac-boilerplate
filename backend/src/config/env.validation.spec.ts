@@ -2,6 +2,7 @@ import { validateEnvironment } from './env.validation';
 
 describe('validateEnvironment', () => {
   const STATE_SECRET = 'a'.repeat(32);
+  const NATIVE_DPOP_NONCE_SECRET = 'native-dpop-test-secret-at-least-32-chars';
 
   const baseEnv: Record<string, unknown> = {
     NODE_ENV: 'test',
@@ -204,9 +205,47 @@ describe('validateEnvironment', () => {
     const result = validateEnvironment({
       ...baseEnv,
       AUTH_NATIVE_ENABLED: 'true',
+      AUTH_NATIVE_DPOP_NONCE_SECRET: NATIVE_DPOP_NONCE_SECRET,
     });
 
     expect(result.AUTH_NATIVE_ENABLED).toBe(true);
+    expect(result.AUTH_NATIVE_DPOP_NONCE_SECRET).toBe(NATIVE_DPOP_NONCE_SECRET);
+  });
+
+  it('requires the DPoP nonce secret when native auth is enabled', () => {
+    expect(() =>
+      validateEnvironment({ ...baseEnv, AUTH_NATIVE_ENABLED: 'true' }),
+    ).toThrow(/AUTH_NATIVE_DPOP_NONCE_SECRET/);
+  });
+
+  it('rejects a short DPoP nonce secret when native auth is enabled', () => {
+    expect(() =>
+      validateEnvironment({
+        ...baseEnv,
+        AUTH_NATIVE_ENABLED: 'true',
+        AUTH_NATIVE_DPOP_NONCE_SECRET: 'too-short',
+      }),
+    ).toThrow(/AUTH_NATIVE_DPOP_NONCE_SECRET/);
+  });
+
+  it('rejects a DPoP nonce secret one character below the minimum', () => {
+    expect(() =>
+      validateEnvironment({
+        ...baseEnv,
+        AUTH_NATIVE_ENABLED: 'true',
+        AUTH_NATIVE_DPOP_NONCE_SECRET: 'n'.repeat(31),
+      }),
+    ).toThrow(/AUTH_NATIVE_DPOP_NONCE_SECRET/);
+  });
+
+  it('accepts native auth disabled without a DPoP nonce secret', () => {
+    const result = validateEnvironment({
+      ...baseEnv,
+      AUTH_NATIVE_ENABLED: 'false',
+    });
+
+    expect(result.AUTH_NATIVE_ENABLED).toBe(false);
+    expect(result.AUTH_NATIVE_DPOP_NONCE_SECRET).toBeUndefined();
   });
 
   it('AUTH_NATIVE_ALLOW_CUSTOM_SCHEME defaults to false', () => {
