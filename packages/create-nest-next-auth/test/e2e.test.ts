@@ -30,6 +30,7 @@ import {
   DEFAULT_SELECTION_MUST_EXIST,
   DEFAULT_SELECTION_MUST_NOT_EXIST,
 } from './plain-run-fixture.js';
+import { expectPlannedMobileWorkspaceIsPruned } from './mobile-workspace-assertions.js';
 
 let packed: Packed;
 
@@ -49,6 +50,14 @@ describe('the packed CLI', () => {
 
   it('scans a default Git project cleanly', () => {
     checkGeneratedGuardrails(packed);
+  });
+
+  it('keeps planned mobile targets out of generated projects', () => {
+    const project = join(packed.workspace, 'web-only');
+    const result = scaffold(packed, 'web-only', 'email-password');
+
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+    expectPlannedMobileWorkspaceIsPruned(project, join(packed.workspace, 'package'));
   });
 
   it('excludes runtime artifacts and prohibited names before copying template files', () => {

@@ -6,6 +6,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { format, getFileInfo, resolveConfig } from 'prettier';
 import { listFiles } from '../src/utils/fs.js';
+import { matchesAnyGlob } from '../src/utils/glob.js';
 import { stripFeatureMarkers } from '../src/prune/markers.js';
 
 export const PACKAGE_DIR = fileURLToPath(new URL('..', import.meta.url));
@@ -74,19 +75,14 @@ export function buildCli(): Promise<CommandResult> {
 
 export function scaffold(
   target: string,
-  features: string[],
+  features?: string[],
   flags: string[] = [],
+  executable = CLI,
 ): Promise<CommandResult> {
-  return runTool(process.execPath, [
-    CLI,
-    target,
-    '--yes',
-    '--features',
-    features.join(','),
-    ...flags,
-    '--no-install',
-    '--no-git',
-  ]);
+  const args = [executable, target, '--yes'];
+  if (features) args.push('--features', features.join(','));
+  args.push(...flags, '--no-install', '--no-git');
+  return runTool(process.execPath, args);
 }
 
 /** Installs a generated project the way a user would, without lifecycle scripts. */
@@ -185,11 +181,6 @@ const COMPARED_DIRECTORIES = [
   'shared/core/src',
   'shared/sdk/src',
 ];
-const MAINTAINER_BROWSER_HELPERS = new Set([
-  'backend/test/utils/browser-server.ts',
-  'backend/test/utils/local-oauth.ts',
-]);
-
 export interface MarkerDifference {
   file: string;
   reason: string;
@@ -207,13 +198,14 @@ async function formatLikeRepository(content: string, relative: string): Promise<
 
 /**
  * Compares a project scaffolded with everything selected against the
- * repository: retained files differ only by markers, and the two maintainer
- * browser helpers must be absent.
+ * repository: retained files differ only by markers, and manifest removals
+ * must be absent.
  */
 export async function compareWithRepository(
   project: string,
   featureIds: string[],
   markerIds: string[],
+  alwaysRemoveFiles: string[],
 ): Promise<MarkerDifference[]> {
   const kept = new Set(featureIds);
   const known = new Set(markerIds);
@@ -222,9 +214,9 @@ export async function compareWithRepository(
   for (const directory of COMPARED_DIRECTORIES) {
     for (const file of await listFiles(join(REPO_ROOT, directory))) {
       const relative = `${directory}/${file}`;
-      if (MAINTAINER_BROWSER_HELPERS.has(relative)) {
+      if (matchesAnyGlob(relative, alwaysRemoveFiles)) {
         if (existsSync(join(project, relative)))
-          differences.push({ file: relative, reason: 'maintainer browser helper was retained' });
+          differences.push({ file: relative, reason: 'manifest-removed file was retained' });
         continue;
       }
       const source = readFileSync(join(REPO_ROOT, relative), 'utf8');
