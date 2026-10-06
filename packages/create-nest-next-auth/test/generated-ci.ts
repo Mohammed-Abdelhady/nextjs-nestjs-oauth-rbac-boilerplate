@@ -7,6 +7,7 @@ import { listFiles } from '../src/utils/fs.js';
 import { matchesGlob } from '../src/utils/glob.js';
 import type { Packed } from './packed-cli.js';
 import {
+  expectSupportedActionInputs,
   jobsOf,
   PNPM_SETUP_ACTION,
   PNPM_SETUP_WITH,
@@ -45,6 +46,10 @@ export async function checkGeneratedCi(packed: Packed, preset: string): Promise<
     with: PNPM_SETUP_WITH,
   });
   const trusted = readWorkflow(join(project, '.github/workflows/trusted-scan.yml'));
+  expectSupportedActionInputs([
+    { name: `${preset} generated CI workflow`, workflow },
+    { name: `${preset} generated trusted scan workflow`, workflow: trusted },
+  ]);
   expect(Object.keys(jobsOf(trusted))).toEqual(['trusted-range']);
   expect(trusted.on).toEqual({
     pull_request_target: {

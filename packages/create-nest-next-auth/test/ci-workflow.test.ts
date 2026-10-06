@@ -2,10 +2,14 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { isRecord } from '../src/manifest/read.js';
 import {
+  CACHE_ACTION,
+  CHECKOUT_ACTION,
+  expectSupportedActionInputs,
   jobsOf,
   PNPM_SETUP_ACTION,
   PNPM_SETUP_WITH,
   readWorkflow,
+  SETUP_NODE_ACTION,
   stepsOf,
 } from './ci-workflow-helpers.js';
 
@@ -48,8 +52,8 @@ describe('CI workflow contract', () => {
     expect(Object.keys(jobs)).toEqual(['range-scan', 'quality', 'installer']);
     for (const job of Object.values(jobs)) {
       const steps = stepsOf(job);
-      expect(steps[0].uses).toBe('actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683');
-      expect(steps[1].uses).toBe('actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020');
+      expect(steps[0].uses).toBe(CHECKOUT_ACTION);
+      expect(steps[1].uses).toBe(SETUP_NODE_ACTION);
       for (const step of steps) {
         if (step.uses === PNPM_SETUP_ACTION) expect(step.with).toEqual(PNPM_SETUP_WITH);
         if (typeof step.run !== 'string') continue;
@@ -64,7 +68,6 @@ describe('CI workflow contract', () => {
     expect(rootPackage.packageManager).toBe('pnpm@12.6.0');
     expect(stepsOf(jobs.quality)[1].with).toEqual({
       'node-version-file': '.nvmrc',
-      'package-manager-cache': false,
     });
     expect(stepsOf(jobs.quality)[2]).toMatchObject({
       uses: PNPM_SETUP_ACTION,
@@ -116,7 +119,7 @@ it('uses only base code in the read-only trusted scan', () => {
   expect(Object.keys(jobs)).toEqual(['trusted-range']);
   const steps = stepsOf(jobs['trusted-range']);
   expect(steps[0]).toMatchObject({
-    uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683',
+    uses: CHECKOUT_ACTION,
     with: {
       ref: '${{ github.event.pull_request.base.sha }}',
       'fetch-depth': 0,
@@ -124,8 +127,8 @@ it('uses only base code in the read-only trusted scan', () => {
     },
   });
   expect(steps[1]).toMatchObject({
-    uses: 'actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020',
-    with: { 'node-version-file': '.nvmrc', 'package-manager-cache': false },
+    uses: SETUP_NODE_ACTION,
+    with: { 'node-version-file': '.nvmrc' },
   });
   expect(steps[2]).toMatchObject({
     id: 'fetch',
@@ -148,6 +151,13 @@ it('uses only base code in the read-only trusted scan', () => {
   expect(readFileSync(TRUSTED, 'utf8')).not.toMatch(/\$\{\{\s*secrets\./);
 });
 
+it('uses only inputs declared by each pinned action revision', () => {
+  expectSupportedActionInputs([
+    { name: 'CI workflow', workflow: readWorkflow(WORKFLOW) },
+    { name: 'trusted scan workflow', workflow: readWorkflow(TRUSTED) },
+  ]);
+});
+
 it('bounds jobs and caches runtime Mongo binaries in both jobs that need them', () => {
   const jobs = jobsOf(readWorkflow(WORKFLOW));
   for (const [id, timeout] of [
@@ -165,7 +175,7 @@ it('bounds jobs and caches runtime Mongo binaries in both jobs that need them', 
     const steps = stepsOf(jobs[id]);
     expect(steps[3]).toMatchObject({ id: 'mongo', run: 'node scripts/ci.mjs --cache' });
     expect(steps[4]).toEqual({
-      uses: 'actions/cache@5a3ec84eff668545956fd18022155c47e93e2684',
+      uses: CACHE_ACTION,
       with: {
         path: '${{ steps.mongo.outputs.path }}',
         key: '${{ runner.os }}-${{ runner.arch }}-${{ steps.mongo.outputs.key }}',
