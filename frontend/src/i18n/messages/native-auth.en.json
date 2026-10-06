@@ -18,6 +18,10 @@
       "NATIVE_DPOP_NONCE_INVALID": "The security check for this sign-in request has expired. Start again in the app.",
       "NATIVE_DPOP_PROOF_ATH_INVALID": "We couldn't verify this sign-in request. Start again in the app.",
       "NATIVE_DPOP_PROOF_REPLAYED": "This sign-in request was already used. Start again in the app.",
+      "NATIVE_DPOP_PROOF_REQUIRED": "This token needs proof from its device. Retry from the app.",
+      "NATIVE_DPOP_KEY_MISMATCH": "This token belongs to a different device key. Use the device that signed in.",
+      "NATIVE_DPOP_REQUIRED": "This app must use device-bound tokens. Update the app before signing in.",
+      "NATIVE_DPOP_RETRY_IN_PROGRESS": "If you received the replacement tokens, use them. Otherwise, sign in again.",
       "NATIVE_DPOP_CONFIGURATION_INVALID": "Mobile sign-in is unavailable. Try again later."
     }
   },
