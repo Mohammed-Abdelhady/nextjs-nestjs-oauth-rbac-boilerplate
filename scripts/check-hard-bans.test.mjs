@@ -233,7 +233,7 @@ test('mobile expo app is capped', () => {
 test('expo prebuild output is not scanned', () => {
   assert.equal(isScanTarget('mobile/expo/ios/Pods/helper.js'), false);
   assert.equal(isScanTarget('mobile/expo/android/app/build.js'), false);
-  assert.equal(isScanTarget('mobile/expo/.expo/cache.js'), false);
+  assert.equal(isScanTarget('mobile/expo/.expo/cache.js'), true);
   const ios = evaluateChanges({
     added: [added('mobile/expo/ios/Pods/helper.js', ['/* eslint-disable no-console */'])],
     lineCounts: [{ path: 'mobile/expo/ios/Pods/helper.js', lines: 10 }],
@@ -248,7 +248,7 @@ test('expo prebuild output is not scanned', () => {
     added: [added('mobile/expo/.expo/cache.js', ['/* eslint-disable no-console */'])],
     lineCounts: [{ path: 'mobile/expo/.expo/cache.js', lines: 10 }],
   });
-  assert.equal(cache.ok, true);
+  assert.equal(cache.ok, false);
 });
 
 test('hand-written native source is still scanned', () => {

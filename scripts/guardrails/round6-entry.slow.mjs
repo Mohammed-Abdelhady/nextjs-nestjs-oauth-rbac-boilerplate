@@ -50,8 +50,16 @@ for (const kind of ['directory', 'file']) {
       const result = run(repo, entry, args);
       assert.deepEqual(
         { status: result.status, hits: result.hits },
-        { status: 1, hits: [['src/a.ts', 2, TOKEN]] },
+        {
+          status: 1,
+          hits: [['src/a.ts', 2, TOKEN]],
+        },
       );
+      if (kind === 'file' && mode !== '--staged')
+        assert.match(
+          result.diagnostic,
+          /^(?:\[[a-f0-9]+\] )?entry-alias\.mjs:1: Source symlinks are refused; commit a regular source file\.$/m,
+        );
     });
   }
 

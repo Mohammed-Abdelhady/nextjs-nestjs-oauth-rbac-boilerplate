@@ -116,6 +116,20 @@ test('tracked inventory scrubs hook Git variables and ignores deleted, untracked
   }
 });
 
+test('tracked inventory scans GitHub workflow files', (t) => {
+  const fixture = repository(t);
+  fixture.write('.github/workflows/ci.yml', `run: ${OLD_MANAGER} ci\n`);
+  fixture.git('add', '.');
+
+  assert.deepEqual(checkPackageManager(fixture.root), [
+    {
+      file: '.github/workflows/ci.yml',
+      line: 1,
+      reference: `${OLD_MANAGER} ci`,
+    },
+  ]);
+});
+
 test('non-Git scaffolds scan text and UTF-16 while refusing symlink traversal', (t) => {
   const root = mkdtempSync(join(tmpdir(), 'manager-inventory-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
