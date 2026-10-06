@@ -21,8 +21,8 @@ import { matchesGlob } from '../src/utils/glob.js';
 import {
   fixtureRoot,
   git,
-  installerVersion,
   isolatedGit,
+  installerVersion,
   manifestGlobs,
   readAnswers,
   run,
@@ -40,13 +40,15 @@ describe('.create-nest-next-auth.json', () => {
   it('records the contract and the default resolved answers', async () => {
     const root = fixtureRoot(roots);
     const project = join(root, 'app');
+    const version = installerVersion();
     const { code, output } = await run(root, [project, '--yes', '--no-install', '--no-git']);
     expect(code, output).toBe(0);
 
     const { raw, record } = readAnswers(project, ANSWERS_FILE_NAME);
     expect(record).toEqual({
-      schemaVersion: 1,
-      installer: { name: 'create-nest-next-auth', version: installerVersion() },
+      schemaVersion: 2,
+      packageManager: 'pnpm@12.6.0',
+      installer: { name: 'create-nest-next-auth', version },
       template: { sha256: TEMPLATE_SHA },
       answers: {
         targets: ['web'],
@@ -58,10 +60,11 @@ describe('.create-nest-next-auth.json', () => {
     });
     expect(raw).toBe(
       `{
-  "schemaVersion": 1,
+  "schemaVersion": 2,
+  "packageManager": "pnpm@12.6.0",
   "installer": {
     "name": "create-nest-next-auth",
-    "version": "${installerVersion()}"
+    "version": "${version}"
   },
   "template": {
     "sha256": "${TEMPLATE_SHA}"
@@ -246,7 +249,13 @@ describe('.create-nest-next-auth.json', () => {
     expect(code, output).toBe(0);
 
     const { raw, record } = readAnswers(project, ANSWERS_FILE_NAME);
-    expect(Object.keys(record)).toEqual(['schemaVersion', 'installer', 'template', 'answers']);
+    expect(Object.keys(record)).toEqual([
+      'schemaVersion',
+      'packageManager',
+      'installer',
+      'template',
+      'answers',
+    ]);
     expect(Object.keys(record.installer)).toEqual(['name', 'version']);
     expect(Object.keys(record.template)).toEqual(['sha256']);
     expect(Object.keys(record.answers)).toEqual([
@@ -256,7 +265,7 @@ describe('.create-nest-next-auth.json', () => {
       'options',
       'locales',
     ]);
-    expect(record.schemaVersion).toBe(1);
+    expect(record.schemaVersion).toBe(2);
     expect(raw).not.toContain(project);
     expect(raw).not.toContain('createdAt');
   });

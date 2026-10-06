@@ -1,7 +1,6 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { loadManifest } from '../src/manifest/load.js';
 import { availableFeatures } from '../src/manifest/select.js';
 import type { Manifest } from '../src/types.js';
@@ -21,7 +20,7 @@ import {
 
 /**
  * Option combinations, slow by nature: each installs and builds a generated
- * project. Run with `npm run test:combinations -w packages/create-nest-next-auth`.
+ * project. Run with `pnpm --filter create-nest-next-auth run test:combinations`.
  */
 
 /** The four providers and the credential method a default run keeps. */
@@ -106,7 +105,7 @@ let manifest: Manifest;
 let built = { ok: false, output: '' };
 
 beforeAll(async () => {
-  workspace = mkdtempSync(join(tmpdir(), 'cna-options-'));
+  workspace = mkdtempSync(join(inject('combinationRoot'), 'options-'));
   manifest = await loadManifest(REPO_ROOT);
   built = await buildCli();
 });
@@ -146,7 +145,7 @@ describe('generated projects with options off', () => {
       expect(existsSync(join(project, path)), `${path} should be gone`).toBe(false);
     }
 
-    await expectInstallsLintsBuilds(project);
+    await expectInstallsLintsBuilds(project, inject('pnpmStore'));
     if (combination.unitTests) {
       await expectFrontendUnitTests(project);
       await expectBackendUnitTests(project);

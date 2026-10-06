@@ -1,12 +1,20 @@
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  copyFileSync,
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { delimiter, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { vi } from 'vitest';
 import { main } from '../src/cli.js';
 import { TEMPLATE_IDENTITY_FILE } from '../src/constants/index.js';
 import type { AnswersRecord, Manifest } from '../src/types.js';
+import { writePnpmBoundary } from './pnpm-boundary.js';
 
 export const PACKAGE_DIR = fileURLToPath(new URL('..', import.meta.url));
 export const REPO_ROOT = dirname(dirname(PACKAGE_DIR));
@@ -36,11 +44,19 @@ export async function run(
   argv: string[],
   options: RunOptions = {},
 ): Promise<RunResult> {
+  const inheritedPath = process.env.PATH;
+  const hasPathOverride = Object.hasOwn(options.env ?? {}, 'PATH');
+  const noPnpm = hasPathOverride && !options.env?.PATH;
+  const pnpmDirectory = noPnpm ? '' : mkdtempSync(join(tmpdir(), 'cna-test-pnpm-'));
+  if (pnpmDirectory !== '') await writePnpmBoundary(pnpmDirectory);
   const previous = new Map<string, string | undefined>();
   for (const [key, value] of Object.entries(options.env ?? {})) {
     previous.set(key, process.env[key]);
     if (value === undefined) delete process.env[key];
     else process.env[key] = value;
+  }
+  if (pnpmDirectory !== '') {
+    process.env.PATH = [pnpmDirectory, process.env.PATH ?? ''].filter(Boolean).join(delimiter);
   }
   const stdout = vi.spyOn(process.stdout, 'write');
   const stderr = vi.spyOn(process.stderr, 'write');
@@ -56,6 +72,9 @@ export async function run(
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
+    if (inheritedPath === undefined) delete process.env.PATH;
+    else process.env.PATH = inheritedPath;
+    if (pnpmDirectory !== '') rmSync(pnpmDirectory, { recursive: true, force: true });
   }
   return { code, output };
 }

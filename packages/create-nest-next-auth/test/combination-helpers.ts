@@ -1,14 +1,18 @@
 import { execFile } from 'node:child_process';
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import { existsSync, mkdirSync, readdirSync, readFileSync, symlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { format, getFileInfo, resolveConfig } from 'prettier';
+import { parse, stringify } from 'yaml';
+import { isRecord } from '../src/manifest/read.js';
 import { listFiles } from '../src/utils/fs.js';
 import { matchesAnyGlob } from '../src/utils/glob.js';
+import { commandEnvironment } from '../src/utils/exec.js';
 import { stripFeatureMarkers } from '../src/prune/markers.js';
+import { assertWorkspaceEdgesResolve } from './workspace-assertions.js';
 
 export const PACKAGE_DIR = fileURLToPath(new URL('..', import.meta.url));
 export const REPO_ROOT = dirname(dirname(PACKAGE_DIR));
@@ -27,11 +31,6 @@ const LINKED_MODULES = [
   'shared/sdk/node_modules',
 ];
 
-const TYPESCRIPT_BIN = createRequire(import.meta.url).resolve('typescript/bin/tsc');
-export const JEST_BIN = createRequire(join(REPO_ROOT, 'backend/package.json')).resolve(
-  'jest/bin/jest',
-);
-
 export interface CommandResult {
   ok: boolean;
   output: string;
@@ -42,7 +41,7 @@ const execute = promisify(execFile);
 export async function runTool(
   executable: string,
   args: string[],
-  options: { cwd?: string; timeout?: number; signal?: AbortSignal } = {},
+  options: { cwd?: string; timeout?: number; signal?: AbortSignal; env?: NodeJS.ProcessEnv } = {},
 ): Promise<CommandResult> {
   try {
     const { stdout, stderr } = await execute(executable, args, {
@@ -51,7 +50,7 @@ export async function runTool(
       signal: options.signal,
       maxBuffer: 8 * 1024 * 1024,
       encoding: 'utf8',
-      env: { ...process.env, npm_config_update_notifier: 'false' },
+      env: { ...commandEnvironment(), ...options.env, npm_config_update_notifier: 'false' },
     });
     return { ok: true, output: `${stdout}${stderr}` };
   } catch (error) {
@@ -86,14 +85,61 @@ export function scaffold(
   const args = [executable, target, '--yes'];
   if (features) args.push('--features', features.join(','));
   args.push(...flags, '--no-install', '--no-git');
-  return runTool(process.execPath, args);
+  return scaffoldAndCheck(target, args);
 }
 
-/** Installs a generated project the way a user would, without lifecycle scripts. */
-export function installProject(project: string): Promise<CommandResult> {
-  return runTool('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], {
+async function scaffoldAndCheck(target: string, args: string[]): Promise<CommandResult> {
+  const result = await runTool(process.execPath, args);
+  if (result.ok) assertWorkspaceEdgesResolve(target);
+  return result;
+}
+
+/** Updates the pruned graph, then verifies it with lifecycle scripts enabled. */
+export async function installProject(project: string, store: string): Promise<CommandResult> {
+  const workspaceFile = join(project, 'pnpm-workspace.yaml');
+  const workspace: unknown = parse(await readFile(workspaceFile, 'utf8'));
+  if (!isRecord(workspace)) throw new Error('Invalid generated pnpm workspace configuration.');
+  // pnpm run verifies the dependency layout too, so later gates need the same store.
+  await writeFile(workspaceFile, stringify({ ...workspace, storeDir: store }));
+  const options = {
     cwd: project,
+    env: { MONGOMS_DOWNLOAD_DIR: join(dirname(store), 'mongo-binaries') },
+  };
+  const update = await runTool(
+    'pnpm',
+    ['install', '--lockfile-only', '--store-dir', store],
+    options,
+  );
+  if (!update.ok) return update;
+  return runTool('pnpm', ['install', '--frozen-lockfile', '--store-dir', store], options);
+}
+
+export function installFromWarmStore(project: string, store: string): Promise<CommandResult> {
+  return runTool('pnpm', ['install', '--offline', '--frozen-lockfile', '--store-dir', store], {
+    cwd: project,
+    env: {
+      MONGOMS_DOWNLOAD_DIR: join(dirname(store), 'mongo-binaries'),
+      MONGOMS_RUNTIME_DOWNLOAD: 'false',
+    },
   });
+}
+
+export function runBackendBoot(project: string): Promise<CommandResult> {
+  return runTool(
+    'pnpm',
+    [
+      '--filter',
+      'backend',
+      'exec',
+      'jest',
+      '--config',
+      'test/jest-e2e.json',
+      '--runInBand',
+      '--runTestsByPath',
+      'test/app.boot.e2e-spec.ts',
+    ],
+    { cwd: project },
+  );
 }
 
 /**
@@ -118,9 +164,8 @@ function linkModuleDirectory(source: string, target: string, project: string): v
 }
 
 /**
- * Points the generated project at the repository's installed packages. The
- * combinations have to typecheck without an install, which npm would refuse to
- * run offline anyway.
+ * Borrows installed dependencies only for isolated feature-runtime unit fixtures.
+ * Combination suites install their own graph with pnpm.
  */
 export function linkDependencies(project: string): void {
   linkRootModules(project);
@@ -136,7 +181,10 @@ export function linkDependencies(project: string): void {
 }
 
 export function typecheck(project: string, workspace: string): Promise<CommandResult> {
-  return runTool(process.execPath, [TYPESCRIPT_BIN, '--noEmit', '-p', workspace], { cwd: project });
+  const binary = createRequire(join(project, workspace, 'package.json')).resolve(
+    'typescript/bin/tsc',
+  );
+  return runTool(process.execPath, [binary, '--noEmit', '-p', workspace], { cwd: project });
 }
 
 /**
@@ -174,7 +222,12 @@ export async function writePrunedSharedTsconfig(project: string): Promise<void> 
 export function typecheckFrontendWithPrunedShared(project: string): Promise<CommandResult> {
   return runTool(
     process.execPath,
-    [TYPESCRIPT_BIN, '--noEmit', '-p', `frontend/${PRUNED_SHARED_TSCONFIG}`],
+    [
+      createRequire(join(project, 'frontend/package.json')).resolve('typescript/bin/tsc'),
+      '--noEmit',
+      '-p',
+      `frontend/${PRUNED_SHARED_TSCONFIG}`,
+    ],
     { cwd: project },
   );
 }
@@ -184,6 +237,8 @@ const COMPARED_DIRECTORIES = [
   'backend/src',
   'backend/test',
   'frontend/src',
+  'mobile/auth/src',
+  'mobile/auth/test',
   'shared/core/src',
   'shared/sdk/src',
 ];

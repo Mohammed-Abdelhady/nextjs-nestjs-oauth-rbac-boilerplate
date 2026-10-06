@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -131,11 +131,11 @@ describe('prunePackageScripts', () => {
 
   it('removes only the deleted part of a simple && chain', () => {
     const result = prunePackageScripts(
-      packageJson({ check: 'npm run lint && node scripts/setup-production.js' }),
+      packageJson({ check: 'pnpm run lint && node scripts/setup-production.js' }),
       ['scripts/setup-production.js'],
     );
 
-    expect(result.scripts).toEqual({ check: 'npm run lint' });
+    expect(result.scripts).toEqual({ check: 'pnpm run lint' });
   });
 
   it('drops a && chain when every part runs a deleted file', () => {
@@ -151,9 +151,9 @@ describe('prunePackageScripts', () => {
 
   it('fails loudly when a deleted file sits in a non-&& operator chain', () => {
     for (const command of [
-      'npm run lint; node scripts/setup-production.js',
-      'npm run lint || node scripts/setup-production.js',
-      'npm run lint | node scripts/setup-production.js',
+      'pnpm run lint; node scripts/setup-production.js',
+      'pnpm run lint || node scripts/setup-production.js',
+      'pnpm run lint | node scripts/setup-production.js',
     ]) {
       expect(() =>
         prunePackageScripts(packageJson({ check: command }), ['scripts/setup-production.js']),
@@ -169,22 +169,21 @@ describe('prunePackageScripts', () => {
 });
 
 describe('prunePackageWorkspaces', () => {
-  it('removes a workspace glob when pruning leaves no package manifest under it', () => {
-    const result = prunePackageWorkspaces({ workspaces: ['backend', 'mobile/*', 'shared/*'] }, [
-      'backend/package.json',
-      'shared/core/package.json',
-      'shared/sdk/package.json',
+  it('copies the resolved folders from the pnpm workspace source', () => {
+    const result = prunePackageWorkspaces({ workspaces: ['backend', 'mobile/*'] }, [
+      'backend',
+      'shared/core',
     ]);
 
-    expect(result.workspaces).toEqual(['backend', 'shared/*']);
+    expect(result.workspaces).toEqual(['backend', 'shared/core']);
   });
 });
 
 describe('prunePackageDependencies', () => {
   it('removes references to workspace packages that were removed', () => {
     const packageJson = {
-      devDependencies: { '@app/native-auth': '*', eslint: '^9.0.0' },
-      optionalDependencies: { '@app/native-auth': '*' },
+      devDependencies: { '@app/native-auth': 'workspace:*', eslint: '^9.0.0' },
+      optionalDependencies: { '@app/native-auth': 'workspace:*' },
     };
 
     expect(prunePackageDependencies(packageJson, new Set(['@app/native-auth']))).toEqual({
@@ -206,5 +205,32 @@ describe('pruneRootPackage', () => {
     await writeFile(join(root, 'package.json'), '{ not json', 'utf8');
 
     await expect(pruneRootPackage(root, [])).rejects.toThrow(/Could not parse package\.json/);
+  });
+
+  it('uses pnpm workspace folders to prune root workspace edges', async () => {
+    const root = await tempRoot();
+    await writeFile(join(root, 'pnpm-workspace.yaml'), 'packages: [backend]\n', 'utf8');
+    await writeFile(
+      join(root, 'package.json'),
+      JSON.stringify({
+        workspaces: ['backend', 'mobile/*'],
+        devDependencies: { '@app/native-auth': 'workspace:*', eslint: '^9.0.0' },
+      }),
+      'utf8',
+    );
+    await mkdir(join(root, 'backend'), { recursive: true });
+    await mkdir(join(root, 'mobile/auth'), { recursive: true });
+    await writeFile(join(root, 'backend/package.json'), JSON.stringify({ name: 'backend' }));
+    await writeFile(
+      join(root, 'mobile/auth/package.json'),
+      JSON.stringify({ name: '@app/native-auth' }),
+    );
+
+    await pruneRootPackage(root, []);
+
+    expect(JSON.parse(await readFile(join(root, 'package.json'), 'utf8'))).toEqual({
+      workspaces: ['backend'],
+      devDependencies: { eslint: '^9.0.0' },
+    });
   });
 });

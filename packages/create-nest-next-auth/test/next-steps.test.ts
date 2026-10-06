@@ -5,8 +5,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { buildNextSteps, readWorkspaceStartScripts } from '../src/scaffold/next-steps.js';
 
 const SCRIPTS = {
-  backend: 'npm run start:dev -w backend',
-  frontend: 'npm run dev -w frontend',
+  backend: 'pnpm --filter backend run start:dev',
+  frontend: 'pnpm --filter frontend run dev',
 };
 
 const roots: string[] = [];
@@ -37,7 +37,7 @@ describe('buildNextSteps', () => {
       buildNextSteps({ directoryLabel: 'app', installed: false, docker: false, scripts: SCRIPTS }),
     ).toEqual([
       'cd app',
-      'npm install',
+      'pnpm install',
       'cp backend/.env.example backend/.env',
       'cp frontend/.env.example frontend/.env.local',
       '# Start a single-node replica set (sign-in uses transactions):',
@@ -46,8 +46,8 @@ describe('buildNextSteps', () => {
       '# leave mongod running, then in a second terminal:',
       'mongosh --eval "rs.initiate()"',
       '# set MONGO_URI with replicaSet=rs0 in backend/.env, then:',
-      'npm run start:dev -w backend',
-      'npm run dev -w frontend',
+      'pnpm --filter backend run start:dev',
+      'pnpm --filter frontend run dev',
     ]);
   });
 });
@@ -76,8 +76,8 @@ describe('readWorkspaceStartScripts', () => {
     }
 
     await expect(readWorkspaceStartScripts(root)).resolves.toEqual({
-      backend: 'npm run start -w backend',
-      frontend: 'npm run start -w frontend',
+      backend: 'pnpm --filter backend run start',
+      frontend: 'pnpm --filter frontend run start',
     });
   });
 
