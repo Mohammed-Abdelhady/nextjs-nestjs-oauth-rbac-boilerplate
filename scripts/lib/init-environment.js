@@ -44,6 +44,7 @@ BCRYPT_ROUNDS=10
 SESSION_COOKIE_NAME=sid
 SESSION_COOKIE_MAX_AGE=604800000
 AUTH_NATIVE_ENABLED=false
+AUTH_NATIVE_DPOP_REQUIRED=false
 AUTH_NATIVE_DPOP_NONCE_SECRET=${config.nativeDpopNonceSecret}
 
 # API origin used by OAuth callbacks and generated clients
