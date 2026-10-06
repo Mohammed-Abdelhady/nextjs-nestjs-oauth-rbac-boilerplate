@@ -2,7 +2,23 @@
   "errors": {
     "codes": {
       "NATIVE_AUTH_DISABLED": "تسجيل الدخول عبر التطبيق معطل حالياً. يرجى المحاولة لاحقاً",
-      "NATIVE_TRANSACTION_EXPIRED": "انتهت صلاحية طلب تسجيل الدخول. عد إلى التطبيق وحاول مرة أخرى"
+      "NATIVE_TRANSACTION_EXPIRED": "انتهت صلاحية طلب تسجيل الدخول. عد إلى التطبيق وحاول مرة أخرى",
+      "NATIVE_DPOP_PROOF_TOO_LARGE": "حجم طلب تسجيل الدخول كبير جداً. ابدأ من جديد في التطبيق.",
+      "NATIVE_DPOP_PROOF_MALFORMED": "تعذرت قراءة طلب تسجيل الدخول. ابدأ من جديد في التطبيق.",
+      "NATIVE_DPOP_PROOF_DUPLICATE_MEMBER": "يحتوي طلب تسجيل الدخول على حقول مكررة. ابدأ من جديد في التطبيق.",
+      "NATIVE_DPOP_PROOF_HEADER_INVALID": "طلب تسجيل الدخول غير صالح. ابدأ من جديد في التطبيق.",
+      "NATIVE_DPOP_PROOF_ALGORITHM_INVALID": "يستخدم طلب تسجيل الدخول طريقة غير مدعومة. ابدأ من جديد في التطبيق.",
+      "NATIVE_DPOP_PROOF_JWK_INVALID": "مفتاح تسجيل الدخول غير صالح. ابدأ من جديد في التطبيق.",
+      "NATIVE_DPOP_PROOF_SIGNATURE_INVALID": "تعذر التحقق من طلب تسجيل الدخول. ابدأ من جديد في التطبيق.",
+      "NATIVE_DPOP_PROOF_METHOD_MISMATCH": "لا يتوافق طلب تسجيل الدخول مع الخطوة الحالية. ابدأ من جديد في التطبيق.",
+      "NATIVE_DPOP_PROOF_ADDRESS_MISMATCH": "طلب تسجيل الدخول مخصص لخدمة أخرى. ابدأ من جديد في التطبيق.",
+      "NATIVE_DPOP_PROOF_IAT_INVALID": "لم يعد طلب تسجيل الدخول صالحاً. ابدأ من جديد في التطبيق.",
+      "NATIVE_DPOP_PROOF_JTI_INVALID": "طلب تسجيل الدخول غير صالح. ابدأ من جديد في التطبيق.",
+      "NATIVE_DPOP_NONCE_REQUIRED": "حدّث طلب تسجيل الدخول في التطبيق ثم أعد المحاولة.",
+      "NATIVE_DPOP_NONCE_INVALID": "انتهت صلاحية التحقق من طلب تسجيل الدخول. ابدأ من جديد في التطبيق.",
+      "NATIVE_DPOP_PROOF_ATH_INVALID": "تعذر التحقق من طلب تسجيل الدخول. ابدأ من جديد في التطبيق.",
+      "NATIVE_DPOP_PROOF_REPLAYED": "سبق استخدام طلب تسجيل الدخول هذا. ابدأ من جديد في التطبيق.",
+      "NATIVE_DPOP_CONFIGURATION_INVALID": "تسجيل الدخول عبر التطبيق غير متاح. حاول مرة أخرى لاحقاً."
     }
   },
   "auth": {

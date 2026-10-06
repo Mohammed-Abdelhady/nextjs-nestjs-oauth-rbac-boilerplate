@@ -2,7 +2,23 @@
   "errors": {
     "codes": {
       "NATIVE_AUTH_DISABLED": "Mobile sign-in is turned off for now. Please try again later",
-      "NATIVE_TRANSACTION_EXPIRED": "This sign-in request has expired. Go back to the app and try again"
+      "NATIVE_TRANSACTION_EXPIRED": "This sign-in request has expired. Go back to the app and try again",
+      "NATIVE_DPOP_PROOF_TOO_LARGE": "This sign-in request is too large. Start again in the app.",
+      "NATIVE_DPOP_PROOF_MALFORMED": "We couldn't read this sign-in request. Start again in the app.",
+      "NATIVE_DPOP_PROOF_DUPLICATE_MEMBER": "This sign-in request contains repeated fields. Start again in the app.",
+      "NATIVE_DPOP_PROOF_HEADER_INVALID": "This sign-in request is invalid. Start again in the app.",
+      "NATIVE_DPOP_PROOF_ALGORITHM_INVALID": "This sign-in request uses an unsupported method. Start again in the app.",
+      "NATIVE_DPOP_PROOF_JWK_INVALID": "The sign-in key is invalid. Start again in the app.",
+      "NATIVE_DPOP_PROOF_SIGNATURE_INVALID": "We couldn't verify this sign-in request. Start again in the app.",
+      "NATIVE_DPOP_PROOF_METHOD_MISMATCH": "This sign-in request doesn't match the current step. Start again in the app.",
+      "NATIVE_DPOP_PROOF_ADDRESS_MISMATCH": "This sign-in request is for a different service. Start again in the app.",
+      "NATIVE_DPOP_PROOF_IAT_INVALID": "This sign-in request is no longer valid. Start again in the app.",
+      "NATIVE_DPOP_PROOF_JTI_INVALID": "This sign-in request is invalid. Start again in the app.",
+      "NATIVE_DPOP_NONCE_REQUIRED": "Refresh this sign-in request in the app and try again.",
+      "NATIVE_DPOP_NONCE_INVALID": "The security check for this sign-in request has expired. Start again in the app.",
+      "NATIVE_DPOP_PROOF_ATH_INVALID": "We couldn't verify this sign-in request. Start again in the app.",
+      "NATIVE_DPOP_PROOF_REPLAYED": "This sign-in request was already used. Start again in the app.",
+      "NATIVE_DPOP_CONFIGURATION_INVALID": "Mobile sign-in is unavailable. Try again later."
     }
   },
   "auth": {
