@@ -18,6 +18,7 @@ import {
 import { packageManagerCases } from './packed-package-manager.js';
 import { checkGeneratedHookHistory } from './generated-hook-history.js';
 import { checkGeneratedGuardrails } from './generated-guardrails.js';
+import { checkGeneratedCi } from './generated-ci.js';
 import {
   DEFAULT_SELECTION_MUST_EXIST,
   DEFAULT_SELECTION_MUST_NOT_EXIST,
@@ -38,6 +39,9 @@ afterAll(() => {
 
 describe('the packed CLI', () => {
   packageManagerCases(() => packed);
+  it.each(['standard', 'minimal'])('ships only runnable CI gates for %s', (preset) =>
+    checkGeneratedCi(packed, preset),
+  );
   it('refuses a pre-hook local violation inherited by a clean generated branch', () => {
     checkGeneratedHookHistory(packed);
   });

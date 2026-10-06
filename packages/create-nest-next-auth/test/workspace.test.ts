@@ -6,7 +6,14 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, expect, it } from 'vitest';
 import { parse } from 'yaml';
 import { isRecord } from '../src/manifest/read.js';
-import { renderWorkspace } from '../src/scaffold/workspace.js';
+import { renderWorkspace, workspaceDirectories } from '../src/scaffold/workspace.js';
+
+const ROOT_SCRIPT_COMMANDS = [
+  ['lint', 'pnpm -r --if-present run lint'],
+  ['typecheck', 'pnpm -r --if-present run typecheck'],
+  ['test', 'pnpm -r --if-present run test && pnpm run test:config'],
+] as const;
+const MOBILE_AUTH_WORKSPACE = 'mobile/auth';
 
 let root = '';
 afterEach(async () => {
@@ -83,4 +90,41 @@ it('resolves root and pnpm workspace lists to the same package folders', async (
       .sort();
 
   expect(folders(packageManifest.workspaces)).toEqual(folders(workspace.packages));
+});
+
+it('routes every workspace check script through the recursive root scripts', async () => {
+  const repository = fileURLToPath(new URL('../../../', import.meta.url));
+  const rootPackage: unknown = JSON.parse(await readFile(join(repository, 'package.json'), 'utf8'));
+  if (!isRecord(rootPackage) || !isRecord(rootPackage.scripts)) {
+    throw new Error('The root package manifest has no scripts.');
+  }
+
+  const workspaces = await workspaceDirectories(repository);
+  expect(workspaces).toContain(MOBILE_AUTH_WORKSPACE);
+  const manifests = await Promise.all(
+    workspaces.map(async (workspace) => {
+      const value: unknown = JSON.parse(
+        await readFile(join(repository, workspace, 'package.json'), 'utf8'),
+      );
+      return {
+        workspace,
+        scripts: isRecord(value) && isRecord(value.scripts) ? value.scripts : undefined,
+      };
+    }),
+  );
+
+  for (const [script, command] of ROOT_SCRIPT_COMMANDS) {
+    expect(rootPackage.scripts[script]).toBe(command);
+    for (const manifest of manifests) {
+      if (typeof manifest.scripts?.[script] !== 'string') continue;
+      expect(rootPackage.scripts[script], `${manifest.workspace}/${script}`).toBe(command);
+    }
+  }
+
+  const mobileScripts = manifests.find(
+    (manifest) => manifest.workspace === MOBILE_AUTH_WORKSPACE,
+  )?.scripts;
+  for (const [script] of ROOT_SCRIPT_COMMANDS) {
+    expect(typeof mobileScripts?.[script], `${MOBILE_AUTH_WORKSPACE}/${script}`).toBe('string');
+  }
 });
