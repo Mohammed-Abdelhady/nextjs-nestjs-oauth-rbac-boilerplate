@@ -12,13 +12,17 @@ import {
 } from './checker.mjs';
 import {
   GITLINK_MODE,
+  GIT_PATH_REPLACEMENT_CHARACTER,
+  SYMLINK_MODE,
+  SOURCE_SYMLINK_REASON,
   LINE_ENDINGS,
   GIT_PATH_BATCH_BYTES,
   MAX_EXCERPT_LENGTH,
   COMMIT_ABBREVIATION_LENGTH,
 } from './policy.mjs';
 import { git, readBlobs, repositoryRoot } from './repository-git.mjs';
-import { parseRawPatch } from './git-diff.mjs';
+import { validateGitPath } from './git-paths.mjs';
+import { parseRawPatch, requireTargetPatches } from './git-diff.mjs';
 import { mergeBase } from './refs.mjs';
 import { decodeContent, isUtf16 } from './text-content.mjs';
 import { encodedAddedLines } from './encoded-diff.mjs';
@@ -61,10 +65,15 @@ function evaluateEntries(entries) {
   const targets = entries.filter(
     (entry) => entry.mode !== GITLINK_MODE && contentTarget(entry.path),
   );
-  const blobs = readBlobs(targets);
+  const links = targets.filter(
+    (entry) =>
+      entry.mode === SYMLINK_MODE && isScanTarget(projectRelative(entry.path, repositoryRoot())),
+  );
+  const regular = targets.filter((entry) => entry.mode !== SYMLINK_MODE);
+  const blobs = readBlobs(regular);
   const added = [];
   const lineCounts = [];
-  for (const original of targets) {
+  for (const original of regular) {
     const entry = {
       ...original,
       path: projectRelative(original.path, repositoryRoot()),
@@ -88,7 +97,10 @@ function evaluateEntries(entries) {
           );
     added.push({ path: entry.path, content, addedLines });
   }
-  return evaluateChanges({ added, lineCounts });
+  return withSourceLinks(
+    evaluateChanges({ added, lineCounts }),
+    links.map((entry) => projectRelative(entry.path, repositoryRoot())),
+  );
 }
 
 function checkDiff(revisions, { rootCommit = false } = {}) {
@@ -109,13 +121,18 @@ function checkDiff(revisions, { rootCommit = false } = {}) {
   const patches = [];
   const groups = [];
   for (const entry of targets) {
+    validateGitPath(entry.path);
     const renamed = /^[RC]/.test(entry.status);
     if (renamed && entry.oldOid === entry.oid) {
       patches.push(entry);
       continue;
     }
-    if (renamed && entries.some((other) => other.path.startsWith(`${entry.previous}/`))) {
-      // An old filename is now a directory: its pathspec would read excluded descendants.
+    if (
+      renamed &&
+      (entry.previous.includes(GIT_PATH_REPLACEMENT_CHARACTER) ||
+        entries.some((other) => other.path.startsWith(`${entry.previous}/`)))
+    ) {
+      // Compare blobs when the old name is unsupported or now names a directory.
       const patch = git(['diff', entry.oldOid, entry.oid, ...DIFF_OPTIONS]);
       patches.push({
         ...entry,
@@ -125,7 +142,7 @@ function checkDiff(revisions, { rootCommit = false } = {}) {
     }
     const paths = [`./${entry.path}`];
     if (renamed && entry.oldMode !== GITLINK_MODE && contentTarget(entry.previous))
-      paths.push(`./${entry.previous}`);
+      paths.push(`./${validateGitPath(entry.previous)}`);
     groups.push(paths);
   }
   let batch = [];
@@ -150,6 +167,7 @@ function checkDiff(revisions, { rootCommit = false } = {}) {
     bytes += length;
   }
   flush();
+  requireTargetPatches(targets, patches);
   return evaluateEntries(patches);
 }
 
@@ -188,10 +206,12 @@ export function checkTree() {
     .filter(Boolean)
     .map((filePath) => projectRelative(filePath, repositoryRoot()))
     .filter((filePath) => filePath !== null);
+  const links = [];
   const added = [];
   const lineCounts = [];
   for (const filePath of new Set(paths)) {
     if (!isContentTarget(filePath)) continue;
+    validateGitPath(filePath);
     const absolute = resolve(root, filePath);
     let stat;
     try {
@@ -206,6 +226,10 @@ export function checkTree() {
       }
       throw error;
     }
+    if (stat.isSymbolicLink() && isScanTarget(filePath)) {
+      links.push(filePath);
+      continue;
+    }
     if (!stat.isFile()) continue;
     const blob = readFileSync(absolute);
     if (!isTextContent(filePath, blob)) continue;
@@ -213,7 +237,7 @@ export function checkTree() {
     lineCounts.push({ path: filePath, lines: countLines(content) });
     added.push({ path: filePath, content, addedLines: rows(content) });
   }
-  return evaluateChanges({ added, lineCounts });
+  return withSourceLinks(evaluateChanges({ added, lineCounts }), links);
 }
 
 export function checkCommit(commit, parents = []) {
@@ -237,7 +261,11 @@ function intersect(comparisons) {
   const bans = comparisons[0].bans.filter((hit) =>
     comparisons.every((result) =>
       result.bans.some(
-        (other) => other.path === hit.path && other.line === hit.line && other.token === hit.token,
+        (other) =>
+          other.path === hit.path &&
+          other.line === hit.line &&
+          other.token === hit.token &&
+          other.reason === hit.reason,
       ),
     ),
   );
@@ -245,4 +273,12 @@ function intersect(comparisons) {
     comparisons.every((result) => result.caps.some((other) => other.path === hit.path)),
   );
   return { bans, caps, ok: bans.length === 0 && caps.length === 0 };
+}
+
+function withSourceLinks(result, paths) {
+  const bans = [
+    ...result.bans,
+    ...paths.map((path) => ({ path, line: 1, reason: SOURCE_SYMLINK_REASON })),
+  ];
+  return { ...result, bans, ok: result.ok && paths.length === 0 };
 }

@@ -43,3 +43,17 @@ export function parseRawPatch(output, { requirePatches = false } = {}) {
     throw new Error('Git patch count does not match metadata.');
   return entries;
 }
+
+export function requireTargetPatches(targets, patches) {
+  const counts = new Map();
+  for (const entry of patches) {
+    const key = `${entry.path}\0${entry.oid}`;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  for (const target of targets) {
+    if (counts.get(`${target.path}\0${target.oid}`) !== 1)
+      throw new Error(
+        'Git content patch is missing or duplicated for a target path; refusing to scan.',
+      );
+  }
+}

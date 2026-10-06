@@ -1,4 +1,6 @@
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { scannerWorkspaceRoots } from './workspace-roots.mjs';
 import {
   ATTRIBUTION_PATTERNS,
   BANNED_CONSTRUCTS,
@@ -61,13 +63,28 @@ export function isTextContent(filePath, content) {
   return isScanTarget(filePath) || !content.subarray(0, BINARY_PROBE_BYTES).includes(0);
 }
 
-export function isScanTarget(filePath) {
+let workspaceRoots;
+function defaultWorkspaceRoots() {
+  return (workspaceRoots ??= scannerWorkspaceRoots(
+    fileURLToPath(new URL('../..', import.meta.url)),
+  ));
+}
+
+function skippedDirectory(filePath, roots) {
+  const parts = filePath.split('/');
+  return parts.some(
+    (part, index) =>
+      SKIPPED_DIRECTORY_PARTS.includes(part) && roots.includes(parts.slice(0, index).join('/')),
+  );
+}
+
+export function isScanTarget(filePath, roots = defaultWorkspaceRoots()) {
   const normalized = filePath;
   if (isProtectedPath(normalized)) return false;
   if (normalized === 'package.json' || normalized.endsWith('/package.json')) return true;
   if (normalized.startsWith('.husky/') && !normalized.includes('/_/')) return true;
   if (SKIPPED_PATH_PREFIXES.some((prefix) => normalized.startsWith(prefix))) return false;
-  if (normalized.split('/').some((part) => SKIPPED_DIRECTORY_PARTS.includes(part))) return false;
+  if (skippedDirectory(normalized, roots)) return false;
   return SCAN_EXTENSIONS.includes(path.posix.extname(normalized).toLowerCase());
 }
 
@@ -79,7 +96,7 @@ export function isCappedPath(filePath) {
   if (UNCAPPED_EXTENSIONS.includes(path.posix.extname(filePath).toLowerCase())) return false;
   if (!isScanTarget(filePath)) {
     if (SKIPPED_PATH_PREFIXES.some((prefix) => filePath.startsWith(prefix))) return false;
-    if (filePath.split('/').some((part) => SKIPPED_DIRECTORY_PARTS.includes(part))) return false;
+    if (skippedDirectory(filePath, defaultWorkspaceRoots())) return false;
   }
   return CAPPED_PATH.test(filePath) || CAPPED_FILES.includes(filePath);
 }
