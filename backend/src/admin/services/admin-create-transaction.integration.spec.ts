@@ -62,19 +62,14 @@ describe('administrative creation owns its insert transaction', () => {
     ).toBe(0);
   });
 
-  it('leaves no account when commit fails permanently after insertion', async () => {
+  it('leaves no account when transaction work fails after insertion', async () => {
     const { h } = fixture;
-    const start = h.connection.startSession.bind(h.connection);
+    const insert = h.users.collection.insertOne.bind(h.users.collection);
     jest
-      .spyOn(h.connection, 'startSession')
-      .mockImplementationOnce(async (options?: ClientSessionOptions) => {
-        const session = await start(options);
-        jest
-          .spyOn(session, 'commitTransaction')
-          .mockRejectedValueOnce(
-            new MongoNetworkError('commit disconnected before send'),
-          );
-        return session;
+      .spyOn(h.users.collection, 'insertOne')
+      .mockImplementationOnce(async (...args) => {
+        await insert(...args);
+        throw new MongoNetworkError('insert failed before commit');
       });
     await expect(
       fixture.create('commit-failure@example.test'),
@@ -87,4 +82,42 @@ describe('administrative creation owns its insert transaction', () => {
     ).toBeNull();
     expect(await h.events.countDocuments({})).toBe(0);
   });
+
+  it.each([
+    { commitLands: true, email: 'landed-unknown@example.test' },
+    { commitLands: false, email: 'absent-unknown@example.test' },
+  ])(
+    'answers unknown when account creation commit may have landed ($email)',
+    async ({ commitLands, email }) => {
+      const { h } = fixture;
+      const start = h.connection.startSession.bind(h.connection);
+      jest
+        .spyOn(h.connection, 'startSession')
+        .mockImplementationOnce(async (options?: ClientSessionOptions) => {
+          const session = await start(options);
+          const commit = session.commitTransaction.bind(session);
+          jest
+            .spyOn(session, 'commitTransaction')
+            .mockImplementationOnce(async () => {
+              if (commitLands) await commit();
+              throw new MongoNetworkError('commit response unavailable');
+            });
+          return session;
+        });
+
+      await expect(fixture.create(email)).rejects.toMatchObject({
+        code: ErrorCode.TRANSACTION_OUTCOME_UNKNOWN,
+        status: 503,
+      });
+
+      const account = await h.users.findOne({ email });
+      expect(account !== null).toBe(commitLands);
+      if (account) {
+        expect(account.role).toBe(EDITOR_SLUG);
+        expect(
+          await h.roleModel.findOne({ slug: account.role }),
+        ).not.toBeNull();
+      }
+    },
+  );
 });

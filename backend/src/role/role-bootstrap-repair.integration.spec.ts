@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { MongoNetworkError } from 'mongodb';
+import { ClientSessionOptions } from 'mongoose';
 import { ROLE_SWEEP_PENDING } from '../common/constants/roles';
 import { RoleSweepBootstrapService } from './services/role-sweep-bootstrap.service';
 import { Role, RoleDocument } from './schemas/role.schema';
@@ -97,6 +98,61 @@ describe('startup retries durable role repairs', () => {
       [],
     );
   });
+
+  it('keeps startup sweep work when its commit answer is unknown', async () => {
+    const { h } = fixture;
+    const target = await fixture.seed(
+      'bootstrap-unknown@example.test',
+      EDITOR_SLUG,
+    );
+    const role = await h.roleModel.findOne({ slug: EDITOR_SLUG }).orFail();
+    await h.roleModel.updateOne(
+      { _id: role._id },
+      {
+        $set: {
+          slug: LEAD_SLUG,
+          pendingHolderSweeps: [
+            {
+              roleId: role._id,
+              previousSlug: EDITOR_SLUG,
+              actorId: fixture.roleActorId,
+              sweepId: 'startup-unknown-sweep',
+            },
+          ],
+        },
+      },
+    );
+    const start = h.connection.startSession.bind(h.connection);
+    jest
+      .spyOn(h.connection, 'startSession')
+      .mockImplementationOnce(async (options?: ClientSessionOptions) => {
+        const session = await start(options);
+        const commit = session.commitTransaction.bind(session);
+        jest
+          .spyOn(session, 'commitTransaction')
+          .mockImplementationOnce(async () => {
+            await commit();
+            throw new MongoNetworkError('startup sweep answer unavailable');
+          });
+        return session;
+      });
+    const log = jest.spyOn(Logger.prototype, 'error');
+
+    await expect(finishBootstrap([instance()])).resolves.toBeUndefined();
+
+    expect((await h.users.findById(target._id))?.role).toBe(LEAD_SLUG);
+    expect(
+      (await h.roleModel.findById(role._id))?.pendingHolderSweeps,
+    ).toHaveLength(1);
+    expect(log).toHaveBeenCalledWith({
+      event: ROLE_SWEEP_PENDING,
+      roleId: role._id.toString(),
+      previousSlug: EDITOR_SLUG,
+      actorId: fixture.roleActorId,
+      error: 'name=UnknownTransactionOutcomeError cause=name=MongoNetworkError',
+    });
+  });
+
   it('repairs a delete that crashed before transferring its reference to the default role', async () => {
     const { h } = fixture;
     const target = await fixture.seed(

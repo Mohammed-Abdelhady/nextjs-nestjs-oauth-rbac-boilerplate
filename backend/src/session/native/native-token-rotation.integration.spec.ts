@@ -10,11 +10,15 @@ import {
   stopNativeOauth,
 } from './native-oauth.harness-spec';
 import { getModelToken } from '@nestjs/mongoose';
+import { MongoTopologyClosedError } from 'mongodb';
+import { HttpStatus } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { CREDENTIAL_PURPOSE } from '../constants/credential-purpose';
 import { SECURITY_EVENT_ACTION } from '../constants/security-event-action';
 import { OAUTH_ERROR } from './native-oauth.types';
+import { AppException } from '../../common/exceptions/app.exception';
+import { ErrorCode } from '../../common/enums/error-code.enum';
 import {
   SecurityEvent,
   SecurityEventDocument,
@@ -101,6 +105,45 @@ describe('native token rotation (plan 04)', () => {
         sessionId: session._id.toString(),
       }),
     ).toContain(SECURITY_EVENT_ACTION.REFRESH_REPLAYED);
+  });
+
+  it('maps an unknown refresh commit through the token grant to its own error code', async () => {
+    const granted = await issueNativeGrant(ctx);
+    const originalStartSession = ctx.harness.connection.startSession.bind(
+      ctx.harness.connection,
+    );
+    const startSession = jest.spyOn(ctx.harness.connection, 'startSession');
+    startSession.mockImplementation(async () => {
+      const session = await originalStartSession();
+      jest
+        .spyOn(session, 'commitTransaction')
+        .mockRejectedValue(new MongoTopologyClosedError());
+      return session;
+    });
+
+    try {
+      const outcome = await ctx.tokens
+        .grant(
+          {
+            grant_type: 'refresh_token',
+            refresh_token: granted.refreshToken,
+            client_id: NATIVE_CLIENT_ID,
+          },
+          NATIVE_META,
+        )
+        .then(
+          () => undefined,
+          (error: unknown) => error,
+        );
+
+      expect(outcome).toBeInstanceOf(AppException);
+      if (!(outcome instanceof AppException))
+        throw new Error('Expected an application failure');
+      expect(outcome.getCode()).toBe(ErrorCode.TRANSACTION_OUTCOME_UNKNOWN);
+      expect(outcome.getStatus()).toBe(HttpStatus.SERVICE_UNAVAILABLE);
+    } finally {
+      startSession.mockRestore();
+    }
   });
 
   it('stops accepting an access token at the exact five-minute deadline', async () => {

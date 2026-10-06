@@ -2,12 +2,13 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Logger } from '@nestjs/common';
 import type { Model } from 'mongoose';
 import { Types } from 'mongoose';
-import { ClientSession } from 'mongodb';
+import { ClientSession, MongoNetworkError } from 'mongodb';
 import type { Response } from 'supertest';
 import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from '../../src/user/schemas/user.schema';
 import { PendingRegistration } from '../../src/auth/schemas/pending-registration.schema';
 import { PENDING_PURPOSE } from '../../src/auth/constants/registration';
+import { ErrorCode } from '../../src/common/enums/error-code.enum';
 import { bootE2eApp, browserAgent, type E2eApp } from '../utils/e2e-app';
 import { TEST_NOW } from '../utils/frozen-clock';
 import { RaceGate } from '../utils/race-gate';
@@ -21,7 +22,7 @@ const PASSWORD = 'Password123!';
 const NAME = 'Test User';
 const LIVE_EXPIRY = new Date(TEST_NOW.getTime() + 15 * 60 * 1000);
 
-/** The driver's real commit, kept before any spec installs a spy on it. */
+/** Original driver method, before test spies are installed. */
 const realCommitTransaction = (
   ClientSession.prototype as {
     commitTransaction: (this: ClientSession) => Promise<void>;
@@ -66,6 +67,13 @@ describe('Activation unknown commit outcomes (e2e)', () => {
     return agent.post(path).send(body);
   }
 
+  function expectUnknownOutcome(response: Response): void {
+    expect(response.status).toBe(503);
+    expect(response.body.error.code).toBe(
+      ErrorCode.TRANSACTION_OUTCOME_UNKNOWN,
+    );
+  }
+
   function activationBody(
     email: string,
     code: string,
@@ -106,26 +114,27 @@ describe('Activation unknown commit outcomes (e2e)', () => {
     return target;
   }
 
-  /**
-   * Make the driver's commit report a result the helper cannot confirm. With
-   * `lands` the real commit runs first, so the account is written; without it
-   * the commit never reaches the database.
-   */
-  function unknownCommit(lands: boolean): jest.SpyInstance {
-    const labelled = () =>
-      Object.assign(new Error('unknown commit'), {
-        errorLabels: ['UnknownTransactionCommitResult'],
-      });
+  /** Inject an ambiguous commit answer, optionally after the actual commit. */
+  function unknownCommit(
+    lands: boolean,
+    unlabelledNetworkError = false,
+  ): jest.SpyInstance {
+    const failure = () =>
+      unlabelledNetworkError
+        ? new MongoNetworkError('connection closed after commit')
+        : Object.assign(new Error('unknown commit'), {
+            errorLabels: ['UnknownTransactionCommitResult'],
+          });
     if (!lands) {
       return jest
         .spyOn(ClientSession.prototype, 'commitTransaction')
-        .mockImplementation(() => Promise.reject(labelled()));
+        .mockImplementation(() => Promise.reject(failure()));
     }
     return jest
       .spyOn(ClientSession.prototype, 'commitTransaction')
       .mockImplementation(async function (this: ClientSession) {
         await realCommitTransaction.call(this).catch(() => undefined);
-        throw labelled();
+        throw failure();
       });
   }
 
@@ -182,9 +191,48 @@ describe('Activation unknown commit outcomes (e2e)', () => {
       spy.mockRestore();
     }
 
-    expect(response.status).toBe(500);
+    expectUnknownOutcome(response);
     expect(response.body).not.toMatchObject({ data: { mustSignIn: true } });
     expect((await users.findOne({ email }))?.name).toBe('Foreign');
+  });
+
+  it('answers sign-in-required when an unlabelled network error follows a landed activation', async () => {
+    const email = 'network-commit-landed@example.test';
+    await seedSignup(email);
+    const spy = unknownCommit(true, true);
+
+    const response = await post(
+      '/api/auth/activate',
+      activationBody(email, CODE, PASSWORD),
+    );
+    spy.mockRestore();
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      success: true,
+      data: { requiresTwoFactor: false, mustSignIn: true, user: null },
+    });
+    expect(response.headers['set-cookie']).toBeUndefined();
+    expect(await users.countDocuments({ email })).toBe(1);
+  });
+
+  it('answers unknown when an unlabelled network error follows an activation that did not land', async () => {
+    const email = 'network-commit-lost@example.test';
+    await seedSignup(email);
+    const read = jest.spyOn(users, 'findById');
+    const spy = unknownCommit(false, true);
+
+    const response = await post(
+      '/api/auth/activate',
+      activationBody(email, CODE, PASSWORD),
+    );
+    spy.mockRestore();
+
+    expectUnknownOutcome(response);
+    expect(response.body).not.toMatchObject({ data: { mustSignIn: true } });
+    expect(await users.countDocuments({ email })).toBe(0);
+    expect(await pendingRegistrations.countDocuments({ email })).toBe(1);
+    expect(read).toHaveBeenCalledTimes(1);
   });
 
   it('leaves the pending record usable when the commit did not land', async () => {
@@ -198,7 +246,7 @@ describe('Activation unknown commit outcomes (e2e)', () => {
     );
     spy.mockRestore();
 
-    expect(first.status).toBe(500);
+    expectUnknownOutcome(first);
     expect(await users.countDocuments({ email })).toBe(0);
     expect(await pendingRegistrations.countDocuments({ email })).toBe(1);
 
@@ -210,7 +258,7 @@ describe('Activation unknown commit outcomes (e2e)', () => {
     expect(second.status).toBe(200);
   });
 
-  it('rethrows the original when the unknown-commit re-read fails', async () => {
+  it('answers unknown when the unknown-commit re-read fails', async () => {
     const email = 'commit-read-fail@example.test';
     await seedSignup(email);
     const commitSpy = unknownCommit(false);
@@ -228,12 +276,12 @@ describe('Activation unknown commit outcomes (e2e)', () => {
     readSpy.mockRestore();
     commitSpy.mockRestore();
 
-    expect(response.status).toBe(500);
+    expectUnknownOutcome(response);
     const logged = errorSpy.mock.calls
       .map((call: unknown[]) => call.map((v) => String(v)).join(' '))
       .join('\n');
-    expect(logged).toContain('cause=Error');
-    expect(logged).not.toContain('cause=TypeError');
+    expect(logged).toContain('cause=name=Error');
+    expect(logged).not.toContain('cause=name=TypeError');
     errorSpy.mockRestore();
   });
 
@@ -252,7 +300,7 @@ describe('Activation unknown commit outcomes (e2e)', () => {
     expect((await users.findById(target._id))?.isVerified).toBe(true);
   });
 
-  it('rethrows when the unknown email-change commit did not land', async () => {
+  it('answers unknown when the email-change commit did not land', async () => {
     const email = 'change-commit-lost@example.test';
     const target = await seedEmailChange(email, 4);
     const spy = unknownCommit(false);
@@ -263,7 +311,39 @@ describe('Activation unknown commit outcomes (e2e)', () => {
     });
     spy.mockRestore();
 
-    expect(response.status).toBe(500);
+    expectUnknownOutcome(response);
+    expect((await users.findById(target._id))?.isVerified).toBe(false);
+  });
+
+  it('confirms the change when an unlabelled network error follows a landed commit', async () => {
+    const email = 'network-change-landed@example.test';
+    const target = await seedEmailChange(email, 4);
+    const spy = unknownCommit(true, true);
+
+    const response = await post('/api/auth/confirm-email-change', {
+      email,
+      code: CODE,
+    });
+    spy.mockRestore();
+
+    expect(response.status).toBe(200);
+    expect((await users.findById(target._id))?.isVerified).toBe(true);
+  });
+
+  it('does not confirm the change when an unlabelled network error follows a commit that did not land', async () => {
+    const email = 'network-change-lost@example.test';
+    const target = await seedEmailChange(email, 4);
+    const read = jest.spyOn(users, 'findById');
+    const spy = unknownCommit(false, true);
+
+    const response = await post('/api/auth/confirm-email-change', {
+      email,
+      code: CODE,
+    });
+    spy.mockRestore();
+
+    expectUnknownOutcome(response);
+    expect(read).toHaveBeenCalledTimes(1);
     expect((await users.findById(target._id))?.isVerified).toBe(false);
   });
 });

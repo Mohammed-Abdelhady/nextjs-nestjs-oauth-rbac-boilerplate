@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GlobalExceptionFilter } from './global-exception.filter';
 import { ErrorCode } from '../enums/error-code.enum';
+import { UnknownTransactionOutcomeError } from '../exceptions/unknown-transaction-outcome.error';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
 import { ArgumentsHost } from '@nestjs/common';
@@ -44,6 +45,25 @@ describe('GlobalExceptionFilter Mapping', () => {
       }),
     });
   }
+
+  it('maps an unhandled unknown commit to the retryable outcome code', () => {
+    filter.catch(
+      new UnknownTransactionOutcomeError(new Error('commit answer lost')),
+      createMockHost(),
+    );
+
+    expect(mockResponse.status).toHaveBeenCalledWith(
+      HttpStatus.SERVICE_UNAVAILABLE,
+    );
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        error: expect.objectContaining({
+          code: ErrorCode.TRANSACTION_OUTCOME_UNKNOWN,
+        }),
+      }),
+    );
+  });
 
   describe('Mongoose CastError handling (D-07)', () => {
     it('maps CastError to 400 with INVALID_INPUT', () => {
