@@ -72,3 +72,19 @@ it('ships commit scopes that match the available template workspaces', () => {
 
   expect(shipped).toBe(expected);
 });
+
+it('keeps repository cloning instructions out of the generated quick start', () => {
+  const source = readFileSync(join(REPOSITORY_ROOT, 'README.md'));
+  const shipped = templateContent('README.md', source).toString();
+  expect({
+    repositoryClone: source.toString().includes('git clone '),
+    generatedClone: shipped.includes('git clone '),
+    frozenInstall: shipped.includes('pnpm install --frozen-lockfile'),
+    projectInstall: shipped.includes('pnpm install\n'),
+  }).toEqual({
+    repositoryClone: true,
+    generatedClone: false,
+    frozenInstall: false,
+    projectInstall: true,
+  });
+});

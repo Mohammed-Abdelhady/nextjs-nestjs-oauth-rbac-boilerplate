@@ -15,6 +15,7 @@ import {
   scaffold,
   sourceFilesWithMarkers,
 } from './packed-cli.js';
+import { installerDocCases } from './installer-docs.js';
 import { packageManagerCases } from './packed-package-manager.js';
 import { checkGeneratedHookHistory } from './generated-hook-history.js';
 import { checkGeneratedGuardrails } from './generated-guardrails.js';
@@ -43,6 +44,8 @@ describe('the packed CLI', () => {
   it('writes rules from project data and omits pruned feature references', async () => {
     await checkGeneratedRules(packed);
   });
+
+  installerDocCases(() => packed);
   it.each(['standard', 'minimal'])('ships only runnable CI gates for %s', (preset) =>
     checkGeneratedCi(packed, preset),
   );
