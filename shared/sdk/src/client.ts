@@ -1,12 +1,14 @@
 import { unwrapAuthMethods } from './auth-methods';
 import { HTTP_METHOD, OAUTH_GRANT_TYPE, TRANSPORT_FAILURE } from './constants';
 import { unwrapOAuth } from './envelope';
+import { isSdkError } from './errors';
 import { API_PATHS } from './paths';
 import { unwrapSessionList } from './sessions';
 import { unwrapObject } from './shapes';
 import { unwrapTokenSet } from './tokens';
 import {
   TransportError,
+  isTransportError,
   toTransportError,
   type Transport,
   type TransportRequest,
@@ -28,7 +30,7 @@ import type {
   User,
 } from './types';
 
-/** Per-call options. An aborted call rejects with a `TransportError` whose reason is `aborted`. */
+/** Per-call options. An untyped cancellation rejects with `TransportError` reason `aborted`. */
 export interface CallOptions<TSignal extends TransportSignal = TransportSignal> {
   signal?: TSignal;
 }
@@ -100,6 +102,7 @@ export function createApiClient<TSignal extends TransportSignal = TransportSigna
     try {
       return await transport.request(signal === undefined ? call : { ...call, signal });
     } catch (error) {
+      if (isSdkError(error) && !isTransportError(error)) throw error;
       throw toTransportError(error, signal);
     }
   };
