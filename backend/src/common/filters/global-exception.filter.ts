@@ -9,6 +9,7 @@ import {
 import { Response } from 'express';
 import { ThrottlerException } from '@nestjs/throttler';
 import { AppException } from '../exceptions/app.exception';
+import { isUnknownTransactionOutcome } from '../exceptions/unknown-transaction-outcome.error';
 import { ValidationFailedException } from '../exceptions/validation-failed.exception';
 import { ErrorCode } from '../enums/error-code.enum';
 import { ErrorResponse } from '../dto/api-response.dto';
@@ -74,10 +75,6 @@ function describeUnknownException(error: unknown): string {
     return `non-object ${typeof error}`;
   }
   const parts = [describeDriverError(error)];
-  const cause = (error as { cause?: unknown }).cause;
-  if (typeof cause === 'object' && cause !== null) {
-    parts.push(`cause=${describeDriverError(cause)}`);
-  }
   const validationErrors = (error as UnknownExceptionFacts).errors;
   if (
     validationErrors &&
@@ -134,6 +131,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       );
       this.logger.warn(
         `AppException (${statusCode}): ${exception.getCode()}${this.describeFailedFields(exception)}${tag}`,
+      );
+    } else if (isUnknownTransactionOutcome(exception)) {
+      statusCode = HttpStatus.SERVICE_UNAVAILABLE;
+      errorResponse = ErrorResponse.error(
+        ErrorCode.TRANSACTION_OUTCOME_UNKNOWN,
+        'The transaction outcome is unknown',
+      );
+      this.logger.error(
+        `Unknown transaction outcome: ${describeDriverError(exception)}${tag}`,
+        stackFrames(exception),
       );
     } else if (exception instanceof ThrottlerException) {
       statusCode = HttpStatus.TOO_MANY_REQUESTS;

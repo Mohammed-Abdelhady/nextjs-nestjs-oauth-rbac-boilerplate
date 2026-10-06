@@ -4,8 +4,7 @@ import { Connection, Model } from 'mongoose';
 import { User, UserDocument } from '../../user/schemas/user.schema';
 import { ApiResponse } from '../../common/dto/api-response.dto';
 import {
-  hasErrorLabel,
-  UNKNOWN_COMMIT_RESULT_LABEL,
+  isUnknownTransactionOutcome,
   withMajorityTransaction,
 } from '../../session/utils/mongo-transaction';
 import { VerificationCodeService } from './verification-code.service';
@@ -14,6 +13,8 @@ import { activationCodeInvalid } from '../utils/activation-error.util';
 import { PENDING_PURPOSE } from '../constants/registration';
 import { ReservedCode } from '../interfaces/pending-code.interface';
 import { ConfirmEmailChangeDto } from '../dto/confirm-email-change.dto';
+import { logUnknownCommit } from '../utils/unknown-commit.util';
+import { asAuthorityUnavailable } from '../../session/utils/authority-unavailable';
 
 /**
  * Confirms the new address an admin moved an account to. It is its own
@@ -51,17 +52,22 @@ export class EmailChangeConfirmationService {
         await confirmEmailChange(reserved, this.userModel, session);
       });
     } catch (error) {
-      if (!hasErrorLabel(error, UNKNOWN_COMMIT_RESULT_LABEL)) {
+      if (!isUnknownTransactionOutcome(error)) {
         throw error;
       }
-      // The commit may have landed. Read this generation's verified state; a
-      // landed commit answers success, otherwise the failure is real.
-      if (!(await this.confirmedForGeneration(reserved))) {
-        throw error;
+      // The commit may have landed. Only a verified generation answers
+      // success; an absent or unreadable row remains an unknown outcome.
+      let confirmed: boolean;
+      try {
+        confirmed = await this.confirmedForGeneration(reserved);
+      } catch {
+        logUnknownCommit(this.logger, 'Email change', error);
+        asAuthorityUnavailable(error);
       }
-      this.logger.error(
-        `Email change commit result unknown for user ${reserved.userId?.toString() ?? 'unknown'}`,
-      );
+      if (!confirmed) {
+        asAuthorityUnavailable(error);
+      }
+      logUnknownCommit(this.logger, 'Email change', error);
     }
 
     return ApiResponse.success({

@@ -24,8 +24,7 @@ import {
 import { activationCodeInvalid } from '../utils/activation-error.util';
 import { generateVerificationCode } from '../utils/verification-code.util';
 import {
-  hasErrorLabel,
-  UNKNOWN_COMMIT_RESULT_LABEL,
+  isUnknownTransactionOutcome,
   withMajorityTransaction,
 } from '../../session/utils/mongo-transaction';
 import {
@@ -33,6 +32,8 @@ import {
   MAIL_COUNTER_PURPOSE,
 } from '../constants/registration';
 import { REGISTRATION_CONTRACT_OUTDATED_MESSAGE } from '../constants/auth-messages';
+import { logUnknownCommit } from '../utils/unknown-commit.util';
+import { asAuthorityUnavailable } from '../../session/utils/authority-unavailable';
 
 /**
  * The sign-up code flows: start a registration, activate with the mailed code,
@@ -145,7 +146,7 @@ export class RegistrationService {
         );
       });
     } catch (error) {
-      if (hasErrorLabel(error, UNKNOWN_COMMIT_RESULT_LABEL)) {
+      if (isUnknownTransactionOutcome(error)) {
         return this.finishUnknownCommit(accountId, error);
       }
       throw error;
@@ -187,11 +188,10 @@ export class RegistrationService {
   /**
    * A commit whose result is unknown may or may not have landed. Only answer
    * "sign in" when this caller's own account — the id generated before the
-   * transaction — is really there; otherwise the failure is real and is
-   * rethrown. Looking up by address alone could match an account a concurrent
-   * sign-in method created and tell this caller to sign in to a password they
-   * never set. If the re-read itself fails, the original error is rethrown and
-   * the unknown commit is still logged.
+   * transaction — is really there. An absent or unreadable row remains an
+   * unknown outcome and answers with its 503 code. Looking up by address alone
+   * could match an account a concurrent sign-in method created and tell this
+   * caller to sign in to a password they never set.
    */
   private async finishUnknownCommit(
     accountId: Types.ObjectId,
@@ -201,22 +201,15 @@ export class RegistrationService {
     try {
       committed = await this.userModel.findById(accountId);
     } catch {
-      this.logUnknownCommit(accountId, error);
-      throw error;
+      logUnknownCommit(this.logger, 'Activation', error);
+      asAuthorityUnavailable(error);
     }
 
     if (committed) {
-      this.logUnknownCommit(accountId, error);
+      logUnknownCommit(this.logger, 'Activation', error);
       return ActivateResponseDto.signInRequired();
     }
-    throw error;
-  }
-
-  private logUnknownCommit(accountId: Types.ObjectId, error: unknown): void {
-    const cause = error instanceof Error ? error.name : typeof error;
-    this.logger.error(
-      `Activation commit result unknown for user ${accountId.toString()} cause=${cause}`,
-    );
+    asAuthorityUnavailable(error);
   }
 
   /**
