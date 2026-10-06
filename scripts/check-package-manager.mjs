@@ -14,8 +14,29 @@ import { decodeContent, isUtf16 } from './guardrails/text-content.mjs';
 const LEGACY_MANAGER = 'n' + 'pm';
 const LEGACY_LOCKFILE = 'package' + '-lock';
 const LEGACY_EXEC = 'np' + 'x';
+const LEGACY_YARN = 'y' + 'arn';
+const LEGACY_BUN = 'b' + 'un';
+const LEGACY_BUN_EXEC = LEGACY_BUN + 'x';
+const LEGACY_MANAGER_VERBS = [
+  'run',
+  'ci',
+  'install',
+  'test',
+  'start',
+  'i',
+  'exec',
+  'audit',
+  'update',
+  'add',
+  'remove',
+  'uninstall',
+  'rebuild',
+  'link',
+  'dedupe',
+  'prune',
+].join('|');
 const FORBIDDEN_REFERENCE = new RegExp(
-  `\\b(?:${LEGACY_MANAGER} (?:run|ci|install)\\b|${LEGACY_EXEC} |${LEGACY_LOCKFILE})`,
+  `\\b(?:${LEGACY_MANAGER} (?:${LEGACY_MANAGER_VERBS})\\b|${LEGACY_EXEC}\\b|${LEGACY_YARN} (?:add|install|run|dev)\\b|${LEGACY_BUN_EXEC}\\b|${LEGACY_BUN} (?:install|run)\\b|${LEGACY_LOCKFILE})`,
   'g',
 );
 const PUBLICATION_PATHS = new Set(['packages/create-nest-next-auth/test/packed-cli.ts']);
