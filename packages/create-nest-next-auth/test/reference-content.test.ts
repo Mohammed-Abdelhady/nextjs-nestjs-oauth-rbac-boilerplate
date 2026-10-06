@@ -6,6 +6,7 @@ import {
   ARABIC_FORBIDDEN,
   DOCKER_FORBIDDEN,
   findForbiddenContent,
+  LEGACY_PACKAGE_MANAGER_COMMANDS,
   PRODUCTION_FORBIDDEN,
 } from './reference-content.js';
 
@@ -81,5 +82,22 @@ describe('findForbiddenContent', () => {
     const root = await tree({ 'README.md': '# Project\n' });
 
     expect(findForbiddenContent(root, DOCKER_FORBIDDEN)).toEqual([]);
+  });
+
+  it('finds npm, yarn, and bun commands in generated instruction text', async () => {
+    const oldNpm = 'n' + 'pm';
+    const oldYarn = 'y' + 'arn';
+    const oldBun = 'b' + 'un';
+    const root = await tree({
+      'npm.md': `${oldNpm} run lint\n`,
+      'yarn.md': `${oldYarn} install\n`,
+      'bun.md': `${oldBun} run lint\n`,
+    });
+
+    expect(findForbiddenContent(root, LEGACY_PACKAGE_MANAGER_COMMANDS)).toEqual([
+      'bun.md',
+      'npm.md',
+      'yarn.md',
+    ]);
   });
 });

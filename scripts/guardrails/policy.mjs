@@ -168,6 +168,7 @@ BANNED_CONSTRUCTS.push(
   { token: 'document["write"]', reason: RULE_REASONS.DOM },
   {
     token: 'inline eslint configuration',
+    display: 'description',
     pattern: /\/\*\s*eslint\s+['"]?(?:@[\w-]+\/)?[\w][\w/-]*['"]?\s*:/g,
     reason: RULE_REASONS.SUPPRESSION,
   },

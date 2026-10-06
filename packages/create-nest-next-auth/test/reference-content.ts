@@ -78,3 +78,36 @@ export const ARABIC_FORBIDDEN = [
   /switchToArabic/,
   /[\u0600-\u06FF]/,
 ];
+
+const LEGACY_NPM = 'n' + 'pm';
+const LEGACY_NPX = LEGACY_NPM + 'x';
+const LEGACY_YARN = 'y' + 'arn';
+const LEGACY_BUN = 'b' + 'un';
+const LEGACY_BUNX = LEGACY_BUN + 'x';
+const LEGACY_COMMAND_VERBS = [
+  'run',
+  'ci',
+  'install',
+  'test',
+  'start',
+  'i',
+  'exec',
+  'audit',
+  'update',
+  'add',
+  'remove',
+  'uninstall',
+  'rebuild',
+  'link',
+  'dedupe',
+  'prune',
+].join('|');
+
+/** Commands that conflict with the pnpm version printed for generated projects. */
+export const LEGACY_PACKAGE_MANAGER_COMMANDS = [
+  new RegExp(`\\b${LEGACY_NPM} (?:${LEGACY_COMMAND_VERBS})\\b`),
+  new RegExp(`\\b${LEGACY_NPX}\\b`),
+  new RegExp(`\\b${LEGACY_YARN} (?:add|install|run|dev)\\b`),
+  new RegExp(`\\b${LEGACY_BUNX}\\b`),
+  new RegExp(`\\b${LEGACY_BUN} (?:install|run)\\b`),
+];

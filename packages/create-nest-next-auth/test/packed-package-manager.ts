@@ -58,6 +58,14 @@ export function packageManagerCases(getPacked: () => Packed): void {
         '--version\ninstall --lockfile-only\ninstall --frozen-lockfile\n',
       );
       expectLockfileImportersMatchWorkspace(project);
+      const committedFiles = execFileSync('git', ['ls-tree', '--name-only', 'HEAD'], {
+        cwd: project,
+        env: commandEnvironment(),
+        encoding: 'utf8',
+      })
+        .trimEnd()
+        .split('\n');
+      expect(committedFiles).toEqual(expect.arrayContaining(['AGENTS.md', 'CLAUDE.md']));
       expect(
         execFileSync('git', ['status', '--short'], {
           cwd: project,

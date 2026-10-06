@@ -99,7 +99,25 @@ it('routes every workspace check script through the recursive root scripts', asy
     throw new Error('The root package manifest has no scripts.');
   }
 
-  const workspaces = await workspaceDirectories(repository);
+  if (
+    !Array.isArray(rootPackage.workspaces) ||
+    !rootPackage.workspaces.every((pattern): pattern is string => typeof pattern === 'string')
+  ) {
+    throw new Error('The root package manifest has an invalid workspace list.');
+  }
+  const workspaces = globSync(
+    rootPackage.workspaces.map((pattern) => `${pattern}/package.json`),
+    { cwd: repository },
+  )
+    .map((file) => posix.dirname(file))
+    .sort();
+  await fixture(await readFile(join(repository, 'pnpm-workspace.yaml'), 'utf8'));
+  for (const workspace of workspaces) {
+    const manifest = await readFile(join(repository, workspace, 'package.json'), 'utf8');
+    await mkdir(join(root, workspace), { recursive: true });
+    await writeFile(join(root, workspace, 'package.json'), manifest);
+  }
+  expect(await workspaceDirectories(root)).toEqual(workspaces);
   expect(workspaces).toContain(MOBILE_AUTH_WORKSPACE);
   const manifests = await Promise.all(
     workspaces.map(async (workspace) => {
