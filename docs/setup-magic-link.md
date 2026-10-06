@@ -13,7 +13,13 @@ A magic link is a token mailed to an address. Following it signs the address hol
 3. The client page behind that link reads the token out of the query string and posts it to `POST /api/auth/magic-link/verify`.
 4. The backend spends the token, sets the session cookie and returns the account.
 
-**What this needs**: a working SMTP configuration. See [setup-smtp.md](setup-smtp.md).
+**What this needs**: a working SMTP configuration.
+
+<!-- feature:email-password:start -->
+
+For email and password setup, see [setup-smtp.md](setup-smtp.md).
+
+<!-- feature:email-password:end -->
 
 ---
 
@@ -178,7 +184,7 @@ Magic links are off. Check `MAGIC_LINK_ENABLED`, and check `SMTP_HOST` and `EMAI
 
 The reply is the same whether or not a link was mailed, so start with the logs. `Magic link sent to ...` is written only when the link was handed to SMTP; `Magic link hourly cap reached for ...` means the address is over `MAGIC_LINK_MAX_PER_HOUR`; `Magic link request for a deleted account` means the account is soft-deleted and nothing was mailed.
 
-A hand-off that fails is logged as `Failed to send sign-in link email requestId=<id> cause=<name>` and is not reported to the caller: the route still answers `200`. Take the request id from the `X-Request-Id` response header or the request log and search the logs for `requestId=<id>` to trace it. See the troubleshooting section of [setup-smtp.md](setup-smtp.md).
+A hand-off that fails is logged as `Failed to send sign-in link email requestId=<id> cause=<name>` and is not reported to the caller: the route still answers `200`. Take the request id from the `X-Request-Id` response header or the request log and search the logs for `requestId=<id>` to trace it. Check your SMTP configuration and your mail provider's delivery logs.
 
 Watch the order while SMTP is broken: the pending record is written before the mail goes out, so five failed sends use up `MAGIC_LINK_MAX_PER_HOUR` for that address. Further requests then answer `200` and mail nothing until the hour passes. Fix SMTP first, then wait out the window or clear the address from `pendingmagiclinks`.
 
