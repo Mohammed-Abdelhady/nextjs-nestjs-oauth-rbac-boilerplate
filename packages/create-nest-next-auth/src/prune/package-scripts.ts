@@ -1,10 +1,10 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { ROOT_PACKAGE_JSON, ROOT_PACKAGE_LOCK } from '../constants/index.js';
+import { PACKAGE_DEPENDENCY_GROUPS, ROOT_PACKAGE_JSON } from '../constants/index.js';
 import TEMPLATE_TEST_POLICY from '../constants/template-tests.json' with { type: 'json' };
 import { isRecord } from '../manifest/read.js';
 import { listFiles, readFileIfExists } from '../utils/fs.js';
-import { matchesGlob } from '../utils/glob.js';
+import { workspaceDirectories } from '../scaffold/workspace.js';
 
 const REPOSITORY_TEST_PATHS = TEMPLATE_TEST_POLICY.EXCLUDED_PATH_PATTERNS.map(
   (pattern) => new RegExp(pattern),
@@ -81,14 +81,10 @@ export function prunePackageScripts(
 
 export function prunePackageWorkspaces(
   packageJson: Record<string, unknown>,
-  existingFiles: readonly string[],
+  directories: readonly string[],
 ): Record<string, unknown> {
   if (!Array.isArray(packageJson.workspaces)) return packageJson;
-  const workspaces = packageJson.workspaces.filter((workspace) => {
-    if (typeof workspace !== 'string') return true;
-    return existingFiles.some((file) => matchesGlob(file, `${workspace}/package.json`));
-  });
-  return { ...packageJson, workspaces };
+  return { ...packageJson, workspaces: [...directories] };
 }
 
 export function prunePackageDependencies(
@@ -97,12 +93,7 @@ export function prunePackageDependencies(
 ): Record<string, unknown> {
   let changed = false;
   const updated = { ...packageJson };
-  for (const group of [
-    'dependencies',
-    'devDependencies',
-    'optionalDependencies',
-    'peerDependencies',
-  ]) {
+  for (const group of PACKAGE_DEPENDENCY_GROUPS) {
     const dependencies = packageJson[group];
     if (!isRecord(dependencies)) continue;
     const kept = Object.fromEntries(
@@ -135,9 +126,14 @@ export async function pruneRootPackage(
   if (!isRecord(parsed)) return false;
 
   const existingFiles = await listFiles(root);
-  const unavailableWorkspaceNames = await findUnavailableWorkspaceNames(root, existingFiles);
+  const directories = await workspaceDirectories(root);
   const withScripts = prunePackageScripts(parsed, deletedFiles);
-  const withWorkspaces = prunePackageWorkspaces(withScripts, existingFiles);
+  const withWorkspaces = prunePackageWorkspaces(withScripts, directories);
+  const unavailableWorkspaceNames = await findUnavailableWorkspaceNames(
+    root,
+    existingFiles,
+    directories,
+  );
   const updated = prunePackageDependencies(withWorkspaces, unavailableWorkspaceNames);
   let changed = JSON.stringify(updated) !== JSON.stringify(parsed);
   if (changed) await writeFile(path, `${JSON.stringify(updated, null, 2)}\n`, 'utf8');
@@ -159,16 +155,31 @@ export async function pruneRootPackage(
 async function findUnavailableWorkspaceNames(
   root: string,
   files: readonly string[],
+  directories: readonly string[],
 ): Promise<Set<string>> {
-  const raw = await readFileIfExists(join(root, ROOT_PACKAGE_LOCK));
-  if (raw === undefined) return new Set();
-  const lock: unknown = JSON.parse(raw);
-  if (!isRecord(lock) || !isRecord(lock.packages)) return new Set();
-  const names = new Set<string>();
-  for (const [path, entry] of Object.entries(lock.packages)) {
-    if (!path || path.startsWith('node_modules/') || !isRecord(entry)) continue;
-    if (typeof entry.resolved === 'string' || files.includes(`${path}/package.json`)) continue;
-    if (typeof entry.name === 'string') names.add(entry.name);
+  const workspaceManifests = new Set(directories.map((directory) => `${directory}/package.json`));
+  const available = new Set<string>();
+  const referenced = new Set<string>();
+
+  for (const file of files.filter(
+    (entry) => entry === ROOT_PACKAGE_JSON || entry.endsWith('/package.json'),
+  )) {
+    const raw = await readFileIfExists(join(root, file));
+    if (raw === undefined) continue;
+    const value: unknown = JSON.parse(raw);
+    if (!isRecord(value)) continue;
+
+    if (workspaceManifests.has(file)) {
+      if (typeof value.name === 'string') available.add(value.name);
+    }
+    for (const group of PACKAGE_DEPENDENCY_GROUPS) {
+      const dependencies = value[group];
+      if (!isRecord(dependencies)) continue;
+      for (const [name, version] of Object.entries(dependencies)) {
+        if (typeof version === 'string' && version.startsWith('workspace:')) referenced.add(name);
+      }
+    }
   }
-  return names;
+
+  return new Set([...referenced].filter((name) => !available.has(name)));
 }

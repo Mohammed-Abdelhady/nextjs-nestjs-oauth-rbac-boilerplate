@@ -6,6 +6,7 @@ import {
   BROKEN_PACKAGE,
   LOCALE_OPTION_LOCALES,
   PACKAGE_MANIFEST,
+  PACKAGE_MANAGER_SPEC,
   REINSTALL_HINT,
   REQUIRED_LOCALE_ID,
   SHA256_HEX_PATTERN,
@@ -114,6 +115,7 @@ export function answersRecord(
 ): AnswersRecord {
   return {
     schemaVersion: ANSWERS_SCHEMA_VERSION,
+    packageManager: PACKAGE_MANAGER_SPEC,
     installer,
     template,
     answers: resolvedAnswers(plan),

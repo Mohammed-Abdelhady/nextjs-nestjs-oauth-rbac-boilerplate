@@ -19,7 +19,7 @@ async function hasIdentity(root: string): Promise<boolean> {
 }
 
 /**
- * Creates the repository and the first commit. Runs before npm install so the
+ * Creates the repository and the first commit. Runs before pnpm install so the
  * project's husky hooks are not installed yet and cannot reject this commit.
  */
 export async function initRepository(root: string): Promise<GitResult> {

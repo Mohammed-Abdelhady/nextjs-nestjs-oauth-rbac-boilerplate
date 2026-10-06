@@ -57,6 +57,7 @@
         "frontend/.dockerignore",
         ".env.docker.example",
         "scripts/config-transforms.ports.test.mjs",
+        "scripts/config-transforms.docker.test.mjs",
         "scripts/lib/config-transforms.js"
       ],
       "docs": [],
@@ -71,11 +72,13 @@
         "docker-compose.prod.yml",
         "scripts/setup-production.js",
         "scripts/config-transforms.test.mjs",
+        "scripts/config-transforms.probes.test.mjs",
+        "scripts/config-transforms.diagnostics.test.mjs",
         "scripts/lib/failure-diagnostics.mjs",
         "scripts/verify-docker.mjs",
         "scripts/lib/docker-http-probes.mjs"
       ],
-      "docs": ["docs/deployment.md", "docs/PRODUCTION-SETUP.md"],
+      "docs": ["docs/deployment.md", "docs/deployment-custom-domain.md", "docs/PRODUCTION-SETUP.md"],
       "catalogueKeys": []
     },
     "locale-ar": {
@@ -152,7 +155,7 @@
       ],
       "envVars": ["SMTP_HOST", "SMTP_PORT", "SMTP_SECURE", "SMTP_USER", "SMTP_PASS", "EMAIL_FROM"],
       "requires": [],
-      "docs": ["docs/setup-smtp.md"]
+      "docs": ["docs/setup-smtp.md", "docs/setup-smtp-mail-service.md", "docs/setup-smtp-production.md"]
     },
     "google": {
       "label": "Google",
@@ -169,7 +172,7 @@
         "NEXT_PUBLIC_GOOGLE_CLIENT_ID"
       ],
       "requires": ["oauth-core"],
-      "docs": ["docs/setup-google-oauth.md"]
+      "docs": ["docs/setup-google-oauth.md", "docs/setup-google-oauth-advanced-configuration.md"]
     },
     "github": {
       "label": "GitHub",
@@ -187,7 +190,7 @@
         "NEXT_PUBLIC_GITHUB_CLIENT_ID"
       ],
       "requires": ["oauth-core"],
-      "docs": ["docs/setup-github-oauth.md"]
+      "docs": ["docs/setup-github-oauth.md", "docs/setup-github-oauth-troubleshooting.md", "docs/setup-github-oauth-app-options.md"]
     },
     "facebook": {
       "label": "Facebook",
@@ -204,7 +207,7 @@
         "NEXT_PUBLIC_FACEBOOK_APP_ID"
       ],
       "requires": ["oauth-core"],
-      "docs": ["docs/setup-facebook-oauth.md", "docs/facebook-oauth-permissions.md"]
+      "docs": ["docs/setup-facebook-oauth.md", "docs/setup-facebook-oauth-publishing-and-configuration.md", "docs/facebook-oauth-permissions.md"]
     },
     "magic-link": {
       "status": "available",
@@ -459,6 +462,7 @@
       "frontend/playwright.frontend.config.ts",
       "backend/test/utils/browser-server.ts",
       "backend/test/utils/local-oauth.ts",
+      "frontend/README.maintainer.md",
       "template.manifest.json",
       ".hyperflow/**",
       "openspec/**"

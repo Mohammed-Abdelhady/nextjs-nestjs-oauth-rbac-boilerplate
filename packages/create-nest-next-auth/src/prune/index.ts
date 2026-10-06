@@ -2,8 +2,8 @@ import type { Manifest, PruneResult } from '../types.js';
 import {
   ENV_EXAMPLE_FILES,
   FRONTEND_PACKAGE_JSON,
+  PNPM_WORKSPACE_FILE,
   ROOT_PACKAGE_JSON,
-  ROOT_PACKAGE_LOCK,
 } from '../constants/index.js';
 import { removeDocMarkers } from './doc-markers.js';
 import { removeDocLinks } from './docs.js';
@@ -14,7 +14,7 @@ import { formatChangedFiles } from './format.js';
 import { removeFeatureLines } from './markers.js';
 import { pruneMessageCatalogues } from './messages.js';
 import { pruneRootPackage } from './package-scripts.js';
-import { pruneRootPackageLock } from './package-lock.js';
+import { renderWorkspace } from '../scaffold/workspace.js';
 import { findDanglingReferences } from './references.js';
 
 /** Env vars only the removed features use, mapped to the words naming them. */
@@ -85,11 +85,12 @@ export async function prune(
     markerIds,
   );
 
-  const docs = await removeDocLinks(root, doomedDocs);
+  const removedMarkdown = deletedFiles.filter((path) => path.endsWith('.md'));
+  const docs = await removeDocLinks(root, [...doomedDocs, ...removedMarkdown]);
   const strippedEnvVars = await stripEnvFiles(root, removedEnvVars(manifest, selected));
   await writeFeatureFlag(root, selectedFeatures);
+  const workspaceChanged = await renderWorkspace(root);
   await pruneRootPackage(root, deletedFiles);
-  await pruneRootPackageLock(root);
   await pruneDependabot(root, deletedFiles);
   const editedCatalogues = await pruneMessageCatalogues(root, manifest, removedOptions);
 
@@ -102,8 +103,8 @@ export async function prune(
     ...ENV_EXAMPLE_FILES,
     ...editedCatalogues,
     ROOT_PACKAGE_JSON,
-    ROOT_PACKAGE_LOCK,
     FRONTEND_PACKAGE_JSON,
+    ...(workspaceChanged ? [PNPM_WORKSPACE_FILE] : []),
     DEPENDABOT_FILE,
   ]);
 

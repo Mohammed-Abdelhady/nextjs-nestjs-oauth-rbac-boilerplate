@@ -144,6 +144,7 @@ export interface ResolvedAnswers {
  */
 export interface AnswersRecord {
   schemaVersion: typeof ANSWERS_SCHEMA_VERSION;
+  packageManager: string;
   installer: InstallerIdentity;
   template: TemplateIdentity;
   answers: ResolvedAnswers;

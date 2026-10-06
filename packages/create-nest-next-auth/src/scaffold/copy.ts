@@ -19,7 +19,7 @@ async function restoreNames(directory: string): Promise<void> {
 
 /**
  * Copies the bundled template into the target directory and restores the file
- * names npm refuses to publish (.gitignore, package-lock.json, .npmrc). A
+ * names npm refuses to publish (.gitignore, pnpm-lock.yaml, .npmrc). A
  * symbolic-link template is refused, so the pruner never edits the package's
  * own template through the target.
  */

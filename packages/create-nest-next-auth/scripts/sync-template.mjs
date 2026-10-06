@@ -6,11 +6,10 @@ import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promi
 import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import TEMPLATE_SYNC_INPUTS from './template-sync-inputs.json' with { type: 'json' };
-const { npmTemplateContent } = await import(
-  new URL(TEMPLATE_SYNC_INPUTS.commands, new URL('../', import.meta.url)).href
-);
-
 const PACKAGE_DIR = dirname(dirname(fileURLToPath(import.meta.url)));
+const PACKAGE_MANAGER_CONFIG = JSON.parse(
+  await readFile(join(PACKAGE_DIR, TEMPLATE_SYNC_INPUTS.manager), 'utf8'),
+);
 const TEMPLATE_TEST_POLICY = JSON.parse(
   await readFile(join(PACKAGE_DIR, TEMPLATE_SYNC_INPUTS.policy), 'utf8'),
 );
@@ -62,8 +61,6 @@ const EXCLUDED_PATHS = new Set([
   'CLAUDE.md',
   'AGENTS.md',
   MANIFEST_NAME,
-  'pnpm-workspace.yaml',
-  'pnpm-lock.yaml',
   join('.husky', '_'),
 ]);
 
@@ -78,7 +75,7 @@ const ENV_EXAMPLES = new Set([
 const RENAMED_FILES = new Map([
   ['.gitignore', '_gitignore'],
   ['.npmrc', '_npmrc'],
-  ['package-lock.json', '_package-lock.json'],
+  [PACKAGE_MANAGER_CONFIG.PNPM_LOCKFILE, PACKAGE_MANAGER_CONFIG.PACKED_PNPM_LOCKFILE],
 ]);
 
 export function isExcluded(relativePath, name, isDirectory) {
@@ -95,8 +92,17 @@ export function isExcluded(relativePath, name, isDirectory) {
   return false;
 }
 
+function removeInstallerImporter(bytes) {
+  const lines = bytes.toString('utf8').split('\n');
+  const start = lines.findIndex((line) => line === '  packages/create-nest-next-auth:');
+  if (start === -1) return bytes;
+  let end = start + 1;
+  while (end < lines.length && !/^(?:  [^ ]|[^ #][^:]*:|---$)/.test(lines[end])) end += 1;
+  return Buffer.from([...lines.slice(0, start), ...lines.slice(end)].join('\n'));
+}
+
 export function templateContent(relativePath, bytes) {
-  bytes = npmTemplateContent(relativePath, bytes);
+  if (relativePath === PACKAGE_MANAGER_CONFIG.PNPM_LOCKFILE) return removeInstallerImporter(bytes);
   if (relativePath === TEMPLATE_TEST_POLICY.POLICY_PATH) {
     const content = bytes.toString('utf8');
     const updated = content.replace(

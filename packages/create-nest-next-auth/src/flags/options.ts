@@ -41,7 +41,7 @@ export function buildProgram(version: string): Command {
     .option('--no-docker', 'leave out the Docker files')
     .option('--no-production', 'leave out the production nginx and compose files')
     .option('--dry-run', 'print the resolved plan and write nothing')
-    .option('--no-install', 'skip npm install')
+    .option('--no-install', 'skip dependency installation')
     .option('--no-git', 'skip git init and the first commit')
     .allowExcessArguments(false)
     .exitOverride();
