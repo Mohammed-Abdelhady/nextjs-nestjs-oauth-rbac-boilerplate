@@ -8,7 +8,8 @@ import test from 'node:test';
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const MANIFESTS = [
   'package.json', 'backend/package.json', 'frontend/package.json',
-  'packages/create-nest-next-auth/package.json', 'shared/core/package.json', 'shared/sdk/package.json',
+  'mobile/auth/package.json', 'packages/create-nest-next-auth/package.json',
+  'shared/core/package.json', 'shared/sdk/package.json',
 ];
 const readManifest = (file) => JSON.parse(readFileSync(join(ROOT, file), 'utf8'));
 
@@ -24,7 +25,7 @@ test('the pinned pnpm reads workspace patterns, overrides and explicit build dec
     packages: config.packages, overrides: config.overrides,
     allowBuilds: config.allowBuilds, enablePrePostScripts: config.enablePrePostScripts,
   }, {
-    packages: ['backend', 'frontend', 'packages/*', 'shared/*'],
+    packages: ['backend', 'frontend', 'mobile/*', 'packages/*', 'shared/*'],
     overrides: { diff: '>=8.0.3', lodash: '^4.18.1', '@nestjs/platform-express>multer': '2.4.0' },
     allowBuilds: {
       '@parcel/watcher': true, '@scarf/scarf': false, '@swc/core': true,
@@ -45,8 +46,9 @@ test('repository manifests pin the package manager and supported Node major with
     readManifest('backend/package.json').devDependencies['@app/sdk'],
     readManifest('frontend/package.json').dependencies['@app/core'],
     readManifest('frontend/package.json').dependencies['@app/sdk'],
+    readManifest('mobile/auth/package.json').dependencies['@app/sdk'],
     readManifest('shared/sdk/package.json').dependencies['@app/core'],
-  ], ['workspace:*', 'workspace:*', 'workspace:*', 'workspace:*']);
+  ], ['workspace:*', 'workspace:*', 'workspace:*', 'workspace:*', 'workspace:*']);
 });
 
 test('recursive gates omit the root and chain root config tests once', () => {

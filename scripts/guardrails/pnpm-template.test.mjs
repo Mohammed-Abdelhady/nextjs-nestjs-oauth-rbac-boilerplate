@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import test from 'node:test';
+import { legacyReferences } from '../check-package-manager.mjs';
 import { templateContent, isExcluded } from '../../packages/create-nest-next-auth/scripts/sync-template.mjs';
 import { buildNextStepLines } from '../lib/init-next-steps.js';
 import { gitEnvironment } from './git-environment.mjs';
@@ -17,21 +18,44 @@ function temporary(t) {
   return root;
 }
 
-test('template sync retains npm manifests, local workspace edges and security overrides', () => {
+test('template sync preserves pnpm manifests, workspace edges and packed lock naming', () => {
   const root = JSON.parse(templateContent('package.json', readFileSync(join(ROOT, 'package.json'))));
-  assert.equal(root.packageManager, undefined);
-  assert.deepEqual(root.engines, { node: '>=22.12.0 <23', npm: '>=10.9.0' });
-  assert.deepEqual(root.overrides, {
-    diff: '>=8.0.3', lodash: '^4.18.1', '@nestjs/platform-express': { multer: '2.4.0' },
-  });
-  assert.equal(root.scripts.build, 'npm run build --workspaces --if-present');
-  assert.equal(root.scripts.test, 'npm run test --workspaces --if-present && npm run test:config');
+  assert.equal(root.packageManager, 'pnpm@12.6.0');
+  assert.deepEqual(root.engines, { node: '>=22.12.0 <23', pnpm: '12.6.0' });
+  const mobileAuth = JSON.parse(
+    templateContent('mobile/auth/package.json', readFileSync(join(ROOT, 'mobile/auth/package.json'))),
+  );
+  assert.deepEqual(
+    {
+      rootWorkspace: root.workspaces.includes('mobile/*'),
+      workspaceFile: /^\s+-\s+mobile\/\*$/m.test(
+        readFileSync(join(ROOT, 'pnpm-workspace.yaml'), 'utf8'),
+      ),
+      packageManager: mobileAuth.packageManager,
+      engines: mobileAuth.engines,
+      sdk: mobileAuth.dependencies['@app/sdk'],
+      rootScripts: { lint: root.scripts.lint, typecheck: root.scripts.typecheck },
+    },
+    {
+      rootWorkspace: true,
+      workspaceFile: true,
+      packageManager: 'pnpm@12.6.0',
+      engines: { node: '>=22.12.0 <23', pnpm: '12.6.0' },
+      sdk: 'workspace:*',
+      rootScripts: {
+        lint: 'pnpm -r --if-present run lint',
+        typecheck: 'pnpm -r --if-present run typecheck',
+      },
+    },
+  );
+  assert.equal(root.scripts.build, 'pnpm -r --if-present run build');
+  assert.equal(root.scripts.test, 'pnpm -r --if-present run test && pnpm run test:config');
   const frontend = JSON.parse(templateContent('frontend/package.json', readFileSync(join(ROOT, 'frontend/package.json'))));
-  assert.equal(frontend.dependencies['@app/core'], '*');
-  assert.equal(frontend.dependencies['@app/sdk'], '*');
-  assert.equal(frontend.scripts.lint, 'npm run lint:rtl && eslint --max-warnings 0');
-  assert.equal(isExcluded('pnpm-workspace.yaml', 'pnpm-workspace.yaml', false), true);
-  assert.equal(isExcluded('pnpm-lock.yaml', 'pnpm-lock.yaml', false), true);
+  assert.equal(frontend.dependencies['@app/core'], 'workspace:*');
+  assert.equal(frontend.dependencies['@app/sdk'], 'workspace:*');
+  assert.equal(frontend.scripts.lint, 'pnpm run lint:rtl && eslint --max-warnings 0');
+  assert.equal(isExcluded('pnpm-workspace.yaml', 'pnpm-workspace.yaml', false), false);
+  assert.equal(isExcluded('pnpm-lock.yaml', 'pnpm-lock.yaml', false), false);
 });
 
 test('template sync preserves dependency-free config gates without excluded repository tests', () => {
@@ -44,24 +68,26 @@ test('template sync preserves dependency-free config gates without excluded repo
   );
 });
 
-test('generated hooks and lint-staged commands remain runnable with npm', () => {
+test('generated hooks and lint-staged commands remain runnable with pnpm', () => {
   for (const [hook, command] of [
-    ['commit-msg', 'npm exec --offline -- commitlint --edit "$1"'],
-    ['pre-commit', 'npm exec --offline -- lint-staged'],
-    ['pre-push', 'npm run lint && npm run typecheck && npm run test'],
+    ['commit-msg', 'pnpm exec commitlint --edit "$1"'],
+    ['pre-commit', 'pnpm exec lint-staged'],
+    ['pre-push', 'pnpm run lint && pnpm run typecheck && pnpm run test'],
   ]) {
     const source = templateContent(`.husky/${hook}`, readFileSync(join(ROOT, '.husky', hook))).toString();
     assert.equal(source.split('\n').includes(command), true, hook);
-    assert.equal(source.split('\n').includes('sh scripts/lib/require-package-manager.sh npm'), true, hook);
+    assert.equal(source.split('\n').includes('sh scripts/lib/require-package-manager.sh pnpm'), true, hook);
   }
   const staged = templateContent('.lintstagedrc.cjs', readFileSync(join(ROOT, '.lintstagedrc.cjs'))).toString();
-  assert.match(staged, /npm exec --offline --workspace backend -- eslint --fix --max-warnings 0/);
-  assert.doesNotMatch(staged, /pnpm/);
+  assert.match(staged, /pnpm --filter backend exec eslint --fix --max-warnings 0/);
+  assert.doesNotMatch(staged, /\bnpm\b/);
 });
 
 test('repository and generated init commands select real workspace scripts', async () => {
   const config = { env: { frontendPort: 3000, backendPort: 5000 } };
-  const commands = (lines) => lines.map((line) => line.replace(/\u001b\[[0-9;]*m/g, '').trim()).filter((line) => /^(?:pnpm|npm) /.test(line));
+  const commands = (lines) => lines
+    .map((line) => line.replace(/\u001b\[[0-9;]*m/g, '').trim())
+    .filter((line) => line.startsWith('pnpm ') || legacyReferences('generated-init.md', line).length > 0);
   assert.deepEqual(commands(buildNextStepLines(config)), [
     'pnpm install --frozen-lockfile', 'pnpm --filter backend run start:dev',
     'pnpm --filter frontend run dev', 'pnpm run setup:prod',
@@ -70,7 +96,7 @@ test('repository and generated init commands select real workspace scripts', asy
     .toString().replace("'./cli-utils.js'", JSON.stringify(pathToFileURL(join(ROOT, 'scripts/lib/cli-utils.js')).href));
   const generated = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
   assert.deepEqual(commands(generated.buildNextStepLines(config)), [
-    'npm install', 'npm run start:dev -w backend', 'npm run dev -w frontend', 'npm run setup:prod',
+    'pnpm install --frozen-lockfile', 'pnpm --filter backend run start:dev', 'pnpm --filter frontend run dev', 'pnpm run setup:prod',
   ]);
   for (const [workspace, script] of [['backend', 'start:dev'], ['frontend', 'dev']]) {
     const manifest = JSON.parse(readFileSync(join(ROOT, workspace, 'package.json')));
@@ -108,13 +134,14 @@ test('lint-staged selects each importing workspace binary instead of root hoisti
   assert.deepEqual([
     config['backend/**/*.ts'], config['frontend/**/*.{ts,tsx}'],
     config['packages/create-nest-next-auth/**/*.ts'], config['shared/core/**/*.ts'],
-    config['shared/sdk/**/*.ts'],
+    config['shared/sdk/**/*.ts'], config['mobile/auth/**/*.ts'],
   ], [
     ['pnpm --filter backend exec eslint --fix --max-warnings 0'],
     ['pnpm --filter frontend exec eslint --fix --max-warnings 0'],
     ['pnpm --filter create-nest-next-auth exec eslint --fix --max-warnings 0'],
     ['pnpm --filter @app/core exec eslint --fix --max-warnings 0'],
     ['pnpm --filter @app/sdk exec eslint --fix --max-warnings 0'],
+    ['pnpm --filter @app/native-auth exec eslint --fix --max-warnings 0'],
   ]);
 });
 
