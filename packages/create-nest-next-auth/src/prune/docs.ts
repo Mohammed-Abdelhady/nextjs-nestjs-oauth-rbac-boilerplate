@@ -6,6 +6,7 @@ const LIST_OR_ROW = /^\s*(?:[-*+]|\d+[.)]|\|)/;
 const INLINE_LINK = /\[([^\]]*)\]\((<[^>]+>|[^)\s]+)(?:\s+[^)]*)?\)/g;
 const REFERENCE = /^\s{0,3}\[([^\]]+)\]:\s*(<[^>]+>|[^\s]+)/;
 const REFERENCE_LINK = /\[([^\]]+)\](?:\[([^\]]*)\])?/g;
+const FENCE = /^ {0,3}(`{3,}|~{3,})(.*)$/;
 
 export interface DocPruneResult {
   removedLines: number;
@@ -25,9 +26,31 @@ function isRemovedTarget(file: string, target: string, removed: Set<string>): bo
   return removed.has(posix.normalize(posix.join(posix.dirname(file), path)));
 }
 
-function referenceTargets(lines: string[]): Map<string, string> {
+function fencedLines(lines: string[]): boolean[] {
+  let opening: { character: string; length: number } | undefined;
+  return lines.map((line) => {
+    const marker = FENCE.exec(line);
+    if (opening !== undefined) {
+      if (
+        marker !== null &&
+        marker[1][0] === opening.character &&
+        marker[1].length >= opening.length &&
+        marker[2].trim() === ''
+      ) {
+        opening = undefined;
+      }
+      return true;
+    }
+    if (marker === null || (marker[1][0] === '`' && marker[2].includes('`'))) return false;
+    opening = { character: marker[1][0], length: marker[1].length };
+    return true;
+  });
+}
+
+function referenceTargets(lines: string[], fenced: boolean[]): Map<string, string> {
   const targets = new Map<string, string>();
-  for (const line of lines) {
+  for (const [index, line] of lines.entries()) {
+    if (fenced[index]) continue;
     const definition = REFERENCE.exec(line);
     if (definition !== null) targets.set(definition[1].trim().toLowerCase(), definition[2]);
   }
@@ -82,9 +105,14 @@ export async function removeDocLinks(root: string, docPaths: string[]): Promise<
   for (const file of markdown) {
     const path = join(root, file);
     const original = (await readFile(path, 'utf8')).split('\n');
-    const references = referenceTargets(original);
+    const fenced = fencedLines(original);
+    const references = referenceTargets(original, fenced);
     const kept: string[] = [];
-    for (const line of original) {
+    for (const [index, line] of original.entries()) {
+      if (fenced[index]) {
+        kept.push(line);
+        continue;
+      }
       const definition = REFERENCE.exec(line);
       if (definition !== null && isRemovedTarget(file, definition[2], removed)) {
         removedLines += 1;

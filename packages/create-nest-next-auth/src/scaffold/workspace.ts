@@ -1,10 +1,10 @@
-import { globSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join, posix } from 'node:path';
 import { parseDocument } from 'yaml';
 import { PACKAGE_MANIFEST, PNPM_WORKSPACE_FILE } from '../constants/index.js';
 import { isRecord } from '../manifest/read.js';
-import { isErrnoException, toPosix } from '../utils/fs.js';
+import { isErrnoException, listFiles } from '../utils/fs.js';
+import { matchesAnyGlob } from '../utils/glob.js';
 
 interface WorkspaceDocument {
   document: ReturnType<typeof parseDocument>;
@@ -38,12 +38,11 @@ async function readWorkspace(root: string): Promise<WorkspaceDocument | undefine
 export async function workspaceDirectories(root: string): Promise<string[]> {
   const workspace = await readWorkspace(root);
   if (workspace === undefined) return [];
+  const patterns = workspace.packages.map((pattern) => `${pattern}/${PACKAGE_MANIFEST}`);
+  const files = await listFiles(root);
   return [
     ...new Set(
-      globSync(
-        workspace.packages.map((pattern) => `${pattern}/${PACKAGE_MANIFEST}`),
-        { cwd: root },
-      ).map((file) => posix.dirname(toPosix(file))),
+      files.filter((file) => matchesAnyGlob(file, patterns)).map((file) => posix.dirname(file)),
     ),
   ].sort();
 }
@@ -52,8 +51,11 @@ export async function workspaceDirectories(root: string): Promise<string[]> {
 export async function renderWorkspace(root: string): Promise<boolean> {
   const workspace = await readWorkspace(root);
   if (workspace === undefined) return false;
-  const packages = workspace.packages.filter(
-    (pattern) => globSync(`${pattern}/${PACKAGE_MANIFEST}`, { cwd: root }).length > 0,
+  const manifests = (await listFiles(root)).filter(
+    (file) => file === PACKAGE_MANIFEST || file.endsWith(`/${PACKAGE_MANIFEST}`),
+  );
+  const packages = workspace.packages.filter((pattern) =>
+    manifests.some((file) => matchesAnyGlob(file, [`${pattern}/${PACKAGE_MANIFEST}`])),
   );
   if (packages.length === workspace.packages.length) return false;
 

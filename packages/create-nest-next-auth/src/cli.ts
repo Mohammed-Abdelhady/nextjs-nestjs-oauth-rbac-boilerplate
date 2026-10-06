@@ -116,16 +116,24 @@ async function scaffold(
   }
   pruning.stop('Pruned');
   log.message(describeSelection(manifest, result).join('\n'));
+  const lockfileUpdating = spinner();
+  lockfileUpdating.start('Updating pnpm lockfile');
   let lockfile: Awaited<ReturnType<typeof prepareLockfile>>;
   try {
     lockfile = await prepareLockfile(target);
   } catch (error) {
+    lockfileUpdating.stop('pnpm lockfile update failed');
     const reason = error instanceof Error ? error.message : String(error);
     log.error(`Could not prepare the pnpm lockfile: ${reason}`);
     outro(`Left the tree at ${target} so you can inspect it.`);
     return 1;
   }
-  if (!lockfile.ok) {
+  lockfileUpdating.stop(lockfile.ok ? 'pnpm lockfile updated' : 'pnpm lockfile update failed');
+  if (!lockfile.ok && options.install) {
+    log.error(
+      `pnpm-lock.yaml removed; dependency installation was skipped. ${lockfile.reason ?? 'The lockfile could not be updated.'}`,
+    );
+  } else if (!lockfile.ok) {
     log.message(
       `pnpm-lock.yaml removed. ${lockfile.reason ?? 'The lockfile could not be updated.'}`,
     );
@@ -140,7 +148,7 @@ async function scaffold(
   // skip git or install alike. --dry-run never reaches this branch.
   await recordAnswers(target, answers);
 
-  return (await finishSetup(target, manifest, plan, options)) ? 0 : 1;
+  return (await finishSetup(target, manifest, plan, options, lockfile.ok)) ? 0 : 1;
 }
 
 async function finishSetup(
@@ -148,6 +156,7 @@ async function finishSetup(
   manifest: Manifest,
   plan: Plan,
   options: CliOptions,
+  lockfileReady: boolean,
 ): Promise<boolean> {
   if (options.git) {
     const git = await initRepository(target);
@@ -160,7 +169,7 @@ async function finishSetup(
   }
 
   let installed = false;
-  if (options.install) {
+  if (options.install && lockfileReady) {
     const installing = spinner();
     installing.start('Installing dependencies with pnpm');
     const install = await installDependencies(target);
@@ -185,7 +194,7 @@ async function finishSetup(
     'Next steps',
   );
   note(buildDocLinks(manifest, plan.features).join('\n'), 'Docs');
-  return !options.install || installed;
+  return !options.install || (lockfileReady && installed);
 }
 
 export async function main(
