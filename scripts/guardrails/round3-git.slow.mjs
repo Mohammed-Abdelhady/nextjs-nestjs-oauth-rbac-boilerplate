@@ -206,6 +206,7 @@ test('long banned lines have bounded excerpts', (t) => {
 
 test('Git output over the bound names the 64 MiB limit', (t) => {
   const repo = repository(t);
+  repo.write('package.json', '{}');
   repo.write('public/big.js', 'x'.repeat(65 * 1024 * 1024));
   repo.git('add', '.');
   const result = repo.check('--staged');

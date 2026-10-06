@@ -12,6 +12,12 @@ const USAGE =
 
 function printReport(result) {
   for (const hit of result.bans) {
+    if (hit.reason) {
+      console.error(
+        `${hit.commit ? `[${hit.commit}] ` : ''}${hit.path}:${hit.line}: ${hit.reason}`,
+      );
+      continue;
+    }
     console.error(
       `${hit.commit ? `[${hit.commit}] ` : ''}${hit.path}:${hit.line}: banned token ${JSON.stringify(hit.token)}: ${hit.text}`,
     );

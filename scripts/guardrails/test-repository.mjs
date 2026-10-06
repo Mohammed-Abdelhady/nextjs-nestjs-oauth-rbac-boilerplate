@@ -107,3 +107,14 @@ export function repository(t, initArgs = []) {
 export function outcome(result) {
   return { status: result.status, hits: result.hits, caps: result.caps };
 }
+
+export function writeIndexPath(repo, bytes, content) {
+  const options = { cwd: repo.root, env: repo.env, stdio: 'pipe' };
+  const oid = execFileSync('git', ['hash-object', '-w', '--stdin'], { ...options, input: content })
+    .toString()
+    .trim();
+  execFileSync('git', ['update-index', '-z', '--index-info'], {
+    ...options,
+    input: Buffer.concat([Buffer.from(`100644 ${oid}\t`), Buffer.from(bytes), Buffer.from('\0')]),
+  });
+}

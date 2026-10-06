@@ -51,6 +51,7 @@ const EXCLUDED_DIRS = new Set([
 // Paths dropped relative to the repository root. Maintainer tooling is not
 // part of a generated project.
 const EXCLUDED_PATHS = new Set([
+  '.github/CODEOWNERS',
   '.hyperflow',
   '.claude',
   '.codex',
@@ -116,12 +117,32 @@ export function templateContent(relativePath, bytes) {
     );
     return Buffer.from(updated);
   }
-  if (relativePath !== TEMPLATE_TEST_POLICY.DOC_PATH) return bytes;
+  if (relativePath === TEMPLATE_TEST_POLICY.CI_CONFIG_PATH) {
+    const config = JSON.parse(bytes.toString('utf8'));
+    config.gates = config.gates
+      .filter((gate) => !gate.repositoryOnly)
+      .map(({ repositoryOnly, ...gate }) => gate);
+    return Buffer.from(`${JSON.stringify(config, null, 2)}\n`);
+  }
+  const workflow = TEMPLATE_TEST_POLICY.WORKFLOW_PATHS.includes(relativePath);
+  if (workflow)
+    bytes = Buffer.from(
+      bytes
+        .toString('utf8')
+        .replaceAll('branches: [staging, master]', 'branches: [staging, master, main]'),
+    );
+  if (!workflow && relativePath !== TEMPLATE_TEST_POLICY.DOC_PATH) return bytes;
+  const start = workflow
+    ? TEMPLATE_TEST_POLICY.WORKFLOW_ONLY_START
+    : TEMPLATE_TEST_POLICY.REPOSITORY_ONLY_START;
+  const end = workflow
+    ? TEMPLATE_TEST_POLICY.WORKFLOW_ONLY_END
+    : TEMPLATE_TEST_POLICY.REPOSITORY_ONLY_END;
   let excluded = false;
   const kept = [];
   for (const line of bytes.toString('utf8').split('\n')) {
-    if (line.trim() === TEMPLATE_TEST_POLICY.REPOSITORY_ONLY_START) excluded = true;
-    else if (line.trim() === TEMPLATE_TEST_POLICY.REPOSITORY_ONLY_END) excluded = false;
+    if (line.trim() === start) excluded = true;
+    else if (line.trim() === end) excluded = false;
     else if (!excluded) kept.push(line);
   }
   return Buffer.from(kept.join('\n'));

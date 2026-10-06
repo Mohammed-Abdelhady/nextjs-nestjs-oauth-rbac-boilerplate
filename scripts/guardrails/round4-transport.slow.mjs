@@ -11,6 +11,7 @@ const ENV_MODULE = new URL('./git-environment.mjs', import.meta.url).href;
 
 test('missing external Git patch data fails at the staged call boundary', (t) => {
   const repo = repository(t);
+  repo.write('package.json', '{}');
   repo.write('src/value.ts', `node.${TOKEN} = value;\n`);
   repo.git('add', '.');
   const executable = execFileSync('which', ['git'], {

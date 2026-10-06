@@ -80,6 +80,7 @@ for (const tail of ['', 'x'.repeat(1000)]) {
 
 test('an unmaterialisable tracked path warns once while scanning reachable files', (t) => {
   const repo = repository(t);
+  repo.write('package.json', '{}');
   repo.write('src/value.ts', BAD);
   repo.git('add', '.');
   const oid = execFileSync('git', ['hash-object', '-w', '--stdin'], {

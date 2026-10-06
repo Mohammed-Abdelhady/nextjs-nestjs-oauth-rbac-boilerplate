@@ -1,28 +1,24 @@
-import { existsSync, globSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { extname, resolve, dirname, relative, sep } from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { isScanTarget } from './checker.mjs';
+import { validateGitPath } from './git-paths.mjs';
 import { gitEnvironment } from './git-environment.mjs';
 import { EXPLICIT_TYPE_RULE, GIT_MAX_BUFFER_BYTES, TYPESCRIPT_EXTENSIONS } from './policy.mjs';
 
-export function declaredWorkspaces(root) {
-  const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
-  const patterns = manifest.workspaces ?? [];
-  return [
-    ...new Set(patterns.flatMap((pattern) => globSync(`${pattern}/package.json`, { cwd: root }))),
-  ]
-    .map((file) => dirname(file))
-    .sort();
-}
+export { declaredWorkspaces } from './workspace-roots.mjs';
+import { declaredWorkspaces, scannerWorkspaceRoots } from './workspace-roots.mjs';
 
 function filesystemTypeFiles(root) {
+  const roots = scannerWorkspaceRoots(root);
+  const ignore = createRequire(import.meta.url)('ignore');
   function rulesAt(directory) {
     const file = resolve(directory, '.gitignore');
     return existsSync(file)
       ? [{
           directory,
-          matcher: createRequire(import.meta.url)('ignore')().add(readFileSync(file, 'utf8')),
+          matcher: ignore().add(readFileSync(file, 'utf8')),
         }]
       : [];
   }
@@ -51,13 +47,13 @@ function filesystemTypeFiles(root) {
       }
       if (ignored) continue;
       if (entry.isDirectory()) {
-        if (entry.name !== '.git' && isScanTarget(`${file}/probe.ts`)) {
+        if (entry.name !== '.git' && isScanTarget(`${file}/probe.ts`, roots)) {
           files.push(...walk(file, rules));
         }
       } else if (
         entry.isFile() &&
         TYPESCRIPT_EXTENSIONS.includes(extname(file).toLowerCase()) &&
-        isScanTarget(file)
+        isScanTarget(file, roots)
       ) {
         files.push(file);
       }
@@ -82,14 +78,15 @@ export function trackedTypeFiles(root, { filesystem = false, env = process.env }
     if (repository.stderr.includes('not a git repository')) return filesystemTypeFiles(root);
     throw new Error(repository.stderr.trim().split(/\r?\n/)[0]);
   }
+  const roots = scannerWorkspaceRoots(root);
   return execFileSync('git', ['-c', 'core.fsmonitor=false', 'ls-files', '-z', '--', '.'], options)
     .split('\0')
     .filter(
       (file) =>
-        TYPESCRIPT_EXTENSIONS.includes(extname(file).toLowerCase()) &&
-        isScanTarget(file) &&
-        existsSync(resolve(root, file)),
-    );
+        TYPESCRIPT_EXTENSIONS.includes(extname(file).toLowerCase()) && isScanTarget(file, roots),
+    )
+    .map(validateGitPath)
+    .filter((file) => existsSync(resolve(root, file)));
 }
 
 export async function workspacePolicyProblems(root, options) {

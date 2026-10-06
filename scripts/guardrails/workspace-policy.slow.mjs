@@ -154,7 +154,12 @@ test('filesystem fallback applies the scanner directory skips', (t) => {
     repo.write(file, 'export {};\n');
   }
   rmSync(join(repo.root, '.git'), { recursive: true });
-  assert.deepEqual(trackedTypeFiles(repo.root, { env: repo.env }), ['src/a.test.tsx', 'src/a.ts']);
+  assert.deepEqual(trackedTypeFiles(repo.root, { env: repo.env }), [
+    'src/.expo/a.ts',
+    'src/.next/a.ts',
+    'src/a.test.tsx',
+    'src/a.ts',
+  ]);
 });
 
 function fixtureSnapshot(root, directory = '') {
@@ -214,6 +219,8 @@ test('parser setup failure registers its cases before the hook fails', (t) => {
     'checker.mjs',
     'policy.mjs',
     'git-environment.mjs',
+    'git-paths.mjs',
+    'workspace-roots.mjs',
   ]) {
     copyFileSync(
       fileURLToPath(new URL(file, import.meta.url)),

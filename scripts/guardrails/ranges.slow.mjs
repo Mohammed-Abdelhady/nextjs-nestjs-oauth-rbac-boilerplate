@@ -227,7 +227,16 @@ test('full scan does not follow links or open protected files', (t) => {
   repo.write('outside.txt', BAD);
   symlinkSync(join(repo.root, 'outside.txt'), join(repo.root, 'link.ts'));
   repo.write('backend/src/.env.local', BAD + CLEAN.repeat(351));
-  assert.deepEqual(outcome(repo.check('--all')), { status: 0, hits: [], caps: [] });
+  const result = repo.check('--all');
+  assert.deepEqual(outcome(result), {
+    status: 1,
+    hits: [],
+    caps: [],
+  });
+  assert.match(
+    result.diagnostic,
+    /^link\.ts:1: Source symlinks are refused; commit a regular source file\.$/m,
+  );
 });
 
 test('commit message mode strips attribution through the hook entry', (t) => {

@@ -1,6 +1,9 @@
 export const LINE_ENDINGS = /\r\n|\r|\n/;
 export const FILE_LINE_LIMIT = 350;
 export const EXIT_CODES = { OK: 0, VIOLATION: 1, ERROR: 2 };
+export const CI_EVENT_NAMES = { PULL_REQUEST: 'pull_request', PUSH: 'push' };
+export const CI_SCAN_MODES = { RANGE: 'range', ALL: 'all', SKIP: 'skip' };
+export const CI_TERMINATION_SIGNALS = ['SIGINT', 'SIGTERM'];
 export const SCAN_EXTENSIONS = [
   '.ts',
   '.tsx',
@@ -75,6 +78,15 @@ export const PUSH_BASE_REFS = [
 export const TYPESCRIPT_EXTENSIONS = ['.ts', '.tsx', '.mts', '.cts'];
 export const EXPLICIT_TYPE_RULE = '@typescript-eslint/no-explicit-' + 'a' + 'ny';
 export const GITLINK_MODE = '160000';
+export const SYMLINK_MODE = '120000';
+export const SOURCE_SYMLINK_REASON = 'Source symlinks are refused; commit a regular source file.';
+export const GIT_PATH_REPLACEMENT_CHARACTER = '\uFFFD';
+export const CI_FETCH_REFS = { HEAD: 'refs/ci/pr-head', BASE: 'refs/ci/current-base' };
+export const CI_AUTH_HEADER_NAME = 'extraheader';
+export const WORKSPACE_MANIFEST_WARNING =
+  'Guardrails warning: cannot read or parse package.json workspace metadata; using repository-root exclusions only.';
+export const CI_TRACE2_VARIABLES = ['GIT_TRACE2', 'GIT_TRACE2_EVENT', 'GIT_TRACE2_PERF'];
+export const CI_VERSION_PATTERN = /^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/;
 export const BINARY_EXTENSIONS = [
   '.png',
   '.bmp',

@@ -454,6 +454,7 @@
   },
   "core": {
     "alwaysRemoveFiles": [
+      ".github/CODEOWNERS",
       "frontend/e2e/**",
       "mobile/**",
       "backend/test/native-auth-engine.e2e-spec.ts",
@@ -464,6 +465,7 @@
       "backend/test/utils/local-oauth.ts",
       "frontend/README.maintainer.md",
       "template.manifest.json",
+      "scripts/ci/*.test.mjs",
       ".hyperflow/**",
       "openspec/**"
     ]
