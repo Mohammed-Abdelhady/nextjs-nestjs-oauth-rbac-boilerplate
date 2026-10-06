@@ -91,6 +91,8 @@ export async function bootE2eApp(
     THROTTLE_LIMIT: String(options.throttleLimit ?? 1000),
     AUTH_PASSWORD_ENABLED: 'true',
     AUTH_NATIVE_ENABLED: String(options.nativeEnabled ?? false),
+    AUTH_NATIVE_DPOP_NONCE_SECRET:
+      'local-fixture-native-dpop-secret-000000000000',
     AUTH_NATIVE_APPLICATIONS: JSON.stringify(options.nativeApplications ?? []),
     AUTH_NATIVE_ALLOW_CUSTOM_SCHEME: String(
       options.nativeCustomSchemeAllowed ?? false,

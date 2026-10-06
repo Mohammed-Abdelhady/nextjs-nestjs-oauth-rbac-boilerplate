@@ -29,6 +29,14 @@ import {
   NativeCredential,
   NativeCredentialDocument,
 } from '../schemas/native-credential.schema';
+import {
+  NativeDpopProofId,
+  NativeDpopProofIdDocument,
+} from '../schemas/native-dpop-proof-id.schema';
+import {
+  SecurityEvent,
+  SecurityEventDocument,
+} from '../schemas/security-event.schema';
 import { startMemoryReplSet } from '../../../test/utils/memory-replset';
 import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
 import {
@@ -40,6 +48,9 @@ import {
 export const NATIVE_CLIENT_ID = 'native-app';
 export const NATIVE_REDIRECT = 'myapp://callback';
 export const NATIVE_META = { ip: '203.0.113.10', userAgent: 'NativeTest/1' };
+export const NATIVE_DPOP_TEST_SECRET =
+  'native-dpop-test-secret-at-least-32-chars';
+export const NATIVE_PUBLIC_API_ORIGIN = 'https://api.example.test';
 
 export interface NativeOauthHarness {
   mongo: Awaited<ReturnType<typeof startMemoryReplSet>>;
@@ -49,6 +60,8 @@ export interface NativeOauthHarness {
   access: NativeAccessService;
   transactions: Model<AuthorizationTransactionDocument>;
   credentials: Model<NativeCredentialDocument>;
+  proofIds: Model<NativeDpopProofIdDocument>;
+  securityEvents: Model<SecurityEventDocument>;
 }
 
 export interface ApprovedNativeCode {
@@ -81,20 +94,33 @@ export async function startNativeOauth(
   dbName: string,
 ): Promise<NativeOauthHarness> {
   const mongo = await startMemoryReplSet();
-  const harness = await bootSessionAuthority(
-    mongo.uri(dbName),
-    new FrozenClock(TEST_NOW),
-    { nativeEnabled: true, withNativeHttp: true },
-  );
-  return {
-    mongo,
-    harness,
-    authorize: harness.app.get(NativeAuthorizeService),
-    tokens: harness.app.get(NativeTokenService),
-    access: harness.app.get(NativeAccessService),
-    transactions: harness.app.get(getModelToken(AuthorizationTransaction.name)),
-    credentials: harness.app.get(getModelToken(NativeCredential.name)),
-  };
+  const previousSecret = process.env.AUTH_NATIVE_DPOP_NONCE_SECRET;
+  const previousApiUrl = process.env.API_URL;
+  process.env.AUTH_NATIVE_DPOP_NONCE_SECRET = NATIVE_DPOP_TEST_SECRET;
+  process.env.API_URL = NATIVE_PUBLIC_API_ORIGIN;
+  try {
+    const harness = await bootSessionAuthority(
+      mongo.uri(dbName),
+      new FrozenClock(TEST_NOW),
+      { nativeEnabled: true, withNativeHttp: true },
+    );
+    return {
+      mongo,
+      harness,
+      authorize: harness.app.get(NativeAuthorizeService),
+      tokens: harness.app.get(NativeTokenService),
+      access: harness.app.get(NativeAccessService),
+      transactions: harness.app.get(
+        getModelToken(AuthorizationTransaction.name),
+      ),
+      credentials: harness.app.get(getModelToken(NativeCredential.name)),
+      proofIds: harness.app.get(getModelToken(NativeDpopProofId.name)),
+      securityEvents: harness.app.get(getModelToken(SecurityEvent.name)),
+    };
+  } finally {
+    restoreEnvironmentValue('AUTH_NATIVE_DPOP_NONCE_SECRET', previousSecret);
+    restoreEnvironmentValue('API_URL', previousApiUrl);
+  }
 }
 
 export async function stopNativeOauth(ctx: NativeOauthHarness): Promise<void> {
@@ -111,6 +137,8 @@ export async function resetNativeClient(
   await ctx.harness.users.deleteMany({});
   await ctx.transactions.deleteMany({});
   await ctx.credentials.deleteMany({});
+  await ctx.proofIds.deleteMany({});
+  await ctx.securityEvents.deleteMany({});
   await ctx.harness.applications.deleteMany({ clientId: NATIVE_CLIENT_ID });
   await ctx.harness.applications.create({
     clientId: NATIVE_CLIENT_ID,
@@ -130,6 +158,17 @@ export async function resetNativeClient(
     sessionVersion: 0,
     issuanceFence: 0,
   });
+}
+
+function restoreEnvironmentValue(
+  key: 'AUTH_NATIVE_DPOP_NONCE_SECRET' | 'API_URL',
+  previous: string | undefined,
+): void {
+  if (previous === undefined) {
+    delete process.env[key];
+    return;
+  }
+  process.env[key] = previous;
 }
 
 export async function issueNativeGrant(

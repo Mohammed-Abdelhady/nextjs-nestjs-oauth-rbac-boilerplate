@@ -65,9 +65,13 @@ export async function bootSessionAuthority(
             auth: {
               epoch: 1,
               nativeEnabled: options?.nativeEnabled ?? false,
+              nativeDpopNonceSecret: process.env.AUTH_NATIVE_DPOP_NONCE_SECRET,
               passwordEnabled: true,
             },
-            server: { nodeEnv: 'test' },
+            server: {
+              nodeEnv: 'test',
+              apiUrl: process.env.API_URL ?? 'http://localhost:5001',
+            },
             cors: { clientUrl: 'http://localhost:3000' },
           }),
         ],
