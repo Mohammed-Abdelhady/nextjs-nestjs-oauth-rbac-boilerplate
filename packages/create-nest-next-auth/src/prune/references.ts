@@ -1,5 +1,5 @@
-import { readFile } from 'node:fs/promises';
-import { extname, join, posix } from 'node:path';
+import { readFile, stat } from 'node:fs/promises';
+import { extname, isAbsolute, join, posix, relative, resolve, sep } from 'node:path';
 import {
   FRONTEND_ALIAS,
   FRONTEND_SOURCE,
@@ -12,7 +12,8 @@ import {
 } from '../constants/index.js';
 import { isRecord } from '../manifest/read.js';
 import type { DanglingReference } from '../types.js';
-import { listFiles } from '../utils/fs.js';
+import { docReferences } from './docs.js';
+import { isErrnoException, listFiles } from '../utils/fs.js';
 
 // from '...' | import('...') | require('...')
 const SPECIFIER = new RegExp(
@@ -108,9 +109,8 @@ async function resolveSpecifier(
 }
 
 /**
- * Reports imports and package scripts that point at files the pruner deleted. A
- * non-empty result means the manifest claims a file belongs to one feature or
- * option while shared code still depends on it, or a script still runs it.
+ * Reports imports and scripts into deleted files, and missing relative Markdown
+ * targets. Shared references to feature-owned files need the same feature marker.
  */
 export async function findDanglingReferences(
   root: string,
@@ -125,6 +125,7 @@ export async function findDanglingReferences(
   const dangling: DanglingReference[] = [];
   const shared = sharedPackages(root, deletedFiles);
   const files = await listFiles(root);
+  const projectRoot = resolve(root);
 
   for (const file of files.filter(isSourceFile)) {
     const lines = (await readFile(join(root, file), 'utf8')).split('\n');
@@ -136,6 +137,24 @@ export async function findDanglingReferences(
         const target = resolved === undefined ? undefined : byPath.get(resolved);
         if (target === undefined) continue;
         dangling.push({ file, line: index + 1, specifier, target });
+      }
+    }
+  }
+
+  for (const file of files.filter((path) => path.endsWith('.md'))) {
+    const references = docReferences(file, await readFile(join(root, file), 'utf8'));
+    for (const reference of references) {
+      const target = resolve(projectRoot, reference.target);
+      const fromRoot = relative(projectRoot, target);
+      if (fromRoot === '..' || fromRoot.startsWith(`..${sep}`) || isAbsolute(fromRoot)) {
+        dangling.push(reference);
+        continue;
+      }
+      try {
+        await stat(target);
+      } catch (error) {
+        if (!isErrnoException(error) || error.code !== 'ENOENT') throw error;
+        dangling.push(reference);
       }
     }
   }
