@@ -9,19 +9,47 @@ import { repository } from './test-repository.mjs';
 const OLD_MANAGER = 'n' + 'pm';
 const OLD_EXEC = 'np' + 'x';
 const OLD_LOCK = 'package' + '-lock';
+const OLD_YARN = 'y' + 'arn';
+const OLD_BUN = 'b' + 'un';
+const OLD_BUN_EXEC = OLD_BUN + 'x';
 
-test('inventory rejects every legacy command and lock reference with file and line', () => {
-  for (const [suffix, reference] of [
-    ['run build', `${OLD_MANAGER} run`],
-    ['ci', `${OLD_MANAGER} ci`],
-    ['install', `${OLD_MANAGER} install`],
-  ]) {
-    assert.deepEqual(legacyReferences('docs/setup.md', `heading\n${OLD_MANAGER} ${suffix}\n`), [
+const LEGACY_COMMANDS = [
+  [`${OLD_MANAGER} run build`, `${OLD_MANAGER} run`],
+  [`${OLD_MANAGER} ci`, `${OLD_MANAGER} ci`],
+  [`${OLD_MANAGER} install`, `${OLD_MANAGER} install`],
+  [`${OLD_MANAGER} test`, `${OLD_MANAGER} test`],
+  [`${OLD_MANAGER} start`, `${OLD_MANAGER} start`],
+  [`${OLD_MANAGER} i`, `${OLD_MANAGER} i`],
+  [`${OLD_MANAGER} exec eslint`, `${OLD_MANAGER} exec`],
+  [`${OLD_MANAGER} audit`, `${OLD_MANAGER} audit`],
+  [`${OLD_MANAGER} update`, `${OLD_MANAGER} update`],
+  [`${OLD_MANAGER} add package`, `${OLD_MANAGER} add`],
+  [`${OLD_MANAGER} remove package`, `${OLD_MANAGER} remove`],
+  [`${OLD_MANAGER} uninstall package`, `${OLD_MANAGER} uninstall`],
+  [`${OLD_MANAGER} rebuild package`, `${OLD_MANAGER} rebuild`],
+  [`${OLD_MANAGER} link package`, `${OLD_MANAGER} link`],
+  [`${OLD_MANAGER} dedupe`, `${OLD_MANAGER} dedupe`],
+  [`${OLD_MANAGER} prune`, `${OLD_MANAGER} prune`],
+  [`${OLD_YARN} add package`, `${OLD_YARN} add`],
+  [`${OLD_YARN} install`, `${OLD_YARN} install`],
+  [`${OLD_YARN} run build`, `${OLD_YARN} run`],
+  [`${OLD_YARN} dev`, `${OLD_YARN} dev`],
+  [`${OLD_BUN_EXEC} eslint`, OLD_BUN_EXEC],
+  [`${OLD_BUN} install`, `${OLD_BUN} install`],
+  [`${OLD_BUN} run build`, `${OLD_BUN} run`],
+];
+
+for (const [command, reference] of LEGACY_COMMANDS) {
+  test(`inventory rejects ${reference}`, () => {
+    assert.deepEqual(legacyReferences('docs/setup.md', `heading\n${command}\n`), [
       { file: 'docs/setup.md', line: 2, reference },
     ]);
-  }
+  });
+}
+
+test('inventory rejects the legacy executable and lock references', () => {
   assert.deepEqual(legacyReferences('.husky/pre-commit', `${OLD_EXEC} eslint`), [
-    { file: '.husky/pre-commit', line: 1, reference: `${OLD_EXEC} ` },
+    { file: '.husky/pre-commit', line: 1, reference: OLD_EXEC },
   ]);
   assert.deepEqual(legacyReferences('Dockerfile', `COPY ${OLD_LOCK}.json ./`), [
     { file: 'Dockerfile', line: 1, reference: OLD_LOCK },
@@ -31,7 +59,7 @@ test('inventory rejects every legacy command and lock reference with file and li
   ]);
 });
 
-test('inventory accepts pnpm, publication and changelogs without exempting installer source', () => {
+test('inventory accepts pnpm, registry prose and publication commands', () => {
   assert.deepEqual(
     legacyReferences(
       'README.md',
@@ -39,6 +67,16 @@ test('inventory accepts pnpm, publication and changelogs without exempting insta
     ),
     [],
   );
+  for (const phrase of [
+    `the ${OLD_MANAGER} registry`,
+    `${OLD_MANAGER} pack`,
+    `${OLD_MANAGER} publish`,
+  ]) {
+    assert.deepEqual(legacyReferences('docs/setup.md', phrase), []);
+  }
+});
+
+test('publication and changelog exemptions remain narrow', () => {
   assert.deepEqual(
     legacyReferences('packages/create-nest-next-auth/test/packed-cli.ts', `${OLD_MANAGER} install`),
     [],
