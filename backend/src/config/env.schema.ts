@@ -11,13 +11,17 @@ import {
   Matches,
   Max,
   Min,
-  MinLength,
-  ValidateIf,
 } from 'class-validator';
+import { OAuthEnvironmentConfig } from './env.oauth.schema';
+import { NativeEnvironmentVariables } from './env.native.schema';
 import {
-  OAuthEnvironmentConfig,
-  OAuthEnvironmentVariables,
-} from './env.oauth.schema';
+  transformBoolean,
+  transformOptionalString,
+} from '../common/utils/environment-transform';
+export {
+  transformBoolean,
+  transformOptionalString,
+} from '../common/utils/environment-transform';
 import {
   ACTIVATION_CODE_EXPIRES_IN_DEFAULT,
   ACTIVATION_CODE_EXPIRES_IN_MAX,
@@ -26,7 +30,6 @@ import {
   MAIL_DRAIN_DEADLINE_MS,
   MAIL_MAX_PENDING_SENDS,
 } from '../mail/constants/mail.constants';
-import { NATIVE_DPOP_SECRET_MIN_LENGTH } from '../session/constants/session-policy';
 
 export interface EnvironmentConfig extends OAuthEnvironmentConfig {
   NODE_ENV: 'development' | 'production' | 'test';
@@ -53,6 +56,7 @@ export interface EnvironmentConfig extends OAuthEnvironmentConfig {
 
   AUTH_EPOCH?: number;
   AUTH_NATIVE_ENABLED?: boolean;
+  AUTH_NATIVE_DPOP_REQUIRED?: boolean;
   AUTH_NATIVE_DPOP_NONCE_SECRET?: string;
   AUTH_NATIVE_APPLICATIONS?: string;
   AUTH_NATIVE_ALLOW_CUSTOM_SCHEME?: boolean;
@@ -79,36 +83,7 @@ export interface EnvironmentConfig extends OAuthEnvironmentConfig {
   PROFILE_SYNC_FIELDS?: string;
 }
 
-export function transformBoolean(
-  defaultValue?: boolean,
-): (params: { value: unknown }) => unknown {
-  return ({ value }: { value: unknown }): unknown => {
-    if (value === undefined || value === null || value === '') {
-      return defaultValue;
-    }
-    if (value === 'true' || value === true) {
-      return true;
-    }
-    if (value === 'false' || value === false) {
-      return false;
-    }
-    return value;
-  };
-}
-
-/**
- * Treat a key that is present but blank as unset. A `.env` copied from an
- * example often keeps the line with nothing after the `=`.
- */
-export function transformOptionalString({
-  value,
-}: {
-  value: unknown;
-}): unknown {
-  return value === '' ? undefined : value;
-}
-
-export class EnvironmentVariables extends OAuthEnvironmentVariables {
+export class EnvironmentVariables extends NativeEnvironmentVariables {
   @IsEnum(['development', 'production', 'test'])
   @IsOptional()
   NODE_ENV: 'development' | 'production' | 'test' = 'development';
@@ -226,24 +201,6 @@ export class EnvironmentVariables extends OAuthEnvironmentVariables {
   @Min(1)
   @IsOptional()
   AUTH_EPOCH: number = 1;
-
-  @Transform(transformBoolean(false))
-  @IsBoolean()
-  @IsOptional()
-  AUTH_NATIVE_ENABLED: boolean = false;
-  @ValidateIf((value: EnvironmentVariables) => value.AUTH_NATIVE_ENABLED)
-  @IsString()
-  @MinLength(NATIVE_DPOP_SECRET_MIN_LENGTH)
-  AUTH_NATIVE_DPOP_NONCE_SECRET?: string;
-  @Transform(transformOptionalString)
-  @IsString()
-  @IsOptional()
-  AUTH_NATIVE_APPLICATIONS?: string;
-
-  @Transform(transformBoolean(false))
-  @IsBoolean()
-  @IsOptional()
-  AUTH_NATIVE_ALLOW_CUSTOM_SCHEME: boolean = false;
 
   @Type(() => Number)
   @IsInt()

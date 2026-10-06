@@ -84,6 +84,7 @@ test('init writes OAuth and native DPoP secrets into backend configuration', asy
     ),
   );
   assert.match(backendEnv, /AUTH_NATIVE_ENABLED=false/);
+  assert.match(backendEnv, /AUTH_NATIVE_DPOP_REQUIRED=false/);
   assert.match(source, /\.\.\.createSetupSecrets\(\)/);
   assert.match(source, /mode: 0o600/);
   assert.doesNotMatch(backendEnv, /frontendPort\}\/auth\/oauth\/callback/);

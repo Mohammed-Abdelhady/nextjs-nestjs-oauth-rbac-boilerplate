@@ -15,6 +15,10 @@ export class AuthEpochService {
     return this.configService.get<boolean>('auth.nativeEnabled', false);
   }
 
+  nativeDpopRequired(): boolean {
+    return this.configService.get<boolean>('auth.nativeDpopRequired', false);
+  }
+
   nativeApplications(): NativeApplicationConfiguration[] {
     return this.configService.get<NativeApplicationConfiguration[]>(
       'auth.nativeApplications',

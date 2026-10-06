@@ -11,6 +11,7 @@ import {
   SECURITY_EVENT_ACTION,
   SECURITY_EVENT_OUTCOME,
 } from '../constants/security-event-action';
+import { NATIVE_DPOP_FAILURE_REASON } from '../constants/session-policy';
 import {
   Application,
   ApplicationDocument,
@@ -19,10 +20,6 @@ import {
   AuthorizationTransaction,
   AuthorizationTransactionDocument,
 } from '../schemas/authorization-transaction.schema';
-import {
-  NativeCredential,
-  NativeCredentialDocument,
-} from '../schemas/native-credential.schema';
 import {
   UserApplicationGrant,
   UserApplicationGrantDocument,
@@ -33,6 +30,7 @@ import { withMajorityTransaction } from '../utils/mongo-transaction';
 import { hashToken } from '../utils/token-hash';
 import { NativeCredentialIssuer } from './native-credential.issuer';
 import { NativeRefreshService } from './native-refresh.service';
+import { NativeRevokeService } from './native-revoke.service';
 import { SessionIssuanceService } from '../services/session-issuance.service';
 import { SecurityEventService } from '../services/security-event.service';
 import { NativeDpopProofResult } from './native-dpop-proof';
@@ -57,8 +55,6 @@ export class NativeTokenService {
     @InjectConnection() private readonly connection: Connection,
     @InjectModel(AuthorizationTransaction.name)
     private readonly transactions: Model<AuthorizationTransactionDocument>,
-    @InjectModel(NativeCredential.name)
-    private readonly credentials: Model<NativeCredentialDocument>,
     @InjectModel(User.name) private readonly users: Model<UserDocument>,
     @InjectModel(Application.name)
     private readonly applications: Model<ApplicationDocument>,
@@ -66,6 +62,7 @@ export class NativeTokenService {
     private readonly grants: Model<UserApplicationGrantDocument>,
     private readonly issuer: NativeCredentialIssuer,
     private readonly refreshes: NativeRefreshService,
+    private readonly revocations: NativeRevokeService,
     private readonly sessionIssuance: SessionIssuanceService,
     private readonly dpop: NativeDpopService,
     private readonly events: SecurityEventService,
@@ -97,6 +94,7 @@ export class NativeTokenService {
           body.refresh_token ?? '',
           body.client_id ?? '',
           meta,
+          dpopProof,
         );
       }
       return oauthFailure(
@@ -108,46 +106,11 @@ export class NativeTokenService {
     }
   }
 
-  async revoke(body: RevokeRequest): Promise<RevokeSuccess | OauthFailure> {
-    if (!this.authEpoch.nativeEnabled()) {
-      return oauthFailure(
-        HttpStatus.BAD_REQUEST,
-        OAUTH_ERROR.UNAUTHORIZED_CLIENT,
-        ErrorCode.NATIVE_AUTH_DISABLED,
-      );
-    }
-    if (body.client_secret) {
-      return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_CLIENT);
-    }
-    const token = body.token?.trim() ?? '';
-    if (!token) {
-      return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_REQUEST);
-    }
-    try {
-      await withMajorityTransaction(this.connection, async (db) => {
-        const credential = await this.credentials
-          .findOne({ tokenHash: hashToken(token) })
-          .session(db)
-          .exec();
-        if (!credential) {
-          return;
-        }
-        if (body.client_id && body.client_id !== credential.clientId) {
-          return;
-        }
-        const now = this.clock.now();
-        await this.issuer.revokeFamily(
-          db,
-          credential.familyId,
-          credential.sessionId,
-          now,
-          SECURITY_EVENT_ACTION.NATIVE_CLIENT_REVOKED,
-        );
-      });
-      return { ok: true };
-    } catch (error) {
-      asAuthorityUnavailable(error);
-    }
+  async revoke(
+    body: RevokeRequest,
+    dpopProof?: string,
+  ): Promise<RevokeSuccess | OauthFailure> {
+    return this.revocations.revoke(body, dpopProof);
   }
 
   private async exchange(
@@ -161,6 +124,19 @@ export class NativeTokenService {
     const verifier = body.code_verifier ?? '';
     if (!code || !clientId || !redirectUri || !verifier) {
       return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_REQUEST);
+    }
+    if (dpopProof === undefined && this.authEpoch.nativeDpopRequired()) {
+      const now = this.clock.now();
+      await this.recordProofRefusal(
+        code,
+        NATIVE_DPOP_FAILURE_REASON.REQUIRED,
+        now,
+      );
+      return oauthFailure(
+        HttpStatus.BAD_REQUEST,
+        OAUTH_ERROR.INVALID_DPOP_PROOF,
+        NATIVE_DPOP_FAILURE_REASON.REQUIRED,
+      );
     }
     let verifiedProof: Extract<NativeDpopProofResult, { ok: true }> | undefined;
     if (dpopProof !== undefined) {

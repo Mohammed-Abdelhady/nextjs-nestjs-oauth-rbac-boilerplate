@@ -48,6 +48,7 @@ import {
   ApiNativeTokenExchange,
   ApiNativeAuthorizeApproveErrors,
   ApiNativeAuthorizeStart,
+  ApiNativeRevoke,
 } from './native-oauth.swagger';
 import { negotiateNativeAuthorizeLocale } from './native-locale.util';
 import {
@@ -255,6 +256,7 @@ export class NativeOAuthController {
 
   @Public()
   @SkipBrowserProof()
+  @ApiNativeRevoke()
   @Post('revoke')
   async revoke(
     @Body() body: RevokeRequest,
@@ -269,9 +271,15 @@ export class NativeOAuthController {
       });
       return;
     }
-    const result = await this.tokens.revoke(body);
+    const result = await this.tokens.revoke(
+      body,
+      request.get(NATIVE_DPOP_PROOF_HEADER),
+    );
     response.setHeader('Cache-Control', 'no-store');
     if (!result.ok) {
+      if (result.dpopNonce) {
+        response.setHeader(NATIVE_DPOP_NONCE_HEADER, result.dpopNonce);
+      }
       this.writeError(response, result);
       return;
     }

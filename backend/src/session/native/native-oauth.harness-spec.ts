@@ -21,6 +21,7 @@ import {
   TokenSuccess,
 } from './native-oauth.types';
 import { NativeTokenService } from './native-token.service';
+import { signNativeDpopProof } from './native-dpop-test-vectors.harness-spec';
 import {
   AuthorizationTransaction,
   AuthorizationTransactionDocument,
@@ -92,12 +93,17 @@ export function nativeHttpServer(app: INestApplication): Server {
 
 export async function startNativeOauth(
   dbName: string,
+  options: { nativeDpopRequired?: boolean } = {},
 ): Promise<NativeOauthHarness> {
   const mongo = await startMemoryReplSet();
   const previousSecret = process.env.AUTH_NATIVE_DPOP_NONCE_SECRET;
   const previousApiUrl = process.env.API_URL;
+  const previousDpopRequired = process.env.AUTH_NATIVE_DPOP_REQUIRED;
   process.env.AUTH_NATIVE_DPOP_NONCE_SECRET = NATIVE_DPOP_TEST_SECRET;
   process.env.API_URL = NATIVE_PUBLIC_API_ORIGIN;
+  process.env.AUTH_NATIVE_DPOP_REQUIRED = String(
+    options.nativeDpopRequired ?? false,
+  );
   try {
     const harness = await bootSessionAuthority(
       mongo.uri(dbName),
@@ -120,6 +126,7 @@ export async function startNativeOauth(
   } finally {
     restoreEnvironmentValue('AUTH_NATIVE_DPOP_NONCE_SECRET', previousSecret);
     restoreEnvironmentValue('API_URL', previousApiUrl);
+    restoreEnvironmentValue('AUTH_NATIVE_DPOP_REQUIRED', previousDpopRequired);
   }
 }
 
@@ -161,7 +168,8 @@ export async function resetNativeClient(
 }
 
 function restoreEnvironmentValue(
-  key: 'AUTH_NATIVE_DPOP_NONCE_SECRET' | 'API_URL',
+  key:
+    'AUTH_NATIVE_DPOP_NONCE_SECRET' | 'API_URL' | 'AUTH_NATIVE_DPOP_REQUIRED',
   previous: string | undefined,
 ): void {
   if (previous === undefined) {
@@ -185,6 +193,32 @@ export async function issueNativeGrant(
       code_verifier: approved.verifier,
     },
     NATIVE_META,
+  );
+  if (!granted.ok) {
+    throw new Error(granted.error);
+  }
+  return granted;
+}
+
+export async function issueBoundNativeGrant(
+  ctx: NativeOauthHarness,
+  proofId = 'native-initial-exchange-proof',
+): Promise<TokenSuccess> {
+  const user = await createTestUser(
+    ctx.harness.users,
+    'bound-native@example.com',
+  );
+  const approved = await approveNativeCode(ctx, user);
+  const granted = await ctx.tokens.grant(
+    {
+      grant_type: 'authorization_code',
+      code: approved.code,
+      redirect_uri: NATIVE_REDIRECT,
+      client_id: NATIVE_CLIENT_ID,
+      code_verifier: approved.verifier,
+    },
+    NATIVE_META,
+    signNativeDpopProof({ claims: { jti: proofId } }),
   );
   if (!granted.ok) {
     throw new Error(granted.error);

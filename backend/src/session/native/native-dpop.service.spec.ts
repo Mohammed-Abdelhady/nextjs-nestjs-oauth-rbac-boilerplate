@@ -1,4 +1,11 @@
-import { resolveNativeDpopTokenAddress } from './native-dpop.service';
+import {
+  resolveNativeDpopAddress,
+  resolveNativeDpopTokenAddress,
+} from './native-dpop.service';
+import {
+  NATIVE_DPOP_REVOKE_PATH,
+  NATIVE_DPOP_TOKEN_PATH,
+} from '../constants/session-policy';
 import { OAUTH_ERROR } from './native-oauth.types';
 
 describe('native DPoP token address', () => {
@@ -20,6 +27,35 @@ describe('native DPoP token address', () => {
     ],
   ])('appends the token path to %s', (_label, apiOrigin, expectedAddress) => {
     expect(resolveNativeDpopTokenAddress(apiOrigin)).toBe(expectedAddress);
+  });
+
+  it.each([
+    [
+      'token path after a trailing slash and prefix',
+      'https://api.example.test/gateway/',
+      NATIVE_DPOP_TOKEN_PATH,
+      'https://api.example.test/gateway/api/oauth/token',
+    ],
+    [
+      'revoke path after a trailing slash and prefix',
+      'https://api.example.test/gateway/',
+      NATIVE_DPOP_REVOKE_PATH,
+      'https://api.example.test/gateway/api/oauth/revoke',
+    ],
+    [
+      'token path after a prefix without a slash',
+      'https://api.example.test/v2',
+      NATIVE_DPOP_TOKEN_PATH,
+      'https://api.example.test/v2/api/oauth/token',
+    ],
+    [
+      'revoke path after a prefix without a slash',
+      'https://api.example.test/v2',
+      NATIVE_DPOP_REVOKE_PATH,
+      'https://api.example.test/v2/api/oauth/revoke',
+    ],
+  ] as const)('resolves the %s', (_label, apiOrigin, path, expectedAddress) => {
+    expect(resolveNativeDpopAddress(apiOrigin, path)).toBe(expectedAddress);
   });
 });
 

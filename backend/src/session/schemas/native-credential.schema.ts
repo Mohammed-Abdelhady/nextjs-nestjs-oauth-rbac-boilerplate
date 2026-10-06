@@ -47,6 +47,18 @@ export class NativeCredential {
   @Prop()
   proofKeyThumbprint?: string;
 
+  @Prop()
+  firstUsedAt?: Date;
+
+  @Prop()
+  successorAccessHash?: string;
+
+  @Prop()
+  successorRefreshHash?: string;
+
+  @Prop()
+  retryClaimUntil?: Date;
+
   createdAt!: Date;
   updatedAt!: Date;
 }

@@ -184,6 +184,25 @@ describe('validateEnvironment', () => {
 
     expect(result.AUTH_EPOCH).toBe(1);
     expect(result.AUTH_NATIVE_ENABLED).toBe(false);
+    expect(result.AUTH_NATIVE_DPOP_REQUIRED).toBe(false);
+  });
+
+  it.each([
+    ['true', true],
+    ['false', false],
+  ])('parses AUTH_NATIVE_DPOP_REQUIRED=%s as %s', (value, expected) => {
+    const result = validateEnvironment({
+      ...baseEnv,
+      AUTH_NATIVE_DPOP_REQUIRED: value,
+    });
+
+    expect(result.AUTH_NATIVE_DPOP_REQUIRED).toBe(expected);
+  });
+
+  it('rejects an invalid AUTH_NATIVE_DPOP_REQUIRED value', () => {
+    expect(() =>
+      validateEnvironment({ ...baseEnv, AUTH_NATIVE_DPOP_REQUIRED: 'yes' }),
+    ).toThrow(/AUTH_NATIVE_DPOP_REQUIRED/);
   });
 
   it.each(['0x10', '1e3', '0', '-1', ' 2 '])(
