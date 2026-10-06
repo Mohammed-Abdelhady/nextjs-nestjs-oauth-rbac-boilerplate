@@ -18,6 +18,7 @@ import {
 import { packageManagerCases } from './packed-package-manager.js';
 import { checkGeneratedHookHistory } from './generated-hook-history.js';
 import { checkGeneratedGuardrails } from './generated-guardrails.js';
+import { checkGeneratedRules } from './generated-rules.js';
 import { checkGeneratedCi } from './generated-ci.js';
 import {
   DEFAULT_SELECTION_MUST_EXIST,
@@ -39,6 +40,9 @@ afterAll(() => {
 
 describe('the packed CLI', () => {
   packageManagerCases(() => packed);
+  it('writes rules from project data and omits pruned feature references', async () => {
+    await checkGeneratedRules(packed);
+  });
   it.each(['standard', 'minimal'])('ships only runnable CI gates for %s', (preset) =>
     checkGeneratedCi(packed, preset),
   );

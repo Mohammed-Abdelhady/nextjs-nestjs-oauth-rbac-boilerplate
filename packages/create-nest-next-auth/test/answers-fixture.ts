@@ -11,12 +11,18 @@ const COPIED_FROM_REPOSITORY = [
   'frontend/.gitignore',
   'nginx/.gitignore',
   '.prettierrc',
+  'scripts/guardrails/policy.mjs',
 ];
 
 /** A small tree: one file per prune stage, one the default selection removes. */
 const FILES: Record<string, string> = {
-  'package.json': '{\n  "name": "fixture",\n  "version": "1.0.0",\n  "scripts": {}\n}\n',
+  'package.json':
+    '{\n  "name": "fixture",\n  "version": "1.0.0",\n  "packageManager": "pnpm@12.6.0",\n  "scripts": {}\n}\n',
+  'scripts/ci/gates.json': '{\n  "gates": []\n}\n',
+  'commitlint.config.cjs':
+    "module.exports = { rules: { 'type-enum': [2, 'always', ['feat']], 'scope-enum': [2, 'always', ['root']], 'subject-max-length': [2, 'always', 100] } };\n",
   'frontend/package.json': '{\n  "name": "fixture-frontend"\n}\n',
+  'pnpm-workspace.yaml': 'packages: []\n',
   'backend/src/main.ts': 'export const started = true;\n',
   'backend/src/auth/magic-link/magic-link.controller.ts':
     'export const magicLinkController = true;\n',
