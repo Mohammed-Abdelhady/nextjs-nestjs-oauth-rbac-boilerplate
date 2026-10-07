@@ -17,9 +17,9 @@ import { settle } from './support/subject';
 const SETTINGS: NativePortSettings = {
   clientId: 'com.example.mobile',
   environment: 'staging',
-  redirectUri: 'com.example.mobile://oauth/callback',
   ephemeralBrowserSession: false,
 };
+const RETURN_ADDRESS = 'com.example.mobile://oauth/callback';
 /** Written by hand: prefix, escaped client id, environment. */
 const RECORD_KEY = 'auth.com_002eexample_002emobile.staging';
 const INSTALL_KEY = 'app.install-id';
@@ -31,6 +31,12 @@ function device() {
   const linking = new FakeLinking(LINK);
   const time = new FakeTime();
   const marker = new FakeMarkerFile();
+  const recordMarker = new FakeMarkerFile();
+  // A shell names the record marker after the client and environment, so other settings get another file.
+  const markerFor = (settings: NativePortSettings): FakeMarkerFile =>
+    settings.clientId === SETTINGS.clientId && settings.environment === SETTINGS.environment
+      ? recordMarker
+      : new FakeMarkerFile();
   const build = (settings: NativePortSettings = SETTINGS) =>
     createNativePorts(
       {
@@ -41,13 +47,14 @@ function device() {
         sha256Algorithm: FAKE_SHA256,
         linking,
         installMarker: marker,
+        recordMarker: markerFor(settings),
         uuid: new FakeUuid(),
         clock: time,
         timers: time,
       },
       settings,
     );
-  return { store, browser, linking, time, marker, build };
+  return { store, browser, linking, time, marker, recordMarker, build };
 }
 
 describe('the one factory a shell calls', () => {
@@ -104,14 +111,27 @@ describe('the one factory a shell calls', () => {
     });
   });
 
+  it('marks the record in its own file and leaves the install marker alone', async () => {
+    const { store, marker, recordMarker, build } = device();
+    const ports = build();
+
+    await ports.credentials.replace('record');
+
+    expect(recordMarker.present).toBe(true);
+    expect(marker.present).toBe(false);
+    store.discard(RECORD_KEY);
+    expect(await ports.credentials.read()).toEqual({ kind: 'corrupt' });
+  });
+
   it.each([[true], [false]])(
-    'opens the browser with the return address and ephemeral set to %j',
+    'opens the browser with the return address it is given and ephemeral set to %j',
     async (ephemeralBrowserSession) => {
       const { browser, build } = device();
       browser.steps.push({ kind: 'resolve', result: { type: 'cancel' } });
 
       await build({ ...SETTINGS, ephemeralBrowserSession }).authBrowser.open(
         'https://api.example.test/authorize',
+        RETURN_ADDRESS,
         new TestAbort().signal,
       );
 
@@ -136,7 +156,7 @@ describe('the one factory a shell calls', () => {
     time.advance(50);
     await settle();
 
-    expect(await ports.callbacks.initialAddress()).toBe(LINK);
+    expect(await ports.callbacks.initialAddress()).toEqual({ kind: 'address', address: LINK });
     expect(linking.initialReads).toBe(1);
     expect(ports.clock.monotonicTime()).toBe(50);
     expect(ports.clock.wallTime()).toBe(1_800_000_000_050);
@@ -151,12 +171,13 @@ describe('the one factory a shell calls', () => {
 });
 
 describe('the package entry', () => {
-  it('exports the factory, the transport and the two values a shell needs', () => {
+  it('exports the factory, the transport and the three values a shell needs', () => {
     expect(Object.keys(entry).sort()).toEqual([
       'INSTALL_MARKER_FILE',
       'REQUEST_DEADLINE_MS',
       'createFetchTransport',
       'createNativePorts',
+      'recordMarkerFile',
     ]);
     expect(entry.INSTALL_MARKER_FILE).toBe('install.marker');
     expect(entry.REQUEST_DEADLINE_MS).toBe(20_000);

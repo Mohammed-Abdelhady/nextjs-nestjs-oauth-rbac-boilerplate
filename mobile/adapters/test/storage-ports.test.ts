@@ -13,7 +13,7 @@ const SECOND_ID = '00000000-0000-4000-8000-000000000002';
 describe('credentials adapter over the secure store', () => {
   it('reads, writes and deletes one key with the keychain options', async () => {
     const store = new FakeSecureStore();
-    const port = createCredentialsPort(store, KEY, OPTIONS);
+    const port = createCredentialsPort(store, KEY, OPTIONS, new FakeMarkerFile());
 
     await port.replace('record');
     await port.read();
@@ -30,7 +30,7 @@ describe('credentials adapter over the secure store', () => {
     const store = new FakeSecureStore();
     store.items.set(KEY, '');
 
-    expect(await createCredentialsPort(store, KEY, OPTIONS).read()).toEqual({
+    expect(await createCredentialsPort(store, KEY, OPTIONS, new FakeMarkerFile()).read()).toEqual({
       kind: 'found',
       value: '',
     });
@@ -39,7 +39,7 @@ describe('credentials adapter over the secure store', () => {
   it('leaves another key alone', async () => {
     const store = new FakeSecureStore();
     store.items.set('auth.other-client.test', 'theirs');
-    const port = createCredentialsPort(store, KEY, OPTIONS);
+    const port = createCredentialsPort(store, KEY, OPTIONS, new FakeMarkerFile());
 
     expect(await port.read()).toEqual({ kind: 'missing' });
     await port.delete();
@@ -100,13 +100,29 @@ describe('install adapter over the keychain and a marker file', () => {
     expect(await port.identity()).toEqual({ kind: 'found', id: FIRST_ID });
   });
 
-  it('reports a locked keychain as unavailable and keeps the stored id', async () => {
+  it('reports a locked keychain as locked and keeps the stored id', async () => {
     const { store, port } = setup();
     await port.identity();
     store.readFailure = 'User interaction is not allowed.';
 
-    expect(await port.identity()).toEqual({ kind: 'unavailable' });
+    expect(await port.identity()).toEqual({ kind: 'locked' });
     expect(store.items.get(INSTALL_KEY)).toBe(FIRST_ID);
+  });
+
+  it('reports a keychain that is out of reach as unavailable, not as locked', async () => {
+    const { store, port } = setup();
+    await port.identity();
+    store.readFailure = 'No keychain is available. You may need to restart your computer.';
+
+    expect(await port.identity()).toEqual({ kind: 'unavailable' });
+  });
+
+  it('reports locked when the first id cannot be written to a locked keychain', async () => {
+    const { store, marker, port } = setup();
+    store.writeFailure = 'User interaction is not allowed.';
+
+    expect(await port.identity()).toEqual({ kind: 'locked' });
+    expect(marker.present).toBe(false);
   });
 
   it('reports a failed write as unavailable and does not mark the install', async () => {

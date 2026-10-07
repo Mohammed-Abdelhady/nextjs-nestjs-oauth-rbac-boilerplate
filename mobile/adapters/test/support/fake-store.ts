@@ -39,6 +39,8 @@ export class FakeSecureStore implements SecureStoreApi {
   /** Limits the read failure to one item, as when two items differ in accessibility. */
   readFailureKey: string | undefined;
   failNextSet = false;
+  /** Every set and delete fails with this keychain reason. */
+  writeFailure: string | undefined;
 
   reset(): void {
     this.items.clear();
@@ -46,6 +48,12 @@ export class FakeSecureStore implements SecureStoreApi {
     this.readFailure = undefined;
     this.readFailureKey = undefined;
     this.failNextSet = false;
+    this.writeFailure = undefined;
+  }
+
+  /** Android dropping an entry it can no longer decrypt: no error, the item is just gone. */
+  discard(key: string): void {
+    this.items.delete(key);
   }
 
   async getItemAsync(key: string, options?: SecureStoreOptionsApi): Promise<string | null> {
@@ -59,6 +67,9 @@ export class FakeSecureStore implements SecureStoreApi {
 
   async setItemAsync(key: string, value: string, options?: SecureStoreOptionsApi): Promise<void> {
     this.record('set', key, options);
+    if (this.writeFailure !== undefined) {
+      throw keychainError(this.writeFailure, 'setValueWithKeyAsync');
+    }
     if (this.failNextSet) {
       this.failNextSet = false;
       throw keychainError('I/O error.', 'setValueWithKeyAsync');
@@ -68,6 +79,9 @@ export class FakeSecureStore implements SecureStoreApi {
 
   async deleteItemAsync(key: string, options?: SecureStoreOptionsApi): Promise<void> {
     this.record('delete', key, options);
+    if (this.writeFailure !== undefined) {
+      throw keychainError(this.writeFailure, 'deleteValueWithKeyAsync');
+    }
     this.items.delete(key);
   }
 

@@ -1,6 +1,6 @@
 import type { AbortSignalPort } from '@app/native-auth';
 
-/** The engine's abort signal shape. Its own controller is not exported. */
+/** The engine's abort signal shape, with a count of the listeners still attached. */
 export class TestAbort {
   private readonly listeners = new Set<() => void>();
   private isAborted = false;
