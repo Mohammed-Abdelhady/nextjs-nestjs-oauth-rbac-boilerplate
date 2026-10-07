@@ -1,3 +1,5 @@
+import type { RulesPolicy } from '../types.js';
+
 export type PlanErrorReason =
   | 'unknown'
   | 'planned'
@@ -30,6 +32,7 @@ export interface PlanRemoval {
 }
 
 export interface Plan {
+  rules: RulesPolicy;
   targets: string[];
   database: string;
   features: string[];
@@ -43,6 +46,7 @@ export interface Plan {
 
 /** What the flags, config file and prompts ask for, before presets and defaults. */
 export interface PlanRequest {
+  rules?: RulesPolicy;
   targets?: string[];
   databases?: string[];
   features?: string[];

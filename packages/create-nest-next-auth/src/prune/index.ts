@@ -1,10 +1,12 @@
-import type { Manifest, PruneResult } from '../types.js';
+import type { Manifest, PruneResult, RulesPolicy } from '../types.js';
 import {
   ENV_EXAMPLE_FILES,
   FRONTEND_PACKAGE_JSON,
   PNPM_WORKSPACE_FILE,
   ROOT_PACKAGE_JSON,
+  DEFAULT_RULES_POLICY,
 } from '../constants/index.js';
+import { pruneRules } from './rules.js';
 import { removeDocMarkers } from './doc-markers.js';
 import { removeDocLinks } from './docs.js';
 import { DEPENDABOT_FILE, pruneDependabot } from './dependabot.js';
@@ -45,6 +47,7 @@ export async function prune(
   manifest: Manifest,
   selectedFeatures: string[],
   selectedOptions: string[],
+  rules: RulesPolicy = DEFAULT_RULES_POLICY,
 ): Promise<PruneResult> {
   const selected = new Set(selectedFeatures);
   const removed = Object.keys(manifest.features).filter((id) => !selected.has(id));
@@ -70,6 +73,7 @@ export async function prune(
     ...doomedFiles,
     ...doomedDocs,
   ]);
+  deletedFiles.push(...(await pruneRules(root, rules)));
 
   // Runs for every selection, not only a partial one: the full project has to
   // come out without marker comments too. Option ids are valid marker names.

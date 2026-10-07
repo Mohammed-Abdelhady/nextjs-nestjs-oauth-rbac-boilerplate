@@ -1,5 +1,5 @@
 import PACKAGE_MANAGER_CONFIG from './package-manager.json' with { type: 'json' };
-import type { FeatureKind } from '../types.js';
+import type { FeatureKind, RulesPolicy } from '../types.js';
 
 /** Every kind a user can pick from the prompt. */
 type PromptedKind = Exclude<FeatureKind, 'hidden'>;
@@ -102,7 +102,11 @@ export const FEATURE_FLAG_VAR = 'AUTH_FEATURES';
 export const ANSWERS_FILE_NAME = '.create-nest-next-auth.json';
 
 /** Version of that file's shape. Bumped only when the contract changes. */
-export const ANSWERS_SCHEMA_VERSION = 2;
+export const ANSWERS_SCHEMA_VERSION = 3;
+export const PREVIOUS_ANSWERS_SCHEMA_VERSION = 2;
+export const RULES_POLICY = { STRICT: 'strict', STANDARD: 'standard' } as const;
+export const RULES_POLICIES = [RULES_POLICY.STRICT, RULES_POLICY.STANDARD] as const;
+export const DEFAULT_RULES_POLICY: RulesPolicy = RULES_POLICY.STRICT;
 
 /** Build artifact next to `template/`: the SHA-256 of the shipped template. */
 export const TEMPLATE_IDENTITY_FILE = 'template.identity.json';

@@ -1,9 +1,15 @@
-import { Command } from 'commander';
-import { CLI_NAME, DOCKER_OPTION_ID, PRODUCTION_OPTION_ID } from '../constants/index.js';
-import type { CliOptions } from '../types.js';
+import { Command, Option } from 'commander';
+import {
+  CLI_NAME,
+  DOCKER_OPTION_ID,
+  PRODUCTION_OPTION_ID,
+  RULES_POLICIES,
+} from '../constants/index.js';
+import type { CliOptions, RulesPolicy } from '../types.js';
 
 interface RawOptions {
   yes?: boolean;
+  rules?: RulesPolicy;
   features?: string;
   targets?: string;
   database?: string;
@@ -32,6 +38,11 @@ export function buildProgram(version: string): Command {
     .version(version, '-v, --version')
     .argument('[directory]', 'directory to create, defaults to a prompt')
     .option('-y, --yes', 'accept the defaults and skip the prompts')
+    .addOption(
+      new Option('--rules <policy>', 'rules: strict (recommended) or standard').choices([
+        ...RULES_POLICIES,
+      ]),
+    )
     .option('--features <list>', 'comma separated feature ids, skips the feature prompt')
     .option('--targets <list>', 'comma separated client ids, skips the client prompt')
     .option('--database <list>', 'database id; more than one is an error')
@@ -64,6 +75,7 @@ export function parseCliOptions(argv: string[], version = '0.0.0'): CliOptions {
   return {
     directory: program.args[0],
     yes: raw.yes === true,
+    rules: raw.rules,
     features: raw.features === undefined ? undefined : splitList(raw.features),
     targets: raw.targets === undefined ? undefined : splitList(raw.targets),
     databases: raw.database === undefined ? undefined : splitList(raw.database),

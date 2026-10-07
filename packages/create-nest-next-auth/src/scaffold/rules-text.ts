@@ -2,7 +2,14 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { isRecord } from '../manifest/read.js';
-import { AGENTS_TEMPLATE } from './rules-text-template.js';
+import {
+  AGENTS_TEMPLATE,
+  STANDARD_CODE_TEXT,
+  STANDARD_NOT_ENFORCED,
+} from './rules-text-template.js';
+import { RULES_POLICY } from '../constants/index.js';
+import { RULES_GATES_PATH as GATES_PATH } from '../constants/rules.js';
+import type { RulesPolicy } from '../types.js';
 import {
   explicitTypeLintFact,
   readPolicyFacts,
@@ -14,13 +21,12 @@ export const AGENTS_FILE_NAME = 'AGENTS.md';
 export const CLAUDE_FILE_NAME = 'CLAUDE.md';
 export const CLAUDE_RULES_TEXT = 'See AGENTS.md for project rules.\n';
 
-const GATES_PATH = 'scripts/ci/gates.json';
 const COMMITLINT_PATH = 'commitlint.config.cjs';
 const PACKAGE_JSON_PATH = 'package.json';
 
 export interface RulesTextInput {
   projectRoot: string;
-  level: string;
+  level: RulesPolicy;
   delivery: {
     hooks: boolean;
     actions: boolean;
@@ -184,7 +190,14 @@ export async function renderRulesText(input: RulesTextInput): Promise<RenderedRu
     'This file guides developers and coding agents. It does not block changes by itself.',
     ...(input.delivery.hooks ? ['Local hooks can be skipped.'] : []),
   ].join(' ');
-  const agents = replacePlaceholders(AGENTS_TEMPLATE, {
+  const template =
+    input.level === RULES_POLICY.STANDARD
+      ? AGENTS_TEMPLATE.replace(
+          /Source file limit:[\s\S]*?{{bannedConstructs}}{{explicitTypeLint}}/,
+          STANDARD_CODE_TEXT + '{{explicitTypeLint}}',
+        )
+      : AGENTS_TEMPLATE;
+  const agents = replacePlaceholders(template, {
     level: input.level,
     fileLineLimit: String(policy.fileLineLimit),
     bannedConstructs: renderBannedConstructs(policy),
@@ -198,7 +211,10 @@ export async function renderRulesText(input: RulesTextInput): Promise<RenderedRu
     hooks,
     actions,
     branchProtection,
-    notEnforced,
+    notEnforced:
+      input.level === RULES_POLICY.STANDARD
+        ? `${notEnforced}\n\n${STANDARD_NOT_ENFORCED}`
+        : notEnforced,
     whereThingsAre,
   });
   return { agents, claude: CLAUDE_RULES_TEXT };

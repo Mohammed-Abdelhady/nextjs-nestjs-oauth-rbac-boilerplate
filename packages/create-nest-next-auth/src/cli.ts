@@ -11,6 +11,7 @@ import {
   USAGE_EXIT_CODE,
 } from './constants/index.js';
 import { ConfigFileError, readConfigFile } from './flags/config-file.js';
+import { RULES_HOOK_PATHS, RULES_WORKFLOW_PATH } from './constants/rules.js';
 import { parseCliOptions } from './flags/options.js';
 import { toPlanRequest } from './flags/request.js';
 import { CliError, BrokenPackageError } from './errors.js';
@@ -86,7 +87,12 @@ interface PromptNeeds extends PlanPromptNeeds {
 
 function requireInteractive(options: CliOptions, needs: PromptNeeds): void {
   const needsPrompt =
-    needs.directory || needs.targets || needs.database || needs.features || needs.options;
+    needs.directory ||
+    needs.targets ||
+    needs.database ||
+    needs.features ||
+    needs.options ||
+    needs.rules;
   if (!needsPrompt || options.yes || process.stdin.isTTY === true) return;
   throw new CliError('No terminal to prompt in. Pass --yes or the matching flags.');
 }
@@ -100,15 +106,22 @@ async function scaffold(
 ): Promise<number> {
   const copying = spinner();
   copying.start('Copying the template');
-  await copyTemplate(templateDir(), target);
-  await setProjectName(target, basename(target));
+  try {
+    await copyTemplate(templateDir(), target);
+    await setProjectName(target, basename(target));
+  } catch (error) {
+    copying.stop('Copying failed');
+    log.error(error instanceof Error ? error.message : String(error));
+    outro(`Left the tree at ${target} so you can inspect it.`);
+    return 1;
+  }
   copying.stop('Template copied');
 
   const pruning = spinner();
   pruning.start('Removing what you did not pick');
   let result: PruneResult;
   try {
-    result = await prune(target, manifest, plan.features, plan.options);
+    result = await prune(target, manifest, plan.features, plan.options, plan.rules);
   } catch (error) {
     pruning.stop('Pruning failed');
     const reason = error instanceof Error ? error.message : String(error);
@@ -119,13 +132,10 @@ async function scaffold(
   pruning.stop('Pruned');
   await writeRulesText({
     projectRoot: target,
-    level: 'strict',
+    level: plan.rules,
     delivery: {
-      hooks:
-        existsSync(join(target, '.husky/pre-commit')) &&
-        existsSync(join(target, '.husky/commit-msg')) &&
-        existsSync(join(target, '.husky/pre-push')),
-      actions: existsSync(join(target, '.github/workflows/ci.yml')),
+      hooks: RULES_HOOK_PATHS.every((path) => existsSync(join(target, path))),
+      actions: existsSync(join(target, RULES_WORKFLOW_PATH)),
     },
   });
   log.message(describeSelection(manifest, result).join('\n'));

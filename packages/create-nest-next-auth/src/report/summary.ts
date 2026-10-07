@@ -22,6 +22,7 @@ function labels(manifest: Manifest, ids: string[]): string {
 export function buildSummary(manifest: Manifest, plan: Plan): string[] {
   const visibleFeatures = plan.features.filter((id) => manifest.features[id]?.kind !== 'hidden');
   const lines = [
+    `Rules      ${plan.rules}`,
     `Clients    ${labels(manifest, plan.targets)}`,
     `Database   ${plan.database === '' ? 'none' : labelFor(manifest, plan.database)}`,
     `Sign-in    ${labels(manifest, visibleFeatures)}`,
