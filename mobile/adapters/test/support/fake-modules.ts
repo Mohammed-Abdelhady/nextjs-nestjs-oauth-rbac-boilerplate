@@ -2,7 +2,7 @@ import type {
   ClockApi,
   CryptoApi,
   LinkingApi,
-  MarkerFileApi,
+  RecordMarkerApi,
   TimerApi,
   UuidApi,
   WebBrowserApi,
@@ -114,6 +114,8 @@ export class FakeLinking implements LinkingApi {
   private readonly handlers = new Set<(event: { url: string }) => void>();
   initialReads = 0;
   failInitial = false;
+  /** This many reads fail before one works. */
+  failingInitialReads = 0;
 
   constructor(private readonly launchAddress: string | null) {}
 
@@ -123,7 +125,9 @@ export class FakeLinking implements LinkingApi {
 
   async getInitialURL(): Promise<string | null> {
     this.initialReads += 1;
-    if (this.failInitial) throw new Error('The launch address could not be read.');
+    const failsOnce = this.failingInitialReads > 0;
+    if (failsOnce) this.failingInitialReads -= 1;
+    if (this.failInitial || failsOnce) throw new Error('The launch address could not be read.');
     return this.launchAddress;
   }
 
@@ -138,9 +142,11 @@ export class FakeLinking implements LinkingApi {
 }
 
 /** An `expo-file-system` file: gone after a reinstall, refuses to be created twice. */
-export class FakeMarkerFile implements MarkerFileApi {
+export class FakeMarkerFile implements RecordMarkerApi {
   present = false;
   unreadable = false;
+  /** The file system refuses to create or delete the file. */
+  readOnly = false;
 
   get exists(): boolean {
     if (this.unreadable) throw new Error('The file system is not available.');
@@ -148,8 +154,15 @@ export class FakeMarkerFile implements MarkerFileApi {
   }
 
   create(): void {
+    if (this.readOnly) throw new Error('The file system is read-only.');
     if (this.present) throw new Error('The file already exists.');
     this.present = true;
+  }
+
+  delete(): void {
+    if (this.readOnly) throw new Error('The file system is read-only.');
+    if (!this.present) throw new Error('The file does not exist.');
+    this.present = false;
   }
 }
 

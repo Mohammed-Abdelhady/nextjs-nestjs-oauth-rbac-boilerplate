@@ -1,7 +1,10 @@
-import type { CallbackPort } from '../src';
+import type { CallbackPort, LaunchAddressResult } from '../src';
 import { CHECK_ID, SAMPLE } from './constants';
 import { attempt, expectEqual } from './expect';
 import type { ConformanceCheck, ConformanceSubject } from './types';
+
+const LAUNCHED: LaunchAddressResult = { kind: 'address', address: SAMPLE.RETURN_ADDRESS };
+const NONE: LaunchAddressResult = { kind: 'none' };
 
 const initial = (port: CallbackPort) =>
   attempt('callbacks.initialAddress()', () => port.initialAddress());
@@ -24,12 +27,16 @@ async function handledOnce(subject: ConformanceSubject, readFirst: boolean): Pro
   const order = readFirst ? 'read then event' : 'event then read';
   const port = await subject.driver.callbacks.launch(SAMPLE.RETURN_ADDRESS);
   const { received } = listen(port);
-  const handed: (string | undefined)[] = [];
-  if (readFirst) handed.push(await initial(port));
+  const handed: string[] = [];
+  const take = async (): Promise<void> => {
+    const result = await initial(port);
+    if (result.kind === 'address') handed.push(result.address);
+  };
+  if (readFirst) await take();
   await deliver(subject, SAMPLE.RETURN_ADDRESS);
-  if (!readFirst) handed.push(await initial(port));
+  if (!readFirst) await take();
   expectEqual(
-    [...handed, ...received].filter((address) => address !== undefined),
+    [...handed, ...received],
     [SAMPLE.RETURN_ADDRESS],
     `launch address repeated as an event (${order})`,
   );
@@ -44,8 +51,8 @@ export const CALLBACKS_CHECKS: readonly ConformanceCheck[] = [
     port: 'callbacks',
     async run({ driver }) {
       const port = await driver.callbacks.launch(SAMPLE.RETURN_ADDRESS);
-      expectEqual(await initial(port), SAMPLE.RETURN_ADDRESS, 'first read of the launch address');
-      expectEqual(await initial(port), undefined, 'second read of the launch address');
+      expectEqual(await initial(port), LAUNCHED, 'first read of the launch address');
+      expectEqual(await initial(port), NONE, 'second read of the launch address');
     },
   },
   {
@@ -53,7 +60,23 @@ export const CALLBACKS_CHECKS: readonly ConformanceCheck[] = [
     port: 'callbacks',
     async run({ driver }) {
       const port = await driver.callbacks.launch(undefined);
-      expectEqual(await initial(port), undefined, 'launch address of a plain start');
+      expectEqual(await initial(port), NONE, 'launch address of a plain start');
+    },
+  },
+  {
+    // A failed read is not "no link": the sign-in that started the app would be lost.
+    id: CHECK_ID.CALLBACKS_LAUNCH_UNAVAILABLE,
+    port: 'callbacks',
+    async run({ driver }) {
+      await driver.callbacks.failNextLaunchRead();
+      const port = await driver.callbacks.launch(SAMPLE.RETURN_ADDRESS);
+      expectEqual(
+        await initial(port),
+        { kind: 'unavailable' },
+        'a launch address read that failed',
+      );
+      expectEqual(await initial(port), LAUNCHED, 'the next read, once the address can be read');
+      expectEqual(await initial(port), NONE, 'a read after the address was handed over');
     },
   },
   {

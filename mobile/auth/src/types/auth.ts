@@ -12,6 +12,7 @@ export type SessionStatus =
 export type AuthOperation = 'none' | 'authorizing' | 'exchanging' | 'refreshing' | 'signingOut';
 export type AuthReason =
   | 'storageFailure'
+  | 'storageLocked'
   | 'invalidRecord'
   | 'installMismatch'
   | 'refreshInterrupted'
@@ -43,9 +44,13 @@ export interface AuthConfiguration {
 
 export interface CredentialsPort {
   read(): Promise<CredentialReadResult>;
-  replace(value: string): Promise<void>;
-  delete(): Promise<void>;
+  replace(value: string): Promise<CredentialWriteResult>;
+  delete(): Promise<CredentialWriteResult>;
 }
+
+/** A write or delete that did not happen says why, and leaves the stored record as it was. */
+export type CredentialWriteResult =
+  { kind: 'done' } | { kind: 'locked' } | { kind: 'cancelled' } | { kind: 'unavailable' };
 
 export type CredentialReadResult =
   | { kind: 'found'; value: string }
@@ -67,7 +72,7 @@ export type AuthBrowserResult =
   | { kind: 'failed'; reason: string };
 
 export interface AuthBrowserPort {
-  open(address: string, signal: AbortSignalPort): Promise<AuthBrowserResult>;
+  open(address: string, redirectUri: string, signal: AbortSignalPort): Promise<AuthBrowserResult>;
 }
 
 export interface CryptoPort {
@@ -79,8 +84,12 @@ export type Unsubscribe = () => void;
 
 export interface CallbackPort {
   subscribe(listener: (address: string) => void | Promise<void>): Unsubscribe;
-  initialAddress(): Promise<string | undefined>;
+  initialAddress(): Promise<LaunchAddressResult>;
 }
+
+/** `unavailable` means the read failed, so the engine asks again on the next restore. */
+export type LaunchAddressResult =
+  { kind: 'address'; address: string } | { kind: 'none' } | { kind: 'unavailable' };
 
 export interface ClockPort {
   wallTime(): number;
@@ -91,7 +100,8 @@ export interface TimerPort {
   after(milliseconds: number, callback: () => void): Unsubscribe;
 }
 
-export type InstallIdentityResult = { kind: 'found'; id: string } | { kind: 'unavailable' };
+export type InstallIdentityResult =
+  { kind: 'found'; id: string } | { kind: 'locked' } | { kind: 'unavailable' };
 
 export interface InstallPort {
   identity(): Promise<InstallIdentityResult>;
@@ -171,6 +181,13 @@ export type SignOutOutcome =
       error?: Error | ApiError | OAuthError | TransportError;
     };
 
+/** `error` is what a request waiting on the same refresh would have rejected with. */
+export type RefreshOutcome =
+  | { kind: 'disposed' }
+  | { kind: 'refreshed' }
+  | { kind: 'notSignedIn' }
+  | { kind: 'failed'; error: Error };
+
 export interface AuthEngine {
   readonly snapshot: AuthSnapshot;
   readonly transport: Transport<AbortSignalPort>;
@@ -178,6 +195,8 @@ export interface AuthEngine {
   restore(): Promise<RestoreOutcome>;
   signIn(): Promise<SignInOutcome>;
   signOut(): Promise<SignOutOutcome>;
+  /** Refreshes now, sharing any refresh already running. */
+  refresh(): Promise<RefreshOutcome>;
   dispose(): void;
 }
 

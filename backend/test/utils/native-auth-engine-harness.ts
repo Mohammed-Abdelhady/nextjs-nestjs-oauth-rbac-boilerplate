@@ -195,15 +195,19 @@ function makePorts(
         ),
       replace: (value: string) => {
         credential = value;
-        return Promise.resolve();
+        return Promise.resolve({ kind: 'done' });
       },
       delete: () => {
         credential = undefined;
-        return Promise.resolve();
+        return Promise.resolve({ kind: 'done' });
       },
     },
     authBrowser: {
-      open: async (address: string, _signal: AbortSignalPort) => {
+      open: async (
+        address: string,
+        _redirectUri: string,
+        _signal: AbortSignalPort,
+      ) => {
         authorizationAddresses.push(address);
         return authorizeWithBrowser(browser, address, authorizationChoice);
       },
@@ -220,7 +224,7 @@ function makePorts(
     },
     callbacks: {
       subscribe: () => () => undefined,
-      initialAddress: () => Promise.resolve(undefined),
+      initialAddress: () => Promise.resolve({ kind: 'none' }),
     },
     clock,
     timer: new TestTimer(),

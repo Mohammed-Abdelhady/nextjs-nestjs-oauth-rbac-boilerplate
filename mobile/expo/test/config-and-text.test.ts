@@ -1,4 +1,4 @@
-import { AuthPortError } from '@app/native-auth';
+import { AuthPortError, CredentialStoreError } from '@app/native-auth';
 import { ApiError, OAuthError, TransportError } from '@app/sdk';
 import { describe, expect, it } from 'vitest';
 import {
@@ -75,6 +75,8 @@ describe('outcome as text', () => {
       'authorizationDenied (access_denied)',
     ],
     [{ kind: 'signedOut', revocation: 'revoked' } as const, 'signedOut (revoked)'],
+    [{ kind: 'refreshed' } as const, 'refreshed'],
+    [{ kind: 'notSignedIn' } as const, 'notSignedIn'],
   ])('describes %j', (outcome, expected) => {
     expect(describeOutcome(outcome)).toBe(expected);
   });
@@ -88,6 +90,15 @@ describe('outcome as text', () => {
     expect(
       describeOutcome({ kind: 'signedOut', revocation: 'failed', error: new TransportError() }),
     ).toBe('signedOut (failed, TransportError no_response)');
+  });
+
+  it('says why the store refused a write, so a locked device reads as locked', () => {
+    const locked = new CredentialStoreError('credentials.replace', 'locked');
+
+    expect(describeError(locked)).toBe('CredentialStoreError credentials.replace locked');
+    expect(describeOutcome({ kind: 'failed', error: locked })).toBe(
+      'failed (CredentialStoreError credentials.replace locked)',
+    );
   });
 
   it('describes each error a request can reject with', () => {

@@ -13,18 +13,27 @@ const OTHER_LINK = 'sampleapp://auth/callback?code=B&state=s2';
 describe('browser adapter over the web browser module', () => {
   function setup() {
     const browser = new FakeWebBrowser();
-    const port = createAuthBrowserPort(browser, { redirectUri: RETURN, ephemeralSession: true });
+    const port = createAuthBrowserPort(browser, { ephemeralSession: true });
     return { browser, port };
   }
 
-  it('opens the session with the return address and the private-session choice', async () => {
+  it('opens the session with the return address it is given and the private-session choice', async () => {
     const { browser, port } = setup();
-    browser.steps.push({ kind: 'resolve', result: { type: 'cancel' } });
+    browser.steps.push(
+      { kind: 'resolve', result: { type: 'cancel' } },
+      { kind: 'resolve', result: { type: 'cancel' } },
+    );
 
-    await port.open(AUTHORIZE, new TestAbort().signal);
+    await port.open(AUTHORIZE, RETURN, new TestAbort().signal);
+    await port.open(AUTHORIZE, 'otherapp://signed-in', new TestAbort().signal);
 
     expect(browser.opened).toEqual([
       { url: AUTHORIZE, redirectUrl: RETURN, options: { preferEphemeralSession: true } },
+      {
+        url: AUTHORIZE,
+        redirectUrl: 'otherapp://signed-in',
+        options: { preferEphemeralSession: true },
+      },
     ]);
   });
 
@@ -33,7 +42,7 @@ describe('browser adapter over the web browser module', () => {
     const controller = new TestAbort();
     controller.abort();
 
-    expect(await port.open(AUTHORIZE, controller.signal)).toEqual({ kind: 'dismissed' });
+    expect(await port.open(AUTHORIZE, RETURN, controller.signal)).toEqual({ kind: 'dismissed' });
     expect(browser.opened).toEqual([]);
   });
 
@@ -43,7 +52,7 @@ describe('browser adapter over the web browser module', () => {
       throw new Error('WebBrowser.dismissBrowser is not available on android');
     };
     const controller = new TestAbort();
-    const opened = port.open(AUTHORIZE, controller.signal);
+    const opened = port.open(AUTHORIZE, RETURN, controller.signal);
     await settle();
 
     controller.abort();
@@ -56,7 +65,10 @@ describe('browser adapter over the web browser module', () => {
     browser.steps.push({ kind: 'resolve', result: { type: 'success', url: LINK } });
     const controller = new TestAbort();
 
-    expect(await port.open(AUTHORIZE, controller.signal)).toEqual({ kind: 'redirect', url: LINK });
+    expect(await port.open(AUTHORIZE, RETURN, controller.signal)).toEqual({
+      kind: 'redirect',
+      url: LINK,
+    });
     controller.abort();
 
     expect(browser.dismissals).toBe(0);
@@ -64,10 +76,10 @@ describe('browser adapter over the web browser module', () => {
 
   it('fails a second session while the first is open and leaves the first running', async () => {
     const { browser, port } = setup();
-    const first = port.open(AUTHORIZE, new TestAbort().signal);
+    const first = port.open(AUTHORIZE, RETURN, new TestAbort().signal);
     await settle();
 
-    expect(await port.open(AUTHORIZE, new TestAbort().signal)).toEqual({
+    expect(await port.open(AUTHORIZE, RETURN, new TestAbort().signal)).toEqual({
       kind: 'failed',
       reason: 'ERR_WEB_BROWSER_ALREADY_OPEN',
     });
@@ -83,7 +95,7 @@ describe('browser adapter over the web browser module', () => {
       throw new Error('The method is not available.');
     };
 
-    expect(await port.open(AUTHORIZE, new TestAbort().signal)).toEqual({
+    expect(await port.open(AUTHORIZE, RETURN, new TestAbort().signal)).toEqual({
       kind: 'failed',
       reason: 'The method is not available.',
     });
@@ -110,17 +122,69 @@ describe('callback adapter over the linking module', () => {
     expect(linking.initialReads).toBe(1);
   });
 
-  it('rejects the read and still delivers links when the launch address cannot be read', async () => {
+  it('reports the read as unavailable and still delivers links when it cannot be read', async () => {
     const linking = new FakeLinking(null);
     linking.failInitial = true;
     const port = createCallbackPort(linking);
     const { received } = listen(port);
 
-    await expect(port.initialAddress()).rejects.toThrow('The launch address could not be read.');
+    expect(await port.initialAddress()).toEqual({ kind: 'unavailable' });
     linking.emit(LINK);
     await settle();
 
     expect(received).toEqual([LINK]);
+  });
+
+  it('hands over the launch address, then answers that there is none left', async () => {
+    const port = createCallbackPort(new FakeLinking(LINK));
+
+    expect(await port.initialAddress()).toEqual({ kind: 'address', address: LINK });
+    expect(await port.initialAddress()).toEqual({ kind: 'none' });
+  });
+
+  it('answers none for a start without a link', async () => {
+    expect(await createCallbackPort(new FakeLinking(null)).initialAddress()).toEqual({
+      kind: 'none',
+    });
+  });
+
+  it('asks the system again on the read after a failed one', async () => {
+    const linking = new FakeLinking(LINK);
+    linking.failingInitialReads = 1;
+    const port = createCallbackPort(linking);
+
+    expect(await port.initialAddress()).toEqual({ kind: 'unavailable' });
+    expect(linking.initialReads).toBe(1);
+    expect(await port.initialAddress()).toEqual({ kind: 'address', address: LINK });
+    expect(linking.initialReads).toBe(2);
+  });
+
+  it('does not hand the launch address twice when its event came during a failed read', async () => {
+    const linking = new FakeLinking(LINK);
+    linking.failingInitialReads = 1;
+    const port = createCallbackPort(linking);
+    const { received } = listen(port);
+    await port.initialAddress();
+
+    linking.emit(LINK);
+    await settle();
+
+    expect(received).toEqual([LINK]);
+    expect(await port.initialAddress()).toEqual({ kind: 'none' });
+  });
+
+  it('keeps the launch address for the read when another link came during a failed read', async () => {
+    const linking = new FakeLinking(LINK);
+    linking.failingInitialReads = 1;
+    const port = createCallbackPort(linking);
+    const { received } = listen(port);
+    await port.initialAddress();
+
+    linking.emit(OTHER_LINK);
+    await settle();
+
+    expect(received).toEqual([OTHER_LINK]);
+    expect(await port.initialAddress()).toEqual({ kind: 'address', address: LINK });
   });
 
   it('delivers links in the order the system sent them', async () => {

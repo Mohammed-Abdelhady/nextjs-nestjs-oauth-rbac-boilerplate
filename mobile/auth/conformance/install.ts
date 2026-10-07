@@ -26,4 +26,13 @@ export const INSTALL_CHECKS: readonly ConformanceCheck[] = [
       expectEqual(await identity(subject), { kind: 'unavailable' }, 'unreadable install identity');
     },
   },
+  {
+    // Locked means unlock and try again. Unavailable means the storage is broken.
+    id: CHECK_ID.INSTALL_LOCKED,
+    port: 'install',
+    async run(subject) {
+      await subject.driver.install.lock();
+      expectEqual(await identity(subject), { kind: 'locked' }, 'install identity while locked');
+    },
+  },
 ];

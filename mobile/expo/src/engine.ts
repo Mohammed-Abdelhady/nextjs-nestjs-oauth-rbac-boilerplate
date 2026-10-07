@@ -1,4 +1,4 @@
-import { INSTALL_MARKER_FILE } from '@app/native-adapters';
+import { INSTALL_MARKER_FILE, recordMarkerFile } from '@app/native-adapters';
 import type { AuthConfiguration } from '@app/native-auth';
 import * as Crypto from 'expo-crypto';
 import { File, Paths } from 'expo-file-system';
@@ -22,6 +22,10 @@ export function createNativeShellAuth(
       sha256Algorithm: Crypto.CryptoDigestAlgorithm.SHA256,
       linking: Linking,
       installMarker: new File(Paths.document, INSTALL_MARKER_FILE),
+      recordMarker: new File(
+        Paths.document,
+        recordMarkerFile(configuration.clientId, configuration.environment),
+      ),
       uuid: Crypto,
       clock: { date: Date, performance },
       timers: {

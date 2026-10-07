@@ -3,6 +3,13 @@ import type { CredentialsPort, CryptoPort, InstallPort } from '../src';
 import { type BrokenAdapter, itCatches } from './conformance-broken';
 import type { FakeSubject } from './conformance-fakes';
 
+/** A write the store refuses is checked once per reason. */
+const WRITE_CHECKS = [
+  'credentials.write-locked',
+  'credentials.write-cancelled',
+  'credentials.write-unavailable',
+];
+
 function credentials(
   fault: string,
   fails: string[],
@@ -93,7 +100,7 @@ describe('credentials faults', () => {
     credentials('appends to the stored record', ['credentials.replace-overwrites'], (inner) => ({
       replace: async (value) => {
         const current = await inner.read();
-        await inner.replace(current.kind === 'found' ? current.value + value : value);
+        return inner.replace(current.kind === 'found' ? current.value + value : value);
       },
     })),
     credentials(
@@ -102,20 +109,29 @@ describe('credentials faults', () => {
       (inner) => ({
         replace: async (value) => {
           await inner.delete();
-          await inner.replace(value);
+          return inner.replace(value);
         },
       }),
     ),
-    credentials('hides a failed write', ['credentials.replace-atomic'], (inner) => ({
-      replace: (value) => inner.replace(value).catch(() => undefined),
-    })),
-    credentials('does not delete', ['credentials.delete'], () => ({
-      delete: async () => undefined,
-    })),
+    credentials(
+      'hides a failed write',
+      ['credentials.replace-atomic', ...WRITE_CHECKS],
+      (inner) => ({
+        replace: async (value) => {
+          await inner.replace(value);
+          return { kind: 'done' };
+        },
+      }),
+    ),
+    credentials(
+      'does not delete',
+      ['credentials.delete', 'credentials.discarded', ...WRITE_CHECKS],
+      () => ({ delete: async () => ({ kind: 'done' }) }),
+    ),
     credentials('throws when deleting from an empty store', ['credentials.delete'], (inner) => ({
       delete: async () => {
         if ((await inner.read()).kind === 'missing') throw new Error('Item not found');
-        await inner.delete();
+        return inner.delete();
       },
     })),
     credentials(
@@ -130,7 +146,7 @@ describe('credentials faults', () => {
     ),
     credentials(
       'hands back a damaged record',
-      ['credentials.corrupt'],
+      ['credentials.corrupt', 'credentials.discarded'],
       readAs('corrupt', { kind: 'found', value: '' }),
     ),
     credentials('throws when the store is unavailable', ['credentials.unavailable'], (inner) => ({
@@ -172,7 +188,7 @@ describe('crypto faults', () => {
 
 describe('install faults', () => {
   itCatches([
-    install('never finds an identity', ['install.found'], () => async () => ({
+    install('never finds an identity', ['install.found', 'install.locked'], () => async () => ({
       kind: 'unavailable',
     })),
     install('makes a new identity on every read', ['install.found'], (inner) => {

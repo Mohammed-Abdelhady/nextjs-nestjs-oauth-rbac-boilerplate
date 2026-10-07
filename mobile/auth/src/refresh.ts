@@ -18,7 +18,7 @@ import { revokeQuietly } from './revocation';
 import { requestRefreshTokens } from './refresh-token-request';
 import { settleDeviceKeyRefreshFailure } from './refresh-key-failure';
 import { createRefreshSingleFlight } from './refresh-single-flight';
-import { finishRefresh } from './refresh-state';
+import { finishRefresh, installRotatedTokens } from './refresh-state';
 import {
   persistRotatedSessionAfterDispose,
   settleDisposedRefreshFailure,
@@ -69,7 +69,7 @@ export function createRefreshCoordinator(
       if (!written) throw new AuthSessionError();
     } catch (error) {
       if (!runtime.isEpochCurrent(epoch)) throw new AuthSessionError();
-      finishRefresh(runtime, true);
+      finishRefresh(runtime, true, error);
       throw authPortFailure(error, 'credentials.replace');
     }
     if (
@@ -171,7 +171,7 @@ export function createRefreshCoordinator(
           }
           throw new AuthSessionError();
         }
-      } catch {
+      } catch (failure) {
         if (!runtime.isEpochCurrent(epoch)) {
           if (runtime.disposed && runtime.preserveSessionOnDispose) {
             if (!disposedFailureSettled) {
@@ -189,25 +189,11 @@ export function createRefreshCoordinator(
           await settleLateRotation(tokens.refreshToken);
           throw new AuthSessionError();
         }
-        const memoryTokens = runtime.installTokens(
-          tokens.accessToken,
-          tokens.refreshToken,
-          sentAt,
-          tokens.expiresIn,
-          currentTokens.lineageId,
-          currentTokens.proofKeyThumbprint,
-        );
-        finishRefresh(runtime, true);
+        const memoryTokens = installRotatedTokens(runtime, tokens, sentAt, currentTokens);
+        finishRefresh(runtime, true, failure);
         return memoryTokens;
       }
-      const nextTokens = runtime.installTokens(
-        tokens.accessToken,
-        tokens.refreshToken,
-        sentAt,
-        tokens.expiresIn,
-        currentTokens.lineageId,
-        currentTokens.proofKeyThumbprint,
-      );
+      const nextTokens = installRotatedTokens(runtime, tokens, sentAt, currentTokens);
       finishRefresh(runtime);
       return nextTokens;
     } catch (error) {
@@ -281,12 +267,12 @@ export function createRefreshCoordinator(
       if (!written) throw new AuthSessionError();
       if (!runtime.isEpochCurrent(epoch)) return;
       finishRefresh(runtime);
-    } catch {
+    } catch (refused) {
       if (!runtime.isEpochCurrent(epoch)) {
         if (runtime.disposed) await settleDisposedRefreshFailure(runtime, record, failure);
         return;
       }
-      finishRefresh(runtime, true);
+      finishRefresh(runtime, true, refused);
     }
   }
 

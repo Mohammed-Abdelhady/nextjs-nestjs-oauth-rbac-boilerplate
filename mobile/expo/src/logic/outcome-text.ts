@@ -1,12 +1,14 @@
 import {
   AuthPortError,
+  CredentialStoreError,
+  type RefreshOutcome,
   type RestoreOutcome,
   type SignInOutcome,
   type SignOutOutcome,
 } from '@app/native-auth';
 import { ApiError, OAuthError, TransportError } from '@app/sdk';
 
-export type EngineOutcome = RestoreOutcome | SignInOutcome | SignOutOutcome;
+export type EngineOutcome = RestoreOutcome | SignInOutcome | SignOutOutcome | RefreshOutcome;
 
 const UNKNOWN_ERROR = 'unknown';
 
@@ -15,6 +17,9 @@ export function describeError(error: unknown): string {
   if (error instanceof ApiError) return `${error.name} ${error.status} ${error.code}`;
   if (error instanceof OAuthError) return `${error.name} ${error.status} ${error.error}`;
   if (error instanceof TransportError) return `${error.name} ${error.reason}`;
+  if (error instanceof CredentialStoreError) {
+    return `${error.name} ${error.operation} ${error.condition}`;
+  }
   if (error instanceof AuthPortError) return `${error.name} ${error.operation} ${error.reason}`;
   if (error instanceof Error) return `${error.name}: ${error.message}`;
   return UNKNOWN_ERROR;

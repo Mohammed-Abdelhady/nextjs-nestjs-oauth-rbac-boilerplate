@@ -42,7 +42,6 @@ export function createShellAuth<TAlgorithm, TSignal, THandle>(
   const ports = createNativePorts(modules, {
     clientId: configuration.clientId,
     environment: configuration.environment,
-    redirectUri: configuration.redirectUri,
     ephemeralBrowserSession,
   });
   const transports: DebugTransport[] = [];

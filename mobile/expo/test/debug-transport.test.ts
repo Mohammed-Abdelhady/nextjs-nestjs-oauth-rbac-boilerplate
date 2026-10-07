@@ -16,7 +16,7 @@ describe('debug transport', () => {
     };
   }
 
-  it('passes requests through until it is told to expire one', async () => {
+  it('passes every request through with its answer', async () => {
     const server = inner();
     const debug = createDebugTransport(server);
 
@@ -24,33 +24,10 @@ describe('debug transport', () => {
       status: 200,
       body: { ok: true },
     });
-    expect(server.paths).toEqual(['/api/user/profile']);
-  });
-
-  it('answers one API request with a local 401 and sends the next one', async () => {
-    const server = inner();
-    const debug = createDebugTransport(server);
-    debug.expireNextRequest();
-
-    const first = await debug.transport.request({ method: 'GET', path: '/api/user/profile' });
-    const second = await debug.transport.request({ method: 'GET', path: '/api/user/profile' });
-
-    expect(first).toEqual({ status: 401, body: undefined });
-    expect(second.status).toBe(200);
-    expect(server.paths).toEqual(['/api/user/profile']);
-  });
-
-  it('never answers a token or revoke request locally', async () => {
-    const server = inner();
-    const debug = createDebugTransport(server);
-    debug.expireNextRequest();
-
     await debug.transport.request({ method: 'POST', path: '/api/oauth/token', body: {} });
     await debug.transport.request({ method: 'POST', path: '/api/oauth/revoke', body: {} });
-    const api = await debug.transport.request({ method: 'GET', path: '/api/user/profile?x=1' });
 
-    expect(server.paths).toEqual(['/api/oauth/token', '/api/oauth/revoke']);
-    expect(api.status).toBe(401);
+    expect(server.paths).toEqual(['/api/user/profile', '/api/oauth/token', '/api/oauth/revoke']);
   });
 
   it('counts refresh requests and not code exchanges', async () => {
@@ -65,5 +42,17 @@ describe('debug transport', () => {
     await token(undefined);
 
     expect(debug.refreshRequests()).toBe(2);
+  });
+
+  it('does not count a refresh-shaped body sent to another path', async () => {
+    const debug = createDebugTransport(inner());
+
+    await debug.transport.request({
+      method: 'POST',
+      path: '/api/oauth/revoke',
+      body: { grant_type: 'refresh_token' },
+    });
+
+    expect(debug.refreshRequests()).toBe(0);
   });
 });

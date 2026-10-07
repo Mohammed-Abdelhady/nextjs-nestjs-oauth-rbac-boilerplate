@@ -1,4 +1,4 @@
-import type { AbortSignalPort, CallbackPort } from '../src';
+import type { AbortSignalPort, CallbackPort, LaunchAddressResult } from '../src';
 import type {
   BrowserScript,
   ConformanceAdapters,
@@ -37,12 +37,16 @@ export class AbortableBrowser extends FakeBrowser {
     );
   }
 
-  override async open(address: string, signal: AbortSignalPort): Promise<BrowserResult> {
+  override async open(
+    address: string,
+    redirectUri: string,
+    signal: AbortSignalPort,
+  ): Promise<BrowserResult> {
     const onAbort = (): void => this.dismiss?.();
     this.isOpen = true;
     signal.addEventListener('abort', onAbort);
     try {
-      return await super.open(address, signal);
+      return await super.open(address, redirectUri, signal);
     } finally {
       signal.removeEventListener('abort', onAbort);
       this.dismiss = undefined;
@@ -62,9 +66,10 @@ export class LaunchCallbacks extends FakeCallbacks {
     this.launchAddress = address;
   }
 
-  override initialAddress(): Promise<string | undefined> {
-    this.handed = true;
-    return super.initialAddress();
+  override async initialAddress(): Promise<LaunchAddressResult> {
+    const result = await super.initialAddress();
+    if (result.kind !== 'unavailable') this.handed = true;
+    return result;
   }
 
   override async deliver(address: string): Promise<void> {
@@ -89,6 +94,8 @@ export interface FakeParts {
   /** Lets a test hand the suite a different callbacks adapter for each launch. */
   makeCallbacks: (address: string | undefined) => FakeCallbacks;
   callbacks: FakeCallbacks | undefined;
+  /** How many reads of the next launch's address fail before one works. */
+  failingLaunchReads: number;
 }
 
 export interface FakeSubject extends ConformanceSubject {
@@ -129,10 +136,13 @@ function driverFor(parts: FakeParts): ConformanceDriver {
       parts.credentials.value = undefined;
       parts.credentials.readResult = undefined;
       parts.credentials.beforeReplace = undefined;
+      parts.credentials.writeResult = undefined;
+      parts.credentials.discarded = false;
       parts.authBrowser.results.length = 0;
       parts.authBrowser.opened.length = 0;
       parts.install.result = { kind: 'found', id: 'install-1' };
       parts.callbacks = undefined;
+      parts.failingLaunchReads = 0;
       time.reset();
     },
     async settle() {
@@ -145,8 +155,15 @@ function driverFor(parts: FakeParts): ConformanceDriver {
       async failNextReplace() {
         parts.credentials.beforeReplace = async () => {
           parts.credentials.beforeReplace = undefined;
-          throw new Error('The store refused the write.');
+          return { kind: 'unavailable' };
         };
+      },
+      async blockWrites(condition) {
+        parts.credentials.writeResult = { kind: condition };
+      },
+      async discard() {
+        parts.credentials.value = undefined;
+        parts.credentials.discarded = true;
       },
     },
     authBrowser: {
@@ -154,11 +171,17 @@ function driverFor(parts: FakeParts): ConformanceDriver {
         parts.authBrowser.script(result);
       },
       lastAddress: async () => parts.authBrowser.opened.at(-1)?.address,
+      lastRedirectUri: async () => parts.authBrowser.opened.at(-1)?.redirectUri,
       isOpen: async () => parts.authBrowser.isOpen,
     },
     callbacks: {
+      async failNextLaunchRead() {
+        parts.failingLaunchReads = 1;
+      },
       async launch(address): Promise<CallbackPort> {
         parts.callbacks = parts.makeCallbacks(address);
+        parts.callbacks.unavailableReads = parts.failingLaunchReads;
+        parts.failingLaunchReads = 0;
         return parts.callbacks;
       },
       async deliver(address) {
@@ -169,6 +192,9 @@ function driverFor(parts: FakeParts): ConformanceDriver {
     install: {
       async makeUnavailable() {
         parts.install.result = { kind: 'unavailable' };
+      },
+      async lock() {
+        parts.install.result = { kind: 'locked' };
       },
     },
   };
@@ -187,6 +213,7 @@ export function fakeSubject(): FakeSubject {
     install: new FakeInstall(),
     makeCallbacks: (address) => new LaunchCallbacks(address),
     callbacks: undefined,
+    failingLaunchReads: 0,
   };
   const adapters: ConformanceAdapters = {
     credentials: parts.credentials,

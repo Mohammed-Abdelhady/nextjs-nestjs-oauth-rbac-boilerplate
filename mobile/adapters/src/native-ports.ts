@@ -13,6 +13,7 @@ import type {
   CryptoApi,
   LinkingApi,
   MarkerFileApi,
+  RecordMarkerApi,
   SecureStoreApi,
   SecureStoreOptionsApi,
   TimerApi,
@@ -30,6 +31,8 @@ export interface NativeModules<TAlgorithm, THandle> {
   sha256Algorithm: TAlgorithm;
   linking: LinkingApi;
   installMarker: MarkerFileApi;
+  /** Named by `recordMarkerFile`, beside the install marker. */
+  recordMarker: RecordMarkerApi;
   uuid: UuidApi;
   clock: ClockApi;
   timers: TimerApi<THandle>;
@@ -38,8 +41,6 @@ export interface NativeModules<TAlgorithm, THandle> {
 export interface NativePortSettings {
   clientId: string;
   environment: string;
-  /** The engine hands the browser port the authorize address only. */
-  redirectUri: string;
   ephemeralBrowserSession: boolean;
 }
 
@@ -53,9 +54,9 @@ export function createNativePorts<TAlgorithm, THandle>(
       modules.secureStore,
       storageKey(CREDENTIALS_KEY_PREFIX, settings.clientId, settings.environment),
       modules.keychainOptions,
+      modules.recordMarker,
     ),
     authBrowser: createAuthBrowserPort(modules.webBrowser, {
-      redirectUri: settings.redirectUri,
       ephemeralSession: settings.ephemeralBrowserSession,
     }),
     crypto: createCryptoPort(modules.crypto, modules.sha256Algorithm),

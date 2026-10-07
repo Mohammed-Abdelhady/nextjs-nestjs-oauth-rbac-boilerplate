@@ -12,7 +12,12 @@ const EVERY_CHECK = [
   'credentials.cancelled',
   'credentials.corrupt',
   'credentials.unavailable',
+  'credentials.discarded',
+  'credentials.write-locked',
+  'credentials.write-cancelled',
+  'credentials.write-unavailable',
   'authBrowser.redirect',
+  'authBrowser.return-address',
   'authBrowser.cancelled',
   'authBrowser.dismissed',
   'authBrowser.failed',
@@ -22,6 +27,7 @@ const EVERY_CHECK = [
   'crypto.random-bytes',
   'callbacks.cold-start-once',
   'callbacks.no-cold-start',
+  'callbacks.launch-unavailable',
   'callbacks.warm-start-once',
   'callbacks.same-address-both-ways',
   'callbacks.unsubscribe',
@@ -32,6 +38,7 @@ const EVERY_CHECK = [
   'timer.cancel',
   'install.found',
   'install.unavailable',
+  'install.locked',
 ];
 
 describe('native adapters against the port contracts', () => {

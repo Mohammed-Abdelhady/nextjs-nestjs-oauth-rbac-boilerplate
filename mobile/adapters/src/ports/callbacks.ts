@@ -1,5 +1,5 @@
 import type { CallbackPort } from '@app/native-auth';
-import { createLaunchAddressFilter } from '../logic/launch-address';
+import { createDeferredLaunchFilter } from '../logic/launch-address';
 import type { LinkingApi } from '../types/modules';
 
 type Listener = Parameters<CallbackPort['subscribe']>[0];
@@ -12,23 +12,34 @@ function notify(listener: Listener, address: string): void {
   }
 }
 
-/** One adapter per app start: it reads the launch address once and remembers it. */
+/** One adapter per app start: it reads the launch address and remembers it. */
 export function createCallbackPort(linking: LinkingApi): CallbackPort {
   const subscribers = new Set<{ listener: Listener }>();
-  const launch = Promise.resolve()
-    .then(() => linking.getInitialURL())
-    .then((address) => address ?? undefined);
-  // A failed read leaves no launch address to repeat, so every event is delivered.
-  const filter = launch.then(createLaunchAddressFilter, () => createLaunchAddressFilter(undefined));
+  const filter = createDeferredLaunchFilter();
+  /** Resolves to whether the system answered. A failed read never rejects. */
+  const readLaunch = (): Promise<boolean> =>
+    Promise.resolve()
+      .then(() => linking.getInitialURL())
+      .then(
+        (address) => {
+          filter.learn(address ?? undefined);
+          return true;
+        },
+        () => false,
+      );
+  // Read at start, so the launch address is known before the first link event is judged.
+  let attempt: Promise<boolean> | undefined = readLaunch();
   let subscription: { remove(): void } | undefined;
   let queue: Promise<void> = Promise.resolve();
 
   const onLink = (event: { url: string }): void => {
     const address = event.url;
     if (typeof address !== 'string') return;
-    // Events wait for the launch read and keep their order.
+    const reading = attempt;
+    // Events wait for a read in progress and keep their order.
     queue = queue.then(async () => {
-      if (!(await filter).admitEvent(address)) return;
+      await reading;
+      if (!filter.admitEvent(address)) return;
       for (const { listener } of [...subscribers]) notify(listener, address);
     });
   };
@@ -45,8 +56,14 @@ export function createCallbackPort(linking: LinkingApi): CallbackPort {
       };
     },
     async initialAddress() {
-      await launch;
-      return (await filter).takeLaunch();
+      const current = (attempt ??= readLaunch());
+      if (!(await current)) {
+        // Each call reports one failed read. The next call asks the system again.
+        if (attempt === current) attempt = undefined;
+        return { kind: 'unavailable' };
+      }
+      const address = filter.takeLaunch();
+      return address === undefined ? { kind: 'none' } : { kind: 'address', address };
     },
   };
 }

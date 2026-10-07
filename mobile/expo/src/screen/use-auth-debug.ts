@@ -60,12 +60,8 @@ export function useAuthDebug({ engine, client, debug }: ShellAuth): AuthDebug {
       [engine, run],
     ),
     refresh: useCallback(
-      () =>
-        run(DEBUG_ACTION.REFRESH, () => {
-          debug.expireNextRequest();
-          return loadProfileText();
-        }),
-      [debug, loadProfileText, run],
+      () => run(DEBUG_ACTION.REFRESH, async () => describeOutcome(await engine.refresh())),
+      [engine, run],
     ),
     loadProfile: useCallback(
       () => run(DEBUG_ACTION.PROFILE, loadProfileText),
