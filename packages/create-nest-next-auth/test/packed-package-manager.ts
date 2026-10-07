@@ -10,6 +10,8 @@ import { BUILD_TIMEOUT, type Packed, scaffold } from './packed-cli.js';
 import { writePnpmBoundary } from './pnpm-boundary.js';
 import { assertWorkspaceEdgesResolve } from './workspace-assertions.js';
 
+const MOBILE_IMPORTERS = ['mobile/auth', 'mobile/cli', 'mobile/expo', 'mobile/metro'];
+
 function expectLockfileImportersMatchWorkspace(project: string): void {
   const workspace: unknown = parse(readFileSync(join(project, 'pnpm-workspace.yaml'), 'utf8'));
   if (!isRecord(workspace) || !Array.isArray(workspace.packages)) {
@@ -42,7 +44,7 @@ export function packageManagerCases(getPacked: () => Packed): void {
     const binaryDirectory = mkdtempSync(join(packed.workspace, 'pnpm-boundary-'));
     const project = join(packed.workspace, 'default-lock-importers');
     try {
-      await writePnpmBoundary(binaryDirectory, '', undefined, true, ['mobile/auth']);
+      await writePnpmBoundary(binaryDirectory, '', undefined, true, MOBILE_IMPORTERS);
       const path = [binaryDirectory, process.env.PATH ?? ''].filter(Boolean).join(delimiter);
       const result = spawnSync(process.execPath, [packed.cli, project, '--yes'], {
         cwd: packed.workspace,
@@ -83,7 +85,7 @@ export function packageManagerCases(getPacked: () => Packed): void {
     const binaryDirectory = mkdtempSync(join(packed.workspace, 'pnpm-boundary-'));
     const project = join(packed.workspace, 'mobile-pruned-lock-importers');
     try {
-      await writePnpmBoundary(binaryDirectory, '', undefined, false, ['mobile/auth']);
+      await writePnpmBoundary(binaryDirectory, '', undefined, false, MOBILE_IMPORTERS);
       const result = spawnSync(
         process.execPath,
         [packed.cli, project, '--yes', '--features', 'email-password', '--no-install', '--no-git'],

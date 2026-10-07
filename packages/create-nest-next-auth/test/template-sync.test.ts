@@ -37,6 +37,9 @@ it('ships the lockfile without the installer workspace importer', () => {
     'backend',
     'frontend',
     'mobile/auth',
+    'mobile/cli',
+    'mobile/expo',
+    'mobile/metro',
     'shared/core',
     'shared/sdk',
   ]);
