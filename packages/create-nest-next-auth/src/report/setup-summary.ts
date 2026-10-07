@@ -5,6 +5,7 @@ import type { SetupSummary } from '../types/setup.js';
 export function renderSetupSummary(summary: SetupSummary): string[] {
   return [
     `Files written: ${summary.files.count}`,
+    ...(summary.files.paths ? [`Written paths: ${summary.files.paths.join(', ') || 'none'}`] : []),
     `Instruction files: ${summary.files.instructions.join(', ') || 'none'}`,
     `Rules: ${summary.rules}`,
     `Lockfile: ${summary.lockfile.status}${summary.lockfile.reason ? `. ${summary.lockfile.reason}` : ''}`,
@@ -15,7 +16,8 @@ export function renderSetupSummary(summary: SetupSummary): string[] {
       ? [`Activate hooks: ${summary.hooks.activationCommand}`]
       : []),
     `Checks run: ${summary.checksRun.join(', ') || 'none'}`,
-    'Skipped:',
+    ...(summary.notAdded ?? []).map(({ check, reason }) => `Not added: ${check}. ${reason}`),
+    ...(summary.skipped.length ? ['Skipped:'] : []),
     ...summary.skipped.map(({ check, reason }) => `  ${check}: ${reason}`),
   ];
 }

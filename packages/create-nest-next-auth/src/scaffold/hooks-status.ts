@@ -15,15 +15,23 @@ export async function readHookStatus(
   if (configuration.code !== 0 || configuration.stdout.trim() === '')
     return { ownRepository, active: false };
   const hookRoot = resolve(root, configuration.stdout.trim());
+  return { ownRepository, active: await hookFilesActive(root, hookRoot) };
+}
+
+export async function hookFilesActive(
+  root: string,
+  hookRoot: string,
+  check: (path: string, mode: number) => Promise<void> = access,
+): Promise<boolean> {
   // Husky's wrappers need their shared runner as well as the project hook bodies.
   try {
-    await access(join(hookRoot, 'h'));
+    await check(join(hookRoot, 'h'), constants.F_OK);
     for (const path of RULES_HOOK_PATHS) {
-      await access(join(root, path), constants.F_OK);
-      await access(join(hookRoot, path.split('/').at(-1) ?? ''), constants.X_OK);
+      await check(join(root, path), constants.F_OK);
+      await check(join(hookRoot, path.split('/').at(-1) ?? ''), constants.X_OK);
     }
-    return { ownRepository, active: true };
+    return true;
   } catch {
-    return { ownRepository, active: false };
+    return false;
   }
 }

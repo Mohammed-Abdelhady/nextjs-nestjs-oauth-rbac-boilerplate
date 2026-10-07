@@ -1,3 +1,4 @@
+import type { RulesTextFacts } from '../types/add-rules.js';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -27,6 +28,7 @@ const PACKAGE_JSON_PATH = 'package.json';
 export interface RulesTextInput {
   projectRoot: string;
   level: RulesPolicy;
+  facts?: RulesTextFacts;
   delivery: {
     hooks: boolean;
     actions: boolean;
@@ -171,12 +173,15 @@ function replacePlaceholders(template: string, values: Record<string, string>): 
 
 export async function renderRulesText(input: RulesTextInput): Promise<RenderedRulesText> {
   const policy = await readPolicyFacts(input.projectRoot);
-  const gatesFile = await readJson(join(input.projectRoot, GATES_PATH), GATES_PATH);
-  const gates = readGates(gatesFile);
+  const gates =
+    input.facts?.gates ??
+    readGates(await readJson(join(input.projectRoot, GATES_PATH), GATES_PATH));
   const commits = await readCommitFacts(input.projectRoot);
-  const manager = await readPackageManager(input.projectRoot);
-  const explicitTypeLint = await explicitTypeLintFact(input.projectRoot, policy);
-  const whereThingsAre = await workspaceLocationLines(input.projectRoot, input.level);
+  const manager = input.facts?.manager ?? (await readPackageManager(input.projectRoot));
+  const explicitTypeLint =
+    input.facts?.explicitTypeLint ?? (await explicitTypeLintFact(input.projectRoot, policy));
+  const whereThingsAre =
+    input.facts?.whereThingsAre ?? (await workspaceLocationLines(input.projectRoot, input.level));
   const hooks = input.delivery.hooks
     ? '- Local hooks run on your machine after Git and dependencies are set up.'
     : '- Local hooks are not included.';
@@ -194,7 +199,7 @@ export async function renderRulesText(input: RulesTextInput): Promise<RenderedRu
     input.level === RULES_POLICY.STANDARD
       ? AGENTS_TEMPLATE.replace(
           /Source file limit:[\s\S]*?{{bannedConstructs}}{{explicitTypeLint}}/,
-          STANDARD_CODE_TEXT + '{{explicitTypeLint}}',
+          (input.facts?.standardCodeText ?? STANDARD_CODE_TEXT) + '{{explicitTypeLint}}',
         )
       : AGENTS_TEMPLATE;
   const agents = replacePlaceholders(template, {
@@ -213,7 +218,7 @@ export async function renderRulesText(input: RulesTextInput): Promise<RenderedRu
     branchProtection,
     notEnforced:
       input.level === RULES_POLICY.STANDARD
-        ? `${notEnforced}\n\n${STANDARD_NOT_ENFORCED}`
+        ? `${notEnforced}\n\n${input.facts?.standardNotEnforced ?? STANDARD_NOT_ENFORCED}`
         : notEnforced,
     whereThingsAre,
   });

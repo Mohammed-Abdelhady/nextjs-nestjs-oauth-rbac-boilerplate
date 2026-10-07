@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest';
 import { buildSetupSummary } from '../src/scaffold/setup-summary.js';
+import { renderSetupSummary } from '../src/report/setup-summary.js';
 import type { SetupFacts } from '../src/types/setup.js';
 
 const BASE: SetupFacts = {
@@ -23,6 +24,18 @@ const BASE: SetupFacts = {
   nextSteps: ['cd app'],
   docs: ['README.md'],
 };
+
+it.each<{ name: string; skipped: SetupFacts['skipped']; expected: string[] }>([
+  { name: 'empty', skipped: [], expected: [] },
+  {
+    name: 'populated',
+    skipped: [{ check: 'lint', reason: 'Not run by the installer.' }],
+    expected: ['Skipped:', '  lint: Not run by the installer.'],
+  },
+])('prints the skipped section only for a $name list with entries', ({ skipped, expected }) => {
+  const lines = renderSetupSummary(buildSetupSummary({ ...BASE, skipped }));
+  expect(lines.filter((line) => line === 'Skipped:' || line.startsWith('  '))).toEqual(expected);
+});
 
 const CASES: {
   name: string;

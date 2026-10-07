@@ -328,3 +328,23 @@ Supports Node 22.12 through Node 22.x for both the CLI and generated project.
 Corepack is not bundled from Node 25. The installer is still packed and published
 with npm. Its template carries `_pnpm-lock.yaml`, restored to `pnpm-lock.yaml`
 before pruning and installation.
+
+## Add rules to an existing project
+
+Run `create-nest-next-auth add rules --rules strict --dry-run` at the project root. Use --yes to confirm.
+
+| Layout at the current directory                                                    | Outcome                                                         |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Root package.json identifies pnpm, no workspaces                                   | Full integration, hooks initially inactive                      |
+| Root package.json identifies pnpm, package.json workspaces                         | Full integration plus workspace instruction pointers            |
+| Root package.json identifies pnpm or npm, pnpm-workspace.yaml                      | Full integration plus workspace instruction pointers            |
+| Root package.json identifies npm, no workspaces                                    | Full integration using that manager, hooks initially inactive   |
+| Root package.json identifies npm, package.json workspaces                          | Full integration plus workspace instruction pointers            |
+| No packageManager field, exactly one supported manager lockfile                    | Same integration, manager version reported as unpinned          |
+| No root package.json, including a nested repository directory without one          | Refused with the reason, rules not active, nothing written      |
+| Yarn-only or Bun-only lockfile or packageManager                                   | Refused with the reason, rules not active, nothing written      |
+| No manager evidence, conflicting lockfiles, invalid manifest or workspace document | Refused with the reason, rules not active, nothing written      |
+| Nested directory inside another Git repository without its own Git root            | Refused to prevent activating hooks in the enclosing repository |
+
+See [Add rules to an existing project](docs/add-rules.md) for supported projects, safety,
+blockers, dependencies, activation and running it again.
