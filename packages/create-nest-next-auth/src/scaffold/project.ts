@@ -1,0 +1,93 @@
+import { existsSync } from 'node:fs';
+import { basename, join } from 'node:path';
+import { log, outro, spinner } from '@clack/prompts';
+import { RULES_HOOK_PATHS, RULES_WORKFLOW_PATH } from '../constants/rules.js';
+import type { Plan } from '../manifest/plan.js';
+import { templateDir } from '../paths.js';
+import { prune } from '../prune/index.js';
+import { describeDangling, describeSelection } from '../report.js';
+import type { AnswersRecord, CliOptions, Manifest, PruneResult } from '../types.js';
+import type { SetupSummary } from '../types/setup.js';
+import { recordAnswers } from './answers.js';
+import { copyTemplate } from './copy.js';
+import { prepareLockfile } from './install.js';
+import { setProjectName } from './package-json.js';
+import { writeRulesText } from './rules-text.js';
+import { finishSetup } from './setup.js';
+
+export async function scaffoldProject(
+  target: string,
+  manifest: Manifest,
+  plan: Plan,
+  options: CliOptions,
+  answers: AnswersRecord,
+): Promise<SetupSummary | undefined> {
+  const copying = spinner();
+  copying.start('Copying the template');
+  try {
+    await copyTemplate(templateDir(), target);
+    await setProjectName(target, basename(target));
+  } catch (error) {
+    copying.stop('Copying failed');
+    log.error(error instanceof Error ? error.message : String(error));
+    outro(`Left the tree at ${target} so you can inspect it.`);
+    return undefined;
+  }
+  copying.stop('Template copied');
+
+  const pruning = spinner();
+  pruning.start('Removing what you did not pick');
+  let result: PruneResult;
+  try {
+    result = await prune(target, manifest, plan.features, plan.options, plan.rules);
+  } catch (error) {
+    pruning.stop('Pruning failed');
+    const reason = error instanceof Error ? error.message : String(error);
+    log.error(`Pruning failed: ${reason}`);
+    outro(`Left the tree at ${target} so you can inspect it.`);
+    return undefined;
+  }
+  pruning.stop('Pruned');
+  await writeRulesText({
+    projectRoot: target,
+    level: plan.rules,
+    delivery: {
+      hooks: RULES_HOOK_PATHS.every((path) => existsSync(join(target, path))),
+      actions: existsSync(join(target, RULES_WORKFLOW_PATH)),
+    },
+  });
+  log.message(describeSelection(manifest, result).join('\n'));
+  const lockfileUpdating = spinner();
+  lockfileUpdating.start('Updating pnpm lockfile');
+  let lockfile: Awaited<ReturnType<typeof prepareLockfile>>;
+  try {
+    lockfile = await prepareLockfile(target);
+  } catch (error) {
+    lockfileUpdating.stop('pnpm lockfile update failed');
+    const reason = error instanceof Error ? error.message : String(error);
+    log.error(`Could not prepare the pnpm lockfile: ${reason}`);
+    outro(`Left the tree at ${target} so you can inspect it.`);
+    return undefined;
+  }
+  lockfileUpdating.stop(lockfile.ok ? 'pnpm lockfile updated' : 'pnpm lockfile update failed');
+  if (!lockfile.ok && options.install) {
+    log.error(
+      `pnpm-lock.yaml removed; dependency installation was skipped. ${lockfile.reason ?? 'The lockfile could not be updated.'}`,
+    );
+  } else if (!lockfile.ok) {
+    log.message(
+      `pnpm-lock.yaml removed. ${lockfile.reason ?? 'The lockfile could not be updated.'}`,
+    );
+  }
+  if (result.dangling.length > 0) {
+    log.error(describeDangling(result.dangling).join('\n'));
+    outro(`Left the tree at ${target} so you can inspect it.`);
+    return undefined;
+  }
+
+  // Records how the project was made, before any git commit and on runs that
+  // skip git or install alike. --dry-run never reaches this branch.
+  await recordAnswers(target, answers);
+
+  return finishSetup(target, manifest, plan, options, lockfile);
+}

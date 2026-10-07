@@ -1,7 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { RULES_POLICY } from '../constants/index.js';
 import { isRecord } from '../manifest/read.js';
+import type { RulesPolicy } from '../types.js';
 import { isErrnoException } from '../utils/fs.js';
 import { AGENT_RULE_COPY, KNOWN_WORKSPACE_COPY } from './rules-text-template.js';
 import { workspaceDirectories } from './workspace.js';
@@ -157,7 +159,10 @@ export async function explicitTypeLintFact(
   return `The workspace ESLint configs reject TypeScript's \`${typeName}\` type.`;
 }
 
-export async function workspaceLocationLines(projectRoot: string): Promise<string> {
+export async function workspaceLocationLines(
+  projectRoot: string,
+  level: RulesPolicy,
+): Promise<string> {
   const directories = await workspaceDirectories(projectRoot);
   const workspaces = directories.map((directory) => {
     const description = Object.hasOwn(KNOWN_WORKSPACE_COPY, directory)
@@ -166,7 +171,9 @@ export async function workspaceLocationLines(projectRoot: string): Promise<strin
     return description === undefined ? `- \`${directory}\`` : `- \`${directory}\`: ${description}`;
   });
   workspaces.push(
-    `- \`${POLICY_PATH}\`: Change the policy here. AGENTS.md is a snapshot rendered at scaffolding time. Later policy changes do not update it.`,
+    level === RULES_POLICY.STANDARD
+      ? `- \`${POLICY_PATH}\`: This file ships, but nothing runs it at the standard rules level. Generate again with strict to restore the scan.`
+      : `- \`${POLICY_PATH}\`: Change the policy here. AGENTS.md is a snapshot rendered at scaffolding time. Later policy changes do not update it.`,
   );
   return workspaces.join('\n');
 }
