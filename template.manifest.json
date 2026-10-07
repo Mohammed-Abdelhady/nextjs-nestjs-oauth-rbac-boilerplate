@@ -459,6 +459,7 @@
       "CLAUDE.md",
       "frontend/e2e/**",
       "mobile/**",
+      "mobile/adapters/**",
       "mobile/cli/**",
       "mobile/expo/**",
       "mobile/metro/**",

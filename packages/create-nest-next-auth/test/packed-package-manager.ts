@@ -10,7 +10,13 @@ import { BUILD_TIMEOUT, type Packed, scaffold } from './packed-cli.js';
 import { writePnpmBoundary } from './pnpm-boundary.js';
 import { assertWorkspaceEdgesResolve } from './workspace-assertions.js';
 
-const MOBILE_IMPORTERS = ['mobile/auth', 'mobile/cli', 'mobile/expo', 'mobile/metro'];
+const MOBILE_IMPORTERS = [
+  'mobile/adapters',
+  'mobile/auth',
+  'mobile/cli',
+  'mobile/expo',
+  'mobile/metro',
+];
 
 function expectLockfileImportersMatchWorkspace(project: string): void {
   const workspace: unknown = parse(readFileSync(join(project, 'pnpm-workspace.yaml'), 'utf8'));

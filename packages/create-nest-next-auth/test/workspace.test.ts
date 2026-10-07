@@ -13,7 +13,13 @@ const ROOT_SCRIPT_COMMANDS = [
   ['typecheck', 'pnpm -r --if-present run typecheck'],
   ['test', 'pnpm -r --if-present run test && pnpm run test:config'],
 ] as const;
-const MOBILE_WORKSPACES = ['mobile/auth', 'mobile/cli', 'mobile/expo', 'mobile/metro'];
+const MOBILE_WORKSPACES = [
+  'mobile/adapters',
+  'mobile/auth',
+  'mobile/cli',
+  'mobile/expo',
+  'mobile/metro',
+];
 
 let root = '';
 afterEach(async () => {

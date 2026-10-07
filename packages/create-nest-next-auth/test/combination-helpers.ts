@@ -237,6 +237,7 @@ const COMPARED_DIRECTORIES = [
   'backend/src',
   'backend/test',
   'frontend/src',
+  'mobile/adapters',
   'mobile/auth/conformance',
   'mobile/auth/src',
   'mobile/auth/test',
