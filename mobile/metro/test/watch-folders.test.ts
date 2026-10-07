@@ -22,6 +22,7 @@ it('watches the store, the shell and every workspace package the shell reaches',
   expect(watched(root)).toEqual([
     'node_modules',
     'mobile/expo',
+    'mobile/adapters',
     'mobile/auth',
     'mobile/metro',
     'shared/core',
@@ -55,6 +56,7 @@ it('watches a workspace package as soon as the shell depends on it', () => {
   expect(watched(root)).toEqual([
     'node_modules',
     'mobile/expo',
+    'mobile/adapters',
     'mobile/auth',
     'mobile/metro',
     'mobile/ui',
@@ -119,6 +121,7 @@ it('drops the base folders inside the workspace and keeps the ones outside it', 
     '/elsewhere/assets',
     'node_modules',
     'mobile/expo',
+    'mobile/adapters',
     'mobile/auth',
     'mobile/metro',
     'shared/core',
@@ -127,10 +130,15 @@ it('drops the base folders inside the workspace and keeps the ones outside it', 
   expect(base).toEqual(snapshot);
 });
 
-it.each(['mobile/expo', 'mobile/cli'])('gives %s in this repository its real reach', (shell) => {
+// The bare shell gains mobile/adapters here when it depends on the shared adapters.
+it.each([
+  ['mobile/expo', ['mobile/adapters']],
+  ['mobile/cli', []],
+])('gives %s in this repository its real reach', (shell, adapters) => {
   expect(watched(REPOSITORY, shell)).toEqual([
     'node_modules',
     shell,
+    ...adapters,
     'mobile/auth',
     'mobile/metro',
     'shared/core',

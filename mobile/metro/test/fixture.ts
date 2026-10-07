@@ -49,8 +49,17 @@ export function removeWorkspaces(): void {
 export const REPOSITORY_LIKE: Record<string, FixturePackage> = {
   'mobile/expo': {
     name: '@app/mobile-expo',
-    dependencies: { '@app/native-auth': 'workspace:*', '@app/sdk': 'workspace:*', react: '19.2.3' },
+    dependencies: {
+      '@app/native-adapters': 'workspace:*',
+      '@app/native-auth': 'workspace:*',
+      '@app/sdk': 'workspace:*',
+      react: '19.2.3',
+    },
     devDependencies: { '@app/metro-config': 'workspace:*' },
+  },
+  'mobile/adapters': {
+    name: '@app/native-adapters',
+    dependencies: { '@app/native-auth': 'workspace:*', '@app/sdk': 'workspace:*' },
   },
   'mobile/auth': {
     name: '@app/native-auth',
