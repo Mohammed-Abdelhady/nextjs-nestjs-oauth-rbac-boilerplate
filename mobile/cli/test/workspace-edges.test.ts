@@ -11,6 +11,6 @@ describe('workspace packages seen from the bare shell', () => {
 
   it('reaches the adapter conformance suite through its own entry', () => {
     expect(typeof conformance.runConformance).toBe('function');
-    expect(conformance.CONFORMANCE_CHECKS).toHaveLength(29);
+    expect(conformance.CONFORMANCE_CHECKS).toHaveLength(36);
   });
 });
