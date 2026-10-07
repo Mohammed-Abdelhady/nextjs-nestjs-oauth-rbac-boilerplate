@@ -33,6 +33,7 @@ import type {
 /** Per-call options. An untyped cancellation rejects with `TransportError` reason `aborted`. */
 export interface CallOptions<TSignal extends TransportSignal = TransportSignal> {
   signal?: TSignal;
+  headers?: Readonly<Record<string, string>>;
 }
 
 /**
@@ -100,7 +101,12 @@ export function createApiClient<TSignal extends TransportSignal = TransportSigna
       throw new TransportError(TRANSPORT_FAILURE.ABORTED);
     }
     try {
-      return await transport.request(signal === undefined ? call : { ...call, signal });
+      const request = {
+        ...call,
+        ...(options?.headers === undefined ? {} : { headers: options.headers }),
+        ...(signal === undefined ? {} : { signal }),
+      };
+      return await transport.request(request);
     } catch (error) {
       if (isSdkError(error) && !isTransportError(error)) throw error;
       throw toTransportError(error, signal);

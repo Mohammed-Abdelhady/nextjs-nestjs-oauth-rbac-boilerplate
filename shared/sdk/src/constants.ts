@@ -20,6 +20,11 @@ export const OAUTH_GRANT_TYPE = {
 } as const;
 
 export const OAUTH_TOKEN_TYPE = 'Bearer';
+export const OAUTH_DPOP_TOKEN_TYPE = 'DPoP';
+export type OAuthTokenType = typeof OAUTH_TOKEN_TYPE | typeof OAUTH_DPOP_TOKEN_TYPE;
+
+export const DPOP_PROOF_HEADER = 'DPoP';
+export const DPOP_NONCE_HEADER = 'DPoP-Nonce';
 
 /** Failure strings the raw OAuth routes answer with, as `{ error }`. */
 export const OAUTH_ERROR = {

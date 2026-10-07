@@ -48,6 +48,7 @@ export interface OAuthErrorInit {
   status: number;
   error: string;
   errorDescription?: string;
+  dpopNonce?: string;
 }
 
 /** A raw OAuth route refused the request with `{ error }`. */
@@ -57,6 +58,8 @@ export class OAuthError extends SdkError {
   readonly error: string;
   /** The `error_description` the server sent, when it sent a string. */
   readonly errorDescription?: string;
+  /** The DPoP-Nonce response header on a nonce challenge, when present. */
+  readonly dpopNonce?: string;
 
   constructor(init: OAuthErrorInit) {
     super(init.error);
@@ -64,5 +67,6 @@ export class OAuthError extends SdkError {
     this.status = init.status;
     this.error = init.error;
     this.errorDescription = init.errorDescription;
+    this.dpopNonce = init.dpopNonce;
   }
 }
