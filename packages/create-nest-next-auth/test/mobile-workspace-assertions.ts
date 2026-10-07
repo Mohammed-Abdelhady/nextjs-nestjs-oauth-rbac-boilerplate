@@ -45,7 +45,13 @@ export async function expectPlannedMobileWorkspaceIsPruned(
 
   const workspace = parse(readFileSync(join(project, 'pnpm-workspace.yaml'), 'utf8')) as {
     packages: string[];
+    minimumReleaseAgeExclude?: string[];
+    minimumReleaseAgeStrict?: boolean;
   };
+  expect({
+    releaseAgeExceptions: workspace.minimumReleaseAgeExclude ?? [],
+    releaseAgeStrict: workspace.minimumReleaseAgeStrict,
+  }).toEqual({ releaseAgeExceptions: [], releaseAgeStrict: true });
   const packageFiles = (await listFiles(project))
     .filter((file) => file === 'package.json' || file.endsWith('/package.json'))
     .map((file) => ({ file, source: readFileSync(join(project, file), 'utf8') }));
