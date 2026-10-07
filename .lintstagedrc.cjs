@@ -10,7 +10,12 @@ module.exports = {
   'shared/**/*.{ts,tsx,js,json}': ['prettier --write'],
   'shared/core/**/*.ts': ['pnpm --filter @app/core exec eslint --fix --max-warnings 0'],
   'shared/sdk/**/*.ts': ['pnpm --filter @app/sdk exec eslint --fix --max-warnings 0'],
-  'mobile/**/*.{ts,tsx,js,jsx,json}': ['prettier --write'],
+  'mobile/**/*.{ts,tsx,js,jsx,cjs,mts,json}': ['prettier --write'],
   'mobile/auth/**/*.ts': ['pnpm --filter @app/native-auth exec eslint --fix --max-warnings 0'],
+  'mobile/cli/**/*.{ts,tsx}': ['pnpm --filter @app/mobile-cli exec eslint --fix --max-warnings 0'],
+  'mobile/expo/**/*.{ts,tsx}': ['pnpm --filter @app/mobile-expo exec eslint --fix --max-warnings 0'],
+  'mobile/metro/**/*.{ts,cjs}': [
+    'pnpm --filter @app/metro-config exec eslint --fix --max-warnings 0',
+  ],
   '*.{md,yml,yaml}': ['prettier --write'],
 };
