@@ -165,6 +165,35 @@ abort release their waiters and cancel the timer.
 `AuthPortError` reports a deadline or failure from an engine port. The SDK client preserves this
 typed error so a shell can distinguish storage and timer failures from a network failure.
 
+## Adapter conformance suite
+
+`@app/native-auth/conformance` checks a shell's port adapters against the contracts above. It is a
+separate entry, so the engine's main entry carries no test code. It uses no test framework and no
+platform API, and runs the same way in a unit test or on a device.
+
+```ts
+import { runConformance } from '@app/native-auth/conformance';
+
+const results = await runConformance({ adapters, driver });
+expect(results.filter((result) => !result.ok)).toEqual([]);
+```
+
+`adapters` holds the shell's `credentials`, `authBrowser`, `crypto`, `clock`, `timer` and `install`
+adapters. `driver` is the part only a test harness can do: lock the store, fail the next write, end
+the next browser session a given way, start the app from a link, deliver a link, let time pass, move
+the wall clock, and make the install identity unreadable. The callbacks adapter comes from
+`driver.callbacks.launch(address)`, one per app start, because a cold-start address exists before the
+adapter does. `driver.reset()` runs before each check and `driver.settle()` resolves once work the
+adapters already started has finished.
+
+Each result names its check, such as `credentials.locked` or `callbacks.same-address-both-ways`, and a
+failed one carries the reason. Two rules go beyond the port types. A launch address that the system
+repeats as a link event is handed over once in total. A blocked read reports why and is never
+`missing`.
+
+The suite does not cover `DeviceKeyPort`, a change of install identity after a reinstall, or two
+replaces racing each other.
+
 ## Device key interface
 
 `DeviceKeyPort` describes an ES256 key held in device secure hardware, with `unavailable`,

@@ -21,3 +21,7 @@ allowBuilds:
 
 # The installer builds its template in prebuild before bundling the CLI.
 enablePrePostScripts: true
+
+# A package too new for the release-age cooldown stops the install. Without
+# this, pnpm adds an exception to this file by itself and carries on.
+minimumReleaseAgeStrict: true

@@ -4,20 +4,18 @@
     "lib": ["ES2022"],
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "allowJs": true,
+    "checkJs": true,
     "strict": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
-    "esModuleInterop": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "isolatedModules": true,
-    "verbatimModuleSyntax": true,
-    "types": []
+    "types": ["node"]
   },
-  "include": ["src/**/*.ts", "conformance/**/*.ts", "test/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*.cjs", "test/**/*.ts"],
+  "exclude": ["node_modules"]
 }

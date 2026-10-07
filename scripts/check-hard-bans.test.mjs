@@ -134,6 +134,16 @@ test('mobile test files use the same line cap as source files', () => {
   assert.equal(isCappedPath('mobile/auth/test/long.test.ts'), true);
 });
 
+test('the adapter conformance suite is capped like source files', () => {
+  assert.equal(isCappedPath('mobile/auth/conformance/credentials.ts'), true);
+  assert.equal(isCappedPath('mobile/auth/conformance-notes/credentials.ts'), false);
+  const over = evaluateChanges({
+    added: [added('mobile/auth/conformance/credentials.ts', ['export {};'])],
+    lineCounts: [{ path: 'mobile/auth/conformance/credentials.ts', lines: FILE_LINE_LIMIT + 1 }],
+  });
+  assert.equal(over.ok, false);
+});
+
 test('root scripts over the cap are not gated', () => {
   assert.equal(isCappedPath('scripts/init.js'), false);
   const result = evaluateChanges({
@@ -233,7 +243,8 @@ test('mobile expo app is capped', () => {
 test('expo prebuild output is not scanned', () => {
   assert.equal(isScanTarget('mobile/expo/ios/Pods/helper.js'), false);
   assert.equal(isScanTarget('mobile/expo/android/app/build.js'), false);
-  assert.equal(isScanTarget('mobile/expo/.expo/cache.js'), true);
+  assert.equal(isScanTarget('mobile/expo/.expo/cache.js'), false);
+  assert.equal(isScanTarget('mobile/undeclared/.expo/cache.js'), true);
   const ios = evaluateChanges({
     added: [added('mobile/expo/ios/Pods/helper.js', ['/* eslint-disable no-console */'])],
     lineCounts: [{ path: 'mobile/expo/ios/Pods/helper.js', lines: 10 }],
@@ -245,8 +256,8 @@ test('expo prebuild output is not scanned', () => {
   });
   assert.equal(android.ok, true);
   const cache = evaluateChanges({
-    added: [added('mobile/expo/.expo/cache.js', ['/* eslint-disable no-console */'])],
-    lineCounts: [{ path: 'mobile/expo/.expo/cache.js', lines: 10 }],
+    added: [added('mobile/undeclared/.expo/cache.js', ['/* eslint-disable no-console */'])],
+    lineCounts: [{ path: 'mobile/undeclared/.expo/cache.js', lines: 10 }],
   });
   assert.equal(cache.ok, false);
 });

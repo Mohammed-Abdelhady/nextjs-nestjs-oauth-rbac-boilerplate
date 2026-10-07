@@ -237,8 +237,12 @@ const COMPARED_DIRECTORIES = [
   'backend/src',
   'backend/test',
   'frontend/src',
+  'mobile/auth/conformance',
   'mobile/auth/src',
   'mobile/auth/test',
+  'mobile/cli',
+  'mobile/expo',
+  'mobile/metro',
   'shared/core/src',
   'shared/sdk/src',
 ];

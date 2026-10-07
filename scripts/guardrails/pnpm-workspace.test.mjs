@@ -8,7 +8,8 @@ import test from 'node:test';
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const MANIFESTS = [
   'package.json', 'backend/package.json', 'frontend/package.json',
-  'mobile/auth/package.json', 'packages/create-nest-next-auth/package.json',
+  'mobile/auth/package.json', 'mobile/cli/package.json', 'mobile/expo/package.json',
+  'mobile/metro/package.json', 'packages/create-nest-next-auth/package.json',
   'shared/core/package.json', 'shared/sdk/package.json',
 ];
 const readManifest = (file) => JSON.parse(readFileSync(join(ROOT, file), 'utf8'));
@@ -24,6 +25,8 @@ test('the pinned pnpm reads workspace patterns, overrides and explicit build dec
   assert.deepEqual({
     packages: config.packages, overrides: config.overrides,
     allowBuilds: config.allowBuilds, enablePrePostScripts: config.enablePrePostScripts,
+    releaseAgeStrict: config.minimumReleaseAgeStrict,
+    releaseAgeExceptions: config.minimumReleaseAgeExclude ?? [],
   }, {
     packages: ['backend', 'frontend', 'mobile/*', 'packages/*', 'shared/*'],
     overrides: { diff: '>=8.0.3', lodash: '^4.18.1', '@nestjs/platform-express>multer': '2.4.0' },
@@ -32,6 +35,8 @@ test('the pinned pnpm reads workspace patterns, overrides and explicit build dec
       bcrypt: true, fsevents: true, 'mongodb-memory-server': true, 'unrs-resolver': true,
     },
     enablePrePostScripts: true,
+    releaseAgeStrict: true,
+    releaseAgeExceptions: [],
   });
 });
 
@@ -49,6 +54,14 @@ test('repository manifests pin the package manager and supported Node major with
     readManifest('mobile/auth/package.json').dependencies['@app/sdk'],
     readManifest('shared/sdk/package.json').dependencies['@app/core'],
   ], ['workspace:*', 'workspace:*', 'workspace:*', 'workspace:*', 'workspace:*']);
+  for (const shell of ['mobile/cli/package.json', 'mobile/expo/package.json']) {
+    const manifest = readManifest(shell);
+    assert.deepEqual({
+      engine: manifest.dependencies['@app/native-auth'],
+      sdk: manifest.dependencies['@app/sdk'],
+      metro: manifest.devDependencies['@app/metro-config'],
+    }, { engine: 'workspace:*', sdk: 'workspace:*', metro: 'workspace:*' }, shell);
+  }
 });
 
 test('recursive gates omit the root and chain root config tests once', () => {

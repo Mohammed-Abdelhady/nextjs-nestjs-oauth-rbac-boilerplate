@@ -13,7 +13,7 @@ const ROOT_SCRIPT_COMMANDS = [
   ['typecheck', 'pnpm -r --if-present run typecheck'],
   ['test', 'pnpm -r --if-present run test && pnpm run test:config'],
 ] as const;
-const MOBILE_AUTH_WORKSPACE = 'mobile/auth';
+const MOBILE_WORKSPACES = ['mobile/auth', 'mobile/cli', 'mobile/expo', 'mobile/metro'];
 
 let root = '';
 afterEach(async () => {
@@ -118,7 +118,7 @@ it('routes every workspace check script through the recursive root scripts', asy
     await writeFile(join(root, workspace, 'package.json'), manifest);
   }
   expect(await workspaceDirectories(root)).toEqual(workspaces);
-  expect(workspaces).toContain(MOBILE_AUTH_WORKSPACE);
+  expect(workspaces).toEqual(expect.arrayContaining(MOBILE_WORKSPACES));
   const manifests = await Promise.all(
     workspaces.map(async (workspace) => {
       const value: unknown = JSON.parse(
@@ -139,10 +139,10 @@ it('routes every workspace check script through the recursive root scripts', asy
     }
   }
 
-  const mobileScripts = manifests.find(
-    (manifest) => manifest.workspace === MOBILE_AUTH_WORKSPACE,
-  )?.scripts;
-  for (const [script] of ROOT_SCRIPT_COMMANDS) {
-    expect(typeof mobileScripts?.[script], `${MOBILE_AUTH_WORKSPACE}/${script}`).toBe('string');
+  for (const workspace of MOBILE_WORKSPACES) {
+    const scripts = manifests.find((manifest) => manifest.workspace === workspace)?.scripts;
+    for (const [script] of ROOT_SCRIPT_COMMANDS) {
+      expect(typeof scripts?.[script], `${workspace}/${script}`).toBe('string');
+    }
   }
 });

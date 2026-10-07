@@ -110,7 +110,7 @@ export const BINARY_EXTENSIONS = [
   '.mp3',
 ];
 export const CAPPED_PATH =
-  /^(backend\/(src|test)|frontend\/(src|e2e)|packages\/[^/]+\/src|shared\/[^/]+\/src|mobile\/[^/]+\/(src|app|test)|scripts\/guardrails)\//;
+  /^(backend\/(src|test)|frontend\/(src|e2e)|packages\/[^/]+\/src|shared\/[^/]+\/src|mobile\/[^/]+\/(src|app|test|conformance)|scripts\/guardrails)\//;
 export const CAPPED_FILES = ['scripts/check-hard-bans.mjs', 'scripts/check-hard-bans.test.mjs'];
 export const DOM_TOKENS = [
   'dangerouslySetInnerHTML',

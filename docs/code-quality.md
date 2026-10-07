@@ -128,7 +128,7 @@ Human-maintained files in the source and test directories selected by `CAPPED_PA
 
 <!-- repository-only:start -->
 
-This repository caps `backend/src`, `backend/test`, `frontend/src`, `frontend/e2e`, `packages/*/src`, `shared/*/src`, and `mobile/*/(src|app)`.
+This repository caps `backend/src`, `backend/test`, `frontend/src`, `frontend/e2e`, `packages/*/src`, `shared/*/src`, and `mobile/*/(src|app|test|conformance)`.
 <!-- repository-only:end -->
 
 Source files remain checked when Git marks them binary or their content includes NUL. Non-source images and gitlinks are excluded from content reads. Other text files under capped directories still receive ceiling checks, except JSON data, Jest snapshots and CSS styles. These three extensions are uncapped because data, recorded output and styles do not have the same implementation ceiling. Non-source content is binary when its first 8000 bytes contain NUL. Source extensions always receive both checks even with NUL.

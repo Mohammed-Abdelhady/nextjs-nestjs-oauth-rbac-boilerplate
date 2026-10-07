@@ -33,7 +33,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/**/*.ts'],
+    files: ['src/**/*.ts', 'conformance/**/*.ts'],
     ignores: ['src/**/*.test.ts'],
     rules: {
       'no-restricted-globals': [
