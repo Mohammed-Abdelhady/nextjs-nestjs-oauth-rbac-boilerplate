@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Connection, Model, createConnection } from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import {
+  startMemoryReplSet,
+  type MemoryReplSet,
+} from '../../../test/utils/memory-replset';
 import { AdminEmailChangeService } from './admin-email-change.service';
 import { VerificationCodeService } from '../../auth/services/verification-code.service';
 import { AuthMailService } from '../../auth/services/auth-mail.service';
@@ -16,7 +19,7 @@ import {
 } from '../../../test/utils/session-authority-harness';
 
 describe('AdminEmailChangeService', () => {
-  let mongo: MongoMemoryServer;
+  let mongo: MemoryReplSet;
   let connection: Connection;
   let users: Model<User>;
   let service: AdminEmailChangeService;
@@ -37,7 +40,7 @@ describe('AdminEmailChangeService', () => {
   };
 
   beforeAll(async () => {
-    mongo = await MongoMemoryServer.create({ instance: { ip: '127.0.0.1' } });
+    mongo = await startMemoryReplSet();
     connection = await createConnection(mongo.getUri()).asPromise();
     users = connection.model<User>(User.name, UserSchema);
     await users.init();

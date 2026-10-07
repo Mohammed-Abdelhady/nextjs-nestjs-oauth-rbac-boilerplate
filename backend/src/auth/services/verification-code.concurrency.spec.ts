@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { ClientSession, Connection, createConnection, Model } from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import {
+  startMemoryReplSet,
+  type MemoryReplSet,
+} from '../../../test/utils/memory-replset';
 import { VerificationCodeService } from './verification-code.service';
 import { MailCounterService } from './mail-counter.service';
 import {
@@ -20,7 +23,7 @@ import {
 import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
 
 describe('VerificationCodeService concurrency', () => {
-  let mongo: MongoMemoryServer;
+  let mongo: MemoryReplSet;
   let connection: Connection;
   let model: Model<PendingRegistration>;
   let service: VerificationCodeService;
@@ -28,7 +31,7 @@ describe('VerificationCodeService concurrency', () => {
   let sessions: ClientSession[];
 
   beforeAll(async () => {
-    mongo = await MongoMemoryServer.create({ instance: { ip: '127.0.0.1' } });
+    mongo = await startMemoryReplSet();
     connection = await createConnection(mongo.getUri()).asPromise();
     model = connection.model<PendingRegistration>(
       PendingRegistration.name,

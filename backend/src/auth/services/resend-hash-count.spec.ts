@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Connection, Model, createConnection } from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import {
+  startMemoryReplSet,
+  type MemoryReplSet,
+} from '../../../test/utils/memory-replset';
 import * as bcrypt from 'bcrypt';
 import { RegistrationService } from './registration.service';
 import { VerificationCodeService } from './verification-code.service';
@@ -44,7 +47,7 @@ const EXPIRED_EXPIRY = new Date(TEST_NOW.getTime() - 1000);
  * resendActivationCode paths. This counts at the HashService boundary.
  */
 describe('resend activation hash count', () => {
-  let mongo: MongoMemoryServer;
+  let mongo: MemoryReplSet;
   let connection: Connection;
   let users: Model<User>;
   let registrations: Model<PendingRegistration>;
@@ -54,7 +57,7 @@ describe('resend activation hash count', () => {
   let hashSpy: jest.SpyInstance;
 
   beforeAll(async () => {
-    mongo = await MongoMemoryServer.create({ instance: { ip: '127.0.0.1' } });
+    mongo = await startMemoryReplSet();
     connection = await createConnection(mongo.getUri()).asPromise();
     users = connection.model(User.name, UserSchema);
     registrations = connection.model(

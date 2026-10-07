@@ -3,7 +3,10 @@ import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import express, { Response } from 'express';
 import { Connection, Model, createConnection } from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import {
+  startMemoryReplSet,
+  type MemoryReplSet,
+} from '../../test/utils/memory-replset';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { User, UserSchema } from '../user/schemas/user.schema';
@@ -25,7 +28,7 @@ const PASSWORD = 'Password123!';
 const NEW_PASSWORD = 'NewPassword123!';
 
 describe('AuthService sign-in and password reset (real database)', () => {
-  let mongo: MongoMemoryServer;
+  let mongo: MemoryReplSet;
   let connection: Connection;
   let users: Model<User>;
   let service: AuthService;
@@ -38,7 +41,7 @@ describe('AuthService sign-in and password reset (real database)', () => {
   let compareSpy: jest.SpyInstance;
 
   beforeAll(async () => {
-    mongo = await MongoMemoryServer.create({ instance: { ip: '127.0.0.1' } });
+    mongo = await startMemoryReplSet();
     connection = await createConnection(mongo.getUri()).asPromise();
     users = connection.model<User>(User.name, UserSchema);
     await users.init();

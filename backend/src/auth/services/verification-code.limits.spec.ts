@@ -3,7 +3,10 @@ import { Logger } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Connection, Model, createConnection } from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import {
+  startMemoryReplSet,
+  type MemoryReplSet,
+} from '../../../test/utils/memory-replset';
 import { VerificationCodeService } from './verification-code.service';
 import { MailCounterService } from './mail-counter.service';
 import {
@@ -34,7 +37,7 @@ const WINDOW_MS = 15 * 60 * 1000;
 const LIVE_EXPIRY = new Date(TEST_NOW.getTime() + CODE_EXPIRES_IN);
 
 describe('VerificationCodeService limits', () => {
-  let mongo: MongoMemoryServer;
+  let mongo: MemoryReplSet;
   let connection: Connection;
   let registrations: Model<PendingRegistration>;
   let counters: Model<MailCounter>;
@@ -42,7 +45,7 @@ describe('VerificationCodeService limits', () => {
   let clock: FrozenClock;
 
   beforeAll(async () => {
-    mongo = await MongoMemoryServer.create({ instance: { ip: '127.0.0.1' } });
+    mongo = await startMemoryReplSet();
     connection = await createConnection(mongo.getUri()).asPromise();
     registrations = connection.model<PendingRegistration>(
       PendingRegistration.name,

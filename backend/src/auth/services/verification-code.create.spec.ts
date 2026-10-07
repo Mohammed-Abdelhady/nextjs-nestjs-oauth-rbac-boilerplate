@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Connection, Model, Types, createConnection } from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import {
+  startMemoryReplSet,
+  type MemoryReplSet,
+} from '../../../test/utils/memory-replset';
 import * as bcrypt from 'bcrypt';
 import { VerificationCodeService } from './verification-code.service';
 import { MailCounterService } from './mail-counter.service';
@@ -36,14 +39,14 @@ const EXPIRED_EXPIRY = new Date(TEST_NOW.getTime() - 1000);
  * concurrent cases live in the e2e race specs.
  */
 describe('VerificationCodeService pending registration', () => {
-  let mongo: MongoMemoryServer;
+  let mongo: MemoryReplSet;
   let connection: Connection;
   let registrations: Model<PendingRegistration>;
   let counters: Model<MailCounter>;
   let service: VerificationCodeService;
 
   beforeAll(async () => {
-    mongo = await MongoMemoryServer.create({ instance: { ip: '127.0.0.1' } });
+    mongo = await startMemoryReplSet();
     connection = await createConnection(mongo.getUri()).asPromise();
     registrations = connection.model<PendingRegistration>(
       PendingRegistration.name,

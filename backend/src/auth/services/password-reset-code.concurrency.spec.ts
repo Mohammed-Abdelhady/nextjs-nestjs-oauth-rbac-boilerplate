@@ -2,7 +2,10 @@ import { ConfigService } from '@nestjs/config';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Connection, createConnection, Model } from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import {
+  startMemoryReplSet,
+  type MemoryReplSet,
+} from '../../../test/utils/memory-replset';
 import { PasswordResetCodeService } from './password-reset-code.service';
 import {
   PendingPasswordReset,
@@ -20,13 +23,13 @@ import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
 const ROUNDS = 4;
 
 describe('PasswordResetCodeService concurrency', () => {
-  let mongo: MongoMemoryServer;
+  let mongo: MemoryReplSet;
   let connection: Connection;
   let model: Model<PendingPasswordReset>;
   let service: PasswordResetCodeService;
 
   beforeAll(async () => {
-    mongo = await MongoMemoryServer.create({ instance: { ip: '127.0.0.1' } });
+    mongo = await startMemoryReplSet();
     connection = await createConnection(mongo.getUri()).asPromise();
     model = connection.model<PendingPasswordReset>(
       PendingPasswordReset.name,

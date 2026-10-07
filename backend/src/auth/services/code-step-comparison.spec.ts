@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Connection, Model, createConnection } from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import {
+  startMemoryReplSet,
+  type MemoryReplSet,
+} from '../../../test/utils/memory-replset';
 import * as bcrypt from 'bcrypt';
 import { VerificationCodeService } from './verification-code.service';
 import { PasswordResetCodeService } from './password-reset-code.service';
@@ -41,7 +44,7 @@ function costOf(hash: string): number {
  * HashService boundary for each failing path.
  */
 describe('code-step comparison count', () => {
-  let mongo: MongoMemoryServer;
+  let mongo: MemoryReplSet;
   let connection: Connection;
   let registrations: Model<PendingRegistration>;
   let resets: Model<PendingPasswordReset>;
@@ -52,7 +55,7 @@ describe('code-step comparison count', () => {
   let compareSpy: jest.SpyInstance;
 
   beforeAll(async () => {
-    mongo = await MongoMemoryServer.create({ instance: { ip: '127.0.0.1' } });
+    mongo = await startMemoryReplSet();
     connection = await createConnection(mongo.getUri()).asPromise();
     registrations = connection.model<PendingRegistration>(
       PendingRegistration.name,

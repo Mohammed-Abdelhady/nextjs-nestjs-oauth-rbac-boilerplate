@@ -13,6 +13,16 @@ pnpm run build            # Production build
 pnpm run start:prod       # Production server
 ```
 
+## Testing
+
+A unit run starts one MongoDB replica set per Jest worker. Each suite uses its
+own database on that worker's server, then drops it during suite cleanup. A
+solo run uses all but one available CPU by default. If another backend test
+command is active, a new command uses one worker and one database instance.
+
+Set the unit worker count with `pnpm test -- --maxWorkers=4`. The separate
+`--maxWorkers 4`, `-w 4`, and percentage forms are also accepted.
+
 ## Tech stack
 
 - **NestJS 11** on Express
