@@ -1,5 +1,6 @@
 import type { Transport, TransportRequest, TransportResponse } from '@app/sdk';
 import type { AbortSignalPort } from '../src';
+import type { DeviceKeyPort } from '../src';
 import { FakeTimer } from './fake-timer';
 import { registerTransport } from './tracking';
 
@@ -302,7 +303,7 @@ export class FakeCrypto {
   }
 }
 
-export function testPorts(transport: ScriptedTransport) {
+export function testPorts(transport: ScriptedTransport, deviceKey?: DeviceKeyPort) {
   return {
     credentials: new MemoryCredentials(),
     authBrowser: new FakeBrowser(),
@@ -312,6 +313,7 @@ export function testPorts(transport: ScriptedTransport) {
     timer: new FakeTimer(),
     install: new FakeInstall(),
     makeTransport: (_baseAddress: string) => transport,
+    ...(deviceKey === undefined ? {} : { deviceKey }),
   };
 }
 
