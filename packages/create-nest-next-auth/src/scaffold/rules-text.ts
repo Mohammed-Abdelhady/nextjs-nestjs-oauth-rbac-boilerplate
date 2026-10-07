@@ -176,7 +176,7 @@ export async function renderRulesText(input: RulesTextInput): Promise<RenderedRu
   const commits = await readCommitFacts(input.projectRoot);
   const manager = await readPackageManager(input.projectRoot);
   const explicitTypeLint = await explicitTypeLintFact(input.projectRoot, policy);
-  const whereThingsAre = await workspaceLocationLines(input.projectRoot);
+  const whereThingsAre = await workspaceLocationLines(input.projectRoot, input.level);
   const hooks = input.delivery.hooks
     ? '- Local hooks run on your machine after Git and dependencies are set up.'
     : '- Local hooks are not included.';
