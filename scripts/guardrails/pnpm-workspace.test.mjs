@@ -25,6 +25,8 @@ test('the pinned pnpm reads workspace patterns, overrides and explicit build dec
   assert.deepEqual({
     packages: config.packages, overrides: config.overrides,
     allowBuilds: config.allowBuilds, enablePrePostScripts: config.enablePrePostScripts,
+    releaseAgeStrict: config.minimumReleaseAgeStrict,
+    releaseAgeExceptions: config.minimumReleaseAgeExclude ?? [],
   }, {
     packages: ['backend', 'frontend', 'mobile/*', 'packages/*', 'shared/*'],
     overrides: { diff: '>=8.0.3', lodash: '^4.18.1', '@nestjs/platform-express>multer': '2.4.0' },
@@ -33,6 +35,8 @@ test('the pinned pnpm reads workspace patterns, overrides and explicit build dec
       bcrypt: true, fsevents: true, 'mongodb-memory-server': true, 'unrs-resolver': true,
     },
     enablePrePostScripts: true,
+    releaseAgeStrict: true,
+    releaseAgeExceptions: [],
   });
 });
 
