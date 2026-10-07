@@ -33,6 +33,7 @@ import type { MailOptions } from '../../src/mail/interfaces/mail-options.interfa
 import type { NativeApplicationConfiguration } from '../../src/config/types/native-application.type';
 import { FrozenClock, TEST_NOW } from './frozen-clock';
 import { mailedCode as lastMailedCode } from './pending-race';
+import { withTemporaryWorkingDirectory } from './temporary-working-directory';
 
 export type HttpServer = Server;
 export type TestAgent = ReturnType<typeof request.agent>;
@@ -73,7 +74,6 @@ export async function bootE2eApp(
   const nodeEnv = options.nodeEnv ?? 'test';
   const browserStrategy = options.browserStrategy; // feature:oauth-core
   const failMail = options.failMail === true;
-  const originalDirectory = process.cwd();
   const fixtureDirectory = await mkdtemp(join(tmpdir(), 'auth-e2e-'));
   const mongo = await startMemoryReplSet().catch(async (error: unknown) => {
     await rmdir(fixtureDirectory);
@@ -146,11 +146,6 @@ export async function bootE2eApp(
       recordCleanupError(error);
     }
 
-    try {
-      process.chdir(originalDirectory);
-    } catch (error) {
-      recordCleanupError(error);
-    }
     for (const key of Object.keys(process.env)) {
       if (!previous.has(key)) delete process.env[key];
     }
@@ -170,9 +165,11 @@ export async function bootE2eApp(
 
   try {
     Object.assign(process.env, environment);
-    process.chdir(fixtureDirectory);
     const { AppModule, MONGOOSE_CONNECTION_OPTIONS } =
-      await import('../../src/app.module');
+      await withTemporaryWorkingDirectory(
+        fixtureDirectory,
+        () => import('../../src/app.module'),
+      );
     const { MailService } = await import('../../src/mail/mail.service');
     const { RoleSeedService } =
       await import('../../src/database/seeds/role.seed');

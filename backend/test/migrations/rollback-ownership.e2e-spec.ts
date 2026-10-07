@@ -1,6 +1,9 @@
 import { createRequire } from 'node:module';
 import { MongoClient, ObjectId } from 'mongodb';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import {
+  startMemoryReplSet,
+  type MemoryReplSet,
+} from '../utils/memory-replset';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
@@ -36,11 +39,11 @@ const primaryProvider = loadMigration(
 ) as Migration;
 
 describe('migration rollback ownership', () => {
-  let mongo: MongoMemoryServer;
+  let mongo: MemoryReplSet;
   let client: MongoClient;
 
   beforeAll(async () => {
-    mongo = await MongoMemoryServer.create({ instance: { ip: '127.0.0.1' } });
+    mongo = await startMemoryReplSet();
     client = await MongoClient.connect(mongo.getUri());
   }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 

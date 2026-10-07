@@ -94,7 +94,7 @@ describe('passkey ObjectId round trip', () => {
       const mongoUri = mongo.uri(databaseName);
       const rawClient = new MongoClient(mongoUri);
       await rawClient.connect();
-      const database = rawClient.db(databaseName);
+      const database = rawClient.db(mongo.databaseName(databaseName));
       const mongoose = new Mongoose();
       const connection = await mongoose.createConnection(mongoUri).asPromise();
 

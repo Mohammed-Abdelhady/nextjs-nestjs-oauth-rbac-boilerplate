@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Connection, Model, createConnection } from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import {
+  startMemoryReplSet,
+  type MemoryReplSet,
+} from '../../../test/utils/memory-replset';
 import { MailCounterService } from './mail-counter.service';
 import { MailCounter, MailCounterSchema } from '../schemas/mail-counter.schema';
 import { Clock } from '../../common/services/clock';
@@ -22,14 +25,14 @@ const ROUNDS = 4;
 const WINDOW_MS = 15 * 60 * 1000;
 
 describe('MailCounterService', () => {
-  let mongo: MongoMemoryServer;
+  let mongo: MemoryReplSet;
   let connection: Connection;
   let counters: Model<MailCounter>;
   let service: MailCounterService;
   let clock: FrozenClock;
 
   beforeAll(async () => {
-    mongo = await MongoMemoryServer.create({ instance: { ip: '127.0.0.1' } });
+    mongo = await startMemoryReplSet();
     connection = await createConnection(mongo.getUri()).asPromise();
     counters = connection.model(MailCounter.name, MailCounterSchema);
     await counters.init();

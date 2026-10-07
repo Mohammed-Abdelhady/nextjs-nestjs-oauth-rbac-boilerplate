@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Connection, Model, createConnection } from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import {
+  startMemoryReplSet,
+  type MemoryReplSet,
+} from '../../../test/utils/memory-replset';
 import * as bcrypt from 'bcrypt';
 import { PasswordResetCodeService } from './password-reset-code.service';
 import {
@@ -29,13 +32,13 @@ const EXPIRED_EXPIRY = new Date(TEST_NOW.getTime() - 1000);
  * concurrent cases live in the e2e race specs.
  */
 describe('PasswordResetCodeService pending reset', () => {
-  let mongo: MongoMemoryServer;
+  let mongo: MemoryReplSet;
   let connection: Connection;
   let resets: Model<PendingPasswordReset>;
   let service: PasswordResetCodeService;
 
   beforeAll(async () => {
-    mongo = await MongoMemoryServer.create({ instance: { ip: '127.0.0.1' } });
+    mongo = await startMemoryReplSet();
     connection = await createConnection(mongo.getUri()).asPromise();
     resets = connection.model<PendingPasswordReset>(
       PendingPasswordReset.name,

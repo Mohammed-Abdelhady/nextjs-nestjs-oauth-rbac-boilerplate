@@ -274,9 +274,12 @@ describe('session authority migration indexes', () => {
   }> {
     databaseSequence += 1;
     const databaseName = `session_authority_indexes_${databaseSequence}`;
-    const connection = harness.connection.useDb(databaseName, {
-      useCache: false,
-    });
+    const connection = harness.connection.useDb(
+      mongo.databaseName(databaseName),
+      {
+        useCache: false,
+      },
+    );
     await connection.dropDatabase();
     return { connection, mongoUri: mongo.uri(databaseName) };
   }

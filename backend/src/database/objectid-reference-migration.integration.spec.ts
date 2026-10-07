@@ -98,7 +98,7 @@ describe('ObjectId reference data migration', () => {
     const mongoUri = mongo.uri(databaseName);
     const client = new MongoClient(mongoUri);
     await client.connect();
-    const database = client.db(databaseName);
+    const database = client.db(mongo.databaseName(databaseName));
 
     try {
       await database.dropDatabase();
