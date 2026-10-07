@@ -17,6 +17,7 @@ import {
 } from './packed-cli.js';
 import { installerDocCases } from './installer-docs.js';
 import { packageManagerCases } from './packed-package-manager.js';
+import { rulesLevelCases } from './packed-rules-levels.js';
 import { checkGeneratedHookHistory } from './generated-hook-history.js';
 import { checkGeneratedGuardrails } from './generated-guardrails.js';
 import { checkGeneratedRules } from './generated-rules.js';
@@ -41,6 +42,7 @@ afterAll(() => {
 
 describe('the packed CLI', () => {
   packageManagerCases(() => packed);
+  rulesLevelCases(() => packed);
   it('writes rules from project data and omits pruned feature references', async () => {
     await checkGeneratedRules(packed);
   });

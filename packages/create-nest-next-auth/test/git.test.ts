@@ -26,7 +26,7 @@ import { fixtureRoot, git, isolatedGit, run } from './answers-helpers.js';
 import { repositorySnapshot, seedRepository } from './git-fixture.js';
 
 const roots: string[] = [];
-const ANSWERS_BYTES = '{"schemaVersion":1}\n';
+const ANSWERS_BYTES = '{"schemaVersion":3,"rules":{"policy":"strict"}}\n';
 
 beforeEach(() => {
   TEMPLATE_FIXTURE.path = fixtureRoot(roots);

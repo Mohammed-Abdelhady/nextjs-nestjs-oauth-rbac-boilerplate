@@ -46,7 +46,8 @@ describe('.create-nest-next-auth.json', () => {
 
     const { raw, record } = readAnswers(project, ANSWERS_FILE_NAME);
     expect(record).toEqual({
-      schemaVersion: 2,
+      schemaVersion: 3,
+      rules: { policy: 'strict' },
       packageManager: 'pnpm@12.6.0',
       installer: { name: 'create-nest-next-auth', version },
       template: { sha256: TEMPLATE_SHA },
@@ -60,8 +61,11 @@ describe('.create-nest-next-auth.json', () => {
     });
     expect(raw).toBe(
       `{
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "packageManager": "pnpm@12.6.0",
+  "rules": {
+    "policy": "strict"
+  },
   "installer": {
     "name": "create-nest-next-auth",
     "version": "${version}"
@@ -252,6 +256,7 @@ describe('.create-nest-next-auth.json', () => {
     expect(Object.keys(record)).toEqual([
       'schemaVersion',
       'packageManager',
+      'rules',
       'installer',
       'template',
       'answers',
@@ -265,7 +270,7 @@ describe('.create-nest-next-auth.json', () => {
       'options',
       'locales',
     ]);
-    expect(record.schemaVersion).toBe(2);
+    expect(record.schemaVersion).toBe(3);
     expect(raw).not.toContain(project);
     expect(raw).not.toContain('createdAt');
   });
