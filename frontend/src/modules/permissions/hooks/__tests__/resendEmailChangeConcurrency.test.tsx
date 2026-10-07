@@ -2,7 +2,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { registerFormTestLifecycle, stubNetwork, success } from '@/tests/serverRejectionHarness';
-import { adminContext } from '../../components/__tests__/adminEmailConfirmationHarness';
+import { adminContext } from '../../components/users/__tests__/adminEmailConfirmationHarness';
 import { useUserActions } from '../useUserActions';
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() } }));

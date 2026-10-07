@@ -1,8 +1,8 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { UserCard } from '@/modules/permissions/components/UserCard';
-import { UserListSection } from '@/modules/permissions/components/UserListSection';
+import { UserCard } from '@/modules/permissions/components/users/UserCard';
+import { UserListSection } from '@/modules/permissions/components/users/UserListSection';
 import type { AdminUser } from '@/modules/users/types';
 import { cn } from '@/lib/utils';
 

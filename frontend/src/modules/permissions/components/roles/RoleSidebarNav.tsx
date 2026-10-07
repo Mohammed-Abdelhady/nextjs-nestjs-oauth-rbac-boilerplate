@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Lock, Shield } from 'lucide-react';
 import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
 import { cn } from '@/lib/utils';
-import type { Role } from '../api/rolesApi';
+import type { Role } from '../../api/rolesApi';
 
 export interface RoleSidebarNavProps {
   /**

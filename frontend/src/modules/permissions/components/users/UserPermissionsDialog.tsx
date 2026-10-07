@@ -15,10 +15,10 @@ import {
   useGetUserPermissionsQuery,
   useAddPermissionMutation,
   useRemovePermissionMutation,
-} from '../api/permissionsApi';
-import { useGetRoleQuery } from '../api/rolesApi';
-import { PermissionTreeView } from './PermissionTreeView';
-import { PermissionSearchDialog } from './PermissionSearchDialog';
+} from '../../api/permissionsApi';
+import { useGetRoleQuery } from '../../api/rolesApi';
+import { PermissionTreeView } from '../permission-tree/PermissionTreeView';
+import { PermissionSearchDialog } from '../search/PermissionSearchDialog';
 import { UserPermissionsSummary } from './UserPermissionsSummary';
 import { Loader2, Plus, Trash2, Shield, User } from 'lucide-react';
 import { toast } from '@/lib/toast';

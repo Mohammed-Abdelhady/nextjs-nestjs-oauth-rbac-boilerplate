@@ -9,7 +9,7 @@ import {
   stubNetwork,
   success,
 } from '@/tests/serverRejectionHarness';
-import { useUserActions } from '../../hooks/useUserActions';
+import { useUserActions } from '../../../hooks/useUserActions';
 import { UserRoleSelector } from '../UserRoleSelector';
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() } }));

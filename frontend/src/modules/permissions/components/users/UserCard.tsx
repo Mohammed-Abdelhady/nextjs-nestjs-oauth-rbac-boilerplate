@@ -11,7 +11,7 @@ import { USER_PERMISSIONS } from '@app/core';
 import { HOVER_REVEAL_CLASSES } from '@/constants/focusStyles';
 import { cn } from '@/lib/utils';
 import { getInitials, formatDateShort } from '@/lib/formatters';
-import { useUserActions } from '../hooks/useUserActions';
+import { useUserActions } from '../../hooks/useUserActions';
 
 export interface User {
   _id: string;

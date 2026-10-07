@@ -2,7 +2,7 @@
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { usePermissionLabel } from '../hooks/usePermissionLabel';
+import { usePermissionLabel } from '../../hooks/usePermissionLabel';
 
 export interface SearchPermissionGridProps {
   permissions: Record<string, string>;
