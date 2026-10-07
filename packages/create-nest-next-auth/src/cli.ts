@@ -1,3 +1,4 @@
+import { addRulesCommand } from './add-rules/command.js';
 import { readdir } from 'node:fs/promises';
 import { basename, resolve } from 'node:path';
 import { cancel, intro, log, note, outro } from '@clack/prompts';
@@ -81,6 +82,8 @@ export async function main(
     // written: commander prints this version, the answers file records it,
     // and a damaged package stops a scaffolding run and a dry run alike.
     const installer = await readInstallerIdentity(installerRoot);
+    if (argv[0] === 'add' && argv[1] === 'rules')
+      return await addRulesCommand(argv.slice(2), installer.version, installerRoot);
     const options = parseCliOptions(argv, installer.version);
     intro(`${CLI_NAME} ${installer.version}`);
 

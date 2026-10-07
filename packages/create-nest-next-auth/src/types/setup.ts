@@ -9,7 +9,7 @@ export interface SetupOutcome {
 }
 
 export interface SetupFacts {
-  files: { count: number; instructions: string[] };
+  files: { count: number; instructions: string[]; paths?: string[] };
   rules: RulesPolicy;
   lockfile: SetupOutcome;
   git: SetupOutcome;
@@ -28,5 +28,6 @@ export interface SetupSummary extends Omit<
   'ownRepository' | 'hooksIncluded' | 'hooksActive'
 > {
   exitCode: number;
+  notAdded?: { check: string; reason: string }[];
   hooks: { included: boolean; active: boolean; activationCommand?: string };
 }

@@ -16,3 +16,63 @@ export const RULES_QUALITY_DOC_PATH = TEMPLATE_TEST_POLICY.DOC_PATH;
 export const RULES_DOC_INDEX_PATH = 'docs/README.md';
 export const RULES_STANDARD_DOC_TEXT =
   "# Code quality\n\nSee `AGENTS.md` for this project's rules level, checks, commit format, and enforcement.\n";
+
+export const ADD_RULES_RECEIPT = '.create-nest-next-auth.rules.json';
+export const ADD_RULES_AGENT_COPY = 'AGENTS.rules.md';
+export const ADD_RULES_SCRIPT_NAMES = ['lint', 'typecheck', 'test', 'build'] as const;
+export const ADD_RULES_SETUP_PATHS = [
+  '.husky',
+  '.lintstagedrc',
+  '.lintstagedrc.json',
+  '.lintstagedrc.yaml',
+  '.lintstagedrc.yml',
+  '.lintstagedrc.js',
+  '.lintstagedrc.cjs',
+  '.lintstagedrc.mjs',
+  '.lintstagedrc.ts',
+  '.lintstagedrc.cts',
+  '.lintstagedrc.mts',
+  'package.yaml',
+  'package.yml',
+  'lint-staged.config.js',
+  'lint-staged.config.cjs',
+  'lint-staged.config.mjs',
+  'lint-staged.config.ts',
+  'lint-staged.config.cts',
+  'lint-staged.config.mts',
+  '.commitlintrc',
+  '.commitlintrc.json',
+  '.commitlintrc.yaml',
+  '.commitlintrc.yml',
+  '.commitlintrc.js',
+  '.commitlintrc.cjs',
+  '.commitlintrc.mjs',
+  '.commitlintrc.ts',
+  '.commitlintrc.cts',
+  '.commitlintrc.mts',
+  'commitlint.config.js',
+  'commitlint.config.cjs',
+  'commitlint.config.mjs',
+  'commitlint.config.ts',
+  'commitlint.config.cts',
+  'commitlint.config.mts',
+] as const;
+export const ADD_RULES_DEPENDENCIES = [
+  'husky@^9.1.7',
+  'lint-staged@^15.5.2',
+  'prettier@^3.9.9',
+  '@commitlint/cli@^18.6.1',
+  '@commitlint/config-conventional@^18.6.3',
+  'ignore@5.3.2',
+] as const;
+export const ADD_RULES_LOCKFILES = {
+  pnpm: 'pnpm-lock.yaml',
+  npm: ['package', 'lock.json'].join('-'),
+} as const;
+export const ADD_RULES_UNSUPPORTED_LOCKFILES = ['yarn.lock', 'bun.lock', 'bun.lockb'] as const;
+
+export const RULES_COMMIT_CONFIG = 'commitlint.config.cjs';
+export const RULES_STAGED_CONFIG = '.lintstagedrc.cjs';
+export const RULES_CI_ENTRY = 'scripts/ci.mjs';
+
+export const ADD_RULES_GIT_BINARY = '/usr/bin/git';
