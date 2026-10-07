@@ -2,6 +2,7 @@ import { createApiClient } from '@app/sdk';
 import { createBearerTransport } from './bearer-transport';
 import { AuthSessionError } from './errors';
 import { createRefreshCoordinator } from './refresh';
+import { createRefreshNow } from './refresh-now';
 import { createRestoreOperation } from './restore';
 import { AuthRuntime } from './runtime';
 import { createSignInController } from './sign-in';
@@ -31,7 +32,8 @@ export function createAuthEngine(
   );
   const client = createApiClient(transport);
   const revocationClient = createApiClient(runtime.rawTransport);
-  coordinator.current = createRefreshCoordinator(runtime, client, revocationClient);
+  const refreshCoordinator = createRefreshCoordinator(runtime, client, revocationClient);
+  coordinator.current = refreshCoordinator;
   const signIn = createSignInController(runtime, client, revocationClient);
   const restore = createRestoreOperation(runtime, signIn);
   const signOut = createSignOutOperation(runtime, revocationClient);
@@ -50,6 +52,7 @@ export function createAuthEngine(
     restore,
     signIn: signIn.signIn,
     signOut,
+    refresh: createRefreshNow(runtime, refreshCoordinator),
     dispose: () => {
       runtime.dispose();
     },
@@ -57,5 +60,6 @@ export function createAuthEngine(
   return engine;
 }
 
+export { PortAbortController } from './abort-controller';
 export * from './errors';
 export * from './types';

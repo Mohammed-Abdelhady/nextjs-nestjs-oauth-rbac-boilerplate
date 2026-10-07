@@ -16,6 +16,7 @@ export const AUTH_OPERATION = {
 
 export const AUTH_REASON = {
   STORAGE_FAILURE: 'storageFailure',
+  STORAGE_LOCKED: 'storageLocked',
   INVALID_RECORD: 'invalidRecord',
   INSTALL_MISMATCH: 'installMismatch',
   REFRESH_INTERRUPTED: 'refreshInterrupted',
@@ -92,6 +93,24 @@ export const DISALLOWED_REDIRECT_URI_SCHEMES: ReadonlySet<string> = new Set([
   'wss',
 ]);
 export const UTF8_REPLACEMENT_CODE_POINT = 0xfffd;
+
+export const STORE_CONDITION = {
+  LOCKED: 'locked',
+  CANCELLED: 'cancelled',
+  UNAVAILABLE: 'unavailable',
+} as const;
+export const CREDENTIAL_WRITE_DONE = 'done';
+export const LAUNCH_ADDRESS = {
+  ADDRESS: 'address',
+  NONE: 'none',
+  UNAVAILABLE: 'unavailable',
+} as const;
+export const REFRESH_OUTCOME = {
+  DISPOSED: 'disposed',
+  REFRESHED: 'refreshed',
+  NOT_SIGNED_IN: 'notSignedIn',
+  FAILED: 'failed',
+} as const;
 
 export const REVOKE_OUTCOME = {
   NOT_NEEDED: 'notNeeded',

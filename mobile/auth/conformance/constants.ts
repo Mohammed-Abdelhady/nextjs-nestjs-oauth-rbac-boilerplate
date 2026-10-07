@@ -8,7 +8,12 @@ export const CHECK_ID = {
   CREDENTIALS_CANCELLED: 'credentials.cancelled',
   CREDENTIALS_CORRUPT: 'credentials.corrupt',
   CREDENTIALS_UNAVAILABLE: 'credentials.unavailable',
+  CREDENTIALS_DISCARDED: 'credentials.discarded',
+  CREDENTIALS_WRITE_LOCKED: 'credentials.write-locked',
+  CREDENTIALS_WRITE_CANCELLED: 'credentials.write-cancelled',
+  CREDENTIALS_WRITE_UNAVAILABLE: 'credentials.write-unavailable',
   BROWSER_REDIRECT: 'authBrowser.redirect',
+  BROWSER_RETURN_ADDRESS: 'authBrowser.return-address',
   BROWSER_CANCELLED: 'authBrowser.cancelled',
   BROWSER_DISMISSED: 'authBrowser.dismissed',
   BROWSER_FAILED: 'authBrowser.failed',
@@ -18,6 +23,7 @@ export const CHECK_ID = {
   CRYPTO_RANDOM_BYTES: 'crypto.random-bytes',
   CALLBACKS_COLD_START: 'callbacks.cold-start-once',
   CALLBACKS_NO_COLD_START: 'callbacks.no-cold-start',
+  CALLBACKS_LAUNCH_UNAVAILABLE: 'callbacks.launch-unavailable',
   CALLBACKS_WARM_START: 'callbacks.warm-start-once',
   CALLBACKS_SAME_ADDRESS: 'callbacks.same-address-both-ways',
   CALLBACKS_UNSUBSCRIBE: 'callbacks.unsubscribe',
@@ -28,6 +34,7 @@ export const CHECK_ID = {
   TIMER_CANCEL: 'timer.cancel',
   INSTALL_FOUND: 'install.found',
   INSTALL_UNAVAILABLE: 'install.unavailable',
+  INSTALL_LOCKED: 'install.locked',
 } as const;
 
 /** RFC 7636 appendix B. */
@@ -58,6 +65,7 @@ export const SAMPLE = {
   NEXT_RECORD: '{"v":1,"token":"second"}',
   AUTHORIZE_ADDRESS:
     'https://api.example.test/api/oauth/authorize?client_id=native&state=Ab_1-2&scope=api%20read',
+  REDIRECT_URI: 'sampleapp://auth/callback',
   RETURN_ADDRESS: 'sampleapp://auth/callback?code=Xy_9-Z&state=Ab_1-2',
   OTHER_RETURN_ADDRESS: 'sampleapp://auth/callback?code=Qr_7-T&state=Cd_3-4',
 } as const;

@@ -51,6 +51,8 @@ export class AuthRuntime {
   restorePromise: Promise<import('./types/auth').RestoreOutcome> | undefined;
   unsubscribeCallbacks: Unsubscribe | undefined;
   initialAddressRead = false;
+  initialAddressPending: Promise<import('./types/auth').LaunchAddressResult> | undefined;
+  sessionSave: Promise<void> | undefined;
   operationSequence = 0;
   activeAuthorizationOperationId: string | undefined;
   cancelAuthorizationDeadline: Unsubscribe | undefined;

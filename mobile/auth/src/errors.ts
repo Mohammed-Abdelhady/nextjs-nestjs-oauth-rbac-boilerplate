@@ -1,5 +1,5 @@
 import { SdkError } from '@app/sdk';
-import type { DeviceKeyFailure } from './types/auth';
+import type { CredentialWriteResult, DeviceKeyFailure } from './types/auth';
 
 export type AuthPortFailureReason = 'timedOut' | 'failed';
 
@@ -11,6 +11,19 @@ export class AuthPortError extends SdkError {
   ) {
     super(`Native auth port ${operation} ${reason}`, { cause });
     this.name = 'AuthPortError';
+  }
+}
+
+export type CredentialStoreCondition = Exclude<CredentialWriteResult['kind'], 'done'>;
+
+/** A write or delete the store refused. `condition` is the reason the adapter gave. */
+export class CredentialStoreError extends AuthPortError {
+  constructor(
+    operation: string,
+    readonly condition: CredentialStoreCondition,
+  ) {
+    super(operation, 'failed');
+    this.name = 'CredentialStoreError';
   }
 }
 

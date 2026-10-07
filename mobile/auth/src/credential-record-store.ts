@@ -6,6 +6,7 @@ import {
   DISPOSED_RECORD_READ_ATTEMPT_TIMEOUT_MS,
   PORT_OPERATION,
 } from './constants';
+import { deleteStoredRecord, replaceStoredRecord } from './credential-write';
 import { withPortDeadline } from './deadlines';
 import { parseStoredRecord, recordMatches } from './persistence';
 import type { AuthRuntime } from './runtime';
@@ -69,7 +70,7 @@ export function replaceCredentialRecord(
         )
           return;
       }
-      await runtime.dependencies.credentials.replace(serialized);
+      await replaceStoredRecord(runtime, serialized);
       written = true;
       if (expectedEpoch !== runtime.epoch) {
         const recordGuard = guardForRecord(record);
@@ -164,7 +165,7 @@ export function deleteCredentialRecord(
           return;
       }
       if (abandoned) return;
-      await runtime.dependencies.credentials.delete();
+      await deleteStoredRecord(runtime);
       deleted = true;
       runtime.deleteOwed = false;
       runtime.activeAuthorizationOperationId = undefined;
@@ -221,8 +222,8 @@ async function applyLateCorrection(
         return false;
     }
     if (abandoned) return false;
-    if (correction.kind === 'delete') await runtime.dependencies.credentials.delete();
-    else await runtime.dependencies.credentials.replace(JSON.stringify(correction.record));
+    if (correction.kind === 'delete') await deleteStoredRecord(runtime);
+    else await replaceStoredRecord(runtime, JSON.stringify(correction.record));
     return true;
   });
   let corrected = false;

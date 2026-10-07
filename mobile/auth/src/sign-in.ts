@@ -217,6 +217,7 @@ export function createSignInController(
       .then(() =>
         runtime.dependencies.authBrowser.open(
           authorizationAddress(runtime.config, challenge, transaction.state),
+          transaction.returnAddress,
           controller.signal,
         ),
       )

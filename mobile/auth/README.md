@@ -5,14 +5,40 @@
 
 ## Shell ports
 
-- `credentials`: read the one versioned record, replace it atomically, and delete it.
-- `authBrowser`: open the system sign-in browser and report its redirect, cancellation, dismissal, or failure.
+- `credentials`: read the one versioned record, replace it atomically, and delete it. A replace or delete resolves `done`, or `locked`, `cancelled` or `unavailable` when it did not happen.
+- `authBrowser`: open the system sign-in browser with the authorize address and the return address the engine passes, and report its redirect, cancellation, dismissal, or failure.
 - `crypto`: return random bytes and SHA-256 digests as `Uint8Array` values.
-- `callbacks`: subscribe to warm links and read the cold-start address once.
+- `callbacks`: subscribe to warm links and read the cold-start address, answering `address`, `none` or `unavailable`.
 - `clock`: return wall time and monotonic elapsed time in milliseconds.
 - `timer`: schedule a callback after a duration and return its cancel function.
-- `install`: return an install id from storage that is not backed up or restored to another device.
+- `install`: return an install id from storage that is not backed up or restored to another device, or say that the storage is `locked` or `unavailable`.
 - `deviceKey` (optional): keep an ES256 private key in secure hardware and return its public JWK or sign bytes.
+
+### Port contract details
+
+Storage results. A read answers `found`, `missing`, `locked`, `cancelled`, `corrupt` or `unavailable`.
+`corrupt` also covers a record the platform discarded on its own: an adapter over a store that
+answers "nothing there" for both cases keeps a plain marker beside the record, written on replace
+and removed on delete, and reports `corrupt` when the record is gone while the marker remains. The
+engine deletes a `corrupt` record and signs out with the reason `invalidRecord`. A replace or delete
+that did not happen resolves with the reason and leaves the stored record as it was. The engine also
+treats a rejection as a failed write, but an adapter should not rely on that.
+
+Install identity. `locked` means the device has to be unlocked, and restore then returns
+`storageBlocked` with the reason `locked`. `unavailable` means the storage is broken or out of
+reach, and restore returns `installUnavailable`. Neither deletes the record.
+
+Launch address. `unavailable` means the read failed. The engine does not mark the read as done and
+asks again on the next `restore()`, so a sign-in that returns to a cold app is not lost while its
+saved transaction is still valid. A read that passes its deadline stays pending, and a later restore
+takes its answer. An adapter must still hand a launch address over once in total.
+
+Browser. The engine passes the validated return address with every `open(address, redirectUri,
+signal)`, so an adapter keeps no copy of it. `cancelled` and `dismissed` are best effort: iOS
+reports a session that could not be shown as a cancel, and Android reports a person closing the tab
+as a dismissal. The engine treats the two alike and only passes the kind on in the sign-in outcome,
+so an app must not branch on the difference. After an abort the adapter ends the session for the
+engine, but the browser may stay visible, because Android cannot close the tab.
 
 The install id must survive app restarts on one device and must change after a reinstall or device
 restore. Use device-only keychain storage on iOS and the no-backup files directory on Android. If the
@@ -127,14 +153,22 @@ Status and operation are separate snapshot fields.
 | `signingOut`  | Local credentials are cleared while server revocation runs.       |
 
 Snapshots are immutable. `warning: 'storageBlocked'` means a rotated token pair is only in memory.
+With the reason `storageLocked` the store refused the save because the device is locked: call
+`restore()` after unlock and the engine saves the pair it holds, without another refresh. Without
+that reason the engine does not try again until the next refresh writes its marker.
 
 ## Outcomes for the UI
 
-- Restore returns `restored`, `storageBlocked`, or `disposed`.
+- Restore returns `restored`, `storageBlocked`, or `disposed`. The `storageBlocked` reason is `locked`, `cancelled`, `unavailable`, `installUnavailable` or `deviceKeyUnavailable`. `locked` covers a locked record, a locked install identity and an owed delete the locked store refused.
+- Refresh returns `refreshed`, `notSignedIn`, `disposed`, or `failed` with the error a waiting request would have received.
 - Sign-in returns `signedIn`, `alreadySignedIn`, `signedOut`, `disposed`, `cancelled`, `dismissed`, `expired`, `invalidCallback`, `cryptoFailure`, `clockFailure`, `browserFailure`, `authorizationDenied`, `disabled`, `deviceBindingRequired`, `deviceKeyFailure`, `oauthFailure`, `throttled`, `transportFailure`, `aborted`, `apiFailure`, or `storageFailure`.
 - Sign-out returns `signedOut` or `disposed`. Its revocation result is `notNeeded`, `recordUnavailable`, `revoked`, `failed`, or `timedOut`.
 - API requests can reject with `AuthSessionError`, `AuthDisposedError`, `UnsafeRequestPathError`, `DeviceKeyAuthError`, `DeviceBindingRequiredError`, `ApiError`, `OAuthError`, or `TransportError`. `TransportError.reason` is `aborted` or `no_response`.
 - Read the snapshot `reason` after failures and show the `warning` when present.
+
+`refresh()` asks for a new token pair now, whether or not the access token has expired. It joins the
+refresh a request already started, and a request that needs a refresh joins it, so one refresh
+request is sent. It follows the same policy table, backoff and storage rules as an automatic refresh.
 
 After `dispose()`, pending public calls settle as `disposed`, subscriptions are removed, and the
 transport refuses new requests. Disposing does not sign out an established session. During refresh,
@@ -162,7 +196,14 @@ Known limits:
 - A record without a lineage stays on disk until a later sign-in replaces it. Its refresh token stays
   valid until that sign-in's quiet revoke or expiry.
 - A rotated token held only in memory after a storage failure is not revoked by `dispose()`. It stays
-  valid on the server until expiry.
+  valid on the server until expiry. A locked store does not change this: the save is retried only by
+  a live engine, on `restore()` or at its next refresh.
+- A late rotated token that a disposed engine cannot save is revoked whatever the reason, a locked
+  store included. A disposed engine holds nothing in memory to save later.
+- The engine learns that the device was unlocked only when the app calls `restore()`. Call it when
+  the app returns to the foreground.
+- A launch address the port keeps reporting as `unavailable` is asked for on every restore. The
+  saved transaction still expires after six minutes, and the sign-in is lost then.
 - If revocation fails, the token remains alive until expiry. If sign-out's delete also fails, a
   restart can read the old record until the owed deletion succeeds.
 
@@ -182,6 +223,12 @@ abort release their waiters and cancel the timer.
 
 `AuthPortError` reports a deadline or failure from an engine port. The SDK client preserves this
 typed error so a shell can distinguish storage and timer failures from a network failure.
+`CredentialStoreError` is the `AuthPortError` for a write or delete the store refused. Its
+`condition` is `locked`, `cancelled` or `unavailable`, and it is the `error` of a `storageFailure`
+sign-in outcome, a sign-out whose delete failed, and a refresh stopped before it was sent.
+
+The entry also exports `PortAbortController`, the controller behind the signals the engine passes to
+its ports, for a shell or test that needs to build one.
 
 ## Adapter conformance suite
 
@@ -197,17 +244,24 @@ expect(results.filter((result) => !result.ok)).toEqual([]);
 ```
 
 `adapters` holds the shell's `credentials`, `authBrowser`, `crypto`, `clock`, `timer` and `install`
-adapters. `driver` is the part only a test harness can do: lock the store, fail the next write, end
-the next browser session a given way, start the app from a link, deliver a link, let time pass, move
-the wall clock, and make the install identity unreadable. The callbacks adapter comes from
+adapters. `driver` is the part only a test harness can do: lock the store, fail the next write,
+refuse every write for a reason, drop the stored record the way a platform does, end the next
+browser session a given way, start the app from a link, fail that start's first launch read, deliver
+a link, let time pass, move the wall clock, and make the install identity unreadable or locked. The
+callbacks adapter comes from
 `driver.callbacks.launch(address)`, one per app start, because a cold-start address exists before the
 adapter does. `driver.reset()` runs before each check and `driver.settle()` resolves once work the
 adapters already started has finished.
 
 Each result names its check, such as `credentials.locked` or `callbacks.same-address-both-ways`, and a
-failed one carries the reason. Two rules go beyond the port types. A launch address that the system
+failed one carries the reason. Five rules go beyond the port types. A launch address that the system
 repeats as a link event is handed over once in total. A blocked read reports why and is never
-`missing`.
+`missing`. A record the platform discarded reads as `corrupt`, and as `missing` once it is deleted. A
+refused write or delete resolves with its reason and never rejects. After a launch read that failed,
+the next read hands the address over.
+
+`authBrowser.abort` checks that the adapter ends the session, through `driver.authBrowser.isOpen()`.
+A tab the platform cannot close does not count as an open session.
 
 The suite does not cover `DeviceKeyPort`, a change of install identity after a reinstall, or two
 replaces racing each other.

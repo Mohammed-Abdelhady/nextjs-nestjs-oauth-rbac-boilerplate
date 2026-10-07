@@ -12,7 +12,11 @@ async function openWith(
 ): Promise<AuthBrowserResult> {
   await subject.driver.authBrowser.script(script);
   const result = await attempt('authBrowser.open()', () =>
-    subject.adapters.authBrowser.open(SAMPLE.AUTHORIZE_ADDRESS, new PortAbortController().signal),
+    subject.adapters.authBrowser.open(
+      SAMPLE.AUTHORIZE_ADDRESS,
+      SAMPLE.REDIRECT_URI,
+      new PortAbortController().signal,
+    ),
   );
   return result;
 }
@@ -44,6 +48,19 @@ export const AUTH_BROWSER_CHECKS: readonly ConformanceCheck[] = [
       );
     },
   },
+  {
+    // The engine validated this address. A copy kept by the adapter can drift from it.
+    id: CHECK_ID.BROWSER_RETURN_ADDRESS,
+    port: 'authBrowser',
+    async run(subject) {
+      await openWith(subject, { kind: 'cancelled' });
+      expectEqual(
+        await subject.driver.authBrowser.lastRedirectUri(),
+        SAMPLE.REDIRECT_URI,
+        'return address handed to the browser',
+      );
+    },
+  },
   outcomeCheck(CHECK_ID.BROWSER_CANCELLED, { kind: 'cancelled' }),
   outcomeCheck(CHECK_ID.BROWSER_DISMISSED, { kind: 'dismissed' }),
   {
@@ -65,7 +82,7 @@ export const AUTH_BROWSER_CHECKS: readonly ConformanceCheck[] = [
       const controller = new PortAbortController();
       await driver.authBrowser.script({ kind: 'pending' });
       const opened = Promise.resolve().then(() =>
-        adapters.authBrowser.open(SAMPLE.AUTHORIZE_ADDRESS, controller.signal),
+        adapters.authBrowser.open(SAMPLE.AUTHORIZE_ADDRESS, SAMPLE.REDIRECT_URI, controller.signal),
       );
       expectEqual((await settlement(opened, driver)).state, 'pending', 'session before abort');
 
@@ -76,7 +93,7 @@ export const AUTH_BROWSER_CHECKS: readonly ConformanceCheck[] = [
         after.state === 'resolved' && ABORT_OUTCOMES.includes(after.value.kind),
         `an aborted session must resolve as cancelled, dismissed or failed, it is ${describeValue(after)}`,
       );
-      expectEqual(await driver.authBrowser.isOpen(), false, 'browser open after abort');
+      expectEqual(await driver.authBrowser.isOpen(), false, 'session held after abort');
     },
   },
 ];

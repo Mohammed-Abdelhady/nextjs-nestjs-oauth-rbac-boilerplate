@@ -1,14 +1,16 @@
 import { AUTH_OPERATION, AUTH_REASON, SESSION_STATUS } from './constants';
 import {
-  CALLBACK_READ_TIMEOUT_MS,
   CREDENTIAL_READ_TIMEOUT_MS,
   CRYPTO_DIGEST_TIMEOUT_MS,
   INSTALL_IDENTITY_TIMEOUT_MS,
   PORT_OPERATION,
+  STORE_CONDITION,
 } from './constants';
+import { storeCondition } from './credential-write';
 import { withPortDeadline } from './deadlines';
 import { deviceKeyThumbprint } from './dpop-proof';
 import { DeviceKeyAuthError } from './errors';
+import { finishRestoreWithLaunchAddress } from './launch-address';
 import {
   digestInstallIdentity,
   parseStoredRecord,
@@ -16,6 +18,7 @@ import {
   transactionExpired,
 } from './persistence';
 import type { AuthRuntime } from './runtime';
+import { saveSessionAfterUnlock } from './session-save';
 import type { RestoreOutcome } from './types/auth';
 import type { SignInController } from './sign-in';
 
@@ -24,7 +27,12 @@ export function createRestoreOperation(runtime: AuthRuntime, signIn: SignInContr
     if (runtime.disposed) return Promise.resolve({ kind: 'disposed' });
     if (runtime.restorePromise) return runtime.restorePromise;
     if (runtime.snapshot.status === SESSION_STATUS.SIGNED_IN && runtime.tokens) {
-      return Promise.resolve({ kind: 'restored', status: SESSION_STATUS.SIGNED_IN });
+      const saving = saveSessionAfterUnlock(runtime);
+      if (!saving) return Promise.resolve({ kind: 'restored', status: SESSION_STATUS.SIGNED_IN });
+      return runtime.raceWithDispose(
+        saving.then(() => ({ kind: 'restored' as const, status: runtime.snapshot.status })),
+        () => ({ kind: 'disposed' as const }),
+      );
     }
     if (runtime.snapshot.operation !== AUTH_OPERATION.NONE) {
       return Promise.resolve({ kind: 'restored', status: runtime.snapshot.status });
@@ -78,12 +86,12 @@ export function createRestoreOperation(runtime: AuthRuntime, signIn: SignInContr
         return { kind: 'restored', status: runtime.snapshot.status };
       if (!deleted) throw new Error('Credential deletion did not complete');
       return performRestore(epoch);
-    } catch {
+    } catch (error) {
       if (runtime.isEpochCurrent(epoch))
         runtime.setState(SESSION_STATUS.STORAGE_BLOCKED, AUTH_OPERATION.NONE, {
           reason: AUTH_REASON.STORAGE_FAILURE,
         });
-      return { kind: 'storageBlocked', reason: 'unavailable' };
+      return { kind: 'storageBlocked', reason: storeCondition(error) };
     }
   }
 
@@ -107,6 +115,8 @@ export function createRestoreOperation(runtime: AuthRuntime, signIn: SignInContr
       runtime.setState(SESSION_STATUS.STORAGE_BLOCKED, AUTH_OPERATION.NONE, {
         reason: AUTH_REASON.STORAGE_FAILURE,
       });
+      if (identity.kind === STORE_CONDITION.LOCKED)
+        return { kind: 'storageBlocked', reason: STORE_CONDITION.LOCKED };
       return { kind: 'storageBlocked', reason: 'installUnavailable' };
     }
     try {
@@ -148,8 +158,7 @@ export function createRestoreOperation(runtime: AuthRuntime, signIn: SignInContr
       runtime.record = undefined;
       runtime.tokens = undefined;
       runtime.setState(SESSION_STATUS.SIGNED_OUT, AUTH_OPERATION.NONE);
-      await readInitialAddress(runtime, signIn);
-      return { kind: 'restored', status: runtime.snapshot.status };
+      return finishRestoreWithLaunchAddress(runtime, signIn);
     }
     if (stored.kind === 'corrupt') {
       return deleteInvalidRecord(runtime, epoch, AUTH_REASON.INVALID_RECORD);
@@ -231,8 +240,7 @@ export function createRestoreOperation(runtime: AuthRuntime, signIn: SignInContr
       runtime.setState(SESSION_STATUS.SIGNED_IN, AUTH_OPERATION.NONE, {
         profile: runtime.snapshot.profile,
       });
-      await readInitialAddress(runtime, signIn);
-      return { kind: 'restored', status: runtime.snapshot.status };
+      return finishRestoreWithLaunchAddress(runtime, signIn);
     }
     if (record.transaction) {
       let wallTime: number;
@@ -248,8 +256,7 @@ export function createRestoreOperation(runtime: AuthRuntime, signIn: SignInContr
         return deleteInvalidRecord(runtime, epoch, AUTH_REASON.INVALID_RECORD);
       }
       runtime.setState(SESSION_STATUS.SIGNED_OUT, AUTH_OPERATION.NONE);
-      await readInitialAddress(runtime, signIn);
-      return { kind: 'restored', status: runtime.snapshot.status };
+      return finishRestoreWithLaunchAddress(runtime, signIn);
     }
     return deleteInvalidRecord(runtime, epoch, AUTH_REASON.INVALID_RECORD);
   }
@@ -262,40 +269,19 @@ export function createRestoreOperation(runtime: AuthRuntime, signIn: SignInContr
     try {
       const deleted = await runtimeValue.deleteRecord(epoch);
       if (!deleted) return { kind: 'restored', status: runtimeValue.snapshot.status };
-    } catch {
+    } catch (error) {
       if (!runtimeValue.isEpochCurrent(epoch))
         return { kind: 'restored', status: runtimeValue.snapshot.status };
       runtimeValue.setState(SESSION_STATUS.STORAGE_BLOCKED, AUTH_OPERATION.NONE, {
         reason: AUTH_REASON.STORAGE_FAILURE,
       });
-      return { kind: 'storageBlocked', reason: 'unavailable' };
+      return { kind: 'storageBlocked', reason: storeCondition(error) };
     }
     runtimeValue.record = undefined;
     runtimeValue.tokens = undefined;
     runtimeValue.setState(SESSION_STATUS.SIGNED_OUT, AUTH_OPERATION.NONE, { reason });
-    await readInitialAddress(runtimeValue, signIn);
-    return { kind: 'restored', status: runtimeValue.snapshot.status };
+    return finishRestoreWithLaunchAddress(runtimeValue, signIn);
   }
 
   return restore;
-}
-
-async function readInitialAddress(runtime: AuthRuntime, signIn: SignInController): Promise<void> {
-  const epoch = runtime.epoch;
-  let address: string | undefined;
-  if (!runtime.initialAddressRead) {
-    runtime.initialAddressRead = true;
-    try {
-      address = await withPortDeadline(
-        runtime.dependencies.timer,
-        CALLBACK_READ_TIMEOUT_MS,
-        () => runtime.dependencies.callbacks.initialAddress(),
-        PORT_OPERATION.CALLBACK_INITIAL_ADDRESS,
-      );
-    } catch {
-      address = undefined;
-    }
-  }
-  if (!runtime.isEpochCurrent(epoch)) return;
-  await signIn.processInitialAddress(address);
 }
