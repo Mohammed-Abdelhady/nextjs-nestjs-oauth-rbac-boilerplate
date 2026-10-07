@@ -9,6 +9,7 @@ import { FakeCallbacks } from './support';
 const EARLY_REPORT_TURNS = 12;
 const BOTH_MONOTONIC_CHECKS = ['clock.monotonic-never-backwards', 'clock.monotonic-milliseconds'];
 const BOTH_TIMER_CHECKS = ['timer.fires-once', 'timer.cancel'];
+const BOTH_LAUNCH_READ_CHECKS = ['callbacks.cold-start-once', 'callbacks.launch-unavailable'];
 
 function browser(
   fault: string,
@@ -32,7 +33,8 @@ function browserResult(
   return browser(
     fault,
     fails,
-    (inner) => async (address, signal) => change(await inner.open(address, signal)),
+    (inner) => async (address, redirectUri, signal) =>
+      change(await inner.open(address, redirectUri, signal)),
   );
 }
 
@@ -90,7 +92,8 @@ describe('sign-in browser faults', () => {
     browser(
       'changes the address before opening it',
       ['authBrowser.redirect'],
-      (inner) => (address, signal) => inner.open(address.toLowerCase(), signal),
+      (inner) => (address, redirectUri, signal) =>
+        inner.open(address.toLowerCase(), redirectUri, signal),
     ),
     browserResult('reports a cancel as a dismissal', ['authBrowser.cancelled'], (result) =>
       result.kind === 'cancelled' ? { kind: 'dismissed' } : result,
@@ -111,18 +114,23 @@ describe('sign-in browser faults', () => {
     browser(
       'ignores the abort signal',
       ['authBrowser.abort'],
-      (inner) => (address) => inner.open(address, new PortAbortController().signal),
+      (inner) => (address, redirectUri) =>
+        inner.open(address, redirectUri, new PortAbortController().signal),
     ),
-    browser('rejects when aborted', ['authBrowser.abort'], (inner) => async (address, signal) => {
-      const result = await inner.open(address, signal);
-      if (signal.aborted) throw new Error('The session was aborted.');
-      return result;
-    }),
+    browser(
+      'rejects when aborted',
+      ['authBrowser.abort'],
+      (inner) => async (address, redirectUri, signal) => {
+        const result = await inner.open(address, redirectUri, signal);
+        if (signal.aborted) throw new Error('The session was aborted.');
+        return result;
+      },
+    ),
     browser(
       'reports before the session ends',
       ['authBrowser.abort'],
-      (inner) => async (address, signal) => {
-        const session = inner.open(address, signal);
+      (inner) => async (address, redirectUri, signal) => {
+        const session = inner.open(address, redirectUri, signal);
         let ended = false;
         void session.then(() => (ended = true));
         for (let turn = 0; turn < EARLY_REPORT_TURNS; turn += 1) await Promise.resolve();
@@ -132,18 +140,18 @@ describe('sign-in browser faults', () => {
     browser(
       'reports a redirect when aborted',
       ['authBrowser.abort'],
-      (inner) => async (address, signal) => {
-        const result = await inner.open(address, signal);
+      (inner) => async (address, redirectUri, signal) => {
+        const result = await inner.open(address, redirectUri, signal);
         return signal.aborted ? { kind: 'redirect', url: 'sampleapp://auth/callback' } : result;
       },
     ),
     browser(
       'leaves the browser open when aborted',
       ['authBrowser.abort'],
-      (inner) => (address, signal) =>
+      (inner) => (address, redirectUri, signal) =>
         new Promise((resolve) => {
           signal.addEventListener('abort', () => resolve({ kind: 'cancelled' }));
-          void inner.open(address, new PortAbortController().signal).then(resolve);
+          void inner.open(address, redirectUri, new PortAbortController().signal).then(resolve);
         }),
     ),
   ]);
@@ -151,18 +159,15 @@ describe('sign-in browser faults', () => {
 
 describe('return address faults', () => {
   itCatches([
-    callbacks('loses the launch address', ['callbacks.cold-start-once'], (address) =>
-      launchWith(address, () => ({ initialAddress: async () => undefined })),
+    callbacks('loses the launch address', BOTH_LAUNCH_READ_CHECKS, (address) =>
+      launchWith(address, () => ({ initialAddress: async () => ({ kind: 'none' }) })),
     ),
-    callbacks(
-      'returns the launch address on every read',
-      ['callbacks.cold-start-once'],
-      (address) =>
-        launchWith(address, (inner) => {
-          const read = inner.initialAddress.bind(inner);
-          let first: Promise<string | undefined> | undefined;
-          return { initialAddress: () => (first ??= read()) };
-        }),
+    callbacks('returns the launch address on every read', BOTH_LAUNCH_READ_CHECKS, (address) =>
+      launchWith(address, (inner) => {
+        const read = inner.initialAddress.bind(inner);
+        let first: ReturnType<CallbackPort['initialAddress']> | undefined;
+        return { initialAddress: () => (first ??= read()) };
+      }),
     ),
     callbacks(
       'returns an empty address for a plain start',
@@ -170,7 +175,10 @@ describe('return address faults', () => {
       (address) =>
         launchWith(address, (inner) => {
           const read = inner.initialAddress.bind(inner);
-          return { initialAddress: async () => (address === undefined ? '' : read()) };
+          return {
+            initialAddress: async () =>
+              address === undefined ? { kind: 'address', address: '' } : read(),
+          };
         }),
     ),
     callbacks(

@@ -221,6 +221,7 @@ function makeEngine(
                   issued.actor === actor && value.includes(`"refreshToken":"${issued.token}"`),
               )
               .forEach((issued) => issued.settled.resolve());
+            return { kind: 'done' as const };
           },
           true,
         ),
@@ -230,13 +231,14 @@ function makeEngine(
           async () => {
             store.value = undefined;
             store.owner = actor;
+            return { kind: 'done' as const };
           },
           true,
         ),
     },
     authBrowser: {
-      open: (address, signal) =>
-        tapAsync('authBrowser.open', () => base.authBrowser.open(address, signal)),
+      open: (address, redirectUri, signal) =>
+        tapAsync('authBrowser.open', () => base.authBrowser.open(address, redirectUri, signal)),
     },
     crypto: {
       randomBytes: (length) =>

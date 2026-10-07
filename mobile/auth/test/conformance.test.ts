@@ -12,7 +12,12 @@ const EVERY_CHECK = [
   'credentials.cancelled',
   'credentials.corrupt',
   'credentials.unavailable',
+  'credentials.discarded',
+  'credentials.write-locked',
+  'credentials.write-cancelled',
+  'credentials.write-unavailable',
   'authBrowser.redirect',
+  'authBrowser.return-address',
   'authBrowser.cancelled',
   'authBrowser.dismissed',
   'authBrowser.failed',
@@ -22,6 +27,7 @@ const EVERY_CHECK = [
   'crypto.random-bytes',
   'callbacks.cold-start-once',
   'callbacks.no-cold-start',
+  'callbacks.launch-unavailable',
   'callbacks.warm-start-once',
   'callbacks.same-address-both-ways',
   'callbacks.unsubscribe',
@@ -32,6 +38,7 @@ const EVERY_CHECK = [
   'timer.cancel',
   'install.found',
   'install.unavailable',
+  'install.locked',
 ];
 
 describe('adapter conformance suite', () => {
@@ -48,13 +55,13 @@ describe('adapter conformance suite', () => {
     const countByPort = new Map<string, number>();
     for (const { port } of results) countByPort.set(port, (countByPort.get(port) ?? 0) + 1);
     expect(Object.fromEntries(countByPort)).toEqual({
-      credentials: 9,
-      authBrowser: 5,
+      credentials: 13,
+      authBrowser: 6,
       crypto: 3,
-      callbacks: 5,
+      callbacks: 6,
       clock: 3,
       timer: 2,
-      install: 2,
+      install: 3,
     });
   });
 
@@ -66,7 +73,7 @@ describe('adapter conformance suite', () => {
 
     const results = await runConformance(subject);
 
-    expect(results).toHaveLength(29);
+    expect(results).toHaveLength(36);
     expect(new Set(results.map((result) => (result.ok ? 'passed' : result.message)))).toEqual(
       new Set(['The harness lost the device.']),
     );

@@ -1,6 +1,13 @@
 import type { Transport, TransportRequest, TransportResponse } from '@app/sdk';
-import type { AbortSignalPort } from '../src';
-import type { DeviceKeyPort } from '../src';
+import type {
+  AbortSignalPort,
+  AuthBrowserResult,
+  CredentialReadResult,
+  CredentialWriteResult,
+  DeviceKeyPort,
+  InstallIdentityResult,
+  LaunchAddressResult,
+} from '../src';
 import { FakeTimer } from './fake-timer';
 import { registerTransport } from './tracking';
 
@@ -42,19 +49,19 @@ export class Deferred<T> {
   }
 }
 
-export type CredentialRead =
-  | { kind: 'found'; value: string }
-  | { kind: 'missing' }
-  | { kind: 'locked' }
-  | { kind: 'cancelled' }
-  | { kind: 'corrupt' }
-  | { kind: 'unavailable' };
+export type CredentialRead = CredentialReadResult;
+export type CredentialWrite = CredentialWriteResult;
+const DONE: CredentialWrite = { kind: 'done' };
 
 export class MemoryCredentials {
   value: string | undefined;
   readResult: CredentialRead | undefined;
+  /** Every write answers this and changes nothing. `beforeReplace` can refuse one the same way. */
+  writeResult: CredentialWrite | undefined;
+  /** The platform dropped the record on its own, which an adapter reads as corrupt. */
+  discarded = false;
   serializedOperations = false;
-  beforeReplace: ((value: string) => Promise<void>) | undefined;
+  beforeReplace: ((value: string) => Promise<CredentialWrite | void>) | undefined;
   afterReplace: ((value: string) => void) | undefined;
   beforeDelete: (() => Promise<void>) | undefined;
   afterDelete: (() => void) | undefined;
@@ -67,35 +74,40 @@ export class MemoryCredentials {
     this.onOperationQueued?.('read');
     return this.enqueue(async () => {
       this.events.push('read');
+      const empty: CredentialRead = this.discarded ? { kind: 'corrupt' } : { kind: 'missing' };
       const result =
         this.readResult ??
-        (this.value === undefined
-          ? { kind: 'missing' as const }
-          : { kind: 'found' as const, value: this.value });
+        (this.value === undefined ? empty : { kind: 'found' as const, value: this.value });
       this.afterRead?.(result);
       return result;
     });
   }
 
-  replace(value: string): Promise<void> {
+  replace(value: string): Promise<CredentialWrite> {
     this.onOperationQueued?.('replace');
     return this.enqueue(async () => {
       this.events.push('replace:start');
-      await this.beforeReplace?.(value);
+      const refused = this.writeResult ?? (await this.beforeReplace?.(value)) ?? DONE;
+      if (refused.kind !== 'done') return refused;
       this.value = value;
+      this.discarded = false;
       this.events.push('replace:done');
       this.afterReplace?.(value);
+      return DONE;
     });
   }
 
-  delete(): Promise<void> {
+  delete(): Promise<CredentialWrite> {
     this.onOperationQueued?.('delete');
     return this.enqueue(async () => {
       this.events.push('delete:start');
       await this.beforeDelete?.();
+      if (this.writeResult) return this.writeResult;
       this.value = undefined;
+      this.discarded = false;
       this.events.push('delete:done');
       this.afterDelete?.();
+      return DONE;
     });
   }
 
@@ -204,28 +216,30 @@ export function acceptCode(browser: FakeBrowser, code = 'authorization-code'): v
 }
 
 export class FakeBrowser {
-  readonly opened: { address: string; signal: AbortSignalPort }[] = [];
+  readonly opened: { address: string; redirectUri: string; signal: AbortSignalPort }[] = [];
   readonly results: ((address: string) => Promise<BrowserResult> | BrowserResult)[] = [];
   beforeOpen: ((address: string) => void) | undefined;
 
-  async open(address: string, signal: AbortSignalPort): Promise<BrowserResult> {
-    this.opened.push({ address, signal });
+  async open(
+    address: string,
+    redirectUri: string,
+    signal: AbortSignalPort,
+  ): Promise<BrowserResult> {
+    this.opened.push({ address, redirectUri, signal });
     this.beforeOpen?.(address);
     const next = this.results.shift();
     return next ? next(address) : { kind: 'cancelled' };
   }
 }
 
-export type BrowserResult =
-  | { kind: 'redirect'; url: string }
-  | { kind: 'cancelled' }
-  | { kind: 'dismissed' }
-  | { kind: 'failed'; reason: string };
+export type BrowserResult = AuthBrowserResult;
 
 export class FakeCallbacks {
   readonly listeners = new Set<(address: string) => void | Promise<void>>();
   initial: string | undefined;
   initialCalls = 0;
+  /** This many reads of the launch address answer `unavailable` first. */
+  unavailableReads = 0;
   afterDelivery: (() => void) | undefined;
 
   subscribe(listener: (address: string) => void | Promise<void>): () => void {
@@ -233,11 +247,15 @@ export class FakeCallbacks {
     return () => this.listeners.delete(listener);
   }
 
-  initialAddress(): Promise<string | undefined> {
+  initialAddress(): Promise<LaunchAddressResult> {
     this.initialCalls += 1;
+    if (this.unavailableReads > 0) {
+      this.unavailableReads -= 1;
+      return Promise.resolve({ kind: 'unavailable' });
+    }
     const address = this.initial;
     this.initial = undefined;
-    return Promise.resolve(address);
+    return Promise.resolve(address === undefined ? { kind: 'none' } : { kind: 'address', address });
   }
 
   async deliver(address: string): Promise<void> {
@@ -269,10 +287,7 @@ export class FakeClock {
 }
 
 export class FakeInstall {
-  result: { kind: 'found'; id: string } | { kind: 'unavailable' } = {
-    kind: 'found',
-    id: 'install-1',
-  };
+  result: InstallIdentityResult = { kind: 'found', id: 'install-1' };
   calls = 0;
 
   async identity() {

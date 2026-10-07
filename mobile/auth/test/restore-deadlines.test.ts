@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { LaunchAddressResult } from '../src';
 import { INSTALL_IDENTITY_TIMEOUT_MS } from '../src/constants';
 import { createAuthEngine } from './engine';
 import { CONFIG, Deferred, ScriptedTransport, testPorts } from './support';
@@ -27,7 +28,7 @@ describe('restore port deadlines', () => {
 
   it('bounds the cold-start callback read', async () => {
     const ports = testPorts(new ScriptedTransport());
-    const address = new Deferred<string | undefined>();
+    const address = new Deferred<LaunchAddressResult>();
     const started = new Deferred<void>();
     ports.callbacks.initialAddress = () => {
       started.resolve();
@@ -38,7 +39,7 @@ describe('restore port deadlines', () => {
     await started.promise;
     const timerWasScheduled = ports.timer.pending > 0;
     if (timerWasScheduled) ports.timer.fireDelay(5_000);
-    address.resolve(undefined);
+    address.resolve({ kind: 'none' });
     const result = await restore;
 
     expect(timerWasScheduled).toBe(true);

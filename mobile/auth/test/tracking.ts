@@ -57,6 +57,7 @@ export function trackEngine(
     restore: () => track(engine.restore()),
     signIn: () => track(engine.signIn()),
     signOut: () => track(engine.signOut()),
+    refresh: () => track(engine.refresh()),
     dispose: () => engine.dispose(),
   };
 }
