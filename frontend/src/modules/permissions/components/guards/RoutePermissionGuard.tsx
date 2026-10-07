@@ -6,7 +6,7 @@ import { useRouter } from '@/i18n/navigation';
 import { LoadingRegion } from '@/components/layout/LoadingRegion';
 import { useAppSelector } from '@/store/hooks';
 import { selectUser, selectIsAuthenticated } from '@/modules/auth/store/authSlice';
-import { usePermission } from '../hooks/usePermission';
+import { usePermission } from '../../hooks/usePermission';
 
 export interface RoutePermissionGuardProps {
   /**

@@ -52,13 +52,13 @@ Successfully implemented a comprehensive dynamic Role-Based Access Control (RBAC
 **Files Created**:
 
 - `frontend/src/modules/permissions/hooks/usePermission.ts`
-- `frontend/src/modules/permissions/components/PermissionGuard.tsx`
-- `frontend/src/modules/permissions/components/RoutePermissionGuard.tsx`
-- `frontend/src/modules/permissions/components/PermissionSelector.tsx`
-- `frontend/src/modules/permissions/components/CreateRoleDialog.tsx`
-- `frontend/src/modules/permissions/components/EditRoleDialog.tsx`
-- `frontend/src/modules/permissions/components/DeleteRoleDialog.tsx`
-- `frontend/src/modules/permissions/components/UserPermissionsDialog.tsx`
+- `frontend/src/modules/permissions/components/guards/PermissionGuard.tsx`
+- `frontend/src/modules/permissions/components/guards/RoutePermissionGuard.tsx`
+- `frontend/src/modules/permissions/components/selector/PermissionSelector.tsx`
+- `frontend/src/modules/permissions/components/roles/CreateRoleDialog.tsx`
+- `frontend/src/modules/permissions/components/roles/EditRoleDialog.tsx`
+- `frontend/src/modules/permissions/components/roles/DeleteRoleDialog.tsx`
+- `frontend/src/modules/permissions/components/users/UserPermissionsDialog.tsx`
 - `frontend/src/modules/permissions/components/UserPermissionsBadge.tsx`
 - `frontend/src/modules/permissions/components/PermissionsList.tsx`
 - `frontend/src/components/navigation/DashboardNav.tsx`

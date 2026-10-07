@@ -9,7 +9,7 @@ import { LoadingRegion } from '@/components/layout/LoadingRegion';
 import { PaginationControl } from '@/components/pagination';
 import { useGetUsersQuery } from '@/modules/users/api/usersApi';
 import { UserListSkeleton, UserListToolbar, UserGroupedList } from '@/modules/users/components';
-import { CreateUserButton } from '@/modules/permissions/components/CreateUserButton';
+import { CreateUserButton } from '@/modules/permissions/components/users/CreateUserButton';
 import { PermissionGuard, RoutePermissionGuard } from '@/modules/permissions';
 import { USER_PERMISSIONS, parseApiError } from '@app/core';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -17,7 +17,7 @@ import { useAppDispatch } from '@/store/hooks';
 import { baseApi } from '@/store/api/baseApi';
 
 const UserPermissionsDialog = lazy(() =>
-  import('@/modules/permissions/components/UserPermissionsDialog').then((mod) => ({
+  import('@/modules/permissions/components/users/UserPermissionsDialog').then((mod) => ({
     default: mod.UserPermissionsDialog,
   })),
 );

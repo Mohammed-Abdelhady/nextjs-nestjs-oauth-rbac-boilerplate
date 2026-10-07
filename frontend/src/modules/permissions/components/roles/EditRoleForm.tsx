@@ -9,8 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { FieldError, SubmitButton } from '@/components/forms';
-import { PermissionSelector } from './PermissionSelector';
-import type { Role } from '../api/rolesApi';
+import { PermissionSelector } from '../selector/PermissionSelector';
+import type { Role } from '../../api/rolesApi';
 
 export interface EditRoleFormValues {
   name: string;

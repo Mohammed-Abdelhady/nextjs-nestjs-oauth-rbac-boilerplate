@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { usePermission } from '../hooks/usePermission';
+import { usePermission } from '../../hooks/usePermission';
 
 export interface PermissionGuardProps {
   /**

@@ -22,10 +22,10 @@ import {
 } from 'lucide-react';
 import { USER_PERMISSIONS } from '@app/core';
 import { cn } from '@/lib/utils';
-import { useUserActions } from '../hooks/useUserActions';
+import { useUserActions } from '../../hooks/useUserActions';
 import { EditUserDialog } from './EditUserDialog';
 import { UserActionConfirmDialog, type UserConfirmAction } from './UserActionConfirmDialog';
-import { PermissionGuard } from './PermissionGuard';
+import { PermissionGuard } from '../guards/PermissionGuard';
 
 export interface UserActionsMenuUser {
   _id: string;

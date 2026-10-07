@@ -4,10 +4,10 @@ import { memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { PermissionTreeView } from './PermissionTreeView';
+import { PermissionTreeView } from '../permission-tree/PermissionTreeView';
 import { Pencil, Trash2, Shield, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Role } from '../api/rolesApi';
+import type { Role } from '../../api/rolesApi';
 
 export interface RoleDetailPanelProps {
   /**

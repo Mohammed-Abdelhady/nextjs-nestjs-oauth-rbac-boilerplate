@@ -6,19 +6,19 @@ import { LoadingRegion } from '@/components/layout/LoadingRegion';
 import type { Role } from '@/modules/roles/types';
 
 const CreateRoleDialog = lazy(() =>
-  import('@/modules/permissions/components/CreateRoleDialog').then((mod) => ({
+  import('@/modules/permissions/components/roles/CreateRoleDialog').then((mod) => ({
     default: mod.CreateRoleDialog,
   })),
 );
 
 const EditRoleDialog = lazy(() =>
-  import('@/modules/permissions/components/EditRoleDialog').then((mod) => ({
+  import('@/modules/permissions/components/roles/EditRoleDialog').then((mod) => ({
     default: mod.EditRoleDialog,
   })),
 );
 
 const DeleteRoleDialog = lazy(() =>
-  import('@/modules/permissions/components/DeleteRoleDialog').then((mod) => ({
+  import('@/modules/permissions/components/roles/DeleteRoleDialog').then((mod) => ({
     default: mod.DeleteRoleDialog,
   })),
 );

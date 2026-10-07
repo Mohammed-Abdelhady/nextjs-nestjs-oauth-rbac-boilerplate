@@ -15,8 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { FieldError, SubmitButton } from '@/components/forms';
-import { useCreateRoleMutation } from '../api/rolesApi';
-import { PermissionSelector } from './PermissionSelector';
+import { useCreateRoleMutation } from '../../api/rolesApi';
+import { PermissionSelector } from '../selector/PermissionSelector';
 import { toast } from '@/lib/toast';
 import { reportUnlessHandled } from '@/lib/requestFailure';
 
