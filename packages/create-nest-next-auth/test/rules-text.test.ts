@@ -242,6 +242,19 @@ describe('renderRulesText', () => {
     );
   });
 
+  it('explains that the shipped standard policy is inactive and requires strict regeneration', async () => {
+    const projectRoot = await projectFixture();
+    const rendered = await renderRulesText({
+      projectRoot,
+      level: 'standard',
+      delivery: { hooks: true, actions: true },
+    });
+
+    expect(sectionBody(rendered.agents, 'Where things are')?.split('\n')).toContain(
+      '- `scripts/guardrails/policy.mjs`: This file ships, but nothing runs it at the standard rules level. Generate again with strict to restore the scan.',
+    );
+  });
+
   it('omits the type lint fact if one shipped workspace config does not set the rule to error', async () => {
     const projectRoot = await projectFixture({
       explicitRuleSeverity: 'off',
