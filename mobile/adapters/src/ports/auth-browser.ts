@@ -3,8 +3,6 @@ import { browserErrorToOutcome, browserResultToOutcome } from '../logic/browser-
 import type { WebBrowserApi } from '../types/modules';
 
 export interface AuthBrowserSettings {
-  /** The port hands over the authorize address only, the module needs both. */
-  redirectUri: string;
   ephemeralSession: boolean;
 }
 
@@ -13,7 +11,7 @@ export function createAuthBrowserPort(
   settings: AuthBrowserSettings,
 ): AuthBrowserPort {
   return {
-    open(address, signal) {
+    open(address, redirectUri, signal) {
       if (signal.aborted) return Promise.resolve({ kind: 'dismissed' });
       return new Promise<AuthBrowserResult>((resolve) => {
         let settled = false;
@@ -34,7 +32,7 @@ export function createAuthBrowserPort(
         signal.addEventListener('abort', onAbort);
         try {
           browser
-            .openAuthSessionAsync(address, settings.redirectUri, {
+            .openAuthSessionAsync(address, redirectUri, {
               preferEphemeralSession: settings.ephemeralSession,
             })
             .then(

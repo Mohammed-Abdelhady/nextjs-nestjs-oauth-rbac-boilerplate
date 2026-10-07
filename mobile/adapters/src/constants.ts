@@ -5,6 +5,7 @@ export const CREDENTIALS_KEY_PREFIX = 'auth';
 export const INSTALL_ID_KEY = 'app.install-id';
 /** The file a shell passes as `installMarker`, in the app's documents folder. */
 export const INSTALL_MARKER_FILE = 'install.marker';
+export const RECORD_MARKER_SUFFIX = 'marker';
 
 export const SHA256_BYTES = 32;
 

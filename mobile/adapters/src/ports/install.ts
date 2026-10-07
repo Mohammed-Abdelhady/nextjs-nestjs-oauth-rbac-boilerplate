@@ -1,4 +1,5 @@
 import type { InstallIdentityResult, InstallPort } from '@app/native-auth';
+import { storeConditionFromError } from '../logic/secure-store-errors';
 import type {
   MarkerFileApi,
   SecureStoreApi,
@@ -34,8 +35,9 @@ export function createInstallPort(
       await modules.store.setItemAsync(key, id, options);
       if (!marked) modules.marker.create();
       return { kind: 'found', id };
-    } catch {
-      return { kind: 'unavailable' };
+    } catch (error) {
+      // Locked means unlock and try again. Anything else is storage that is out of reach.
+      return { kind: storeConditionFromError(error) === 'locked' ? 'locked' : 'unavailable' };
     }
   };
 

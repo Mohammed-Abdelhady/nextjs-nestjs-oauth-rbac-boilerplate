@@ -39,6 +39,11 @@ export interface MarkerFileApi {
   create(): void;
 }
 
+/** The plain file kept beside the credential record. It goes when the record is deleted. */
+export interface RecordMarkerApi extends MarkerFileApi {
+  delete(): void;
+}
+
 export interface UuidApi {
   randomUUID(): string;
 }
