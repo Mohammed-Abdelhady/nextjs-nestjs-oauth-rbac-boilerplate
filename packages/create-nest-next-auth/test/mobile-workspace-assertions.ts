@@ -4,8 +4,16 @@ import { expect } from 'vitest';
 import { parse } from 'yaml';
 import { listFiles } from '../src/utils/fs.js';
 
-const MOBILE_FOLDERS = ['mobile', 'mobile/auth', 'mobile/cli', 'mobile/expo', 'mobile/metro'];
+const MOBILE_FOLDERS = [
+  'mobile',
+  'mobile/adapters',
+  'mobile/auth',
+  'mobile/cli',
+  'mobile/expo',
+  'mobile/metro',
+];
 const MOBILE_PACKAGES = [
+  '@app/native-adapters',
   '@app/native-auth',
   '@app/metro-config',
   '@app/mobile-cli',
@@ -72,7 +80,13 @@ export async function expectPlannedMobileWorkspaceIsPruned(
     shared: { 'native-core': { files: string[]; workspaces: string[] } };
   };
   expect(manifest.core.alwaysRemoveFiles).toEqual(
-    expect.arrayContaining(['mobile/**', 'mobile/cli/**', 'mobile/expo/**', 'mobile/metro/**']),
+    expect.arrayContaining([
+      'mobile/**',
+      'mobile/adapters/**',
+      'mobile/cli/**',
+      'mobile/expo/**',
+      'mobile/metro/**',
+    ]),
   );
   expect(manifest.shared['native-core'].files).toContain('mobile/auth/**');
   expect(manifest.shared['native-core'].workspaces).toContain('mobile/auth');
