@@ -140,6 +140,12 @@ export function createSignInController(
           runtime.dependencies,
           oldRefreshToken,
           runtime.config.clientId,
+          runtime.record?.proofKeyThumbprint === undefined
+            ? undefined
+            : {
+                serverBaseAddress: runtime.config.serverBaseAddress,
+                proofKeyThumbprint: runtime.record.proofKeyThumbprint,
+              },
         ).catch(() => undefined);
       }
     }

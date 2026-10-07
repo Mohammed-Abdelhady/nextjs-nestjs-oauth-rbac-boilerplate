@@ -12,6 +12,7 @@
 - `clock`: return wall time and monotonic elapsed time in milliseconds.
 - `timer`: schedule a callback after a duration and return its cancel function.
 - `install`: return an install id from storage that is not backed up or restored to another device.
+- `deviceKey` (optional): keep an ES256 private key in secure hardware and return its public JWK or sign bytes.
 
 The install id must survive app restarts on one device and must change after a reinstall or device
 restore. Use device-only keychain storage on iOS and the no-backup files directory on Android. If the
@@ -30,6 +31,8 @@ resolution, which can treat a path as a new host. The engine builds abort signal
 controller, and the transport must honor them. Set a deadline on ordinary API requests too. The
 engine bounds OAuth exchange, profile loading, refresh, storage, and revoke. If an ordinary API
 request never settles, that request stays pending. A later response cannot be retried after sign-out.
+The SDK forwards DPoP request headers and exposes the DPoP-Nonce response header on OAuth errors.
+Web callers do not add proofs or change their requests.
 
 Sign-out calls `oauth.revoke` with the refresh token. The bearer logout route also ends the native
 session family, but it needs an access token that may already have expired. Revocation works with the
@@ -45,16 +48,31 @@ stores the refresh token and lineage id. The lineage id stays local and is carri
 refreshes. The access token stays in memory and a restored session refreshes before its first protected
 request. A marker is saved before each rotation. Refresh failures follow this policy:
 
-| Server result                                                                                         | Stored record and snapshot                                                                                                                                                         | May the old refresh token be sent again?                         |
-| ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `invalid_grant`, `invalid_client`, or `unauthorized_client` with `NATIVE_AUTH_DISABLED`               | Delete the record and become `signedOut`.                                                                                                                                          | No                                                               |
-| Any other OAuth error, including `server_error`, `temporarily_unavailable`, or an unknown code        | Keep the marker, clear tokens from memory, and become `reauthRequired`.                                                                                                            | No                                                               |
-| No response or refresh deadline                                                                       | Keep the marker, clear tokens from memory, and become `reauthRequired`.                                                                                                            | No                                                               |
-| `429 RATE_LIMIT_EXCEEDED`, including a response with no body (the SDK maps a bare `429` to this code) | Clear the marker, keep `signedIn`, and fail the waiting requests with the throttle error. Later requests share one retry after a 30 second backoff.                                | Yes, once after the backoff. The server refused before rotation. |
-| `429` with another code or no matching throttle code                                                  | Keep the marker, clear tokens from memory, and become `reauthRequired`; rotation cannot be ruled out.                                                                              | No                                                               |
-| `503 AUTHORITY_UNAVAILABLE` application response                                                      | Clear the marker, keep `signedIn`, and fail the waiting requests. Later requests share one retry after a 30 second backoff because this code means the transaction did not commit. | Yes, once after the backoff.                                     |
-| `503 TRANSACTION_OUTCOME_UNKNOWN` application response                                                | Keep the marker, clear tokens from memory, and become `reauthRequired`. The server cannot confirm whether rotation committed.                                                      | No                                                               |
-| Other non-OAuth HTTP failure, including a bodiless 5xx or a code paired with the wrong status         | Keep the marker, clear tokens from memory, and become `reauthRequired`; rotation cannot be ruled out.                                                                              | No                                                               |
+When `deviceKey` is configured, code exchange, refresh, and revoke carry a fresh DPoP proof signed
+with that key. The session record stores its public-key thumbprint, while the private key remains in
+the shell's secure hardware. Ordinary API requests stay bearer requests. A nonce challenge is retried
+once with the same OAuth request and a fresh proof id. A second challenge ends that operation.
+
+Only a bound refresh gets one extra send after an unknown answer. It uses the same refresh token and
+a fresh proof. The server can return one replacement pair while that retry window remains open and
+the replacement has not been used. If the answer is `NATIVE_DPOP_RETRY_IN_PROGRESS`, `invalid_grant`,
+or unknown again, the engine asks for sign-in. Unbound sessions never get this retry.
+
+An unavailable key is transient, so the engine keeps the bound session and lets the caller try again.
+Cancellation, key invalidation, or a thumbprint mismatch makes that session unusable and asks for
+sign-in. A new sign-in attempts a quiet revoke of the old family. If its old key is gone, the revoke
+cannot be signed and the old family remains until its server expiry.
+
+| Server result                                                                                         | Stored record and snapshot                                                                                                                                                         | May the old refresh token be sent again?                                       |
+| ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `invalid_grant`, `invalid_client`, or `unauthorized_client` with `NATIVE_AUTH_DISABLED`               | Delete the record and become `signedOut`.                                                                                                                                          | No                                                                             |
+| Any other OAuth error, including `server_error`, `temporarily_unavailable`, or an unknown code        | Keep the marker, clear tokens from memory, and become `reauthRequired`.                                                                                                            | No. The retry exception is for no response or a non-OAuth 5xx.                 |
+| No response or refresh deadline                                                                       | Keep the marker, clear tokens from memory, and become `reauthRequired`.                                                                                                            | No. A bound session may make one proof-bearing retry after an unknown outcome. |
+| `429 RATE_LIMIT_EXCEEDED`, including a response with no body (the SDK maps a bare `429` to this code) | Clear the marker, keep `signedIn`, and fail the waiting requests with the throttle error. Later requests share one retry after a 30 second backoff.                                | Yes, once after the backoff. The server refused before rotation.               |
+| `429` with another code or no matching throttle code                                                  | Keep the marker, clear tokens from memory, and become `reauthRequired`; rotation cannot be ruled out.                                                                              | No                                                                             |
+| `503 AUTHORITY_UNAVAILABLE` application response                                                      | Clear the marker, keep `signedIn`, and fail the waiting requests. Later requests share one retry after a 30 second backoff because this code means the transaction did not commit. | Yes, once after the backoff.                                                   |
+| `503 TRANSACTION_OUTCOME_UNKNOWN` application response                                                | Keep the marker, clear tokens from memory, and become `reauthRequired`. The server cannot confirm whether rotation committed.                                                      | No. A bound session may make one proof-bearing retry.                          |
+| Other non-OAuth HTTP failure, including a bodiless 5xx or a code paired with the wrong status         | Keep the marker, clear tokens from memory, and become `reauthRequired`; rotation cannot be ruled out.                                                                              | No                                                                             |
 
 After disposal, the engine classifies a stored record as `OWN_SAME`, `OWN_OTHER`, `FOREIGN`, `EMPTY`,
 or `UNREADABLE`. `OWN_SAME` means the exact token and lineage are stored, so the record stays and the
@@ -113,9 +131,9 @@ Snapshots are immutable. `warning: 'storageBlocked'` means a rotated token pair 
 ## Outcomes for the UI
 
 - Restore returns `restored`, `storageBlocked`, or `disposed`.
-- Sign-in returns `signedIn`, `alreadySignedIn`, `signedOut`, `disposed`, `cancelled`, `dismissed`, `expired`, `invalidCallback`, `cryptoFailure`, `clockFailure`, `browserFailure`, `authorizationDenied`, `disabled`, `oauthFailure`, `throttled`, `transportFailure`, `aborted`, `apiFailure`, or `storageFailure`.
+- Sign-in returns `signedIn`, `alreadySignedIn`, `signedOut`, `disposed`, `cancelled`, `dismissed`, `expired`, `invalidCallback`, `cryptoFailure`, `clockFailure`, `browserFailure`, `authorizationDenied`, `disabled`, `deviceBindingRequired`, `deviceKeyFailure`, `oauthFailure`, `throttled`, `transportFailure`, `aborted`, `apiFailure`, or `storageFailure`.
 - Sign-out returns `signedOut` or `disposed`. Its revocation result is `notNeeded`, `recordUnavailable`, `revoked`, `failed`, or `timedOut`.
-- API requests can reject with `AuthSessionError`, `AuthDisposedError`, `UnsafeRequestPathError`, `ApiError`, `OAuthError`, or `TransportError`. `TransportError.reason` is `aborted` or `no_response`.
+- API requests can reject with `AuthSessionError`, `AuthDisposedError`, `UnsafeRequestPathError`, `DeviceKeyAuthError`, `DeviceBindingRequiredError`, `ApiError`, `OAuthError`, or `TransportError`. `TransportError.reason` is `aborted` or `no_response`.
 - Read the snapshot `reason` after failures and show the `warning` when present.
 
 After `dispose()`, pending public calls settle as `disposed`, subscriptions are removed, and the
@@ -194,8 +212,16 @@ repeats as a link event is handed over once in total. A blocked read reports why
 The suite does not cover `DeviceKeyPort`, a change of install identity after a reinstall, or two
 replaces racing each other.
 
-## Device key interface
+## Device-bound guarantee and limits
 
-`DeviceKeyPort` describes an ES256 key held in device secure hardware, with `unavailable`,
-`cancelled by the person`, and `keyInvalidated` failures. It is exported for the later device-key
-piece and is not used yet.
+With a configured device key, an intercepted refresh token is not enough to rotate the family. The
+caller must also use the matching private key for a fresh proof. A lost bound-refresh answer gets at
+most one proof-bearing retry. The guarantee now reads: a refresh token is never sent twice, except
+once more with proof for a bound session after an unknown outcome.
+
+The replacement from that retry is the only replacement the server can return for the lost answer.
+If the retry answer is also lost, or the server says a replacement is already in progress, sign-in is
+required. If the key is lost or invalidated, the engine cannot use the bound session or sign a revoke
+for it. That session remains valid on the server until its idle or absolute expiry. `DeviceKeyPort` is
+optional for existing clients and shells that can provide a secure-hardware implementation can enable
+it.

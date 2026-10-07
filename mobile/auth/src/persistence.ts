@@ -45,6 +45,7 @@ export function parseStoredRecord(value: string): StoredAuthRecord | undefined {
     !isString(parsed.clientId) ||
     !isString(parsed.installDigest) ||
     (parsed.lineageId !== undefined && !isString(parsed.lineageId)) ||
+    (parsed.proofKeyThumbprint !== undefined && !isString(parsed.proofKeyThumbprint)) ||
     typeof parsed.schemaVersion !== 'number' ||
     !Number.isInteger(parsed.schemaVersion)
   ) {
@@ -71,12 +72,16 @@ export function parseStoredRecord(value: string): StoredAuthRecord | undefined {
     const tokenFields = {
       ...fields,
       tokens,
+      ...(isString(parsed.proofKeyThumbprint)
+        ? { proofKeyThumbprint: parsed.proofKeyThumbprint }
+        : {}),
       ...(parsed.refreshInFlight === undefined ? {} : { refreshInFlight: parsed.refreshInFlight }),
     };
     if (isString(parsed.lineageId)) return { ...tokenFields, lineageId: parsed.lineageId };
     return tokenFields;
   }
   if (parsed.lineageId !== undefined) return undefined;
+  if (parsed.proofKeyThumbprint !== undefined) return undefined;
   return {
     ...fields,
     ...(isString(parsed.authorizationOperationId)

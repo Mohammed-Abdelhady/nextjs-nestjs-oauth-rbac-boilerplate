@@ -1,4 +1,5 @@
 import { SdkError } from '@app/sdk';
+import type { DeviceKeyFailure } from './types/auth';
 
 export type AuthPortFailureReason = 'timedOut' | 'failed';
 
@@ -35,5 +36,24 @@ export class AuthDisposedError extends SdkError {
   constructor() {
     super('The authentication engine has been disposed');
     this.name = 'AuthDisposedError';
+  }
+}
+
+export type DeviceKeyErrorReason = DeviceKeyFailure['kind'] | 'thumbprintMismatch';
+
+export class DeviceKeyAuthError extends SdkError {
+  constructor(
+    readonly reason: DeviceKeyErrorReason,
+    cause?: unknown,
+  ) {
+    super(`Device key operation failed: ${reason}`, { cause });
+    this.name = 'DeviceKeyAuthError';
+  }
+}
+
+export class DeviceBindingRequiredError extends SdkError {
+  constructor(readonly errorDescription: string) {
+    super(errorDescription);
+    this.name = 'DeviceBindingRequiredError';
   }
 }

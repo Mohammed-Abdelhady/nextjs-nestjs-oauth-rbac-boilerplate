@@ -48,7 +48,7 @@ export function safeThrottleDeadline(runtime: AuthRuntime): number | undefined {
 export function makeRefreshRecord(
   runtime: AuthRuntime,
   installDigest: string,
-  tokens: Pick<RuntimeTokens, 'accessToken' | 'refreshToken' | 'lineageId'>,
+  tokens: Pick<RuntimeTokens, 'accessToken' | 'refreshToken' | 'lineageId' | 'proofKeyThumbprint'>,
   refreshInFlight = false,
 ): SessionAuthRecord {
   const base = makeRecord(runtime.config, installDigest);
@@ -59,6 +59,9 @@ export function makeRefreshRecord(
     clientId: base.clientId,
     installDigest: base.installDigest,
     lineageId: tokens.lineageId,
+    ...(tokens.proofKeyThumbprint === undefined
+      ? {}
+      : { proofKeyThumbprint: tokens.proofKeyThumbprint }),
     tokens: { refreshToken: tokens.refreshToken },
     ...(refreshInFlight ? { refreshInFlight: true } : {}),
   };

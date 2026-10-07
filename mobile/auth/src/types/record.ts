@@ -11,6 +11,7 @@ export type AuthRecord = SessionAuthRecord | PendingAuthRecord;
 export interface SessionAuthRecord extends AuthRecordFields {
   lineageId: string;
   tokens: StoredTokens;
+  proofKeyThumbprint?: string;
   authorizationOperationId?: undefined;
   transaction?: undefined;
   refreshInFlight?: boolean;
@@ -18,6 +19,7 @@ export interface SessionAuthRecord extends AuthRecordFields {
 
 export interface PendingAuthRecord extends AuthRecordFields {
   lineageId?: string;
+  proofKeyThumbprint?: undefined;
   tokens?: undefined;
   authorizationOperationId?: string;
   transaction?: AuthTransaction;
@@ -27,6 +29,7 @@ export interface PendingAuthRecord extends AuthRecordFields {
 export type LegacyTokenRecord = AuthRecordFields & {
   lineageId?: undefined;
   tokens: StoredTokens;
+  proofKeyThumbprint?: string;
   authorizationOperationId?: undefined;
   transaction?: undefined;
   refreshInFlight?: boolean;
@@ -52,4 +55,5 @@ export interface RuntimeTokens extends StoredTokens {
   expiresAt: number;
   version: number;
   lineageId: string;
+  proofKeyThumbprint?: string;
 }

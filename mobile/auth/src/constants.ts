@@ -23,12 +23,16 @@ export const AUTH_REASON = {
   DISABLED: 'disabled',
   PROFILE_FAILURE: 'profileFailure',
   AUTHORIZATION_DENIED: 'authorizationDenied',
+  DEVICE_KEY_UNAVAILABLE: 'deviceKeyUnavailable',
+  DEVICE_KEY_INVALIDATED: 'deviceKeyInvalidated',
+  DEVICE_BINDING_REQUIRED: 'deviceBindingRequired',
 } as const;
 
 export const AUTH_SCHEMA_VERSION = 1;
 export const PKCE_VERIFIER_BYTES = 32;
 export const OAUTH_STATE_BYTES = 16;
 export const SESSION_LINEAGE_BYTES = 16;
+export const DPOP_JTI_BYTES = 16;
 export const MIN_OAUTH_STATE_CHARACTERS = Math.ceil((OAUTH_STATE_BYTES * 8) / 6);
 export const AUTHORIZATION_CODE_LIFETIME_MS = 60_000;
 export const PENDING_AUTHORIZATION_LIFETIME_MS = 5 * 60_000;
@@ -37,6 +41,7 @@ export const BROWSER_AUTHORIZATION_TIMEOUT_MS =
 export const INSTALL_IDENTITY_TIMEOUT_MS = 5_000;
 export const CRYPTO_RANDOM_TIMEOUT_MS = 5_000;
 export const CRYPTO_DIGEST_TIMEOUT_MS = 5_000;
+export const DEVICE_KEY_TIMEOUT_MS = 5_000;
 export const CALLBACK_READ_TIMEOUT_MS = 5_000;
 export const CREDENTIAL_READ_TIMEOUT_MS = 5_000;
 export const DISPOSED_RECORD_READ_ATTEMPTS = 2;
@@ -64,7 +69,11 @@ export const PORT_OPERATION = {
   CRYPTO_RANDOM_BYTES: 'crypto.randomBytes',
   CRYPTO_SHA256: 'crypto.sha256',
   CALLBACK_INITIAL_ADDRESS: 'callbacks.initialAddress',
+  DEVICE_KEY_PUBLIC_KEY: 'deviceKey.publicKey',
+  DEVICE_KEY_SIGN: 'deviceKey.sign',
 } as const;
+export const NATIVE_DPOP_REQUIRED_REASON = 'NATIVE_DPOP_REQUIRED';
+export const NATIVE_DPOP_RETRY_IN_PROGRESS_REASON = 'NATIVE_DPOP_RETRY_IN_PROGRESS';
 export const DISPOSED_RECORD_OWNER = {
   OWN_SAME: 'OWN_SAME',
   OWN_OTHER: 'OWN_OTHER',
