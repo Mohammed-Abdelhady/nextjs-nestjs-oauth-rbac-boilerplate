@@ -135,6 +135,8 @@ test('lint-staged selects each importing workspace binary instead of root hoisti
     config['backend/**/*.ts'], config['frontend/**/*.{ts,tsx}'],
     config['packages/create-nest-next-auth/**/*.ts'], config['shared/core/**/*.ts'],
     config['shared/sdk/**/*.ts'], config['mobile/auth/**/*.ts'],
+    config['mobile/cli/**/*.{ts,tsx}'], config['mobile/expo/**/*.{ts,tsx}'],
+    config['mobile/metro/**/*.{ts,cjs}'],
   ], [
     ['pnpm --filter backend exec eslint --fix --max-warnings 0'],
     ['pnpm --filter frontend exec eslint --fix --max-warnings 0'],
@@ -142,6 +144,9 @@ test('lint-staged selects each importing workspace binary instead of root hoisti
     ['pnpm --filter @app/core exec eslint --fix --max-warnings 0'],
     ['pnpm --filter @app/sdk exec eslint --fix --max-warnings 0'],
     ['pnpm --filter @app/native-auth exec eslint --fix --max-warnings 0'],
+    ['pnpm --filter @app/mobile-cli exec eslint --fix --max-warnings 0'],
+    ['pnpm --filter @app/mobile-expo exec eslint --fix --max-warnings 0'],
+    ['pnpm --filter @app/metro-config exec eslint --fix --max-warnings 0'],
   ]);
 });
 

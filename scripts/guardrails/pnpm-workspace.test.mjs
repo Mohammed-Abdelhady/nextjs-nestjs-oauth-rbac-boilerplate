@@ -8,7 +8,8 @@ import test from 'node:test';
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const MANIFESTS = [
   'package.json', 'backend/package.json', 'frontend/package.json',
-  'mobile/auth/package.json', 'packages/create-nest-next-auth/package.json',
+  'mobile/auth/package.json', 'mobile/cli/package.json', 'mobile/expo/package.json',
+  'mobile/metro/package.json', 'packages/create-nest-next-auth/package.json',
   'shared/core/package.json', 'shared/sdk/package.json',
 ];
 const readManifest = (file) => JSON.parse(readFileSync(join(ROOT, file), 'utf8'));
@@ -49,6 +50,14 @@ test('repository manifests pin the package manager and supported Node major with
     readManifest('mobile/auth/package.json').dependencies['@app/sdk'],
     readManifest('shared/sdk/package.json').dependencies['@app/core'],
   ], ['workspace:*', 'workspace:*', 'workspace:*', 'workspace:*', 'workspace:*']);
+  for (const shell of ['mobile/cli/package.json', 'mobile/expo/package.json']) {
+    const manifest = readManifest(shell);
+    assert.deepEqual({
+      engine: manifest.dependencies['@app/native-auth'],
+      sdk: manifest.dependencies['@app/sdk'],
+      metro: manifest.devDependencies['@app/metro-config'],
+    }, { engine: 'workspace:*', sdk: 'workspace:*', metro: 'workspace:*' }, shell);
+  }
 });
 
 test('recursive gates omit the root and chain root config tests once', () => {
