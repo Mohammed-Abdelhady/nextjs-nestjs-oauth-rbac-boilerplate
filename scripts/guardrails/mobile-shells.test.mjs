@@ -79,8 +79,8 @@ const typed = (exclude, typescript = '^5.9.3') => ({
 });
 const ONE_TYPESCRIPT = 'packages:\n\n  typescript@5.9.3:\n    resolution: {}\n';
 const RUNTIME = {
-  expo: '57.0.27', 'expo-crypto': '57.0.3', 'expo-file-system': '57.0.7',
-  'expo-linking': '57.0.12', 'expo-secure-store': '57.0.4', 'expo-web-browser': '57.0.3',
+  expo: '57.0.26', 'expo-crypto': '57.0.3', 'expo-file-system': '57.0.7',
+  'expo-linking': '57.0.11', 'expo-secure-store': '57.0.4', 'expo-web-browser': '57.0.3',
   react: '19.2.3', 'react-dom': '19.2.3', 'react-native': '0.86.3',
 };
 const TOOLING = {
@@ -110,7 +110,7 @@ test('a patch of difference in React Native between the shells is reported', () 
   ]);
 });
 
-for (const range of ['^57.0.27', '~57.0.27', '57.0', 'latest', 'workspace:*']) {
+for (const range of ['^57.0.26', '~57.0.26', '57.0', 'latest', 'workspace:*']) {
   test(`an Expo version written as ${range} is reported as unpinned`, () => {
     const loose = { ...RUNTIME, expo: range };
 

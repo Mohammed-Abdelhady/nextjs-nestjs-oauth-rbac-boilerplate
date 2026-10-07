@@ -12,10 +12,10 @@
   "dependencies": {
     "@app/native-auth": "workspace:*",
     "@app/sdk": "workspace:*",
-    "expo": "57.0.27",
+    "expo": "57.0.26",
     "expo-crypto": "57.0.3",
     "expo-file-system": "57.0.7",
-    "expo-linking": "57.0.12",
+    "expo-linking": "57.0.11",
     "expo-secure-store": "57.0.4",
     "expo-web-browser": "57.0.3",
     "react": "19.2.3",
