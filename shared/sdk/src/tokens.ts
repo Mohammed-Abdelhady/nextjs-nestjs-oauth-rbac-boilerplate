@@ -1,4 +1,4 @@
-import { OAUTH_TOKEN_TYPE } from './constants';
+import { OAUTH_DPOP_TOKEN_TYPE, OAUTH_TOKEN_TYPE } from './constants';
 import { malformedResponse, nonEmptyString, unwrapOAuth, type JsonObject } from './envelope';
 import type { TransportResponse } from './transport';
 import type { TokenSet } from './types';
@@ -29,8 +29,9 @@ export function unwrapTokenSet(response: TransportResponse): TokenSet {
   if (typeof expiresIn !== 'number' || !Number.isFinite(expiresIn) || expiresIn <= 0) {
     throw malformedToken(status, 'expires_in is not a positive number');
   }
-  if (body.token_type !== OAUTH_TOKEN_TYPE) {
-    throw malformedToken(status, `token_type is not ${OAUTH_TOKEN_TYPE}`);
+  const tokenType = body.token_type;
+  if (tokenType !== OAUTH_TOKEN_TYPE && tokenType !== OAUTH_DPOP_TOKEN_TYPE) {
+    throw malformedToken(status, 'token_type is neither Bearer nor DPoP');
   }
   if (typeof body.scope !== 'string') {
     throw malformedToken(status, 'scope is not a string');
@@ -38,7 +39,7 @@ export function unwrapTokenSet(response: TransportResponse): TokenSet {
 
   return {
     accessToken,
-    tokenType: OAUTH_TOKEN_TYPE,
+    tokenType,
     expiresIn,
     refreshToken,
     scope: body.scope,
