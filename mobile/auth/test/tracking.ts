@@ -73,6 +73,14 @@ export function allowRefreshReplayAfterNonRotatingFailure(token: string): void {
   allowRefreshReplayAfterThrottle(token);
 }
 
+export function allowRefreshReplayAfterDpopNonce(token: string): void {
+  allowRefreshReplayAfterThrottle(token);
+}
+
+export function allowBoundRefreshReplayAfterUnknownOutcome(token: string): void {
+  allowRefreshReplayAfterThrottle(token);
+}
+
 export function assertNoRefreshTokenReplay(): void {
   const tokens = [...transports].flatMap((transport) =>
     transport.sent.flatMap((request) => {

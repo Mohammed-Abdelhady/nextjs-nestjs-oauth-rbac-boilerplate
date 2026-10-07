@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createApiClient, type ApiClient } from './client';
 import { ApiError, OAuthError } from './errors';
 import { SdkError } from './index';
-import { answering, rejecting, type FakeTransport } from './test-support';
+import { answering, rejecting, respond, type FakeTransport } from './test-support';
 import { TransportError, type TransportSignal } from './transport';
 
 const SESSION_ID = '65a000000000000000000001';
@@ -48,6 +48,25 @@ describe('createApiClient failures', () => {
 
     await expect(failure).rejects.toBeInstanceOf(OAuthError);
     await expect(failure).rejects.toMatchObject({ status: 400, error: 'invalid_grant' });
+  });
+
+  it('passes the OAuth description and DPoP nonce through the typed client', async () => {
+    const client = createApiClient({
+      request: () =>
+        Promise.resolve(
+          respond(
+            400,
+            { error: 'use_dpop_nonce', error_description: 'NATIVE_DPOP_REQUIRED' },
+            { 'dpop-nonce': 'nonce-2' },
+          ),
+        ),
+    });
+
+    await expect(client.oauth.refresh(REFRESH)).rejects.toMatchObject({
+      error: 'use_dpop_nonce',
+      errorDescription: 'NATIVE_DPOP_REQUIRED',
+      dpopNonce: 'nonce-2',
+    });
   });
 
   it('raises a refused revoke as OAuthError', async () => {

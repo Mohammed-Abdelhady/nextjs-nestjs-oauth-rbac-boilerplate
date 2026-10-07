@@ -7,6 +7,8 @@ import {
   PORT_OPERATION,
 } from './constants';
 import { withPortDeadline } from './deadlines';
+import { deviceKeyThumbprint } from './dpop-proof';
+import { DeviceKeyAuthError } from './errors';
 import {
   digestInstallIdentity,
   parseStoredRecord,
@@ -178,6 +180,37 @@ export function createRestoreOperation(runtime: AuthRuntime, signIn: SignInContr
       return { kind: 'restored', status: runtime.snapshot.status };
     }
     if (record.tokens) {
+      if (record.proofKeyThumbprint !== undefined) {
+        if (!runtime.dependencies.deviceKey) {
+          runtime.setState(SESSION_STATUS.STORAGE_BLOCKED, AUTH_OPERATION.NONE, {
+            reason: AUTH_REASON.DEVICE_KEY_UNAVAILABLE,
+          });
+          return { kind: 'storageBlocked', reason: 'deviceKeyUnavailable' };
+        }
+        let currentThumbprint: string;
+        try {
+          currentThumbprint = await deviceKeyThumbprint(runtime.dependencies);
+        } catch (error) {
+          if (!(error instanceof DeviceKeyAuthError) || error.reason === 'unavailable') {
+            runtime.setState(SESSION_STATUS.STORAGE_BLOCKED, AUTH_OPERATION.NONE, {
+              reason: AUTH_REASON.DEVICE_KEY_UNAVAILABLE,
+            });
+            return { kind: 'storageBlocked', reason: 'deviceKeyUnavailable' };
+          }
+          runtime.tokens = undefined;
+          runtime.setState(SESSION_STATUS.REAUTH_REQUIRED, AUTH_OPERATION.NONE, {
+            reason: AUTH_REASON.DEVICE_KEY_INVALIDATED,
+          });
+          return { kind: 'restored', status: runtime.snapshot.status };
+        }
+        if (currentThumbprint !== record.proofKeyThumbprint) {
+          runtime.tokens = undefined;
+          runtime.setState(SESSION_STATUS.REAUTH_REQUIRED, AUTH_OPERATION.NONE, {
+            reason: AUTH_REASON.DEVICE_KEY_INVALIDATED,
+          });
+          return { kind: 'restored', status: runtime.snapshot.status };
+        }
+      }
       let monotonicTime: number;
       try {
         monotonicTime = runtime.monotonicTime();
@@ -187,7 +220,14 @@ export function createRestoreOperation(runtime: AuthRuntime, signIn: SignInContr
         });
         return { kind: 'storageBlocked', reason: 'unavailable' };
       }
-      runtime.installTokens('', record.tokens.refreshToken, monotonicTime, 0, record.lineageId);
+      runtime.installTokens(
+        '',
+        record.tokens.refreshToken,
+        monotonicTime,
+        0,
+        record.lineageId,
+        record.proofKeyThumbprint,
+      );
       runtime.setState(SESSION_STATUS.SIGNED_IN, AUTH_OPERATION.NONE, {
         profile: runtime.snapshot.profile,
       });

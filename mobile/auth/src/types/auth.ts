@@ -18,7 +18,10 @@ export type AuthReason =
   | 'oauthFailure'
   | 'disabled'
   | 'profileFailure'
-  | 'authorizationDenied';
+  | 'authorizationDenied'
+  | 'deviceKeyUnavailable'
+  | 'deviceKeyInvalidated'
+  | 'deviceBindingRequired';
 
 export type InvalidCallbackReason =
   | 'tooLong'
@@ -106,6 +109,7 @@ export interface AuthPorts {
 
 export interface AuthDependencies extends AuthPorts {
   makeTransport(baseAddress: string): Transport<AbortSignalPort>;
+  deviceKey?: DeviceKeyPort;
 }
 
 export interface AuthSnapshot {
@@ -126,7 +130,8 @@ export type RestoreOutcome =
   | { kind: 'restored'; status: SessionStatus }
   | {
       kind: 'storageBlocked';
-      reason: 'locked' | 'cancelled' | 'unavailable' | 'installUnavailable';
+      reason:
+        'locked' | 'cancelled' | 'unavailable' | 'installUnavailable' | 'deviceKeyUnavailable';
     };
 
 export type SignInOutcome =
@@ -143,6 +148,11 @@ export type SignInOutcome =
   | { kind: 'authorizationDenied'; error: string }
   | { kind: 'invalidCallback'; reason: InvalidCallbackReason }
   | { kind: 'disabled' }
+  | { kind: 'deviceBindingRequired' }
+  | {
+      kind: 'deviceKeyFailure';
+      reason: 'unavailable' | 'cancelled' | 'keyInvalidated' | 'thumbprintMismatch';
+    }
   | { kind: 'oauthFailure'; error: OAuthError }
   | { kind: 'throttled'; error: ApiError }
   | { kind: 'transportFailure'; error: TransportError }

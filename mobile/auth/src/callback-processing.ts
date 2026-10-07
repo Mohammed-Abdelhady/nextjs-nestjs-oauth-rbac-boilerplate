@@ -1,4 +1,4 @@
-import { OAuthError } from '@app/sdk';
+import { API_PATHS, OAuthError } from '@app/sdk';
 import type { ApiClient } from '@app/sdk';
 import {
   AUTH_OPERATION,
@@ -6,18 +6,18 @@ import {
   CRYPTO_RANDOM_TIMEOUT_MS,
   OAUTH_EXCHANGE_TIMEOUT_MS,
   PORT_OPERATION,
-  PROFILE_READ_TIMEOUT_MS,
   SESSION_LINEAGE_BYTES,
   SESSION_STATUS,
 } from './constants';
-import { oauthFailureReason } from './failure';
+import { isDeviceBindingRequired, oauthFailureReason } from './failure';
 import { parseCallback, parseUri } from './redirect';
 import { constantTimeEqual, transactionExpired } from './persistence';
 import { withNetworkDeadline, withPortDeadline } from './deadlines';
 import { base64UrlEncode } from './encoding';
-import { revokeQuietly } from './revocation';
-import { settleDisposedToken } from './refresh-dispose';
-import { apiFailureOutcome, asError, exchangeFailureOutcome } from './callback-outcomes';
+import { requestWithDpopNonceRetry } from './dpop-requests';
+import { createLateTokenRevoker } from './callback-late-revocation';
+import { readExchangedProfile } from './callback-profile';
+import { asError, exchangeFailureOutcome } from './callback-outcomes';
 import type { AuthRuntime } from './runtime';
 import type { PendingAuthRecord, SessionAuthRecord, AuthTransaction } from './types/record';
 import type {
@@ -149,16 +149,11 @@ export function createCallbackProcessor(
     consumed: PendingAuthRecord,
     epoch: number,
   ): Promise<SignInOutcome> {
-    let revokedToken: string | undefined;
-    let revocation: Promise<void> | undefined;
-    const revokeLateToken = (token: string, lineageId?: string): Promise<void> => {
-      if (revokedToken === token && revocation) return revocation;
-      revokedToken = token;
-      revocation = runtime.disposed
-        ? settleDisposedToken(runtime, revocationClient, consumed.installDigest, lineageId, token)
-        : revokeQuietly(revocationClient, runtime.dependencies, token, runtime.config.clientId);
-      return revocation;
-    };
+    const revokeLateToken = createLateTokenRevoker(
+      runtime,
+      revocationClient,
+      consumed.installDigest,
+    );
     let lineageId: string;
     try {
       const lineageBytes = await withPortDeadline(
@@ -179,25 +174,48 @@ export function createCallbackProcessor(
       return { kind: 'cryptoFailure', error: asError(error) };
     }
     try {
-      const tokens = await withNetworkDeadline(
+      const exchange = await withNetworkDeadline(
         runtime.dependencies.timer,
         OAUTH_EXCHANGE_TIMEOUT_MS,
-        (signal) =>
-          client.oauth.exchangeCode(
+        async (signal) => {
+          const input = {
+            code,
+            codeVerifier: transaction.verifier,
+            redirectUri: transaction.returnAddress,
+            clientId: runtime.config.clientId,
+          };
+          if (!runtime.dependencies.deviceKey) {
+            return {
+              tokens: await client.oauth.exchangeCode(input, { signal }),
+              proofKeyThumbprint: undefined,
+            };
+          }
+          const proof = await requestWithDpopNonceRetry(
             {
-              code,
-              codeVerifier: transaction.verifier,
-              redirectUri: transaction.returnAddress,
-              clientId: runtime.config.clientId,
+              ...runtime.dependencies,
+              serverBaseAddress: runtime.config.serverBaseAddress,
+              method: 'POST',
+              path: API_PATHS.oauth.token,
+              signal,
+              mayRetryChallenge: () => runtime.isEpochCurrent(epoch) && !runtime.disposed,
             },
-            { signal },
-          ),
-        (lateTokens) => {
-          void revokeLateToken(lateTokens.refreshToken, lineageId).catch(() => undefined);
+            ({ headers, signal: requestSignal }) =>
+              client.oauth.exchangeCode(input, { headers, signal: requestSignal }),
+          );
+          return { tokens: proof.value, proofKeyThumbprint: proof.thumbprint };
+        },
+        (lateExchange) => {
+          void revokeLateToken(
+            lateExchange.tokens.refreshToken,
+            lineageId,
+            lateExchange.proofKeyThumbprint,
+          ).catch(() => undefined);
         },
       );
+      const tokens = exchange.tokens;
+      const proofKeyThumbprint = exchange.proofKeyThumbprint;
       if (!runtime.isEpochCurrent(epoch)) {
-        await revokeLateToken(tokens.refreshToken, lineageId);
+        await revokeLateToken(tokens.refreshToken, lineageId, proofKeyThumbprint);
         return { kind: 'signedOut' };
       }
       const sentAt = runtime.lastOAuthTokenSentAt ?? runtime.monotonicTime();
@@ -207,6 +225,7 @@ export function createCallbackProcessor(
         sentAt,
         tokens.expiresIn,
         lineageId,
+        proofKeyThumbprint,
       );
       const tokenRecord: SessionAuthRecord = {
         schemaVersion: consumed.schemaVersion,
@@ -216,6 +235,7 @@ export function createCallbackProcessor(
         installDigest: consumed.installDigest,
         lineageId,
         tokens: { refreshToken: tokens.refreshToken },
+        ...(proofKeyThumbprint === undefined ? {} : { proofKeyThumbprint }),
       };
       try {
         const written = await runtime.replaceRecord(
@@ -230,69 +250,45 @@ export function createCallbackProcessor(
           },
         );
         if (!written) {
-          await revokeLateToken(tokens.refreshToken, lineageId);
+          await revokeLateToken(tokens.refreshToken, lineageId, proofKeyThumbprint);
           return { kind: 'signedOut' };
         }
       } catch (error) {
         if (!runtime.isEpochCurrent(epoch)) {
-          if (runtime.disposed) await revokeLateToken(tokens.refreshToken, lineageId);
+          if (runtime.disposed)
+            await revokeLateToken(tokens.refreshToken, lineageId, proofKeyThumbprint);
           return { kind: 'signedOut' };
         }
         runtime.tokens = undefined;
-        await revokeLateToken(tokens.refreshToken, lineageId);
+        await revokeLateToken(tokens.refreshToken, lineageId, proofKeyThumbprint);
         runtime.setState(SESSION_STATUS.STORAGE_BLOCKED, AUTH_OPERATION.NONE, {
           reason: AUTH_REASON.STORAGE_FAILURE,
         });
         return { kind: 'storageFailure', error: asError(error) };
       }
-      return await readProfile(tokens.refreshToken, lineageId, epoch, revokeLateToken);
+      return await readExchangedProfile(
+        runtime,
+        client,
+        tokens.refreshToken,
+        lineageId,
+        proofKeyThumbprint,
+        epoch,
+        revokeLateToken,
+      );
     } catch (error) {
       if (!runtime.isEpochCurrent(epoch)) return { kind: 'signedOut' };
       runtime.tokens = undefined;
       await runtime.deleteRecord(epoch).catch(() => false);
       if (!runtime.isEpochCurrent(epoch)) return { kind: 'signedOut' };
       const outcome = exchangeFailureOutcome(error);
-      const reason = error instanceof OAuthError ? oauthFailureReason(error) : undefined;
+      const reason =
+        error instanceof OAuthError
+          ? isDeviceBindingRequired(error)
+            ? AUTH_REASON.DEVICE_BINDING_REQUIRED
+            : oauthFailureReason(error)
+          : undefined;
       runtime.setState(SESSION_STATUS.SIGNED_OUT, AUTH_OPERATION.NONE, reason ? { reason } : {});
       return outcome;
-    }
-  }
-
-  async function readProfile(
-    refreshToken: string,
-    lineageId: string,
-    epoch: number,
-    revokeLateToken: (token: string, lineageId?: string) => Promise<void>,
-  ): Promise<SignInOutcome> {
-    try {
-      const profile = await withNetworkDeadline(
-        runtime.dependencies.timer,
-        PROFILE_READ_TIMEOUT_MS,
-        (signal) => client.profile.get({ signal }),
-      );
-      if (!runtime.isEpochCurrent(epoch)) {
-        if (runtime.disposed) await revokeLateToken(refreshToken, lineageId);
-        return { kind: 'signedOut' };
-      }
-      runtime.setState(SESSION_STATUS.SIGNED_IN, AUTH_OPERATION.NONE, { profile });
-      const savedProfile = runtime.snapshot.profile;
-      return savedProfile ? { kind: 'signedIn', profile: savedProfile } : { kind: 'signedOut' };
-    } catch (error) {
-      if (!runtime.isEpochCurrent(epoch)) {
-        if (runtime.disposed) await revokeLateToken(refreshToken, lineageId);
-        return { kind: 'signedOut' };
-      }
-      const tokenToRevoke = runtime.tokens?.refreshToken ?? refreshToken;
-      const endedEpoch = runtime.bumpEpoch();
-      runtime.tokens = undefined;
-      await runtime.deleteRecord(endedEpoch).catch(() => false);
-      if (!runtime.isEpochCurrent(endedEpoch)) return { kind: 'signedOut' };
-      await revokeLateToken(tokenToRevoke, lineageId);
-      if (!runtime.isEpochCurrent(endedEpoch)) return { kind: 'signedOut' };
-      runtime.setState(SESSION_STATUS.SIGNED_OUT, AUTH_OPERATION.NONE, {
-        reason: AUTH_REASON.PROFILE_FAILURE,
-      });
-      return apiFailureOutcome(error);
     }
   }
 

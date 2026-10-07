@@ -183,6 +183,30 @@ describe('createApiClient routes', () => {
     expect(tokens).toEqual(TOKEN_SET);
   });
 
+  it('forwards DPoP headers on each OAuth call', async () => {
+    const transport = answering(200, TOKEN_BODY);
+    const client = createApiClient(transport);
+    const options = { headers: { DPoP: 'proof-jwt' } };
+
+    await client.oauth.exchangeCode(
+      {
+        code: 'code-1',
+        codeVerifier: 'verifier-1',
+        redirectUri: 'myapp://callback',
+        clientId: 'native-app',
+      },
+      options,
+    );
+    await client.oauth.refresh({ refreshToken: 'rt-0', clientId: 'native-app' }, options);
+    await client.oauth.revoke({ token: 'rt-1', clientId: 'native-app' }, options);
+
+    expect(transport.sent.map(({ headers }) => headers?.DPoP)).toEqual([
+      'proof-jwt',
+      'proof-jwt',
+      'proof-jwt',
+    ]);
+  });
+
   it('refreshes in the wire naming', async () => {
     const transport = answering(200, TOKEN_BODY);
 

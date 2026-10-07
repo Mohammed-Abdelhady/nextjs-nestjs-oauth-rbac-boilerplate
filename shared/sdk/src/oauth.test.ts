@@ -54,6 +54,25 @@ describe('unwrapOAuth', () => {
     });
   });
 
+  it('carries the OAuth reason and DPoP nonce from the wire response', () => {
+    const error = thrownBy(() =>
+      unwrapOAuth(
+        respond(
+          400,
+          { error: 'use_dpop_nonce', error_description: 'NATIVE_DPOP_REQUIRED' },
+          { 'DPoP-Nonce': 'nonce-from-server' },
+        ),
+      ),
+    );
+
+    expect(error).toMatchObject({
+      status: 400,
+      error: 'use_dpop_nonce',
+      errorDescription: 'NATIVE_DPOP_REQUIRED',
+      dpopNonce: 'nonce-from-server',
+    });
+  });
+
   it.each([
     ['a missing description', { error: 'invalid_grant' }],
     ['a description that is not a string', { error: 'invalid_grant', error_description: 42 }],
@@ -120,6 +139,16 @@ describe('unwrapTokenSet', () => {
     expect(unwrapTokenSet(respond(200, { ...TOKEN_BODY }))).toEqual({
       accessToken: 'at-1',
       tokenType: 'Bearer',
+      expiresIn: 900,
+      refreshToken: 'rt-1',
+      scope: 'api',
+    });
+  });
+
+  it('accepts the DPoP token type returned by a bound exchange', () => {
+    expect(unwrapTokenSet(respond(200, { ...TOKEN_BODY, token_type: 'DPoP' }))).toEqual({
+      accessToken: 'at-1',
+      tokenType: 'DPoP',
       expiresIn: 900,
       refreshToken: 'rt-1',
       scope: 'api',

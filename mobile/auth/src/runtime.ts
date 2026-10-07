@@ -202,6 +202,7 @@ export class AuthRuntime {
     sentAt: number,
     expiresIn: number,
     lineageId: string,
+    proofKeyThumbprint?: string,
   ): RuntimeTokens {
     this.tokenVersion += 1;
     const next: RuntimeTokens = {
@@ -210,6 +211,7 @@ export class AuthRuntime {
       version: this.tokenVersion,
       expiresAt: sentAt + expiresIn * 1000 - ACCESS_TOKEN_SAFETY_MARGIN_MS,
       lineageId,
+      ...(proofKeyThumbprint === undefined ? {} : { proofKeyThumbprint }),
     };
     this.tokens = next;
     return next;

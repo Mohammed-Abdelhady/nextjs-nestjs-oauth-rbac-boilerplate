@@ -1,8 +1,12 @@
 import { ApiError } from './errors';
 import type { Transport, TransportRequest, TransportResponse } from './transport';
 
-export function respond(status: number, body?: unknown): TransportResponse {
-  return { status, body };
+export function respond(
+  status: number,
+  body?: unknown,
+  headers?: Readonly<Record<string, string>>,
+): TransportResponse {
+  return { status, body, ...(headers === undefined ? {} : { headers }) };
 }
 
 export function thrownBy(run: () => unknown): unknown {

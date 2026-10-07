@@ -1,5 +1,10 @@
 import { ErrorCode, extractFieldErrors, getStatusErrorCode } from '@app/core/errors';
-import { HTTP_STATUS_OK, SUCCESS_STATUS_MAX, SUCCESS_STATUS_MIN } from './constants';
+import {
+  DPOP_NONCE_HEADER,
+  HTTP_STATUS_OK,
+  SUCCESS_STATUS_MAX,
+  SUCCESS_STATUS_MIN,
+} from './constants';
 import { ApiError, OAuthError } from './errors';
 import type { TransportResponse } from './transport';
 
@@ -95,7 +100,23 @@ export function unwrapOAuth<T extends object>(response: TransportResponse): T {
     const errorDescription = isJsonObject(body)
       ? nonEmptyString(body.error_description)
       : undefined;
-    throw new OAuthError({ status, error: oauthError, errorDescription });
+    throw new OAuthError({
+      status,
+      error: oauthError,
+      errorDescription,
+      dpopNonce: readHeader(response.headers, DPOP_NONCE_HEADER),
+    });
   }
   throw toApiError(body, status);
+}
+
+function readHeader(
+  headers: Readonly<Record<string, string>> | undefined,
+  name: string,
+): string | undefined {
+  const expected = name.toLowerCase();
+  for (const [headerName, value] of Object.entries(headers ?? {})) {
+    if (headerName.toLowerCase() === expected && value.length > 0) return value;
+  }
+  return undefined;
 }

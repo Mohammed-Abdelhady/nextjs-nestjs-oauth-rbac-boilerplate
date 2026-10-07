@@ -26,14 +26,16 @@ export interface TransportResponse {
   status: number;
   /** The parsed JSON, or `undefined` when the response has no JSON body. */
   body: unknown;
+  /** Response headers needed to complete typed OAuth challenges. */
+  headers?: Readonly<Record<string, string>>;
 }
 
 /**
  * The port every platform implements. It owns the base URL, credentials, JSON
  * encoding and decoding. It forwards request headers without allowing them to
  * override the content type it sets for JSON bodies. It resolves every HTTP
- * status, rejects transport failures without a response, and may throw
- * `SdkError` for typed failures.
+ * status and response headers, rejects transport failures without a response,
+ * and may throw `SdkError` for typed failures.
  */
 export interface Transport<TSignal extends TransportSignal = TransportSignal> {
   request(request: TransportRequest<TSignal>): Promise<TransportResponse>;

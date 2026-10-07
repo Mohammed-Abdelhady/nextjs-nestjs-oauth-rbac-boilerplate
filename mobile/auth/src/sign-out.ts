@@ -14,6 +14,7 @@ import type { CredentialRecordGuard } from './credential-record-store';
 import type { ApiClient } from '@app/sdk';
 import type { AbortSignalPort, SignOutOutcome } from './types/auth';
 import type { RevokeResult } from './revocation';
+import type { RevocationBinding } from './revocation';
 
 export function createSignOutOperation(
   runtime: AuthRuntime,
@@ -25,6 +26,8 @@ export function createSignOutOperation(
     const recordWasLoaded = runtime.record !== undefined;
     const refreshToken = runtime.tokens?.refreshToken ?? runtime.record?.tokens?.refreshToken;
     const lineageId = runtime.tokens?.lineageId ?? runtime.record?.lineageId;
+    const proofKeyThumbprint =
+      runtime.tokens?.proofKeyThumbprint ?? runtime.record?.proofKeyThumbprint;
     if (refreshToken) runtime.markDisposedRevocationIntent(refreshToken);
     const epoch = runtime.bumpEpoch('signOut');
     runtime.deleteOwed = true;
@@ -38,7 +41,9 @@ export function createSignOutOperation(
     }
     runtime.cancelAuthorizationDeadline = undefined;
     const pending = runtime.raceWithDispose(
-      Promise.resolve().then(() => finishSignOut(refreshToken, lineageId, recordWasLoaded, epoch)),
+      Promise.resolve().then(() =>
+        finishSignOut(refreshToken, lineageId, proofKeyThumbprint, recordWasLoaded, epoch),
+      ),
       () => ({ kind: 'disposed' as const }),
     );
     runtime.signOutPromise = pending;
@@ -57,10 +62,12 @@ export function createSignOutOperation(
   async function finishSignOut(
     refreshToken: string | undefined,
     lineageId: string | undefined,
+    proofKeyThumbprint: string | undefined,
     recordWasLoaded: boolean,
     epoch: number,
   ): Promise<SignOutOutcome> {
     let token = refreshToken;
+    let thumbprint = proofKeyThumbprint;
     let disposeGuard: CredentialRecordGuard | undefined =
       token && runtime.installDigest
         ? {
@@ -83,6 +90,7 @@ export function createSignOutOperation(
           const record = parseStoredRecord(stored.value);
           if (record && recordMatches(record, runtime.config, record.installDigest)) {
             token = record.tokens?.refreshToken;
+            thumbprint = record.proofKeyThumbprint;
             if (token)
               disposeGuard = {
                 kind: 'session',
@@ -104,8 +112,18 @@ export function createSignOutOperation(
     const deletion = runtime
       .deleteRecordGuarded(epoch, disposeGuard)
       .then(() => undefined, asError);
+    const binding: RevocationBinding | undefined =
+      thumbprint === undefined
+        ? undefined
+        : { serverBaseAddress: runtime.config.serverBaseAddress, proofKeyThumbprint: thumbprint };
     const revocation = token
-      ? revokeWithDeadline(revocationClient, runtime.dependencies, token, runtime.config.clientId)
+      ? revokeWithDeadline(
+          revocationClient,
+          runtime.dependencies,
+          token,
+          runtime.config.clientId,
+          binding,
+        )
       : Promise.resolve<RevokeResult>({
           outcome: readError ? 'recordUnavailable' : REVOKE_OUTCOME.NOT_NEEDED,
           ...(readError === undefined ? {} : { error: readError }),

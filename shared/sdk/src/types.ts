@@ -1,4 +1,4 @@
-import type { OAUTH_GRANT_TYPE, OAUTH_TOKEN_TYPE } from './constants';
+import type { OAuthTokenType, OAUTH_GRANT_TYPE } from './constants';
 
 /** The account, as GET and PATCH /api/user/profile send it. Dates are ISO strings. */
 export interface User {
@@ -110,7 +110,7 @@ export type OAuthTokenRequest = OAuthCodeTokenRequest | OAuthRefreshTokenRequest
 
 export interface OAuthTokenResponse {
   access_token: string;
-  token_type: typeof OAUTH_TOKEN_TYPE;
+  token_type: OAuthTokenType;
   expires_in: number;
   refresh_token: string;
   scope: string;
@@ -142,7 +142,7 @@ export interface RevokeTokenInput {
 /** `OAuthTokenResponse` in the client's own naming. */
 export interface TokenSet {
   accessToken: string;
-  tokenType: typeof OAUTH_TOKEN_TYPE;
+  tokenType: OAuthTokenType;
   /** Lifetime of the access token, in seconds. */
   expiresIn: number;
   refreshToken: string;

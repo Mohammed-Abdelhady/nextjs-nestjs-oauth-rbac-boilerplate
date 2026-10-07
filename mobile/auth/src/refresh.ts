@@ -1,19 +1,24 @@
 import { OAuthError } from '@app/sdk';
 import type { ApiClient } from '@app/sdk';
-import { AUTH_OPERATION, AUTH_REASON, OAUTH_REFRESH_TIMEOUT_MS, SESSION_STATUS } from './constants';
-import { AuthSessionError, authPortFailure } from './errors';
-import { PortAbortController } from './abort-controller';
-import { raceWithAbort } from './abortable';
-import { isDefinitiveRefreshFailure, oauthFailureReason } from './failure';
+import { AUTH_OPERATION, AUTH_REASON, SESSION_STATUS } from './constants';
+import {
+  AuthSessionError,
+  authPortFailure,
+  DeviceBindingRequiredError,
+  DeviceKeyAuthError,
+} from './errors';
+import { isDefinitiveRefreshFailure, isDeviceBindingRequired, oauthFailureReason } from './failure';
 import {
   isKnownNonRotatingFailure,
   makeRefreshRecord,
   normalizeRefreshError,
   safeThrottleDeadline,
-  waitForThrottle,
 } from './refresh-helpers';
 import { revokeQuietly } from './revocation';
-import { withNetworkDeadline } from './deadlines';
+import { requestRefreshTokens } from './refresh-token-request';
+import { settleDeviceKeyRefreshFailure } from './refresh-key-failure';
+import { createRefreshSingleFlight } from './refresh-single-flight';
+import { finishRefresh } from './refresh-state';
 import {
   persistRotatedSessionAfterDispose,
   settleDisposedRefreshFailure,
@@ -28,68 +33,12 @@ export interface RefreshCoordinator {
   ensureCurrentTokens(signal?: AbortSignalPort): Promise<RuntimeTokens>;
 }
 
-interface ActiveRefresh {
-  epoch: number;
-  promise?: Promise<RuntimeTokens>;
-  waiters: number;
-  waiting: boolean;
-  waitController: PortAbortController;
-}
-
 export function createRefreshCoordinator(
   runtime: AuthRuntime,
   client: ApiClient<AbortSignalPort>,
   revocationClient: ApiClient<AbortSignalPort> = client,
 ): RefreshCoordinator {
-  let activeRefresh: ActiveRefresh | undefined;
-
-  const refresh = (signal?: AbortSignalPort): Promise<RuntimeTokens> => {
-    const currentTokens = runtime.tokens;
-    if (!currentTokens || runtime.snapshot.status !== SESSION_STATUS.SIGNED_IN) {
-      return Promise.reject(new AuthSessionError());
-    }
-    let operation = activeRefresh;
-    if (!operation || operation.epoch !== runtime.epoch) {
-      const epoch = runtime.epoch;
-      const waitController = new PortAbortController();
-      const next: ActiveRefresh = {
-        epoch,
-        promise: undefined,
-        waiters: 0,
-        waiting: true,
-        waitController,
-      };
-      const pending = Promise.resolve()
-        .then(() => waitForThrottle(runtime, epoch, waitController.signal))
-        .then(() => {
-          if (waitController.signal.aborted) throw new AuthSessionError();
-          next.waiting = false;
-          return performRefresh(epoch, currentTokens);
-        });
-      next.promise = pending;
-      operation = next;
-      activeRefresh = operation;
-      void pending.then(
-        () => {
-          if (activeRefresh === operation) activeRefresh = undefined;
-        },
-        () => {
-          if (activeRefresh === operation) activeRefresh = undefined;
-        },
-      );
-    }
-    if (!operation.promise) return Promise.reject(new AuthSessionError());
-    const shared = operation.promise;
-    operation.waiters += 1;
-    const waiting = operation;
-    return raceWithAbort(shared, signal).finally(() => {
-      waiting.waiters -= 1;
-      if (waiting.waiters === 0 && waiting.waiting) {
-        waiting.waitController.abort();
-        if (activeRefresh === waiting) activeRefresh = undefined;
-      }
-    });
-  };
+  const refresh = createRefreshSingleFlight(runtime, performRefresh);
 
   async function performRefresh(
     epoch: number,
@@ -120,7 +69,7 @@ export function createRefreshCoordinator(
       if (!written) throw new AuthSessionError();
     } catch (error) {
       if (!runtime.isEpochCurrent(epoch)) throw new AuthSessionError();
-      finishWithWarning(runtime);
+      finishRefresh(runtime, true);
       throw authPortFailure(error, 'credentials.replace');
     }
     if (
@@ -144,28 +93,38 @@ export function createRefreshCoordinator(
               currentTokens.lineageId,
               refreshToken,
               currentTokens.refreshToken,
+              currentTokens.proofKeyThumbprint,
             )
           : revokeQuietly(
               revocationClient,
               runtime.dependencies,
               refreshToken,
               runtime.config.clientId,
+              currentTokens.proofKeyThumbprint === undefined
+                ? undefined
+                : {
+                    serverBaseAddress: runtime.config.serverBaseAddress,
+                    proofKeyThumbprint: currentTokens.proofKeyThumbprint,
+                  },
             );
         return tokenSettlement;
       };
-      const tokens = await withNetworkDeadline(
-        runtime.dependencies.timer,
-        OAUTH_REFRESH_TIMEOUT_MS,
-        (signal) =>
-          client.oauth.refresh(
-            { refreshToken: currentTokens.refreshToken, clientId: runtime.config.clientId },
-            { signal },
-          ),
+      const tokens = await requestRefreshTokens(
+        runtime,
+        client,
+        currentTokens,
+        epoch,
         (lateTokens) => {
           void settleLateRotation(lateTokens.refreshToken).catch(() => undefined);
         },
       );
-      const rotatedTokens = { ...tokens, lineageId: currentTokens.lineageId };
+      const rotatedTokens = {
+        ...tokens,
+        lineageId: currentTokens.lineageId,
+        ...(currentTokens.proofKeyThumbprint === undefined
+          ? {}
+          : { proofKeyThumbprint: currentTokens.proofKeyThumbprint }),
+      };
       if (!runtime.isEpochCurrent(epoch)) {
         if (runtime.disposed && runtime.preserveSessionOnDispose) {
           await persistRotatedSessionAfterDispose(
@@ -236,8 +195,9 @@ export function createRefreshCoordinator(
           sentAt,
           tokens.expiresIn,
           currentTokens.lineageId,
+          currentTokens.proofKeyThumbprint,
         );
-        finishWithWarning(runtime);
+        finishRefresh(runtime, true);
         return memoryTokens;
       }
       const nextTokens = runtime.installTokens(
@@ -246,8 +206,9 @@ export function createRefreshCoordinator(
         sentAt,
         tokens.expiresIn,
         currentTokens.lineageId,
+        currentTokens.proofKeyThumbprint,
       );
-      finishNormally(runtime);
+      finishRefresh(runtime);
       return nextTokens;
     } catch (error) {
       if (!runtime.isEpochCurrent(epoch)) {
@@ -257,10 +218,20 @@ export function createRefreshCoordinator(
         }
         throw error;
       }
+      if (error instanceof DeviceKeyAuthError) {
+        await settleDeviceKeyRefreshFailure(runtime, stableRecord, epoch, error);
+        throw error;
+      }
       if (error instanceof OAuthError) {
         const endedEpoch = runtime.bumpEpoch();
         // Keep unknown rotations out of memory if a stale status is ever restored.
         runtime.tokens = undefined;
+        if (isDeviceBindingRequired(error)) {
+          runtime.setState(SESSION_STATUS.REAUTH_REQUIRED, AUTH_OPERATION.NONE, {
+            reason: AUTH_REASON.DEVICE_BINDING_REQUIRED,
+          });
+          throw new DeviceBindingRequiredError(error.errorDescription ?? 'NATIVE_DPOP_REQUIRED');
+        }
         if (!isDefinitiveRefreshFailure(error)) {
           runtime.setState(SESSION_STATUS.REAUTH_REQUIRED, AUTH_OPERATION.NONE, {
             reason: AUTH_REASON.REFRESH_INTERRUPTED,
@@ -309,27 +280,14 @@ export function createRefreshCoordinator(
       const written = await runtime.replaceRecord(record, epoch);
       if (!written) throw new AuthSessionError();
       if (!runtime.isEpochCurrent(epoch)) return;
-      finishNormally(runtime);
+      finishRefresh(runtime);
     } catch {
       if (!runtime.isEpochCurrent(epoch)) {
         if (runtime.disposed) await settleDisposedRefreshFailure(runtime, record, failure);
         return;
       }
-      finishWithWarning(runtime);
+      finishRefresh(runtime, true);
     }
-  }
-
-  function finishNormally(runtimeValue: AuthRuntime): void {
-    runtimeValue.setState(SESSION_STATUS.SIGNED_IN, AUTH_OPERATION.NONE, {
-      profile: runtimeValue.snapshot.profile,
-    });
-  }
-
-  function finishWithWarning(runtimeValue: AuthRuntime): void {
-    runtimeValue.setState(SESSION_STATUS.SIGNED_IN, AUTH_OPERATION.NONE, {
-      profile: runtimeValue.snapshot.profile,
-      warning: 'storageBlocked',
-    });
   }
 
   const ensureCurrentTokens = async (signal?: AbortSignalPort): Promise<RuntimeTokens> => {

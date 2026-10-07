@@ -8,16 +8,29 @@ import type {
   ClockPort,
   TimerPort,
 } from '@app/native-auth';
-import { TransportError, TRANSPORT_FAILURE } from '@app/sdk';
-import type { TransportRequest, TransportResponse } from '@app/sdk';
+import {
+  API_PATHS,
+  OAUTH_GRANT_TYPE,
+  TransportError,
+  TRANSPORT_FAILURE,
+} from '@app/sdk';
+import type {
+  HttpMethod,
+  Transport,
+  TransportRequest,
+  TransportResponse,
+} from '@app/sdk';
 import request from 'supertest';
 import { loginAs, type E2eApp, type TestAgent } from './e2e-app';
 import { SEED_USER } from '../constants/seed-users';
-import { supertestTransport } from './sdk-transport';
 import { NATIVE_CLIENT_ID, NATIVE_REDIRECT } from './native-authorize.fixtures';
+import { buildDpopProof } from '../../../mobile/auth/src/dpop-proof';
+import { parseStoredRecord } from '../../../mobile/auth/src/persistence';
+import { SoftwareDeviceKey } from '../../../mobile/auth/test/software-device-key';
 
+export const ENGINE_SERVER_BASE_ADDRESS = 'http://127.0.0.1:5107';
 const CONFIG = {
-  serverBaseAddress: 'http://127.0.0.1:5107',
+  serverBaseAddress: ENGINE_SERVER_BASE_ADDRESS,
   environment: 'test',
   clientId: NATIVE_CLIENT_ID,
   redirectUri: NATIVE_REDIRECT,
@@ -26,7 +39,13 @@ const CONFIG = {
 
 export type EnginePorts = AuthDependencies & {
   clock: ClockPort & { elapsed: number; advance(milliseconds: number): void };
-  beforeTransportRequest?: (request: TransportRequest<AbortSignalPort>) => void;
+  beforeTransportRequest?: (
+    request: TransportRequest<AbortSignalPort>,
+  ) => void | Promise<void>;
+  afterLostRefreshResponse?: (
+    request: TransportRequest<AbortSignalPort>,
+    response: TransportResponse,
+  ) => Promise<void>;
   loseNextRefreshResponse(): void;
 };
 
@@ -36,12 +55,19 @@ export interface EngineHarness {
   requests: TransportRequest<AbortSignalPort>[];
   responses: TransportResponse[];
   authorizationAddresses: string[];
+  serverClock: E2eApp['clock'];
+}
+
+export interface BoundEngineHarness extends EngineHarness {
+  deviceKey: SoftwareDeviceKey;
+  makeDpopProof(token: string, nonce: string): Promise<string>;
 }
 
 export async function openEngine(
   e2eApp: E2eApp,
   redirectUri = CONFIG.redirectUri,
   authorizationChoice: 'approve' | 'deny' = 'approve',
+  deviceKey?: SoftwareDeviceKey,
 ): Promise<EngineHarness> {
   const browser = await loginAs(e2eApp.httpServer, SEED_USER);
   const requests: TransportRequest<AbortSignalPort>[] = [];
@@ -54,10 +80,53 @@ export async function openEngine(
     responses,
     authorizationAddresses,
     authorizationChoice,
+    deviceKey,
   );
   const engine = createAuthEngine({ ...CONFIG, redirectUri }, ports);
   await engine.restore();
-  return { engine, ports, requests, responses, authorizationAddresses };
+  return {
+    engine,
+    ports,
+    requests,
+    responses,
+    authorizationAddresses,
+    serverClock: e2eApp.clock,
+  };
+}
+
+export async function openEngineWithDeviceKey(
+  e2eApp: E2eApp,
+): Promise<BoundEngineHarness> {
+  const deviceKey = new SoftwareDeviceKey();
+  const harness = await openEngine(
+    e2eApp,
+    CONFIG.redirectUri,
+    'approve',
+    deviceKey,
+  );
+  return {
+    ...harness,
+    deviceKey,
+    makeDpopProof: async (token, nonce) => {
+      const result = await buildDpopProof({
+        crypto: harness.ports.crypto,
+        clock: harness.ports.clock,
+        timer: harness.ports.timer,
+        deviceKey,
+        serverBaseAddress: ENGINE_SERVER_BASE_ADDRESS,
+        method: 'POST',
+        path: API_PATHS.oauth.token,
+        token,
+        nonce,
+      });
+      return result.proof;
+    },
+  };
+}
+
+export async function readStoredAuthRecord(ports: EnginePorts) {
+  const stored = await ports.credentials.read();
+  return stored.kind === 'found' ? parseStoredRecord(stored.value) : undefined;
 }
 
 export async function signedInEngine(e2eApp: E2eApp): Promise<EngineHarness> {
@@ -83,7 +152,7 @@ export function isRefreshBody(
     typeof value === 'object' &&
     value !== null &&
     'grant_type' in value &&
-    value.grant_type === 'refresh_token' &&
+    value.grant_type === OAUTH_GRANT_TYPE.REFRESH_TOKEN &&
     'refresh_token' in value &&
     typeof value.refresh_token === 'string'
   );
@@ -96,10 +165,11 @@ function makePorts(
   responses: TransportResponse[],
   authorizationAddresses: string[],
   authorizationChoice: 'approve' | 'deny',
+  deviceKey?: SoftwareDeviceKey,
 ): EnginePorts {
   let credential: string | undefined;
   let loseRefreshResponse = false;
-  const rawTransport = supertestTransport(() => request(e2eApp.httpServer));
+  const rawTransport = makeE2eTransport(e2eApp);
   const clock: ClockPort & {
     elapsed: number;
     advance(milliseconds: number): void;
@@ -115,6 +185,7 @@ function makePorts(
   };
   let randomCall = 0;
   const ports: EnginePorts = {
+    ...(deviceKey === undefined ? {} : { deviceKey }),
     credentials: {
       read: () =>
         Promise.resolve(
@@ -163,7 +234,7 @@ function makePorts(
       request: async (
         transportRequest: TransportRequest<AbortSignalPort>,
       ): Promise<TransportResponse> => {
-        ports.beforeTransportRequest?.(transportRequest);
+        await ports.beforeTransportRequest?.(transportRequest);
         requests.push(transportRequest);
         const response = await rawTransport.request(transportRequest);
         responses.push(response);
@@ -174,6 +245,9 @@ function makePorts(
           response.status < 300
         ) {
           loseRefreshResponse = false;
+          const afterLost = ports.afterLostRefreshResponse;
+          ports.afterLostRefreshResponse = undefined;
+          await afterLost?.(transportRequest, response);
           throw new TransportError(TRANSPORT_FAILURE.NO_RESPONSE);
         }
         return response;
@@ -181,6 +255,36 @@ function makePorts(
     }),
   };
   return ports;
+}
+
+function makeE2eTransport(e2eApp: E2eApp): Transport<AbortSignalPort> {
+  const verbs: Record<HttpMethod, 'get' | 'post' | 'patch' | 'delete'> = {
+    GET: 'get',
+    POST: 'post',
+    PATCH: 'patch',
+    DELETE: 'delete',
+  };
+  return {
+    request: async ({ method, path, body, headers }) => {
+      let call = request(e2eApp.httpServer)[verbs[method]](path);
+      for (const [name, value] of Object.entries(headers ?? {})) {
+        if (name.toLowerCase() !== 'content-type') call = call.set(name, value);
+      }
+      if (typeof body === 'object' && body !== null) call = call.send(body);
+      const response = await call;
+      const nonce = response.headers['dpop-nonce'];
+      return {
+        status: response.status,
+        body:
+          response.type === 'application/json'
+            ? (response.body as unknown)
+            : undefined,
+        ...(typeof nonce === 'string'
+          ? { headers: { 'DPoP-Nonce': nonce } }
+          : {}),
+      };
+    },
+  };
 }
 
 class TestTimer implements TimerPort {

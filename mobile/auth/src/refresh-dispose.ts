@@ -14,7 +14,12 @@ export async function persistRotatedSessionAfterDispose(
   client: ApiClient<AbortSignalPort>,
   installDigest: string,
   sentRefreshToken: string,
-  tokens: { accessToken: string; refreshToken: string; lineageId: string },
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+    lineageId: string;
+    proofKeyThumbprint?: string;
+  },
 ): Promise<void> {
   const guard = refreshGuard(installDigest, sentRefreshToken, tokens.lineageId);
   const nextRecord = makeRefreshRecord(runtime, installDigest, tokens);
@@ -39,6 +44,7 @@ export async function settleDisposedToken(
   lineageId: string | undefined,
   refreshToken: string,
   sentRefreshToken?: string,
+  proofKeyThumbprint?: string,
 ): Promise<void> {
   const guard: CredentialRecordGuard = {
     kind: 'session',
@@ -51,7 +57,18 @@ export async function settleDisposedToken(
   if (owner === DISPOSED_RECORD_OWNER.OWN_OTHER) return;
   if (owner === DISPOSED_RECORD_OWNER.OWN_SAME) return;
   if (!runtime.markDisposedRevocationIntent(refreshToken)) return;
-  await revokeQuietly(client, runtime.dependencies, refreshToken, runtime.config.clientId);
+  await revokeQuietly(
+    client,
+    runtime.dependencies,
+    refreshToken,
+    runtime.config.clientId,
+    proofKeyThumbprint === undefined
+      ? undefined
+      : {
+          serverBaseAddress: runtime.config.serverBaseAddress,
+          proofKeyThumbprint,
+        },
+  );
   if (owner === DISPOSED_RECORD_OWNER.UNREADABLE)
     await runtime.deleteRecordGuarded(runtime.epoch, guard).catch(() => false);
 }

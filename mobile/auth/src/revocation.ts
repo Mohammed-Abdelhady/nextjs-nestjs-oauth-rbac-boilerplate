@@ -1,12 +1,18 @@
-import { ApiError, OAuthError, TransportError } from '@app/sdk';
+import { API_PATHS, ApiError, OAuthError, TransportError } from '@app/sdk';
 import type { ApiClient } from '@app/sdk';
 import { SIGN_OUT_REVOKE_TIMEOUT_MS } from './constants';
 import { PortAbortController } from './abort-controller';
 import type { AuthDependencies, AbortSignalPort, RevocationOutcome } from './types/auth';
+import { requestWithDpopNonceRetry } from './dpop-requests';
 
 export interface RevokeResult {
   outcome: RevocationOutcome;
   error?: Error | ApiError | OAuthError | TransportError;
+}
+
+export interface RevocationBinding {
+  serverBaseAddress: string;
+  proofKeyThumbprint: string;
 }
 
 export async function revokeWithDeadline(
@@ -14,6 +20,7 @@ export async function revokeWithDeadline(
   dependencies: AuthDependencies,
   token: string,
   clientId: string,
+  binding?: RevocationBinding,
 ): Promise<RevokeResult> {
   const controller = new PortAbortController();
   let cancel = (): void => undefined;
@@ -31,8 +38,22 @@ export async function revokeWithDeadline(
   } catch (error) {
     return { outcome: 'failed', error: asError(error) };
   }
-  const revoke = client.oauth
-    .revoke({ token, clientId }, { signal: controller.signal })
+  const request = binding
+    ? requestWithDpopNonceRetry(
+        {
+          ...dependencies,
+          serverBaseAddress: binding.serverBaseAddress,
+          method: 'POST',
+          path: API_PATHS.oauth.revoke,
+          token,
+          expectedThumbprint: binding.proofKeyThumbprint,
+          signal: controller.signal,
+          mayRetryChallenge: () => !controller.signal.aborted,
+        },
+        ({ headers, signal }) => client.oauth.revoke({ token, clientId }, { headers, signal }),
+      ).then(({ value }) => value)
+    : client.oauth.revoke({ token, clientId }, { signal: controller.signal });
+  const revoke = request
     .then((): RevokeResult => ({ outcome: 'revoked' }))
     .catch((error: unknown): RevokeResult => ({
       outcome: 'failed',
@@ -55,8 +76,9 @@ export async function revokeQuietly(
   dependencies: AuthDependencies,
   token: string,
   clientId: string,
+  binding?: RevocationBinding,
 ): Promise<void> {
-  const result = await revokeWithDeadline(client, dependencies, token, clientId);
+  const result = await revokeWithDeadline(client, dependencies, token, clientId, binding);
   void result;
 }
 
