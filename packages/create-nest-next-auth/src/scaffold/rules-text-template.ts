@@ -24,6 +24,12 @@ export const KNOWN_WORKSPACE_COPY: Record<string, string> = {
   'shared/sdk': 'API routes, wire types, and the typed client.',
 };
 
+export const STANDARD_CODE_TEXT =
+  'Follow the workspace lint rules. Inline lint configuration is refused.';
+
+export const STANDARD_NOT_ENFORCED =
+  'The banned-construct scan and file length ceiling are off. The rules level was chosen at generation. Editing `.create-nest-next-auth.json` does not switch it.';
+
 export const AGENTS_TEMPLATE = `# Project instructions
 
 This file gives developers and coding agents the rules for this project.

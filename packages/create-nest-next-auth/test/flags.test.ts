@@ -6,6 +6,7 @@ describe('parseCliOptions', () => {
     expect(parseCliOptions([])).toEqual({
       directory: undefined,
       yes: false,
+      rules: undefined,
       features: undefined,
       targets: undefined,
       databases: undefined,

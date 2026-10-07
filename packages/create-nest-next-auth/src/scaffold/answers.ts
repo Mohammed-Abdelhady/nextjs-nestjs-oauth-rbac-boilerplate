@@ -4,6 +4,9 @@ import {
   ANSWERS_FILE_NAME,
   ANSWERS_SCHEMA_VERSION,
   BROKEN_PACKAGE,
+  DEFAULT_RULES_POLICY,
+  PREVIOUS_ANSWERS_SCHEMA_VERSION,
+  RULES_POLICIES,
   LOCALE_OPTION_LOCALES,
   PACKAGE_MANIFEST,
   PACKAGE_MANAGER_SPEC,
@@ -14,7 +17,7 @@ import {
 } from '../constants/index.js';
 import { BrokenPackageError } from '../errors.js';
 import type { Plan } from '../manifest/plan.js';
-import { isRecord } from '../manifest/read.js';
+import { isMember, isRecord, readString, readStringArray } from '../manifest/read.js';
 import { formatChangedFiles } from '../prune/format.js';
 import type {
   AnswersRecord,
@@ -116,6 +119,7 @@ export function answersRecord(
   return {
     schemaVersion: ANSWERS_SCHEMA_VERSION,
     packageManager: PACKAGE_MANAGER_SPEC,
+    rules: { policy: plan.rules },
     installer,
     template,
     answers: resolvedAnswers(plan),
@@ -131,4 +135,52 @@ export function answersRecord(
 export async function recordAnswers(target: string, record: AnswersRecord): Promise<void> {
   await writeFile(join(target, ANSWERS_FILE_NAME), `${JSON.stringify(record, null, 2)}\n`, 'utf8');
   await formatChangedFiles(target, [ANSWERS_FILE_NAME]);
+}
+
+/** Reads both supported versions into the current normalized contract. */
+export function parseAnswersRecord(value: unknown): AnswersRecord {
+  if (!isRecord(value)) throw new Error('Answers record must be an object.');
+  if (
+    value.schemaVersion !== ANSWERS_SCHEMA_VERSION &&
+    value.schemaVersion !== PREVIOUS_ANSWERS_SCHEMA_VERSION
+  ) {
+    throw new Error('Unsupported answers schema version.');
+  }
+  const problems: string[] = [];
+  const rules = isRecord(value.rules) ? value.rules.policy : undefined;
+  const policy =
+    value.schemaVersion === PREVIOUS_ANSWERS_SCHEMA_VERSION && value.rules === undefined
+      ? DEFAULT_RULES_POLICY
+      : rules;
+  if (!isMember(RULES_POLICIES, policy)) throw new Error('Invalid rules policy.');
+  const installer = isRecord(value.installer) ? value.installer : {};
+  const template = isRecord(value.template) ? value.template : {};
+  const answers = isRecord(value.answers) ? value.answers : {};
+  const sha256 = readString(template.sha256, 'template.sha256', problems);
+  if (!SHA256_HEX_PATTERN.test(sha256)) problems.push('Invalid template sha256');
+  const record: AnswersRecord = {
+    schemaVersion: ANSWERS_SCHEMA_VERSION,
+    packageManager: readString(value.packageManager, 'packageManager', problems),
+    rules: { policy },
+    installer: {
+      name: readString(installer.name, 'installer.name', problems),
+      version: readString(installer.version, 'installer.version', problems),
+    },
+    template: { sha256 },
+    answers: {
+      targets: readStringArray(answers.targets, 'answers.targets', problems),
+      database: readString(answers.database, 'answers.database', problems),
+      features: readStringArray(answers.features, 'answers.features', problems),
+      options: readStringArray(answers.options, 'answers.options', problems),
+      locales: readStringArray(answers.locales, 'answers.locales', problems),
+    },
+  };
+  if (problems.length > 0) throw new Error(`Invalid answers record: ${problems.join(', ')}`);
+  return record;
+}
+
+export async function readAnswersRecord(target: string): Promise<AnswersRecord> {
+  const raw = await readFile(join(target, ANSWERS_FILE_NAME), 'utf8');
+  const value: unknown = JSON.parse(raw);
+  return parseAnswersRecord(value);
 }

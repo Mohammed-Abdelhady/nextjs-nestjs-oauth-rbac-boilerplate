@@ -1,3 +1,5 @@
+import { DEFAULT_RULES_POLICY, RULES_POLICIES } from '../constants/index.js';
+import type { RulesPolicy } from '../types.js';
 import { isCancel, multiselect, select } from '@clack/prompts';
 import {
   availableDatabaseIds,
@@ -9,6 +11,7 @@ import type { Manifest } from '../types.js';
 import { askFeatures, CANCELLED } from './index.js';
 
 export interface PlanPromptNeeds {
+  rules: boolean;
   targets: boolean;
   database: boolean;
   features: boolean;
@@ -23,6 +26,7 @@ export interface PlanPromptNeeds {
 export function planPromptNeeds(manifest: Manifest, request: PlanRequest): PlanPromptNeeds {
   const presetGiven = request.preset !== undefined;
   return {
+    rules: request.rules === undefined,
     targets:
       !presetGiven && request.targets === undefined && availableTargetIds(manifest).length > 1,
     database: request.databases === undefined && availableDatabaseIds(manifest).length > 1,
@@ -81,6 +85,19 @@ async function askOptions(
   return answer;
 }
 
+async function askRules(): Promise<RulesPolicy | typeof CANCELLED> {
+  const answer = await select({
+    message: 'Rules: strict (recommended) or standard',
+    options: RULES_POLICIES.map((value) => ({
+      value,
+      label: value === DEFAULT_RULES_POLICY ? 'strict (recommended)' : value,
+    })),
+    initialValue: DEFAULT_RULES_POLICY,
+  });
+  if (isCancel(answer) || typeof answer === 'symbol') return CANCELLED;
+  return answer;
+}
+
 /** Collects every prompted dimension into a partial request. */
 export async function askPlan(
   manifest: Manifest,
@@ -117,6 +134,12 @@ export async function askPlan(
     const overrides: Partial<Record<string, boolean>> = {};
     for (const id of availableOptionIds(manifest)) overrides[id] = selected.includes(id);
     answers.options = overrides;
+  }
+
+  if (needs.rules) {
+    const rules = await askRules();
+    if (rules === CANCELLED) return CANCELLED;
+    answers.rules = rules;
   }
 
   return answers;

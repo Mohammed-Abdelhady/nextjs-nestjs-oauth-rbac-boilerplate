@@ -1,4 +1,4 @@
-import type { ANSWERS_SCHEMA_VERSION } from './constants/index.js';
+import type { ANSWERS_SCHEMA_VERSION, RULES_POLICIES } from './constants/index.js';
 
 /** `hidden` features are never offered; another feature pulls them in. */
 export type FeatureKind = 'credential' | 'oauth' | 'second-factor' | 'passwordless' | 'hidden';
@@ -91,10 +91,13 @@ export interface Manifest {
   };
 }
 
+export type RulesPolicy = (typeof RULES_POLICIES)[number];
+
 export interface CliOptions {
   /** Target path as typed by the user, or undefined when it has to be prompted. */
   directory?: string;
   yes: boolean;
+  rules?: RulesPolicy;
   features?: string[];
   targets?: string[];
   databases?: string[];
@@ -145,6 +148,7 @@ export interface ResolvedAnswers {
 export interface AnswersRecord {
   schemaVersion: typeof ANSWERS_SCHEMA_VERSION;
   packageManager: string;
+  rules: { policy: RulesPolicy };
   installer: InstallerIdentity;
   template: TemplateIdentity;
   answers: ResolvedAnswers;

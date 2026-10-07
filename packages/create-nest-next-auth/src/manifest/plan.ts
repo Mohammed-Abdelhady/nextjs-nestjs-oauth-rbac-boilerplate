@@ -1,6 +1,7 @@
 import type { Manifest, Preset } from '../types.js';
 import {
   DEFAULT_PRESET_ID,
+  DEFAULT_RULES_POLICY,
   LOCALE_IDS,
   LOCALE_OPTION_LOCALES,
   REQUIRED_LOCALE_ID,
@@ -249,6 +250,7 @@ export function resolvePlan(manifest: Manifest, request: PlanRequest): Plan {
   const selectedSignInSite = signInSite(manifest, chosenTargets, added);
 
   return {
+    rules: request.rules ?? DEFAULT_RULES_POLICY,
     targets: availableTargetIds(manifest).filter((id) => chosenTargets.has(id)),
     database,
     features: availableFeatures(manifest)
