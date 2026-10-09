@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["DeviceKeyModule"]
+  },
+  "android": {
+    "modules": ["app.modules.devicekey.DeviceKeyModule"]
+  }
+}
