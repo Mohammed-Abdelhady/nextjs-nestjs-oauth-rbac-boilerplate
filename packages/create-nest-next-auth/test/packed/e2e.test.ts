@@ -26,7 +26,7 @@ import {
   DEFAULT_SELECTION_MUST_EXIST,
   DEFAULT_SELECTION_MUST_NOT_EXIST,
 } from '../support/plain-run-fixture.js';
-import { expectPlannedMobileWorkspaceIsPruned } from '../support/mobile-workspace-assertions.js';
+import { mobileTargetCases } from './packed-mobile-targets.js';
 import { assertWorkspaceEdgesResolve } from '../support/workspace-assertions.js';
 
 let packed: Packed;
@@ -62,13 +62,7 @@ describe('the packed CLI', () => {
     checkGeneratedGuardrails(packed);
   });
 
-  it('keeps planned mobile targets out of generated projects', async () => {
-    const project = join(packed.workspace, 'web-only');
-    const result = scaffold(packed, 'web-only', 'email-password');
-
-    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
-    await expectPlannedMobileWorkspaceIsPruned(project, join(packed.workspace, 'package'));
-  });
+  mobileTargetCases(() => packed);
 
   it('keeps every default provider and takes the markers off', () => {
     const result = scaffold(packed, 'full');

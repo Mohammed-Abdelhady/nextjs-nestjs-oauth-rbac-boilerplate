@@ -108,6 +108,24 @@ describe('validateManifestPaths', () => {
     ]);
   });
 
+  it('rejects a client env file that is not tracked', () => {
+    const stale = manifest({
+      targets: {
+        web: {
+          label: 'Web',
+          default: true,
+          files: ['frontend/**'],
+          workspaces: ['frontend'],
+          envFiles: ['frontend/package.json', 'frontend/.env.example'],
+        },
+      },
+    });
+
+    expect(manifestPathProblems(stale, TRACKED)).toEqual([
+      'targets.web.envFiles names "frontend/.env.example", which matches no tracked file',
+    ]);
+  });
+
   it('reports every dimension at once against an empty tree', () => {
     expect(manifestPathProblems(manifest(), [])).toEqual([
       'targets.web.files names "frontend/**", which matches no tracked file',

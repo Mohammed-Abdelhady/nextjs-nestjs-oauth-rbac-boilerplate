@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 import { templateContent } from '../../scripts/sync-template.mjs';
+import { stripFeatureMarkers } from '../../src/prune/markers.js';
 import { renderRulesText } from '../../src/scaffold/rules-text.js';
 
 const REPOSITORY_ROOT = fileURLToPath(new URL('../../../../', import.meta.url));
@@ -34,21 +35,27 @@ function sectionBody(markdown: string, heading: string): string | undefined {
   return markdown.split(`## ${heading}\n\n`)[1]?.split('\n\n## ')[0];
 }
 
+/** What a web project keeps of a tooling file: the lines marked for a mobile app go. */
+function forWebProject(path: string, content: string): string {
+  const mobileIds = new Set(['native-core', 'native-expo']);
+  return stripFeatureMarkers(content, path, new Set(), mobileIds).content;
+}
+
 async function projectFixture(overrides: FixtureFiles = {}): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), 'cna-rules-'));
   roots.push(root);
   const policySource =
     overrides.policy ??
     (await readFile(join(REPOSITORY_ROOT, 'scripts/guardrails/policy.mjs'), 'utf8'));
-  const policy = templateContent(
+  const policy = forWebProject(
     'scripts/guardrails/policy.mjs',
-    Buffer.from(policySource),
-  ).toString();
+    templateContent('scripts/guardrails/policy.mjs', Buffer.from(policySource)).toString(),
+  );
   const commitlintSource = await readFile(join(REPOSITORY_ROOT, 'commitlint.config.cjs'), 'utf8');
-  const commitlint = templateContent(
+  const commitlint = forWebProject(
     'commitlint.config.cjs',
-    Buffer.from(commitlintSource),
-  ).toString();
+    templateContent('commitlint.config.cjs', Buffer.from(commitlintSource)).toString(),
+  );
   const gates =
     overrides.gates ??
     JSON.stringify({

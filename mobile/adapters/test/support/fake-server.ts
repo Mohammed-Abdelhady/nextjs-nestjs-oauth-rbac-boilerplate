@@ -13,8 +13,8 @@ export const SERVER_USER = {
   permissions: [],
   authProvider: 'password',
   isVerified: true,
-  twoFactorEnabled: false,
-  passkeyCount: 0,
+  twoFactorEnabled: false, // feature:totp
+  passkeyCount: 0, // feature:passkeys
   linkedProviders: [],
 };
 

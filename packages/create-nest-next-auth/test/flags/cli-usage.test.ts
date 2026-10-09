@@ -48,10 +48,10 @@ describe('usage errors exit 2', () => {
       ...(await target()).flags,
       '--dry-run',
       '--targets',
-      'native-expo',
+      'native-cli',
     ]);
     expect(code).toBe(2);
-    expect(output).toContain('native-expo');
+    expect(output).toContain('"native-cli" is not available yet.');
   });
 
   it('accepts a locale list that includes Arabic', async () => {

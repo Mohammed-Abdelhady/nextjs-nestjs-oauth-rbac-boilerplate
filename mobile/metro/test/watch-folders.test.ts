@@ -145,6 +145,7 @@ it.each([
       'shared/sdk',
     ],
   ],
+  // feature:native-cli:start
   [
     'mobile/cli',
     [
@@ -158,6 +159,7 @@ it.each([
       'shared/sdk',
     ],
   ],
+  // feature:native-cli:end
 ])('gives %s in this repository its real reach', (shell, expected) => {
   expect(watched(REPOSITORY, shell)).toEqual(expected);
 });

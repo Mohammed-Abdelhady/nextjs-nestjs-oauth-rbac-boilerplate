@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { templateContent } from '../../scripts/sync-template.mjs';
 import { prune } from '../../src/prune/index.js';
 import { renderRulesText } from '../../src/scaffold/rules-text.js';
-import { FIXTURE_MANIFEST } from '../support/fixture.js';
+import { TOOLING_MANIFEST } from '../support/fixture.js';
 import { jobsOf, readWorkflow } from '../support/ci-workflow-helpers.js';
 
 const REPO_ROOT = fileURLToPath(new URL('../../../../', import.meta.url));
@@ -45,7 +45,7 @@ describe('generation-time rules policy', () => {
     'enumerates every enforcement point for %s',
     async (level) => {
       const root = await fixture();
-      await prune(root, FIXTURE_MANIFEST, ['email-password', 'alpha', 'beta'], [], level);
+      await prune(root, TOOLING_MANIFEST, ['email-password', 'alpha', 'beta'], [], level);
       const hooks = await Promise.all(
         ['pre-commit', 'pre-push', 'commit-msg'].map((name) =>
           readFile(join(root, '.husky', name), 'utf8'),
@@ -125,7 +125,7 @@ describe('generation-time rules policy', () => {
       const source = await readFile(join(root, path), 'utf8');
       await writeFile(join(root, path), source.replaceAll('\n', '\r\n'));
     }
-    await prune(root, FIXTURE_MANIFEST, ['email-password', 'alpha', 'beta'], [], 'strict');
+    await prune(root, TOOLING_MANIFEST, ['email-password', 'alpha', 'beta'], [], 'strict');
     const contents = await Promise.all(
       FILES.slice(0, 5).map((path) => readFile(join(root, path), 'utf8')),
     );
@@ -142,7 +142,7 @@ describe('generation-time rules policy', () => {
     'states at %s that the commit message hook runs and removes tool attribution',
     async (level) => {
       const root = await fixture();
-      await prune(root, FIXTURE_MANIFEST, ['email-password', 'alpha', 'beta'], [], level);
+      await prune(root, TOOLING_MANIFEST, ['email-password', 'alpha', 'beta'], [], level);
       const hook = await readFile(join(root, '.husky/commit-msg'), 'utf8');
       const withHooks = await renderRulesText({
         projectRoot: root,
@@ -177,7 +177,7 @@ describe('generation-time rules policy', () => {
 
   it('renders standard without an enforced ban list or ceiling and states the generation choice', async () => {
     const root = await fixture();
-    await prune(root, FIXTURE_MANIFEST, ['email-password', 'alpha', 'beta'], [], 'standard');
+    await prune(root, TOOLING_MANIFEST, ['email-password', 'alpha', 'beta'], [], 'standard');
     const { agents } = await renderRulesText({
       projectRoot: root,
       level: 'standard',

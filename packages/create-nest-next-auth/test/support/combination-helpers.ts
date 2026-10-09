@@ -114,6 +114,19 @@ export async function installProject(project: string, store: string): Promise<Co
   return runTool('pnpm', ['install', '--frozen-lockfile', '--store-dir', store], options);
 }
 
+/** Installs exactly what the lockfile the installer wrote names, with nothing resolved again. */
+export async function installFrozen(project: string, store: string): Promise<CommandResult> {
+  const workspaceFile = join(project, 'pnpm-workspace.yaml');
+  const workspace: unknown = parse(await readFile(workspaceFile, 'utf8'));
+  if (!isRecord(workspace)) throw new Error('Invalid generated pnpm workspace configuration.');
+  // pnpm run verifies the dependency layout too, so later gates need the same store.
+  await writeFile(workspaceFile, stringify({ ...workspace, storeDir: store }));
+  return runTool('pnpm', ['install', '--frozen-lockfile', '--store-dir', store], {
+    cwd: project,
+    env: { MONGOMS_DOWNLOAD_DIR: join(dirname(store), 'mongo-binaries') },
+  });
+}
+
 export function installFromWarmStore(project: string, store: string): Promise<CommandResult> {
   return runTool('pnpm', ['install', '--offline', '--frozen-lockfile', '--store-dir', store], {
     cwd: project,
@@ -269,14 +282,14 @@ async function formatLikeRepository(content: string, relative: string): Promise<
 
 /**
  * Compares a project scaffolded with everything selected against the
- * repository: retained files differ only by markers, and manifest removals
- * must be absent.
+ * repository: retained files differ only by markers, and what the manifest
+ * removes, for every project or with a client left out, must be absent.
  */
 export async function compareWithRepository(
   project: string,
   featureIds: string[],
   markerIds: string[],
-  alwaysRemoveFiles: string[],
+  removedFiles: string[],
 ): Promise<MarkerDifference[]> {
   const kept = new Set(featureIds);
   const known = new Set(markerIds);
@@ -285,7 +298,7 @@ export async function compareWithRepository(
   for (const directory of COMPARED_DIRECTORIES) {
     for (const file of await listFiles(join(REPO_ROOT, directory))) {
       const relative = `${directory}/${file}`;
-      if (matchesAnyGlob(relative, alwaysRemoveFiles)) {
+      if (matchesAnyGlob(relative, removedFiles)) {
         if (existsSync(join(project, relative)))
           differences.push({ file: relative, reason: 'manifest-removed file was retained' });
         continue;

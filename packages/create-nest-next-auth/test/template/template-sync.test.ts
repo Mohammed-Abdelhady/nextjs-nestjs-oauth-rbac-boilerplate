@@ -72,12 +72,12 @@ it('ships the project ignore list without only the instruction-file entries', ()
   expect(shipped).toBe(expected);
 });
 
-it('ships commit scopes that match the available template workspaces', () => {
+it('ships the mobile commit scope with the marker that lets a project drop it', () => {
   const source = readFileSync(join(REPOSITORY_ROOT, 'commitlint.config.cjs'), 'utf8');
   const shipped = templateContent('commitlint.config.cjs', Buffer.from(source)).toString();
-  const expected = source.replace(/^\s*'mobile',\r?\n/m, '');
 
-  expect(shipped).toBe(expected);
+  expect(shipped).toBe(source);
+  expect(shipped.split('\n')).toContain("        'mobile', // feature:native-core");
 });
 
 it('keeps repository cloning instructions out of the generated quick start', () => {

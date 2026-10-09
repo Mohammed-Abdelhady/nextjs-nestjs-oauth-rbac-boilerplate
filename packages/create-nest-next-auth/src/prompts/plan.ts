@@ -9,6 +9,7 @@ import {
 import { type PlanRequest, resolvePlan } from '../manifest/plan.js';
 import type { Manifest } from '../types.js';
 import { askFeatures, CANCELLED } from './index.js';
+import { askMobileIdentity, missingMobileFields } from './mobile.js';
 
 export interface PlanPromptNeeds {
   rules: boolean;
@@ -16,6 +17,8 @@ export interface PlanPromptNeeds {
   database: boolean;
   features: boolean;
   options: boolean;
+  /** A mobile app is already chosen and some of its identity is still open. */
+  mobile: boolean;
 }
 
 /**
@@ -29,7 +32,9 @@ export function planPromptNeeds(
   terminal = true,
 ): PlanPromptNeeds {
   const presetGiven = request.preset !== undefined;
+  const chosen = resolvePlan(manifest, request);
   return {
+    mobile: chosen.mobile !== undefined && missingMobileFields(request.mobile ?? {}).length > 0,
     // Without a terminal the level is not asked for: the plan falls back to its default.
     rules: terminal && request.rules === undefined,
     targets:
@@ -50,6 +55,9 @@ async function askTargets(
     options: availableTargetIds(manifest).map((id) => ({
       value: id,
       label: manifest.targets[id].label,
+      ...(manifest.targets[id].description === undefined
+        ? {}
+        : { hint: manifest.targets[id].description }),
     })),
     initialValues: initial,
     required: true,
@@ -117,6 +125,15 @@ export async function askPlan(
     const targets = await askTargets(manifest, baseline.targets);
     if (targets === CANCELLED) return CANCELLED;
     answers.targets = targets;
+  }
+
+  // Asked as soon as the clients are known, and only when one of them is a mobile app.
+  const withTargets = resolvePlan(manifest, { ...request, ...answers });
+  if (withTargets.mobile !== undefined) {
+    const given = request.mobile ?? {};
+    const mobile = await askMobileIdentity(withTargets.mobile, given);
+    if (mobile === CANCELLED) return CANCELLED;
+    answers.mobile = { ...given, ...mobile };
   }
 
   if (needs.database) {

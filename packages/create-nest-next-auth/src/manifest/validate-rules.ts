@@ -1,4 +1,6 @@
 import type { FeatureStatus } from '../types.js';
+import { PACKAGE_MANIFEST } from '../constants/index.js';
+import { matchesAnyGlob } from '../utils/glob.js';
 import { isAvailable } from './select.js';
 import type { Dimensions } from './validate-dimensions.js';
 
@@ -114,16 +116,33 @@ function rejectPlannedFiles(
   }
 }
 
-function checkPlannedFiles(dimensions: Dimensions, problems: string[]): void {
-  for (const [id, target] of Object.entries(dimensions.targets)) {
-    rejectPlannedFiles(
-      'targets',
-      id,
-      target.status,
-      [target.files, target.workspaces, target.envFiles],
-      problems,
-    );
+/**
+ * A workspace an owner lists has to sit under the files it owns, or leaving the
+ * owner out would delete nothing and keep the workspace.
+ */
+function checkOwnedWorkspaces(dimensions: Dimensions, problems: string[]): void {
+  const owners: [string, { files: string[]; workspaces: string[] }][] = [
+    ...Object.entries(dimensions.targets).map(([id, target]): [string, typeof target] => [
+      `targets.${id}`,
+      target,
+    ]),
+    ...Object.entries(dimensions.shared).map(([id, shared]): [string, typeof shared] => [
+      `shared.${id}`,
+      shared,
+    ]),
+  ];
+  for (const [where, owner] of owners) {
+    if (owner.files.length === 0) continue;
+    for (const workspace of owner.workspaces) {
+      if (!matchesAnyGlob(`${workspace}/${PACKAGE_MANIFEST}`, owner.files)) {
+        problems.push(`${where}.workspaces names "${workspace}", which its files do not cover`);
+      }
+    }
   }
+}
+
+// A planned target may own files: it is never part of a plan, so they are always removed.
+function checkPlannedFiles(dimensions: Dimensions, problems: string[]): void {
   for (const [id, database] of Object.entries(dimensions.databases)) {
     rejectPlannedFiles(
       'databases',
@@ -150,4 +169,5 @@ export function checkDimensions(
   checkUniqueIds(dimensions, featureIds, problems);
   checkDefaults(dimensions, problems);
   checkPlannedFiles(dimensions, problems);
+  checkOwnedWorkspaces(dimensions, problems);
 }

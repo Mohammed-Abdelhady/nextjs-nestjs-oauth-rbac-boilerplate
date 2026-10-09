@@ -19,6 +19,7 @@ const ONLY_RULES = {
   database: false,
   features: false,
   options: false,
+  mobile: false,
   rules: true,
 };
 describe('rules selection', () => {
