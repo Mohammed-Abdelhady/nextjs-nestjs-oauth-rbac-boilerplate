@@ -1,14 +1,17 @@
-import crypto from 'node:crypto';
 import { MongoNetworkError } from 'mongodb';
 import { Connection, Model } from 'mongoose';
 import { SecurityEventDocument } from '../../src/session/schemas/security-event.schema';
 import { UNKNOWN_COMMIT_RESULT_LABEL } from '../../src/session/utils/transactions/mongo-transaction';
 import { UserDocument } from '../../src/user/schemas/user.schema';
 import { RaceGate } from './race-gate';
+import {
+  issueOnlyTheRefusedEventId,
+  REFUSED_EVENT_ID,
+  REFUSED_EVENT_SEED_ACTION,
+  REFUSED_EVENT_SEED_OUTCOME,
+} from './refused-event';
 
-/** Action of the stored event that `refuseSecurityEvents` collides with. */
-export const REFUSED_EVENT_SEED_ACTION = 'test.refused-event-seed';
-const REFUSED_EVENT_ID = '00000000-0000-4000-8000-000000000000';
+export { REFUSED_EVENT_SEED_ACTION };
 
 /** Fail at the database boundary after the account write, before revocation. */
 export function failNextVersionWrite(
@@ -54,16 +57,13 @@ export async function refuseSecurityEvents(
     {
       $setOnInsert: {
         action: REFUSED_EVENT_SEED_ACTION,
-        outcome: 'seeded',
+        outcome: REFUSED_EVENT_SEED_OUTCOME,
         occurredAt,
       },
     },
     { upsert: true },
   );
-  const spy = jest
-    .spyOn(crypto, 'randomUUID')
-    .mockReturnValue(REFUSED_EVENT_ID);
-  return () => spy.mockRestore();
+  return issueOnlyTheRefusedEventId();
 }
 
 export interface LostCommitAnswers {
