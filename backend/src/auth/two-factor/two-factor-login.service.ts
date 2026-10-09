@@ -7,7 +7,7 @@ import { ApiResponse } from '../../common/dto/api-response.dto';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { LoginResponseDto } from '../dto/login-response.dto';
-import { SignInService } from '../services/sign-in.service';
+import { SignInService } from '../services/sessions/sign-in.service';
 import { VerifyTwoFactorDto } from './dto/verify-two-factor.dto';
 import { TwoFactorChallengeService } from './services/two-factor-challenge.service';
 import { TwoFactorVerificationService } from './services/two-factor-verification.service';

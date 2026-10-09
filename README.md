@@ -39,24 +39,24 @@ The CLI prompts for the sign-in methods to keep. It removes unused strategy file
 
 At runtime, the frontend calls `GET /api/auth/methods` to learn which authentication flows the backend enables. The backend checks its configuration and returns the active providers, credential toggles, magic link availability, passkey support, and two-factor requirements. The frontend renders only the matching forms and buttons.
 
-| Method              | Type                  | Setup guide                                      |
-| ------------------- | --------------------- | ------------------------------------------------ |
-| Email and password  | Credential            | [SMTP setup](docs/setup-smtp.md)                 |
-| Magic link          | Passwordless          | [Magic link setup](docs/setup-magic-link.md)     |
-| Two-factor (TOTP)   | Second factor         | [Two-factor setup](docs/setup-two-factor.md)     |
-| Passkeys (WebAuthn) | Credential / 2FA      | [Passkey setup](docs/setup-passkeys.md)          |
-| Google              | OAuth 2.0             | [Google setup](docs/setup-google-oauth.md)       |
-| GitHub              | OAuth 2.0             | [GitHub setup](docs/setup-github-oauth.md)       |
-| Facebook            | OAuth 2.0             | [Facebook setup](docs/setup-facebook-oauth.md)   |
-| Apple               | OAuth 2.0 / Form post | [Apple setup](docs/setup-apple-oauth.md)         |
-| Discord             | OAuth 2.0             | [Discord setup](docs/setup-discord-oauth.md)     |
-| GitLab              | OIDC                  | [GitLab setup](docs/setup-gitlab-oauth.md)       |
-| LinkedIn            | OIDC                  | [LinkedIn setup](docs/setup-linkedin-oauth.md)   |
-| Microsoft           | OAuth 2.0             | [Microsoft setup](docs/setup-microsoft-oauth.md) |
-| Generic OIDC        | OIDC                  | [OIDC setup](docs/setup-oidc-oauth.md)           |
-| Slack               | OIDC                  | [Slack setup](docs/setup-slack-oauth.md)         |
-| Twitch              | OIDC                  | [Twitch setup](docs/setup-twitch-oauth.md)       |
-| X (Twitter)         | OAuth 2.0 with PKCE   | [X setup](docs/setup-x-oauth.md)                 |
+| Method              | Type                  | Setup guide                                            |
+| ------------------- | --------------------- | ------------------------------------------------------ |
+| Email and password  | Credential            | [SMTP setup](docs/setup/setup-smtp.md)                 |
+| Magic link          | Passwordless          | [Magic link setup](docs/setup/setup-magic-link.md)     |
+| Two-factor (TOTP)   | Second factor         | [Two-factor setup](docs/setup/setup-two-factor.md)     |
+| Passkeys (WebAuthn) | Credential / 2FA      | [Passkey setup](docs/setup/setup-passkeys.md)          |
+| Google              | OAuth 2.0             | [Google setup](docs/setup/setup-google-oauth.md)       |
+| GitHub              | OAuth 2.0             | [GitHub setup](docs/setup/setup-github-oauth.md)       |
+| Facebook            | OAuth 2.0             | [Facebook setup](docs/setup/setup-facebook-oauth.md)   |
+| Apple               | OAuth 2.0 / Form post | [Apple setup](docs/setup/setup-apple-oauth.md)         |
+| Discord             | OAuth 2.0             | [Discord setup](docs/setup/setup-discord-oauth.md)     |
+| GitLab              | OIDC                  | [GitLab setup](docs/setup/setup-gitlab-oauth.md)       |
+| LinkedIn            | OIDC                  | [LinkedIn setup](docs/setup/setup-linkedin-oauth.md)   |
+| Microsoft           | OAuth 2.0             | [Microsoft setup](docs/setup/setup-microsoft-oauth.md) |
+| Generic OIDC        | OIDC                  | [OIDC setup](docs/setup/setup-oidc-oauth.md)           |
+| Slack               | OIDC                  | [Slack setup](docs/setup/setup-slack-oauth.md)         |
+| Twitch              | OIDC                  | [Twitch setup](docs/setup/setup-twitch-oauth.md)       |
+| X (Twitter)         | OAuth 2.0 with PKCE   | [X setup](docs/setup/setup-x-oauth.md)                 |
 
 ## Quick start
 
@@ -97,6 +97,13 @@ docker compose --env-file .env.docker up --build
 
 <!-- feature:docker:end -->
 
+Copy the example configuration files:
+
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env.local
+```
+
 ### Start manually
 
 ```bash
@@ -110,24 +117,17 @@ pnpm --filter frontend run dev
 Endpoints:
 
 - Frontend: http://localhost:3000
-- Backend API: http://localhost:5000/api
-- Health check: http://localhost:5000/health
-- Swagger documentation: http://localhost:5000/api/docs (set `SWAGGER_ENABLED=true` in `backend/.env`)
+- Backend API: http://localhost:5001/api
+- Health check: http://localhost:5001/health
+- Swagger documentation: http://localhost:5001/api/docs (set `SWAGGER_ENABLED=true` in `backend/.env`)
 
 ## Environment configuration
-
-Copy the example configuration files:
-
-```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env.local
-```
 
 ### Key backend variables (`backend/.env`)
 
 | Variable                        | Description                                                            | Default                                               |
 | ------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------- |
-| `PORT`                          | API server port                                                        | `5000`                                                |
+| `PORT`                          | API server port. Example file sets `5001`.                             | `3000` when unset                                     |
 | `NODE_ENV`                      | Environment name                                                       | `development`                                         |
 | `MONGO_URI`                     | MongoDB URI                                                            | `mongodb://localhost:27017/authboiler?replicaSet=rs0` |
 | `FRONTEND_URL`                  | Frontend origin for CORS and cookie domain                             | `http://localhost:3000`                               |
@@ -141,7 +141,7 @@ cp frontend/.env.example frontend/.env.local
 
 | Variable              | Description                          | Default                 |
 | --------------------- | ------------------------------------ | ----------------------- |
-| `NEXT_PUBLIC_API_URL` | Backend origin without `/api` suffix | `http://localhost:5000` |
+| `NEXT_PUBLIC_API_URL` | Backend origin without `/api` suffix | `http://localhost:5001` |
 
 See [docs/README.md](docs/README.md) for provider-specific credentials and mail settings.
 
@@ -173,17 +173,17 @@ pnpm --filter backend run seed:reset
 
 ## Documentation
 
-| Guide                                        | Description                                                            |
-| -------------------------------------------- | ---------------------------------------------------------------------- |
-| [Architecture](docs/ARCHITECTURE.md)         | Request lifecycle, session storage, OAuth registry, and security model |
-| [Database schema](docs/DATABASE_SCHEMA.md)   | MongoDB collections, indexes, and migrations                           |
-| [RBAC system](docs/RBAC-SYSTEM.md)           | Role levels, permission inheritance, and enforcement guards            |
-| [Migration guide](docs/MIGRATION-GUIDE.md)   | Database migration scripts and versioning                              |
-| [Production setup](docs/PRODUCTION-SETUP.md) | Domain configuration, SSL termination, and Nginx reverse proxy         |
-| [Code quality](docs/code-quality.md)         | Linting, formatting, git hooks, and E2E tests                          |
-| [Deployment](docs/deployment.md)             | Docker Compose and cloud deployment guides                             |
-| [Backend guide](backend/README.md)           | Backend modules, controllers, and configuration schema                 |
-| [Frontend guide](frontend/README.md)         | Frontend routing, components, and internationalization                 |
+| Guide                                                   | Description                                                            |
+| ------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [Architecture](docs/reference/ARCHITECTURE.md)          | Request lifecycle, session storage, OAuth registry, and security model |
+| [Database schema](docs/reference/DATABASE_SCHEMA.md)    | MongoDB collections, indexes, and migrations                           |
+| [RBAC system](docs/access-control/RBAC-SYSTEM.md)       | Role levels, permission inheritance, and enforcement guards            |
+| [Migration guide](docs/operations/MIGRATION-GUIDE.md)   | Database migration scripts and versioning                              |
+| [Production setup](docs/operations/PRODUCTION-SETUP.md) | Domain configuration, SSL termination, and Nginx reverse proxy         |
+| [Code quality](docs/reference/code-quality.md)          | Linting, formatting, git hooks, and E2E tests                          |
+| [Deployment](docs/operations/deployment.md)             | Docker Compose and cloud deployment guides                             |
+| [Backend guide](backend/README.md)                      | Backend modules, controllers, and configuration schema                 |
+| [Frontend guide](frontend/README.md)                    | Frontend routing, components, and internationalization                 |
 
 ## Contributing
 

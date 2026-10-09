@@ -8,8 +8,8 @@ import {
   NATIVE_SCOPE_PATTERN,
   WEB_CLIENT_ID,
 } from '../../session/constants/client-ids';
-import { isAcceptableRedirectUri } from '../../session/utils/redirect-uri.util';
-import type { RedirectUriPolicy } from '../../session/utils/redirect-uri.util';
+import { isAcceptableRedirectUri } from '../../session/utils/oauth/redirect-uri.util';
+import type { RedirectUriPolicy } from '../../session/utils/oauth/redirect-uri.util';
 import type { NativeApplicationConfiguration } from '../types/native-application.type';
 
 const FIRST_PARTY_CLIENT_IDS = new Set([WEB_CLIENT_ID, ADMIN_CLIENT_ID]);

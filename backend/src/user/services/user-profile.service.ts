@@ -10,8 +10,8 @@ import {
   PasskeyDocument,
 } from '../../auth/passkeys/schemas/passkey.schema';
 // feature:passkeys:end
-import { SessionService } from '../../auth/services/session.service';
-import { withMajorityTransaction } from '../../session/utils/mongo-transaction';
+import { SessionService } from '../../auth/services/sessions/session.service';
+import { withMajorityTransaction } from '../../session/utils/transactions/mongo-transaction';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { UserProfileDto } from '../dto/user-profile.dto';

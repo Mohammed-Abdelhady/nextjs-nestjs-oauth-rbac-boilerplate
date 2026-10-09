@@ -10,10 +10,10 @@ import {
 } from '../../auth/passkeys/schemas/passkey.schema';
 // feature:passkeys:end
 import { Role, RoleSchema } from '../../role/schemas/role.schema';
-import { SessionService } from '../../auth/services/session.service';
+import { SessionService } from '../../auth/services/sessions/session.service';
 import { User } from '../schemas/user.schema';
 import { UserProfileService } from './user-profile.service';
-import { hashToken } from '../../session/utils/token-hash';
+import { hashToken } from '../../session/utils/hashing/token-hash';
 import { startMemoryReplSet } from '../../../test/utils/memory-replset';
 import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
 import {

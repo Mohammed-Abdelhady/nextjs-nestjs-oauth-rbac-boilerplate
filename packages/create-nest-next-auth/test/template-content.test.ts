@@ -6,7 +6,7 @@ import { TEMPLATE_IDENTITY_FILE } from '../src/constants/index.js';
 import { buildTemplate } from './sync-template-fixture.js';
 
 const roots: string[] = [];
-const DOC_PATH = 'docs/code-quality.md';
+const DOC_PATH = 'docs/reference/code-quality.md';
 const POLICY_PATH = 'scripts/guardrails/policy.mjs';
 const ROOT_ONLY_START = '<!-- repository-only:start -->';
 const ROOT_ONLY_END = '<!-- repository-only:end -->';
@@ -33,7 +33,7 @@ describe('generated guardrail content', () => {
   it('keeps policy data exempt and removes exemptions for absent regression tests', () => {
     const template = copyContent(
       POLICY_PATH,
-      "export const EXEMPT_PATHS = ['scripts/guardrails/policy.mjs', 'scripts/check-hard-bans.test.mjs'];\n",
+      "export const EXEMPT_PATHS = ['scripts/guardrails/policy.mjs', 'scripts/guardrails/scanner/check-hard-bans.test.mjs'];\n",
     );
     const output = execFileSync(
       process.execPath,
@@ -73,9 +73,9 @@ describe('generated guardrail content', () => {
       `Changed.\n${ROOT_ONLY_START}\nFirst.\n${ROOT_ONLY_END}\n`,
     );
     expect([identity(first), identity(second), identity(changed)]).toEqual([
-      'ebe22b804ece704685702bd2b488b030931c723a659187983efc0c140c7760a4',
-      'ebe22b804ece704685702bd2b488b030931c723a659187983efc0c140c7760a4',
-      '6aa63c9747902824d74396fbed928943da36fd9ccbfc2fcc84df372393a78bc9',
+      '8f819e4ebc6bbcc3bef4e9062ebedc680b1d380f7acf97ccecac9d0d97bcf181',
+      '8f819e4ebc6bbcc3bef4e9062ebedc680b1d380f7acf97ccecac9d0d97bcf181',
+      '39d773812a505e4f3d5f5211e62d352b67966eb19b81eed80153ac270ff22439',
     ]);
   });
 });

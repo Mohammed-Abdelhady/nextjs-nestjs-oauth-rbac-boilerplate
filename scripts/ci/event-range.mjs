@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { gitEnvironment } from '../guardrails/git-environment.mjs';
+import { gitEnvironment } from '../guardrails/git/git-environment.mjs';
 import {
   CI_EVENT_NAMES,
   CI_SCAN_MODES,

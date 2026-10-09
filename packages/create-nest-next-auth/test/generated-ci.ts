@@ -156,11 +156,11 @@ export async function checkGeneratedCi(packed: Packed, preset: string): Promise<
     encoding: 'utf8',
   });
   expect(missingGroup.status).toBe(2);
-  const ciDocs = readFileSync(join(project, 'docs/code-quality.md'), 'utf8')
+  const ciDocs = readFileSync(join(project, 'docs/reference/code-quality.md'), 'utf8')
     .split('## Continuous integration')[1]
     .split('## Hard-ban scan')[0];
   expect(ciDocs).not.toMatch(/installer/i);
-  expect(readFileSync(join(project, 'docs/code-quality.md'), 'utf8')).not.toMatch(
+  expect(readFileSync(join(project, 'docs/reference/code-quality.md'), 'utf8')).not.toMatch(
     /test:config:all|--installer|Installer combinations|repository-only/,
   );
   expect(readFileSync(join(project, '.github/workflows/ci.yml'), 'utf8')).not.toMatch(

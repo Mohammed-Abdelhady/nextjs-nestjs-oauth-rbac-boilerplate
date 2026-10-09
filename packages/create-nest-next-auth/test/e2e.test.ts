@@ -107,14 +107,14 @@ describe('the packed CLI', () => {
         'frontend/e2e',
         'frontend/playwright.config.ts',
         'frontend/playwright.frontend.config.ts',
-        'backend/test/utils/browser-server.ts',
-        'backend/test/utils/local-oauth.ts',
+        'backend/test/utils/browser/browser-server.ts',
+        'backend/test/utils/oauth/local-oauth.ts',
       ])
         expect(existsSync(join(project, path)), path).toBe(false);
       for (const path of [
         'backend/test/utils/e2e-app.ts',
         'backend/test/jest-e2e.json',
-        'backend/test/app.e2e-spec.ts',
+        'backend/test/app/app.e2e-spec.ts',
         'frontend/vitest.config.ts',
         'frontend/src/modules/users/api/usersApi.test.ts',
       ])
@@ -224,8 +224,8 @@ describe('the packed CLI', () => {
     expect(existsSync(strategy('google'))).toBe(true);
     expect(existsSync(strategy('github'))).toBe(false);
     expect(existsSync(strategy('facebook'))).toBe(false);
-    expect(existsSync(join(project, 'docs/setup-github-oauth.md'))).toBe(false);
-    expect(existsSync(join(project, 'docs/setup-google-oauth.md'))).toBe(true);
+    expect(existsSync(join(project, 'docs/setup/setup-github-oauth.md'))).toBe(false);
+    expect(existsSync(join(project, 'docs/setup/setup-google-oauth.md'))).toBe(true);
 
     const providerFixture = readFileSync(
       join(project, 'backend/test/constants/oauth-boot-env.ts'),

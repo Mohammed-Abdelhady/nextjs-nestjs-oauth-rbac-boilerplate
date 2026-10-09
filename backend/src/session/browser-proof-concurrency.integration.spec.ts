@@ -16,7 +16,7 @@ import {
   BrowserProofDocument,
 } from './schemas/browser-proof.schema';
 import { BrowserProofService } from './services/browser-proof.service';
-import { hashToken, randomSecret } from './utils/token-hash';
+import { hashToken, randomSecret } from './utils/hashing/token-hash';
 import { startMemoryReplSet } from '../../test/utils/memory-replset';
 import { FrozenClock, TEST_NOW } from '../../test/utils/frozen-clock';
 import {

@@ -41,7 +41,7 @@ import { SecurityEventService } from './services/security-event.service';
 import { SessionAuthorityService } from './services/session-authority.service';
 import { SessionIssuanceService } from './services/session-issuance.service';
 import { SessionRevocationService } from './services/session-revocation.service';
-import { NativeAccessService } from './native/native-access.service';
+import { NativeAccessService } from './native/access/native-access.service';
 
 @Module({
   imports: [

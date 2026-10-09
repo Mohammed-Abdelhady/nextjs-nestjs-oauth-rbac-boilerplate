@@ -8,9 +8,9 @@ import { User, UserDocument } from '../../user/schemas/user.schema';
 import { REVOKED_REASON } from '../constants/revoked-reason';
 import { SECURITY_EVENT_ACTION } from '../constants/security-event-action';
 import { Session, SessionDocument } from '../schemas/session.schema';
-import { asAuthorityUnavailable } from '../utils/authority-unavailable';
-import { withMajorityTransaction } from '../utils/mongo-transaction';
-import { hashToken } from '../utils/token-hash';
+import { asAuthorityUnavailable } from '../utils/authority/authority-unavailable';
+import { withMajorityTransaction } from '../utils/transactions/mongo-transaction';
+import { hashToken } from '../utils/hashing/token-hash';
 import { SecurityEventService } from './security-event.service';
 import { RoleAssignmentEvent } from '../types/role-assignment-event';
 

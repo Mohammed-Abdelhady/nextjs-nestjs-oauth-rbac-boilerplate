@@ -13,7 +13,7 @@ import { TwoFactorLoginService } from './two-factor-login.service';
 import { VerifyTwoFactorDto } from './dto/verify-two-factor.dto';
 import { TwoFactorChallengeService } from './services/two-factor-challenge.service';
 import { TwoFactorVerificationService } from './services/two-factor-verification.service';
-import { SignInService } from '../services/sign-in.service';
+import { SignInService } from '../services/sessions/sign-in.service';
 import { checkTotpDelta } from './utils/totp.util';
 import {
   createCrypto,

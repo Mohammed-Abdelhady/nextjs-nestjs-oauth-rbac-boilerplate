@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { AuthMethodsController } from './auth-methods.controller';
-import { AuthFeaturesService } from './services/auth-features.service';
+import { AuthFeaturesService } from './services/features/auth-features.service';
 import { OAuthRegistryService } from './oauth/oauth-registry.service'; // feature:oauth-core
 
 describe('AuthMethodsController', () => {

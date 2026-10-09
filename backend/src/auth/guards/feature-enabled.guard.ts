@@ -2,7 +2,7 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AUTH_FEATURE_KEY } from '../decorators/requires-feature.decorator';
 import { AuthFeature } from '../enums/auth-feature.enum';
-import { AuthFeaturesService } from '../services/auth-features.service';
+import { AuthFeaturesService } from '../services/features/auth-features.service';
 
 /**
  * Closes the routes of a sign-in method the deployment turned off. Applied by

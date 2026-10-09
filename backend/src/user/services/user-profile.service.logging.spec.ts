@@ -1,7 +1,7 @@
 import * as bcrypt from 'bcrypt';
 import { UserProfileService } from './user-profile.service';
 import { UserPermissionsService } from './user-permissions.service';
-import { SessionService } from '../../auth/services/session.service';
+import { SessionService } from '../../auth/services/sessions/session.service';
 import {
   bootLoggingServices,
   LoggingServices,

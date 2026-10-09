@@ -10,8 +10,8 @@ import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { SKIP_BROWSER_PROOF } from '../decorators/skip-browser-proof.decorator';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
-import { SessionCookieService } from '../services/session-cookie.service';
-import { SessionService } from '../services/session.service';
+import { SessionCookieService } from '../services/sessions/session-cookie.service';
+import { SessionService } from '../services/sessions/session.service';
 import { CREDENTIAL_PURPOSE } from '../../session/constants/credential-purpose';
 import {
   CSRF_HEADER,
@@ -25,14 +25,14 @@ import {
 } from '../../session/schemas/session.schema';
 import { BrowserProofService } from '../../session/services/browser-proof.service';
 import { ApplicationRegistryService } from '../../session/services/application-registry.service';
-import { decideOrigin } from '../../session/utils/request-origin';
-import { secretEquals } from '../../session/utils/token-hash';
-import { readBearerToken } from '../../session/native/native-access.service';
+import { decideOrigin } from '../../session/utils/request/request-origin';
+import { secretEquals } from '../../session/utils/hashing/token-hash';
+import { readBearerToken } from '../../session/native/access/native-access.service';
 import {
   REQUEST_CREDENTIAL,
   hasBothCredentials,
   selectRequestCredential,
-} from '../../session/utils/request-credential';
+} from '../../session/utils/request/request-credential';
 import { RequestWithUser } from './auth.guard';
 
 // AuthModule is imported from more than one place, so this guard can be

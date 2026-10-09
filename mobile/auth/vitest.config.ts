@@ -4,6 +4,6 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['test/**/*.test.ts'],
-    setupFiles: ['test/unhandled-rejection.setup.ts'],
+    setupFiles: ['test/support/unhandled-rejection.setup.ts'],
   },
 });

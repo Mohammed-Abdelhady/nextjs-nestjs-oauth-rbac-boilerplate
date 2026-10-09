@@ -4,7 +4,7 @@ import { AppException } from '../../../common/exceptions/app.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { UserDocument } from '../../../user/schemas/user.schema';
 import { AuthFeature } from '../../enums/auth-feature.enum';
-import { AuthFeaturesService } from '../../services/auth-features.service';
+import { AuthFeaturesService } from '../../services/features/auth-features.service';
 import { PasskeyCredentialDto } from '../dto/passkey-credential.dto';
 import { PasskeyAssertionService } from './passkey-assertion.service';
 

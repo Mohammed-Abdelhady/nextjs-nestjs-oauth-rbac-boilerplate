@@ -18,7 +18,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
 import { ApiResponse } from '../common/dto/api-response.dto';
 import { SESSION_SWAGGER_AUTH_NAME } from '../common/constants/session';
-import { requestSessionId } from '../session/utils/request-session';
+import { requestSessionId } from '../session/utils/request/request-session';
 
 /**
  * Controller for user profile and account lifecycle operations.

@@ -1,9 +1,9 @@
 import { ConfigService } from '@nestjs/config';
 import { Types } from 'mongoose';
-import { SignInService } from '../services/sign-in.service';
-import { SessionService } from '../services/session.service';
-import { SessionCookieService } from '../services/session-cookie.service';
-import { AuthFeaturesService } from '../services/auth-features.service';
+import { SignInService } from '../services/sessions/sign-in.service';
+import { SessionService } from '../services/sessions/session.service';
+import { SessionCookieService } from '../services/sessions/session-cookie.service';
+import { AuthFeaturesService } from '../services/features/auth-features.service';
 import { TwoFactorChallengeService } from './services/two-factor-challenge.service';
 import { UserDocument } from '../../user/schemas/user.schema';
 import { AuthProvider } from '../../user/enums/auth-provider.enum';

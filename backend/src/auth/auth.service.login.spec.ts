@@ -11,12 +11,12 @@ import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { User, UserSchema } from '../user/schemas/user.schema';
 import { HashService } from '../common/services/hash.service';
-import { AuthMailService } from './services/auth-mail.service';
-import { SessionService } from './services/session.service';
-import { VerificationCodeService } from './services/verification-code.service';
-import { MailCounterService } from './services/mail-counter.service';
-import { PasswordResetCodeService } from './services/password-reset-code.service';
-import { SignInService } from './services/sign-in.service';
+import { AuthMailService } from './services/mail/auth-mail.service';
+import { SessionService } from './services/sessions/session.service';
+import { VerificationCodeService } from './services/codes/verification-code.service';
+import { MailCounterService } from './services/mail/mail-counter.service';
+import { PasswordResetCodeService } from './services/codes/password-reset-code.service';
+import { SignInService } from './services/sessions/sign-in.service';
 import { ErrorCode } from '../common/enums/error-code.enum';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,

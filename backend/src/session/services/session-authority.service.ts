@@ -20,15 +20,15 @@ import {
   UserApplicationGrant,
   UserApplicationGrantDocument,
 } from '../schemas/user-application-grant.schema';
-import { asAuthorityUnavailable } from '../utils/authority-unavailable';
-import { linearizable } from '../utils/linearizable-query';
-import { addMs, capIdleByAbsolute } from '../utils/session-deadline';
+import { asAuthorityUnavailable } from '../utils/authority/authority-unavailable';
+import { linearizable } from '../utils/authority/linearizable-query';
+import { addMs, capIdleByAbsolute } from '../utils/session/session-deadline';
 import {
   currentSessionCandidateFilter,
   currentSessionDeadlines,
   isValidDate,
-} from '../utils/current-session-authority';
-import { hashToken } from '../utils/token-hash';
+} from '../utils/authority/current-session-authority';
+import { hashToken } from '../utils/hashing/token-hash';
 import { ApplicationRegistryService } from './application-registry.service';
 
 export interface ValidateSessionOptions {

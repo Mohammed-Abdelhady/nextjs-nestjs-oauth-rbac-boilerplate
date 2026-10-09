@@ -30,7 +30,7 @@ describe('pnpm installation boundary', () => {
     const root = await fakePnpm();
     expect(await runBackendBoot(root)).toEqual({ ok: true, output: '' });
     expect(await readFile(join(root, 'calls'), 'utf8')).toBe(
-      '--filter backend exec jest --config test/jest-e2e.json --runInBand --runTestsByPath test/app.boot.e2e-spec.ts\n',
+      '--filter backend exec jest --config test/jest-e2e.json --runInBand --runTestsByPath test/app/app.boot.e2e-spec.ts\n',
     );
   });
   it('reports a failed generated backend boot check', async () => {

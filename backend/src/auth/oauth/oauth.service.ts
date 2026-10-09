@@ -2,17 +2,20 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Request, Response } from 'express';
-import { SignInService, SignInOutcome } from '../services/sign-in.service';
-import { SessionService } from '../services/session.service';
-import { SessionCookieService } from '../services/session-cookie.service';
+import {
+  SignInService,
+  SignInOutcome,
+} from '../services/sessions/sign-in.service';
+import { SessionService } from '../services/sessions/session.service';
+import { SessionCookieService } from '../services/sessions/session-cookie.service';
 import { User, UserDocument } from '../../user/schemas/user.schema';
 import { ProfileSyncService } from '../../user/services/profile-sync.service';
 import { AccountLinkingService } from '../../user/services/account-linking.service';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { isMongoDuplicateKeyError } from '../../common/utils/mongo-error.util';
-import { readBearerToken } from '../../session/native/native-access.service';
-import { hasBothCredentials } from '../../session/utils/request-credential';
+import { readBearerToken } from '../../session/native/access/native-access.service';
+import { hasBothCredentials } from '../../session/utils/request/request-credential';
 import {
   OAuthCallbackParams,
   OAuthProfile,

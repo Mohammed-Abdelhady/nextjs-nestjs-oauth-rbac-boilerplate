@@ -11,11 +11,11 @@ import { MagicLinkModule } from './magic-link.module';
 import { MagicLinkController } from './magic-link.controller';
 import { MagicLinkService } from './magic-link.service';
 import { AuthModule } from '../auth.module';
-import { AuthMailService } from '../services/auth-mail.service';
-import { AuthFeaturesService } from '../services/auth-features.service';
-import { SessionService } from '../services/session.service';
-import { SessionCookieService } from '../services/session-cookie.service';
-import { SignInService } from '../services/sign-in.service';
+import { AuthMailService } from '../services/mail/auth-mail.service';
+import { AuthFeaturesService } from '../services/features/auth-features.service';
+import { SessionService } from '../services/sessions/session.service';
+import { SessionCookieService } from '../services/sessions/session-cookie.service';
+import { SignInService } from '../services/sessions/sign-in.service';
 import { FeatureEnabledGuard } from '../guards/feature-enabled.guard';
 
 /**

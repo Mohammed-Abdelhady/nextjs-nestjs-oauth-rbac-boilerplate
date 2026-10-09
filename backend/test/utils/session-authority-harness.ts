@@ -9,9 +9,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import { Connection, Model } from 'mongoose';
 import { Clock } from '../../src/common/services/clock';
-import { SessionService } from '../../src/auth/services/session.service';
+import { SessionService } from '../../src/auth/services/sessions/session.service';
 import { SessionModule } from '../../src/session/session.module';
-import { NativeOAuthModule } from '../../src/session/native/native-oauth.module';
+import { NativeOAuthModule } from '../../src/session/native/oauth/native-oauth.module';
 import {
   Session,
   SessionDocument,

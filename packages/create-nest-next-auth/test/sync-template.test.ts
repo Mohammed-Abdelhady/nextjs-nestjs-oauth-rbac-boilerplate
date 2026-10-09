@@ -39,19 +39,19 @@ describe('sync-template exclusions', () => {
 
   it('ships runtime guardrails and cheap tests without the repository regression suites', () => {
     const paths = [
-      'scripts/check-hard-bans.test.mjs',
+      'scripts/guardrails/scanner/check-hard-bans.test.mjs',
       'scripts/eslint-policy.test.mjs',
-      'scripts/guardrails/checker.test.mjs',
-      'scripts/guardrails/slow/boundaries.test.mjs',
-      'scripts/guardrails/boundaries.slow.mjs',
+      'scripts/guardrails/scanner/round4-patterns.test.mjs',
+      'scripts/guardrails/scanner/checker.slow.mjs',
+      'scripts/guardrails/git/git-cases.slow.mjs',
       'scripts/guardrails/test-repository.mjs',
-      'scripts/guardrails/workspace-policy.mjs',
+      'scripts/guardrails/workspace/workspace-policy.mjs',
       'scripts/check-hard-bans.mjs',
       'scripts/guardrails/policy.mjs',
-      'scripts/guardrails/checker.mjs',
-      'scripts/guardrails/repository-git.mjs',
-      'scripts/guardrails/git-environment.mjs',
-      'scripts/guardrails/round8-hook-fixture.mjs',
+      'scripts/guardrails/scanner/checker.mjs',
+      'scripts/guardrails/git/repository-git.mjs',
+      'scripts/guardrails/git/git-environment.mjs',
+      'scripts/guardrails/git/round8-hook-fixture.mjs',
       'scripts/check-backend-build.test.mjs',
     ];
     const template = buildTemplate(roots, (fixture) => {
@@ -81,8 +81,11 @@ describe('sync-template exclusions', () => {
 
   it('runs retained config tests after copying and transforming a no-Git template', () => {
     const template = buildTemplate(roots, (fixture) => {
-      mkdirSync(join(fixture, 'scripts/guardrails'), { recursive: true });
-      writeFileSync(join(fixture, 'scripts/guardrails/checker.test.mjs'), 'throw new Error();\n');
+      mkdirSync(join(fixture, 'scripts/guardrails/scanner'), { recursive: true });
+      writeFileSync(
+        join(fixture, 'scripts/guardrails/scanner/round4-patterns.test.mjs'),
+        'throw new Error();\n',
+      );
       writeFileSync(
         join(fixture, 'scripts/check-backend-build.test.mjs'),
         "import test from 'node:test'; test('smoke', () => {});\n",
@@ -92,7 +95,7 @@ describe('sync-template exclusions', () => {
         JSON.stringify({
           scripts: {
             'test:config':
-              'node --test scripts/guardrails/*.test.mjs scripts/check-backend-build.test.mjs',
+              'node --test scripts/guardrails/*/*.test.mjs scripts/check-backend-build.test.mjs',
           },
         }),
       );

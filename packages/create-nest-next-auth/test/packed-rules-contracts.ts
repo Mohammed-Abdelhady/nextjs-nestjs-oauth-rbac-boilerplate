@@ -14,7 +14,7 @@ const ENFORCEMENT_PATHS = [
   '.husky/commit-msg',
   GATES_PATH,
   'scripts/check-hard-bans.mjs',
-  'scripts/guardrails/cli.mjs',
+  'scripts/guardrails/scanner/cli.mjs',
   'scripts/ci.mjs',
 ];
 
@@ -27,7 +27,7 @@ const STANDARD_DIFFERENCES = [
   '.husky/pre-push', // Removes push scanning.
   'AGENTS.md', // Renders the chosen policy and its enforcement facts.
   'docs/README.md', // Describes local checks without hard-ban hooks.
-  'docs/code-quality.md', // Directs standard users to their generated rules.
+  'docs/reference/code-quality.md', // Directs standard users to their generated rules.
   'package.json', // Removes scanner scripts and check's scanner command.
   GATES_PATH, // Removes the full-tree scan gate.
 ];

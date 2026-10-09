@@ -1,4 +1,4 @@
-import { PortAbortController } from '../src/abort-controller';
+import { PortAbortController } from '../src/runtime/abort-controller';
 import type { AuthBrowserResult } from '../src';
 import { CHECK_ID, SAMPLE } from './constants';
 import { attempt, describeValue, expectEqual, expectTrue, settlement } from './expect';

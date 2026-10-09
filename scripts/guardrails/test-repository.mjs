@@ -12,7 +12,7 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { gitEnvironment } from './git-environment.mjs';
+import { gitEnvironment } from './git/git-environment.mjs';
 
 export function installChecker(root, { directory: target = '.guardrails-runner' } = {}) {
   if (target === 'scripts') {
@@ -31,14 +31,24 @@ export function installChecker(root, { directory: target = '.guardrails-runner' 
     fileURLToPath(new URL('../check-hard-bans.mjs', import.meta.url)),
     join(root, target, 'check-hard-bans.mjs'),
   );
-  for (const file of readdirSync(fileURLToPath(new URL('.', import.meta.url)))) {
-    if (
-      file.endsWith('.mjs') &&
-      !/\.(?:test|slow)\.mjs$/.test(file) &&
-      !['test-repository.mjs', 'workspace-policy.mjs', 'workspace-tool-fixture.mjs'].includes(file)
-    )
-      copyFileSync(fileURLToPath(new URL(file, import.meta.url)), join(directory, file));
-  }
+  const copyRuntimeFiles = (source, destination) => {
+    for (const entry of readdirSync(source, { withFileTypes: true })) {
+      const sourcePath = join(source, entry.name);
+      const destinationPath = join(destination, entry.name);
+      if (entry.isDirectory()) {
+        mkdirSync(destinationPath, { recursive: true });
+        copyRuntimeFiles(sourcePath, destinationPath);
+      } else if (
+        entry.isFile() &&
+        entry.name.endsWith('.mjs') &&
+        !/\.(?:test|slow)\.mjs$/.test(entry.name) &&
+        !['test-repository.mjs', 'workspace-policy.mjs', 'workspace-tool-fixture.mjs'].includes(entry.name)
+      ) {
+        copyFileSync(sourcePath, destinationPath);
+      }
+    }
+  };
+  copyRuntimeFiles(fileURLToPath(new URL('.', import.meta.url)), directory);
   return join(root, target, 'check-hard-bans.mjs');
 }
 

@@ -1,12 +1,12 @@
 {
   "EXCLUDED_PATH_PATTERNS": [
     "^scripts/guardrails/.*\\.(?:test|slow)\\.mjs$",
-    "^scripts/guardrails/(?:test-repository|workspace-policy|workspace-tool-fixture|round8-hook-fixture)\\.mjs$",
-    "^scripts/(?:check-hard-bans|eslint-policy)\\.test\\.mjs$",
+    "^scripts/guardrails/(?:test-repository\\.mjs|workspace/(?:workspace-policy|workspace-tool-fixture)\\.mjs|git/round8-hook-fixture\\.mjs)$",
+    "^scripts/eslint-policy\\.test\\.mjs$",
     "^scripts/ci/.*\\.test\\.mjs$"
   ],
   "POLICY_PATH": "scripts/guardrails/policy.mjs",
-  "DOC_PATH": "docs/code-quality.md",
+  "DOC_PATH": "docs/reference/code-quality.md",
   "REPOSITORY_ONLY_START": "<!-- repository-only:start -->",
   "REPOSITORY_ONLY_END": "<!-- repository-only:end -->",
   "CI_CONFIG_PATH": "scripts/ci/gates.json",

@@ -25,15 +25,17 @@ export function rulesLevelCases(getPacked: () => Packed): void {
     expect(record.rules).toEqual({ policy: 'standard' });
     expect(
       docReferences(
-        'docs/code-quality.md',
-        readFileSync(join(project, 'docs/code-quality.md'), 'utf8'),
+        'docs/reference/code-quality.md',
+        readFileSync(join(project, 'docs/reference/code-quality.md'), 'utf8'),
       ),
     ).toEqual([]);
     expect(
       readFileSync(join(project, 'docs/README.md'), 'utf8')
         .split('\n')
         .find((line) => line.startsWith('- [Code quality]')),
-    ).toBe('- [Code quality](code-quality.md): Local lint, format, hooks, and tests on push.');
+    ).toBe(
+      '- [Code quality](reference/code-quality.md): Local lint, format, hooks, and tests on push.',
+    );
     expect(await findDanglingReferences(project, ['.github/workflows/trusted-scan.yml'])).toEqual(
       [],
     );

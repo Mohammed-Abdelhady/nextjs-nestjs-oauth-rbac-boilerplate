@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
-import { gitEnvironment } from '../guardrails/git-environment.mjs';
+import { gitEnvironment } from '../guardrails/git/git-environment.mjs';
 import {
   BRANCH_REF_PREFIX,
   CI_AUTH_HEADER_NAME,

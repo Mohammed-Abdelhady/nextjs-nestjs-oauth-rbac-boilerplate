@@ -20,7 +20,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { SessionListData } from './dto/user-profile.dto';
 import { ApiResponse } from '../common/dto/api-response.dto';
 import { SESSION_SWAGGER_AUTH_NAME } from '../common/constants/session';
-import { requestSessionId } from '../session/utils/request-session';
+import { requestSessionId } from '../session/utils/request/request-session';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 
 /**

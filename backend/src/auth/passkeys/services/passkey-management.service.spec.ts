@@ -1,6 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
-import { AuthFeaturesService } from '../../services/auth-features.service';
+import { AuthFeaturesService } from '../../services/features/auth-features.service';
 import { PasskeyManagementService } from './passkey-management.service';
 import { createModelMock } from '../../../common/testing/test-doubles.harness-spec';
 import {

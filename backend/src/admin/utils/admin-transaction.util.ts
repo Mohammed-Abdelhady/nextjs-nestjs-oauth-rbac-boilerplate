@@ -4,8 +4,8 @@ import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { isDatabaseUnavailableError } from '../../common/utils/mongo-error.util';
 import { UserDocument } from '../../user/schemas/user.schema';
-import { asAuthorityUnavailable } from '../../session/utils/authority-unavailable';
-import { AdminUserAccessService } from '../services/admin-user-access.service';
+import { asAuthorityUnavailable } from '../../session/utils/authority/authority-unavailable';
+import { AdminUserAccessService } from '../services/users/admin-user-access.service';
 
 /**
  * Only a genuine database error is an authority failure; a domain refusal

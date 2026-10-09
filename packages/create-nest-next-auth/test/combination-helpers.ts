@@ -136,7 +136,7 @@ export function runBackendBoot(project: string): Promise<CommandResult> {
       'test/jest-e2e.json',
       '--runInBand',
       '--runTestsByPath',
-      'test/app.boot.e2e-spec.ts',
+      'test/app/app.boot.e2e-spec.ts',
     ],
     { cwd: project },
   );

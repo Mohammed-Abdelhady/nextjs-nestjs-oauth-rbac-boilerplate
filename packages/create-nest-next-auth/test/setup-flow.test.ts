@@ -73,7 +73,7 @@ it.each(['strict', 'standard'])(
           },
           ...entry.expected.skipped,
         ],
-        docs: ['README.md', 'docs/README.md', 'docs/setup-smtp.md'],
+        docs: ['README.md', 'docs/README.md', 'docs/setup/setup-smtp.md'],
         lockfile: entry.lock.ok
           ? { status: 'updated' }
           : {

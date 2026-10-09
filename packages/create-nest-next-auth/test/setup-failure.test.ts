@@ -149,7 +149,7 @@ it.each(['strict', 'standard'])(
           'cp .env.docker.example .env.docker',
           'docker compose --env-file .env.docker up -d',
         ],
-        docs: ['README.md', 'docs/README.md', 'docs/setup-smtp.md'],
+        docs: ['README.md', 'docs/README.md', 'docs/setup/setup-smtp.md'],
       });
     }
   },

@@ -51,7 +51,7 @@ describe('prune', () => {
     expect(files).toContain('src/strategies/alpha-oauth.strategy.ts');
     expect(files).toContain('src/strategies/alpha-oauth.strategy.spec.ts');
     expect(files).toContain('docs/setup-alpha.md');
-    expect(files).toContain('docs/setup-smtp.md');
+    expect(files).toContain('docs/setup/setup-smtp.md');
     expect(files).not.toContain('src/strategies/beta-oauth.strategy.ts');
     expect(files).not.toContain('tooling/internal.md');
     expect(result.dangling).toEqual([]);

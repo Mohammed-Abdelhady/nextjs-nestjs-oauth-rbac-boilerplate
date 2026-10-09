@@ -38,8 +38,12 @@ export async function expectPlannedMobileWorkspaceIsPruned(
   templateRoot: string,
 ): Promise<void> {
   expect(MOBILE_FOLDERS.filter((folder) => existsSync(join(project, folder)))).toEqual([]);
-  expect(existsSync(join(project, 'backend/test/native-auth-engine.e2e-spec.ts'))).toBe(false);
-  expect(existsSync(join(project, 'backend/test/utils/native-auth-engine-harness.ts'))).toBe(false);
+  expect(
+    existsSync(join(project, 'backend/test/native/engine/native-auth-engine.e2e-spec.ts')),
+  ).toBe(false);
+  expect(existsSync(join(project, 'backend/test/utils/native/native-auth-engine-harness.ts'))).toBe(
+    false,
+  );
 
   const root = JSON.parse(readFileSync(join(project, 'package.json'), 'utf8')) as {
     workspaces?: string[];

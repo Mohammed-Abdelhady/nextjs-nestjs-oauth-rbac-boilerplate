@@ -2,7 +2,7 @@ import { Types } from 'mongoose';
 import { AppException } from '../common/exceptions/app.exception';
 import { ErrorCode } from '../common/enums/error-code.enum';
 import { CREDENTIAL_PURPOSE } from './constants/credential-purpose';
-import { hashToken } from './utils/token-hash';
+import { hashToken } from './utils/hashing/token-hash';
 import { NativeSessionRevocationService } from './services/native-session-revocation.service';
 import { startMemoryReplSet } from '../../test/utils/memory-replset';
 import { FrozenClock, TEST_NOW } from '../../test/utils/frozen-clock';

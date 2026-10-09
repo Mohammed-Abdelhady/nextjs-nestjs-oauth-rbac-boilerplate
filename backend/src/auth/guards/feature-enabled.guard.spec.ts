@@ -12,7 +12,7 @@ import { ExecutionContext } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { FeatureEnabledGuard } from './feature-enabled.guard';
-import { AuthFeaturesService } from '../services/auth-features.service';
+import { AuthFeaturesService } from '../services/features/auth-features.service';
 import { AuthFeature } from '../enums/auth-feature.enum';
 import { AUTH_FEATURE_KEY } from '../decorators/requires-feature.decorator';
 import { AuthController } from '../auth.controller';

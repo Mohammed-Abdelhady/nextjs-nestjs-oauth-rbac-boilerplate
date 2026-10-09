@@ -26,8 +26,8 @@ import {
   Application,
   ApplicationDocument,
 } from '../schemas/application.schema';
-import { linearizable } from '../utils/linearizable-query';
-import { withMajorityTransaction } from '../utils/mongo-transaction';
+import { linearizable } from '../utils/authority/linearizable-query';
+import { withMajorityTransaction } from '../utils/transactions/mongo-transaction';
 
 @Injectable()
 export class ApplicationRegistryService {

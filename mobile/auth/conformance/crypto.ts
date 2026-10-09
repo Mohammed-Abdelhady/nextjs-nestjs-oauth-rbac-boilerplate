@@ -1,4 +1,4 @@
-import { base64UrlEncode, utf8Bytes } from '../src/encoding';
+import { base64UrlEncode, utf8Bytes } from '../src/proof/encoding';
 import {
   BINARY_VECTOR,
   CHECK_ID,

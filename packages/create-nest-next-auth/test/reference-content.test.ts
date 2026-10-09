@@ -48,7 +48,7 @@ describe('findForbiddenContent', () => {
     const root = await tree({
       'a.txt': 'pnpm run setup:prod\n',
       'b.txt': 'node scripts/verify-docker.mjs\n',
-      'c.txt': 'See docs/deployment.md.\n',
+      'c.txt': 'See docs/operations/deployment.md.\n',
       'd.txt': 'The word nginx alone.\n',
     });
 

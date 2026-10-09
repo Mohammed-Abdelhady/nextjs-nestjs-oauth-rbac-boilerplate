@@ -47,9 +47,9 @@ describe('prunePackageScripts', () => {
     const result = prunePackageScripts(
       packageJson({
         'test:config':
-          'node --test scripts/config-transforms.test.mjs scripts/check-backend-build.test.mjs',
+          'node --test scripts/config-transforms-tests/config-transforms.test.mjs scripts/check-backend-build.test.mjs',
       }),
-      ['scripts/config-transforms.test.mjs'],
+      ['scripts/config-transforms-tests/config-transforms.test.mjs'],
     );
 
     expect(result.scripts).toEqual({
@@ -58,14 +58,14 @@ describe('prunePackageScripts', () => {
   });
 
   it.each([
-    'scripts/check-hard-bans.test.mjs',
+    'scripts/guardrails/scanner/check-hard-bans.test.mjs',
     'scripts/eslint-policy.test.mjs',
-    'scripts/guardrails/checker.test.mjs',
-    'scripts/guardrails/slow/boundaries.test.mjs',
-    'scripts/guardrails/boundaries.slow.mjs',
-    'scripts/guardrails/*.test.mjs',
-    'scripts/guardrails/*.slow.mjs',
-    './scripts/guardrails/checker.test.mjs',
+    'scripts/guardrails/scanner/round4-patterns.test.mjs',
+    'scripts/guardrails/scanner/checker.slow.mjs',
+    'scripts/guardrails/git/git-cases.slow.mjs',
+    'scripts/guardrails/*/*.test.mjs',
+    'scripts/guardrails/*/*.slow.mjs',
+    './scripts/guardrails/scanner/round4-patterns.test.mjs',
   ])('removes excluded repository tests from generated commands: %s', (path) => {
     const result = prunePackageScripts(
       packageJson({ 'test:config': `node --test ${path} scripts/check-backend-build.test.mjs` }),
@@ -81,7 +81,7 @@ describe('prunePackageScripts', () => {
     const result = prunePackageScripts(
       packageJson({
         'test:config:all':
-          'node --test scripts/guardrails/*.test.mjs scripts/guardrails/*.slow.mjs',
+          'node --test scripts/guardrails/*/*.test.mjs scripts/guardrails/*/*.slow.mjs',
         check: 'node scripts/check-hard-bans.mjs --staged',
       }),
       [],
@@ -95,7 +95,7 @@ describe('prunePackageScripts', () => {
       packageJson({
         'test:config': 'node --test scripts/check-backend-build.test.mjs',
         'test:config:all':
-          'node --test scripts/guardrails/*.slow.mjs scripts/check-backend-build.test.mjs',
+          'node --test scripts/guardrails/*/*.slow.mjs scripts/check-backend-build.test.mjs',
       }),
       [],
     );

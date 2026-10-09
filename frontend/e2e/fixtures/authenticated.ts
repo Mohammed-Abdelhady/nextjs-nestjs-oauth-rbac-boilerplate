@@ -153,7 +153,7 @@ export const test = base.extend<
   ],
   backend: [
     async ({}, run, workerInfo) => {
-      const child = fork(resolve(backendDirectory, 'test/utils/browser-server.ts'), [], {
+      const child = fork(resolve(backendDirectory, 'test/utils/browser/browser-server.ts'), [], {
         cwd: backendDirectory,
         execArgv: ['--require', 'ts-node/register'],
         env: {

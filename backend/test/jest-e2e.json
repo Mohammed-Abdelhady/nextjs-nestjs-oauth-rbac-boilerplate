@@ -3,8 +3,8 @@
   "rootDir": ".",
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
-  "globalSetup": "<rootDir>/utils/mongo-global-setup.ts",
-  "globalTeardown": "<rootDir>/utils/mongo-global-teardown.ts",
+  "globalSetup": "<rootDir>/utils/mongo/mongo-global-setup.ts",
+  "globalTeardown": "<rootDir>/utils/mongo/mongo-global-teardown.ts",
   "transform": {
     "^.+\\.(t|j)s$": [
       "ts-jest",
