@@ -30,7 +30,11 @@ export const OPTION_MANIFEST: Manifest = validateManifest({
     docker: {
       label: 'Docker files',
       default: true,
-      files: ['docker-compose.yml', '**/Dockerfile', 'scripts/config-transforms.ports.test.mjs'],
+      files: [
+        'docker-compose.yml',
+        '**/Dockerfile',
+        'scripts/config-transforms-tests/config-transforms.ports.test.mjs',
+      ],
       requires: [],
       docs: [],
     },
@@ -41,10 +45,10 @@ export const OPTION_MANIFEST: Manifest = validateManifest({
         'nginx/**',
         'docker-compose.prod.yml',
         'scripts/setup-production.js',
-        'scripts/config-transforms.test.mjs',
+        'scripts/config-transforms-tests/config-transforms.test.mjs',
       ],
       requires: ['docker'],
-      docs: ['docs/deployment.md'],
+      docs: ['docs/operations/deployment.md'],
     },
     'locale-ar': {
       label: 'Arabic locale',
@@ -76,9 +80,10 @@ const FILES: Record<string, string> = {
   'nginx/nginx.conf': 'server {}\n',
   'docker-compose.prod.yml': 'services:\n  nginx:\n',
   'scripts/setup-production.js': 'console.log("setup");\n',
-  'scripts/config-transforms.test.mjs': 'export const fixture = true;\n',
-  'scripts/config-transforms.ports.test.mjs': 'export const ports = true;\n',
-  'docs/deployment.md': '# Deployment\n',
+  'scripts/config-transforms-tests/config-transforms.test.mjs': 'export const fixture = true;\n',
+  'scripts/config-transforms-tests/config-transforms.ports.test.mjs':
+    'export const ports = true;\n',
+  'docs/operations/deployment.md': '# Deployment\n',
   'frontend/src/i18n/messages/en.json': '{"hello":"Hello"}\n',
   'frontend/src/i18n/messages/ar.json': '{"hello":"مرحبا"}\n',
   'src/registry.ts': [
@@ -98,7 +103,7 @@ const FILES: Record<string, string> = {
     '',
     '| Guide | Description |',
     '| ----- | ----------- |',
-    '| [Deployment](./docs/deployment.md) | Ship it |',
+    '| [Deployment](./docs/operations/deployment.md) | Ship it |',
     '',
   ].join('\n'),
   'package.json': `${JSON.stringify(
@@ -110,7 +115,7 @@ const FILES: Record<string, string> = {
         'docker:up': 'docker compose up -d',
         'setup:prod': 'node scripts/setup-production.js',
         'test:config':
-          'node --test scripts/config-transforms.test.mjs scripts/config-transforms.ports.test.mjs scripts/check-hard-bans.test.mjs',
+          'node --test scripts/config-transforms-tests/config-transforms.test.mjs scripts/config-transforms-tests/config-transforms.ports.test.mjs scripts/guardrails/scanner/check-hard-bans.test.mjs',
       },
     },
     null,

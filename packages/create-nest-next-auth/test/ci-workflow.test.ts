@@ -195,7 +195,7 @@ it('protects scanner ownership and schedules grouped weekly action updates', () 
     '/scripts/ci/ @Mohammed-Abdelhady',
     '/scripts/guardrails/ @Mohammed-Abdelhady',
     '/scripts/check-hard-bans.mjs @Mohammed-Abdelhady',
-    '/scripts/check-hard-bans.test.mjs @Mohammed-Abdelhady',
+    '/scripts/guardrails/scanner/check-hard-bans.test.mjs @Mohammed-Abdelhady',
     '/packages/create-nest-next-auth/scripts/sync-template.mjs @Mohammed-Abdelhady',
     '/packages/create-nest-next-auth/src/constants/template-tests.json @Mohammed-Abdelhady',
     '/.nvmrc @Mohammed-Abdelhady',

@@ -23,10 +23,10 @@ describe('prune options', () => {
     expect(result.removedOptions).toEqual(['production', 'locale-ar']);
     expect(result.deletedFiles).toEqual([
       'docker-compose.prod.yml',
-      'docs/deployment.md',
+      'docs/operations/deployment.md',
       'frontend/src/i18n/messages/ar.json',
       'nginx/nginx.conf',
-      'scripts/config-transforms.test.mjs',
+      'scripts/config-transforms-tests/config-transforms.test.mjs',
       'scripts/setup-production.js',
     ]);
     expect(files).toContain('docker-compose.yml');
@@ -58,7 +58,7 @@ describe('prune options', () => {
     expect(parsed.scripts).toEqual({
       build: 'nest build',
       'docker:up': 'docker compose up -d',
-      'test:config': 'node --test scripts/config-transforms.ports.test.mjs',
+      'test:config': 'node --test scripts/config-transforms-tests/config-transforms.ports.test.mjs',
     });
   });
 

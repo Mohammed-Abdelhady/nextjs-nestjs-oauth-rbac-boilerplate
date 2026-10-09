@@ -198,7 +198,7 @@ with `web`, `mongodb` and no options.
       "label": "Production nginx and compose",
       "default": true,
       "requires": ["docker"],
-      "files": ["nginx/**", "docker-compose.prod.yml", "docs/deployment.md"],
+      "files": ["nginx/**", "docker-compose.prod.yml", "docs/operations/deployment.md"],
       "catalogueKeys": []
     },
     "locale-ar": {
@@ -231,7 +231,7 @@ with `web`, `mongodb` and no options.
       "files": ["backend/src/auth/oauth/strategies/google-oauth.strategy.ts"],
       "envVars": ["OAUTH_GOOGLE_CLIENT_ID"],
       "requires": ["oauth-core"],
-      "docs": ["docs/setup-google-oauth.md"]
+      "docs": ["docs/setup/setup-google-oauth.md"]
     }
   },
   "core": { "alwaysRemoveFiles": [".hyperflow/**"] }

@@ -17,7 +17,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
       for (const path of [
         'README.md',
         'docs/README.md',
-        'docs/setup-smtp.md',
+        'docs/setup/setup-smtp.md',
         '.husky/pre-commit',
         '.husky/commit-msg',
         '.husky/pre-push',
@@ -34,7 +34,7 @@ import { resolvePlan } from '../src/manifest/plan.js';
 import { parseCliOptions } from '../src/flags/options.js';
 import { answersRecord, readAnswersRecord } from '../src/scaffold/answers.js';
 import { scaffoldProject } from '../src/scaffold/project.js';
-import { fixtureRoot, isolatedGit, PACKAGE_DIR, TEMPLATE_SHA } from './answers-helpers.js';
+import { fixtureRoot, isolatedGit, TEMPLATE_SHA } from './answers-helpers.js';
 import { writePnpmBoundary } from './pnpm-boundary.js';
 
 const roots: string[] = [];
@@ -60,7 +60,7 @@ it.each(['strict', 'standard'] as const)(
   'returns the completed %s scaffold as data with its recorded rules',
   async (rules) => {
     const target = join(TEMPLATE_FIXTURE.path, 'app');
-    const manifest = await loadManifest(PACKAGE_DIR);
+    const manifest = await loadManifest(TEMPLATE_FIXTURE.path);
     const options = parseCliOptions([target, '--yes', '--no-git', '--no-install']);
     const plan = resolvePlan(manifest, {
       features: ['email-password'],

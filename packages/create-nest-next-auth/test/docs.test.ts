@@ -27,20 +27,20 @@ it('removes numbered items and reference definitions for deleted documents', asy
 });
 
 it('keeps a list row and its live link when another target was deleted', async () => {
-  await fixture('- [SMTP](docs/setup-smtp.md) | [Deploy](docs/deployment.md)\n');
+  await fixture('- [SMTP](docs/setup/setup-smtp.md) | [Deploy](docs/operations/deployment.md)\n');
 
-  const result = await removeDocLinks(root, ['docs/setup-smtp.md']);
+  const result = await removeDocLinks(root, ['docs/setup/setup-smtp.md']);
 
   expect(result.removedLines).toBe(0);
   expect(await readFile(join(root, 'README.md'), 'utf8')).toBe(
-    '- SMTP | [Deploy](docs/deployment.md)\n',
+    '- SMTP | [Deploy](docs/operations/deployment.md)\n',
   );
 });
 
 it('keeps links when a filename appears only as link text or in a different target', async () => {
   await fixture('- [Fix for setup-smtp.md](docs/other.md)\n1. [Archive](archive/setup-smtp.md)\n');
 
-  const result = await removeDocLinks(root, ['docs/setup-smtp.md']);
+  const result = await removeDocLinks(root, ['docs/setup/setup-smtp.md']);
 
   expect(result.removedLines).toBe(0);
   expect(await readFile(join(root, 'README.md'), 'utf8')).toBe(

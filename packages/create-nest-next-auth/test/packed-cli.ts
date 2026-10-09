@@ -11,15 +11,15 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { delimiter, extname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import {
   MARKER_EXTENSIONS,
   PACKAGE_MANAGER_VERSION,
   SKIPPED_DIRS,
 } from '../src/constants/index.js';
+import { PACKAGE_DIR, STAGE_ENVIRONMENT, stagePackage } from './package-stage.js';
 import { assertWorkspaceEdgesResolve } from './workspace-assertions.js';
 
-export const PACKAGE_DIR = fileURLToPath(new URL('..', import.meta.url));
+export { PACKAGE_DIR };
 export const BUILD_TIMEOUT = 10 * 60 * 1000;
 
 export interface Packed {
@@ -45,15 +45,21 @@ export function buildAndPack(): Packed {
 
   try {
     // prepack runs the build, so packing alone ships a fresh template,
-    // manifest and identity; a second explicit build would repeat it.
+    // manifest and identity; a second explicit build would repeat it. It runs
+    // in a staged copy: other test files run while this one packs, and a build
+    // in the package folder would rewrite generated files under them.
     const output = execFileSync('npm', ['pack', '--pack-destination', workspace], {
-      cwd: PACKAGE_DIR,
+      cwd: stagePackage(workspace),
       timeout: BUILD_TIMEOUT,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
       // Pack writes to the npm cache. Keep it in the workspace so the test does
       // not depend on write access to the developer's ~/.npm.
-      env: { ...process.env, npm_config_cache: join(workspace, 'npm-cache') },
+      env: {
+        ...process.env,
+        ...STAGE_ENVIRONMENT,
+        npm_config_cache: join(workspace, 'npm-cache'),
+      },
     });
     const tarball = output.trim().split('\n').pop() ?? '';
     execFileSync('tar', ['-xzf', join(workspace, tarball), '-C', workspace], { stdio: 'pipe' });
