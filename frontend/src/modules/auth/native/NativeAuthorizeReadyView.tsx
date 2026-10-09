@@ -1,5 +1,6 @@
 'use client';
 
+import { Description, Heading } from '@/components/design-system';
 import type { RefObject } from 'react';
 import { useTranslations } from 'next-intl';
 import { Loader2, ShieldCheck } from 'lucide-react';
@@ -68,10 +69,12 @@ export function NativeAuthorizeReadyView({
         </Button>
       </div>
 
-      <h1 ref={headingRef} tabIndex={-1} className="mt-6 text-2xl font-extrabold text-foreground">
+      <Heading level={1} variant="display" ref={headingRef} tabIndex={-1} className="mt-6">
         {t('title', { application: applicationName })}
-      </h1>
-      <p className="mt-2 text-sm text-muted-foreground">{t('accountStatement')}</p>
+      </Heading>
+      <Description variant="lead" className="mt-2">
+        {t('accountStatement')}
+      </Description>
 
       <div className="mt-6 space-y-3">
         <Button

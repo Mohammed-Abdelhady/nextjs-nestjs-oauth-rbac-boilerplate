@@ -1,5 +1,6 @@
 'use client';
 
+import { Description, Heading } from '@/components/design-system';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { z } from 'zod';
@@ -91,8 +92,10 @@ export function MagicLinkRequestForm({ isOnlyMethod, redirect }: AuthMethodFormP
     return (
       <div className="mx-auto max-w-xs text-center" role="status" data-testid="magic-link-sent">
         <MailCheck className="mx-auto h-8 w-8 text-primary" aria-hidden="true" />
-        <h3 className="mt-3 text-lg font-semibold">{t('sentTitle')}</h3>
-        <p className="mt-2 text-sm text-muted-foreground">{t('sentBody', { email: sentTo })}</p>
+        <Heading level={3} variant="sectionTitle" className="mt-3">
+          {t('sentTitle')}
+        </Heading>
+        <Description className="mt-2">{t('sentBody', { email: sentTo })}</Description>
         <Button
           type="button"
           variant="ghost"

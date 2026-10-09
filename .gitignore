@@ -62,3 +62,8 @@ Thumbs.db
 
 # But allow docs/ directory for project documentation
 !docs/
+
+# Native projects and caches Expo generates for the mobile shell
+mobile/expo/ios/
+mobile/expo/android/
+mobile/expo/.expo/

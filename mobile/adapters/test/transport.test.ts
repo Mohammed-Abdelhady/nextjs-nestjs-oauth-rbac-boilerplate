@@ -16,7 +16,10 @@ interface FakeSignal {
 /** `fetch` and `AbortController`: answers from a script, rejects when aborted. */
 class FakeHttp implements HttpApi<FakeSignal> {
   readonly sent: { address: string; init: FetchInit<FakeSignal> }[] = [];
-  answer: { status: number; text: string } | 'hang' | Error = { status: 200, text: '' };
+  answer: { status: number; text: string; headers?: Record<string, string> } | 'hang' | Error = {
+    status: 200,
+    text: '',
+  };
 
   fetch(address: string, init: FetchInit<FakeSignal>): Promise<FetchResponseApi> {
     this.sent.push({ address, init });
@@ -24,10 +27,12 @@ class FakeHttp implements HttpApi<FakeSignal> {
     if (init.signal.aborted) return Promise.reject(new Error('Aborted'));
     if (answer instanceof Error) return Promise.reject(answer);
     if (answer !== 'hang') {
+      const { headers } = answer;
       return Promise.resolve({
         status: answer.status,
         text: async () => answer.text,
-        headers: { get: () => null },
+        // `fetch` matches a header name whatever its case.
+        headers: { get: (name: string) => headers?.[name.toLowerCase()] ?? null },
       });
     }
     return new Promise((_resolve, reject) => {
@@ -57,6 +62,32 @@ function setup() {
 }
 
 describe('fetch transport', () => {
+  it('hands on the nonce of a DPoP challenge, and no other response header', async () => {
+    const { http, transport } = setup();
+    http.answer = {
+      status: 400,
+      text: '{"error":"use_dpop_nonce"}',
+      headers: { 'dpop-nonce': 'nonce-1', 'cache-control': 'no-store' },
+    };
+
+    const response = await transport.request({ method: 'POST', path: '/api/oauth/token' });
+
+    expect(response).toEqual({
+      status: 400,
+      body: { error: 'use_dpop_nonce' },
+      headers: { 'DPoP-Nonce': 'nonce-1' },
+    });
+  });
+
+  it('returns no headers when the response carries no nonce', async () => {
+    const { http, transport } = setup();
+    http.answer = { status: 200, text: '{}', headers: { 'cache-control': 'no-store' } };
+
+    const response = await transport.request({ method: 'GET', path: '/api/user/profile' });
+
+    expect(response).toEqual({ status: 200, body: {} });
+  });
+
   it('sends a JSON body to the origin plus the path, without cookies', async () => {
     const { http, transport } = setup();
     http.answer = { status: 201, text: '{"success":true,"data":{"id":"1"}}' };

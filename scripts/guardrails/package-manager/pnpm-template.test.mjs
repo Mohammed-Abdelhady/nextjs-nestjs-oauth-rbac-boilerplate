@@ -137,6 +137,8 @@ test('lint-staged selects each importing workspace binary instead of root hoisti
     config['shared/sdk/**/*.ts'], config['mobile/auth/**/*.ts'],
     config['mobile/cli/**/*.{ts,tsx}'], config['mobile/expo/**/*.{ts,tsx}'],
     config['mobile/metro/**/*.{ts,cjs}'], config['mobile/adapters/**/*.ts'],
+    config['mobile/device-key/**/*.ts'],
+    config['mobile/ui/**/*.{ts,tsx}'],
   ], [
     ['pnpm --filter backend exec eslint --fix --max-warnings 0'],
     ['pnpm --filter frontend exec eslint --fix --max-warnings 0'],
@@ -148,6 +150,8 @@ test('lint-staged selects each importing workspace binary instead of root hoisti
     ['pnpm --filter @app/mobile-expo exec eslint --fix --max-warnings 0'],
     ['pnpm --filter @app/metro-config exec eslint --fix --max-warnings 0'],
     ['pnpm --filter @app/native-adapters exec eslint --fix --max-warnings 0'],
+    ['pnpm --filter @app/device-key exec eslint --fix --max-warnings 0'],
+    ['pnpm --filter @app/native-ui exec eslint --fix --max-warnings 0'],
   ]);
 });
 

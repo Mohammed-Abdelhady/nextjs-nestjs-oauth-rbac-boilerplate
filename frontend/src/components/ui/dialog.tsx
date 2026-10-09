@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { X } from 'lucide-react';
 
 import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
+import { DESCRIPTION_ROLE_CLASSES, HEADING_ROLE_CLASSES } from '@/constants/typography';
 import { cn } from '@/lib/utils';
 
 const Dialog = DialogPrimitive.Root;
@@ -87,7 +88,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn('text-lg font-semibold leading-none tracking-tight', className)}
+    className={cn(HEADING_ROLE_CLASSES.sectionTitle, className)}
     {...props}
   />
 ));
@@ -99,7 +100,7 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn('text-sm text-muted-foreground', className)}
+    className={cn(DESCRIPTION_ROLE_CLASSES.description, className)}
     {...props}
   />
 ));

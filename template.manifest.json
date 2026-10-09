@@ -26,8 +26,8 @@
   },
   "shared": {
     "native-core": {
-      "files": ["mobile/auth/**"],
-      "workspaces": ["mobile/auth"]
+      "files": ["mobile/auth/**", "mobile/device-key/**"],
+      "workspaces": ["mobile/auth", "mobile/device-key"]
     }
   },
   "databases": {
@@ -469,6 +469,7 @@
       "mobile/cli/**",
       "mobile/expo/**",
       "mobile/metro/**",
+      "mobile/ui/**",
       "backend/test/native/engine/native-auth-engine.e2e-spec.ts",
       "backend/test/native/engine/native-auth-engine-dpop.e2e-spec.ts",
       "backend/test/native/engine/native-auth-engine-dpop-retry.e2e-spec.ts",

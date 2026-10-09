@@ -3,8 +3,8 @@ import { API_PATHS, OAUTH_GRANT_TYPE, type Transport } from '@app/sdk';
 
 export interface DebugTransport {
   transport: Transport<AbortSignalPort>;
-  /** Refresh requests that were sent to the server. */
-  refreshRequests(): number;
+  /** Token requests sent for refresh, including nonce retries. */
+  refreshTokenRequests(): number;
 }
 
 function isRefresh(body: unknown): boolean {
@@ -16,17 +16,17 @@ function isRefresh(body: unknown): boolean {
   );
 }
 
-/** Counts the refresh requests the engine sends, so the screen can show a refresh happened once. */
+/** Counts each refresh token request sent, including a nonce challenge and its retry. */
 export function createDebugTransport(inner: Transport<AbortSignalPort>): DebugTransport {
-  let refreshes = 0;
+  let requests = 0;
   return {
     transport: {
       request(request) {
         const route = request.path.split('?')[0];
-        if (route === API_PATHS.oauth.token && isRefresh(request.body)) refreshes += 1;
+        if (route === API_PATHS.oauth.token && isRefresh(request.body)) requests += 1;
         return inner.request(request);
       },
     },
-    refreshRequests: () => refreshes,
+    refreshTokenRequests: () => requests,
   };
 }

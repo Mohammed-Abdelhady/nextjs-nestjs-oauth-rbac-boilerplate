@@ -281,10 +281,8 @@ export function EditUserDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]" data-testid="edit-user-dialog">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold tracking-tight">{t('title')}</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">
-            {t('description')}
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         {/* Key forces remount when userId changes, reinitializing state */}

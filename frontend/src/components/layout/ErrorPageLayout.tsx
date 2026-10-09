@@ -1,3 +1,4 @@
+import { Description, Heading } from '@/components/design-system';
 import type { LucideIcon } from 'lucide-react';
 
 interface ErrorPageLayoutProps {
@@ -45,7 +46,9 @@ export function ErrorPageLayout({
         <div className="lg:w-1/2 xl:w-5/12 p-6 sm:p-12 flex flex-col justify-center">
           <div className="flex flex-col items-center lg:items-start text-center lg:text-start">
             {/* Title carries the only h1; the status code repeats it visually */}
-            <h1 className="text-3xl xl:text-4xl font-extrabold text-foreground mb-4">{title}</h1>
+            <Heading level={1} variant="display" className="mb-4">
+              {title}
+            </Heading>
 
             <p
               aria-hidden="true"
@@ -55,7 +58,9 @@ export function ErrorPageLayout({
             </p>
 
             {/* Description */}
-            <p className="text-lg text-muted-foreground mb-4 max-w-md">{description}</p>
+            <Description variant="lead" className="mb-4 max-w-md">
+              {description}
+            </Description>
 
             {/* Error Digest (if available, for debugging) */}
             {errorDigest && (

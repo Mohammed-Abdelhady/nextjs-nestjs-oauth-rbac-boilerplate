@@ -14,8 +14,10 @@ const MOBILE_IMPORTERS = [
   'mobile/adapters',
   'mobile/auth',
   'mobile/cli',
+  'mobile/device-key',
   'mobile/expo',
   'mobile/metro',
+  'mobile/ui',
 ];
 
 function expectLockfileImportersMatchWorkspace(project: string): void {

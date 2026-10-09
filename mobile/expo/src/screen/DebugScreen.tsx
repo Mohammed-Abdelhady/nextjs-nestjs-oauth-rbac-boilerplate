@@ -1,16 +1,18 @@
 import { Button, ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { ShellAuth } from '../shell';
+import type { StartedShellAuth } from '../shell';
 import { DIRECTION, translate, type Locale, type MessageKey } from '../i18n/messages';
 import { OPERATION_KEY, REASON_KEY, STATUS_KEY, STORAGE_WARNING_KEY } from '../logic/outcome-keys';
 import { render } from '../logic/outcome-text';
 import { useAuthDebug } from './use-auth-debug';
+import { describeDeviceKey } from '../logic/device-key-text';
 
 export const TEST_ID = {
   STATUS: 'auth-status',
+  DEVICE_KEY: 'auth-device-key',
   OPERATION: 'auth-operation',
   WARNING: 'auth-warning',
   LAST_OUTCOME: 'auth-last-outcome',
-  REFRESH_REQUESTS: 'auth-refresh-requests',
+  REFRESH_TOKEN_REQUESTS: 'auth-refresh-token-requests',
   SIGN_IN: 'auth-sign-in',
   REFRESH: 'auth-refresh',
   LOAD_PROFILE: 'auth-load-profile',
@@ -25,7 +27,7 @@ const styles = StyleSheet.create({
 });
 
 interface DebugScreenProps {
-  auth: ShellAuth;
+  auth: StartedShellAuth;
   locale: Locale;
 }
 
@@ -34,7 +36,7 @@ export function DebugScreen({ auth, locale }: DebugScreenProps) {
     snapshot,
     lastOutcome,
     storageWarning,
-    refreshRequests,
+    refreshTokenRequests,
     signIn,
     refresh,
     loadProfile,
@@ -43,6 +45,7 @@ export function DebugScreen({ auth, locale }: DebugScreenProps) {
   const direction = DIRECTION[locale];
   const text = (key: MessageKey, value?: string): string => translate(locale, key, value);
   const none = text('none');
+  const keyState = describeDeviceKey(locale, auth.deviceKey);
   const line = { writingDirection: direction } as const;
   const reason = snapshot.reason === undefined ? none : text(REASON_KEY[snapshot.reason]);
   const warning =
@@ -60,6 +63,9 @@ export function DebugScreen({ auth, locale }: DebugScreenProps) {
         <Text testID={TEST_ID.STATUS} style={line}>
           {text('status', text(STATUS_KEY[snapshot.status]))}
         </Text>
+        <Text testID={TEST_ID.DEVICE_KEY} style={line}>
+          {text('deviceKey', keyState)}
+        </Text>
         <Text testID={TEST_ID.OPERATION} style={line}>
           {text('operation', text(OPERATION_KEY[snapshot.operation]))}
         </Text>
@@ -73,8 +79,8 @@ export function DebugScreen({ auth, locale }: DebugScreenProps) {
         <Text testID={TEST_ID.LAST_OUTCOME} style={line}>
           {text('lastOutcome', outcome)}
         </Text>
-        <Text testID={TEST_ID.REFRESH_REQUESTS} style={line}>
-          {text('refreshRequests', String(refreshRequests))}
+        <Text testID={TEST_ID.REFRESH_TOKEN_REQUESTS} style={line}>
+          {text('refreshTokenRequests', String(refreshTokenRequests))}
         </Text>
       </View>
       <Button

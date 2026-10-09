@@ -131,16 +131,31 @@ it('drops the base folders inside the workspace and keeps the ones outside it', 
 });
 
 it.each([
-  ['mobile/expo', ['mobile/adapters']],
-  ['mobile/cli', ['mobile/adapters']],
-])('gives %s in this repository its real reach', (shell, adapters) => {
-  expect(watched(REPOSITORY, shell)).toEqual([
-    'node_modules',
-    shell,
-    ...adapters,
-    'mobile/auth',
-    'mobile/metro',
-    'shared/core',
-    'shared/sdk',
-  ]);
+  [
+    'mobile/expo',
+    [
+      'node_modules',
+      'mobile/expo',
+      'mobile/adapters',
+      'mobile/auth',
+      'mobile/device-key',
+      'mobile/metro',
+      'shared/core',
+      'shared/sdk',
+    ],
+  ],
+  [
+    'mobile/cli',
+    [
+      'node_modules',
+      'mobile/cli',
+      'mobile/adapters',
+      'mobile/auth',
+      'mobile/metro',
+      'shared/core',
+      'shared/sdk',
+    ],
+  ],
+])('gives %s in this repository its real reach', (shell, expected) => {
+  expect(watched(REPOSITORY, shell)).toEqual(expected);
 });

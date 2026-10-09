@@ -242,8 +242,13 @@ const COMPARED_DIRECTORIES = [
   'mobile/auth/src',
   'mobile/auth/test',
   'mobile/cli',
+  'mobile/device-key/android',
+  'mobile/device-key/ios',
+  'mobile/device-key/src',
+  'mobile/device-key/test',
   'mobile/expo',
   'mobile/metro',
+  'mobile/ui',
   'shared/core/src',
   'shared/sdk/src',
 ];

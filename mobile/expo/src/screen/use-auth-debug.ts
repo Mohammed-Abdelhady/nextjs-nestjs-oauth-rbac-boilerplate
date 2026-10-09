@@ -19,7 +19,7 @@ export interface AuthDebug {
   lastOutcome: Described | undefined;
   /** Set once the action that raised the snapshot's warning has finished. */
   storageWarning: StorageWarning | undefined;
-  refreshRequests: number;
+  refreshTokenRequests: number;
   signIn(): void;
   refresh(): void;
   loadProfile(): void;
@@ -33,18 +33,18 @@ export function useAuthDebug({ engine, client, debug }: ShellAuth): AuthDebug {
   );
   const [lastOutcome, setLastOutcome] = useState<Described>();
   const [storageWarning, setStorageWarning] = useState<StorageWarning>();
-  const [refreshRequests, setRefreshRequests] = useState(0);
+  const [refreshTokenRequests, setRefreshTokenRequests] = useState(0);
 
   const run = useCallback(
     (action: DebugAction, work: () => Promise<Described>): void => {
-      const sentBefore = debug.refreshRequests();
+      const sentBefore = debug.refreshTokenRequests();
       void work()
         .catch(describeError)
         .then((result) => {
-          const sent = debug.refreshRequests();
+          const sent = debug.refreshTokenRequests();
           const settled = engine.snapshot;
           setLastOutcome(describeAction(action, result));
-          setRefreshRequests(sent);
+          setRefreshTokenRequests(sent);
           setStorageWarning((previous) =>
             storageWarningAfter(previous, settled, sent > sentBefore),
           );
@@ -66,7 +66,7 @@ export function useAuthDebug({ engine, client, debug }: ShellAuth): AuthDebug {
     snapshot,
     lastOutcome,
     storageWarning,
-    refreshRequests,
+    refreshTokenRequests,
     signIn: useCallback(
       () => run(DEBUG_ACTION.SIGN_IN, async () => describeSignIn(await engine.signIn())),
       [engine, run],

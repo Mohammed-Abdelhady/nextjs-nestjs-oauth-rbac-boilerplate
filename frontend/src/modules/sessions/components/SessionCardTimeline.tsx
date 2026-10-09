@@ -1,5 +1,6 @@
 'use client';
 
+import { Heading } from '@/components/design-system';
 import { memo, useId, useState, useCallback } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Loader2, LogOut, MapPin, Clock, Calendar } from 'lucide-react';
@@ -106,12 +107,12 @@ export const SessionCardTimeline = memo(
                 size="lg"
               />
               <div className="flex-1">
-                <h3 className="text-sm font-medium tracking-tight flex items-center gap-2 text-card-foreground">
+                <Heading level={3} variant="subsectionTitle" className="flex items-center gap-2">
                   <span id={titleId} data-testid="session-device-label">
                     {nativeName ?? (session.deviceName || deviceLabel)}
                   </span>
                   {session.isCurrent && <CurrentSessionBadge pulse />}
-                </h3>
+                </Heading>
                 <div className="mt-0.5 flex flex-wrap items-center gap-2">
                   {kind && <SessionKindBadge id={kindId} kind={kind} />}
                   {!nativeDevice && (

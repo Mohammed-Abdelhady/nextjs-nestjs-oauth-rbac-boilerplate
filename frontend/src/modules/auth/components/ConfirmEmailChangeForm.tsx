@@ -1,5 +1,6 @@
 'use client';
 
+import { Description, Heading } from '@/components/design-system';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { FormProvider } from 'react-hook-form';
@@ -73,15 +74,12 @@ export function ConfirmEmailChangeForm() {
 
   return (
     <section className="mt-12 flex flex-col items-center" aria-labelledby="confirm-email-heading">
-      <h1
-        id="confirm-email-heading"
-        className="text-2xl xl:text-3xl font-extrabold text-foreground"
-      >
+      <Heading level={1} variant="display" id="confirm-email-heading">
         {t('title')}
-      </h1>
-      <p className="text-base text-muted-foreground mt-4 text-center max-w-md">
+      </Heading>
+      <Description variant="lead" className="mt-4 text-center max-w-md">
         {t('description')}
-      </p>
+      </Description>
       <div className="w-full flex-1 mt-8">
         <FormProvider {...form}>
           <form

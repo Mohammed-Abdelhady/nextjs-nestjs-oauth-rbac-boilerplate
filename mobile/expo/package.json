@@ -11,9 +11,10 @@
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run && node --test test/scene-lifecycle.test.cjs"
   },
   "dependencies": {
+    "@app/device-key": "workspace:*",
     "@app/native-adapters": "workspace:*",
     "@app/native-auth": "workspace:*",
     "@app/sdk": "workspace:*",

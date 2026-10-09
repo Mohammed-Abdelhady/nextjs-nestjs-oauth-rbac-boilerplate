@@ -1,5 +1,6 @@
 'use client';
 
+import { Description, Heading } from '@/components/design-system';
 import { useTranslations } from 'next-intl';
 import { FormProvider } from 'react-hook-form';
 import {
@@ -57,18 +58,20 @@ export function ActivationForm() {
   return (
     <section className="mt-12 flex flex-col items-center" aria-labelledby="activate-heading">
       {/* Title */}
-      <h1
+      <Heading
+        level={1}
+        variant="display"
         id="activate-heading"
-        className="text-2xl xl:text-3xl font-extrabold text-foreground"
+
         data-testid="activate-title"
       >
         {t('title')}
-      </h1>
+      </Heading>
 
       {/* Description */}
-      <p className="text-base text-muted-foreground mt-4 text-center max-w-md">
+      <Description variant="lead" className="mt-4 text-center max-w-md">
         {t('description')}
-      </p>
+      </Description>
 
       <div className="w-full flex-1 mt-8">
         {/* Activation Form */}

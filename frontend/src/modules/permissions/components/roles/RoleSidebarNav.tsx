@@ -1,5 +1,6 @@
 'use client';
 
+import { Heading } from '@/components/design-system';
 import { memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { Lock, Shield } from 'lucide-react';
@@ -79,9 +80,9 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
       {/* System Roles Section */}
       {systemRoles.length > 0 && (
         <section>
-          <h2 className="text-xs uppercase tracking-widest text-tertiary mb-2 px-3">
+          <Heading level={2} variant="eyebrow" className="mb-2 px-3">
             {t('systemRoles')}
-          </h2>
+          </Heading>
           <div className="space-y-1">
             {systemRoles.map((role) => (
               <button
@@ -113,9 +114,9 @@ export const RoleSidebarNav = memo(function RoleSidebarNav({
       {/* Custom Roles Section */}
       {customRoles.length > 0 && (
         <section>
-          <h2 className="text-xs uppercase tracking-widest text-tertiary mb-2 px-3">
+          <Heading level={2} variant="eyebrow" className="mb-2 px-3">
             {t('customRoles', { count: customRoles.length })}
-          </h2>
+          </Heading>
           <div className="space-y-1">
             {customRoles.map((role) => (
               <button

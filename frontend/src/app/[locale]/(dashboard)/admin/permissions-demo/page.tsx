@@ -1,3 +1,4 @@
+import { Description, Heading } from '@/components/design-system';
 import { PermissionGuard, RoutePermissionGuard } from '@/modules/permissions';
 import {
   USER_PERMISSIONS,
@@ -24,23 +25,25 @@ export default function PermissionsDemoPage() {
       <div className="container mx-auto max-w-6xl space-y-8 py-8">
         {/* Page Header */}
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground mt-8">
+          <Heading level={1} variant="pageTitle" className="mt-8">
             Permissions System Demo
-          </h1>
-          <p className="mt-2 text-muted-foreground">
+          </Heading>
+          <Description className="mt-2">
             This page demonstrates how to use permission guards throughout the application.
-          </p>
+          </Description>
         </div>
 
         {/* Single Permission Guard */}
         <section className="space-y-4 rounded-lg border border-border bg-card p-6">
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Single Permission Guard</h2>
+            <Heading level={2} variant="sectionTitle">
+              Single Permission Guard
+            </Heading>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <Description>
             Elements wrapped in PermissionGuard are completely hidden if the user lacks permission.
-          </p>
+          </Description>
 
           <div className="space-y-2">
             <PermissionGuard permission={USER_PERMISSIONS.LIST_ALL}>
@@ -67,12 +70,14 @@ export default function PermissionsDemoPage() {
         <section className="space-y-4 rounded-lg border border-border bg-card p-6">
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Multiple Permissions (Require ALL)</h2>
+            <Heading level={2} variant="sectionTitle">
+              Multiple Permissions (Require ALL)
+            </Heading>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <Description>
             Use the <code className="rounded bg-muted px-1">permissions</code> prop to require ALL
             listed permissions.
-          </p>
+          </Description>
 
           <PermissionGuard permissions={[USER_PERMISSIONS.LIST_ALL, ROLE_PERMISSIONS.LIST_ALL]}>
             <div className="flex items-center gap-2 rounded-md bg-green-50 p-3 dark:bg-green-950">
@@ -97,12 +102,14 @@ export default function PermissionsDemoPage() {
         <section className="space-y-4 rounded-lg border border-border bg-card p-6">
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Any Permissions (Require ANY)</h2>
+            <Heading level={2} variant="sectionTitle">
+              Any Permissions (Require ANY)
+            </Heading>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <Description>
             Use the <code className="rounded bg-muted px-1">anyPermissions</code> prop to show if
             user has ANY of the listed permissions.
-          </p>
+          </Description>
 
           <PermissionGuard
             anyPermissions={[SESSION_PERMISSIONS.READ_ALL, SESSION_PERMISSIONS.READ_OWN]}
@@ -120,11 +127,13 @@ export default function PermissionsDemoPage() {
         <section className="space-y-4 rounded-lg border border-border bg-card p-6">
           <div className="flex items-center gap-2">
             <Settings className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Action Buttons with Permission Guards</h2>
+            <Heading level={2} variant="sectionTitle">
+              Action Buttons with Permission Guards
+            </Heading>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <Description>
             Wrap action buttons with PermissionGuard to completely hide unauthorized actions.
-          </p>
+          </Description>
 
           {/* Sample user card */}
           <div className="rounded-lg border border-border bg-muted/50 p-4">
@@ -177,12 +186,14 @@ export default function PermissionsDemoPage() {
         <section className="space-y-4 rounded-lg border border-border bg-card p-6">
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Fallback Content</h2>
+            <Heading level={2} variant="sectionTitle">
+              Fallback Content
+            </Heading>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <Description>
             Use the <code className="rounded bg-muted px-1">fallback</code> prop to show alternative
             content when permission is denied.
-          </p>
+          </Description>
 
           <PermissionGuard
             permission="this:permission:does:not:exist"
@@ -207,13 +218,13 @@ export default function PermissionsDemoPage() {
         <section className="space-y-4 rounded-lg border border-amber-200 bg-amber-50 p-6 dark:border-amber-800 dark:bg-amber-950">
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-            <h2 className="text-xl font-semibold text-amber-900 dark:text-amber-100">
+            <Heading level={2} variant="sectionTitle">
               Wildcard Permission (*)
-            </h2>
+            </Heading>
           </div>
-          <p className="text-sm text-amber-800 dark:text-amber-200">
+          <Description>
             The wildcard permission grants access to everything. Only assign to super admin users.
-          </p>
+          </Description>
 
           <PermissionGuard permission={WILDCARD_PERMISSION}>
             <div className="rounded-md bg-amber-100 p-4 dark:bg-amber-900">
@@ -226,11 +237,15 @@ export default function PermissionsDemoPage() {
 
         {/* Code Examples */}
         <section className="space-y-4 rounded-lg border border-border bg-card p-6">
-          <h2 className="text-xl font-semibold">Code Examples</h2>
+          <Heading level={2} variant="sectionTitle">
+            Code Examples
+          </Heading>
 
           <div className="space-y-4">
             <div>
-              <h3 className="mb-2 text-sm font-semibold">Component-level Guard:</h3>
+              <Heading level={3} variant="subsectionTitle" className="mb-2">
+                Component-level Guard:
+              </Heading>
               <pre className="overflow-x-auto rounded-md bg-muted p-4 text-xs">
                 {`import { PermissionGuard } from '@/modules/permissions';
 import { USER_PERMISSIONS } from '@app/core';
@@ -242,7 +257,9 @@ import { USER_PERMISSIONS } from '@app/core';
             </div>
 
             <div>
-              <h3 className="mb-2 text-sm font-semibold">Route-level Guard:</h3>
+              <Heading level={3} variant="subsectionTitle" className="mb-2">
+                Route-level Guard:
+              </Heading>
               <pre className="overflow-x-auto rounded-md bg-muted p-4 text-xs">
                 {`import { RoutePermissionGuard } from '@/modules/permissions';
 import { ROLE_PERMISSIONS } from '@app/core';
@@ -258,7 +275,9 @@ export default function RolesPage() {
             </div>
 
             <div>
-              <h3 className="mb-2 text-sm font-semibold">Multiple Permissions (ALL):</h3>
+              <Heading level={3} variant="subsectionTitle" className="mb-2">
+                Multiple Permissions (ALL):
+              </Heading>
               <pre className="overflow-x-auto rounded-md bg-muted p-4 text-xs">
                 {`<PermissionGuard
   permissions={[USER_PERMISSIONS.LIST_ALL, ROLE_PERMISSIONS.LIST_ALL]}
@@ -269,7 +288,9 @@ export default function RolesPage() {
             </div>
 
             <div>
-              <h3 className="mb-2 text-sm font-semibold">Any Permissions (OR):</h3>
+              <Heading level={3} variant="subsectionTitle" className="mb-2">
+                Any Permissions (OR):
+              </Heading>
               <pre className="overflow-x-auto rounded-md bg-muted p-4 text-xs">
                 {`<PermissionGuard
   anyPermissions={[SESSION_PERMISSIONS.READ_ALL, SESSION_PERMISSIONS.READ_OWN]}

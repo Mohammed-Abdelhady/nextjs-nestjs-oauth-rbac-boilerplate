@@ -3,7 +3,7 @@
 import { memo, useCallback } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { StatusBadge } from '@/components/design-system';
+import { Heading, StatusBadge } from '@/components/design-system';
 import { UserRoleSelector } from './UserRoleSelector';
 import { UserActionsMenu } from './UserActionsMenu';
 import { PermissionGuard } from '@/modules/permissions';
@@ -95,7 +95,9 @@ export const UserCard = memo(
           </Avatar>
 
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-medium tracking-tight truncate">{user.name}</h3>
+            <Heading level={3} variant="subsectionTitle" className="truncate">
+              {user.name}
+            </Heading>
             <p className="text-xs text-tertiary tracking-wide truncate">{user.email}</p>
           </div>
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { Heading } from '@/components/design-system';
 import { Fragment } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -73,13 +74,15 @@ export function LoginForm() {
 
   return (
     <section className="mt-12 flex flex-col items-center" aria-labelledby="login-heading">
-      <h1
+      <Heading
+        level={1}
+        variant="display"
         id="login-heading"
-        className="text-2xl xl:text-3xl font-extrabold text-foreground"
+
         data-testid="login-title"
       >
         {t('title')}
-      </h1>
+      </Heading>
 
       <div className="mt-8 w-full flex-1">
         <AuthMethodsGate>

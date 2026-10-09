@@ -63,7 +63,7 @@ async function signedIn() {
   });
   await engine.restore();
   await engine.signIn();
-  const refreshesSent = (): number => debugs[0]?.refreshRequests() ?? 0;
+  const refreshesSent = (): number => debugs[0]?.refreshTokenRequests() ?? 0;
   return { engine, store, server, refreshesSent };
 }
 

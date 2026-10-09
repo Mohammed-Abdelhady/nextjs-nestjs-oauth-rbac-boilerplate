@@ -1,5 +1,6 @@
 'use client';
 
+import { Description, Heading } from '@/components/design-system';
 import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { LOGIN_PATH, REDIRECT_PARAM } from '@/modules/auth/constants/authMethods';
@@ -30,8 +31,10 @@ function NoPasswordHint({ createsAccountByLink }: NoPasswordHintProps) {
 
   return (
     <div className="mx-auto mt-8 max-w-xs text-center" data-testid="register-no-password-hint">
-      <h2 className="text-lg font-semibold">{t(`${suffix}Title`)}</h2>
-      <p className="mt-2 text-sm text-muted-foreground">{t(`${suffix}Body`)}</p>
+      <Heading level={2} variant="sectionTitle">
+        {t(`${suffix}Title`)}
+      </Heading>
+      <Description className="mt-2">{t(`${suffix}Body`)}</Description>
       <IconLinkButton
         href={authPagePath(LOGIN_PATH, redirect)}
         icon={LogIn}
