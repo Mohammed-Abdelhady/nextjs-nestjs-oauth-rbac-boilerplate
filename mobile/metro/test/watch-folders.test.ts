@@ -130,10 +130,9 @@ it('drops the base folders inside the workspace and keeps the ones outside it', 
   expect(base).toEqual(snapshot);
 });
 
-// The bare shell gains mobile/adapters here when it depends on the shared adapters.
 it.each([
   ['mobile/expo', ['mobile/adapters']],
-  ['mobile/cli', []],
+  ['mobile/cli', ['mobile/adapters']],
 ])('gives %s in this repository its real reach', (shell, adapters) => {
   expect(watched(REPOSITORY, shell)).toEqual([
     'node_modules',

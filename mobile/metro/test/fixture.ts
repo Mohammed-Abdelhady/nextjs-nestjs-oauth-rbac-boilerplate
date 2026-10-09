@@ -57,6 +57,16 @@ export const REPOSITORY_LIKE: Record<string, FixturePackage> = {
     },
     devDependencies: { '@app/metro-config': 'workspace:*' },
   },
+  'mobile/cli': {
+    name: '@app/mobile-cli',
+    dependencies: {
+      '@app/native-adapters': 'workspace:*',
+      '@app/native-auth': 'workspace:*',
+      '@app/sdk': 'workspace:*',
+      react: '19.2.3',
+    },
+    devDependencies: { '@app/metro-config': 'workspace:*' },
+  },
   'mobile/adapters': {
     name: '@app/native-adapters',
     dependencies: { '@app/native-auth': 'workspace:*', '@app/sdk': 'workspace:*' },
