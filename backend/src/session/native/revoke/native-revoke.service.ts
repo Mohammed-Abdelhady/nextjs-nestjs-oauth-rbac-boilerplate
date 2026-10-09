@@ -22,9 +22,12 @@ import { NativeCredentialIssuer } from '../token/native-credential.issuer';
 import { nativeDpopOauthFailure } from '../proof/native-dpop-oauth';
 import { isNativeDpopProofIdConflict } from '../proof/native-dpop.service';
 import {
+  REVOKE_REQUEST_FIELDS,
+  readStringFields,
+} from '../oauth/native-request-shape';
+import {
   OAUTH_ERROR,
   OauthFailure,
-  RevokeRequest,
   RevokeSuccess,
   oauthFailure,
 } from '../oauth/native-oauth.types';
@@ -50,7 +53,7 @@ export class NativeRevokeService {
   ) {}
 
   async revoke(
-    body: RevokeRequest,
+    request: unknown,
     dpopProof?: string,
   ): Promise<RevokeSuccess | OauthFailure> {
     if (!this.authEpoch.nativeEnabled()) {
@@ -59,6 +62,10 @@ export class NativeRevokeService {
         OAUTH_ERROR.UNAUTHORIZED_CLIENT,
         ErrorCode.NATIVE_AUTH_DISABLED,
       );
+    }
+    const body = readStringFields(request, REVOKE_REQUEST_FIELDS);
+    if (!body) {
+      return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_REQUEST);
     }
     if (body.client_secret) {
       return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_CLIENT);

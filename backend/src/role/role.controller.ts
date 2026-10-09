@@ -116,7 +116,8 @@ export class RoleController {
   @ApiOperation({
     summary: 'Create a new role',
     description:
-      'Create a custom role with specific permissions. Only admins can create roles.',
+      'Create a custom role with specific permissions. The caller can only ' +
+      'give the role permissions they hold themselves.',
   })
   @ApiResponse({
     status: 201,
@@ -128,13 +129,18 @@ export class RoleController {
     description: 'Invalid input or permission format',
   })
   @ApiResponse({
+    status: 403,
+    description: 'A requested permission is not held by the caller',
+  })
+  @ApiResponse({
     status: 409,
     description: 'Role with this name already exists',
   })
   async create(
     @Body() dto: CreateRoleDto,
+    @CurrentUser('id') actorId: string,
   ): Promise<ApiResponseDto<RoleResponseDto>> {
-    const data = await this.roleService.create(dto);
+    const data = await this.roleService.create(dto, actorId);
     return {
       success: true,
       message: 'Role created successfully',
@@ -165,7 +171,9 @@ export class RoleController {
   })
   @ApiResponse({
     status: 403,
-    description: 'Cannot rename a system role or strip the admin wildcard',
+    description:
+      'Cannot rename a system role, strip the admin wildcard, edit a role at ' +
+      'or above your own level, or add a permission you do not hold',
   })
   @ApiResponse({
     status: 404,

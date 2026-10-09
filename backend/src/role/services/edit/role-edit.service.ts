@@ -1,19 +1,20 @@
 import { randomUUID } from 'crypto';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Connection, Error as MongooseError, Model, Types } from 'mongoose';
+import { Connection, Model, Types } from 'mongoose';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
-import {
-  isDatabaseUnavailableError,
-  isMongoDuplicateKeyError,
-} from '../../../common/utils/mongo-error.util';
+import { isDatabaseUnavailableError } from '../../../common/utils/mongo-error.util';
 import { withMajorityTransaction } from '../../../session/utils/transactions/mongo-transaction';
 import { asAuthorityUnavailable } from '../../../session/utils/authority/authority-unavailable';
 import { SecurityEventService } from '../../../session/services/security-event.service';
 import { ROLE_PENDING_SWEEP_LIMIT } from '../../../common/constants/roles';
 import { ROLE_PERMISSIONS } from '../../../common/constants/permissions';
-import { assertFreshRolePermission } from '../../utils/role-actor.util';
+import {
+  assertCanGrant,
+  assertFreshRolePermission,
+  assertOutranksRole,
+} from '../../utils/role-actor.util';
 import { moveRoleHolders } from '../../utils/holder-sweeps/role-holder.util';
 import { repairPendingRoleSweeps } from '../../utils/holder-sweeps/role-pending-sweep.util';
 import { UserRole } from '../../../user/enums/user-role.enum';
@@ -24,6 +25,11 @@ import {
   RoleDocument,
 } from '../../schemas/role.schema';
 import { UpdateRoleDto } from '../../dto/update-role.dto';
+import {
+  createRoleWithinCeiling,
+  rethrowRoleWriteError,
+} from '../../utils/role-create.util';
+import { CreateRoleDto } from '../../dto/create-role.dto';
 import {
   dedupePermissions,
   generateSlug,
@@ -54,6 +60,30 @@ export class RoleEditService {
   ) {}
 
   /**
+   * Store a new custom role holding only permissions the actor holds.
+   */
+  async create(
+    dto: CreateRoleDto,
+    slug: string,
+    actorId: string,
+  ): Promise<RoleDocument> {
+    try {
+      return await createRoleWithinCeiling(
+        {
+          connection: this.connection,
+          userModel: this.userModel,
+          roleModel: this.roleModel,
+        },
+        dto,
+        slug,
+        actorId,
+      );
+    } catch (error) {
+      rethrowRoleWriteError(error, slug);
+    }
+  }
+
+  /**
    * Save the role and end the sessions of every holder in one transaction.
    * The role is re-read inside the work function and the previous slug and
    * rename flag are recomputed from it, so a rename that landed before this
@@ -69,7 +99,7 @@ export class RoleEditService {
       const outcome = await withMajorityTransaction(
         this.connection,
         async (session) => {
-          await assertFreshRolePermission(
+          const actor = await assertFreshRolePermission(
             this.userModel,
             this.roleModel,
             actorId,
@@ -87,6 +117,11 @@ export class RoleEditService {
               HttpStatus.NOT_FOUND,
             );
           }
+          assertOutranksRole(actor, current);
+          const addedPermissions = (dto.permissions ?? []).filter(
+            (permission) => !current.permissions.includes(permission),
+          );
+          assertCanGrant(actor, addedPermissions);
           const previousSlug = current.slug;
           const nextSlug = dto.name ? generateSlug(dto.name) : previousSlug;
           const renamed = nextSlug !== previousSlug;
@@ -160,24 +195,7 @@ export class RoleEditService {
       );
       return outcome;
     } catch (error) {
-      if (isMongoDuplicateKeyError(error)) {
-        throw new AppException(
-          ErrorCode.ROLE_NAME_TAKEN,
-          `Role with slug "${requestedSlug ?? 'requested'}" already exists`,
-          HttpStatus.CONFLICT,
-        );
-      }
-      if (error instanceof MongooseError.ValidationError) {
-        throw new AppException(
-          ErrorCode.VALIDATION_ERROR,
-          error.message,
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-      if (!isDatabaseUnavailableError(error)) {
-        throw error;
-      }
-      asAuthorityUnavailable(error);
+      rethrowRoleWriteError(error, requestedSlug);
     }
   }
 

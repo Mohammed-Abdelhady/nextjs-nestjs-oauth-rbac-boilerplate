@@ -22,7 +22,7 @@ describe('parseNativeApplications', () => {
       ],
     ],
     [
-      'keeps configured scopes and multiple redirect addresses',
+      'keeps the api scope and multiple redirect addresses',
       JSON.stringify([
         {
           ...VALID_APPLICATION,
@@ -30,7 +30,7 @@ describe('parseNativeApplications', () => {
             'com.example.mobile://oauth/callback',
             'http://127.0.0.1:5100/callback',
           ],
-          allowedScopes: ['api', 'profile:read'],
+          allowedScopes: ['api'],
         },
       ]),
       [
@@ -40,7 +40,7 @@ describe('parseNativeApplications', () => {
             'com.example.mobile://oauth/callback',
             'http://127.0.0.1:5100/callback',
           ],
-          allowedScopes: ['api', 'profile:read'],
+          allowedScopes: ['api'],
         },
       ],
     ],
@@ -62,6 +62,38 @@ describe('parseNativeApplications', () => {
     ],
   ])('%s', (_name, raw, expected) => {
     expect(parseNativeApplications(raw)).toEqual(expected);
+  });
+
+  it.each([
+    ['a narrower scope', ['profile.read']],
+    ['the api scope beside another scope', ['api', 'profile:read']],
+    ['the api scope in another letter case', ['API']],
+  ])('refuses %s and names the application', (_name, allowedScopes) => {
+    expect(() =>
+      parseNativeApplications(
+        JSON.stringify([{ ...VALID_APPLICATION, allowedScopes }]),
+      ),
+    ).toThrow(
+      'AUTH_NATIVE_APPLICATIONS entry "com.example.mobile": allowedScopes must be exactly ["api"]',
+    );
+  });
+
+  it('refuses a narrower scope on the second application only', () => {
+    expect(() =>
+      parseNativeApplications(
+        JSON.stringify([
+          VALID_APPLICATION,
+          {
+            ...VALID_APPLICATION,
+            clientId: 'com.example.widget',
+            redirectUris: ['com.example.widget://oauth/callback'],
+            allowedScopes: ['profile.read'],
+          },
+        ]),
+      ),
+    ).toThrow(
+      'AUTH_NATIVE_APPLICATIONS entry "com.example.widget": allowedScopes must be exactly ["api"]',
+    );
   });
 
   it.each([

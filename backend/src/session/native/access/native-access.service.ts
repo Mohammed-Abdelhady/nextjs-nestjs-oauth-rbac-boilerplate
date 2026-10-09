@@ -7,6 +7,7 @@ import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { Clock } from '../../../common/services/clock';
 import { AuthEpochService } from '../../../common/services/auth-epoch.service';
 import { CREDENTIAL_PURPOSE } from '../../constants/credential-purpose';
+import { NATIVE_ACCESS_TOKEN_TYPE } from '../../constants/session-policy';
 import {
   NativeCredential,
   NativeCredentialDocument,
@@ -30,7 +31,7 @@ export function readBearerToken(request: Request): string | null {
   const scheme = header.slice(0, separator);
   const token = header.slice(separator + 1).trim();
   if (
-    scheme !== 'Bearer' ||
+    scheme !== NATIVE_ACCESS_TOKEN_TYPE ||
     token.length === 0 ||
     token.length > BEARER_MAX_LENGTH
   ) {

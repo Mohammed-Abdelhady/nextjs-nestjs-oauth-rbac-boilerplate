@@ -109,12 +109,6 @@ export class EnvironmentVariables extends NativeEnvironmentVariables {
   @IsOptional()
   CLIENT_URL: string = 'http://localhost:3000';
 
-  @IsString()
-  @IsNotEmpty()
-  @IsUrl({ require_protocol: true, require_tld: false })
-  @IsOptional()
-  API_URL?: string;
-
   @Type(() => Number)
   @IsInt()
   @Min(1)

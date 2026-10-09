@@ -176,10 +176,10 @@ describe('RoleService', () => {
       mockRoleModel.findOne.mockResolvedValueOnce(buildRole());
 
       await expect(
-        service.create({
-          name: 'Content Editor',
-          permissions: ['posts:read:all'],
-        }),
+        service.create(
+          { name: 'Content Editor', permissions: ['posts:read:all'] },
+          actorId,
+        ),
       ).rejects.toMatchObject({ code: 'ROLE_NAME_TAKEN', status: 409 });
     });
 
@@ -200,7 +200,10 @@ describe('RoleService', () => {
       mockRoleModel.findOne.mockResolvedValueOnce(null);
 
       await expect(
-        service.create({ name: 'Auditor', permissions: ['not a permission'] }),
+        service.create(
+          { name: 'Auditor', permissions: ['not a permission'] },
+          actorId,
+        ),
       ).rejects.toMatchObject({
         code: 'INVALID_PERMISSION_FORMAT',
         status: 400,

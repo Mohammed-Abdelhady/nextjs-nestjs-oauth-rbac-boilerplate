@@ -212,6 +212,15 @@ function parseAllowedScopes(
     seenScopes.add(scope);
     allowedScopes.push(scope);
   }
+  // Scopes are not enforced on any route, so a narrower list would only look
+  // like a restriction while the token kept the user's full permissions.
+  if (allowedScopes.length !== 1 || allowedScopes[0] !== DEFAULT_API_AUDIENCE) {
+    throw entryError(
+      index,
+      clientId,
+      `allowedScopes must be exactly ["${DEFAULT_API_AUDIENCE}"]; it is the only scope and grants the user's full permissions`,
+    );
+  }
   return allowedScopes;
 }
 

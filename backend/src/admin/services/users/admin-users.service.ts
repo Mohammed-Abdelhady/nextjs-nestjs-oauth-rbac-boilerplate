@@ -10,6 +10,7 @@ import {
   loadAuthorizedUser,
   logSessionRevocation,
   rethrowOrUnavailable,
+  saveUserUpdate,
 } from '../../utils/admin-transaction.util';
 import { reconcileAssignedRole } from '../../utils/admin-role-reconcile.util';
 import { REVOKED_REASON } from '../../../session/constants/revoked-reason';
@@ -43,10 +44,7 @@ export class AdminUsersService {
     @InjectConnection() private readonly connection: Connection,
   ) {}
 
-  /**
-   * Update name and email. Changing the email is admin-only and sends the
-   * account back through verification.
-   */
+  /** Update name and email; an admin email edit requires verification again. */
   async updateUser(
     id: string,
     dto: UpdateUserDto,
@@ -63,22 +61,37 @@ export class AdminUsersService {
     );
     await this.accessService.assertCanModify(actorRole, targetUser.role);
 
-    if (name !== undefined) {
-      targetUser.name = name;
-    }
-
-    if (email && email !== targetUser.email) {
+    const previousEmail = targetUser.email;
+    const previousGeneration = targetUser.addressGeneration ?? 0;
+    const emailMoved = Boolean(email) && email !== targetUser.email;
+    if (email && emailMoved) {
       const actorLevel = await this.accessService.getActorLevel(actorRole);
       await this.emailChangeService.apply(targetUser, email, actorLevel);
     }
 
-    await targetUser.save();
-    this.logger.log(`User ${id} updated by ${actorId}`);
+    try {
+      const saved = await saveUserUpdate(
+        this.connection,
+        this.userModel,
+        this.accessService,
+        {
+          id,
+          actorId,
+          name,
+          moved: emailMoved ? targetUser : undefined,
+          previousEmail,
+          previousGeneration,
+        },
+      );
 
-    return ApiResponse.success(
-      mapToAdminUserDto(targetUser),
-      'User updated successfully',
-    );
+      this.logger.log(`User ${id} updated by ${actorId}`);
+      return ApiResponse.success(
+        mapToAdminUserDto(saved),
+        'User updated successfully',
+      );
+    } catch (error) {
+      rethrowOrUnavailable(error);
+    }
   }
 
   /**
@@ -106,9 +119,7 @@ export class AdminUsersService {
     return ApiResponse.success({ message: 'Confirmation email sent' });
   }
 
-  /**
-   * Activate or deactivate an account.
-   */
+  /** Activate or deactivate an account. */
   async updateUserStatus(
     id: string,
     dto: UpdateUserStatusDto,
@@ -118,7 +129,10 @@ export class AdminUsersService {
   > {
     const { isActive } = dto;
     const userId = new Types.ObjectId(id);
-    await this.accessService.loadActiveUser(id);
+    // Only a deactivation needs the target to be active beforehand.
+    if (!isActive) {
+      await this.accessService.loadActiveUser(id);
+    }
 
     this.accessService.assertNotSelf(
       id,
@@ -136,6 +150,8 @@ export class AdminUsersService {
             session,
             id,
             actorId,
+            undefined,
+            { includeDeleted: isActive },
           );
 
           current.isDeleted = !isActive;

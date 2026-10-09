@@ -22,6 +22,10 @@ export class MailCounter {
   @Prop({ required: true })
   windowStartedAt!: Date;
 
+  /** The end of the window. A deleted counter counts like a rolled-over one. */
+  @Prop({ required: true, index: { expireAfterSeconds: 0 } })
+  expiresAt!: Date;
+
   createdAt!: Date;
   updatedAt!: Date;
 }

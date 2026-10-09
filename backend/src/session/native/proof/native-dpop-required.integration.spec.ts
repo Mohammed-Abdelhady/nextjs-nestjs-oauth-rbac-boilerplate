@@ -109,7 +109,7 @@ describe('native DPoP required mode', () => {
       signNativeDpopProof({ claims: { jti: 'required-exchange-bound' } }),
     );
     expect(accepted.status).toBe(200);
-    expect(accepted.body.token_type).toBe('DPoP');
+    expect(accepted.body.token_type).toBe('Bearer');
   });
 
   it('refuses unbound refresh without spending the token or ending its family', async () => {

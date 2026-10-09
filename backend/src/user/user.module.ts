@@ -1,3 +1,4 @@
+import { CommonModule } from '../common/common.module';
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserProfileController } from './user-profile.controller';
@@ -21,6 +22,7 @@ import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
+    CommonModule,
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Session.name, schema: SessionSchema },

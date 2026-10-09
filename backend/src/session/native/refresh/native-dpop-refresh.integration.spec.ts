@@ -159,7 +159,7 @@ describe('native DPoP bound refresh', () => {
     const session = await ctx.harness.sessions.findById(old.sessionId).orFail();
 
     expect(response.status).toBe(200);
-    expect(response.body.token_type).toBe('DPoP');
+    expect(response.body.token_type).toBe('Bearer');
     expect(old.generation).toBe(1);
     expect(issued.map((credential) => credential.generation)).toEqual([2, 2]);
     expect(issued.map((credential) => credential.proofKeyThumbprint)).toEqual([
@@ -253,7 +253,7 @@ describe('native DPoP bound refresh', () => {
       }),
     );
     expect(accepted.status).toBe(200);
-    expect(accepted.body.token_type).toBe('DPoP');
+    expect(accepted.body.token_type).toBe('Bearer');
   });
 
   it('allows the bound app to rotate after a refresh-token thief has no key', async () => {
@@ -271,7 +271,7 @@ describe('native DPoP bound refresh', () => {
     );
 
     expect(accepted.status).toBe(200);
-    expect(accepted.body.token_type).toBe('DPoP');
+    expect(accepted.body.token_type).toBe('Bearer');
   });
 
   it('uses the session thumbprint when a bound credential has no thumbprint field', async () => {
@@ -294,7 +294,7 @@ describe('native DPoP bound refresh', () => {
       .exec();
 
     expect(response.status).toBe(200);
-    expect(response.body.token_type).toBe('DPoP');
+    expect(response.body.token_type).toBe('Bearer');
     expect(newRefresh.proofKeyThumbprint).toBe(THUMBPRINT_A);
     expect(newRefresh.purpose).toBe(CREDENTIAL_PURPOSE.NATIVE_REFRESH);
   });

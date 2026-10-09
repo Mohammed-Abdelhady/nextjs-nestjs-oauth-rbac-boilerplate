@@ -6,6 +6,7 @@ import { RoleHierarchyService } from '../../../role/services/role-hierarchy.serv
 import { AppException } from '../../../common/exceptions/app.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import {
+  ADMIN_LEVEL,
   canManageLevel,
   canModifyLevel,
   isValidRoleAssignment,
@@ -142,6 +143,7 @@ export class AdminUserAccessService {
     targetRole: string,
     session: ClientSession,
     message = 'Cannot modify user with higher or equal role',
+    requireAdmin = false,
   ): Promise<void> {
     const actor = await this.userModel
       .findById(actorId)
@@ -163,6 +165,13 @@ export class AdminUserAccessService {
       targetRole,
       session,
     );
+    if (requireAdmin && actorLevel < ADMIN_LEVEL) {
+      throw new AppException(
+        ErrorCode.EMAIL_CHANGE_NOT_ALLOWED,
+        'Only admins can change the email address of another account',
+        HttpStatus.FORBIDDEN,
+      );
+    }
 
     if (!canModifyLevel(actorLevel, targetLevel)) {
       throw new AppException(

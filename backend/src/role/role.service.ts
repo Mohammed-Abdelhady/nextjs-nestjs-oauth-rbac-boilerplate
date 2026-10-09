@@ -13,10 +13,8 @@ import {
 } from './dto/role-response.dto';
 import { UserRole } from '../user/enums/user-role.enum';
 import { WILDCARD_PERMISSION } from '../common/constants/permissions';
-import { CUSTOM_ROLE_LEVEL } from '../common/utils/role-hierarchy';
 import {
   assertValidPermissions,
-  dedupePermissions,
   generateSlug,
   mapRoleToResponseDto,
 } from './utils/role.util';
@@ -38,7 +36,7 @@ export class RoleService {
   /**
    * Create a new role with validation
    */
-  async create(dto: CreateRoleDto): Promise<RoleResponseDto> {
+  async create(dto: CreateRoleDto, actorId: string): Promise<RoleResponseDto> {
     const slug = generateSlug(dto.name);
 
     const existing = await this.roleModel.findOne({ slug: { $eq: slug } });
@@ -52,17 +50,7 @@ export class RoleService {
 
     assertValidPermissions(dto.permissions);
 
-    const role = new this.roleModel({
-      name: dto.name,
-      slug,
-      description: dto.description,
-      isSystemRole: false,
-      isProtected: false,
-      level: CUSTOM_ROLE_LEVEL,
-      permissions: dedupePermissions(dto.permissions),
-    });
-
-    await role.save();
+    const role = await this.roleEdit.create(dto, slug, actorId);
 
     return this.mapToResponseDto(role);
   }

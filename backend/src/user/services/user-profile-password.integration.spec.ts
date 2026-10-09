@@ -12,6 +12,7 @@ import {
 import { Role, RoleSchema } from '../../role/schemas/role.schema';
 import { SessionService } from '../../auth/services/sessions/session.service';
 import { User } from '../schemas/user.schema';
+import { Clock } from '../../common/services/clock';
 import { UserProfileService } from './user-profile.service';
 import { hashToken } from '../../session/utils/hashing/token-hash';
 import { startMemoryReplSet } from '../../../test/utils/memory-replset';
@@ -42,6 +43,7 @@ describe('password change keeps the calling session (plan S1)', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserProfileService,
+        { provide: Clock, useValue: harness.clock },
         { provide: getModelToken(User.name), useValue: harness.users },
         {
           provide: getModelToken(Role.name),

@@ -65,7 +65,10 @@ describe('a reused slug stops an older holder sweep', () => {
       const settled = Promise.allSettled([edit]);
       try {
         await gate.reached();
-        await h.roles.create({ name: 'Content Editor', permissions: [] });
+        await h.roles.create(
+          { name: 'Content Editor', permissions: [] },
+          fixture.roleActorId,
+        );
         await fixture.assign(target._id.toString());
       } finally {
         gate.release();

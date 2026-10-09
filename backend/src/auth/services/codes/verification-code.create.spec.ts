@@ -27,6 +27,7 @@ import {
 } from '../../constants/registration';
 import { rejectionOf } from '../../../../test/utils/rejection';
 import { FrozenClock, TEST_NOW } from '../../../../test/utils/frozen-clock';
+import { seedMailCounter } from '../../../../test/utils/mail-counter-seed';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
@@ -175,11 +176,10 @@ describe('VerificationCodeService pending registration', () => {
   it('refuses to mail once the address is over its cap and keeps the old code', async () => {
     const email = 'capped@example.test';
     await seed({ email, hashedCode: 'still-valid-code' });
-    await counters.create({
+    await seedMailCounter(counters, {
       email,
       purpose: MAIL_COUNTER_PURPOSE.SIGNUP,
       mailedCodes: MAILED_CODE_LIMIT_PER_ADDRESS,
-      windowStartedAt: TEST_NOW,
     });
 
     const result = await service.createOrUpdatePendingRegistration(
@@ -194,7 +194,7 @@ describe('VerificationCodeService pending registration', () => {
 
   it('resets the cap when the window has rolled over', async () => {
     const email = 'window@example.test';
-    await counters.create({
+    await seedMailCounter(counters, {
       email,
       purpose: MAIL_COUNTER_PURPOSE.SIGNUP,
       mailedCodes: MAILED_CODE_LIMIT_PER_ADDRESS,

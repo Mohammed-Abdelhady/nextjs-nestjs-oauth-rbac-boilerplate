@@ -134,7 +134,7 @@ describe('native DPoP authorization-code exchange', () => {
       .exec();
 
     expect(bound.status).toBe(200);
-    expect(bound.body.token_type).toBe('DPoP');
+    expect(bound.body.token_type).toBe('Bearer');
     expect(session?.proofKeyThumbprint).toBe(THUMBPRINT_A);
     expect(
       credentials.map((credential) => credential.proofKeyThumbprint),
@@ -171,7 +171,7 @@ describe('native DPoP authorization-code exchange', () => {
     });
 
     expect(accepted.status).toBe(200);
-    expect(accepted.body.token_type).toBe('DPoP');
+    expect(accepted.body.token_type).toBe('Bearer');
     expect(
       await ctx.securityEvents.countDocuments({ action: DPOP_REFUSAL_ACTION }),
     ).toBe(1);
@@ -228,7 +228,7 @@ describe('native DPoP authorization-code exchange', () => {
 
     const accepted = await exchangeCode(ctx, approved, signNativeDpopProof());
     expect(accepted.status).toBe(200);
-    expect(accepted.body.token_type).toBe('DPoP');
+    expect(accepted.body.token_type).toBe('Bearer');
 
     const consumedReplay = await exchangeCode(
       ctx,
@@ -338,7 +338,7 @@ describe('native DPoP authorization-code exchange', () => {
     const winner = responses.find((response) => response.status === 200);
     const loser = responses.find((response) => response.status !== 200);
 
-    expect(winner?.body.token_type).toBe('DPoP');
+    expect(winner?.body.token_type).toBe('Bearer');
     expect(loser?.status).toBe(400);
     expect(loser?.body).toEqual({
       error: OAUTH_ERROR.INVALID_DPOP_PROOF,

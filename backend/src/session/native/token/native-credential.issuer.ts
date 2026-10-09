@@ -11,6 +11,7 @@ import {
   AUTH_SCHEMA_VERSION,
   DEVICE_NAME_MAX_LENGTH,
   NATIVE_ACCESS_LIFETIME_MS,
+  NATIVE_ACCESS_TOKEN_TYPE,
   NATIVE_INITIAL_IDLE_MS,
   USER_AGENT_MAX_LENGTH,
 } from '../../constants/session-policy';
@@ -155,7 +156,7 @@ export class NativeCredentialIssuer {
       refreshToken,
       expiresIn: Math.floor((accessExpiresAt.getTime() - now.getTime()) / 1000),
       scope: pending.requestedScopes.join(' '),
-      tokenType: proofKeyThumbprint ? 'DPoP' : 'Bearer',
+      tokenType: NATIVE_ACCESS_TOKEN_TYPE,
     };
   }
 
@@ -166,8 +167,8 @@ export class NativeCredentialIssuer {
     now: Date,
     action: string,
   ): Promise<void> {
-    await this.sessions
-      .updateOne(
+    const session = await this.sessions
+      .findOneAndUpdate(
         { _id: sessionId },
         {
           $set: {
@@ -177,6 +178,7 @@ export class NativeCredentialIssuer {
           },
         },
       )
+      .select({ user: 1, clientId: 1 })
       .session(db)
       .exec();
     await this.credentials
@@ -188,6 +190,8 @@ export class NativeCredentialIssuer {
       .exec();
     await this.events.record(
       {
+        targetUserId: session?.user.toString(),
+        clientId: session?.clientId,
         sessionId: sessionId.toString(),
         action,
       },

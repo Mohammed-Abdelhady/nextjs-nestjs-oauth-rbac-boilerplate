@@ -60,7 +60,7 @@ describe('native DPoP spent-token expiry', () => {
       .findById(presented.sessionId)
       .orFail();
 
-    expect(result.tokenType).toBe('DPoP');
+    expect(result.tokenType).toBe('Bearer');
     expect(credentials.map((credential) => credential.generation)).toEqual([
       2, 2,
     ]);

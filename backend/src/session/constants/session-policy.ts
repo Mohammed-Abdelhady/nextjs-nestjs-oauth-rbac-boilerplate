@@ -24,6 +24,8 @@ export const MAX_ADMIN_SESSIONS_PER_USER = 5;
 export const AUTHORIZATION_CODE_LIFETIME_MS = 60 * 1000;
 export const PENDING_AUTH_LIFETIME_MS = 5 * 60 * 1000;
 
+/** Access tokens are bearer credentials, device-bound session or not. */
+export const NATIVE_ACCESS_TOKEN_TYPE = 'Bearer';
 export const NATIVE_DPOP_PROOF_HEADER = 'DPoP';
 export const NATIVE_DPOP_NONCE_HEADER = 'DPoP-Nonce';
 export const NATIVE_DPOP_TOKEN_PATH = '/api/oauth/token';

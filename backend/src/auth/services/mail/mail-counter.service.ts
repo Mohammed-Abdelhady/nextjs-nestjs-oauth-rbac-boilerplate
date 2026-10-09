@@ -73,6 +73,12 @@ export class MailCounterService {
               windowStartedAt: {
                 $cond: [windowRolledOver, now, '$windowStartedAt'],
               },
+              expiresAt: {
+                $add: [
+                  { $cond: [windowRolledOver, now, '$windowStartedAt'] },
+                  this.windowMs,
+                ],
+              },
             },
           },
         ],
@@ -96,6 +102,7 @@ export class MailCounterService {
           purpose,
           mailedCodes: 1,
           windowStartedAt: now,
+          expiresAt: new Date(now.getTime() + this.windowMs),
         });
         return true;
       } catch (error) {

@@ -73,7 +73,7 @@ describe('native DPoP lost-answer retry', () => {
       clientId: NATIVE_CLIENT_ID,
     });
 
-    expect(replacement).toMatchObject({ ok: true, tokenType: 'DPoP' });
+    expect(replacement).toMatchObject({ ok: true, tokenType: 'Bearer' });
     expect(replacementPair.map((row) => row.generation)).toEqual([2, 2]);
     expect(replacementPair.map((row) => row.proofKeyThumbprint)).toEqual([
       THUMBPRINT_A,
@@ -111,7 +111,7 @@ describe('native DPoP lost-answer retry', () => {
         replacement.refreshToken,
         proof(replacement.refreshToken, 'replacement-works'),
       ),
-    ).toMatchObject({ ok: true, tokenType: 'DPoP' });
+    ).toMatchObject({ ok: true, tokenType: 'Bearer' });
   });
 
   it('allows a retry one millisecond inside the retry window', async () => {
@@ -137,7 +137,7 @@ describe('native DPoP lost-answer retry', () => {
     if (!result.ok) {
       throw new Error('retry inside the window did not return a pair');
     }
-    expect(result.tokenType).toBe('DPoP');
+    expect(result.tokenType).toBe('Bearer');
     expect(
       (await pairCredentials(ctx, result)).map((row) => row.generation),
     ).toEqual([2, 2]);

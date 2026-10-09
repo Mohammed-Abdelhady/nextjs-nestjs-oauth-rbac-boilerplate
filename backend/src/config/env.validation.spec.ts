@@ -225,6 +225,7 @@ describe('validateEnvironment', () => {
       ...baseEnv,
       AUTH_NATIVE_ENABLED: 'true',
       AUTH_NATIVE_DPOP_NONCE_SECRET: NATIVE_DPOP_NONCE_SECRET,
+      API_URL: 'https://api.example.test',
     });
 
     expect(result.AUTH_NATIVE_ENABLED).toBe(true);
