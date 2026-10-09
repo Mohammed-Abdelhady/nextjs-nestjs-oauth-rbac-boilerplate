@@ -1,11 +1,13 @@
 # AI Assistant Files
 .kilocode
 .claude
+.hyperflow/
 AGENTS.md
 CLAUDE.md
 
 # Dependencies
 node_modules/
+package-lock.json
 
 # Build outputs
 dist/
@@ -14,9 +16,10 @@ build/
 out/
 
 # Scaffolding CLI build inputs, produced by
-# npm run build -w packages/create-nest-next-auth
+# pnpm --filter create-nest-next-auth run build
 packages/create-nest-next-auth/template/
 packages/create-nest-next-auth/template.manifest.json
+packages/create-nest-next-auth/template.identity.json
 
 # Environment files
 .env
@@ -34,6 +37,9 @@ blob-report/
 .auth/
 .mongodb-binaries/
 mongodb-memory-server/
+
+# Local MongoDB replica set data (created by the local start steps)
+mongodb-data/
 
 # Logs
 *.log
@@ -56,3 +62,8 @@ Thumbs.db
 
 # But allow docs/ directory for project documentation
 !docs/
+
+# Native projects and caches Expo generates for the mobile shell
+mobile/expo/ios/
+mobile/expo/android/
+mobile/expo/.expo/

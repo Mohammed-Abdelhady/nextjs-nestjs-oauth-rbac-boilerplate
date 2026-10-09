@@ -8,7 +8,7 @@ import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
  */
 @Schema({ timestamps: true })
 export class TwoFactorChallenge {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
   user!: Types.ObjectId;
 
   /** sha256 of the nonce inside the cookie, hex encoded. */

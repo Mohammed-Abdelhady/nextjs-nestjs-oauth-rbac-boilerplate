@@ -8,10 +8,12 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { PrivateCacheInterceptor } from './common/interceptors/private-cache.interceptor';
 import { RequestLoggingInterceptor } from './common/interceptors/request-logging.interceptor';
 import { HealthModule } from './health/health.module';
 import { UserModule } from './user/user.module';
 import { SessionModule } from './session/session.module';
+import { NativeOAuthModule } from './session/native/oauth/native-oauth.module';
 import { AuthModule } from './auth/auth.module';
 import { AuthMethodsController } from './auth/auth-methods.controller';
 import { MagicLinkModule } from './auth/magic-link/magic-link.module'; // feature:magic-link
@@ -39,6 +41,38 @@ import configuration from './config/configuration';
 import { validateEnvironment } from './config/env.validation';
 import { Connection } from 'mongoose';
 
+export const MONGOOSE_CONNECTION_OPTIONS = {
+  w: 'majority' as const,
+  retryWrites: true,
+  readPreference: 'primary' as const,
+};
+
+export function buildMongooseOptions(configService: ConfigService): {
+  uri: string | undefined;
+  w: 'majority';
+  retryWrites: boolean;
+  readPreference: 'primary';
+  connectionFactory: (connection: Connection) => Connection;
+} {
+  return {
+    uri: configService.get<string>('MONGO_URI'),
+    ...MONGOOSE_CONNECTION_OPTIONS,
+    connectionFactory: (connection: Connection) => {
+      const logger = new Logger('Mongoose');
+      connection.on('connected', () => {
+        logger.log('Connected to MongoDB');
+      });
+      connection.on('error', (err: Error) => {
+        logger.error(`MongoDB connection error: ${err.message}`, err.stack);
+      });
+      connection.on('disconnected', () => {
+        logger.warn('Disconnected from MongoDB');
+      });
+      return connection;
+    },
+  };
+}
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -53,22 +87,7 @@ import { Connection } from 'mongoose';
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGO_URI'),
-        connectionFactory: (connection: Connection) => {
-          const logger = new Logger('Mongoose');
-          connection.on('connected', () => {
-            logger.log('Connected to MongoDB');
-          });
-          connection.on('error', (err: Error) => {
-            logger.error(`MongoDB connection error: ${err.message}`, err.stack);
-          });
-          connection.on('disconnected', () => {
-            logger.warn('Disconnected from MongoDB');
-          });
-          return connection;
-        },
-      }),
+      useFactory: buildMongooseOptions,
       inject: [ConfigService],
     }),
     ThrottlerModule.forRootAsync({
@@ -88,6 +107,7 @@ import { Connection } from 'mongoose';
     DatabaseModule,
     UserModule,
     SessionModule,
+    NativeOAuthModule,
     RoleModule,
     AuthModule,
     // feature:oauth-core:start
@@ -127,6 +147,10 @@ import { Connection } from 'mongoose';
     {
       provide: APP_INTERCEPTOR,
       useClass: RequestLoggingInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: PrivateCacheInterceptor,
     },
   ],
 })

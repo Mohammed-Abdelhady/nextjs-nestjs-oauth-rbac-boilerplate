@@ -1,0 +1,50 @@
+{
+  "name": "@app/core",
+  "version": "0.1.0",
+  "description": "Platform-neutral rules and types shared by the web and mobile clients",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./errors": "./src/errors.ts",
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "errors": [
+        "./src/errors.ts"
+      ]
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "zod": "^3.25.76"
+  },
+  "peerDependenciesMeta": {
+    "zod": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-prettier": "^5.5.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.70.1",
+    "vitest": "^5.0.2",
+    "zod": "^3.25.76"
+  },
+  "engines": {
+    "node": ">=22.12.0 <23",
+    "pnpm": "12.6.0"
+  }
+}

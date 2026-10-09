@@ -1,5 +1,22 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
+import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
+
+@Schema({ _id: false })
+export class PendingRoleSweep {
+  @Prop({ type: MongooseSchema.Types.ObjectId, required: true })
+  roleId!: Types.ObjectId;
+
+  @Prop({ required: true })
+  previousSlug!: string;
+
+  @Prop({ required: true })
+  actorId!: string;
+
+  @Prop()
+  sweepId?: string;
+}
+
+const PendingRoleSweepSchema = SchemaFactory.createForClass(PendingRoleSweep);
 
 /**
  * Role schema for dynamic role management system.
@@ -10,7 +27,7 @@ export class Role {
   @Prop({ required: true, trim: true })
   name!: string;
 
-  @Prop({ required: true, unique: true, lowercase: true, trim: true })
+  @Prop({ required: true, lowercase: true, trim: true })
   slug!: string;
 
   @Prop({ trim: true })
@@ -33,6 +50,9 @@ export class Role {
   @Prop({ type: [String], default: [] })
   permissions!: string[];
 
+  @Prop({ type: [PendingRoleSweepSchema], default: [] })
+  pendingHolderSweeps!: PendingRoleSweep[];
+
   // Timestamp fields (automatically managed by Mongoose with timestamps: true)
   createdAt!: Date;
   updatedAt!: Date;
@@ -44,7 +64,7 @@ export const RoleSchema: MongooseSchema<Role> =
   SchemaFactory.createForClass(Role);
 
 // Indexes for performance
-RoleSchema.index({ slug: 1 }, { unique: true });
+RoleSchema.index({ slug: 1 }, { unique: true, name: 'slug_1' });
 RoleSchema.index({ isSystemRole: 1 });
 RoleSchema.index({ createdAt: -1 });
 

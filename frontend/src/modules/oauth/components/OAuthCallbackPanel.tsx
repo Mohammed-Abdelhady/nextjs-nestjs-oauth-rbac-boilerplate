@@ -1,11 +1,13 @@
 'use client';
 
+import { Description, Heading } from '@/components/design-system';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useRouter } from '@/i18n/navigation';
 import { authApi } from '@/modules/auth/store/authApi';
+import { translatableErrorCode } from '@/modules/auth/utils/errorCodeMessage';
 import { useAppDispatch } from '@/store/hooks';
 import { useGetEnabledProvidersQuery } from '../api';
 import { OAUTH_DEFAULT_ERROR_CODE } from '../constants';
@@ -53,7 +55,9 @@ export function OAuthCallbackPanel({
     dispatch(authApi.endpoints.getCurrentUser.initiate(undefined, { forceRefetch: true }))
       .unwrap()
       .then(() => router.replace(redirect))
-      .catch(() => setFailureCode(OAUTH_DEFAULT_ERROR_CODE));
+      .catch((error: unknown) =>
+        setFailureCode(translatableErrorCode(error, OAUTH_DEFAULT_ERROR_CODE)),
+      );
   }, [dispatch, redirect, router, status]);
 
   if (failureCode === null) {
@@ -61,8 +65,12 @@ export function OAuthCallbackPanel({
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <div className="text-center" data-testid="oauth-callback-pending">
           <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" aria-hidden="true" />
-          <h1 className="mt-4 text-2xl font-semibold text-foreground">{t('title')}</h1>
-          <p className="mt-2 text-muted-foreground">{t('pending')}</p>
+          <Heading level={1} variant="display" className="mt-4">
+            {t('title')}
+          </Heading>
+          <Description variant="lead" className="mt-2">
+            {t('pending')}
+          </Description>
         </div>
       </div>
     );
@@ -79,8 +87,12 @@ export function OAuthCallbackPanel({
           <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
         </div>
 
-        <h1 className="mb-2 text-2xl font-semibold text-foreground">{t('errorTitle')}</h1>
-        <p className="mb-8 text-muted-foreground">{message}</p>
+        <Heading level={1} variant="display" className="mb-2">
+          {t('errorTitle')}
+        </Heading>
+        <Description variant="lead" className="mb-8">
+          {message}
+        </Description>
 
         <Button asChild className="w-full sm:w-auto" data-testid="oauth-back-to-sign-in">
           <Link href="/auth/login">{t('backToSignIn')}</Link>

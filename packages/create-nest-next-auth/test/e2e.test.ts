@@ -1,91 +1,33 @@
-import { execFileSync, spawnSync } from 'node:child_process';
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
-import { tmpdir } from 'node:os';
-import { dirname, extname, join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { MARKER_EXTENSIONS, SKIPPED_DIRS } from '../src/constants/index.js';
-
-const PACKAGE_DIR = fileURLToPath(new URL('..', import.meta.url));
-const BUILD_TIMEOUT = 10 * 60 * 1000;
-
-interface Packed {
-  ok: boolean;
-  reason?: string;
-  cli: string;
-  workspace: string;
-}
-
-/** Builds the package, packs it, and unpacks the tarball into a temp directory. */
-function buildAndPack(): Packed {
-  const workspace = mkdtempSync(join(tmpdir(), 'cna-e2e-'));
-  const packed: Packed = { ok: false, cli: '', workspace };
-
-  try {
-    execFileSync('npm', ['run', 'build'], {
-      cwd: PACKAGE_DIR,
-      timeout: BUILD_TIMEOUT,
-      stdio: 'pipe',
-    });
-    const output = execFileSync('npm', ['pack', '--pack-destination', workspace], {
-      cwd: PACKAGE_DIR,
-      timeout: BUILD_TIMEOUT,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-      // Pack writes to the npm cache. Keep it in the workspace so the test does
-      // not depend on write access to the developer's ~/.npm.
-      env: { ...process.env, npm_config_cache: join(workspace, 'npm-cache') },
-    });
-    const tarball = output.trim().split('\n').pop() ?? '';
-    execFileSync('tar', ['-xzf', join(workspace, tarball), '-C', workspace], { stdio: 'pipe' });
-
-    packed.cli = join(workspace, 'package', 'dist', 'index.js');
-    packed.ok = existsSync(packed.cli);
-    if (!packed.ok) packed.reason = 'the tarball has no dist/index.js';
-  } catch (error) {
-    packed.reason = error instanceof Error ? error.message.split('\n')[0] : String(error);
-  }
-
-  if (!packed.ok) rmSync(workspace, { recursive: true, force: true });
-  return packed;
-}
-
-const MARKER_COMMENT = /(\/\/|\{\/\*)\s*feature:[a-z0-9-]/;
-
-/** Generated source files that still carry a marker comment. */
-function sourceFilesWithMarkers(root: string, prefix = ''): string[] {
-  const found: string[] = [];
-
-  for (const entry of readdirSync(join(root, prefix), { withFileTypes: true })) {
-    const relative = prefix === '' ? entry.name : `${prefix}/${entry.name}`;
-    if (entry.isDirectory()) {
-      if (SKIPPED_DIRS.has(entry.name)) continue;
-      found.push(...sourceFilesWithMarkers(root, relative));
-      continue;
-    }
-    if (!(MARKER_EXTENSIONS as readonly string[]).includes(extname(entry.name))) continue;
-    const content = readFileSync(join(root, relative), 'utf8');
-    if (MARKER_COMMENT.test(content)) found.push(relative);
-  }
-
-  return found;
-}
-
-function scaffold(packed: Packed, name: string, features?: string): ReturnType<typeof spawnSync> {
-  const target = join(packed.workspace, name);
-  const args = [packed.cli, target, '--yes', '--no-install', '--no-git'];
-  if (features !== undefined) args.push('--features', features);
-  return spawnSync(process.execPath, args, { encoding: 'utf8', timeout: BUILD_TIMEOUT });
-}
+import {
+  ANSWERS_FILE_NAME,
+  SHA256_HEX_PATTERN,
+  TEMPLATE_IDENTITY_FILE,
+} from '../src/constants/index.js';
+import {
+  BUILD_TIMEOUT,
+  buildAndPack,
+  type Packed,
+  scaffold,
+  sourceFilesWithMarkers,
+} from './packed-cli.js';
+import { installerDocCases } from './installer-docs.js';
+import { packageManagerCases } from './packed-package-manager.js';
+import { rulesLevelCases } from './packed-rules-levels.js';
+import { checkGeneratedHookHistory } from './generated-hook-history.js';
+import { checkGeneratedGuardrails } from './generated-guardrails.js';
+import { checkGeneratedRules } from './generated-rules.js';
+import { checkGeneratedCi } from './generated-ci.js';
+import {
+  DEFAULT_SELECTION_MUST_EXIST,
+  DEFAULT_SELECTION_MUST_NOT_EXIST,
+} from './plain-run-fixture.js';
+import { expectPlannedMobileWorkspaceIsPruned } from './mobile-workspace-assertions.js';
+import { assertWorkspaceEdgesResolve } from './workspace-assertions.js';
 
 let packed: Packed;
 
@@ -99,72 +41,33 @@ afterAll(() => {
 });
 
 describe('the packed CLI', () => {
-  it('excludes runtime artifacts and prohibited names before copying template files', () => {
-    const fixture = mkdtempSync(join(tmpdir(), 'cna-template-exclusions-'));
-    const script = join(fixture, 'packages/create-nest-next-auth/scripts/sync-template.mjs');
-    const artifacts = [
-      'output/playwright/sentinel.txt',
-      'backend/test-results/sentinel.txt',
-      'frontend/playwright-report/sentinel.txt',
-      'blob-report/sentinel.txt',
-      'frontend/.auth/sentinel.json',
-      '.mongodb-binaries/sentinel.txt',
-      'mongodb-memory-server/sentinel.txt',
-      '.env.synthetic',
-      'backend/.env.extra.example',
-    ];
-    const kept = [
-      'README.md',
-      'frontend/e2e/fixtures/source.ts',
-      '.env.docker.example',
-      'backend/.env.example',
-      'frontend/.env.example',
-    ];
-    try {
-      mkdirSync(dirname(script), { recursive: true });
-      copyFileSync(join(PACKAGE_DIR, 'scripts/sync-template.mjs'), script);
-      for (const path of [...artifacts, ...kept]) {
-        mkdirSync(dirname(join(fixture, path)), { recursive: true });
-        writeFileSync(join(fixture, path), 'synthetic sentinel\n');
-      }
-      writeFileSync(join(fixture, 'template.manifest.json'), '{"features":{}}');
-      execFileSync(process.execPath, [script], { timeout: 10_000, stdio: 'pipe' });
-      const template = join(fixture, 'packages/create-nest-next-auth/template');
-      for (const path of artifacts) expect(existsSync(join(template, path)), path).toBe(false);
-      for (const path of kept) expect(existsSync(join(template, path)), path).toBe(true);
+  packageManagerCases(() => packed);
+  rulesLevelCases(() => packed);
+  it('writes rules from project data and omits pruned feature references', async () => {
+    await checkGeneratedRules(packed);
+  });
 
-      // Certificate and credential names are strings only; no such file is created or opened.
-      const prohibited = [
-        'fixture.pem',
-        'fixture.key',
-        'fixture.crt',
-        '.ssh',
-        '.aws',
-        '.kube',
-        'ssl',
-        '.config/gcloud',
-      ];
-      const output = execFileSync(
-        process.execPath,
-        [
-          '--input-type=module',
-          '--eval',
-          `
-        import { pathToFileURL } from 'node:url';
-        const { isExcluded } = await import(pathToFileURL(process.argv[2]).href);
-        const paths = JSON.parse(process.argv[3]);
-        console.log(JSON.stringify(paths.map(path => isExcluded(path, path.split('/').pop(), !/[.](pem|key|crt)$/.test(path)))));
-      `,
-          process.execPath,
-          script,
-          JSON.stringify(prohibited),
-        ],
-        { encoding: 'utf8', timeout: 10_000 },
-      );
-      expect(JSON.parse(output)).toEqual(prohibited.map(() => true));
-    } finally {
-      rmSync(fixture, { recursive: true, force: true });
-    }
+  installerDocCases(() => packed);
+  it.each(['standard', 'minimal'])('ships only runnable CI gates for %s', (preset) =>
+    checkGeneratedCi(packed, preset),
+  );
+  it('refuses a pre-hook local violation inherited by a clean generated branch', () => {
+    checkGeneratedHookHistory(packed);
+  });
+  it('pushes the same inherited violation at standard, where only the gates run', () => {
+    checkGeneratedHookHistory(packed, 'standard');
+  });
+
+  it('scans a default Git project cleanly', () => {
+    checkGeneratedGuardrails(packed);
+  });
+
+  it('keeps planned mobile targets out of generated projects', async () => {
+    const project = join(packed.workspace, 'web-only');
+    const result = scaffold(packed, 'web-only', 'email-password');
+
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+    await expectPlannedMobileWorkspaceIsPruned(project, join(packed.workspace, 'package'));
   });
 
   it('keeps every default provider and takes the markers off', () => {
@@ -182,11 +85,18 @@ describe('the packed CLI', () => {
     expect(appModule).not.toContain('feature:');
   });
 
+  it('carries the renamed pnpm lockfile in the real packed artifact', () => {
+    expect(existsSync(join(packed.workspace, 'package/template/_pnpm-lock.yaml'))).toBe(true);
+  });
+
   it('restores the file names npm strips from a tarball', () => {
-    const project = join(packed.workspace, 'full');
+    const result = scaffold(packed, 'restored-names');
+    const project = join(packed.workspace, 'restored-names');
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
     expect(existsSync(join(project, '.gitignore'))).toBe(true);
-    expect(existsSync(join(project, 'package-lock.json'))).toBe(true);
+    expect(existsSync(join(project, 'pnpm-lock.yaml'))).toBe(true);
     expect(existsSync(join(project, '_gitignore'))).toBe(false);
+    expect(readFileSync(join(project, '.gitignore'), 'utf8')).toContain('mongodb-data/');
   });
 
   it.each(['email-password', 'email-password,google'])(
@@ -200,14 +110,14 @@ describe('the packed CLI', () => {
         'frontend/e2e',
         'frontend/playwright.config.ts',
         'frontend/playwright.frontend.config.ts',
-        'backend/test/utils/browser-server.ts',
-        'backend/test/utils/local-oauth.ts',
+        'backend/test/utils/browser/browser-server.ts',
+        'backend/test/utils/oauth/local-oauth.ts',
       ])
         expect(existsSync(join(project, path)), path).toBe(false);
       for (const path of [
         'backend/test/utils/e2e-app.ts',
         'backend/test/jest-e2e.json',
-        'backend/test/app.e2e-spec.ts',
+        'backend/test/app/app.e2e-spec.ts',
         'frontend/vitest.config.ts',
         'frontend/src/modules/users/api/usersApi.test.ts',
       ])
@@ -223,8 +133,8 @@ describe('the packed CLI', () => {
         scripts: Record<string, string>;
       };
       expect(backend.scripts['test:e2e']).toContain('test/jest-e2e.json');
-      expect(readFileSync(join(project, 'frontend/README.md'), 'utf8')).toContain(
-        'original source repository only',
+      expect(readFileSync(join(project, 'frontend/README.md'), 'utf8')).not.toContain(
+        'README.maintainer.md',
       );
       if (!features.includes('google'))
         expect(readFileSync(join(project, 'backend/test/utils/e2e-app.ts'), 'utf8')).not.toContain(
@@ -233,10 +143,43 @@ describe('the packed CLI', () => {
     },
   );
 
+  it('keeps documented package scripts valid when Arabic is off', () => {
+    const project = join(packed.workspace, 'arabic-off-inventory');
+    const result = scaffold(packed, 'arabic-off-inventory', undefined, {
+      flags: ['--locales', 'en'],
+    });
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+    assertWorkspaceEdgesResolve(project);
+    const frontendReadme = readFileSync(join(project, 'frontend/README.md'), 'utf8');
+    expect(frontendReadme).not.toContain('README.maintainer.md');
+    expect(existsSync(join(project, 'frontend/README.maintainer.md'))).toBe(false);
+
+    const inventory = spawnSync(
+      process.execPath,
+      [fileURLToPath(new URL('../../../scripts/check-package-manager.mjs', import.meta.url))],
+      { cwd: project, encoding: 'utf8' },
+    );
+    expect({
+      status: inventory.status,
+      stdout: inventory.stdout,
+      stderr: inventory.stderr,
+    }).toEqual({
+      status: 0,
+      stdout: 'Package-manager inventory: 0 legacy references, 0 missing pnpm scripts\n',
+      stderr: '',
+    });
+  });
+
   it.each(['full', 'test-scope-email-password'])(
     'keeps root README relative links usable for %s',
     (name) => {
-      const project = join(packed.workspace, name);
+      const result = scaffold(
+        packed,
+        `readme-links-${name}`,
+        name === 'full' ? undefined : 'email-password',
+      );
+      expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+      const project = join(packed.workspace, `readme-links-${name}`);
       const readme = readFileSync(join(project, 'README.md'), 'utf8');
       for (const match of readme.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
         const target = match[1].split('#')[0];
@@ -254,10 +197,24 @@ describe('the packed CLI', () => {
   });
 
   it('names the generated root package after the directory', () => {
+    const result = scaffold(packed, 'named-project');
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
     const manifest: unknown = JSON.parse(
-      readFileSync(join(packed.workspace, 'full', 'package.json'), 'utf8'),
+      readFileSync(join(packed.workspace, 'named-project', 'package.json'), 'utf8'),
     );
-    expect((manifest as { name?: string }).name).toBe('full');
+    expect((manifest as { name?: string }).name).toBe('named-project');
+  });
+
+  it('prints the version from its own package.json', () => {
+    const result = spawnSync(process.execPath, [packed.cli, '--version'], {
+      encoding: 'utf8',
+      timeout: BUILD_TIMEOUT,
+    });
+    const packedPackage = JSON.parse(
+      readFileSync(join(packed.workspace, 'package', 'package.json'), 'utf8'),
+    ) as { version?: string };
+    expect(result.status).toBe(0);
+    expect(result.stdout.trim()).toBe(packedPackage.version);
   });
 
   it('drops the providers that were not selected', () => {
@@ -270,8 +227,8 @@ describe('the packed CLI', () => {
     expect(existsSync(strategy('google'))).toBe(true);
     expect(existsSync(strategy('github'))).toBe(false);
     expect(existsSync(strategy('facebook'))).toBe(false);
-    expect(existsSync(join(project, 'docs/setup-github-oauth.md'))).toBe(false);
-    expect(existsSync(join(project, 'docs/setup-google-oauth.md'))).toBe(true);
+    expect(existsSync(join(project, 'docs/setup/setup-github-oauth.md'))).toBe(false);
+    expect(existsSync(join(project, 'docs/setup/setup-google-oauth.md'))).toBe(true);
 
     const providerFixture = readFileSync(
       join(project, 'backend/test/constants/oauth-boot-env.ts'),
@@ -298,6 +255,9 @@ describe('the packed CLI', () => {
     const project = join(packed.workspace, 'passkeys-only');
     const env = readFileSync(join(project, 'backend/.env.example'), 'utf8');
     expect(env).toContain('OAUTH_STATE_SECRET');
+    expect(env).toContain('AUTH_NATIVE_ENABLED=false');
+    expect(env).toContain('AUTH_NATIVE_DPOP_REQUIRED=false');
+    expect(env).toContain('AUTH_NATIVE_DPOP_NONCE_SECRET=');
     expect(env).toContain('AUTH_FEATURES=passkeys');
     const schema = readFileSync(join(project, 'backend/src/config/env.oauth.schema.ts'), 'utf8');
     expect(schema).toContain('@MinLength');
@@ -305,9 +265,64 @@ describe('the packed CLI', () => {
   });
 
   it('leaves no feature marker anywhere in the tree', () => {
-    const project = join(packed.workspace, 'pruned');
+    const result = scaffold(packed, 'marker-free', 'email-password,google');
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+    const project = join(packed.workspace, 'marker-free');
     const marked = sourceFilesWithMarkers(project);
 
     expect(marked).toEqual([]);
+  });
+
+  it('matches the default selection contract and rejects usage errors', () => {
+    const result = scaffold(packed, 'plain-run');
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+    const project = join(packed.workspace, 'plain-run');
+    for (const path of DEFAULT_SELECTION_MUST_EXIST) {
+      expect(existsSync(join(project, path)), path).toBe(true);
+    }
+    for (const path of DEFAULT_SELECTION_MUST_NOT_EXIST) {
+      expect(existsSync(join(project, path)), path).toBe(false);
+    }
+    // The packed answers file records the identity the packed build computed.
+    const answers = JSON.parse(readFileSync(join(project, ANSWERS_FILE_NAME), 'utf8')) as {
+      template?: { sha256?: unknown };
+    };
+    expect(String(answers.template?.sha256)).toMatch(SHA256_HEX_PATTERN);
+    const packedIdentity = JSON.parse(
+      readFileSync(join(packed.workspace, 'package', TEMPLATE_IDENTITY_FILE), 'utf8'),
+    ) as { sha256?: unknown };
+    expect(answers.template?.sha256).toBe(packedIdentity.sha256);
+    const root = JSON.parse(readFileSync(join(project, 'package.json'), 'utf8')) as {
+      name?: string;
+    };
+    expect(root.name).toBe('plain-run');
+    expect(readFileSync(join(project, 'backend/.env.example'), 'utf8')).toContain(
+      'AUTH_FEATURES=oauth-core,email-password,google,github,facebook',
+    );
+    expect(readFileSync(join(project, 'backend/.env.example'), 'utf8')).toContain(
+      'AUTH_NATIVE_DPOP_NONCE_SECRET=',
+    );
+    expect(readFileSync(join(project, 'backend/.env.example'), 'utf8')).toContain(
+      'AUTH_NATIVE_DPOP_REQUIRED=false',
+    );
+    expect(readFileSync(join(project, 'backend/src/app.module.ts'), 'utf8')).toContain(
+      'GoogleOAuthStrategy',
+    );
+    expect(
+      readFileSync(join(project, 'frontend/src/modules/users/api/usersApi.ts'), 'utf8'),
+    ).toContain('usersApi');
+    const run = (args: string[]): ReturnType<typeof spawnSync> =>
+      spawnSync(process.execPath, [packed.cli, ...args], {
+        encoding: 'utf8',
+        timeout: BUILD_TIMEOUT,
+      });
+    const common = ['--yes', '--no-install', '--no-git'];
+    expect(run([join(packed.workspace, 'bad-flag'), ...common, '--targets']).status).toBe(2);
+
+    const target = join(packed.workspace, 'unknown-feature');
+    const unknown = run([target, ...common, '--features', 'google,nope']);
+    expect(unknown.status).toBe(2);
+    expect(`${unknown.stdout}${unknown.stderr}`).toContain('nope');
+    expect(existsSync(target)).toBe(false);
   });
 });

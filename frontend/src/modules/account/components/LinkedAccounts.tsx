@@ -1,5 +1,6 @@
 'use client';
 
+import { Heading } from '@/components/design-system';
 import { useTranslations } from 'next-intl';
 import { AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,7 +60,9 @@ export function LinkedAccounts() {
       <CardContent className="space-y-6">
         {linkedProviders.length > 0 && (
           <div className="space-y-4">
-            <h3 className="text-sm font-medium">{t('linkedAccountsLabel')}</h3>
+            <Heading level={3} variant="subsectionTitle">
+              {t('linkedAccountsLabel')}
+            </Heading>
             <div className="space-y-3">
               {linkedProviders.map((providerId) => (
                 <LinkedAccountCard
@@ -84,7 +87,9 @@ export function LinkedAccounts() {
 
         {availableProviders.length > 0 && (
           <div className="space-y-4">
-            <h3 className="text-sm font-medium">{t('availableProvidersLabel')}</h3>
+            <Heading level={3} variant="subsectionTitle">
+              {t('availableProvidersLabel')}
+            </Heading>
             <div className="flex items-center gap-2 flex-wrap">
               {availableProviders.map((provider) => (
                 <LinkProviderButton key={provider.id} provider={provider} />

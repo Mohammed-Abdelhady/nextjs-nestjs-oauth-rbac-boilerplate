@@ -2,7 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from './decorators/public.decorator';
 import { AuthFeature } from './enums/auth-feature.enum';
-import { AuthFeaturesService } from './services/auth-features.service';
+import { AuthFeaturesService } from './services/features/auth-features.service';
 import { AuthMethodsResponseDto } from './dto/auth-methods-response.dto';
 import { OAuthRegistryService } from './oauth/oauth-registry.service'; // feature:oauth-core
 import { ApiResponse } from '../common/dto/api-response.dto';

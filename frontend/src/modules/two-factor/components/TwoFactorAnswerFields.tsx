@@ -5,6 +5,8 @@ import { FormInput } from '@/components/forms';
 import { Button } from '@/components/ui/button';
 import { CodeField } from './CodeField';
 import type { AnswerFormData } from '../utils/answerSchema';
+import { RECOVERY_CODE_FONT_SIZE } from '@/lib/config/form-styles';
+import { cn } from '@/lib/utils';
 
 interface TwoFactorAnswerFieldsProps {
   useRecoveryCode: boolean;
@@ -33,7 +35,7 @@ export function TwoFactorAnswerFields({
           autoComplete="one-time-code"
           disabled={isBusy}
           autoFocus
-          className="text-center text-lg uppercase tracking-widest"
+          className={cn('text-center uppercase tracking-widest', RECOVERY_CODE_FONT_SIZE)}
           data-testid="two-factor-recovery-code-input"
         />
       ) : (

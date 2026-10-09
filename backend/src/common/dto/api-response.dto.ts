@@ -59,7 +59,7 @@ export class ErrorDetails {
 
   @ApiProperty({
     description: 'Optional additional context (e.g., field errors, retry info)',
-    example: { remainingAttempts: 3 },
+    example: { retryAfter: 60 },
     required: false,
     type: Object,
     additionalProperties: true,
@@ -139,9 +139,7 @@ export const CommonErrorResponses = {
           code: 'VALIDATION_ERROR',
           message: 'Validation failed',
           details: {
-            errors: [
-              { field: 'email', messages: ['email must be a valid email'] },
-            ],
+            fields: { email: ['email must be a valid email'] },
           },
         },
       },

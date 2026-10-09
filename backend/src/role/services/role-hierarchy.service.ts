@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { ClientSession, Model } from 'mongoose';
 import { Role, RoleDocument } from '../schemas/role.schema';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
@@ -26,8 +26,8 @@ export class RoleHierarchyService {
    * @param slug - Role slug to resolve
    * @returns The stored level, or 0 when the slug has no role document
    */
-  async getLevel(slug: string): Promise<number> {
-    const role = await this.findLevel(slug);
+  async getLevel(slug: string, session?: ClientSession): Promise<number> {
+    const role = await this.findLevel(slug, session);
     return role ? resolveRoleLevel(role) : UNKNOWN_ROLE_LEVEL;
   }
 
@@ -69,11 +69,16 @@ export class RoleHierarchyService {
       .map((role) => role.slug);
   }
 
-  private async findLevel(slug: string): Promise<RoleLevelProjection | null> {
-    return this.roleModel
+  private async findLevel(
+    slug: string,
+    session?: ClientSession,
+  ): Promise<RoleLevelProjection | null> {
+    const query = this.roleModel
       .findOne({ slug: { $eq: slug } })
-      .select('slug level')
-      .lean<RoleLevelProjection | null>()
-      .exec();
+      .select('slug level');
+    if (session) {
+      query.session(session);
+    }
+    return query.lean<RoleLevelProjection | null>().exec();
   }
 }

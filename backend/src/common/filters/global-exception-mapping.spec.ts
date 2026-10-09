@@ -1,12 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GlobalExceptionFilter } from './global-exception.filter';
 import { ErrorCode } from '../enums/error-code.enum';
+import { UnknownTransactionOutcomeError } from '../exceptions/unknown-transaction-outcome.error';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
 import { ArgumentsHost } from '@nestjs/common';
 import { RequestWithId } from '../interfaces/request-with-id.interface';
 import { Error as MongooseError } from 'mongoose';
 import { MongoServerError } from 'mongodb';
+import {
+  createArgumentsHostMock,
+  createRequestMock,
+} from '../testing/test-doubles.harness-spec';
 
 describe('GlobalExceptionFilter Mapping', () => {
   let filter: GlobalExceptionFilter;
@@ -25,7 +30,7 @@ describe('GlobalExceptionFilter Mapping', () => {
       json: jest.fn().mockReturnThis(),
     };
 
-    mockRequest = {} as RequestWithId;
+    mockRequest = createRequestMock({});
   });
 
   afterEach(() => {
@@ -33,13 +38,32 @@ describe('GlobalExceptionFilter Mapping', () => {
   });
 
   function createMockHost(): ArgumentsHost {
-    return {
+    return createArgumentsHostMock({
       switchToHttp: jest.fn().mockReturnValue({
         getResponse: () => mockResponse,
         getRequest: () => mockRequest,
       }),
-    } as unknown as ArgumentsHost;
+    });
   }
+
+  it('maps an unhandled unknown commit to the retryable outcome code', () => {
+    filter.catch(
+      new UnknownTransactionOutcomeError(new Error('commit answer lost')),
+      createMockHost(),
+    );
+
+    expect(mockResponse.status).toHaveBeenCalledWith(
+      HttpStatus.SERVICE_UNAVAILABLE,
+    );
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        error: expect.objectContaining({
+          code: ErrorCode.TRANSACTION_OUTCOME_UNKNOWN,
+        }),
+      }),
+    );
+  });
 
   describe('Mongoose CastError handling (D-07)', () => {
     it('maps CastError to 400 with INVALID_INPUT', () => {

@@ -4,11 +4,13 @@ import { Reflector } from '@nestjs/core';
 import { getModelToken } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 import { AuthGuard } from './auth.guard';
-import { SessionService } from '../services/session.service';
-import { SessionCookieService } from '../services/session-cookie.service';
+import { SessionService } from '../services/sessions/session.service';
+import { SessionCookieService } from '../services/sessions/session-cookie.service';
 import { Public } from '../decorators/public.decorator';
 import { Role } from '../../role/schemas/role.schema';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import { NativeAccessService } from '../../session/native/access/native-access.service';
+import { createExecutionContextMock } from '../../common/testing/test-doubles.harness-spec';
 
 class GuardedRoutes {
   @Public()
@@ -24,6 +26,10 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
   };
   let sessionCookieService: {
     read: jest.Mock;
+    clear: jest.Mock;
+  };
+  let nativeAccess: {
+    validate: jest.Mock;
   };
   let roleModel: {
     findOne: jest.Mock;
@@ -32,21 +38,28 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
   const createMockContext = (
     cookies: Record<string, string> = {},
     handler: () => void = GuardedRoutes.prototype.closedRoute,
-  ): { context: ExecutionContext; request: Record<string, unknown> } => {
+  ): {
+    context: ExecutionContext;
+    request: Record<string, unknown>;
+    response: Record<string, unknown>;
+  } => {
     const request = {
       cookies,
+      headers: {},
       user: undefined,
       session: undefined,
     };
-    const context = {
+    const response: Record<string, unknown> = {};
+    const context = createExecutionContextMock({
       switchToHttp: () => ({
         getRequest: () => request,
+        getResponse: () => response,
       }),
       getHandler: () => handler,
       getClass: () => GuardedRoutes,
-    } as unknown as ExecutionContext;
+    });
 
-    return { context, request };
+    return { context, request, response };
   };
 
   beforeEach(async () => {
@@ -58,6 +71,11 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
       read: jest.fn(
         (req: { cookies?: Record<string, string> }) => req.cookies?.sid,
       ),
+      clear: jest.fn(),
+    };
+
+    nativeAccess = {
+      validate: jest.fn(),
     };
 
     roleModel = {
@@ -73,6 +91,7 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
         AuthGuard,
         { provide: SessionService, useValue: sessionService },
         { provide: SessionCookieService, useValue: sessionCookieService },
+        { provide: NativeAccessService, useValue: nativeAccess },
         { provide: getModelToken(Role.name), useValue: roleModel },
         Reflector,
       ],
@@ -104,8 +123,10 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
     expect(sessionCookieService.read).toHaveBeenCalledWith(request);
   });
 
-  it('should throw SESSION_INVALID when validateSession returns null', async () => {
-    const { context, request } = createMockContext({ sid: 'invalid-token' });
+  it('should clear the stale cookie when validateSession returns null', async () => {
+    const { context, request, response } = createMockContext({
+      sid: 'invalid-token',
+    });
     sessionService.validateSession.mockResolvedValue(null);
 
     await expect(guard.canActivate(context)).rejects.toMatchObject({
@@ -117,12 +138,27 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
     expect(sessionService.validateSession).toHaveBeenCalledWith(
       'invalid-token',
     );
+    expect(sessionCookieService.clear).toHaveBeenCalledWith(response);
   });
 
   it('should throw SESSION_INVALID when populated user is missing', async () => {
     const { context } = createMockContext({ sid: 'valid-token' });
     sessionService.validateSession.mockResolvedValue({
       user: null,
+    });
+
+    await expect(guard.canActivate(context)).rejects.toMatchObject({
+      code: ErrorCode.SESSION_INVALID,
+      status: 401,
+    });
+  });
+
+  // Deliberate: a session read that did not populate its user carries only
+  // the id. The guard must refuse it rather than read fields off the id.
+  it('deliberately refuses an unpopulated session user with SESSION_INVALID', async () => {
+    const { context } = createMockContext({ sid: 'valid-token' });
+    sessionService.validateSession.mockResolvedValue({
+      user: new Types.ObjectId(),
     });
 
     await expect(guard.canActivate(context)).rejects.toMatchObject({
@@ -164,5 +200,87 @@ describe('AuthGuard (X-13, D-29, S-01, S-21)', () => {
 
     const allowed = await guard.canActivate(context);
     expect(allowed).toBe(true);
+  });
+
+  it('accepts a native access token when no session cookie is present', async () => {
+    const { context, request } = createMockContext({});
+    request.headers = { authorization: 'Bearer access-token' };
+    nativeAccess.validate.mockResolvedValue({
+      user: {
+        _id: new Types.ObjectId('507f1f77bcf86cd799439011'),
+        email: 'active@example.com',
+        name: 'Active User',
+        role: 'user',
+        permissions: [],
+        isVerified: true,
+        isDeleted: false,
+      },
+    });
+
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+    expect(sessionService.validateSession).not.toHaveBeenCalled();
+    expect(nativeAccess.validate).toHaveBeenCalledWith('access-token');
+  });
+
+  it('rejects a bearer token that is not a live access credential', async () => {
+    const { context, request } = createMockContext({});
+    request.headers = { authorization: 'Bearer refresh-token' };
+    nativeAccess.validate.mockResolvedValue(null);
+
+    await expect(guard.canActivate(context)).rejects.toMatchObject({
+      code: ErrorCode.SESSION_INVALID,
+      status: 401,
+    });
+    expect(request.user).toBeUndefined();
+  });
+
+  it('authenticates the bearer user when a cookie for another user is also sent', async () => {
+    const { context, request } = createMockContext({ sid: 'cookie-token' });
+    request.headers = { authorization: 'Bearer access-token' };
+    const bearerUserId = new Types.ObjectId('507f1f77bcf86cd799439012');
+    nativeAccess.validate.mockResolvedValue({
+      user: {
+        _id: bearerUserId,
+        email: 'bearer@example.com',
+        name: 'Bearer User',
+        role: 'user',
+        permissions: [],
+        isVerified: true,
+        isDeleted: false,
+      },
+    });
+
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+    expect(nativeAccess.validate).toHaveBeenCalledWith('access-token');
+    expect(sessionService.validateSession).not.toHaveBeenCalled();
+    expect(request.user).toMatchObject({
+      id: '507f1f77bcf86cd799439012',
+      email: 'bearer@example.com',
+    });
+  });
+
+  it('fails on an invalid bearer without falling back to the cookie', async () => {
+    const { context, request } = createMockContext({ sid: 'cookie-token' });
+    request.headers = { authorization: 'Bearer invalid-token' };
+    nativeAccess.validate.mockResolvedValue(null);
+    sessionService.validateSession.mockResolvedValue({
+      user: {
+        _id: new Types.ObjectId('507f1f77bcf86cd799439011'),
+        email: 'cookie@example.com',
+        name: 'Cookie User',
+        role: 'user',
+        permissions: [],
+        isVerified: true,
+        isDeleted: false,
+      },
+    });
+
+    await expect(guard.canActivate(context)).rejects.toMatchObject({
+      code: ErrorCode.SESSION_INVALID,
+      status: 401,
+    });
+    expect(sessionService.validateSession).not.toHaveBeenCalled();
+    expect(sessionCookieService.clear).not.toHaveBeenCalled();
+    expect(request.user).toBeUndefined();
   });
 });

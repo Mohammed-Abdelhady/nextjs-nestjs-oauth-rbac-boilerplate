@@ -1,0 +1,84 @@
+{
+  "install": {
+    "name": "Install dependencies",
+    "command": "pnpm",
+    "args": ["install", "--frozen-lockfile"],
+    "env": {
+      "MONGOMS_DISABLE_POSTINSTALL": "1"
+    }
+  },
+  "gates": [
+    {
+      "name": "Full-tree hard bans",
+      "group": "quality",
+      "command": "node",
+      "args": ["scripts/check-hard-bans.mjs", "--all"]
+    },
+    {
+      "name": "Package-manager inventory",
+      "group": "quality",
+      "command": "node",
+      "args": ["scripts/check-package-manager.mjs"]
+    },
+    {
+      "name": "Workspace dependency check",
+      "group": "quality",
+      "command": "node",
+      "args": ["scripts/check-workspace-dependencies.mjs"]
+    },
+    {
+      "name": "Lint",
+      "group": "quality",
+      "command": "pnpm",
+      "args": ["run", "lint"]
+    },
+    {
+      "name": "Typecheck",
+      "group": "quality",
+      "command": "pnpm",
+      "args": ["run", "typecheck"]
+    },
+    {
+      "name": "Unit and config tests",
+      "group": "quality",
+      "command": "pnpm",
+      "args": ["test"]
+    },
+    {
+      "name": "Complete config regressions",
+      "group": "quality",
+      "command": "pnpm",
+      "args": ["run", "test:config:all"],
+      "repositoryOnly": true
+    },
+    {
+      "name": "Build",
+      "group": "quality",
+      "command": "pnpm",
+      "args": ["run", "build"]
+    },
+    {
+      "name": "Backend end-to-end",
+      "group": "quality",
+      "command": "pnpm",
+      "args": ["--filter", "backend", "run", "test:e2e"]
+    },
+    {
+      "name": "Installer combinations",
+      "group": "installer",
+      "command": "pnpm",
+      "args": ["--filter", "create-nest-next-auth", "run", "test:combinations"],
+      "repositoryOnly": true
+    }
+  ],
+  "environment": {
+    "MONGOMS_DOWNLOAD_DIR": ".mongodb-binaries",
+    "MONGOMS_VERSION": "8.2.6",
+    "MONGOMS_DISABLE_POSTINSTALL": "1"
+  },
+  "mongoCache": {
+    "lockfile": "pnpm-lock.yaml",
+    "packageName": "mongodb-memory-server",
+    "keyPrefix": "mongodb-memory-server-"
+  }
+}

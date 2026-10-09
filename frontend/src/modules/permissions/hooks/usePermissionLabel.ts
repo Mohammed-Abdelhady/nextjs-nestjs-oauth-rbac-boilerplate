@@ -2,8 +2,7 @@
 
 import { useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { PERMISSION_ACTIONS, PERMISSION_SCOPES } from '../constants/permissions';
-import { parsePermission } from '../utils/permissionUtils';
+import { PERMISSION_ACTIONS, PERMISSION_SCOPES, parsePermission } from '@app/core';
 
 /** Turns a permission string such as `users:read:all` into a label in the active locale. */
 export type PermissionLabelFormatter = (permission: string) => string;

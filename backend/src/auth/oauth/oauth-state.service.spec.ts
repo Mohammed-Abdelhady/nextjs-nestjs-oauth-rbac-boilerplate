@@ -6,6 +6,10 @@ import { OAuthStateService, OAuthStatePayload } from './oauth-state.service';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { OAUTH_STATE_TTL_MS } from './oauth.constants';
+import {
+  createRequestMock,
+  createResponseMock,
+} from '../../common/testing/test-doubles.harness-spec';
 
 const SECRET = 'unit-test-oauth-state-secret-value-32';
 
@@ -16,10 +20,10 @@ function service(nodeEnv = 'test'): OAuthStateService {
     NODE_ENV: nodeEnv,
   };
 
-  return new OAuthStateService({
-    get: <T>(key: string, fallback?: T): T | undefined =>
-      (config[key] as T | undefined) ?? fallback,
-  } as unknown as ConfigService);
+  // A real ConfigService reads internal config values before validated env
+  // and process.env, so the values seeded here always win on every reachable
+  // path.
+  return new OAuthStateService(new ConfigService(config));
 }
 
 function responseSpy(): {
@@ -30,14 +34,14 @@ function responseSpy(): {
   const cookie = jest.fn();
   const clearCookie = jest.fn();
   return {
-    response: { cookie, clearCookie } as unknown as Response,
+    response: createResponseMock({ cookie, clearCookie }),
     cookie,
     clearCookie,
   };
 }
 
 function requestWith(cookies: Record<string, string>): Request {
-  return { cookies } as unknown as Request;
+  return createRequestMock({ cookies });
 }
 
 function expectStateInvalid(run: () => void): AppException {

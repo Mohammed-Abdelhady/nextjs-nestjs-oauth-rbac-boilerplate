@@ -1,0 +1,190 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { InjectModel } from '@nestjs/mongoose';
+import { ClientSession, Model } from 'mongoose';
+import {
+  PendingRegistration,
+  PendingRegistrationDocument,
+} from '../../schemas/pending-registration.schema';
+import { HashService } from '../../../common/services/hash.service';
+import { Clock } from '../../../common/services/clock';
+import { currentRequestId } from '../../../common/context/request-context';
+import { activationCodeInvalid } from '../../utils/activation-error.util';
+import { generateVerificationCode } from '../../utils/verification-code.util';
+import { PendingRegistrationStore } from './pending-registration.store';
+import { MailCounterService } from '../mail/mail-counter.service';
+import { PendingPurpose } from '../../constants/registration';
+import {
+  IssuedCode,
+  RegistrationDetails,
+  ReservedCode,
+} from '../../interfaces/pending-code.interface';
+
+/**
+ * Activation code verification: reserve an attempt, compare the code once,
+ * and consume the exact generation inside the caller's transaction. Opening
+ * and refreshing records is the pending-record store's responsibility, and the
+ * per-address mail cap is the mail counter's.
+ */
+@Injectable()
+export class VerificationCodeService {
+  private readonly logger = new Logger(VerificationCodeService.name);
+  private readonly maxAttempts: number;
+  private readonly store: PendingRegistrationStore;
+
+  constructor(
+    @InjectModel(PendingRegistration.name)
+    private readonly pendingRegistrationModel: Model<PendingRegistrationDocument>,
+    private readonly hashService: HashService,
+    configService: ConfigService,
+    private readonly clock: Clock,
+    private readonly mailCounterService: MailCounterService,
+  ) {
+    this.maxAttempts = configService.get<number>('activation.maxAttempts', 5);
+    this.store = new PendingRegistrationStore(
+      this.pendingRegistrationModel,
+      this.hashService,
+      configService,
+      clock,
+    );
+  }
+
+  /**
+   * Open or refresh the pending record for an address and purpose. Returns
+   * null when the address already had its allowance of mailed codes.
+   */
+  async createOrUpdatePendingRegistration(
+    email: string,
+    purpose: PendingPurpose,
+    details: RegistrationDetails = {},
+  ): Promise<IssuedCode | null> {
+    const underCap = await this.mailCounterService.tryRecord(email, purpose);
+    if (!underCap) {
+      await this.spendCodeHashingTime();
+      return null;
+    }
+
+    const stored = await this.store.createOrUpdate(email, purpose, details);
+    if (stored !== null) {
+      this.logger.log(
+        `Opened ${purpose} code requestId=${currentRequestId() ?? 'unknown'}`,
+      );
+    }
+    return stored;
+  }
+
+  /**
+   * Reissue the code of an existing pending record. Returns null when nothing
+   * was mailed, so every caller answers the generic reply.
+   */
+  async resendActivationCode(
+    email: string,
+    purpose: PendingPurpose,
+    details: RegistrationDetails = {},
+  ): Promise<IssuedCode | null> {
+    const underCap = await this.mailCounterService.tryRecord(email, purpose);
+    if (!underCap) {
+      await this.spendCodeHashingTime();
+      return null;
+    }
+
+    const stored = await this.store.resend(email, purpose, details);
+    if (stored !== null) {
+      this.logger.log(
+        `Resent ${purpose} code requestId=${currentRequestId() ?? 'unknown'}`,
+      );
+    }
+    return stored;
+  }
+
+  /**
+   * Reserve one attempt, then compare the code exactly once on every path.
+   * A wrong, missing, expired, exhausted or superseded code answers the one
+   * shared failure; the dummy comparison keeps the timing the same.
+   *
+   * @param email - Address the code was sent to
+   * @param code - Code the caller submitted
+   * @param purpose - Which kind of pending record the code must belong to
+   * @throws AppException ACTIVATION_CODE_INVALID for every failing state
+   */
+  async verifyCode(
+    email: string,
+    code: string,
+    purpose: PendingPurpose,
+  ): Promise<ReservedCode> {
+    const now = this.clock.now();
+    const reserved = await this.pendingRegistrationModel.findOneAndUpdate(
+      {
+        email: { $eq: email },
+        purpose,
+        expiresAt: { $gt: now },
+        attempts: { $lt: this.maxAttempts },
+      },
+      { $inc: { attempts: 1 } },
+      { new: true, select: '+hashedCode' },
+    );
+
+    if (!reserved) {
+      await this.pendingRegistrationModel.deleteOne({
+        email: { $eq: email },
+        purpose,
+        expiresAt: { $lte: now },
+      });
+      await this.hashService.spendComparison(code);
+      throw activationCodeInvalid();
+    }
+
+    const isCodeValid = await this.hashService.compare(
+      code,
+      reserved.hashedCode,
+    );
+    if (!isCodeValid) {
+      throw activationCodeInvalid();
+    }
+
+    return {
+      id: reserved._id,
+      email: reserved.email,
+      purpose,
+      hashedCode: reserved.hashedCode,
+      userId: reserved.userId,
+      addressGeneration: reserved.addressGeneration,
+    };
+  }
+
+  /**
+   * Delete exactly the generation that was compared, inside the caller's
+   * transaction. A resend or a new registration changes hashedCode, so the
+   * stale caller matches nothing and the transaction rolls back.
+   *
+   * @param reserved - The record returned by verifyCode
+   * @param session - Transaction the delete must join
+   * @returns True when this caller consumed the generation
+   */
+  async consumeCode(
+    reserved: ReservedCode,
+    session: ClientSession,
+  ): Promise<boolean> {
+    const consumed = await this.pendingRegistrationModel.findOneAndDelete(
+      {
+        _id: reserved.id,
+        purpose: reserved.purpose,
+        hashedCode: reserved.hashedCode,
+        expiresAt: { $gt: this.clock.now() },
+      },
+      { session },
+    );
+    return consumed !== null;
+  }
+
+  /**
+   * Spend the one code-hash every path through the open and resend methods
+   * costs. The store hashes the code it opens; an over-cap answer never reaches
+   * the store, so it spends the same cost here. Without it an over-cap answer
+   * is milliseconds faster than one that opens a record, which tells an address
+   * with an account from a free one.
+   */
+  private async spendCodeHashingTime(): Promise<void> {
+    await this.hashService.hash(generateVerificationCode());
+  }
+}

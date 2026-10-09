@@ -1,0 +1,5 @@
+# Prebuild output and Expo's local state
+ios/
+android/
+.expo/
+dist/

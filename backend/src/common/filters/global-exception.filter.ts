@@ -9,6 +9,8 @@ import {
 import { Response } from 'express';
 import { ThrottlerException } from '@nestjs/throttler';
 import { AppException } from '../exceptions/app.exception';
+import { isUnknownTransactionOutcome } from '../exceptions/unknown-transaction-outcome.error';
+import { ValidationFailedException } from '../exceptions/validation-failed.exception';
 import { ErrorCode } from '../enums/error-code.enum';
 import { ErrorResponse } from '../dto/api-response.dto';
 import { RequestWithId } from '../interfaces/request-with-id.interface';
@@ -16,7 +18,91 @@ import {
   isCastError,
   isMongoDuplicateKeyError,
   isDuplicateEmailError,
+  describeDriverError,
+  errorToken,
 } from '../utils/mongo-error.util';
+
+/** What a driver CastError may carry: the field, never the offending value. */
+interface CastErrorFacts {
+  path?: unknown;
+  value?: unknown;
+}
+
+/**
+ * A loggable line for a driver CastError: the field path and the value's
+ * runtime type, because the message embeds the value itself.
+ */
+function describeCastError(error: CastErrorFacts): string {
+  const valueKind = error.value === null ? 'null' : typeof error.value;
+  const pathName = errorToken(error.path);
+  return `path=${pathName} value=${valueKind}`;
+}
+
+/** The colliding key names of a duplicate-key error, never their values. */
+function describeDuplicateKeys(error: unknown): string {
+  if (typeof error !== 'object' || error === null) {
+    return 'unknown';
+  }
+  const facts = error as {
+    keyPattern?: Record<string, unknown>;
+    keyValue?: Record<string, unknown>;
+  };
+  if (facts.keyPattern) {
+    return JSON.stringify(
+      Object.keys(facts.keyPattern).map((key) => errorToken(key)),
+    );
+  }
+  if (facts.keyValue) {
+    return JSON.stringify(
+      Object.keys(facts.keyValue).map((key) => errorToken(key)),
+    );
+  }
+  return 'unknown';
+}
+
+/** Facts an unknown exception may share in its log line without its text. */
+interface UnknownExceptionFacts {
+  errors?: Record<string, { path?: unknown }>;
+}
+
+/**
+ * The loggable facts about an unknown failure: its name, its driver code
+ * when present, and which fields a Mongoose ValidationError blames. The
+ * message itself is left out, since driver messages carry raw values.
+ */
+function describeUnknownException(error: unknown): string {
+  if (typeof error !== 'object' || error === null) {
+    return `non-object ${typeof error}`;
+  }
+  const parts = [describeDriverError(error)];
+  const validationErrors = (error as UnknownExceptionFacts).errors;
+  if (
+    validationErrors &&
+    typeof validationErrors === 'object' &&
+    Object.keys(validationErrors).length > 0
+  ) {
+    parts.push(
+      `paths=${Object.keys(validationErrors)
+        .map((key) => errorToken(key))
+        .join(',')}`,
+    );
+  }
+  return parts.join(' ');
+}
+
+/** Strip the complete message before selecting stack frames. */
+function stackFrames(error: unknown): string | undefined {
+  if (!(error instanceof Error) || !error.stack) {
+    return undefined;
+  }
+  const head = error.message ? `${error.name}: ${error.message}` : error.name;
+  if (!error.stack.startsWith(head)) return undefined;
+  const frames = error.stack
+    .slice(head.length)
+    .split('\n')
+    .filter((line) => /^\s+at /.test(line));
+  return frames.length > 0 ? frames.join('\n') : undefined;
+}
 
 /**
  * Global exception filter that transforms exceptions into standardized error responses.
@@ -44,7 +130,17 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         exception.getDetails(),
       );
       this.logger.warn(
-        `AppException: ${exception.getCode()} - ${exception.message}${tag}`,
+        `AppException (${statusCode}): ${exception.getCode()}${this.describeFailedFields(exception)}${tag}`,
+      );
+    } else if (isUnknownTransactionOutcome(exception)) {
+      statusCode = HttpStatus.SERVICE_UNAVAILABLE;
+      errorResponse = ErrorResponse.error(
+        ErrorCode.TRANSACTION_OUTCOME_UNKNOWN,
+        'The transaction outcome is unknown',
+      );
+      this.logger.error(
+        `Unknown transaction outcome: ${describeDriverError(exception)}${tag}`,
+        stackFrames(exception),
       );
     } else if (exception instanceof ThrottlerException) {
       statusCode = HttpStatus.TOO_MANY_REQUESTS;
@@ -58,34 +154,23 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         'Too many requests',
         { retryAfter },
       );
-      this.logger.warn(`ThrottlerException: ${exception.message}${tag}`);
+      this.logger.warn(
+        `ThrottlerException (${statusCode}): ${ErrorCode.RATE_LIMIT_EXCEEDED}${tag}`,
+      );
     } else if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
-
-      const validationResult = this.extractValidationErrors(exception);
-      if (validationResult) {
-        errorResponse = ErrorResponse.error(
-          ErrorCode.VALIDATION_ERROR,
-          'Validation failed',
-          validationResult,
-        );
-        this.logger.warn(
-          `ValidationException: ${JSON.stringify(validationResult.fields)}${tag}`,
-        );
-      } else {
-        const code = this.mapHttpStatusToErrorCode(statusCode);
-        errorResponse = ErrorResponse.error(code, exception.message);
-        this.logger.warn(
-          `HttpException (${statusCode}): ${code} - ${exception.message}${tag}`,
-        );
-      }
+      const code = this.mapHttpStatusToErrorCode(statusCode);
+      errorResponse = ErrorResponse.error(code, exception.message);
+      // Framework messages quote the raw request body, so the line names
+      // the status and the mapped code and nothing of the payload.
+      this.logger.warn(`HttpException (${statusCode}): ${code}${tag}`);
     } else if (isCastError(exception)) {
       statusCode = HttpStatus.BAD_REQUEST;
       errorResponse = ErrorResponse.error(
         ErrorCode.INVALID_INPUT,
         exception.message || 'Invalid input',
       );
-      this.logger.warn(`CastError: ${exception.message}${tag}`);
+      this.logger.warn(`CastError: ${describeCastError(exception)}${tag}`);
     } else if (isMongoDuplicateKeyError(exception)) {
       statusCode = HttpStatus.CONFLICT;
       const isEmail = isDuplicateEmailError(exception);
@@ -97,7 +182,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         : 'Resource conflict occurred';
       errorResponse = ErrorResponse.error(code, message);
       this.logger.warn(
-        `MongoDuplicateKeyError (11000): ${code} - ${exception.message}${tag}`,
+        `MongoDuplicateKeyError: code=${exception.code} keys=${describeDuplicateKeys(exception)}${tag}`,
       );
     } else {
       statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -105,9 +190,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         ErrorCode.INTERNAL_ERROR,
         'An unexpected error occurred',
       );
+      // The name, code and paths can go to the log; a driver message embeds
+      // the offending value, and so does the first line of the stack.
       this.logger.error(
-        `Unknown exception: ${exception instanceof Error ? exception.message : String(exception)}${tag}`,
-        exception instanceof Error ? exception.stack : undefined,
+        `Unknown exception: ${describeUnknownException(exception)}${tag}`,
+        stackFrames(exception),
       );
     }
 
@@ -116,6 +203,18 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
 
     response.status(statusCode).json(errorResponse);
+  }
+
+  /**
+   * Which DTO fields a refused request failed on, for the log. Names only:
+   * messages and unknown property names can carry what the caller sent.
+   */
+  private describeFailedFields(exception: AppException): string {
+    if (!(exception instanceof ValidationFailedException)) {
+      return '';
+    }
+    const { fieldNames, omittedCount } = exception.logSummary;
+    return ` (fields: ${fieldNames.join(', ')}; omitted: ${omittedCount})`;
   }
 
   /**
@@ -131,43 +230,5 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       [HttpStatus.TOO_MANY_REQUESTS]: ErrorCode.RATE_LIMIT_EXCEEDED,
     };
     return codes[status] ?? ErrorCode.INTERNAL_ERROR;
-  }
-
-  /**
-   * Extracts validation errors from BadRequestException thrown by ValidationPipe.
-   */
-  private extractValidationErrors(
-    exception: HttpException,
-  ): { fields: Record<string, string[]> } | null {
-    const status = exception.getStatus();
-    if (status !== Number(HttpStatus.BAD_REQUEST)) {
-      return null;
-    }
-
-    const response = exception.getResponse();
-    if (typeof response !== 'object' || response === null) {
-      return null;
-    }
-
-    const responseObj = response as Record<string, unknown>;
-    const messages = responseObj.message;
-
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return null;
-    }
-
-    const fields: Record<string, string[]> = {};
-    for (const msg of messages) {
-      if (typeof msg === 'string') {
-        const fieldMatch = msg.match(/^(\w+)\s/);
-        const fieldName = fieldMatch ? fieldMatch[1] : 'general';
-        if (!fields[fieldName]) {
-          fields[fieldName] = [];
-        }
-        fields[fieldName].push(msg);
-      }
-    }
-
-    return { fields };
   }
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { Description, Heading } from '@/components/design-system';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { z } from 'zod';
@@ -8,10 +9,12 @@ import { MailCheck, Send } from 'lucide-react';
 import { useFormWithValidation } from '@/hooks/useFormWithValidation';
 import { FormInput, FormRootError, SubmitButton } from '@/components/forms';
 import { Button } from '@/components/ui/button';
-import { zodEmail } from '@/lib/validations';
-import { parseApiError } from '@/lib/apiError';
+import { zodEmail, parseApiError } from '@app/core';
 import { useCooldown } from '@/modules/auth/hooks/useCooldown';
 import { useFeatureDisabledHandler } from '@/modules/auth/hooks/useFeatureDisabled';
+import { isNativeAuthorizeContinuation } from '@/modules/auth/constants/nativeAuthorize';
+import { getRedirectPath } from '@/modules/auth/utils';
+import { translatableErrorCode } from '@/modules/auth/utils/errorCodeMessage';
 import type { AuthMethodFormProps } from '../types';
 import { useRequestMagicLinkMutation } from './magicLinkApi';
 
@@ -34,8 +37,9 @@ type MagicLinkFormData = z.infer<ReturnType<typeof createMagicLinkSchema>>;
  * The confirmation says a link is on its way whatever the backend did, which
  * matches a reply that is deliberately the same for every address.
  */
-export function MagicLinkRequestForm({ isOnlyMethod }: AuthMethodFormProps) {
+export function MagicLinkRequestForm({ isOnlyMethod, redirect }: AuthMethodFormProps) {
   const t = useTranslations('auth.magicLink');
+  const tCodes = useTranslations('errors.codes');
   const [requestMagicLink, { isLoading }] = useRequestMagicLinkMutation();
   const handleFeatureDisabled = useFeatureDisabledHandler();
   const [sentTo, setSentTo] = useState<string | null>(null);
@@ -57,8 +61,12 @@ export function MagicLinkRequestForm({ isOnlyMethod }: AuthMethodFormProps) {
 
   const send = useCallback(
     async (email: string) => {
+      // Only the native authorize continuation is worth carrying through the
+      // link, and only its validated value is sent, never the raw query string.
+      const validated = getRedirectPath(redirect, '');
+      const continuation = isNativeAuthorizeContinuation(validated) ? validated : undefined;
       try {
-        await requestMagicLink({ email }).unwrap();
+        await requestMagicLink({ email, redirect: continuation }).unwrap();
         setSentTo(email);
         startCooldown();
       } catch (err) {
@@ -66,10 +74,14 @@ export function MagicLinkRequestForm({ isOnlyMethod }: AuthMethodFormProps) {
         if (handleFeatureDisabled(err)) {
           return;
         }
-        setError('root', { type: 'manual', message: parseApiError(err).message || t('error') });
+        const code = translatableErrorCode(err, '');
+        setError('root', {
+          type: 'manual',
+          message: code ? tCodes(code) : parseApiError(err).message || t('error'),
+        });
       }
     },
-    [handleFeatureDisabled, requestMagicLink, setError, startCooldown, t],
+    [handleFeatureDisabled, redirect, requestMagicLink, setError, startCooldown, t, tCodes],
   );
 
   const onSubmit = useCallback(async (data: MagicLinkFormData) => send(data.email), [send]);
@@ -80,8 +92,10 @@ export function MagicLinkRequestForm({ isOnlyMethod }: AuthMethodFormProps) {
     return (
       <div className="mx-auto max-w-xs text-center" role="status" data-testid="magic-link-sent">
         <MailCheck className="mx-auto h-8 w-8 text-primary" aria-hidden="true" />
-        <h3 className="mt-3 text-lg font-semibold">{t('sentTitle')}</h3>
-        <p className="mt-2 text-sm text-muted-foreground">{t('sentBody', { email: sentTo })}</p>
+        <Heading level={3} variant="sectionTitle" className="mt-3">
+          {t('sentTitle')}
+        </Heading>
+        <Description className="mt-2">{t('sentBody', { email: sentTo })}</Description>
         <Button
           type="button"
           variant="ghost"

@@ -6,7 +6,7 @@ import { ApiResponse } from '../../../common/dto/api-response.dto';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { AuthFeature } from '../../enums/auth-feature.enum';
-import { AuthFeaturesService } from '../../services/auth-features.service';
+import { AuthFeaturesService } from '../../services/features/auth-features.service';
 import { Passkey, PasskeyDocument } from '../schemas/passkey.schema';
 import {
   PasskeyListResponseDto,

@@ -3,9 +3,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { Request, Response } from 'express';
 import { OAuthService } from './oauth.service';
-import { SignInService } from '../services/sign-in.service';
-import { SessionService } from '../services/session.service';
-import { SessionCookieService } from '../services/session-cookie.service';
+import { SignInService } from '../services/sessions/sign-in.service';
+import { SessionService } from '../services/sessions/session.service';
+import { SessionCookieService } from '../services/sessions/session-cookie.service';
 import { ProfileSyncService } from '../../user/services/profile-sync.service';
 import { AccountLinkingService } from '../../user/services/account-linking.service';
 import { User } from '../../user/schemas/user.schema';
@@ -25,6 +25,7 @@ function strategy(): OAuthProviderStrategy {
   return {
     id: 'google',
     displayName: 'Google',
+    envPrefix: 'GOOGLE',
     supportsPkce: true,
     usesOidc: true,
     emailAlwaysVerified: true,
@@ -33,7 +34,7 @@ function strategy(): OAuthProviderStrategy {
     getAuthorizationUrl: () => 'https://example.test',
     exchangeCode: jest.fn().mockResolvedValue({ accessToken: 'token' }),
     fetchProfile: jest.fn().mockResolvedValue(PROFILE),
-  } as unknown as OAuthProviderStrategy;
+  };
 }
 
 describe('OAuthService linking', () => {
@@ -107,6 +108,17 @@ describe('OAuthService linking', () => {
     ).rejects.toMatchObject({
       code: ErrorCode.SESSION_REQUIRED,
     });
+  });
+
+  it('refuses a link start carrying both a cookie and a bearer token', async () => {
+    await expect(
+      service.requireSessionUserId({
+        headers: { authorization: 'Bearer access-token' },
+      } as Request),
+    ).rejects.toMatchObject({
+      code: ErrorCode.MIXED_CREDENTIALS,
+    });
+    expect(sessions.validateSession).not.toHaveBeenCalled();
   });
 
   it('rejects when the session user does not match the stored link user', async () => {

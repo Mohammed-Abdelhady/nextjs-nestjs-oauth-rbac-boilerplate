@@ -1,5 +1,7 @@
 'use client';
 
+import { HEADING_ROLE_CLASSES } from '@/constants/typography';
+import { Description } from '@/components/design-system';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { CheckCircle2 } from 'lucide-react';
@@ -50,15 +52,15 @@ export function WelcomeModal({ isOpen, userName, onClose }: WelcomeModalProps) {
           </div>
 
           <div className="space-y-3">
-            <DialogTitle className="text-2xl xl:text-3xl font-extrabold text-foreground">
+            <DialogTitle className={HEADING_ROLE_CLASSES.display}>
               {t('title', { name: userName })}
             </DialogTitle>
 
-            <p className="text-base font-semibold text-muted-foreground">{t('subtitle')}</p>
+            <Description variant="lead">{t('subtitle')}</Description>
 
-            <p id="welcome-description" className="text-sm text-muted-foreground max-w-sm">
+            <Description id="welcome-description" className="max-w-sm">
               {t('message')}
-            </p>
+            </Description>
           </div>
 
           <button

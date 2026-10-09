@@ -1,8 +1,10 @@
 'use client';
 
+import { Description, Heading } from '@/components/design-system';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from '@/lib/toast';
+import { reportUnlessHandled } from '@/lib/requestFailure';
 import { Loader2, CheckCircle2, Link as LinkIcon, Unlink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,7 +20,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { OAuthProviderIcon } from '@/modules/oauth';
-import { parseApiError } from '@/lib/apiError';
 import { useUnlinkProviderMutation, useSetPrimaryProviderMutation } from '../api';
 
 interface LinkedAccountCardProps {
@@ -52,9 +53,8 @@ export function LinkedAccountCard({
       toast.success(t('unlinkSuccess', { provider: displayName }));
       onChange?.();
       setShowUnlinkDialog(false);
-    } catch (error: unknown) {
-      const parsed = parseApiError(error);
-      toast.error(parsed.message || t('unlinkError', { provider: displayName }));
+    } catch (error) {
+      reportUnlessHandled(error);
     }
   };
 
@@ -63,9 +63,8 @@ export function LinkedAccountCard({
       await setPrimaryProvider({ provider: providerId }).unwrap();
       toast.success(t('setPrimarySuccess', { provider: displayName }));
       onChange?.();
-    } catch (error: unknown) {
-      const parsed = parseApiError(error);
-      toast.error(parsed.message || t('setPrimaryError', { provider: displayName }));
+    } catch (error) {
+      reportUnlessHandled(error);
     }
   };
 
@@ -85,7 +84,9 @@ export function LinkedAccountCard({
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-medium">{displayName}</h3>
+                  <Heading level={3} variant="subsectionTitle">
+                    {displayName}
+                  </Heading>
                   {isPrimary && (
                     <Badge variant="default" className="text-xs">
                       <CheckCircle2 className="me-1 h-3 w-3" />
@@ -93,9 +94,9 @@ export function LinkedAccountCard({
                     </Badge>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <Description>
                   {isPrimary ? t('primaryDescription') : t('linkedDescription')}
-                </p>
+                </Description>
               </div>
             </div>
 

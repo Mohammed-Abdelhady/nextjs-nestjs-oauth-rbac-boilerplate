@@ -1,20 +1,14 @@
-// Constants
-export * from './constants/permissions';
-
-// Utils
-export * from './utils/permissionUtils';
-
 // Hooks
 export * from './hooks/usePermission';
 
 // Components
-export * from './components/PermissionGuard';
-export * from './components/RoutePermissionGuard';
-export * from './components/PermissionSelector';
-export * from './components/CreateRoleDialog';
-export * from './components/EditRoleDialog';
-export * from './components/DeleteRoleDialog';
-export * from './components/UserPermissionsDialog';
+export * from './components/guards/PermissionGuard';
+export * from './components/guards/RoutePermissionGuard';
+export * from './components/selector/PermissionSelector';
+export * from './components/roles/CreateRoleDialog';
+export * from './components/roles/EditRoleDialog';
+export * from './components/roles/DeleteRoleDialog';
+export * from './components/users/UserPermissionsDialog';
 
 // API
 export * from './api/rolesApi';

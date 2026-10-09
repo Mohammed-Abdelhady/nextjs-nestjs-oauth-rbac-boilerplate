@@ -1,7 +1,7 @@
 import { magicLinkMethod } from '@/modules/auth/methods/magic-link'; // feature:magic-link
 import { passwordMethod } from '@/modules/auth/methods/password'; // feature:email-password
 import { passkeysMethod } from '@/modules/passkeys'; // feature:passkeys
-import type { AuthMethods } from '../types/auth.types';
+import type { AuthMethods } from '@app/sdk';
 import type { AuthMethodEntry } from './types';
 
 /**

@@ -1,4 +1,5 @@
 #!/bin/sh
 set -e
-npx --no -- commitlint --edit "$1"
+sh scripts/lib/require-package-manager.sh pnpm
+pnpm exec commitlint --edit "$1"
 node scripts/check-hard-bans.mjs --commit-msg "$1"

@@ -7,14 +7,13 @@ jest.mock('./utils/totp.util', () => ({
 }));
 
 import { HttpStatus } from '@nestjs/common';
-import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { AppException } from '../../common/exceptions/app.exception';
 import { TwoFactorLoginService } from './two-factor-login.service';
 import { VerifyTwoFactorDto } from './dto/verify-two-factor.dto';
 import { TwoFactorChallengeService } from './services/two-factor-challenge.service';
 import { TwoFactorVerificationService } from './services/two-factor-verification.service';
-import { SignInService } from '../services/sign-in.service';
+import { SignInService } from '../services/sessions/sign-in.service';
 import { checkTotpDelta } from './utils/totp.util';
 import {
   createCrypto,
@@ -24,14 +23,22 @@ import {
   USER_ID,
 } from './two-factor.harness-spec';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import {
+  createModelMock,
+  partialMock,
+} from '../../common/testing/test-doubles.harness-spec';
+import {
+  createRequestMock,
+  createResponseMock,
+} from '../../common/testing/test-doubles.harness-spec';
 
 const delta = checkTotpDelta as jest.Mock;
 
 const CHALLENGE_ID = new Types.ObjectId('507f1f77bcf86cd799439012');
-const MOCK_REQUEST = { cookies: {} } as unknown as Request;
-const MOCK_RESPONSE = {
+const MOCK_REQUEST = createRequestMock({ cookies: {} });
+const MOCK_RESPONSE = createResponseMock({
   req: { headers: { 'user-agent': 'test-agent' }, ip: '127.0.0.1' },
-} as unknown as Response;
+});
 
 const USER_SUMMARY = {
   id: USER_ID.toString(),
@@ -44,9 +51,9 @@ const USER_SUMMARY = {
 };
 
 /** Stands in for the credential a feature such as passkeys would carry. */
-const CREDENTIAL = {
+const CREDENTIAL = Object.assign(new VerifyTwoFactorDto(), {
   credential: 'signed-blob',
-} as unknown as VerifyTwoFactorDto;
+});
 
 interface Harness {
   service: TwoFactorLoginService;
@@ -92,12 +99,17 @@ function createHarness(user: MockUser | null): Harness {
 
   return {
     service: new TwoFactorLoginService(
-      userModel as unknown as ConstructorParameters<
-        typeof TwoFactorLoginService
-      >[0],
-      challengeService as unknown as TwoFactorChallengeService,
-      new TwoFactorVerificationService(userModel as never, createCrypto()),
-      signInService as unknown as SignInService,
+      createModelMock<ConstructorParameters<typeof TwoFactorLoginService>[0]>(
+        userModel,
+      ),
+      partialMock<TwoFactorChallengeService>(challengeService),
+      new TwoFactorVerificationService(
+        createModelMock<
+          ConstructorParameters<typeof TwoFactorVerificationService>[0]
+        >(userModel),
+        createCrypto(),
+      ),
+      partialMock<SignInService>(signInService),
       [verifier],
     ),
     challengeService,

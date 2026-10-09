@@ -3,15 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=22.12.0",
-    "npm": ">=10.9.0"
+    "node": ">=22.12.0 <23",
+    "pnpm": "12.6.0"
   },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint:rtl": "node scripts/check-rtl.mjs",
-    "lint": "npm run lint:rtl && eslint --max-warnings 0",
+    "lint": "pnpm run lint:rtl && eslint --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css}\"",
@@ -21,6 +21,8 @@
     "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
+    "@app/core": "workspace:*",
+    "@app/sdk": "workspace:*",
     "@hookform/resolvers": "^5.9.1",
     "@radix-ui/react-alert-dialog": "^1.1.23",
     "@radix-ui/react-avatar": "^1.2.6",
@@ -50,22 +52,28 @@
     "redux-persist": "^6.0.0",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.7.0",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "@radix-ui/react-tooltip": "1.2.16"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
-    "@types/node": "^20",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^22.20.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-prettier": "^5.5.6",
+    "jsdom": "^26.1.0",
     "prettier": "^3.9.9",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^5.0.2"
+    "vitest": "^5.0.2",
+    "postcss": "8.5.28",
+    "playwright": "1.63.0"
   }
 }

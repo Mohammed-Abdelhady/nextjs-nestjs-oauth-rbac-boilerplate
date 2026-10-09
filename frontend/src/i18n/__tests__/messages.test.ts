@@ -1,17 +1,18 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import type { MessageTree } from './message-tree';
 
+// feature:locale-ar:start
 /** Every ICU plural category Arabic needs. */
 const ARABIC_PLURAL_CATEGORIES = ['zero', 'one', 'two', 'few', 'many', 'other'] as const;
+// feature:locale-ar:end
 
 /** Matches a key at the start of a line, so values that contain quotes are left alone. */
 const KEY_LINE = /^(\s*)"((?:[^"\\]|\\.)*)"(\s*):/gm;
 
 /** Separator that cannot appear in a message key, used to make duplicate keys survive JSON.parse. */
 const TAG = '@@';
-
-type MessageTree = { [key: string]: string | MessageTree };
 
 function readMessages(locale: string): string {
   return readFileSync(
@@ -52,6 +53,7 @@ function findDuplicateKeys(tree: MessageTree, prefix = ''): string[] {
   return duplicates;
 }
 
+// feature:locale-ar:start
 function flatten(tree: MessageTree, prefix = ''): Map<string, string> {
   const flat = new Map<string, string>();
 
@@ -75,18 +77,20 @@ function pluralCategoriesOf(message: string): string[] {
     new RegExp(`(^|[\\s{])${category}\\s*\\{`).test(body),
   );
 }
+// feature:locale-ar:end
 
 const english = parseWithTaggedKeys(readMessages('en'));
-const arabic = parseWithTaggedKeys(readMessages('ar'));
-const englishMessages = flatten(english);
-const arabicMessages = flatten(arabic);
+const arabic = parseWithTaggedKeys(readMessages('ar')); // feature:locale-ar
+const englishMessages = flatten(english); // feature:locale-ar
+const arabicMessages = flatten(arabic); // feature:locale-ar
 
 describe('locale message files', () => {
   it('has no duplicate keys', () => {
     expect(findDuplicateKeys(english)).toEqual([]);
-    expect(findDuplicateKeys(arabic)).toEqual([]);
+    expect(findDuplicateKeys(arabic)).toEqual([]); // feature:locale-ar
   });
 
+  // feature:locale-ar:start
   it('has the same keys in English and Arabic', () => {
     const englishOnly = [...englishMessages.keys()].filter((key) => !arabicMessages.has(key));
     const arabicOnly = [...arabicMessages.keys()].filter((key) => !englishMessages.has(key));
@@ -112,4 +116,5 @@ describe('locale message files', () => {
 
     expect(incomplete).toEqual([]);
   });
+  // feature:locale-ar:end
 });

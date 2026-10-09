@@ -1,3 +1,4 @@
+import { Description, Heading } from '@/components/design-system';
 import { UpdateProfileCard } from '@/modules/account';
 import { LinkedAccounts, ProfileSyncStatus } from '@/modules/account'; // feature:oauth-core
 import { ChangePasswordCard } from '@/modules/auth/methods/password'; // feature:email-password
@@ -37,17 +38,16 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
     <div className="container p-10">
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="text-muted-foreground">{t('description')}</p>
+          <Heading level={1} variant="pageTitle">
+            {t('title')}
+          </Heading>
+          <Description>{t('description')}</Description>
         </div>
 
         <section aria-labelledby="settings-account-group" className="space-y-4">
-          <h2
-            id="settings-account-group"
-            className="text-xs uppercase tracking-widest text-muted-foreground"
-          >
+          <Heading level={2} variant="eyebrow" id="settings-account-group">
             {t('accountGroup')}
-          </h2>
+          </Heading>
           <div className="grid gap-6 md:grid-cols-2">
             <UpdateProfileCard />
             <ChangePasswordCard /> {/* feature:email-password */}
@@ -62,12 +62,9 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
 
         {/* feature:oauth-core:start */}
         <section aria-labelledby="settings-integrations-group" className="space-y-4">
-          <h2
-            id="settings-integrations-group"
-            className="text-xs uppercase tracking-widest text-muted-foreground"
-          >
+          <Heading level={2} variant="eyebrow" id="settings-integrations-group">
             {t('integrationsGroup')}
-          </h2>
+          </Heading>
           <div className="grid gap-6 md:grid-cols-2">
             <LinkedAccounts />
             <ProfileSyncStatus />

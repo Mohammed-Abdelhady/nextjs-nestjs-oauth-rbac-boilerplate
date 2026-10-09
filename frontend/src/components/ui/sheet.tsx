@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { X } from 'lucide-react';
 
 import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
+import { DESCRIPTION_ROLE_CLASSES, HEADING_ROLE_CLASSES } from '@/constants/typography';
 import { cn } from '@/lib/utils';
 
 const Sheet = SheetPrimitive.Root;
@@ -119,7 +120,7 @@ const SheetTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SheetPrimitive.Title
     ref={ref}
-    className={cn('text-lg font-semibold text-foreground', className)}
+    className={cn(HEADING_ROLE_CLASSES.sectionTitle, className)}
     {...props}
   />
 ));
@@ -131,7 +132,7 @@ const SheetDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SheetPrimitive.Description
     ref={ref}
-    className={cn('text-sm text-muted-foreground', className)}
+    className={cn(DESCRIPTION_ROLE_CLASSES.description, className)}
     {...props}
   />
 ));

@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { hasPermission, hasAnyPermission, hasAllPermissions } from '../utils/permissionUtils';
+import { hasPermission, hasAnyPermission, hasAllPermissions } from '@app/core';
 
 /**
  * Hook to check user permissions.

@@ -1,5 +1,6 @@
 'use client';
 
+import { Description, Heading } from '@/components/design-system';
 import { useCallback, useMemo, useState } from 'react';
 import { FormProvider } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
@@ -59,7 +60,7 @@ export function TwoFactorChallengePanel({ redirect }: TwoFactorChallengePanelPro
         const response = await verify(toAnswer(data)).unwrap();
         await completeSignIn(response, redirect);
       } catch (err) {
-        handleFeatureDisabled(err, false);
+        handleFeatureDisabled(err);
         setError('root', { type: 'manual', message: tCodes(translatableErrorCode(err)) });
       }
     },
@@ -68,14 +69,18 @@ export function TwoFactorChallengePanel({ redirect }: TwoFactorChallengePanelPro
 
   return (
     <section className="mt-12 flex flex-col items-center" aria-labelledby="two-factor-heading">
-      <h1
+      <Heading
+        level={1}
+        variant="display"
         id="two-factor-heading"
-        className="text-2xl xl:text-3xl font-extrabold text-foreground"
+
         data-testid="two-factor-title"
       >
         {t('title')}
-      </h1>
-      <p className="mt-4 max-w-sm text-center text-sm text-muted-foreground">{t('description')}</p>
+      </Heading>
+      <Description variant="lead" className="mt-4 max-w-sm text-center">
+        {t('description')}
+      </Description>
 
       <FormProvider {...form}>
         <form

@@ -36,7 +36,9 @@ describe('HashService', () => {
 
   describe('hash', () => {
     it('should hash with the configured cost', async () => {
-      mockedBcrypt.hash.mockResolvedValue('hashed' as never);
+      // The mock keeps the auto-mock instance; the implementation only has to
+      // return what `await bcrypt.hash(...)` resolves to.
+      mockedBcrypt.hash.mockImplementation(() => 'hashed');
 
       const result = await service.hash('plain-text');
 
@@ -48,7 +50,7 @@ describe('HashService', () => {
     });
 
     it('should fall back to 10 rounds when the config holds no value', async () => {
-      mockedBcrypt.hash.mockResolvedValue('hashed' as never);
+      mockedBcrypt.hash.mockImplementation(() => 'hashed');
       const fallbackService = await buildService();
 
       await fallbackService.hash('plain-text');
@@ -59,14 +61,14 @@ describe('HashService', () => {
 
   describe('compare', () => {
     it('should return true when bcrypt matches', async () => {
-      mockedBcrypt.compare.mockResolvedValue(true as never);
+      mockedBcrypt.compare.mockImplementation(() => true);
 
       await expect(service.compare('plain', 'hash')).resolves.toBe(true);
       expect(mockedBcrypt.compare).toHaveBeenCalledWith('plain', 'hash');
     });
 
     it('should return false when bcrypt does not match', async () => {
-      mockedBcrypt.compare.mockResolvedValue(false as never);
+      mockedBcrypt.compare.mockImplementation(() => false);
 
       await expect(service.compare('plain', 'hash')).resolves.toBe(false);
     });

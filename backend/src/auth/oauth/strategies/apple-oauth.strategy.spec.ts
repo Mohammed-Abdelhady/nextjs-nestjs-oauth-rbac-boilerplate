@@ -1,5 +1,6 @@
 import { createLocalJWKSet, exportPKCS8, jwtVerify } from 'jose';
 import { AppleOAuthStrategy } from './apple-oauth.strategy';
+import { Logger } from '@nestjs/common';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { APPLE_CLIENT_SECRET_MAX_LIFETIME_SECONDS } from '../utils/apple-client-secret.util';
 import {
@@ -172,6 +173,9 @@ describe('AppleOAuthStrategy', () => {
     });
 
     it('fails when the token response carries no id_token', async () => {
+      const warn = jest
+        .spyOn(Logger.prototype, 'warn')
+        .mockImplementation(() => {});
       mockFetch([{ url: TOKEN_URL, body: { access_token: 'access' } }]);
 
       await expectAppException(
@@ -181,6 +185,8 @@ describe('AppleOAuthStrategy', () => {
         }),
         ErrorCode.OAUTH_CODE_INVALID,
       );
+      expect(warn.mock.calls.flat().join(' ')).toContain('reason=no_id_token');
+      warn.mockRestore();
     });
 
     it('fails when the sign-in key cannot be read', async () => {

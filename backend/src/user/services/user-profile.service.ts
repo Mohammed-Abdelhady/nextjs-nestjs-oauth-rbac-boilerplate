@@ -1,8 +1,9 @@
 import { Injectable, Logger, HttpStatus } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { ClientSession, Connection, Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from '../schemas/user.schema';
+import { UserRole } from '../enums/user-role.enum';
 import { Role, RoleDocument } from '../../role/schemas/role.schema';
 // feature:passkeys:start
 import {
@@ -10,11 +11,13 @@ import {
   PasskeyDocument,
 } from '../../auth/passkeys/schemas/passkey.schema';
 // feature:passkeys:end
-import { SessionService } from '../../auth/services/session.service';
+import { SessionService } from '../../auth/services/sessions/session.service';
+import { withMajorityTransaction } from '../../session/utils/transactions/mongo-transaction';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { UserProfileDto } from '../dto/user-profile.dto';
 import { AppException } from '../../common/exceptions/app.exception';
+import { Clock } from '../../common/services/clock';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { ApiResponse } from '../../common/dto/api-response.dto';
 import { getEffectivePermissions } from '../../auth/utils/permissions.util';
@@ -43,6 +46,8 @@ export class UserProfileService {
     private readonly passkeyModel: Model<PasskeyDocument>,
     // feature:passkeys:end
     private readonly sessionService: SessionService,
+    @InjectConnection() private readonly connection: Connection,
+    private readonly clock: Clock,
   ) {}
 
   /**
@@ -58,7 +63,7 @@ export class UserProfileService {
 
     assertActiveUser(user);
 
-    this.logger.log(`Profile retrieved for user: ${user.email}`);
+    this.logger.log(`Profile retrieved: userId=${user._id.toString()}`);
     const profileDto = await this.mapToProfileDto(user);
     return ApiResponse.success(profileDto);
   }
@@ -82,7 +87,7 @@ export class UserProfileService {
 
     await user.save();
 
-    this.logger.log(`Profile updated for user: ${user.email}`);
+    this.logger.log(`Profile updated: userId=${user._id.toString()}`);
     const profileDto = await this.mapToProfileDto(user);
     return ApiResponse.success(profileDto, 'Profile updated successfully');
   }
@@ -93,9 +98,17 @@ export class UserProfileService {
   async changePassword(
     userId: string,
     dto: ChangePasswordDto,
-    currentSessionToken: string,
+    currentSessionId: string | null,
   ): Promise<ApiResponse<{ message: string }>> {
     assertValidObjectId(userId, 'Invalid user ID format');
+
+    if (currentSessionId === null) {
+      throw new AppException(
+        ErrorCode.SESSION_INVALID,
+        'Current session is no longer active',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
 
     const user = await this.userModel
       .findById(userId)
@@ -136,16 +149,28 @@ export class UserProfileService {
       );
     }
 
-    user.password = await bcrypt.hash(dto.newPassword, PASSWORD_SALT_ROUNDS);
-    await user.save();
-
-    // Invalidate all other sessions (keep current session)
-    await this.sessionService.invalidateAllSessionsExcept(
-      new Types.ObjectId(userId),
-      currentSessionToken,
+    const hashedPassword = await bcrypt.hash(
+      dto.newPassword,
+      PASSWORD_SALT_ROUNDS,
     );
 
-    this.logger.log(`Password changed for user: ${user.email}`);
+    // The password save and the revocation of the other sessions share one
+    // transaction: a revocation failure leaves the old password in place.
+    // The document is loaded per attempt: one that already saved it has no
+    // modified paths left, so a retried attempt would store nothing.
+    await withMajorityTransaction(this.connection, async (db) => {
+      const current = await this.userModel.findById(userId).session(db).exec();
+      assertActiveUser(current);
+      current.password = hashedPassword;
+      await current.save({ session: db });
+      await this.sessionService.invalidateAllSessionsExceptSession(
+        new Types.ObjectId(userId),
+        currentSessionId,
+        db,
+      );
+    });
+
+    this.logger.log(`Password changed: userId=${user._id.toString()}`);
     return ApiResponse.success({
       message:
         'Password changed successfully. Other sessions have been logged out.',
@@ -154,23 +179,67 @@ export class UserProfileService {
 
   /**
    * Soft delete (deactivate) own account.
+   * The last active admin is refused: nobody else could restore the account.
    */
   async deactivateAccount(
     userId: string,
   ): Promise<ApiResponse<{ message: string }>> {
-    const user = await this.userModel.findById(userId).exec();
-    assertActiveUser(user);
+    // The check, the soft delete and the revocation commit or abort together.
+    await withMajorityTransaction(this.connection, async (db) => {
+      const user = await this.userModel.findById(userId).session(db).exec();
+      assertActiveUser(user);
+      if (user.role === (UserRole.ADMIN as string)) {
+        await this.assertAnotherActiveAdmin(user._id, db);
+      }
 
-    user.isDeleted = true;
-    user.deletedAt = new Date();
-    await user.save();
+      user.isDeleted = true;
+      user.deletedAt = this.clock.now();
+      await user.save({ session: db });
 
-    await this.sessionService.invalidateAllSessions(new Types.ObjectId(userId));
+      await this.sessionService.invalidateAllSessions(user._id, db);
+    });
 
-    this.logger.log(`Account deactivated for user: ${user.email}`);
+    this.logger.log(`Account deactivated: userId=${userId}`);
     return ApiResponse.success({
       message: 'Account deactivated successfully',
     });
+  }
+
+  private async assertAnotherActiveAdmin(
+    userId: Types.ObjectId,
+    db: ClientSession,
+  ): Promise<void> {
+    const others = await this.userModel
+      .countDocuments({
+        _id: { $ne: userId },
+        role: UserRole.ADMIN,
+        isDeleted: { $ne: true },
+      })
+      .session(db)
+      .exec();
+    if (others === 0) {
+      throw new AppException(
+        ErrorCode.ADMIN_CANNOT_DEACTIVATE_SELF,
+        'The last active administrator cannot deactivate their own account',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    // Two admins leaving at once each see the other in their own snapshot.
+    // Both write the admin role here, so one conflicts and counts again.
+    const fenced = await this.roleModel
+      .updateOne(
+        { slug: UserRole.ADMIN },
+        { $inc: { __v: 1 } },
+        { session: db, timestamps: false },
+      )
+      .exec();
+    if (fenced.matchedCount !== 1) {
+      throw new AppException(
+        ErrorCode.AUTHORITY_UNAVAILABLE,
+        'Administrator role is unavailable',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
   }
 
   /**

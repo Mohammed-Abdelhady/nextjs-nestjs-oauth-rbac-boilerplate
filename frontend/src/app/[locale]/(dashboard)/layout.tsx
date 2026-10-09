@@ -5,7 +5,7 @@ import { AuthGuard } from '@/components/providers/AuthGuard';
 import { MobileNavSheet } from '@/components/navigation/MobileNavSheet';
 import { SidebarBrand } from '@/components/navigation/SidebarBrand';
 import { SidebarPanel } from '@/components/navigation/SidebarPanel';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'; // feature:locale-ar
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { LogoutButton } from '@/modules/auth/components/LogoutButton';
 import { useAppSelector } from '@/store/hooks';
@@ -48,7 +48,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <span className="text-xs text-muted-foreground">({user.role})</span>
                 </div>
               )}
-              <LanguageSwitcher />
+              <LanguageSwitcher /> {/* feature:locale-ar */}
               <ThemeSwitcher />
               <LogoutButton />
             </div>

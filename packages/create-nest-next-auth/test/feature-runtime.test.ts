@@ -14,7 +14,7 @@ const FILES = [
   'backend/tsconfig.json',
   'backend/src/auth/constants/available-auth-features.ts',
   'backend/src/auth/enums/auth-feature.enum.ts',
-  'backend/src/auth/services/auth-features.service.ts',
+  'backend/src/auth/services/features/auth-features.service.ts',
   'backend/src/common/exceptions/app.exception.ts',
   'backend/src/common/enums/error-code.enum.ts',
 ];
@@ -28,7 +28,14 @@ describe('generated backend feature availability', () => {
       const project = mkdtempSync(join(root, 'selection-'));
       for (const file of FILES) {
         const source = readFileSync(join(REPO_ROOT, file), 'utf8');
-        const { content } = stripFeatureMarkers(source, file, new Set(selected), new Set(FEATURES));
+        // oauth-core is hidden and never selected here, but the error-code
+        // enum carries its markers, so it has to be a known id to strip.
+        const { content } = stripFeatureMarkers(
+          source,
+          file,
+          new Set(selected),
+          new Set([...FEATURES, 'oauth-core']),
+        );
         const destination = join(project, file);
         mkdirSync(dirname(destination), { recursive: true });
         writeFileSync(destination, content);

@@ -1,16 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getModelToken } from '@nestjs/mongoose';
+import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
+import { Clock } from '../../common/services/clock';
 import { UserProfileService } from './user-profile.service';
 import { User } from '../schemas/user.schema';
 import { UserRole } from '../enums/user-role.enum';
 import { AuthProvider } from '../enums/auth-provider.enum';
 import { Role } from '../../role/schemas/role.schema';
 import { Passkey } from '../../auth/passkeys/schemas/passkey.schema'; // feature:passkeys
-import { SessionService } from '../../auth/services/session.service';
+import { SessionService } from '../../auth/services/sessions/session.service';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+
+import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
 
 jest.mock('bcrypt');
 
@@ -18,7 +21,7 @@ describe('UserProfileService', () => {
   let service: UserProfileService;
 
   const mockUserId = new Types.ObjectId().toString();
-  const mockSessionToken = 'mock-session-token';
+  const mockSessionId = new Types.ObjectId().toString();
 
   const mockUser = {
     _id: new Types.ObjectId(mockUserId),
@@ -51,17 +54,29 @@ describe('UserProfileService', () => {
 
   const mockSessionService = {
     invalidateAllSessions: jest.fn().mockResolvedValue(1),
-    invalidateAllSessionsExcept: jest.fn().mockResolvedValue(1),
+    invalidateAllSessionsExceptSession: jest.fn().mockResolvedValue(1),
+  };
+
+  const mockConnection = {
+    startSession: jest.fn().mockResolvedValue({
+      startTransaction: jest.fn(),
+      commitTransaction: jest.fn().mockResolvedValue(undefined),
+      abortTransaction: jest.fn().mockResolvedValue(undefined),
+      endSession: jest.fn().mockResolvedValue(undefined),
+      inTransaction: jest.fn().mockReturnValue(true),
+    }),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserProfileService,
+        { provide: Clock, useValue: new FrozenClock(TEST_NOW) },
         { provide: getModelToken(User.name), useValue: mockUserModel },
         { provide: getModelToken(Role.name), useValue: mockRoleModel },
         { provide: getModelToken(Passkey.name), useValue: mockPasskeyModel }, // feature:passkeys
         { provide: SessionService, useValue: mockSessionService },
+        { provide: getConnectionToken(), useValue: mockConnection },
       ],
     }).compile();
 
@@ -166,6 +181,7 @@ describe('UserProfileService', () => {
       };
       mockUserModel.findById.mockReturnValue({
         select: jest.fn().mockReturnThis(),
+        session: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(userToUpdate),
       });
       (bcrypt.compare as jest.Mock)
@@ -175,12 +191,18 @@ describe('UserProfileService', () => {
       const result = await service.changePassword(
         mockUserId,
         { currentPassword: 'oldPassword', newPassword: 'NewPassword123' },
-        mockSessionToken,
+        mockSessionId,
       );
 
       expect(result.success).toBe(true);
       expect(userToUpdate.save).toHaveBeenCalled();
-      expect(mockSessionService.invalidateAllSessionsExcept).toHaveBeenCalled();
+      expect(
+        mockSessionService.invalidateAllSessionsExceptSession,
+      ).toHaveBeenCalledWith(
+        expect.anything(),
+        mockSessionId,
+        expect.anything(),
+      );
     });
 
     it('should throw error if current password is incorrect', async () => {
@@ -190,7 +212,7 @@ describe('UserProfileService', () => {
         service.changePassword(
           mockUserId,
           { currentPassword: 'wrongPassword', newPassword: 'NewPassword123' },
-          mockSessionToken,
+          mockSessionId,
         ),
       ).rejects.toMatchObject({ code: ErrorCode.INVALID_CURRENT_PASSWORD });
     });
@@ -204,7 +226,7 @@ describe('UserProfileService', () => {
         service.changePassword(
           mockUserId,
           { currentPassword: 'oldPassword', newPassword: 'oldPassword' },
-          mockSessionToken,
+          mockSessionId,
         ),
       ).rejects.toMatchObject({ code: ErrorCode.SAME_PASSWORD });
     });
@@ -219,9 +241,22 @@ describe('UserProfileService', () => {
         service.changePassword(
           mockUserId,
           { currentPassword: 'oldPassword', newPassword: 'NewPassword123' },
-          mockSessionToken,
+          mockSessionId,
         ),
       ).rejects.toMatchObject({ code: ErrorCode.INVALID_CURRENT_PASSWORD });
+    });
+
+    it('should refuse without a current session', async () => {
+      await expect(
+        service.changePassword(
+          mockUserId,
+          { currentPassword: 'oldPassword', newPassword: 'NewPassword123' },
+          null,
+        ),
+      ).rejects.toMatchObject({ code: ErrorCode.SESSION_INVALID });
+      expect(
+        mockSessionService.invalidateAllSessionsExceptSession,
+      ).not.toHaveBeenCalled();
     });
   });
 
@@ -232,6 +267,7 @@ describe('UserProfileService', () => {
         save: jest.fn().mockResolvedValue(true),
       };
       mockUserModel.findById.mockReturnValue({
+        session: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(userToDeactivate),
       });
 
@@ -244,6 +280,7 @@ describe('UserProfileService', () => {
 
     it('should throw error if user not found', async () => {
       mockUserModel.findById.mockReturnValue({
+        session: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(null),
       });
 

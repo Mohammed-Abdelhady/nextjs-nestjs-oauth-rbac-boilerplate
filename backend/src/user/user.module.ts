@@ -1,3 +1,4 @@
+import { CommonModule } from '../common/common.module';
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserProfileController } from './user-profile.controller';
@@ -15,13 +16,13 @@ import {
   PasskeySchema,
 } from '../auth/passkeys/schemas/passkey.schema';
 // feature:passkeys:end
-import { SessionService } from '../auth/services/session.service';
 import { AccountLinkingService } from './services/account-linking.service'; // feature:oauth-core
 import { ProfileSyncService } from './services/profile-sync.service'; // feature:oauth-core
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
+    CommonModule,
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Session.name, schema: SessionSchema },
@@ -42,7 +43,6 @@ import { AuthModule } from '../auth/auth.module';
     UserProfileService,
     UserSessionsService,
     UserPermissionsService,
-    SessionService,
     AccountLinkingService, // feature:oauth-core
     ProfileSyncService, // feature:oauth-core
   ],

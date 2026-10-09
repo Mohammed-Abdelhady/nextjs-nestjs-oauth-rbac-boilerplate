@@ -12,6 +12,7 @@ import {
   type FieldValues,
 } from 'react-hook-form';
 
+import { DESCRIPTION_ROLE_CLASSES } from '@/constants/typography';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 
@@ -131,7 +132,7 @@ const FormDescription = React.forwardRef<
     <p
       ref={ref}
       id={formDescriptionId}
-      className={cn('text-sm text-muted-foreground', className)}
+      className={cn(DESCRIPTION_ROLE_CLASSES.description, className)}
       {...props}
     />
   );

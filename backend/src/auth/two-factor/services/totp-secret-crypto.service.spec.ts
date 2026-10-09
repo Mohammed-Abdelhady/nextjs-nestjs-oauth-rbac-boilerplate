@@ -8,12 +8,11 @@ const KEY = Buffer.alloc(32, 7).toString('base64');
 const OTHER_KEY = Buffer.alloc(32, 9).toString('base64');
 
 function service(encryptionKey?: string): TotpSecretCryptoService {
-  return new TotpSecretCryptoService({
-    get: <T>(key: string): T | undefined =>
-      key === 'twoFactor.encryptionKey'
-        ? (encryptionKey as T | undefined)
-        : undefined,
-  } as unknown as ConfigService);
+  const values: Record<string, string> = {};
+  if (encryptionKey !== undefined) {
+    values['twoFactor.encryptionKey'] = encryptionKey;
+  }
+  return new TotpSecretCryptoService(new ConfigService(values));
 }
 
 function expectNotConfigured(run: () => unknown): void {

@@ -7,7 +7,7 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { TwoFactorService } from './two-factor.service';
@@ -21,6 +21,7 @@ import { CurrentUser } from '../decorators/current-user.decorator';
 import { RequiresFeature } from '../decorators/requires-feature.decorator';
 import { AuthFeature } from '../enums/auth-feature.enum';
 import { RequestWithUser } from '../guards/auth.guard';
+import { SESSION_SWAGGER_AUTH_NAME } from '../../common/constants/session';
 import { THROTTLE_TWO_FACTOR_VERIFY } from '../../common/constants/throttle';
 
 /**
@@ -45,7 +46,7 @@ export class TwoFactorController {
    */
   @Post('setup')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth('JWT-auth')
+  @ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
   @ApiOperation({
     summary: 'Start two-factor setup',
     description:
@@ -68,7 +69,7 @@ export class TwoFactorController {
    */
   @Post('confirm')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth('JWT-auth')
+  @ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
   @ApiOperation({
     summary: 'Confirm two-factor setup',
     description:
@@ -89,7 +90,7 @@ export class TwoFactorController {
    */
   @Post('disable')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth('JWT-auth')
+  @ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
   @ApiOperation({
     summary: 'Turn two-factor authentication off',
     description:
@@ -110,7 +111,7 @@ export class TwoFactorController {
    */
   @Post('recovery-codes/regenerate')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth('JWT-auth')
+  @ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
   @ApiOperation({
     summary: 'Replace the recovery codes',
     description:

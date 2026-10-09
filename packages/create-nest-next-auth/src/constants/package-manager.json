@@ -1,0 +1,7 @@
+{
+  "PACKAGE_MANAGER": "pnpm",
+  "PACKAGE_MANAGER_VERSION": "12.6.0",
+  "PNPM_WORKSPACE_FILE": "pnpm-workspace.yaml",
+  "PNPM_LOCKFILE": "pnpm-lock.yaml",
+  "PACKED_PNPM_LOCKFILE": "_pnpm-lock.yaml"
+}

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { AuthMethodsController } from './auth-methods.controller';
-import { AuthFeaturesService } from './services/auth-features.service';
+import { AuthFeaturesService } from './services/features/auth-features.service';
 import { OAuthRegistryService } from './oauth/oauth-registry.service'; // feature:oauth-core
 
 describe('AuthMethodsController', () => {
@@ -24,12 +24,12 @@ describe('AuthMethodsController', () => {
       get: jest.fn((key: string, fallback?: boolean) =>
         key in values ? values[key] : fallback,
       ),
-    } as unknown as ConfigService;
+    };
 
     // feature:oauth-core:start
     const registry = {
       listEnabled: jest.fn().mockReturnValue(providers),
-    } as unknown as OAuthRegistryService;
+    };
     // feature:oauth-core:end
 
     const module: TestingModule = await Test.createTestingModule({

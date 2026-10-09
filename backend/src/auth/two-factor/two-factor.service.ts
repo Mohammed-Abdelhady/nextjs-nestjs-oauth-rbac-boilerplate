@@ -67,7 +67,7 @@ export class TwoFactorService {
     };
     await user.save();
 
-    this.logger.log(`Two-factor setup started for ${user.email}`);
+    this.logger.log(`Two-factor setup started: userId=${user._id.toString()}`);
     return TwoFactorSetupResponseDto.success(
       buildOtpauthUrl(user.email, secret),
       secret,
@@ -102,7 +102,7 @@ export class TwoFactorService {
     user.twoFactor.confirmedAt = new Date();
     await user.save();
 
-    this.logger.log(`Two-factor enabled for ${user.email}`);
+    this.logger.log(`Two-factor enabled: userId=${user._id.toString()}`);
     return RecoveryCodesResponseDto.success(
       codes,
       'Store these codes somewhere safe. They are not shown again.',
@@ -131,7 +131,7 @@ export class TwoFactorService {
     };
     await user.save();
 
-    this.logger.log(`Two-factor disabled for ${user.email}`);
+    this.logger.log(`Two-factor disabled: userId=${user._id.toString()}`);
     return ApiResponse.success({
       message: 'Two-factor authentication is off',
     });
@@ -152,7 +152,7 @@ export class TwoFactorService {
     const codes = this.replaceRecoveryCodes(user);
     await user.save();
 
-    this.logger.log(`Recovery codes replaced for ${user.email}`);
+    this.logger.log(`Recovery codes replaced: userId=${user._id.toString()}`);
     return RecoveryCodesResponseDto.success(
       codes,
       'The codes from before no longer work.',

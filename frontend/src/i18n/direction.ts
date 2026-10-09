@@ -5,7 +5,9 @@
 
 export type TextDirection = 'ltr' | 'rtl';
 
-const RTL_LOCALES = new Set<string>(['ar']);
+const RTL_LOCALES = new Set<string>([
+  'ar', // feature:locale-ar
+]);
 
 export function getTextDirection(locale: string): TextDirection {
   return RTL_LOCALES.has(locale) ? 'rtl' : 'ltr';

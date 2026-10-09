@@ -17,8 +17,9 @@ import {
   ApiResponse,
   ApiParam,
   ApiQuery,
-  ApiBearerAuth,
+  ApiCookieAuth,
 } from '@nestjs/swagger';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RoleService } from './role.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
@@ -31,6 +32,7 @@ import {
 import { PermissionGuard } from '../common/guards/permission.guard';
 import { RequirePermissions } from '../common/decorators/permissions.decorator';
 import { ROLE_PERMISSIONS } from '../common/constants/permissions';
+import { SESSION_SWAGGER_AUTH_NAME } from '../common/constants/session';
 import { ApiResponse as ApiResponseDto } from '../common/dto/api-response.dto';
 
 /**
@@ -38,7 +40,7 @@ import { ApiResponse as ApiResponseDto } from '../common/dto/api-response.dto';
  * All endpoints require authentication and admin-level permissions.
  */
 @ApiTags('roles')
-@ApiBearerAuth('JWT-auth')
+@ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
 @Controller('roles')
 @UseGuards(PermissionGuard)
 export class RoleController {
@@ -114,7 +116,8 @@ export class RoleController {
   @ApiOperation({
     summary: 'Create a new role',
     description:
-      'Create a custom role with specific permissions. Only admins can create roles.',
+      'Create a custom role with specific permissions. The caller can only ' +
+      'give the role permissions they hold themselves.',
   })
   @ApiResponse({
     status: 201,
@@ -126,13 +129,18 @@ export class RoleController {
     description: 'Invalid input or permission format',
   })
   @ApiResponse({
+    status: 403,
+    description: 'A requested permission is not held by the caller',
+  })
+  @ApiResponse({
     status: 409,
     description: 'Role with this name already exists',
   })
   async create(
     @Body() dto: CreateRoleDto,
+    @CurrentUser('id') actorId: string,
   ): Promise<ApiResponseDto<RoleResponseDto>> {
-    const data = await this.roleService.create(dto);
+    const data = await this.roleService.create(dto, actorId);
     return {
       success: true,
       message: 'Role created successfully',
@@ -163,7 +171,9 @@ export class RoleController {
   })
   @ApiResponse({
     status: 403,
-    description: 'Cannot rename a system role or strip the admin wildcard',
+    description:
+      'Cannot rename a system role, strip the admin wildcard, edit a role at ' +
+      'or above your own level, or add a permission you do not hold',
   })
   @ApiResponse({
     status: 404,
@@ -172,8 +182,9 @@ export class RoleController {
   async update(
     @Param('idOrSlug') idOrSlug: string,
     @Body() dto: UpdateRoleDto,
+    @CurrentUser('id') actorId: string,
   ): Promise<ApiResponseDto<RoleUpdateResponseDto>> {
-    const data = await this.roleService.update(idOrSlug, dto);
+    const data = await this.roleService.update(idOrSlug, dto, actorId);
     return {
       success: true,
       message: 'Role updated successfully',
@@ -213,7 +224,10 @@ export class RoleController {
     status: 404,
     description: 'Role not found',
   })
-  async delete(@Param('idOrSlug') idOrSlug: string): Promise<void> {
-    await this.roleService.delete(idOrSlug);
+  async delete(
+    @Param('idOrSlug') idOrSlug: string,
+    @CurrentUser('id') actorId: string,
+  ): Promise<void> {
+    await this.roleService.delete(idOrSlug, actorId);
   }
 }

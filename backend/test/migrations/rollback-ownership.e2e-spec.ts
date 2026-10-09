@@ -1,37 +1,56 @@
+import { createRequire } from 'node:module';
 import { MongoClient, ObjectId } from 'mongodb';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import {
+  startMemoryReplSet,
+  type MemoryReplSet,
+} from '../utils/memory-replset';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from '../utils/session-authority-harness';
 
-/* eslint-disable @typescript-eslint/no-require-imports */
-const defaultPermissions =
-  require('../../migrations/20260904000001-add-default-permissions-to-users.js') as {
-    up: (db: unknown) => Promise<void>;
-    down: (db: unknown) => Promise<void>;
-  };
-const linkedAccounts =
-  require('../../migrations/20260904000002-linked-accounts.js') as {
-    up: (db: unknown) => Promise<void>;
-    down: (db: unknown) => Promise<void>;
-  };
-const primaryProvider =
-  require('../../migrations/20260904000003-backfill-email-primary-provider.js') as {
-    up: (db: unknown) => Promise<void>;
-    down: (db: unknown) => Promise<void>;
-  };
-/* eslint-enable @typescript-eslint/no-require-imports */
+interface Migration {
+  up: (db: unknown) => Promise<void>;
+  down: (db: unknown) => Promise<void>;
+}
+
+/** Shape the migration spec writes; the migrations themselves are untyped. */
+interface LinkedAccountsUserDocument {
+  googleId?: string;
+  authProvider?: string;
+  linkedAccounts?: Array<{
+    provider: string;
+    providerId: string;
+    linkedAt: Date;
+  }>;
+}
+
+// The migrations are plain CommonJS files the migration CLI loads by
+// filename, so the spec loads them the same way instead of import-form.
+const loadMigration = createRequire(__filename);
+const defaultPermissions = loadMigration(
+  '../../migrations/20260904000001-add-default-permissions-to-users.js',
+) as Migration;
+const linkedAccounts = loadMigration(
+  '../../migrations/20260904000002-linked-accounts.js',
+) as Migration;
+const primaryProvider = loadMigration(
+  '../../migrations/20260904000003-backfill-email-primary-provider.js',
+) as Migration;
 
 describe('migration rollback ownership', () => {
-  let mongo: MongoMemoryServer;
+  let mongo: MemoryReplSet;
   let client: MongoClient;
 
   beforeAll(async () => {
-    mongo = await MongoMemoryServer.create({ instance: { ip: '127.0.0.1' } });
+    mongo = await startMemoryReplSet();
     client = await MongoClient.connect(mongo.getUri());
-  });
+  }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   afterAll(async () => {
     await client.close();
     await mongo.stop();
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   beforeEach(async () => {
     await client.db().dropDatabase();
@@ -64,7 +83,7 @@ describe('migration rollback ownership', () => {
   });
 
   it('should refuse to roll back a non-legacy linked provider', async () => {
-    const users = client.db().collection('users');
+    const users = client.db().collection<LinkedAccountsUserDocument>('users');
     await users.insertOne({
       googleId: 'g-1',
       authProvider: 'google',
@@ -79,7 +98,7 @@ describe('migration rollback ownership', () => {
             providerId: 'ms-1',
             linkedAt: new Date(),
           },
-        } as never,
+        },
       },
     );
 

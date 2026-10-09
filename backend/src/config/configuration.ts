@@ -1,5 +1,12 @@
 import { createOAuthConfig, OAuthConfig } from './oauth.config';
 import { APP_NAME } from '../common/constants/app';
+import { ACTIVATION_CODE_EXPIRES_IN_DEFAULT } from '../auth/constants/registration';
+import {
+  MAIL_DRAIN_DEADLINE_MS,
+  MAIL_MAX_PENDING_SENDS,
+} from '../mail/constants/mail.constants';
+import type { NativeApplicationConfiguration } from './types/native-application.type';
+import { parseNativeApplications } from './utils/native-application-config.util';
 
 export { EnvironmentConfig, EnvironmentVariables } from './env.schema';
 
@@ -27,6 +34,10 @@ export interface Configuration {
     pass?: string;
     from?: string;
   };
+  mail: {
+    maxPendingSends: number;
+    drainDeadlineMs: number;
+  };
   bcrypt: {
     rounds: number;
   };
@@ -40,6 +51,12 @@ export interface Configuration {
   };
   auth: {
     passwordEnabled: boolean;
+    epoch: number;
+    nativeEnabled: boolean;
+    nativeDpopRequired: boolean;
+    nativeDpopNonceSecret?: string;
+    nativeApplications: NativeApplicationConfiguration[];
+    nativeCustomSchemeAllowed: boolean;
   };
   magicLink: {
     enabled: boolean;
@@ -90,6 +107,7 @@ const configuration = (): Configuration => {
   const port = Number.parseInt(process.env.PORT || '3000', 10);
   const apiUrl = process.env.API_URL || `http://localhost:${port}`;
   const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+  const nativeEnabled = process.env.AUTH_NATIVE_ENABLED === 'true';
 
   return {
     server: {
@@ -117,6 +135,16 @@ const configuration = (): Configuration => {
       pass: process.env.SMTP_PASS,
       from: process.env.EMAIL_FROM,
     },
+    mail: {
+      maxPendingSends: Number.parseInt(
+        process.env.MAIL_MAX_PENDING_SENDS || String(MAIL_MAX_PENDING_SENDS),
+        10,
+      ),
+      drainDeadlineMs: Number.parseInt(
+        process.env.MAIL_DRAIN_DEADLINE_MS || String(MAIL_DRAIN_DEADLINE_MS),
+        10,
+      ),
+    },
     bcrypt: {
       rounds: Number.parseInt(process.env.BCRYPT_ROUNDS || '10', 10),
     },
@@ -131,7 +159,8 @@ const configuration = (): Configuration => {
     },
     activation: {
       codeExpiresIn: Number.parseInt(
-        process.env.ACTIVATION_CODE_EXPIRES_IN || '900000',
+        process.env.ACTIVATION_CODE_EXPIRES_IN ||
+          String(ACTIVATION_CODE_EXPIRES_IN_DEFAULT),
         10,
       ),
       maxAttempts: Number.parseInt(
@@ -141,6 +170,19 @@ const configuration = (): Configuration => {
     },
     auth: {
       passwordEnabled: process.env.AUTH_PASSWORD_ENABLED !== 'false',
+      epoch: Number.parseInt(process.env.AUTH_EPOCH || '1', 10),
+      nativeEnabled,
+      nativeDpopRequired: process.env.AUTH_NATIVE_DPOP_REQUIRED === 'true',
+      nativeDpopNonceSecret: process.env.AUTH_NATIVE_DPOP_NONCE_SECRET,
+      nativeApplications: nativeEnabled
+        ? parseNativeApplications(process.env.AUTH_NATIVE_APPLICATIONS, {
+            nodeEnv: process.env.NODE_ENV,
+            allowCustomScheme:
+              process.env.AUTH_NATIVE_ALLOW_CUSTOM_SCHEME === 'true',
+          })
+        : [],
+      nativeCustomSchemeAllowed:
+        process.env.AUTH_NATIVE_ALLOW_CUSTOM_SCHEME === 'true',
     },
     magicLink: {
       enabled: process.env.MAGIC_LINK_ENABLED

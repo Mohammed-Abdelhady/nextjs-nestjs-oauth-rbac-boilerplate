@@ -1,23 +1,30 @@
 import { z } from 'zod';
-import { zodEmail } from '@/lib/validations';
+import { zodName } from '@app/core';
+import { createEmailCodeSchema } from './emailCodeSchema';
+import { createPasswordSchema } from './passwordSchema';
 
-/**
- * Activation form validation schema
- */
-export const createActivationSchema = (t: (key: string) => string) =>
-  z.object({
-    email: zodEmail({
-      required: true,
-      messages: {
-        required: t('errors.emailRequired'),
-        invalid: t('errors.emailInvalid'),
-      },
-    }),
-    code: z
-      .string({ required_error: t('errors.codeRequired') })
-      .trim()
-      .length(6, t('errors.codeLength'))
-      .regex(/^\d{6}$/, t('errors.codeInvalid')),
-  });
-
-export type ActivationFormData = z.infer<ReturnType<typeof createActivationSchema>>;
+export const createActivationSchema = (
+  t: (key: string) => string,
+  tPassword: (key: string) => string,
+) =>
+  createEmailCodeSchema(t)
+    .extend({
+      name: zodName({
+        required: true,
+        messages: {
+          required: t('errors.nameRequired'),
+          min: t('errors.nameMinLength'),
+          max: t('errors.nameMaxLength'),
+          pattern: t('errors.namePattern'),
+          noLetter: t('errors.nameNoLetter'),
+        },
+      }),
+      password: createPasswordSchema(tPassword),
+      confirmPassword: z
+        .string({ required_error: t('errors.confirmRequired') })
+        .min(1, t('errors.confirmRequired')),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t('errors.passwordMismatch'),
+      path: ['confirmPassword'],
+    });

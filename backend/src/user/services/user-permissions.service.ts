@@ -76,7 +76,9 @@ export class UserPermissionsService {
     user.permissions.push(permission);
     await user.save();
 
-    this.logger.log(`Permission ${permission} added to user: ${user.email}`);
+    this.logger.log(
+      `Permission ${permission} added: userId=${user._id.toString()}`,
+    );
     return ApiResponse.success(
       {
         userId: user._id.toString(),
@@ -110,7 +112,7 @@ export class UserPermissionsService {
     await user.save();
 
     this.logger.log(
-      `Permission ${permission} removed from user: ${user.email}`,
+      `Permission ${permission} removed: userId=${user._id.toString()}`,
     );
     return ApiResponse.success(
       {

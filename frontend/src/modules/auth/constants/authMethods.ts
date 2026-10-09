@@ -1,6 +1,3 @@
-/** Discovery endpoint that says which sign-in methods this deployment runs. */
-export const AUTH_METHODS_PATH = '/api/auth/methods';
-
 /** Sign-in method ids the registry can hold. */
 export const AUTH_METHOD_ID = {
   PASSWORD: 'password',
@@ -30,3 +27,12 @@ export const ADMIN_PERMISSIONS = [
 export const DEFAULT_SIGNED_IN_PATH = '/dashboard';
 
 export const ADMIN_SIGNED_IN_PATH = '/admin/dashboard';
+
+export const REGISTER_PATH = '/auth/register';
+export const ACTIVATE_PATH = '/auth/activate';
+export const LOGIN_PATH = '/auth/login';
+export const CONFIRM_EMAIL_CHANGE_PATH = '/auth/confirm-email-change';
+export const CONFIRM_EMAIL_CHANGE_ENDPOINT = '/api/auth/confirm-email-change';
+export const VERIFICATION_CODE_LENGTH = 6;
+export const AUTH_EMAIL_MAX_LENGTH = 255;
+export const RESEND_COOLDOWN_SECONDS = 60;

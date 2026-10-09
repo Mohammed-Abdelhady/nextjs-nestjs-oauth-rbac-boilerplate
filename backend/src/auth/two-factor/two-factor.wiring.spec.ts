@@ -15,10 +15,11 @@ import { AuthModule } from '../auth.module';
 import { AuthFeature } from '../enums/auth-feature.enum';
 import { AUTH_FEATURE_KEY } from '../decorators/requires-feature.decorator';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
-import { SignInService } from '../services/sign-in.service';
+import { SignInService } from '../services/sessions/sign-in.service';
 import { TwoFactorChallengeService } from './services/two-factor-challenge.service';
 import { TotpSecretCryptoService } from './services/totp-secret-crypto.service';
 import { TwoFactorVerificationService } from './services/two-factor-verification.service';
+import { handlerOf } from '../../common/testing/test-doubles.harness-spec';
 
 /**
  * The part of the boot check that does not need a database: the two-factor
@@ -26,16 +27,8 @@ import { TwoFactorVerificationService } from './services/two-factor-verification
  * sign-in paths share with it.
  */
 
-type RouteHandler = (...args: never[]) => unknown;
-
 function metadataOf(module: object, key: string): unknown[] {
   return (Reflect.getMetadata(key, module) as unknown[] | undefined) ?? [];
-}
-
-function handlerOf(name: string): RouteHandler {
-  return (
-    TwoFactorController.prototype as unknown as Record<string, RouteHandler>
-  )[name];
 }
 
 describe('Two-factor wiring', () => {
@@ -72,13 +65,23 @@ describe('Two-factor wiring', () => {
   });
 
   it('leaves verify open, since the caller has no session yet', () => {
-    expect(reflector.get(IS_PUBLIC_KEY, handlerOf('verify'))).toBe(true);
+    expect(
+      reflector.get(
+        IS_PUBLIC_KEY,
+        handlerOf(TwoFactorController.prototype, 'verify'),
+      ),
+    ).toBe(true);
   });
 
   it.each(['setup', 'confirm', 'disable', 'regenerateRecoveryCodes'])(
     'keeps %s behind a session',
     (handler) => {
-      expect(reflector.get(IS_PUBLIC_KEY, handlerOf(handler))).toBeUndefined();
+      expect(
+        reflector.get(
+          IS_PUBLIC_KEY,
+          handlerOf(TwoFactorController.prototype, handler),
+        ),
+      ).toBeUndefined();
     },
   );
 });

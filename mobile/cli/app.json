@@ -1,0 +1,15 @@
+{
+  "name": "MobileCli",
+  "displayName": "Mobile CLI",
+  "expo": {
+    "name": "Mobile CLI",
+    "slug": "mobile-cli",
+    "scheme": "mobilecli",
+    "ios": {
+      "bundleIdentifier": "com.example.mobilecli"
+    },
+    "android": {
+      "package": "com.example.mobilecli"
+    }
+  }
+}

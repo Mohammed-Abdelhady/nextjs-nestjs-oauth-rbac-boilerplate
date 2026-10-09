@@ -1,4 +1,4 @@
-/** Credentials created by `npm run seed`. The e2e suites log in as these. */
+/** Credentials created by `pnpm run seed`. The e2e suites log in as these. */
 export interface SeedUser {
   email: string;
   password: string;

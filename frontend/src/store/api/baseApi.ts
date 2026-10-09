@@ -1,11 +1,29 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { API_BASE_URL } from '@/constants/api';
+import {
+  createApi,
+  fetchBaseQuery,
+  type BaseQueryFn,
+  type FetchArgs,
+  type FetchBaseQueryError,
+} from '@reduxjs/toolkit/query/react';
+import {
+  API_BASE_URL,
+  BROWSER_PROOF_ENDPOINT,
+  CSRF_ENDPOINT,
+  LOGOUT_ENDPOINT,
+} from '@/constants/api';
+import { ErrorCode, getErrorCode } from '@app/core';
+import {
+  CSRF_HEADER,
+  clearBrowserProof,
+  csrfLookupHint,
+  methodNeedsBrowserProof,
+  rememberBrowserProof,
+  rememberNoSession,
+  takeBrowserProof,
+  type BrowserProofKind,
+} from './browser-proof';
 
-/**
- * Base query for RTK Query.
- * The session lives in an httpOnly cookie, so every request carries credentials.
- */
-const baseQuery = fetchBaseQuery({
+const rawBaseQuery = fetchBaseQuery({
   baseUrl: API_BASE_URL,
   credentials: 'include',
   prepareHeaders: (headers) => {
@@ -14,10 +32,162 @@ const baseQuery = fetchBaseQuery({
   },
 });
 
+type RawQueryApi = Parameters<typeof rawBaseQuery>[1];
+type RawQueryExtra = Parameters<typeof rawBaseQuery>[2];
+
+function requestUrl(args: string | FetchArgs): string {
+  return typeof args === 'string' ? args : args.url;
+}
+
+function requestMethod(args: string | FetchArgs): string | undefined {
+  return typeof args === 'string' ? undefined : args.method;
+}
+
+type RequestHeaders = FetchArgs['headers'];
+
+function mergeHeaders(init: RequestHeaders): Headers {
+  const headers = new Headers();
+  if (!init) {
+    return headers;
+  }
+  if (init instanceof Headers) {
+    init.forEach((value, key) => headers.set(key, value));
+    return headers;
+  }
+  if (Array.isArray(init)) {
+    for (const [key, value] of init) {
+      headers.set(key, value);
+    }
+    return headers;
+  }
+  for (const [key, value] of Object.entries(init)) {
+    if (value !== undefined) {
+      headers.set(key, value);
+    }
+  }
+  return headers;
+}
+
+function withBrowserProof(args: string | FetchArgs, proof: string): string | FetchArgs {
+  if (typeof args === 'string') {
+    return { url: args, headers: { [CSRF_HEADER]: proof } };
+  }
+  const headers = mergeHeaders(args.headers);
+  headers.set(CSRF_HEADER, proof);
+  return { ...args, headers };
+}
+
 /**
- * Base API configuration for RTK Query
- * All API slices should extend from this
+ * Only the two proof endpoints return the token in the body; a body shaped
+ * like `{ data: { token } }` from any other endpoint must be ignored.
  */
+function proofTokenFromBody(data: unknown, url: string): string | undefined {
+  if (url !== CSRF_ENDPOINT && url !== BROWSER_PROOF_ENDPOINT) {
+    return undefined;
+  }
+  if (data === null || typeof data !== 'object' || !('data' in data)) {
+    return undefined;
+  }
+  const body = data.data;
+  if (body === null || typeof body !== 'object' || !('token' in body)) {
+    return undefined;
+  }
+  const token = body.token;
+  return typeof token === 'string' && token.length > 0 ? token : undefined;
+}
+
+function issuedToken(
+  response: Response | undefined,
+  data: unknown,
+  url: string,
+): string | undefined {
+  const header = response?.headers.get(CSRF_HEADER);
+  if (header) {
+    return header;
+  }
+  return proofTokenFromBody(data, url);
+}
+
+function proofKindForUrl(url: string): BrowserProofKind {
+  return url === BROWSER_PROOF_ENDPOINT ? 'pre-session' : 'session';
+}
+
+function rememberIssuedProof(response: Response | undefined, data: unknown, url: string): void {
+  const token = issuedToken(response, data, url);
+  if (token) {
+    rememberBrowserProof(token, proofKindForUrl(url));
+  }
+}
+
+/**
+ * Reads the session proof first (for a reloaded signed-in page) and falls back
+ * to a fresh pre-session proof when there is no session. A pre-session proof
+ * is stored and consumed inside this function, so no other request can take a
+ * single-use proof that is already claimed.
+ */
+async function loadBrowserProof(api: RawQueryApi, extra: RawQueryExtra): Promise<string> {
+  if (csrfLookupHint() !== 'no-session') {
+    const session = await rawBaseQuery({ url: CSRF_ENDPOINT }, api, extra);
+    const sessionToken = issuedToken(session.meta?.response, session.data, CSRF_ENDPOINT);
+    if (sessionToken) {
+      rememberBrowserProof(sessionToken, 'session');
+      return sessionToken;
+    }
+    rememberNoSession();
+  }
+
+  const preSession = await rawBaseQuery({ url: BROWSER_PROOF_ENDPOINT }, api, extra);
+  const preSessionToken = issuedToken(
+    preSession.meta?.response,
+    preSession.data,
+    BROWSER_PROOF_ENDPOINT,
+  );
+  if (!preSessionToken) {
+    return '';
+  }
+  rememberBrowserProof(preSessionToken, 'pre-session');
+  return takeBrowserProof();
+}
+
+function isProofFailure(error: FetchBaseQueryError | undefined): boolean {
+  if (!error) {
+    return false;
+  }
+  const code = getErrorCode(error);
+  return code === ErrorCode.CSRF_INVALID || code === ErrorCode.CSRF_REQUIRED;
+}
+
+const baseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
+  args,
+  api,
+  extra,
+) => {
+  const url = requestUrl(args);
+  const unsafe = methodNeedsBrowserProof(requestMethod(args));
+
+  let proof = unsafe ? takeBrowserProof() : '';
+  if (unsafe && !proof) {
+    proof = await loadBrowserProof(api, extra);
+  }
+
+  let result = await rawBaseQuery(proof ? withBrowserProof(args, proof) : args, api, extra);
+  rememberIssuedProof(result.meta?.response, result.data, url);
+
+  // A spent or stale proof must be replaced and the request retried exactly
+  // once. The retry reuses `rawBaseQuery`, so it can never itself retry.
+  if (unsafe && isProofFailure(result.error)) {
+    clearBrowserProof();
+    const retryProof = await loadBrowserProof(api, extra);
+    result = await rawBaseQuery(retryProof ? withBrowserProof(args, retryProof) : args, api, extra);
+    rememberIssuedProof(result.meta?.response, result.data, url);
+  }
+
+  if (url === LOGOUT_ENDPOINT) {
+    clearBrowserProof();
+  }
+  return result;
+};
+
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery,

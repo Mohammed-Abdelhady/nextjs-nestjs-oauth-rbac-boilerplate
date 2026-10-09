@@ -35,6 +35,9 @@ export class PendingMagicLink {
   @Prop()
   userAgent?: string;
 
+  @Prop()
+  redirect?: string;
+
   // Timestamp fields (automatically managed by Mongoose with timestamps: true)
   createdAt!: Date;
   updatedAt!: Date;

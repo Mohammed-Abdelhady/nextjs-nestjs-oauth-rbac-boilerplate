@@ -3,16 +3,20 @@ import { getModelToken } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 import type { UserDocument } from '../../src/user/schemas/user.schema';
 import { replacePermissions } from '../utils/permissions';
-import request from 'supertest';
 import type { Response } from 'supertest';
 import {
   bootE2eApp,
+  browserAgent,
   loginAs,
   type E2eApp,
   type TestAgent,
 } from '../utils/e2e-app';
 import { SEED_ADMIN, SEED_USER } from '../constants/seed-users';
 import type { UserResponse } from '../types/e2e-responses';
+import {
+  SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
+} from '../utils/session-authority-harness';
 
 const BASE_PERMISSIONS = ['profile:read:own', 'profile:update:own'];
 
@@ -36,11 +40,11 @@ describe('Permission enforcement (e2e)', () => {
       .get('/api/user/profile')
       .expect(200);
     testUserId = (meResponse.body as ApiBody<UserResponse>).data.id;
-  });
+  }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   afterAll(async () => {
     await e2e?.close();
-  });
+  }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   describe('Permission checking logic', () => {
     it('should grant access with wildcard permission', async () => {
@@ -87,30 +91,32 @@ describe('Permission enforcement (e2e)', () => {
         .get('/api/user/profile')
         .expect(200);
 
-      const registerResponse: Response = await request(e2e.httpServer)
+      const registerAgent = await browserAgent(e2e.httpServer);
+      const registerResponse: Response = await registerAgent
         .post('/api/auth/register')
-        .send({
-          email: 'testuser@test.local',
-          password: 'Test1234!',
-          name: 'Test User',
-        })
+        .send({ email: 'testuser@test.local' })
         .expect(200);
 
       expect((userResponse.body as ApiBody<UserResponse>).data.role).toBe(
         'user',
       );
       expect(registerResponse.body).toHaveProperty('success', true);
-      const message = e2e.mail.at(-1);
+      const message = (await e2e.captureMail()).at(-1);
       const code = message?.text?.match(/\b\d{6}\b/)?.[0];
       expect(code).toBeDefined();
-      const activated = request.agent(e2e.httpServer);
+      const activated = await browserAgent(e2e.httpServer);
       await activated
         .post('/api/auth/activate')
-        .send({ email: 'testuser@test.local', code })
+        .send({
+          email: 'testuser@test.local',
+          code,
+          password: 'Test1234!',
+          name: 'Test User',
+        })
         .expect(200);
       const profile = await activated.get('/api/user/profile').expect(200);
       expect((profile.body as ApiBody<UserResponse>).data.role).toBe('user');
-      expect(e2e.mail).toHaveLength(1);
+      expect(await e2e.captureMail()).toHaveLength(1);
     });
   });
 

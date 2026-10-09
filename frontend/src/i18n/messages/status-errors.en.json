@@ -1,0 +1,7 @@
+{
+  "errors": {
+    "codes": {
+      "CONFLICT": "This conflicts with a change made elsewhere. Refresh and try again"
+    }
+  }
+}

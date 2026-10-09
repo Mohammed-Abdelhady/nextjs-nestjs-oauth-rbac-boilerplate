@@ -1,4 +1,4 @@
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'; // feature:locale-ar
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 
 /**
@@ -9,7 +9,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="relative min-h-screen">
       <header className="absolute inset-x-0 top-0 z-50 flex items-center justify-end gap-2 p-4">
-        <LanguageSwitcher />
+        <LanguageSwitcher /> {/* feature:locale-ar */}
         <ThemeSwitcher />
       </header>
       <main id="main" tabIndex={-1} className="focus-visible:outline-none" data-testid="auth-main">

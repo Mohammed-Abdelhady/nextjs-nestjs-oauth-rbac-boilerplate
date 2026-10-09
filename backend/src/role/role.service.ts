@@ -1,11 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  ConflictException,
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, FilterQuery } from 'mongoose';
 import { Role, RoleDocument } from './schemas/role.schema';
@@ -20,13 +13,15 @@ import {
 } from './dto/role-response.dto';
 import { UserRole } from '../user/enums/user-role.enum';
 import { WILDCARD_PERMISSION } from '../common/constants/permissions';
-import { CUSTOM_ROLE_LEVEL } from '../common/utils/role-hierarchy';
 import {
   assertValidPermissions,
   generateSlug,
   mapRoleToResponseDto,
 } from './utils/role.util';
 import { escapeRegex } from '../common/utils/escape-regex';
+import { ErrorCode } from '../common/enums/error-code.enum';
+import { AppException } from '../common/exceptions/app.exception';
+import { RoleEditService } from './services/edit/role-edit.service';
 
 @Injectable()
 export class RoleService {
@@ -35,34 +30,27 @@ export class RoleService {
   constructor(
     @InjectModel(Role.name) private readonly roleModel: Model<RoleDocument>,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    private readonly roleEdit: RoleEditService,
   ) {}
 
   /**
    * Create a new role with validation
    */
-  async create(dto: CreateRoleDto): Promise<RoleResponseDto> {
+  async create(dto: CreateRoleDto, actorId: string): Promise<RoleResponseDto> {
     const slug = generateSlug(dto.name);
 
     const existing = await this.roleModel.findOne({ slug: { $eq: slug } });
     if (existing) {
-      throw new ConflictException(
+      throw new AppException(
+        ErrorCode.ROLE_NAME_TAKEN,
         `Role with name "${dto.name}" already exists`,
+        HttpStatus.CONFLICT,
       );
     }
 
     assertValidPermissions(dto.permissions);
 
-    const role = new this.roleModel({
-      name: dto.name,
-      slug,
-      description: dto.description,
-      isSystemRole: false,
-      isProtected: false,
-      level: CUSTOM_ROLE_LEVEL,
-      permissions: dto.permissions,
-    });
-
-    await role.save();
+    const role = await this.roleEdit.create(dto, slug, actorId);
 
     return this.mapToResponseDto(role);
   }
@@ -122,14 +110,17 @@ export class RoleService {
   async update(
     idOrSlug: string,
     dto: UpdateRoleDto,
+    actorId: string,
   ): Promise<RoleUpdateResponseDto> {
     const role = await this.findRoleByIdOrSlug(idOrSlug);
     const previousSlug = role.slug;
     const nextSlug = dto.name ? generateSlug(dto.name) : previousSlug;
 
     if (role.isSystemRole && nextSlug !== previousSlug) {
-      throw new ForbiddenException(
+      throw new AppException(
+        ErrorCode.SYSTEM_ROLE_RENAME_FORBIDDEN,
         `System role "${previousSlug}" cannot be renamed to a different slug`,
+        HttpStatus.FORBIDDEN,
       );
     }
 
@@ -138,55 +129,44 @@ export class RoleService {
       this.assertAdminKeepsWildcard(previousSlug, dto.permissions);
     }
 
-    if (dto.name && dto.name !== role.name) {
+    if (dto.name && nextSlug !== previousSlug) {
       await this.assertSlugAvailable(nextSlug, role);
-      role.name = dto.name;
-      role.slug = nextSlug;
     }
 
-    if (dto.description !== undefined) {
-      role.description = dto.description;
+    // The previous slug and the rename flag are recomputed inside the work
+    // function, so a rename that landed meanwhile is used, not the stale one.
+    const outcome = await this.roleEdit.commit(role._id, dto, actorId);
+
+    // The rename line is written only after the transaction commits, so an
+    // aborted attempt cannot report a rename that never landed.
+    if (outcome.renamed) {
+      this.logger.log(
+        `Role renamed from "${outcome.previousSlug}" to "${outcome.nextSlug}", ${outcome.usersMoved} user(s) moved`,
+      );
     }
 
-    if (dto.permissions) {
-      role.permissions = dto.permissions;
-    }
-
-    await role.save();
-
-    let usersMoved = 0;
-    if (nextSlug !== previousSlug) {
-      usersMoved = await this.moveUsers(previousSlug, nextSlug);
-    }
-
-    return { ...this.mapToResponseDto(role), usersMoved };
+    return {
+      ...this.mapToResponseDto(outcome.role),
+      usersMoved: outcome.usersMoved,
+    };
   }
 
   /**
    * Delete a role with validation
    */
-  async delete(idOrSlug: string): Promise<void> {
+  async delete(idOrSlug: string, actorId: string): Promise<void> {
     const role = await this.findRoleByIdOrSlug(idOrSlug);
 
     // System and protected roles are permanent
     if (role.isSystemRole || role.isProtected) {
-      throw new ForbiddenException(
+      throw new AppException(
+        ErrorCode.ROLE_PROTECTED,
         `Role "${role.slug}" is protected and cannot be deleted`,
+        HttpStatus.FORBIDDEN,
       );
     }
 
-    // Check if any users are assigned this role
-    const userCount = await this.userModel.countDocuments({
-      role: role.slug,
-    });
-
-    if (userCount > 0) {
-      throw new BadRequestException(
-        `Cannot delete role. ${userCount} user${userCount > 1 ? 's' : ''} assigned. Please reassign users first.`,
-      );
-    }
-
-    await this.roleModel.deleteOne({ _id: role._id });
+    await this.roleEdit.delete(role._id, actorId);
   }
 
   /**
@@ -226,7 +206,11 @@ export class RoleService {
     }
 
     if (!role) {
-      throw new NotFoundException(`Role "${idOrSlug}" not found`);
+      throw new AppException(
+        ErrorCode.ROLE_NOT_FOUND,
+        `Role "${idOrSlug}" not found`,
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     return role;
@@ -242,7 +226,11 @@ export class RoleService {
     const existing = await this.roleModel.findOne({ slug: { $eq: slug } });
 
     if (existing && existing._id.toString() !== role._id.toString()) {
-      throw new ConflictException(`Role with slug "${slug}" already exists`);
+      throw new AppException(
+        ErrorCode.ROLE_NAME_TAKEN,
+        `Role with slug "${slug}" already exists`,
+        HttpStatus.CONFLICT,
+      );
     }
   }
 
@@ -256,26 +244,12 @@ export class RoleService {
     }
 
     if (!permissions.includes(WILDCARD_PERMISSION)) {
-      throw new ForbiddenException(
+      throw new AppException(
+        ErrorCode.ADMIN_WILDCARD_REQUIRED,
         `The "${WILDCARD_PERMISSION}" permission cannot be removed from the admin role`,
+        HttpStatus.FORBIDDEN,
       );
     }
-  }
-
-  /**
-   * Move every user from a renamed slug onto the new one
-   */
-  private async moveUsers(fromSlug: string, toSlug: string): Promise<number> {
-    const result = await this.userModel.updateMany(
-      { role: fromSlug },
-      { $set: { role: toSlug } },
-    );
-
-    this.logger.log(
-      `Role renamed from "${fromSlug}" to "${toSlug}", ${result.modifiedCount} user(s) moved`,
-    );
-
-    return result.modifiedCount;
   }
 
   /**

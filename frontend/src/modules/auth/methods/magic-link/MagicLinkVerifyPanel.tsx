@@ -1,11 +1,12 @@
 'use client';
 
+import { Description, Heading } from '@/components/design-system';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
-import { ErrorCode } from '@/constants/errorCodes';
+import { ErrorCode } from '@app/core';
 import { useCompleteSignIn } from '@/modules/auth/hooks/useCompleteSignIn';
 import { useFeatureDisabledHandler } from '@/modules/auth/hooks/useFeatureDisabled';
 import { translatableErrorCode } from '@/modules/auth/utils/errorCodeMessage';
@@ -43,9 +44,9 @@ export function MagicLinkVerifyPanel({ token, redirect }: MagicLinkVerifyPanelPr
 
     verifyMagicLink({ token })
       .unwrap()
-      .then((response) => completeSignIn(response, redirect))
+      .then((response) => completeSignIn(response, response.redirect ?? redirect))
       .catch((error: unknown) => {
-        handleFeatureDisabled(error, false);
+        handleFeatureDisabled(error);
         setFailureCode(translatableErrorCode(error, ErrorCode.MAGIC_LINK_INVALID));
       });
   }, [completeSignIn, handleFeatureDisabled, redirect, token, verifyMagicLink]);
@@ -58,8 +59,12 @@ export function MagicLinkVerifyPanel({ token, redirect }: MagicLinkVerifyPanelPr
         data-testid="magic-link-verify-pending"
       >
         <Loader2 className="h-8 w-8 motion-safe:animate-spin text-primary" aria-hidden="true" />
-        <h1 className="mt-4 text-2xl font-extrabold">{t('title')}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{t('pending')}</p>
+        <Heading level={1} variant="display" className="mt-4">
+          {t('title')}
+        </Heading>
+        <Description variant="lead" className="mt-2">
+          {t('pending')}
+        </Description>
       </section>
     );
   }
@@ -70,8 +75,12 @@ export function MagicLinkVerifyPanel({ token, redirect }: MagicLinkVerifyPanelPr
       data-testid="magic-link-verify-error"
     >
       <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
-      <h1 className="mt-4 text-2xl font-extrabold">{t('errorTitle')}</h1>
-      <p className="mt-2 max-w-sm text-sm text-muted-foreground">{tCodes(failureCode)}</p>
+      <Heading level={1} variant="display" className="mt-4">
+        {t('errorTitle')}
+      </Heading>
+      <Description variant="lead" className="mt-2 max-w-sm">
+        {tCodes(failureCode)}
+      </Description>
 
       <Button asChild className="mt-6 w-full max-w-xs" data-testid="magic-link-request-new">
         <Link href="/auth/login">{t('requestNew')}</Link>

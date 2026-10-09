@@ -1,4 +1,5 @@
 import { OidcOAuthStrategy } from './oidc-oauth.strategy';
+import { Logger } from '@nestjs/common';
 import { configFor, mockFetch } from './oauth-strategy.harness-spec';
 import {
   AUTH_URL,
@@ -47,6 +48,70 @@ describe('OidcOAuthStrategy setup', () => {
   });
 
   describe('onModuleInit', () => {
+    it.each([
+      {
+        status: 503,
+        body: { error: 'secret@example.com' },
+        reason: 'http_status',
+        statusFact: 'status=503',
+      },
+      {
+        status: 200,
+        body: discoveryDocument({
+          issuer: 'https://secret@example.com/hunter2',
+        }),
+        reason: 'issuer_mismatch',
+        statusFact: undefined,
+      },
+    ])(
+      'logs discovery $reason by safe name, reason and status',
+      async ({ status, body, reason, statusFact }) => {
+        const warn = jest
+          .spyOn(Logger.prototype, 'warn')
+          .mockImplementation(() => {});
+        try {
+          mockFetch([{ url: DISCOVERY_URL, status, body }]);
+          const provider = discoveringStrategy();
+          await provider.onModuleInit();
+          expect(provider.isEnabled()).toBe(false);
+          const logged = warn.mock.calls.flat().join(' ');
+          expect(logged).toContain('name=DiscoveryFailure');
+          expect(logged).toContain(`reason=${reason}`);
+          if (statusFact) expect(logged).toContain(statusFact);
+          expect(logged).not.toContain('secret@example.com');
+          expect(logged).not.toContain('hunter2');
+        } finally {
+          warn.mockRestore();
+        }
+      },
+    );
+
+    it('labels invalid discovery metadata as unexpected, never network', async () => {
+      const warn = jest
+        .spyOn(Logger.prototype, 'warn')
+        .mockImplementation(() => {});
+      try {
+        mockFetch([
+          {
+            url: DISCOVERY_URL,
+            body: {
+              ...discoveryDocument(),
+              code_challenge_methods_supported: {},
+            },
+          },
+        ]);
+        const provider = discoveringStrategy();
+        await provider.onModuleInit();
+        expect(provider.isEnabled()).toBe(false);
+        const line = warn.mock.calls.flat().join(' ');
+        expect(line).toContain('name=TypeError reason=unexpected');
+        expect(line).not.toContain('reason=network');
+        expect(line).not.toContain('secret@example.com');
+      } finally {
+        warn.mockRestore();
+      }
+    });
+
     it('reads the discovery document once and turns PKCE on', async () => {
       const fetchMock = mockFetch([
         { url: DISCOVERY_URL, body: discoveryDocument() },

@@ -3,6 +3,10 @@ import { PASSKEY_CHALLENGE_COOKIE } from '../constants/passkeys.constants';
 import { PasskeyAssertionService } from './passkey-assertion.service';
 import { WebAuthnAdapter } from './webauthn.adapter';
 import {
+  createModelMock,
+  partialMock,
+} from '../../../common/testing/test-doubles.harness-spec';
+import {
   CREDENTIAL_BODY,
   CREDENTIAL_ID,
   createChallengeService,
@@ -49,10 +53,10 @@ async function createHarness(
 
   return {
     service: new PasskeyAssertionService(
-      passkeyModel as unknown as ConstructorParameters<
-        typeof PasskeyAssertionService
-      >[0],
-      adapter as unknown as WebAuthnAdapter,
+      createModelMock<ConstructorParameters<typeof PasskeyAssertionService>[0]>(
+        passkeyModel,
+      ),
+      partialMock<WebAuthnAdapter>(adapter),
       createPasskeyConfig(),
       challenges,
     ),
@@ -240,8 +244,10 @@ describe('PasskeyAssertionService', () => {
           .mockResolvedValue({ newCounter: 5, userVerified: true }),
       };
       const service = new PasskeyAssertionService(
-        passkeyModel as never,
-        adapter as never,
+        createModelMock<
+          ConstructorParameters<typeof PasskeyAssertionService>[0]
+        >(passkeyModel),
+        partialMock<WebAuthnAdapter>(adapter),
         createPasskeyConfig(),
         challenges,
       );
@@ -275,14 +281,17 @@ describe('PasskeyAssertionService', () => {
         findOne: jest.fn().mockResolvedValue(passkey),
         updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
       };
+      const adapter = {
+        createAuthenticationOptions: jest.fn(),
+        verifyAssertion: jest
+          .fn()
+          .mockResolvedValue({ newCounter: 0, userVerified: true }),
+      };
       const service = new PasskeyAssertionService(
-        passkeyModel as never,
-        {
-          createAuthenticationOptions: jest.fn(),
-          verifyAssertion: jest
-            .fn()
-            .mockResolvedValue({ newCounter: 0, userVerified: true }),
-        } as never,
+        createModelMock<
+          ConstructorParameters<typeof PasskeyAssertionService>[0]
+        >(passkeyModel),
+        partialMock<WebAuthnAdapter>(adapter),
         createPasskeyConfig(),
         challenges,
       );

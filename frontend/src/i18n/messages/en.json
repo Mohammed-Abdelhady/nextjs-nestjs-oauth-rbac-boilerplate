@@ -118,8 +118,6 @@
       "errors": {
         "nameRequired": "Name is required",
         "nameMinLength": "Name must be at least 2 characters",
-        "nameMaxLength": "Name must not exceed 50 characters",
-        "namePattern": "Name can only contain letters, spaces, hyphens and apostrophes",
         "emailRequired": "Email is required",
         "emailInvalid": "Please enter a valid email address",
         "emailExists": "Email already registered",
@@ -511,7 +509,6 @@
       "nameRequired": "Name is required",
       "nameMinLength": "Name must be at least 2 characters",
       "nameMaxLength": "Name must not exceed 100 characters",
-      "namePattern": "Name can only contain letters, spaces, hyphens and apostrophes",
       "noChanges": "No changes to save",
       "error": "Failed to update profile"
     },
@@ -580,7 +577,7 @@
       "INVALID_CURRENT_PASSWORD": "Current password is incorrect",
       "SAME_PASSWORD": "New password must be different from current password",
       "CANNOT_REVOKE_CURRENT_SESSION": "You cannot revoke your current session",
-      "ADMIN_CANNOT_DEACTIVATE_SELF": "Administrators cannot deactivate their own account",
+      "ADMIN_CANNOT_DEACTIVATE_SELF": "The last active administrator cannot deactivate their own account",
       "REAUTH_REQUIRED": "Please re-authenticate to perform this action",
       "NO_PENDING_PASSWORD_RESET": "No password reset request found. Please request a new one",
       "PASSWORD_RESET_CODE_EXPIRED": "Password reset code has expired. Please request a new one",

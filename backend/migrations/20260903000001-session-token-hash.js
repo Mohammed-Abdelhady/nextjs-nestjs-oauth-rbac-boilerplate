@@ -1,3 +1,7 @@
+const { dropIndexIfExists } = require(
+  '../migration-support/migration-index-utils',
+);
+
 /**
  * Migration: Session Token Hash
  *
@@ -41,7 +45,7 @@ module.exports = {
 
     if (oldRefreshTokenIndex) {
       try {
-        await sessionCollection.dropIndex(oldRefreshTokenIndex.name);
+        await dropIndexIfExists(sessionCollection, oldRefreshTokenIndex.name);
       } catch (error) {
         console.warn(`Failed to drop refreshToken index: ${error.message}`);
       }
@@ -69,11 +73,24 @@ module.exports = {
   async down(db) {
     const sessionCollection = db.collection('sessions');
 
+    let primaryIndexDropped = false;
     try {
-      await sessionCollection.dropIndex('tokenHash_unique');
+      primaryIndexDropped = await dropIndexIfExists(
+        sessionCollection,
+        'tokenHash_unique',
+      );
     } catch {
+      // Preserve the released fallback when dropping the named index fails.
+    }
+    if (!primaryIndexDropped) {
       try {
-        await sessionCollection.dropIndex('tokenHash_1');
+        const fallbackIndexDropped = await dropIndexIfExists(
+          sessionCollection,
+          'tokenHash_1',
+        );
+        if (!fallbackIndexDropped) {
+          console.warn('Failed to drop tokenHash index: IndexNotFound');
+        }
       } catch (error) {
         console.warn(`Failed to drop tokenHash index: ${error.message}`);
       }

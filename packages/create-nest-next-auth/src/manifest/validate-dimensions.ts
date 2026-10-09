@@ -1,0 +1,238 @@
+import type {
+  CatalogueKeyRule,
+  Database,
+  Preset,
+  ProjectOption,
+  SharedModule,
+  Target,
+  TargetRequires,
+} from '../types.js';
+import {
+  isRecord,
+  readBoolean,
+  readIdPattern,
+  readOptionalBoolean,
+  readPathArray,
+  readPresetValue,
+  readStatus,
+  readString,
+  readStringArray,
+} from './read.js';
+
+export interface Dimensions {
+  targets: Record<string, Target>;
+  shared: Record<string, SharedModule>;
+  databases: Record<string, Database>;
+  options: Record<string, ProjectOption>;
+  presets: Record<string, Preset>;
+}
+
+function readTargetRequires(value: unknown, where: string, problems: string[]): TargetRequires {
+  if (value === undefined) return { shared: [], targets: [] };
+  if (!isRecord(value)) {
+    problems.push(`${where} must be an object with shared and targets lists`);
+    return { shared: [], targets: [] };
+  }
+  return {
+    shared: readStringArray(value.shared ?? [], `${where}.shared`, problems),
+    targets: readStringArray(value.targets ?? [], `${where}.targets`, problems),
+  };
+}
+
+function readTarget(id: string, value: unknown, problems: string[]): Target {
+  if (!isRecord(value)) {
+    problems.push(`targets.${id} must be an object`);
+    return emptyTarget();
+  }
+  return {
+    label: readString(value.label, `targets.${id}.label`, problems),
+    default: readBoolean(value.default, `targets.${id}.default`, problems),
+    files: readPathArray(value.files ?? [], `targets.${id}.files`, problems),
+    workspaces: readStringArray(value.workspaces ?? [], `targets.${id}.workspaces`, problems),
+    envFiles: readPathArray(value.envFiles ?? [], `targets.${id}.envFiles`, problems),
+    requires: readTargetRequires(value.requires, `targets.${id}.requires`, problems),
+    needsSignInSite: readOptionalBoolean(
+      value.needsSignInSite,
+      `targets.${id}.needsSignInSite`,
+      problems,
+    ),
+    status: readStatus(value.status, `targets.${id}.status`, problems),
+  };
+}
+
+function emptyTarget(): Target {
+  return {
+    label: '',
+    default: false,
+    files: [],
+    workspaces: [],
+    envFiles: [],
+    requires: { shared: [], targets: [] },
+    status: 'planned',
+  };
+}
+
+function readShared(id: string, value: unknown, problems: string[]): SharedModule {
+  if (!isRecord(value)) {
+    problems.push(`shared.${id} must be an object`);
+    return { files: [], workspaces: [] };
+  }
+  return {
+    files: readPathArray(value.files ?? [], `shared.${id}.files`, problems),
+    workspaces: readStringArray(value.workspaces ?? [], `shared.${id}.workspaces`, problems),
+  };
+}
+
+function readDatabase(id: string, value: unknown, problems: string[]): Database {
+  if (!isRecord(value)) {
+    problems.push(`databases.${id} must be an object`);
+    return emptyDatabase();
+  }
+  return {
+    label: readString(value.label, `databases.${id}.label`, problems),
+    default: readBoolean(value.default, `databases.${id}.default`, problems),
+    files: readPathArray(value.files ?? [], `databases.${id}.files`, problems),
+    envVars: readStringArray(value.envVars ?? [], `databases.${id}.envVars`, problems),
+    composeServices: readStringArray(
+      value.composeServices ?? [],
+      `databases.${id}.composeServices`,
+      problems,
+    ),
+    status: readStatus(value.status, `databases.${id}.status`, problems),
+  };
+}
+
+function emptyDatabase(): Database {
+  return {
+    label: '',
+    default: false,
+    files: [],
+    envVars: [],
+    composeServices: [],
+    status: 'planned',
+  };
+}
+
+function readCatalogueKeys(value: unknown, where: string, problems: string[]): CatalogueKeyRule[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) {
+    problems.push(`${where} must be an array`);
+    return [];
+  }
+  return value.map((entry, index) => {
+    if (!isRecord(entry)) {
+      problems.push(`${where}[${index}] must be an object`);
+      return { path: '', keys: [] };
+    }
+    return {
+      path: readString(entry.path, `${where}[${index}].path`, problems),
+      keys: readStringArray(entry.keys, `${where}[${index}].keys`, problems),
+    };
+  });
+}
+
+function readOption(id: string, value: unknown, problems: string[]): ProjectOption {
+  if (!isRecord(value)) {
+    problems.push(`options.${id} must be an object`);
+    return emptyOption();
+  }
+  return {
+    label: readString(value.label, `options.${id}.label`, problems),
+    default: readBoolean(value.default, `options.${id}.default`, problems),
+    files: readPathArray(value.files ?? [], `options.${id}.files`, problems),
+    requires: readStringArray(value.requires ?? [], `options.${id}.requires`, problems),
+    docs: readPathArray(value.docs ?? [], `options.${id}.docs`, problems),
+    catalogueKeys: readCatalogueKeys(
+      value.catalogueKeys ?? [],
+      `options.${id}.catalogueKeys`,
+      problems,
+    ),
+    status: readStatus(value.status, `options.${id}.status`, problems),
+  };
+}
+
+function emptyOption(): ProjectOption {
+  return {
+    label: '',
+    default: false,
+    files: [],
+    requires: [],
+    docs: [],
+    catalogueKeys: [],
+    status: 'planned',
+  };
+}
+
+const PRESET_KEYS = new Set(['targets', 'features', 'options']);
+
+function readPreset(id: string, value: unknown, problems: string[]): Preset {
+  if (!isRecord(value)) {
+    problems.push(`presets.${id} must be an object`);
+    return { targets: [], features: [], options: [] };
+  }
+  for (const key of Object.keys(value)) {
+    if (!PRESET_KEYS.has(key)) problems.push(`presets.${id} has unknown key "${key}"`);
+  }
+  return {
+    targets: readPresetValue(value.targets, `presets.${id}.targets`, problems),
+    features: readPresetValue(value.features, `presets.${id}.features`, problems),
+    options: readPresetValue(value.options, `presets.${id}.options`, problems),
+  };
+}
+
+function readDimension<T>(
+  value: unknown,
+  where: string,
+  read: (id: string, entry: unknown, problems: string[]) => T,
+  problems: string[],
+): Record<string, T> {
+  if (value === undefined) return {};
+  if (!isRecord(value)) {
+    problems.push(`${where} must be an object`);
+    return {};
+  }
+  const entries: Record<string, T> = {};
+  for (const [id, entry] of Object.entries(value)) {
+    readIdPattern(id, where, problems);
+    entries[id] = read(id, entry, problems);
+  }
+  return entries;
+}
+
+/** Reads the version 2 dimensions. Missing dimensions read as empty. */
+export function readDimensions(value: Record<string, unknown>, problems: string[]): Dimensions {
+  return {
+    targets: readDimension(value.targets, 'targets', readTarget, problems),
+    shared: readDimension(value.shared, 'shared', readShared, problems),
+    databases: readDimension(value.databases, 'databases', readDatabase, problems),
+    options: readDimension(value.options, 'options', readOption, problems),
+    presets: readDimension(value.presets, 'presets', readPreset, problems),
+  };
+}
+
+export function legacyDimensions(): Dimensions {
+  return {
+    targets: {
+      web: {
+        label: 'Web app (Next.js)',
+        default: true,
+        files: [],
+        workspaces: ['frontend'],
+        envFiles: [],
+        requires: { shared: [], targets: [] },
+      },
+    },
+    shared: {},
+    databases: {
+      mongodb: {
+        label: 'MongoDB',
+        default: true,
+        files: [],
+        envVars: [],
+        composeServices: [],
+      },
+    },
+    options: {},
+    presets: {},
+  };
+}

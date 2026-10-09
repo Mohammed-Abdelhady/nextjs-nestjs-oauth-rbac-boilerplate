@@ -6,11 +6,15 @@ export async function runHttpProbes(
   timeout = 10_000,
   maxBytes = 1024 * 1024,
 ) {
+  // Locales that render right to left; everything else reads left to right.
+  const rightToLeft = [
+    'ar', // feature:locale-ar
+  ];
   const targets = [
     { name: 'backend-health', url: 'http://backend:5000/health' },
     { name: 'nginx-health', url: 'http://nginx:8080/health' },
     { name: 'frontend-en', url: 'http://frontend:3000/en/auth/login', locale: 'en' },
-    { name: 'frontend-ar', url: 'http://frontend:3000/ar/auth/login', locale: 'ar' },
+    { name: 'frontend-ar', url: 'http://frontend:3000/ar/auth/login', locale: 'ar' }, // feature:locale-ar
     { name: 'auth-methods', url: 'http://backend:5000/api/auth/methods' },
   ];
   const checked = [];
@@ -44,7 +48,7 @@ export async function runHttpProbes(
       const html = body.match(/<html\b[^>]*>/i)?.[0] ?? '';
       const loading =
         body.match(/<div\b[^>]*data-testid="store-rehydration-loading"[^>]*>/i)?.[0] ?? '';
-      const direction = target.locale === 'ar' ? 'rtl' : 'ltr';
+      const direction = rightToLeft.includes(target.locale) ? 'rtl' : 'ltr';
       // PersistGate serves this accessible shell before the browser hydrates the login form.
       if (
         !html.includes(`lang="${target.locale}"`) ||
@@ -106,7 +110,13 @@ export function validateProbeResults(output) {
   } catch {
     throw new Error('container HTTP probes: invalid result JSON');
   }
-  const names = ['backend-health', 'nginx-health', 'frontend-en', 'frontend-ar', 'auth-methods'];
+  const names = [
+    'backend-health',
+    'nginx-health',
+    'frontend-en',
+    'frontend-ar', // feature:locale-ar
+    'auth-methods',
+  ];
   const reasons = [
     'unexpected HTTP status or redirect',
     'response too large',

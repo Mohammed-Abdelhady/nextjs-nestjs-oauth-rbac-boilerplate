@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import {
   DEFAULT_COMMIT_MESSAGE,
   GIT_FALLBACK_EMAIL,
@@ -8,6 +9,7 @@ import { lastLines, run } from '../utils/exec.js';
 export interface GitResult {
   ok: boolean;
   reason?: string;
+  enclosingWorkTree?: string;
 }
 
 async function hasIdentity(root: string): Promise<boolean> {
@@ -17,22 +19,27 @@ async function hasIdentity(root: string): Promise<boolean> {
 }
 
 /**
- * Creates the repository and the first commit. Runs before npm install so the
+ * Creates the repository and the first commit. Runs before pnpm install so the
  * project's husky hooks are not installed yet and cannot reject this commit.
  */
 export async function initRepository(root: string): Promise<GitResult> {
-  const init = await run('git', ['init'], root);
-  if (init.code !== 0) return { ok: false, reason: lastLines(init.stderr, 2) || 'git init failed' };
+  const enclosing = await run('git', ['rev-parse', '--show-toplevel'], root);
+  const context =
+    enclosing.code === 0 ? { enclosingWorkTree: enclosing.stdout.replace(/\n$/, '') } : {};
+  const init = await run('git', ['init', '--', resolve(root)], root);
+  if (init.code !== 0) {
+    return { ...context, ok: false, reason: lastLines(init.stderr, 2) || 'git init failed' };
+  }
 
   const add = await run('git', ['add', '-A'], root);
-  if (add.code !== 0) return { ok: false, reason: lastLines(add.stderr, 2) };
+  if (add.code !== 0) return { ...context, ok: false, reason: lastLines(add.stderr, 2) };
 
   const identity = (await hasIdentity(root))
     ? []
     : ['-c', `user.name=${GIT_FALLBACK_NAME}`, '-c', `user.email=${GIT_FALLBACK_EMAIL}`];
 
   const commit = await run('git', [...identity, 'commit', '-m', DEFAULT_COMMIT_MESSAGE], root);
-  if (commit.code !== 0) return { ok: false, reason: lastLines(commit.stderr, 2) };
+  if (commit.code !== 0) return { ...context, ok: false, reason: lastLines(commit.stderr, 2) };
 
-  return { ok: true };
+  return { ...context, ok: true };
 }

@@ -1,8 +1,9 @@
+import { Description, Heading } from '@/components/design-system';
 import { Link } from '@/i18n/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Rocket, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'; // feature:locale-ar
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 
 /**
@@ -12,7 +13,7 @@ import { ThemeSwitcher } from '@/components/ThemeSwitcher';
  * Left: Welcome message and CTAs | Right: Decorative illustration
  *
  * Features:
- * - Fully localized (English/Arabic with RTL support)
+ * - Fully localized with direction-safe utilities
  * - Theme-aware with semantic color tokens
  * - Responsive design (illustration hidden on mobile)
  * - Accessible with proper ARIA attributes
@@ -24,7 +25,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   return (
     <div className="relative min-h-screen bg-background text-foreground flex justify-center">
       <header className="absolute inset-x-0 top-0 z-10 flex items-center justify-end gap-2 p-4">
-        <LanguageSwitcher />
+        <LanguageSwitcher /> {/* feature:locale-ar */}
         <ThemeSwitcher />
       </header>
       <main
@@ -37,15 +38,17 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         <section className="lg:w-1/2 xl:w-5/12 p-6 sm:p-12 flex flex-col justify-center">
           <div className="flex flex-col items-center lg:items-start text-center lg:text-start">
             {/* Main Heading */}
-            <h1 className="text-3xl xl:text-4xl font-extrabold text-foreground mb-4">
+            <Heading level={1} variant="display" className="mb-4">
               {t('title')}
-            </h1>
+            </Heading>
 
             {/* Subtitle */}
             <p className="text-lg font-semibold text-primary mb-4 max-w-md">{t('subtitle')}</p>
 
             {/* Description */}
-            <p className="text-lg text-muted-foreground mb-8 max-w-md">{t('description')}</p>
+            <Description variant="lead" className="mb-8 max-w-md">
+              {t('description')}
+            </Description>
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">

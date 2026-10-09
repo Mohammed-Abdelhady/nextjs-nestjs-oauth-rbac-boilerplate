@@ -1,0 +1,56 @@
+{
+  "name": "@app/mobile-expo",
+  "version": "0.1.0",
+  "description": "Expo shell for the mobile sign-in engine",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "expo start --dev-client",
+    "ios": "expo run:ios",
+    "android": "expo run:android",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run && node --test test/scene-lifecycle.test.cjs"
+  },
+  "dependencies": {
+    "@app/device-key": "workspace:*",
+    "@app/native-adapters": "workspace:*",
+    "@app/native-auth": "workspace:*",
+    "@app/sdk": "workspace:*",
+    "expo": "57.0.26",
+    "expo-crypto": "57.0.3",
+    "expo-file-system": "57.0.7",
+    "expo-linking": "57.0.11",
+    "expo-secure-store": "57.0.4",
+    "expo-web-browser": "57.0.3",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3"
+  },
+  "devDependencies": {
+    "@app/metro-config": "workspace:*",
+    "@babel/core": "^7.25.2",
+    "@eslint/js": "^9.39.5",
+    "@types/react": "~19.2.0",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-prettier": "^5.5.6",
+    "globals": "^16.5.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.70.1",
+    "vitest": "^5.0.2"
+  },
+  "expo": {
+    "install": {
+      "exclude": [
+        "typescript@~6.0.3"
+      ]
+    }
+  },
+  "engines": {
+    "node": ">=22.12.0 <23",
+    "pnpm": "12.6.0"
+  },
+  "packageManager": "pnpm@12.6.0"
+}

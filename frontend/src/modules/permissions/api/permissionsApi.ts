@@ -1,4 +1,5 @@
 import { baseApi } from '@/store/api/baseApi';
+import { invalidateOnSuccess } from '@/store/api/invalidateOnSuccess';
 
 /**
  * User permissions response
@@ -7,6 +8,12 @@ export interface UserPermissionsResponse {
   userId: string;
   permissions: string[];
   role: string;
+}
+
+/** Argument of the add and remove permission mutations. */
+export interface UserPermissionArgs {
+  userId: string;
+  permission: string;
 }
 
 /**
@@ -34,10 +41,7 @@ export const permissionsApi = baseApi.injectEndpoints({
     /**
      * Add permission to user
      */
-    addPermission: builder.mutation<
-      UserPermissionsResponse,
-      { userId: string; permission: string }
-    >({
+    addPermission: builder.mutation<UserPermissionsResponse, UserPermissionArgs>({
       query: ({ userId, permission }) => ({
         url: `/api/admin/users/${userId}/permissions`,
         method: 'POST',
@@ -48,16 +52,16 @@ export const permissionsApi = baseApi.injectEndpoints({
         data: UserPermissionsResponse;
         message: string;
       }) => response.data,
-      invalidatesTags: (result, error, { userId }) => [{ type: 'Permissions', id: userId }, 'User'],
+      invalidatesTags: invalidateOnSuccess(({ userId }: UserPermissionArgs) => [
+        { type: 'Permissions', id: userId },
+        'User',
+      ]),
     }),
 
     /**
      * Remove permission from user
      */
-    removePermission: builder.mutation<
-      UserPermissionsResponse,
-      { userId: string; permission: string }
-    >({
+    removePermission: builder.mutation<UserPermissionsResponse, UserPermissionArgs>({
       query: ({ userId, permission }) => ({
         url: `/api/admin/users/${userId}/permissions/${encodeURIComponent(permission)}`,
         method: 'DELETE',
@@ -67,7 +71,10 @@ export const permissionsApi = baseApi.injectEndpoints({
         data: UserPermissionsResponse;
         message: string;
       }) => response.data,
-      invalidatesTags: (result, error, { userId }) => [{ type: 'Permissions', id: userId }, 'User'],
+      invalidatesTags: invalidateOnSuccess(({ userId }: UserPermissionArgs) => [
+        { type: 'Permissions', id: userId },
+        'User',
+      ]),
     }),
   }),
 });

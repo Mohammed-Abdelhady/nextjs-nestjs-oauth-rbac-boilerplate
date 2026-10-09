@@ -1,0 +1,12 @@
+{
+  "errors": {
+    "codes": {
+      "SESSION_LIMIT_REACHED": "Too many active sessions. Sign out of another device and try again",
+      "AUTHORITY_UNAVAILABLE": "Sign-in is temporarily unavailable. Please try again",
+      "TRANSACTION_OUTCOME_UNKNOWN": "The server could not confirm whether this request completed. Check its status and try again. You may need to sign in again",
+      "APPLICATION_NOT_FOUND": "This application is not registered",
+      "APPLICATION_DISABLED": "This application is currently unavailable",
+      "GRANT_BLOCKED": "This application is blocked for your account"
+    }
+  }
+}

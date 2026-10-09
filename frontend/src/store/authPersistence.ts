@@ -10,8 +10,8 @@ export function authPersistence(storage: Storage): PersistConfig<AuthState> {
     whitelist: ['isAuthenticated'],
     migrate: (state: PersistedState): Promise<PersistedState> => {
       if (!state) return Promise.resolve(undefined);
-      const saved = state as unknown as Record<string, unknown>;
       // Old transforms wrapped every field, including loading and persistence metadata.
+      const saved = state as Record<string, unknown>;
       return Promise.resolve({
         isAuthenticated: saved.isAuthenticated === true,
         _persist: { version: 2, rehydrated: false },

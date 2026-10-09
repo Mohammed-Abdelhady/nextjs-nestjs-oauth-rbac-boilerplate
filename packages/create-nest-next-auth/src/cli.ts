@@ -1,40 +1,43 @@
+import { addRulesCommand } from './add-rules/command.js';
 import { readdir } from 'node:fs/promises';
-import { basename, relative, resolve } from 'node:path';
-import { cancel, intro, log, note, outro, spinner } from '@clack/prompts';
-import { CLI_NAME } from './constants/index.js';
+import { basename, resolve } from 'node:path';
+import { cancel, intro, log, note, outro } from '@clack/prompts';
+import { CommanderError } from 'commander';
+import { BROKEN_PACKAGE_EXIT_CODE, CLI_NAME, USAGE_EXIT_CODE } from './constants/index.js';
+import { ConfigFileError, readConfigFile } from './flags/config-file.js';
 import { parseCliOptions } from './flags/options.js';
+import { toPlanRequest } from './flags/request.js';
+import { CliError, BrokenPackageError } from './errors.js';
 import { loadManifest } from './manifest/load.js';
-import { defaultFeatureIds, resolveSelection } from './manifest/select.js';
-import { packageRoot, templateDir } from './paths.js';
-import { prune } from './prune/index.js';
-import { askDirectory, askFeatures, CANCELLED } from './prompts/index.js';
-import { describeDangling, describeSelection } from './report.js';
-import { copyTemplate } from './scaffold/copy.js';
-import { initRepository } from './scaffold/git.js';
-import { detectPackageManager, installDependencies, isSupported } from './scaffold/install.js';
-import { buildDocLinks, buildNextSteps } from './scaffold/next-steps.js';
-import { setProjectName } from './scaffold/package-json.js';
-import type { CliOptions, Manifest } from './types.js';
+import { resolvePlan } from './manifest/plan.js';
+import { packageRoot } from './paths.js';
+import { askDirectory, CANCELLED } from './prompts/index.js';
+import { askPlan, type PlanPromptNeeds, planPromptNeeds } from './prompts/plan.js';
+import { buildSummary, describePlanErrors } from './report/summary.js';
+import { answersRecord, readInstallerIdentity, readTemplateIdentity } from './scaffold/answers.js';
+import type { CliOptions } from './types.js';
+import { scaffoldProject } from './scaffold/project.js';
+import { renderSetupSummary } from './report/setup-summary.js';
+import { isErrnoException } from './utils/fs.js';
 import { validateProjectName } from './utils/project-name.js';
 
 const DEFAULT_DIRECTORY = 'my-app';
-
-class CliError extends Error {}
 
 async function isEmptyDirectory(path: string): Promise<boolean> {
   try {
     return (await readdir(path)).length === 0;
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return true;
+    if (isErrnoException(error) && error.code === 'ENOENT') return true;
     throw error;
   }
 }
 
-/** `cd` target for the next steps: relative when that is not a stack of `..`. */
-function shortestPath(target: string): string {
-  const fromHere = relative(process.cwd(), target);
-  if (fromHere === '') return '.';
-  return fromHere.startsWith('..') ? target : fromHere;
+async function validateTarget(input: string): Promise<string> {
+  const target = resolve(process.cwd(), input);
+  const check = validateProjectName(basename(target));
+  if (!check.valid) throw new CliError(check.message ?? 'Invalid project name.');
+  if (!(await isEmptyDirectory(target))) throw new CliError(`${target} exists and is not empty.`);
+  return target;
 }
 
 async function resolveTarget(options: CliOptions): Promise<string> {
@@ -50,111 +53,110 @@ async function resolveTarget(options: CliOptions): Promise<string> {
     }
   }
 
-  const target = resolve(process.cwd(), input);
-  const check = validateProjectName(basename(target));
-  if (!check.valid) throw new CliError(check.message ?? 'Invalid project name.');
-  if (!(await isEmptyDirectory(target))) throw new CliError(`${target} exists and is not empty.`);
-  return target;
+  return validateTarget(input);
 }
 
-async function resolveFeatures(manifest: Manifest, options: CliOptions): Promise<string[]> {
-  if (options.features !== undefined) return options.features;
-  if (options.yes) return defaultFeatureIds(manifest);
-
-  const answer = await askFeatures(manifest, defaultFeatureIds(manifest));
-  if (answer === CANCELLED) throw new CliError('Cancelled.');
-  return answer;
+interface PromptNeeds extends PlanPromptNeeds {
+  directory: boolean;
 }
 
-function requireInteractive(options: CliOptions): void {
-  const needsPrompt = options.directory === undefined || options.features === undefined;
+function requireInteractive(options: CliOptions, needs: PromptNeeds): void {
+  const needsPrompt =
+    needs.directory ||
+    needs.targets ||
+    needs.database ||
+    needs.features ||
+    needs.options ||
+    needs.rules;
   if (!needsPrompt || options.yes || process.stdin.isTTY === true) return;
-  throw new CliError('No terminal to prompt in. Pass a directory with --yes or --features.');
+  throw new CliError('No terminal to prompt in. Pass --yes or the matching flags.');
 }
 
-async function scaffold(target: string, manifest: Manifest, options: CliOptions): Promise<number> {
-  const selection = resolveSelection(manifest, await resolveFeatures(manifest, options));
-  if (selection.rejected.length > 0) {
-    log.warn(`Not available yet, skipped: ${selection.rejected.join(', ')}`);
-  }
-  if (selection.selected.length === 0) throw new CliError('Select at least one sign-in method.');
-  if (selection.added.length > 0) {
-    log.info(`Added because another method needs it: ${selection.added.join(', ')}`);
-  }
-
-  const copying = spinner();
-  copying.start('Copying the template');
-  await copyTemplate(templateDir(), target);
-  await setProjectName(target, basename(target));
-  copying.stop('Template copied');
-
-  const pruning = spinner();
-  pruning.start('Removing what you did not pick');
-  const result = await prune(target, manifest, selection.selected);
-  pruning.stop('Pruned');
-  log.message(describeSelection(manifest, result).join('\n'));
-
-  if (result.dangling.length > 0) {
-    log.error(describeDangling(result.dangling).join('\n'));
-    outro(`Left the tree at ${target} so you can inspect it.`);
-    return 1;
-  }
-
-  await finishSetup(target, manifest, selection.selected, options);
-  return 0;
-}
-
-async function finishSetup(
-  target: string,
-  manifest: Manifest,
-  selected: string[],
-  options: CliOptions,
-): Promise<void> {
-  if (options.git) {
-    const git = await initRepository(target);
-    if (git.ok) log.step('Created a git repository with a first commit');
-    else log.warn(`Skipped git: ${git.reason ?? 'git is not available'}`);
-  }
-
-  const manager = detectPackageManager();
-  if (options.install && !isSupported(manager)) {
-    log.warn(`${manager} is not supported yet, using npm.`);
-  }
-
-  let installed = false;
-  if (options.install) {
-    const installing = spinner();
-    installing.start('Installing dependencies with npm');
-    const install = await installDependencies(target);
-    installed = install.ok;
-    if (install.ok) {
-      installing.stop('Dependencies installed');
-    } else {
-      installing.stop('npm install failed');
-      log.error(install.reason ?? 'Run npm install in the project directory.');
-    }
-  }
-
-  const directoryLabel = shortestPath(target);
-  note(buildNextSteps({ directoryLabel, installed }).join('\n'), 'Next steps');
-  note(buildDocLinks(manifest, selected).join('\n'), 'Docs');
-}
-
-export async function main(argv: string[], version: string): Promise<number> {
-  const options = parseCliOptions(argv, version);
-  intro(`${CLI_NAME} ${version}`);
-
+export async function main(
+  argv: string[],
+  manifestRoot = packageRoot(),
+  installerRoot = packageRoot(),
+): Promise<number> {
   try {
-    requireInteractive(options);
-    const manifest = await loadManifest(packageRoot());
-    const target = await resolveTarget(options);
-    const code = await scaffold(target, manifest, options);
-    if (code === 0) outro('Done.');
-    return code;
+    // The installer identifies itself once, before anything is parsed or
+    // written: commander prints this version, the answers file records it,
+    // and a damaged package stops a scaffolding run and a dry run alike.
+    const installer = await readInstallerIdentity(installerRoot);
+    if (argv[0] === 'add' && argv[1] === 'rules')
+      return await addRulesCommand(argv.slice(2), installer.version, installerRoot);
+    const options = parseCliOptions(argv, installer.version);
+    intro(`${CLI_NAME} ${installer.version}`);
+
+    const manifest = await loadManifest(manifestRoot);
+    const template = await readTemplateIdentity(manifestRoot);
+    const config = options.config === undefined ? undefined : await readConfigFile(options.config);
+    const request = toPlanRequest(options, config);
+
+    // Flags and the config file are authoritative. Report their errors before
+    // any prompt, so an invalid run never asks a question first.
+    const requested = resolvePlan(manifest, request);
+    if (requested.errors.length > 0) {
+      for (const line of describePlanErrors(manifest, requested.errors)) log.error(line);
+      outro('Nothing was written.');
+      return USAGE_EXIT_CODE;
+    }
+
+    const needs: PromptNeeds = {
+      directory: !options.dryRun && options.directory === undefined,
+      ...planPromptNeeds(manifest, request, process.stdin.isTTY === true),
+    };
+    requireInteractive(options, needs);
+
+    const target = options.dryRun
+      ? options.directory === undefined
+        ? ''
+        : await validateTarget(options.directory)
+      : await resolveTarget(options);
+
+    if (!options.yes) {
+      const answers = await askPlan(manifest, request, needs);
+      if (answers === CANCELLED) throw new CliError('Cancelled.');
+      Object.assign(request, answers);
+    }
+
+    const plan = resolvePlan(manifest, request);
+    if (plan.errors.length > 0) {
+      for (const line of describePlanErrors(manifest, plan.errors)) log.error(line);
+      outro('Nothing was written.');
+      return USAGE_EXIT_CODE;
+    }
+    if (plan.features.length === 0) throw new CliError('Select at least one sign-in method.');
+
+    log.message(buildSummary(manifest, plan).join('\n'));
+
+    if (options.dryRun) {
+      outro('Dry run: nothing written.');
+      return 0;
+    }
+
+    const summary = await scaffoldProject(
+      target,
+      manifest,
+      plan,
+      options,
+      answersRecord(installer, template, plan),
+    );
+    if (summary === undefined) return 1;
+    note(renderSetupSummary(summary).join('\n'), 'Generation summary');
+    note(summary.nextSteps.join('\n'), 'Next steps');
+    note(summary.docs.join('\n'), 'Docs');
+    if (summary.exitCode === 0) outro('Done.');
+    return summary.exitCode;
   } catch (error) {
-    if (error instanceof CliError) {
+    // Commander's own exits (--help, --version, flag syntax) keep its codes.
+    if (error instanceof CommanderError) throw error;
+    if (error instanceof BrokenPackageError) {
       cancel(error.message);
-      return 1;
+      return BROKEN_PACKAGE_EXIT_CODE;
+    }
+    if (error instanceof ConfigFileError || error instanceof CliError) {
+      cancel(error.message);
+      return USAGE_EXIT_CODE;
     }
     throw error;
   }

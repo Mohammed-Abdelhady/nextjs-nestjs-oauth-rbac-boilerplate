@@ -1,5 +1,119 @@
 {
-  "$comment": "Feature map read by packages/create-nest-next-auth. Entries with \"status\": \"planned\" are not offered by the CLI. Entries with \"kind\": \"hidden\" come in through another feature's \"requires\" instead of being picked directly. Files and env vars listed here are deleted from a generated project when the feature is not selected. A path may sit under a directory another feature claims, as the provider strategies do under oauth-core; what a path may not do is belong to a feature that is still needed once this one is gone. Lines shared code needs only for one feature carry a `// feature:<id>` marker instead; see the CLI README.",
+  "version": 2,
+  "$comment": "Feature map read by packages/create-nest-next-auth. Entries with \"status\": \"planned\" are not offered by the CLI. Entries with \"kind\": \"hidden\" come in through another feature's \"requires\" instead of being picked directly. Files and env vars listed here are deleted from a generated project when the feature is not selected. A path may sit under a directory another feature claims, as the provider strategies do under oauth-core; what a path may not do is belong to a feature that is still needed once this one is gone. Lines shared code needs only for one feature carry a `// feature:<id>` marker instead; see the CLI README. While native targets are planned, mobile/** stays in alwaysRemoveFiles. Remove that entry when a native target becomes available so native-core can ship its mobile workspaces.",
+  "targets": {
+    "web": {
+      "label": "Web app (Next.js)",
+      "default": true,
+      "files": ["frontend/**"],
+      "workspaces": ["frontend"],
+      "envFiles": ["frontend/.env.example"]
+    },
+    "native-expo": {
+      "label": "Mobile app, Expo",
+      "default": false,
+      "status": "planned",
+      "requires": { "shared": ["native-core"], "targets": [] },
+      "needsSignInSite": true
+    },
+    "native-cli": {
+      "label": "Mobile app, React Native CLI",
+      "default": false,
+      "status": "planned",
+      "requires": { "shared": ["native-core"] },
+      "needsSignInSite": true
+    }
+  },
+  "shared": {
+    "native-core": {
+      "files": ["mobile/auth/**", "mobile/device-key/**"],
+      "workspaces": ["mobile/auth", "mobile/device-key"]
+    }
+  },
+  "databases": {
+    "mongodb": {
+      "label": "MongoDB",
+      "default": true,
+      "files": ["backend/migrations/**"],
+      "envVars": ["MONGO_URI"],
+      "composeServices": ["mongodb"]
+    },
+    "postgres": {
+      "label": "PostgreSQL",
+      "default": false,
+      "status": "planned"
+    }
+  },
+  "options": {
+    "docker": {
+      "label": "Docker files",
+      "default": true,
+      "files": [
+        "docker-compose.yml",
+        "backend/Dockerfile",
+        "frontend/Dockerfile",
+        ".dockerignore",
+        "backend/.dockerignore",
+        "frontend/.dockerignore",
+        ".env.docker.example",
+        "scripts/config-transforms-tests/config-transforms.ports.test.mjs",
+        "scripts/config-transforms-tests/config-transforms.docker.test.mjs",
+        "scripts/lib/config-transforms.js"
+      ],
+      "docs": [],
+      "catalogueKeys": []
+    },
+    "production": {
+      "label": "Production nginx and compose",
+      "default": true,
+      "requires": ["docker"],
+      "files": [
+        "nginx/**",
+        "docker-compose.prod.yml",
+        "scripts/setup-production.js",
+        "scripts/lib/production-files.js",
+        "scripts/lib/production-prompts.js",
+        "scripts/lib/production-summary.js",
+        "scripts/config-transforms-tests/config-transforms.test.mjs",
+        "scripts/config-transforms-tests/config-transforms.probes.test.mjs",
+        "scripts/config-transforms-tests/config-transforms.diagnostics.test.mjs",
+        "scripts/lib/failure-diagnostics.mjs",
+        "scripts/verify-docker.mjs",
+        "scripts/lib/docker-http-probes.mjs",
+        "scripts/lib/docker-command.mjs",
+        "scripts/lib/docker-smoke-model.mjs",
+        "scripts/lib/docker-source-export.mjs"
+      ],
+      "docs": ["docs/operations/deployment.md", "docs/operations/deployment-custom-domain.md", "docs/operations/PRODUCTION-SETUP.md"],
+      "catalogueKeys": []
+    },
+    "locale-ar": {
+      "label": "Arabic locale",
+      "default": true,
+      "files": [
+        "frontend/src/components/LanguageSwitcher.tsx",
+        "frontend/src/components/LanguageSwitcher.test.tsx",
+        "frontend/src/i18n/messages/ar.json",
+        "frontend/src/i18n/messages/*.ar.json"
+      ],
+      "docs": [],
+      "catalogueKeys": [
+        {
+          "path": "frontend/src/i18n/messages/en.json",
+          "keys": ["common.switchToArabic"]
+        }
+      ]
+    }
+  },
+  "presets": {
+    "minimal": { "targets": ["web"], "features": ["email-password"], "options": [] },
+    "standard": {
+      "targets": ["web"],
+      "features": "defaults",
+      "options": ["docker", "production", "locale-ar"]
+    },
+    "everything": { "targets": "available", "features": "available", "options": "available" }
+  },
   "features": {
     "oauth-core": {
       "label": "OAuth core",
@@ -17,9 +131,13 @@
         "backend/src/user/services/profile-sync.service.spec.ts",
         "backend/src/user/dto/account-linking.dto.ts",
         "backend/test/constants/oauth-boot-env.ts",
+        "backend/test/auth/oauth-link.e2e-spec.ts",
         "frontend/src/modules/oauth/**",
         "frontend/src/modules/account/api/accountLinkingApi.ts",
         "frontend/src/modules/account/api/profileSyncApi.ts",
+        "frontend/src/modules/account/api/__tests__/successOnlyInvalidation.test.ts",
+        "frontend/src/modules/account/api/__tests__/sweepCases.ts",
+        "frontend/src/modules/account/api/__tests__/sweepCoverage.test.ts",
         "frontend/src/modules/account/components/LinkedAccounts.tsx",
         "frontend/src/modules/account/components/LinkedAccountCard.tsx",
         "frontend/src/modules/account/components/LinkProviderButton.tsx",
@@ -43,7 +161,7 @@
       ],
       "envVars": ["SMTP_HOST", "SMTP_PORT", "SMTP_SECURE", "SMTP_USER", "SMTP_PASS", "EMAIL_FROM"],
       "requires": [],
-      "docs": ["docs/setup-smtp.md"]
+      "docs": ["docs/setup/setup-smtp.md", "docs/setup/setup-smtp-mail-service.md", "docs/setup/setup-smtp-production.md"]
     },
     "google": {
       "label": "Google",
@@ -60,7 +178,7 @@
         "NEXT_PUBLIC_GOOGLE_CLIENT_ID"
       ],
       "requires": ["oauth-core"],
-      "docs": ["docs/setup-google-oauth.md"]
+      "docs": ["docs/setup/setup-google-oauth.md", "docs/setup/setup-google-oauth-advanced-configuration.md"]
     },
     "github": {
       "label": "GitHub",
@@ -68,7 +186,8 @@
       "kind": "oauth",
       "default": true,
       "files": [
-        "backend/src/auth/oauth/strategies/github-oauth.strategy.ts"
+        "backend/src/auth/oauth/strategies/github-oauth.strategy.ts",
+        "backend/src/auth/oauth/strategies/github-oauth.strategy.spec.ts"
       ],
       "envVars": [
         "OAUTH_GITHUB_CLIENT_ID",
@@ -77,7 +196,7 @@
         "NEXT_PUBLIC_GITHUB_CLIENT_ID"
       ],
       "requires": ["oauth-core"],
-      "docs": ["docs/setup-github-oauth.md"]
+      "docs": ["docs/setup/setup-github-oauth.md", "docs/setup/setup-github-oauth-troubleshooting.md", "docs/setup/setup-github-oauth-app-options.md"]
     },
     "facebook": {
       "label": "Facebook",
@@ -94,7 +213,7 @@
         "NEXT_PUBLIC_FACEBOOK_APP_ID"
       ],
       "requires": ["oauth-core"],
-      "docs": ["docs/setup-facebook-oauth.md", "docs/facebook-oauth-permissions.md"]
+      "docs": ["docs/setup/setup-facebook-oauth.md", "docs/setup/setup-facebook-oauth-publishing-and-configuration.md", "docs/setup/facebook-oauth-permissions.md"]
     },
     "magic-link": {
       "status": "available",
@@ -119,7 +238,7 @@
         "EMAIL_FROM"
       ],
       "requires": [],
-      "docs": ["docs/setup-magic-link.md"]
+      "docs": ["docs/setup/setup-magic-link.md"]
     },
     "totp": {
       "status": "available",
@@ -136,7 +255,7 @@
       ],
       "envVars": ["TWO_FACTOR_ENABLED", "TOTP_ENCRYPTION_KEY"],
       "requires": [],
-      "docs": ["docs/setup-two-factor.md"]
+      "docs": ["docs/setup/setup-two-factor.md"]
     },
     "passkeys": {
       "status": "available",
@@ -157,7 +276,7 @@
         "OAUTH_STATE_SECRET"
       ],
       "requires": [],
-      "docs": ["docs/setup-passkeys.md"]
+      "docs": ["docs/setup/setup-passkeys.md"]
     },
     "microsoft": {
       "label": "Microsoft",
@@ -175,7 +294,7 @@
         "OAUTH_MICROSOFT_TENANT"
       ],
       "requires": ["oauth-core"],
-      "docs": ["docs/setup-microsoft-oauth.md"]
+      "docs": ["docs/setup/setup-microsoft-oauth.md"]
     },
     "apple": {
       "label": "Apple",
@@ -198,7 +317,7 @@
         "OAUTH_APPLE_PRIVATE_KEY"
       ],
       "requires": ["oauth-core"],
-      "docs": ["docs/setup-apple-oauth.md"]
+      "docs": ["docs/setup/setup-apple-oauth.md"]
     },
     "discord": {
       "label": "Discord",
@@ -215,7 +334,7 @@
         "OAUTH_DISCORD_CALLBACK_URL"
       ],
       "requires": ["oauth-core"],
-      "docs": ["docs/setup-discord-oauth.md"]
+      "docs": ["docs/setup/setup-discord-oauth.md"]
     },
     "linkedin": {
       "label": "LinkedIn",
@@ -232,7 +351,7 @@
         "OAUTH_LINKEDIN_CALLBACK_URL"
       ],
       "requires": ["oauth-core"],
-      "docs": ["docs/setup-linkedin-oauth.md"]
+      "docs": ["docs/setup/setup-linkedin-oauth.md"]
     },
     "gitlab": {
       "status": "available",
@@ -251,7 +370,7 @@
         "OAUTH_GITLAB_BASE_URL"
       ],
       "requires": ["oauth-core"],
-      "docs": ["docs/setup-gitlab-oauth.md"]
+      "docs": ["docs/setup/setup-gitlab-oauth.md"]
     },
     "x": {
       "status": "available",
@@ -269,7 +388,7 @@
         "OAUTH_X_CALLBACK_URL"
       ],
       "requires": ["oauth-core"],
-      "docs": ["docs/setup-x-oauth.md"]
+      "docs": ["docs/setup/setup-x-oauth.md"]
     },
     "slack": {
       "status": "available",
@@ -287,7 +406,7 @@
         "OAUTH_SLACK_CALLBACK_URL"
       ],
       "requires": ["oauth-core"],
-      "docs": ["docs/setup-slack-oauth.md"]
+      "docs": ["docs/setup/setup-slack-oauth.md"]
     },
     "twitch": {
       "status": "available",
@@ -305,7 +424,7 @@
         "OAUTH_TWITCH_CALLBACK_URL"
       ],
       "requires": ["oauth-core"],
-      "docs": ["docs/setup-twitch-oauth.md"]
+      "docs": ["docs/setup/setup-twitch-oauth.md"]
     },
     "oidc": {
       "status": "available",
@@ -336,17 +455,34 @@
         "OAUTH_OIDC_JWKS_URL"
       ],
       "requires": ["oauth-core"],
-      "docs": ["docs/setup-oidc-oauth.md"]
+      "docs": ["docs/setup/setup-oidc-oauth.md"]
     }
   },
   "core": {
     "alwaysRemoveFiles": [
+      ".github/CODEOWNERS",
+      "AGENTS.md",
+      "CLAUDE.md",
       "frontend/e2e/**",
+      "mobile/**",
+      "mobile/adapters/**",
+      "mobile/cli/**",
+      "mobile/expo/**",
+      "mobile/metro/**",
+      "mobile/ui/**",
+      "backend/test/native/engine/native-auth-engine.e2e-spec.ts",
+      "backend/test/native/engine/native-auth-engine-dpop.e2e-spec.ts",
+      "backend/test/native/engine/native-auth-engine-dpop-retry.e2e-spec.ts",
+      "backend/test/native/engine/native-auth-engine-dpop-challenge.e2e-spec.ts",
+      "backend/test/utils/native/native-auth-engine-harness.ts",
+      "backend/test/utils/native/native-auth-engine-dpop-support.ts",
       "frontend/playwright.config.ts",
       "frontend/playwright.frontend.config.ts",
-      "backend/test/utils/browser-server.ts",
-      "backend/test/utils/local-oauth.ts",
+      "backend/test/utils/browser/browser-server.ts",
+      "backend/test/utils/oauth/local-oauth.ts",
+      "frontend/README.maintainer.md",
       "template.manifest.json",
+      "scripts/ci/*.test.mjs",
       ".hyperflow/**",
       "openspec/**"
     ]

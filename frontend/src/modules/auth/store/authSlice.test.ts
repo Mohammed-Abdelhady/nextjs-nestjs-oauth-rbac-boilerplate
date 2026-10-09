@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import authReducer, { loginFulfilled, logout } from './authSlice';
-import type { User } from '../types/auth.types';
+import type { SignedInUser } from '../types/auth.types';
 
-const user: User = {
+const user: SignedInUser = {
   id: 'user-1',
   email: 'user@example.com',
   name: 'Ada',

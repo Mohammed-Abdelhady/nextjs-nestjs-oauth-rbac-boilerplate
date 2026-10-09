@@ -9,8 +9,8 @@ const OBJECT_ID_REGEX = /^[0-9a-fA-F]{24}$/;
  * Throws an AppException with code INVALID_INPUT and status 400 when validation fails.
  */
 @Injectable()
-export class ParseObjectIdPipe implements PipeTransform<string, string> {
-  transform(value: string): string {
+export class ParseObjectIdPipe implements PipeTransform<unknown, string> {
+  transform(value: unknown): string {
     if (typeof value !== 'string' || !OBJECT_ID_REGEX.test(value)) {
       throw new AppException(
         ErrorCode.INVALID_INPUT,

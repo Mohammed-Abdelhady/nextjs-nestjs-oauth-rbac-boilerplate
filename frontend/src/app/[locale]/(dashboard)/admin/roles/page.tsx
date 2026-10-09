@@ -4,17 +4,17 @@ import { useState, useMemo, useCallback, Activity } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { SearchBar, SplitView } from '@/components/design-system';
+import { Description, Heading, SearchBar, SplitView } from '@/components/design-system';
 import { PaginationControl } from '@/components/pagination';
 import { useListRolesQuery } from '@/modules/roles/api/rolesApi';
 import type { Role } from '@/modules/roles/types';
-import { RoleSidebarNav } from '@/modules/permissions/components/RoleSidebarNav';
-import { RoleDetailPanel } from '@/modules/permissions/components/RoleDetailPanel';
+import { RoleSidebarNav } from '@/modules/permissions/components/roles/RoleSidebarNav';
+import { RoleDetailPanel } from '@/modules/permissions/components/roles/RoleDetailPanel';
 import { RoleSplitViewSkeleton, RoleDialogs } from '@/modules/roles/components';
-import { RoutePermissionGuard, ROLE_PERMISSIONS } from '@/modules/permissions';
+import { RoutePermissionGuard } from '@/modules/permissions';
+import { ROLE_PERMISSIONS, parseApiError } from '@app/core';
 import { Plus, Shield } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
-import { parseApiError } from '@/lib/apiError';
 
 export default function RolesPage() {
   const t = useTranslations('roles');
@@ -78,10 +78,10 @@ export default function RolesPage() {
         <div className="my-8">
           <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                {t('count', { count: totalCount })}
-              </p>
+              <Heading level={1} variant="pageTitle">
+                {t('title')}
+              </Heading>
+              <Description className="mt-1">{t('count', { count: totalCount })}</Description>
             </div>
             <Button onClick={() => setCreateDialogOpen(true)} data-testid="create-role-button">
               <Plus className="me-2 h-4 w-4" aria-hidden="true" />
@@ -136,10 +136,12 @@ export default function RolesPage() {
             data-testid="empty-state"
           >
             <Shield className="h-10 w-10 text-muted-foreground mb-3" aria-hidden="true" />
-            <h2 className="text-lg font-semibold">{isFiltered ? t('noRoles') : t('noRolesYet')}</h2>
-            <p className="text-sm text-muted-foreground max-w-sm mt-1 mb-4">
+            <Heading level={2} variant="sectionTitle">
+              {isFiltered ? t('noRoles') : t('noRolesYet')}
+            </Heading>
+            <Description className="max-w-sm mt-1 mb-4">
               {isFiltered ? t('noRolesHint') : t('noRolesYetHint')}
-            </p>
+            </Description>
             {isFiltered ? (
               <Button
                 variant="outline"

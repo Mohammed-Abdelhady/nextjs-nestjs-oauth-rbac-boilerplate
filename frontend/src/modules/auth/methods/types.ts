@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 import type { AuthMethodId } from '../constants/authMethods';
-import type { AuthMethods } from '../types/auth.types';
+import type { AuthMethods } from '@app/sdk';
 
 export interface AuthMethodFormProps {
   /** Page to open once the sign-in finishes, or null for the default. */

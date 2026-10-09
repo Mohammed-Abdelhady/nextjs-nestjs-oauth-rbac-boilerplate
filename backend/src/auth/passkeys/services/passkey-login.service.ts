@@ -7,7 +7,7 @@ import { ApiResponse } from '../../../common/dto/api-response.dto';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { LoginResponseDto } from '../../dto/login-response.dto';
-import { SignInService } from '../../services/sign-in.service';
+import { SignInService } from '../../services/sessions/sign-in.service';
 import { VerifyPasskeyLoginDto } from '../dto/verify-passkey-login.dto';
 import { PasskeyAssertionService } from './passkey-assertion.service';
 import { PasskeyRequestOptions } from './webauthn.adapter';
@@ -65,18 +65,22 @@ export class PasskeyLoginService {
 
     if (userVerified) {
       const summary = await this.signInService.issueSession(user, response);
-      this.logger.log(`Passkey sign-in with user verification: ${user.email}`);
+      this.logger.log(
+        `Passkey sign-in with user verification: userId=${user._id.toString()}`,
+      );
       return LoginResponseDto.success(summary);
     }
 
     const outcome = await this.signInService.completeSignIn(user, response);
 
     if (outcome.requiresTwoFactor) {
-      this.logger.log(`Passkey accepted, second factor owed: ${user.email}`);
+      this.logger.log(
+        `Passkey accepted, second factor owed: userId=${user._id.toString()}`,
+      );
       return LoginResponseDto.twoFactorRequired();
     }
 
-    this.logger.log(`Passkey sign-in: ${user.email}`);
+    this.logger.log(`Passkey sign-in: userId=${user._id.toString()}`);
     return LoginResponseDto.success(outcome.user);
   }
 }

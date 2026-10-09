@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import type { JWTPayload } from 'jose';
 import { SlackOAuthStrategy } from './slack-oauth.strategy';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
@@ -115,6 +116,56 @@ describe('SlackOAuthStrategy', () => {
         ErrorCode.OAUTH_CODE_INVALID,
       );
     });
+
+    it.each([
+      {
+        body: { ok: false, error: 'invalid_code' },
+        fact: 'providerCode=invalid_code',
+      },
+      {
+        body: { ok: false, error: 'bad_client_secret' },
+        fact: 'providerCode=bad_client_secret',
+      },
+      {
+        body: { ok: false, access_token: 'token' },
+        fact: 'reason=provider_error',
+      },
+      { body: { ok: true }, fact: 'reason=no_access_token' },
+      {
+        body: { ok: false, error: 'secret@example.com hunter2' },
+        fact: 'providerCode=unlisted',
+      },
+      {
+        body: { ok: false, error: 'bad_verification_code' },
+        fact: 'providerCode=unlisted',
+      },
+    ])(
+      'logs only Slack machine codes and the correct reason: $fact',
+      async ({ body, fact }) => {
+        const warn = jest
+          .spyOn(Logger.prototype, 'warn')
+          .mockImplementation(() => {});
+        try {
+          mockFetch([{ url: TOKEN_URL, body }]);
+          await expectAppException(
+            strategy().exchangeCode({
+              code: 'spent',
+              redirectUri: REDIRECT_URI,
+              nonce: 'nonce-value',
+            }),
+            ErrorCode.OAUTH_CODE_INVALID,
+          );
+          const line = warn.mock.calls.flat().join(' ');
+          expect(line).toContain(fact);
+          expect(line).not.toContain('secret@example.com');
+          expect(line).not.toContain('hunter2');
+          expect(line).not.toContain('bad_verification_code');
+          if (!body.error) expect(line).not.toContain('providerCode=');
+        } finally {
+          warn.mockRestore();
+        }
+      },
+    );
 
     it('reads an error out of a 200 response with ok false', async () => {
       mockFetch([

@@ -1,4 +1,4 @@
-import { ErrorCode } from '@/constants/errorCodes';
+import { ErrorCode } from '@app/core';
 
 /** Backend route prefix for the browser facing OAuth endpoints. */
 export const OAUTH_ROUTE_BASE = '/api/auth/oauth';

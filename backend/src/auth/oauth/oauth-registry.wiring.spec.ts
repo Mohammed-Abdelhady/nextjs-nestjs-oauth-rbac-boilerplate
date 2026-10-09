@@ -90,10 +90,7 @@ function configServiceFromEnv(env: Record<string, string>): ConfigService {
     values[`oauth.providers.${id}`] = provider;
   }
 
-  return {
-    get: <T>(key: string, fallback?: T): T | undefined =>
-      (values[key] as T | undefined) ?? fallback,
-  } as unknown as ConfigService;
+  return new ConfigService(values);
 }
 
 function registryFor(env: Record<string, string>): OAuthRegistryService {

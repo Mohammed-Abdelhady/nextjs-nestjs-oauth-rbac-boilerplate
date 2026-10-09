@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { Connection, ConnectionStates } from 'mongoose';
 import { HealthService } from './health.service';
@@ -6,11 +7,19 @@ import { HealthService } from './health.service';
 describe('HealthService (X-11)', () => {
   const buildService = async (
     connection: Partial<Connection>,
+    epoch = 1,
   ): Promise<HealthService> => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         HealthService,
         { provide: getConnectionToken(), useValue: connection },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: (key: string, fallback: number) =>
+              key === 'auth.epoch' ? epoch : fallback,
+          },
+        },
       ],
     }).compile();
 
@@ -68,12 +77,17 @@ describe('HealthService (X-11)', () => {
       expect(service.getHealth().status).toBe('unhealthy');
     });
 
-    it('should not leak uptime, memory or environment (S-22)', async () => {
+    it('should report readiness epoch and schema without uptime or environment (S-22)', async () => {
       const service = await buildService({
         readyState: ConnectionStates.connected,
       });
 
-      expect(Object.keys(service.getHealth()).sort()).toEqual([
+      const health = service.getHealth();
+      expect(health.authEpoch).toBe(1);
+      expect(health.authSchemaVersion).toBe(1);
+      expect(Object.keys(health).sort()).toEqual([
+        'authEpoch',
+        'authSchemaVersion',
         'status',
         'timestamp',
       ]);

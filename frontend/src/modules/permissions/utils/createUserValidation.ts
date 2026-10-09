@@ -1,3 +1,6 @@
+import { createPasswordSchema } from '@/modules/auth/utils/passwordSchema';
+import { zodName, type NameMessages } from '@app/core';
+
 export interface CreateUserFormValues {
   email: string;
   name: string;
@@ -6,6 +9,20 @@ export interface CreateUserFormValues {
 }
 
 export type ValidationTranslator = (key: string) => string;
+
+/**
+ * The messages the shared name rule reads for the admin forms. The keys are
+ * the ones the create/edit user dialogs already use.
+ */
+export function nameMessagesFor(t: ValidationTranslator): NameMessages {
+  return {
+    required: t('nameRequired'),
+    min: t('nameMinLength'),
+    max: t('nameMaxLength'),
+    pattern: t('namePattern'),
+    noLetter: t('nameNoLetter'),
+  };
+}
 
 /**
  * Validates inputs for the create user modal.
@@ -17,6 +34,7 @@ export type ValidationTranslator = (key: string) => string;
 export function validateCreateUserForm(
   values: CreateUserFormValues,
   t: ValidationTranslator,
+  tPassword: ValidationTranslator,
 ): Record<string, string> {
   const errors: Record<string, string> = {};
 
@@ -26,20 +44,17 @@ export function validateCreateUserForm(
     errors.email = t('emailInvalid');
   }
 
-  if (!values.name.trim()) {
-    errors.name = t('nameRequired');
-  } else if (values.name.trim().length < 2) {
-    errors.name = t('nameMinLength');
+  const nameResult = zodName({
+    required: true,
+    messages: nameMessagesFor(t),
+  }).safeParse(values.name);
+  if (!nameResult.success) {
+    errors.name = nameResult.error.issues[0].message;
   }
 
-  if (!values.password) {
-    errors.password = t('passwordRequired');
-  } else if (values.password.length < 8) {
-    errors.password = t('passwordMinLength');
-  } else if (
-    !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(values.password)
-  ) {
-    errors.password = t('passwordStrength');
+  const passwordResult = createPasswordSchema(tPassword).safeParse(values.password);
+  if (!passwordResult.success) {
+    errors.password = passwordResult.error.issues[0].message;
   }
 
   if (!values.role) {

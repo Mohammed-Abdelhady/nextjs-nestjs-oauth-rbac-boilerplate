@@ -17,10 +17,11 @@ import {
   ApiQuery,
   ApiBody,
   ApiParam,
-  ApiBearerAuth,
+  ApiCookieAuth,
 } from '@nestjs/swagger';
-import { AdminUsersService } from './services/admin-users.service';
-import { AdminUserQueriesService } from './services/admin-user-queries.service';
+import { AdminUsersService } from './services/users/admin-users.service';
+import { AdminUserCreateService } from './services/users/admin-user-create.service';
+import { AdminUserQueriesService } from './services/users/admin-user-queries.service';
 import { PermissionGuard } from '../common/guards/permission.guard';
 import { RequirePermissions } from '../common/decorators/permissions.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -32,6 +33,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { ApiResponse } from '../common/dto/api-response.dto';
 import { AdminUserDto, UserListData } from './dto/admin-user-response.dto';
 import { USER_PERMISSIONS } from '../common/constants/permissions';
+import { SESSION_SWAGGER_AUTH_NAME } from '../common/constants/session';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 
 /**
@@ -40,12 +42,13 @@ import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
  * needs the actor's level to exceed the target's level.
  */
 @ApiTags('admin')
-@ApiBearerAuth('JWT-auth')
+@ApiCookieAuth(SESSION_SWAGGER_AUTH_NAME)
 @Controller('admin/users')
 @UseGuards(PermissionGuard)
 export class AdminUsersController {
   constructor(
     private readonly adminUsersService: AdminUsersService,
+    private readonly adminUserCreateService: AdminUserCreateService,
     private readonly adminUserQueriesService: AdminUserQueriesService,
   ) {}
 
@@ -67,8 +70,9 @@ export class AdminUsersController {
   async createUser(
     @Body() dto: CreateUserDto,
     @CurrentUser('role') actorRole: string,
+    @CurrentUser('id') actorId: string,
   ): Promise<ApiResponse<AdminUserDto>> {
-    return this.adminUsersService.createUser(dto, actorRole);
+    return this.adminUserCreateService.createUser(dto, actorRole, actorId);
   }
 
   /**
@@ -184,6 +188,34 @@ export class AdminUsersController {
   }
 
   /**
+   * Re-send the confirmation code for a user's current unverified address.
+   *
+   * @example POST /admin/users/:id/resend-email-change
+   */
+  @Post(':id/resend-email-change')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermissions(USER_PERMISSIONS.UPDATE_ALL)
+  @ApiOperation({
+    summary: 'Resend an email change confirmation',
+    description:
+      'Re-sends the confirmation code for the account current unverified ' +
+      'address. The address and its generation are unchanged; a fresh code ' +
+      'is issued up to the per-address mail cap.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'User ID',
+    example: '507f1f77bcf86cd799439011',
+  })
+  async resendEmailChange(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('role') actorRole: string,
+  ): Promise<ApiResponse<{ message: string }>> {
+    return this.adminUsersService.resendEmailChange(id, actorId, actorRole);
+  }
+
+  /**
    * Activate or deactivate a user.
    *
    * @example PATCH /admin/users/:id/status
@@ -206,11 +238,10 @@ export class AdminUsersController {
     @Param('id', ParseObjectIdPipe) id: string,
     @Body() dto: UpdateUserStatusDto,
     @CurrentUser('id') actorId: string,
-    @CurrentUser('role') actorRole: string,
   ): Promise<
     ApiResponse<{ id: string; isDeleted: boolean; deletedAt?: Date }>
   > {
-    return this.adminUsersService.updateUserStatus(id, dto, actorId, actorRole);
+    return this.adminUsersService.updateUserStatus(id, dto, actorId);
   }
 
   /**
@@ -263,8 +294,7 @@ export class AdminUsersController {
   async deleteUser(
     @Param('id', ParseObjectIdPipe) id: string,
     @CurrentUser('id') actorId: string,
-    @CurrentUser('role') actorRole: string,
   ): Promise<void> {
-    return this.adminUsersService.deleteUser(id, actorId, actorRole);
+    return this.adminUsersService.deleteUser(id, actorId);
   }
 }

@@ -1,4 +1,6 @@
-import { BadRequestException } from '@nestjs/common';
+import { HttpStatus } from '@nestjs/common';
+import { ErrorCode } from '../../common/enums/error-code.enum';
+import { AppException } from '../../common/exceptions/app.exception';
 import { PERMISSION_REGEX } from '../../common/constants/permissions';
 import {
   CUSTOM_ROLE_LEVEL,
@@ -34,16 +36,49 @@ export function generateSlug(name: string): string {
  * Reject permissions that do not match resource:action[:scope] or the wildcard.
  *
  * @param permissions - Permission strings to check
- * @throws BadRequestException on the first malformed entry
+ * @throws AppException INVALID_PERMISSION_FORMAT on the first malformed entry
  */
 export function assertValidPermissions(permissions: string[]): void {
   for (const permission of permissions) {
     if (!PERMISSION_REGEX.test(permission)) {
-      throw new BadRequestException(
+      throw new AppException(
+        ErrorCode.INVALID_PERMISSION_FORMAT,
         `Invalid permission format: "${permission}". Must be resource:action[:scope] or wildcard "*"`,
+        HttpStatus.BAD_REQUEST,
       );
     }
   }
+}
+
+/**
+ * Compare two permission lists as sets: equal size and membership both ways.
+ * Duplicates are ignored, so `[a, b]` and `[a, a]` differ (b is dropped).
+ *
+ * @param current - Permissions stored on the role
+ * @param next - Permissions in the update
+ */
+export function samePermissions(current: string[], next: string[]): boolean {
+  const stored = new Set(current);
+  const incoming = new Set(next);
+  if (stored.size !== incoming.size) {
+    return false;
+  }
+  for (const permission of stored) {
+    if (!incoming.has(permission)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Drop duplicate permission entries before they are stored, so the stored
+ * permission set is canonical.
+ *
+ * @param permissions - Permissions from the request
+ */
+export function dedupePermissions(permissions: string[]): string[] {
+  return [...new Set(permissions)];
 }
 
 /**

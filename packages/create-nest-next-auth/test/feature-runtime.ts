@@ -8,7 +8,7 @@ const REGISTER = require.resolve('ts-node/register');
 
 const CHECK_FEATURES = `
   const assert = require('node:assert/strict');
-  const { AuthFeaturesService } = require('./src/auth/services/auth-features.service');
+  const { AuthFeaturesService } = require('./src/auth/services/features/auth-features.service');
   const { AuthFeature } = require('./src/auth/enums/auth-feature.enum');
   const selected = new Set(JSON.parse(process.argv[1]));
   const features = [
