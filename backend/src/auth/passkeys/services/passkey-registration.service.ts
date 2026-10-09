@@ -1,12 +1,8 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 import { Request, Response } from 'express';
-import { User, UserDocument } from '../../../user/schemas/user.schema';
 import { ApiResponse } from '../../../common/dto/api-response.dto';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
-import { Passkey, PasskeyDocument } from '../schemas/passkey.schema';
 import { PasskeySummaryDto } from '../dto/passkey-summary.dto';
 import { VerifyPasskeyRegistrationDto } from '../dto/verify-passkey-registration.dto';
 import { toPasskeySummary } from '../utils/passkey-summary.util';
@@ -14,6 +10,8 @@ import { PasskeyChallengeService } from './passkey-challenge.service';
 import { PasskeyConfigService } from './passkey-config.service';
 import { PasskeyCreationOptions, WebAuthnAdapter } from './webauthn.adapter';
 import { PASSKEY_DEFAULT_NAME } from '../constants/passkeys.constants';
+import { PasskeyAccounts } from '../stores/passkey-accounts';
+import { PasskeyStore } from '../stores/passkey.store';
 
 /**
  * Adding a passkey to an account that is already signed in. The challenge the
@@ -25,9 +23,8 @@ export class PasskeyRegistrationService {
   private readonly logger = new Logger(PasskeyRegistrationService.name);
 
   constructor(
-    @InjectModel(Passkey.name)
-    private readonly passkeyModel: Model<PasskeyDocument>,
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    private readonly passkeys: PasskeyStore,
+    private readonly accounts: PasskeyAccounts,
     private readonly adapter: WebAuthnAdapter,
     private readonly config: PasskeyConfigService,
     private readonly challenges: PasskeyChallengeService,
@@ -42,7 +39,7 @@ export class PasskeyRegistrationService {
     userId: string,
     response: Response,
   ): Promise<ApiResponse<PasskeyCreationOptions>> {
-    const user = await this.userModel.findById(userId);
+    const user = await this.accounts.findAccount(userId);
 
     if (!user || user.isDeleted) {
       throw new AppException(
@@ -52,14 +49,12 @@ export class PasskeyRegistrationService {
       );
     }
 
-    const existing = await this.passkeyModel
-      .find({ user: user._id })
-      .select('credentialId transports');
+    const existing = await this.passkeys.listDescriptors(user.id);
 
     const options = await this.adapter.createRegistrationOptions({
       rpId: this.config.rpId,
       rpName: this.config.rpName,
-      userId: user._id.toString(),
+      userId: user.id,
       userName: user.email,
       userDisplayName: user.name,
       excludeCredentials: existing.map((passkey) => ({
@@ -72,7 +67,7 @@ export class PasskeyRegistrationService {
       response,
       'register',
       options.challenge,
-      user._id.toString(),
+      user.id,
     );
 
     return ApiResponse.success(options);
@@ -114,14 +109,12 @@ export class PasskeyRegistrationService {
       throw this.verificationFailed('attestation did not verify');
     }
 
-    if (
-      await this.passkeyModel.exists({ credentialId: verified.credentialId })
-    ) {
+    if (await this.passkeys.isCredentialRegistered(verified.credentialId)) {
       throw this.verificationFailed('credential is already registered');
     }
 
-    const passkey = await this.passkeyModel.create({
-      user: challenge.sub,
+    const passkey = await this.passkeys.insert({
+      userId,
       credentialId: verified.credentialId,
       publicKey: verified.publicKey,
       counter: verified.counter,
@@ -129,7 +122,6 @@ export class PasskeyRegistrationService {
       deviceType: verified.deviceType,
       backedUp: verified.backedUp,
       name: dto.name?.trim() || PASSKEY_DEFAULT_NAME,
-      lastUsedAt: null,
     });
 
     this.logger.log(`Passkey registered for user ${userId}`);

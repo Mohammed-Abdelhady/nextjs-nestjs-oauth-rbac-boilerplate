@@ -1,0 +1,43 @@
+import { Response } from 'express';
+import { AuthenticatedUserSummary } from '../../interfaces/authenticated-user.interface';
+
+/** An account as the passkey routes need it. */
+export interface PasskeyAccount {
+  readonly id: string;
+  readonly email: string;
+  readonly name: string;
+  readonly isDeleted: boolean;
+}
+
+/** The ways into an account that are stored on the account itself. */
+export interface StoredSignInMethods {
+  hasPassword: boolean;
+  hasLinkedAccount: boolean;
+}
+
+/** The accounts passkeys are registered to and sign in. */
+export abstract class PasskeyAccounts {
+  /** The account with this id, deactivated ones included. */
+  abstract findAccount(userId: string): Promise<PasskeyAccount | null>;
+  abstract findSignInMethods(
+    userId: string,
+  ): Promise<StoredSignInMethods | null>;
+}
+
+export type PasskeySignInOutcome =
+  | { requiresTwoFactor: true }
+  | { requiresTwoFactor: false; user: AuthenticatedUserSummary };
+
+/** The shared sign-in, for an account a passkey just proved. */
+export abstract class PasskeySignIn {
+  /** Issues the session with no second factor check. */
+  abstract issueSession(
+    account: PasskeyAccount,
+    response: Response,
+  ): Promise<AuthenticatedUserSummary>;
+  /** The sign-in every other route runs, second factor included. */
+  abstract completeSignIn(
+    account: PasskeyAccount,
+    response: Response,
+  ): Promise<PasskeySignInOutcome>;
+}

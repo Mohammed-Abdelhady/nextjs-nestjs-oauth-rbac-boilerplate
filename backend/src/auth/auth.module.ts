@@ -29,6 +29,8 @@ import { SignInService } from './services/sessions/sign-in.service';
 import { TotpSecretCryptoService } from './two-factor/services/totp-secret-crypto.service'; // feature:totp
 import { TwoFactorChallengeService } from './two-factor/services/two-factor-challenge.service'; // feature:totp
 import { TwoFactorVerificationService } from './two-factor/services/two-factor-verification.service'; // feature:totp
+import { MONGO_SECOND_FACTOR_STORES } from './two-factor/persistence/mongo/mongo-second-factor-stores'; // feature:totp
+import { SecondFactorStore } from './two-factor/stores/second-factor.store'; // feature:totp
 import { VerificationCodeService } from './services/codes/verification-code.service';
 import { MailCounterService } from './services/mail/mail-counter.service';
 import { EmailChangeConfirmationService } from './services/registration/email-change-confirmation.service';
@@ -82,6 +84,7 @@ import { AuthGuard } from './guards/auth.guard';
     TotpSecretCryptoService,
     TwoFactorChallengeService,
     TwoFactorVerificationService,
+    ...MONGO_SECOND_FACTOR_STORES,
     // feature:totp:end
     SignInService,
     FeatureEnabledGuard,
@@ -108,6 +111,7 @@ import { AuthGuard } from './guards/auth.guard';
     TotpSecretCryptoService,
     TwoFactorChallengeService,
     TwoFactorVerificationService,
+    SecondFactorStore,
     // feature:totp:end
     SignInService,
     FeatureEnabledGuard,

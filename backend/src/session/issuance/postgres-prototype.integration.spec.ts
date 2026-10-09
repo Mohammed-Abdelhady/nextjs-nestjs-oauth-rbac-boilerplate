@@ -132,6 +132,8 @@ describe('PostgreSQL prototype adapter', () => {
         '0005_accounts.sql',
         '0006_session_authority_revocation.sql',
         '0007_applications_grants.sql',
+        '0008_two_factor.sql',
+        '0009_passkeys.sql',
       ],
       again: [],
       recorded: [
@@ -142,6 +144,8 @@ describe('PostgreSQL prototype adapter', () => {
         '0005_accounts.sql',
         '0006_session_authority_revocation.sql',
         '0007_applications_grants.sql',
+        '0008_two_factor.sql',
+        '0009_passkeys.sql',
       ],
     });
   });

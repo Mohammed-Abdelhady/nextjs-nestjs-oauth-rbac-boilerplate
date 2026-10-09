@@ -6,7 +6,7 @@ import {
   hkdfSync,
   randomBytes,
 } from 'crypto';
-import { TwoFactorSecret } from '../../../user/schemas/two-factor.schema';
+import { StoredTotpSecret } from '../stores/second-factor-account';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { TWO_FACTOR_CHALLENGE_HKDF_INFO } from '../constants/two-factor.constants';
@@ -23,7 +23,7 @@ const IV_BYTES = 12;
 export class TotpSecretCryptoService {
   constructor(private readonly configService: ConfigService) {}
 
-  encrypt(plaintext: string): TwoFactorSecret {
+  encrypt(plaintext: string): StoredTotpSecret {
     const iv = randomBytes(IV_BYTES);
     const cipher = createCipheriv('aes-256-gcm', this.key(), iv);
     const ciphertext = Buffer.concat([
@@ -42,7 +42,7 @@ export class TotpSecretCryptoService {
    * @throws AppException TWO_FACTOR_NOT_CONFIGURED when the key is missing, or
    * when it no longer matches what the record was written with
    */
-  decrypt(secret: TwoFactorSecret): string {
+  decrypt(secret: StoredTotpSecret): string {
     try {
       const decipher = createDecipheriv(
         'aes-256-gcm',

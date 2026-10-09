@@ -1,8 +1,4 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User, UserDocument } from '../../../user/schemas/user.schema';
-import { TwoFactorSecret } from '../../../user/schemas/two-factor.schema';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { TotpSecretCryptoService } from './totp-secret-crypto.service';
@@ -12,6 +8,14 @@ import {
   recoveryHashEquals,
 } from '../utils/recovery-code.util';
 import { TOTP_STEP_MS } from '../constants/two-factor.constants';
+import {
+  SecondFactorAccount,
+  StoredTotpSecret,
+} from '../stores/second-factor-account';
+import {
+  SecondFactorStore,
+  SPEND_OUTCOME,
+} from '../stores/second-factor.store';
 
 /** What a caller may send as the second factor. Exactly one is used. */
 export interface SecondFactorInput {
@@ -29,7 +33,7 @@ export class TwoFactorVerificationService {
   private readonly logger = new Logger(TwoFactorVerificationService.name);
 
   constructor(
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    private readonly accounts: SecondFactorStore,
     private readonly cryptoService: TotpSecretCryptoService,
   ) {}
 
@@ -38,7 +42,7 @@ export class TwoFactorVerificationService {
    * in, or when the value in it does not match
    */
   async verifySecondFactor(
-    user: UserDocument,
+    user: SecondFactorAccount,
     input: SecondFactorInput,
   ): Promise<void> {
     if (input.code) {
@@ -58,8 +62,8 @@ export class TwoFactorVerificationService {
    * Checks a code against the secret on the account, whether or not the second
    * factor is confirmed yet, and marks the step as spent.
    */
-  async verifyTotpCode(user: UserDocument, code: string): Promise<void> {
-    const secret = user.twoFactor?.secret;
+  async verifyTotpCode(user: SecondFactorAccount, code: string): Promise<void> {
+    const secret = user.twoFactor.secret;
     if (!secret) {
       throw this.invalidCode('account has no secret to check against');
     }
@@ -71,28 +75,20 @@ export class TwoFactorVerificationService {
       throw this.invalidCode('code was already used');
     }
 
-    const updated = await this.userModel.updateOne(
-      {
-        _id: user._id,
-        'twoFactor.lastUsedStep': lastUsedStep ?? null,
-      },
-      { $set: { 'twoFactor.lastUsedStep': step } },
-    );
+    const outcome = await this.accounts.spendTotpStep(user, step);
 
-    if (updated.modifiedCount !== 1) {
+    if (outcome !== SPEND_OUTCOME.SPENT) {
       throw this.invalidCode('code was already used');
     }
-
-    user.twoFactor.lastUsedStep = step;
   }
 
   /** Spends one recovery code. A code that was already spent is refused. */
   async verifyRecoveryCode(
-    user: UserDocument,
+    user: SecondFactorAccount,
     recoveryCode: string,
   ): Promise<void> {
     const hash = hashRecoveryCode(recoveryCode);
-    const match = (user.twoFactor?.recoveryCodes ?? []).find(
+    const match = user.twoFactor.recoveryCodes.find(
       (candidate) =>
         candidate.usedAt === null && recoveryHashEquals(candidate.hash, hash),
     );
@@ -101,29 +97,22 @@ export class TwoFactorVerificationService {
       throw this.invalidCode('recovery code is unknown or already used');
     }
 
-    const usedAt = new Date();
-    const updated = await this.userModel.updateOne(
-      {
-        _id: user._id,
-        'twoFactor.recoveryCodes': {
-          $elemMatch: { hash: match.hash, usedAt: null },
-        },
-      },
-      { $set: { 'twoFactor.recoveryCodes.$.usedAt': usedAt } },
+    const outcome = await this.accounts.spendRecoveryCode(
+      user,
+      match.hash,
+      new Date(Date.now()),
     );
 
-    if (updated.modifiedCount !== 1) {
+    if (outcome !== SPEND_OUTCOME.SPENT) {
       throw this.invalidCode('recovery code is unknown or already used');
     }
-
-    match.usedAt = usedAt;
   }
 
   /**
    * The absolute TOTP step the code belongs to, counted from the epoch. Steps
    * only ever move forward, which is what makes a spent one detectable.
    */
-  private resolveStep(secret: TwoFactorSecret, code: string): number {
+  private resolveStep(secret: StoredTotpSecret, code: string): number {
     const delta = checkTotpDelta(code, this.cryptoService.decrypt(secret));
 
     if (delta === null || delta === undefined) {

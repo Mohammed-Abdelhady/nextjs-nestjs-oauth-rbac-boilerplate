@@ -3,6 +3,10 @@ import { SignInService } from '../../services/sessions/sign-in.service';
 import { PasskeyAssertionService } from './passkey-assertion.service';
 import { PasskeyLoginService } from './passkey-login.service';
 import {
+  MongoPasskeyAccounts,
+  MongoPasskeySignIn,
+} from '../persistence/mongo/mongo-passkey-accounts';
+import {
   createModelMock,
   partialMock,
 } from '../../../common/testing/test-doubles.harness-spec';
@@ -63,11 +67,13 @@ function createHarness(options: {
 
   return {
     service: new PasskeyLoginService(
-      createModelMock<ConstructorParameters<typeof PasskeyLoginService>[0]>(
-        userModel,
+      new MongoPasskeyAccounts(
+        createModelMock<ConstructorParameters<typeof MongoPasskeyAccounts>[0]>(
+          userModel,
+        ),
       ),
       partialMock<PasskeyAssertionService>(assertions),
-      partialMock<SignInService>(signInService),
+      new MongoPasskeySignIn(partialMock<SignInService>(signInService)),
     ),
     assertions,
     signInService,

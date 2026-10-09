@@ -2,6 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { PasskeyChallengeService } from './services/passkey-challenge.service';
+import { MongoPasskeyChallengeStore } from './persistence/mongo/mongo-passkey-challenge.store';
 import { PasskeyConfigService } from './services/passkey-config.service';
 import { PasskeyCredentialDto } from './dto/passkey-credential.dto';
 import {
@@ -54,8 +55,10 @@ export function createChallengeService(
   store = createChallengeStore(),
 ): PasskeyChallengeService {
   return new PasskeyChallengeService(
-    createModelMock<ConstructorParameters<typeof PasskeyChallengeService>[0]>(
-      store,
+    new MongoPasskeyChallengeStore(
+      createModelMock<
+        ConstructorParameters<typeof MongoPasskeyChallengeStore>[0]
+      >(store),
     ),
     createConfigService(values),
   );
