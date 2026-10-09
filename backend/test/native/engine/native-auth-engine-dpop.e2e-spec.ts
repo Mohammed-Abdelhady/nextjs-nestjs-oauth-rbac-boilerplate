@@ -1,5 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
+import request from 'supertest';
 import {
   API_PATHS,
   DPOP_PROOF_HEADER,
@@ -78,8 +79,14 @@ describe('native auth engine device-bound sessions (e2e)', () => {
     const session = await sessionFor(e2e, rows[0]?.sessionId);
     const stored = await readStoredAuthRecord(harness.ports);
 
+    // The scheme the token reply names is the one the API accepts.
+    const profile = await request(e2e.httpServer)
+      .get('/api/user/profile')
+      .set('Authorization', `${pair.token_type} ${pair.access_token}`);
+
     expect(outcome.kind).toBe('signedIn');
-    expect(pair.token_type).toBe('DPoP');
+    expect(pair.token_type).toBe('Bearer');
+    expect(profile.status).toBe(200);
     expect(rows.map(({ proofKeyThumbprint }) => proofKeyThumbprint)).toEqual([
       FIXED_THUMBPRINT,
       FIXED_THUMBPRINT,
@@ -159,7 +166,7 @@ describe('native auth engine device-bound sessions (e2e)', () => {
     expect(secondProof.claims.ath).toBe(tokenHashClaim(previous.refreshToken));
     expect(secondProof.claims.nonce).toBe(nonce);
     expect(firstProof.claims.jti).not.toBe(secondProof.claims.jti);
-    expect(pair.token_type).toBe('DPoP');
+    expect(pair.token_type).toBe('Bearer');
     expect(next.lineageId).toBe(previous.lineageId);
     expect(next.proofKeyThumbprint).toBe(FIXED_THUMBPRINT);
     expect(rows.map(({ proofKeyThumbprint }) => proofKeyThumbprint)).toEqual([

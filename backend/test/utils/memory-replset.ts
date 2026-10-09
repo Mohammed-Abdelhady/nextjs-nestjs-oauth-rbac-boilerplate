@@ -6,7 +6,10 @@ import { MongoClient } from 'mongodb';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 import type { Db } from 'mongodb';
-import { BACKEND_TEST_MONGO_URIS_ENV } from '../constants/mongo';
+import {
+  BACKEND_TEST_MONGO_DATA_PREFIX,
+  BACKEND_TEST_MONGO_URIS_ENV,
+} from '../constants/mongo';
 import type { SharedMongoServer } from './mongo/mongo-server-state';
 
 const REPLICA_SET_NAME = 'rs0';
@@ -89,7 +92,7 @@ export async function startSharedMongoServer(
   instanceIndex = 0,
 ): Promise<SharedMongoServer> {
   const dataPath = await mkdtemp(
-    join(tmpdir(), `backend-jest-mongo-${process.pid}-`),
+    join(tmpdir(), `${BACKEND_TEST_MONGO_DATA_PREFIX}${process.pid}-`),
   );
   const preferredPort =
     PORT_BASE + ((process.pid + instanceIndex * PORT_STRIDE) % PORT_RANGE);
