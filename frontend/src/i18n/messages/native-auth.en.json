@@ -3,6 +3,7 @@
     "codes": {
       "NATIVE_AUTH_DISABLED": "Mobile sign-in is turned off for now. Please try again later",
       "NATIVE_TRANSACTION_EXPIRED": "This sign-in request has expired. Go back to the app and try again",
+      "NATIVE_AUTHORIZE_ACCOUNT_MISMATCH": "The signed-in account changed. Check the account shown here before you continue.",
       "NATIVE_DPOP_PROOF_TOO_LARGE": "This sign-in request is too large. Start again in the app.",
       "NATIVE_DPOP_PROOF_MALFORMED": "We couldn't read this sign-in request. Start again in the app.",
       "NATIVE_DPOP_PROOF_DUPLICATE_MEMBER": "This sign-in request contains repeated fields. Start again in the app.",

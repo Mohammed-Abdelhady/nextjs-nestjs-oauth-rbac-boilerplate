@@ -3,6 +3,8 @@
 import type { RefObject } from 'react';
 import { useTranslations } from 'next-intl';
 import { Loader2, ShieldCheck } from 'lucide-react';
+import { ErrorCode } from '@app/core';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { getInitials } from '@/lib/formatters';
@@ -12,6 +14,8 @@ interface NativeAuthorizeReadyViewProps {
   applicationName: string;
   accountName: string;
   accountEmail: string;
+  /** The account below replaced the one shown before; say so before asking again. */
+  accountChanged: boolean;
   action: NativeAuthorizeAction | null;
   headingRef: RefObject<HTMLHeadingElement | null>;
   onApprove: () => void;
@@ -24,6 +28,7 @@ export function NativeAuthorizeReadyView({
   applicationName,
   accountName,
   accountEmail,
+  accountChanged,
   action,
   headingRef,
   onApprove,
@@ -31,10 +36,16 @@ export function NativeAuthorizeReadyView({
   onNotYou,
 }: NativeAuthorizeReadyViewProps) {
   const t = useTranslations('auth.nativeAuthorize');
+  const tCodes = useTranslations('errors.codes');
   const busy = action !== null;
 
   return (
     <section className="mx-auto mt-12 w-full max-w-sm" data-testid="native-authorize-ready">
+      {accountChanged && (
+        <Alert variant="warning" className="mb-4" data-testid="native-authorize-account-changed">
+          <AlertDescription>{tCodes(ErrorCode.NATIVE_AUTHORIZE_ACCOUNT_MISMATCH)}</AlertDescription>
+        </Alert>
+      )}
       <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10">
           <AvatarFallback className="bg-secondary text-primary text-sm font-medium">

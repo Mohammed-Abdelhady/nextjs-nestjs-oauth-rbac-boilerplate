@@ -138,7 +138,12 @@ export const UNTAGGED: MutationCase[] = [
     name: 'approveNativeAuthorize',
     reads: READ_SET,
     write: (store) =>
-      store.dispatch(authApi.endpoints.approveNativeAuthorize.initiate({ transactionId: 'txn-1' })),
+      store.dispatch(
+        authApi.endpoints.approveNativeAuthorize.initiate({
+          transactionId: 'txn-1',
+          expectedUserId: 'user-1',
+        }),
+      ),
     accepted: { redirectUri: '/auth/callback?code=abc' },
     requests: [
       GET_PROFILE,
@@ -154,7 +159,12 @@ export const UNTAGGED: MutationCase[] = [
     name: 'denyNativeAuthorize',
     reads: READ_SET,
     write: (store) =>
-      store.dispatch(authApi.endpoints.denyNativeAuthorize.initiate({ transactionId: 'txn-1' })),
+      store.dispatch(
+        authApi.endpoints.denyNativeAuthorize.initiate({
+          transactionId: 'txn-1',
+          expectedUserId: 'user-1',
+        }),
+      ),
     accepted: { redirectUri: '/auth/callback?error=access_denied' },
     requests: [
       GET_PROFILE,

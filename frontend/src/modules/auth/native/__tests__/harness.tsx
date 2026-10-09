@@ -26,6 +26,14 @@ export const TEST_USER: User = {
   linkedProviders: ['email'],
 };
 
+/** A second account, for the cases where the browser session changes hands. */
+export const OTHER_USER: User = {
+  ...TEST_USER,
+  id: 'user-2',
+  email: 'omar@example.com',
+  name: 'Omar Nasser',
+};
+
 /** Platform value is never shown; it is part of the contract payload. */
 export function transactionPayload(applicationName: string) {
   return {
@@ -113,8 +121,11 @@ export type FetchHandler = (request: Request) => Response | Promise<Response>;
 export type ProfileMode = 'ok' | 'pending' | 'fail';
 
 export interface FetchOptions {
-  /** How the profile endpoint answers; defaults to a signed-in account. */
-  profile?: ProfileMode;
+  /**
+   * How the profile endpoint answers; defaults to a signed-in account. A
+   * handler lets one test change the answer between requests.
+   */
+  profile?: ProfileMode | FetchHandler;
 }
 
 const PROFILE_PATH = '/api/user/profile';
@@ -131,6 +142,9 @@ export function installFetch(handler: FetchHandler, options: FetchOptions = {}):
     requests.push(pathname);
 
     if (pathname === PROFILE_PATH) {
+      if (typeof options.profile === 'function') {
+        return options.profile(request);
+      }
       if (options.profile === 'pending') {
         return new Promise<Response>(() => {});
       }
@@ -146,6 +160,15 @@ export function installFetch(handler: FetchHandler, options: FetchOptions = {}):
     return handler(request);
   });
   return requests;
+}
+
+/** A refusal in the envelope the API answers with. */
+export function errorResponse(code: string, status: number): Response {
+  return jsonResponse({ success: false, error: { code, message: code } }, status);
+}
+
+export function userResponse(user: User): Response {
+  return jsonResponse({ success: true, data: user });
 }
 
 export function jsonResponse(body: unknown, status = 200): Response {

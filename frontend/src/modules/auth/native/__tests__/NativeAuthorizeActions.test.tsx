@@ -6,7 +6,6 @@ import { loadMessages } from '@/i18n/load-messages';
 import { ErrorCode } from '@app/core';
 import { clearBrowserProof, rememberBrowserProof } from '@/store/api/browser-proof';
 import {
-  TEST_TRANSACTION,
   installFetch,
   jsonResponse,
   makeStore,
@@ -125,7 +124,7 @@ describe('NativeAuthorizePanel actions', () => {
 
     await screen.findByTestId('native-authorize-returning');
     expect(posts).toEqual(['/api/oauth/authorize/approve']);
-    expect(bodies).toEqual([{ transactionId: TEST_TRANSACTION }]);
+    expect(bodies).toEqual([{ transactionId: 'txn-abc123', expectedUserId: 'user-1' }]);
   });
 
   it('calls deny exactly once on a double click', async () => {

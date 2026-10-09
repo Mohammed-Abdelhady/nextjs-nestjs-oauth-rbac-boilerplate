@@ -172,6 +172,29 @@ describe('NativeAuthorizePanel states', () => {
     expect(screen.queryByTestId('native-authorize-approve')).toBeNull();
   });
 
+  it('reads the profile again when Retry follows a failed profile read', async () => {
+    let profileReads = 0;
+    installFetch(() => jsonResponse({ success: true, data: transactionPayload('Acme Mobile') }), {
+      profile: () => {
+        profileReads += 1;
+        return profileReads === 1
+          ? jsonResponse(
+              { success: false, error: { code: 'INTERNAL_ERROR', message: 'down' } },
+              503,
+            )
+          : jsonResponse({ success: true, data: TEST_USER });
+      },
+    });
+    renderPanel({ locale: 'en', messages: messages.en, store: makeStore() });
+
+    await screen.findByTestId('native-authorize-error');
+    fireEvent.click(screen.getByTestId('native-authorize-retry'));
+
+    const ready = await screen.findByTestId('native-authorize-ready');
+    expect(ready.textContent).toContain('layla@example.com');
+    expect(profileReads).toBe(2);
+  });
+
   it('waits for the account before offering approval', async () => {
     installFetch(() => jsonResponse({ success: true, data: transactionPayload('Acme Mobile') }), {
       profile: 'pending',

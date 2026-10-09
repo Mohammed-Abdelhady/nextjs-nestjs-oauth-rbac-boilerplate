@@ -2,21 +2,21 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { ErrorCode } from '@app/core';
+import { ErrorCode, parseApiError } from '@app/core';
 import { useRouter } from '@/i18n/navigation';
+import { baseApi } from '@/store/api/baseApi';
 import { useAppDispatch } from '@/store/hooks';
 import { REDIRECT_PARAM } from '../constants/authMethods';
-import { nativeAuthorizeContinuation } from '../constants/nativeAuthorize';
+import { isSignInRequired, nativeAuthorizeContinuation } from '../constants/nativeAuthorize';
 import { translatableErrorCode } from '../utils/errorCodeMessage';
 import {
   useApproveNativeAuthorizeMutation,
   useDenyNativeAuthorizeMutation,
-  useGetCurrentUserQuery,
-  useGetNativeAuthorizeTransactionQuery,
   useLogoutMutation,
 } from '../store/authApi';
 import { logout as logoutAction } from '../store/authSlice';
 import { isSafeNativeRedirect } from './nativeRedirect';
+import { useNativeAuthorizeReads } from './useNativeAuthorizeReads';
 
 /** How long the page waits for the app to open before offering a second try. */
 const REOPEN_DELAY_MS = 2000;
@@ -30,6 +30,8 @@ export type NativeAuthorizeViewKind =
 export interface NativeAuthorizeFailure {
   code: string;
   message: string;
+  /** The answer means there is no usable session, so the person must sign in. */
+  signInRequired: boolean;
 }
 
 export interface NativeAuthorizeView {
@@ -39,6 +41,8 @@ export interface NativeAuthorizeView {
   accountEmail: string;
   action: NativeAuthorizeAction | null;
   failure: NativeAuthorizeFailure | null;
+  /** The signed-in account is not the one the card showed a moment ago. */
+  accountChanged: boolean;
   canReopen: boolean;
 }
 
@@ -63,6 +67,7 @@ const EMPTY_VIEW: Omit<NativeAuthorizeView, 'kind'> = {
   accountEmail: '',
   action: null,
   failure: null,
+  accountChanged: false,
   canReopen: false,
 };
 
@@ -70,7 +75,8 @@ const EMPTY_VIEW: Omit<NativeAuthorizeView, 'kind'> = {
  * The browser step of native sign-in, as state plus handlers.
  *
  * It waits for the account as well as the transaction, so approval is never
- * offered before the person can see which account is granting it. A single
+ * offered before the person can see which account is granting it. Approve and
+ * deny name that account, and neither completes for a different one. A single
  * in-flight guard covers approve, deny and "Not you?", so no two requests can
  * race and a held Enter spends the transaction once.
  */
@@ -80,56 +86,69 @@ export function useNativeAuthorize(transaction: string): NativeAuthorizeControll
   const router = useRouter();
   const dispatch = useAppDispatch();
 
+  const [leaving, setLeaving] = useState(false);
   const {
-    data: account,
-    isError: isAccountError,
-    error: accountError,
-  } = useGetCurrentUserQuery(undefined);
-  const {
-    data: transactionData,
-    isLoading: isTransactionLoading,
-    isError: isTransactionError,
-    error: transactionError,
-    refetch,
-  } = useGetNativeAuthorizeTransactionQuery(transaction, {
-    skip: transaction.length === 0,
-  });
+    account,
+    transactionData,
+    isTransactionLoading,
+    accountError,
+    transactionError,
+    readAccount,
+    refetchAll,
+  } = useNativeAuthorizeReads(transaction, leaving);
   const [approve] = useApproveNativeAuthorizeMutation();
   const [deny] = useDenyNativeAuthorizeMutation();
   const [logout] = useLogoutMutation();
 
   const [action, setAction] = useState<NativeAuthorizeAction | null>(null);
   const [actionFailure, setActionFailure] = useState<NativeAuthorizeFailure | null>(null);
+  const [accountChanged, setAccountChanged] = useState(false);
   const [redirectUri, setRedirectUri] = useState<string | null>(null);
   const [returning, setReturning] = useState(false);
   const [canReopen, setCanReopen] = useState(false);
 
   const inFlight = useRef(false);
-  const hasRedirected = useRef(false);
+  const hasLeft = useRef(false);
 
   const toFailure = useCallback(
     (error: unknown): NativeAuthorizeFailure => {
       const code = translatableErrorCode(error, ErrorCode.INTERNAL_ERROR);
-      return { code, message: tCodes(code) };
+      const answer = parseApiError(error);
+      return {
+        code,
+        message: tCodes(code),
+        signInRequired: isSignInRequired(answer.code, answer.statusCode),
+      };
     },
     [tCodes],
   );
 
-  const transactionFailure = isTransactionError ? toFailure(transactionError) : null;
-  const accountFailure = isAccountError ? toFailure(accountError) : null;
+  const transactionFailure = transactionError === undefined ? null : toFailure(transactionError);
+  const accountFailure = accountError === undefined ? null : toFailure(accountError);
   const failure = actionFailure ?? transactionFailure ?? accountFailure;
-  const sessionRequired = failure?.code === ErrorCode.SESSION_REQUIRED;
+  // A refused session outranks whatever else failed beside it.
+  const signInRequired = [actionFailure, transactionFailure, accountFailure].some(
+    (candidate) => candidate?.signInRequired === true,
+  );
 
-  // A 401 must clear the auth slice too, or the sign-in page bounces straight
-  // back to this route and the loop repeats.
+  // A refused session and "Not you?" both end here. Flagging it during render
+  // stops the reads before anything below can ask the server again.
+  if (signInRequired && !leaving) {
+    setLeaving(true);
+  }
+
+  // Leaving clears the auth slice, or the sign-in page bounces straight back
+  // here, and drops every cached read so the return trip starts from the
+  // server's answer for whoever signed in.
   useEffect(() => {
-    if (!sessionRequired || hasRedirected.current) {
+    if (!leaving || hasLeft.current) {
       return;
     }
-    hasRedirected.current = true;
+    hasLeft.current = true;
     dispatch(logoutAction());
+    dispatch(baseApi.util.resetApiState());
     router.replace(signInHref(transaction));
-  }, [dispatch, router, sessionRequired, transaction]);
+  }, [dispatch, leaving, router, transaction]);
 
   useEffect(() => {
     if (!returning) {
@@ -139,21 +158,51 @@ export function useNativeAuthorize(transaction: string): NativeAuthorizeControll
     return () => clearTimeout(timer);
   }, [returning]);
 
+  const failAction = useCallback(
+    (error: unknown) => {
+      inFlight.current = false;
+      setAction(null);
+      setActionFailure(toFailure(error));
+    },
+    [toFailure],
+  );
+
+  /** Back to the card, now showing whoever is signed in, with the notice. */
+  const showChangedAccount = useCallback(() => {
+    inFlight.current = false;
+    setAction(null);
+    setAccountChanged(true);
+  }, []);
+
   const runAction = useCallback(
     async (kind: 'approve' | 'deny') => {
-      if (inFlight.current) {
+      if (inFlight.current || !account) {
         return;
       }
       inFlight.current = true;
       setActionFailure(null);
+      setAccountChanged(false);
       setAction(kind);
+      const shownUserId = account.id;
       try {
+        // Another tab may have changed the session since the card was drawn.
+        if (kind === 'approve' && (await readAccount()).id !== shownUserId) {
+          showChangedAccount();
+          return;
+        }
         const call = kind === 'approve' ? approve : deny;
-        const result = await call({ transactionId: transaction }).unwrap();
+        const result = await call({
+          transactionId: transaction,
+          expectedUserId: shownUserId,
+        }).unwrap();
         if (!isSafeNativeRedirect(result.redirectUri)) {
           inFlight.current = false;
           setAction(null);
-          setActionFailure({ code: ErrorCode.INTERNAL_ERROR, message: t('errorGeneric') });
+          setActionFailure({
+            code: ErrorCode.INTERNAL_ERROR,
+            message: t('errorGeneric'),
+            signInRequired: false,
+          });
           return;
         }
         setRedirectUri(result.redirectUri);
@@ -162,12 +211,14 @@ export function useNativeAuthorize(transaction: string): NativeAuthorizeControll
         setReturning(true);
         window.location.assign(result.redirectUri);
       } catch (error) {
-        inFlight.current = false;
-        setAction(null);
-        setActionFailure(toFailure(error));
+        if (translatableErrorCode(error) !== ErrorCode.NATIVE_AUTHORIZE_ACCOUNT_MISMATCH) {
+          failAction(error);
+          return;
+        }
+        await readAccount().then(showChangedAccount, failAction);
       }
     },
-    [approve, deny, t, toFailure, transaction],
+    [account, approve, deny, failAction, readAccount, showChangedAccount, t, transaction],
   );
 
   const notYou = useCallback(async () => {
@@ -179,23 +230,21 @@ export function useNativeAuthorize(transaction: string): NativeAuthorizeControll
     setAction('notYou');
     try {
       await logout().unwrap();
-      dispatch(logoutAction());
-      router.replace(signInHref(transaction));
+      setLeaving(true);
     } catch (error) {
-      inFlight.current = false;
-      setAction(null);
-      setActionFailure(toFailure(error));
+      failAction(error);
     }
-  }, [dispatch, logout, router, toFailure, transaction]);
+  }, [failAction, logout]);
 
   const retry = useCallback(() => {
     inFlight.current = false;
     setActionFailure(null);
     setAction(null);
+    setAccountChanged(false);
     setReturning(false);
     setCanReopen(false);
-    refetch();
-  }, [refetch]);
+    refetchAll();
+  }, [refetchAll]);
 
   const reopen = useCallback(() => {
     if (redirectUri) {
@@ -218,13 +267,14 @@ export function useNativeAuthorize(transaction: string): NativeAuthorizeControll
       accountEmail: account?.email ?? '',
       action,
       failure,
+      accountChanged,
       canReopen,
     };
 
     if (transaction.length === 0 || failure?.code === ErrorCode.NATIVE_TRANSACTION_EXPIRED) {
       return { ...base, kind: 'expired' };
     }
-    if (sessionRequired) {
+    if (leaving) {
       return { ...base, kind: 'loading' };
     }
     if (failure?.code === ErrorCode.NATIVE_AUTH_DISABLED) {
