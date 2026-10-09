@@ -196,7 +196,7 @@ Production compose file includes resource limits:
 - **Backend**: 512MB memory, 0.5 CPU
 - **Frontend**: 512MB memory, 0.5 CPU
 
-Adjust these in [`docker-compose.prod.yml`](../docker-compose.prod.yml) as needed.
+Adjust these in [`docker-compose.prod.yml`](../../docker-compose.prod.yml) as needed.
 
 ---
 
@@ -281,7 +281,7 @@ The install command activates pnpm 12.6.0 and uses `corepack pnpm` for a frozen 
 See [Vercel package managers](https://vercel.com/docs/package-managers) and
 [shared monorepo files](https://vercel.com/docs/monorepos/monorepo-faq).
 
-The [`vercel.json`](../frontend/vercel.json) file includes:
+The [`vercel.json`](../../frontend/vercel.json) file includes:
 
 - **Framework**: Next.js (optimized)
 - **Build Command**: `corepack pnpm run build`

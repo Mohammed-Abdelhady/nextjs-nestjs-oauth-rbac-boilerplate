@@ -203,7 +203,7 @@ All objectives met:
 ## References
 
 - **System Documentation**: [RBAC-SYSTEM.md](./RBAC-SYSTEM.md)
-- **Migration Guide**: [MIGRATION-GUIDE.md](./MIGRATION-GUIDE.md)
+- **Migration Guide**: [MIGRATION-GUIDE.md](../operations/MIGRATION-GUIDE.md)
 - **API Documentation**: Swagger UI at `/api/docs` (when running)
 - **OpenSpec Proposal**: `openspec/changes/implement-dynamic-rbac-system/`
 
@@ -231,7 +231,7 @@ All objectives met:
 For questions or issues:
 
 1. Check [RBAC-SYSTEM.md](./RBAC-SYSTEM.md) documentation
-2. Review [MIGRATION-GUIDE.md](./MIGRATION-GUIDE.md) for deployment issues
+2. Review [MIGRATION-GUIDE.md](../operations/MIGRATION-GUIDE.md) for deployment issues
 3. Check `/admin/permissions-demo` page for examples
 4. Create GitHub issue with detailed description
 

@@ -125,7 +125,7 @@ For migration issues:
 
 - Create GitHub issue with migration logs
 - Contact development team
-- Review [RBAC-SYSTEM.md](./RBAC-SYSTEM.md) documentation
+- Review [RBAC-SYSTEM.md](../access-control/RBAC-SYSTEM.md) documentation
 
 ---
 

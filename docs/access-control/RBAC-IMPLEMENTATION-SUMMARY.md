@@ -81,9 +81,9 @@ Successfully implemented a comprehensive dynamic Role-Based Access Control (RBAC
 
 - `backend/test/roles.e2e-spec.ts` - Role management tests
 - `backend/test/permissions.e2e-spec.ts` - Permission tests
-- `docs/RBAC-SYSTEM.md` - Complete system documentation
-- `docs/MIGRATION-GUIDE.md` - Deployment and migration guide
-- `docs/RBAC-IMPLEMENTATION-SUMMARY.md` - This file
+- `docs/access-control/RBAC-SYSTEM.md` - Complete system documentation
+- `docs/operations/MIGRATION-GUIDE.md` - Deployment and migration guide
+- `docs/access-control/RBAC-IMPLEMENTATION-SUMMARY.md` - This file
 
 ---
 

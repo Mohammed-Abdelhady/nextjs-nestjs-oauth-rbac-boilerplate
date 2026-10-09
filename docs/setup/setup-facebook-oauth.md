@@ -4,7 +4,7 @@ This guide explains how to set up Facebook Login for social authentication in yo
 
 ## 📚 Related Documentation
 
-- **Permissions Guide**: See `docs/facebook-oauth-permissions.md` for detailed information about:
+- **Permissions Guide**: See `docs/setup/facebook-oauth-permissions.md` for detailed information about:
   - What permissions the app requests (`email`, `public_profile`)
   - Why profile pictures DON'T require `user_photos` permission
   - App Review requirements (spoiler: none needed for basic login)
@@ -179,7 +179,7 @@ The following permissions are **NOT requested** by the app:
 
 **Note**: Advanced permissions would require Facebook App Review before going live.
 
-**For detailed information about permissions**, see: `docs/facebook-oauth-permissions.md`
+**For detailed information about permissions**, see: `docs/setup/facebook-oauth-permissions.md`
 
 ---
 

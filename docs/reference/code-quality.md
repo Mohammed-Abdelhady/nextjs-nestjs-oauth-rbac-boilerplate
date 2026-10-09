@@ -92,13 +92,13 @@ None of these workflows has run on the hosting service yet. Local YAML parsing, 
 
 ## Hard-ban scan
 
-The dependency-free entry is `scripts/check-hard-bans.mjs`. Policy data, token reasons, paths and limits live in `scripts/guardrails/policy.mjs`; checker and Git logic live beside it. Staged mode scans added lines in the index. Committed-range mode scans from the base and head's merge base. Existing lines are left alone.
+The dependency-free entry is `scripts/check-hard-bans.mjs`. Policy data, token reasons, paths and limits live in `scripts/guardrails/policy.mjs`; scanner and Git helpers live in its `scanner/` and `git/` folders. Staged mode scans added lines in the index. Committed-range mode scans from the base and head's merge base. Existing lines are left alone.
 
 It scans `.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs`, `.cjs`, `.sh` case-insensitively, `package.json`, and `.husky` hook scripts. Markdown is skipped so this guide can name the tokens. Policy data is exempt because it contains banned spellings as data.
 
 <!-- repository-only:start -->
 
-This repository also exempts `scripts/check-hard-bans.test.mjs`, which contains legacy token fixtures.
+This repository also exempts `scripts/guardrails/scanner/check-hard-bans.test.mjs`, which contains legacy token fixtures.
 <!-- repository-only:end -->
 
 Checker logic and other tests are scanned. Source files in directories named `node_modules`, `dist`, `.next`, and `.expo` are skipped only when that directory is a direct child of the repository root or a declared workspace root. Workspace roots come from the root package manifest and present workspace manifests. Both array-form workspaces and object-form `workspaces.packages` are supported. An unreadable or unparseable manifest emits one warning and permits only repository-root exclusions. Projects outside declared workspaces receive no directory-name skip. Nested source directories such as `backend/src/dist/` are scanned. A file named `package.json` is scanned unless its path is protected, including in those skipped directories. `.husky/_/` is skipped.
@@ -175,7 +175,7 @@ Git metadata is diffed without path arguments. Content diffs use only eligible c
 
 <!-- repository-only:start -->
 
-This repository's default config command includes listed root suites and fast `scripts/guardrails/*.test.mjs` suites. `pnpm run test:config:all` additionally runs every `scripts/guardrails/*.slow.mjs` suite, including real Git histories, hooks and large fixtures. The CI quality job runs that complete command. Generated projects retain the runtime checker and inexpensive config checks, and exclude these regression suites and fixture helpers.
+This repository's default config command includes listed root suites and fast `scripts/guardrails/*/*.test.mjs` suites. `pnpm run test:config:all` additionally runs every `scripts/guardrails/*/*.slow.mjs` suite, including real Git histories, hooks and large fixtures. The CI quality job runs that complete command. Generated projects retain the runtime checker and inexpensive config checks, and exclude these regression suites and fixture helpers.
 <!-- repository-only:end -->
 
 Workspace lint:
