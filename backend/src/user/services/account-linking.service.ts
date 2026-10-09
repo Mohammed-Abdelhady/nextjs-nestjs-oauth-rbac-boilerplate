@@ -3,9 +3,33 @@ import { EMAIL_PROVIDER } from '../../common/constants/oauth-providers';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { UniqueConflictError } from '../../common/persistence/persistence-errors';
+import { runLeavingFailuresAsRaised } from '../../common/persistence/store-failure';
+import {
+  UnitOfWork,
+  UnitOfWorkRunner,
+} from '../../common/persistence/unit-of-work';
 import { OAuthProfile } from '../../auth/oauth/oauth-provider.interface';
 import { LinkedAccountStore } from '../stores/linked-account.store';
 import { StoredAccount } from '../stores/stored-account';
+import {
+  SignInMethodRule,
+  WAY_IN_OUTCOME,
+  WaysLeft,
+} from './sign-in-method.rule';
+
+/**
+ * What an unlink accepts as left: every other linked provider, and email
+ * sign-in on an account created for it while the deployment can sign that
+ * address in or recover it, by password reset or by magic link.
+ */
+function waysLeftWithout(provider: string): WaysLeft {
+  return (held, switches) => {
+    const email = held.emailSignIn && (switches.password || switches.magicLink);
+    const others = held.linkedProviders.filter((linked) => linked !== provider);
+
+    return (email ? 1 : 0) + others.length;
+  };
+}
 
 /**
  * Links and unlinks OAuth accounts on a user.
@@ -17,7 +41,11 @@ import { StoredAccount } from '../stores/stored-account';
 export class AccountLinkingService {
   private readonly logger = new Logger(AccountLinkingService.name);
 
-  constructor(private readonly links: LinkedAccountStore) {}
+  constructor(
+    private readonly links: LinkedAccountStore,
+    private readonly signInMethods: SignInMethodRule,
+    private readonly runner: UnitOfWorkRunner,
+  ) {}
 
   /**
    * Adds a provider account to a user.
@@ -84,7 +112,29 @@ export class AccountLinkingService {
     userId: string,
     provider: string,
   ): Promise<StoredAccount> {
-    const user = await this.requireUser(userId);
+    // The count and the removal commit or abort together, so two removals of
+    // a way in at once cannot each count the other's as the one that stays.
+    const unlinked = await runLeavingFailuresAsRaised(
+      this.runner,
+      (unitOfWork) => this.unlinkHeld(unitOfWork, userId, provider),
+    );
+
+    this.logger.log(`User ${userId} unlinked their ${provider} account`);
+    return unlinked;
+  }
+
+  private async unlinkHeld(
+    unitOfWork: UnitOfWork,
+    userId: string,
+    provider: string,
+  ): Promise<StoredAccount> {
+    // Held first: the account read below is then the one the removal changes.
+    const wayIn = await this.signInMethods.holdForRemoval(
+      unitOfWork,
+      userId,
+      waysLeftWithout(provider),
+    );
+    const user = this.active(await this.links.readAccount(unitOfWork, userId));
 
     if (provider === EMAIL_PROVIDER) {
       throw new AppException(
@@ -104,7 +154,7 @@ export class AccountLinkingService {
       );
     }
 
-    if (user.linkedProviders.length === 1) {
+    if (wayIn === WAY_IN_OUTCOME.LAST) {
       throw new AppException(
         ErrorCode.CANNOT_UNLINK_LAST_PROVIDER,
         'You must keep at least one sign-in method',
@@ -116,16 +166,13 @@ export class AccountLinkingService {
     const remaining = user.linkedAccounts.filter(
       (account) => account.provider !== provider,
     );
-    const unlinked = await this.links.removeLink(user, {
+    return this.links.removeLink(unitOfWork, user, {
       provider,
       primaryProvider:
         user.primaryProvider === provider
           ? remaining[0]?.provider
           : user.primaryProvider,
     });
-
-    this.logger.log(`User ${userId} unlinked their ${provider} account`);
-    return unlinked;
   }
 
   /** Every sign-in method on the account, including 'email'. */

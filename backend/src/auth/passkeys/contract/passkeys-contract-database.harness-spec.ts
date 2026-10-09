@@ -4,6 +4,8 @@ import {
   RerunPause,
   UnitOfWorkRunner,
 } from '../../../common/persistence/unit-of-work';
+import { LinkedAccountStore } from '../../../user/stores/linked-account.store'; // feature:oauth-core
+import { SignInMethodStore } from '../../../user/stores/sign-in-method.store';
 import { PasskeyChallengePurpose } from '../constants/passkeys.constants';
 import { PasskeyAccounts } from '../stores/passkey-accounts';
 import { PasskeyChallengeStore } from '../stores/passkey-challenge.store';
@@ -52,6 +54,8 @@ export interface PasskeysContractHarness {
   readonly passkeys: PasskeyStore;
   readonly challenges: PasskeyChallengeStore;
   readonly accounts: PasskeyAccounts;
+  readonly links: LinkedAccountStore; // feature:oauth-core
+  readonly signInMethods: SignInMethodStore;
   /** The adapter's runner, pausing before a rerun the way the case says. */
   runner(pause: RerunPause): UnitOfWorkRunner;
 
@@ -66,6 +70,8 @@ export interface PasskeysContractHarness {
   }): Promise<string>;
   setDeleted(userId: string, deleted: boolean): Promise<void>;
   removeAccount(userId: string): Promise<void>;
+  /** The providers linked to an account, as stored. */
+  storedProviders(userId: string): Promise<string[]>;
 
   seedPasskey(passkey: SeedPasskey): Promise<string>;
   /** Every stored passkey, by credential id. */

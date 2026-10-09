@@ -92,6 +92,13 @@ export class User {
   twoFactor!: TwoFactor;
   // feature:totp:end
 
+  /**
+   * Written by every removal of a way to sign in, so two of them on one
+   * account conflict. It carries no meaning of its own.
+   */
+  @Prop({ type: Number, select: false })
+  signInFence?: number;
+
   /** Virtual: 'email' when password sign-in applies, plus every linked OAuth provider. */
   linkedProviders!: string[];
 

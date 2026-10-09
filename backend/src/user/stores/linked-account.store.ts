@@ -1,3 +1,4 @@
+import { UnitOfWork } from '../../common/persistence/unit-of-work';
 import { StoredAccount } from './stored-account';
 
 /**
@@ -48,8 +49,17 @@ export abstract class LinkedAccountStore {
     account: StoredAccount,
     link: { provider: string; providerId: string; primaryProvider?: string },
   ): Promise<StoredAccount>;
-  /** Removes every link to the provider and stores the primary provider given. */
+  /** The account as the unit of work sees it, for the write that follows. */
+  abstract readAccount(
+    unitOfWork: UnitOfWork,
+    userId: string,
+  ): Promise<StoredAccount | null>;
+  /**
+   * Removes every link to the provider and stores the primary provider given,
+   * for an account whose ways in the unit of work holds.
+   */
   abstract removeLink(
+    unitOfWork: UnitOfWork,
     account: StoredAccount,
     unlink: { provider: string; primaryProvider: string | undefined },
   ): Promise<StoredAccount>;
