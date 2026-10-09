@@ -111,10 +111,19 @@ from the store populated by `pnpm fetch`.
 
 Set `AUTH_NATIVE_ENABLED=true` to enable native sign-in. Declare clients in
 `AUTH_NATIVE_APPLICATIONS` as a JSON array with `clientId`, `displayName`, and
-one or more `redirectUris`. You can add `allowedScopes`; when omitted, the
-application gets the same `api` scope as the first-party web application.
+one or more `redirectUris`. `api` is the only scope, and it grants the user's
+full permissions: a native access token can do everything the signed-in user
+can. `allowedScopes` may be omitted or set to exactly `["api"]`. Any other
+list stops the server at startup with an error that names the application,
+because no route checks scopes and a narrower list would not narrow access.
 When enabled, also set `AUTH_NATIVE_DPOP_NONCE_SECRET` to a random value of at
 least 32 characters. Generate one with `openssl rand -hex 32`.
+Set `API_URL` to the public origin of this API, the address native clients
+call, for example `https://api.example.com`. DPoP proofs are checked against
+it, so a wrong value refuses every device-bound exchange, refresh and
+revocation. The server does not start with native sign-in enabled unless
+`API_URL` is an `http` or `https` origin with no path, query or fragment
+(leave out `/api`), and it must be `https` when `NODE_ENV=production`.
 Keep `AUTH_NATIVE_DPOP_REQUIRED=false` while clients still use bearer refresh
 tokens. Set it to `true` after every supported client can bind tokens with DPoP.
 
@@ -124,7 +133,10 @@ AUTH_NATIVE_APPLICATIONS='[{"clientId":"com.example.mobile","displayName":"Examp
 
 Each client ID must use letters, numbers, periods, underscores, hyphens, or
 tildes, and can be at most 128 characters. Redirect addresses use the native
-redirect rules. Custom schemes are allowed. HTTP addresses must use a loopback
+redirect rules. Custom schemes such as the one above are accepted outside
+production. In production they are refused, and the server does not start,
+unless `AUTH_NATIVE_ALLOW_CUSTOM_SCHEME=true`; it defaults to `false`. HTTPS and
+loopback HTTP addresses work either way. HTTP addresses must use a loopback
 host, and fragments are rejected.
 
 At startup, the backend reconciles the list for the current environment. It
@@ -166,7 +178,9 @@ credential is used, the server ends the family and the user must sign in again.
 
 `AUTH_NATIVE_DPOP_REQUIRED` is false by default. When true, code exchanges need
 a DPoP proof and unbound families cannot refresh. Access tokens remain bearer
-credentials for up to five minutes; API requests do not need DPoP proofs.
+credentials for up to five minutes; API requests do not need DPoP proofs. The
+token reply says `"token_type":"Bearer"` for a device-bound pair too, and
+`Authorization: Bearer <access_token>` is the only scheme the API accepts.
 
 ### Native OAuth error shapes
 
@@ -178,6 +192,17 @@ are intentionally not unified, so a client parser must handle all three.
 | OAuth                | Token, revoke and authorize validation and OAuth failures            | `400`  | `{"error":"invalid_grant"}`. When native sign-in is turned off the reason is included: `{"error":"unauthorized_client","error_description":"NATIVE_AUTH_DISABLED"}` |
 | Application envelope | Browser authorize actions (read, approve, deny) and other API routes | `4xx`  | `{"success":false,"error":{"code":"NATIVE_TRANSACTION_EXPIRED","message":"..."},"requestId":"..."}`                                                                 |
 | Throttling answer    | Any route over the rate limit                                        | `429`  | `{"success":false,"error":{"code":"RATE_LIMIT_EXCEEDED","message":"Too many requests","details":{"retryAfter":60}},"requestId":"..."}`                              |
+
+A token or revoke request with no body, or with a field that is present and
+not a string, answers `400 {"error":"invalid_request"}`.
+
+Approve and deny accept an optional `expectedUserId`, the id of the account the
+consent page displayed. When it is sent and the browser is now signed in as
+another account, the action answers `409` with `NATIVE_AUTHORIZE_ACCOUNT_MISMATCH`
+in the application envelope. Nothing changes and the request stays pending, so
+the displayed account can still approve or deny it. A value that is not a
+string answers `400` with `VALIDATION_ERROR`. Without the field the
+action is not checked against an account.
 
 ## API endpoints
 
