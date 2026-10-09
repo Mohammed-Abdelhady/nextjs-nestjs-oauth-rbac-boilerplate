@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import { sql } from 'kysely';
 import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
 import {
   issueOnlyTheRefusedEventId,
@@ -179,12 +178,7 @@ export async function bootPostgresRoleHarness(): Promise<RoleContractHarness> {
       return issueOnlyTheRefusedEventId();
     },
 
-    reset: async () => {
-      await connection.rollBackOpenWork();
-      await sql`TRUNCATE security_events, role_pending_sweeps, roles, sessions, user_application_grants, user_linked_accounts, users`.execute(
-        database,
-      );
-    },
+    reset: connection.reset,
     close: connection.close,
   };
 }

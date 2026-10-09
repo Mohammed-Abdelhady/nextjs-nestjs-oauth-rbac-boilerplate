@@ -1,6 +1,5 @@
 import { Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
-import { UserDocument } from '../../../user/schemas/user.schema';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { AuthFeaturesService } from '../../services/features/auth-features.service';
 import { PasskeyAssertionService } from './passkey-assertion.service';
@@ -18,7 +17,7 @@ import {
 
 const MOCK_REQUEST = createRequestMock({ cookies: {} });
 const MOCK_RESPONSE = createResponseMock({});
-const USER = partialMock<UserDocument>({ _id: USER_ID });
+const USER = { id: USER_ID.toString() };
 
 interface Harness {
   verifier: PasskeySecondFactorVerifier;
@@ -31,7 +30,7 @@ function createHarness(
 ): Harness {
   const assertions = {
     verify: jest.fn().mockResolvedValue({
-      passkey: { user: passkeyOwner },
+      passkey: { userId: passkeyOwner.toString() },
       userVerified: true,
     }),
   };

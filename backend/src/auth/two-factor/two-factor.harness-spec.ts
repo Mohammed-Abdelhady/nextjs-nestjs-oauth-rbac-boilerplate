@@ -7,6 +7,7 @@ import { TotpSecretCryptoService } from './services/totp-secret-crypto.service';
 import { TwoFactorVerificationService } from './services/two-factor-verification.service';
 import { TwoFactorReauthService } from './services/two-factor-reauth.service';
 import { hashRecoveryCode } from './utils/recovery-code.util';
+import { MongoSecondFactorStore } from './persistence/mongo/mongo-second-factor.store';
 import {
   createModelMock,
   partialMock,
@@ -117,19 +118,17 @@ export function createHarness(user: MockUser | null): TwoFactorHarness {
   };
 
   const crypto = createCrypto();
+  const accounts = new MongoSecondFactorStore(
+    createModelMock<ConstructorParameters<typeof MongoSecondFactorStore>[0]>(
+      userModel,
+    ),
+  );
 
   return {
     service: new TwoFactorService(
-      createModelMock<ConstructorParameters<typeof TwoFactorService>[0]>(
-        userModel,
-      ),
+      accounts,
       crypto,
-      new TwoFactorVerificationService(
-        createModelMock<
-          ConstructorParameters<typeof TwoFactorVerificationService>[0]
-        >(userModel),
-        crypto,
-      ),
+      new TwoFactorVerificationService(accounts, crypto),
       new TwoFactorReauthService(partialMock<HashService>(hashService)),
     ),
     crypto,

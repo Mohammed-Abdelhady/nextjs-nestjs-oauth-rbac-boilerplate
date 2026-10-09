@@ -4,6 +4,7 @@ import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { TwoFactorChallengeService } from './two-factor-challenge.service';
 import { TotpSecretCryptoService } from './totp-secret-crypto.service';
+import { MongoSecondFactorChallengeStore } from '../persistence/mongo/mongo-second-factor-challenge.store';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { createModelMock } from '../../../common/testing/test-doubles.harness-spec';
 import {
@@ -45,9 +46,11 @@ function createHarness(): Harness {
 
   return {
     service: new TwoFactorChallengeService(
-      createModelMock<
-        ConstructorParameters<typeof TwoFactorChallengeService>[0]
-      >(model),
+      new MongoSecondFactorChallengeStore(
+        createModelMock<
+          ConstructorParameters<typeof MongoSecondFactorChallengeStore>[0]
+        >(model),
+      ),
       configService,
       new TotpSecretCryptoService(configService),
     ),
@@ -144,8 +147,8 @@ describe('TwoFactorChallengeService', () => {
       const context = await harness.service.read(requestWith(token));
 
       expect(context).toEqual({
-        challengeId: CHALLENGE_ID,
-        userId: USER_ID,
+        challengeId: CHALLENGE_ID.toString(),
+        userId: USER_ID.toString(),
       });
     });
 
@@ -223,8 +226,8 @@ describe('TwoFactorChallengeService', () => {
       const context = await harness.service.claim(requestWith(token));
 
       expect(context).toEqual({
-        challengeId: CHALLENGE_ID,
-        userId: USER_ID,
+        challengeId: CHALLENGE_ID.toString(),
+        userId: USER_ID.toString(),
       });
       expect(harness.model.findOneAndUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -255,7 +258,7 @@ describe('TwoFactorChallengeService', () => {
         attempts: 1,
       });
 
-      await harness.service.registerFailure(CHALLENGE_ID);
+      await harness.service.registerFailure(CHALLENGE_ID.toString());
 
       expect(harness.model.findOneAndUpdate).toHaveBeenCalledWith(
         { _id: CHALLENGE_ID },
@@ -272,7 +275,7 @@ describe('TwoFactorChallengeService', () => {
         attempts: TWO_FACTOR_MAX_CHALLENGE_ATTEMPTS,
       });
 
-      await harness.service.registerFailure(CHALLENGE_ID);
+      await harness.service.registerFailure(CHALLENGE_ID.toString());
 
       expect(harness.model.deleteOne).toHaveBeenCalledWith({
         _id: CHALLENGE_ID,

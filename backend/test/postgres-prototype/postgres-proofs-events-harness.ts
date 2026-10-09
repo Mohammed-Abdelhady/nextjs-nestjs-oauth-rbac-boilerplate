@@ -1,5 +1,4 @@
 import { ConfigService } from '@nestjs/config';
-import { sql } from 'kysely';
 import { SecurityEventRecorder } from '../../src/session/events/security-event-recorder';
 import { BrowserProofService } from '../../src/session/services/browser-proof.service';
 import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
@@ -90,10 +89,7 @@ export async function bootPostgresProofsEventsHarness(): Promise<ProofsEventsCon
     ownAccountId: () => A_UUID,
     foreignAccountId: () => AN_OBJECT_ID,
 
-    reset: async () => {
-      await connection.rollBackOpenWork();
-      await sql`TRUNCATE browser_proofs, security_events`.execute(database);
-    },
+    reset: connection.reset,
     close: connection.close,
   };
 }

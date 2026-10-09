@@ -22,10 +22,14 @@ const USER = 'postgres';
 const LOG_LINES_KEPT = 50;
 // Durability is off: the data lives for one suite and is then deleted.
 const SERVER_FLAGS = [
-  '-c', `listen_addresses=${HOST}`,
-  '-c', 'fsync=off',
-  '-c', 'synchronous_commit=off',
-  '-c', 'full_page_writes=off',
+  '-c',
+  `listen_addresses=${HOST}`,
+  '-c',
+  'fsync=off',
+  '-c',
+  'synchronous_commit=off',
+  '-c',
+  'full_page_writes=off',
 ];
 
 const ownerPid = process.argv[2];
@@ -53,7 +57,9 @@ const remember = (message) => {
 
 const swept = removeOrphanedPostgresData(tmpdir());
 if (swept.removed.length > 0) {
-  console.error(`[jest-postgres] removed orphaned data=${swept.removed.join(',')}`);
+  console.error(
+    `[jest-postgres] removed orphaned data=${swept.removed.join(',')}`,
+  );
 }
 
 const dataDirectory = await mkdtemp(
@@ -93,9 +99,13 @@ process.stdin.resume();
 try {
   await server.initialise();
   await server.start();
-  process.stdout.write(`${JSON.stringify({ port, password, dataDirectory })}\n`);
+  process.stdout.write(
+    `${JSON.stringify({ port, password, dataDirectory })}\n`,
+  );
 } catch (error) {
-  console.error(`postgres-server: ${error instanceof Error ? error.message : String(error)}`);
+  console.error(
+    `postgres-server: ${error instanceof Error ? error.message : String(error)}`,
+  );
   console.error(serverLog.join(''));
   await stop(1);
 }

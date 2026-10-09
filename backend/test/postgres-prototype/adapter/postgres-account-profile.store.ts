@@ -106,9 +106,15 @@ export class PostgresAccountProfileStore extends AccountProfileStore {
     });
   }
 
-  /** Passkeys are not stored on this database yet. */
-  countPasskeys(): Promise<number> {
-    return Promise.resolve(0);
+  countPasskeys(userId: string): Promise<number> {
+    return accountStatement(async () => {
+      const row = await this.database
+        .selectFrom('passkeys')
+        .select((select) => select.fn.countAll<string>().as('rows'))
+        .where('user_id', '=', toUuid(userId))
+        .executeTakeFirstOrThrow();
+      return Number.parseInt(row.rows, 10);
+    });
   }
 
   readAccount(

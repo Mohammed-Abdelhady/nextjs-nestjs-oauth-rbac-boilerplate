@@ -1,5 +1,11 @@
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -19,7 +25,10 @@ function fixture(t) {
     const name = `${BACKEND_TEST_POSTGRES_DATA_PREFIX}${owner}-abc123`;
     mkdirSync(join(parent, name));
     if (postmasterPid !== undefined) {
-      writeFileSync(join(parent, name, 'postmaster.pid'), `${postmasterPid}\n${parent}\n`);
+      writeFileSync(
+        join(parent, name, 'postmaster.pid'),
+        `${postmasterPid}\n${parent}\n`,
+      );
     }
     return name;
   };
@@ -48,7 +57,11 @@ test('a dead owner with a running server: the server is stopped and the folder r
 
   assert.deepEqual(
     { result, signals: fake.signals, left: existsSync(join(parent, name)) },
-    { result: { stopped: [POSTMASTER], removed: [name] }, signals: [[POSTMASTER, 'SIGQUIT']], left: false },
+    {
+      result: { stopped: [POSTMASTER], removed: [name] },
+      signals: [[POSTMASTER, 'SIGQUIT']],
+      left: false,
+    },
   );
 });
 
@@ -71,7 +84,10 @@ test('a live owner keeps its folder and its server', (t) => {
 test('a recorded pid that now belongs to another program is not signalled', (t) => {
   const { parent, folder } = fixture(t);
   const name = folder(DEAD_OWNER, POSTMASTER);
-  const fake = probes({ alive: [POSTMASTER], commands: { [POSTMASTER]: 'vim notes.txt' } });
+  const fake = probes({
+    alive: [POSTMASTER],
+    commands: { [POSTMASTER]: 'vim notes.txt' },
+  });
 
   const result = removeOrphanedPostgresData(parent, fake);
 
@@ -101,10 +117,13 @@ test('a dead owner with no server left, or no pid file, only loses its folder', 
 
   const result = removeOrphanedPostgresData(parent, fake);
 
-  assert.deepEqual({ result, signals: fake.signals }, {
-    result: { stopped: [], removed: [stopped] },
-    signals: [],
-  });
+  assert.deepEqual(
+    { result, signals: fake.signals },
+    {
+      result: { stopped: [], removed: [stopped] },
+      signals: [],
+    },
+  );
 });
 
 test('a pid file that is not a number and folders of other tools are left to their rules', (t) => {
@@ -121,8 +140,15 @@ test('a pid file that is not a number and folders of other tools are left to the
       result,
       signals: fake.signals,
       mongoLeft: existsSync(join(parent, 'backend-jest-mongo-4001-abc')),
-      unownedLeft: existsSync(join(parent, `${BACKEND_TEST_POSTGRES_DATA_PREFIX}nopid`)),
+      unownedLeft: existsSync(
+        join(parent, `${BACKEND_TEST_POSTGRES_DATA_PREFIX}nopid`),
+      ),
     },
-    { result: { stopped: [], removed: [name] }, signals: [], mongoLeft: true, unownedLeft: true },
+    {
+      result: { stopped: [], removed: [name] },
+      signals: [],
+      mongoLeft: true,
+      unownedLeft: true,
+    },
   );
 });

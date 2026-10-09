@@ -14,6 +14,12 @@ import { VerifyTwoFactorDto } from './dto/verify-two-factor.dto';
 import { TwoFactorChallengeService } from './services/two-factor-challenge.service';
 import { TwoFactorVerificationService } from './services/two-factor-verification.service';
 import { SignInService } from '../services/sessions/sign-in.service';
+import { MongoSecondFactorSignIn } from './persistence/mongo/mongo-second-factor-sign-in';
+import {
+  MongoSecondFactorStore,
+  secondFactorDocumentOf,
+} from './persistence/mongo/mongo-second-factor.store';
+import { SecondFactorVerifier } from './services/second-factor-verifiers';
 import { checkTotpDelta } from './utils/totp.util';
 import {
   createCrypto,
@@ -97,20 +103,32 @@ function createHarness(user: MockUser | null): Harness {
     verify: jest.fn().mockResolvedValue(undefined),
   };
 
+  const accounts = new MongoSecondFactorStore(
+    createModelMock<ConstructorParameters<typeof MongoSecondFactorStore>[0]>(
+      userModel,
+    ),
+  );
+  // The double is handed the document behind the account, which is what the
+  // cases compare against.
+  const verifierOnDocuments: SecondFactorVerifier = {
+    supports: (dto) => verifier.supports({ ...dto }),
+    verify: async (dto, account, request, response) => {
+      await verifier.verify(
+        dto,
+        secondFactorDocumentOf(account),
+        request,
+        response,
+      );
+    },
+  };
+
   return {
     service: new TwoFactorLoginService(
-      createModelMock<ConstructorParameters<typeof TwoFactorLoginService>[0]>(
-        userModel,
-      ),
+      accounts,
       partialMock<TwoFactorChallengeService>(challengeService),
-      new TwoFactorVerificationService(
-        createModelMock<
-          ConstructorParameters<typeof TwoFactorVerificationService>[0]
-        >(userModel),
-        createCrypto(),
-      ),
-      partialMock<SignInService>(signInService),
-      [verifier],
+      new TwoFactorVerificationService(accounts, createCrypto()),
+      new MongoSecondFactorSignIn(partialMock<SignInService>(signInService)),
+      [verifierOnDocuments],
     ),
     challengeService,
     signInService,

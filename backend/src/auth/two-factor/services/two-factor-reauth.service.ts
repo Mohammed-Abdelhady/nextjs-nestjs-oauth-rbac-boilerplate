@@ -1,9 +1,14 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { UserDocument } from '../../../user/schemas/user.schema';
 import { HashService } from '../../../common/services/hash.service';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { TWO_FACTOR_FRESH_SESSION_MS } from '../constants/two-factor.constants';
+
+/** Enough of an account for the password check. */
+export interface PasswordHolder {
+  /** Absent on an account that signs in without a password. */
+  passwordHash?: string;
+}
 
 /** Enough of a session for the freshness check. */
 export interface SessionAge {
@@ -26,12 +31,12 @@ export class TwoFactorReauthService {
    * @throws AppException INVALID_CURRENT_PASSWORD when the password is wrong
    */
   async assertReauthenticated(
-    user: UserDocument,
+    user: PasswordHolder,
     password: string | undefined,
     session: SessionAge | undefined,
   ): Promise<void> {
-    if (user.password) {
-      await this.assertPassword(user.password, password);
+    if (user.passwordHash) {
+      await this.assertPassword(user.passwordHash, password);
       return;
     }
 
@@ -43,14 +48,14 @@ export class TwoFactorReauthService {
    * need nothing more from a passwordless account.
    */
   async assertPasswordIfSet(
-    user: UserDocument,
+    user: PasswordHolder,
     password: string | undefined,
   ): Promise<void> {
-    if (!user.password) {
+    if (!user.passwordHash) {
       return;
     }
 
-    await this.assertPassword(user.password, password);
+    await this.assertPassword(user.passwordHash, password);
   }
 
   private async assertPassword(

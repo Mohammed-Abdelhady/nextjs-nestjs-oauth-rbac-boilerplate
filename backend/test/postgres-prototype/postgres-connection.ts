@@ -1,4 +1,4 @@
-import { Kysely, PostgresDialect, PostgresPool } from 'kysely';
+import { Kysely, PostgresDialect, PostgresPool, sql } from 'kysely';
 import { Client, Pool, PoolClient } from 'pg';
 import { commitCheckedPool } from './adapter/postgres-commit-tag';
 import {
@@ -25,6 +25,35 @@ const WITH_OPEN_WORK = ' AND xact_start IS NOT NULL';
 /** The server's own bound on waiting for one session to go. */
 const SESSION_END_WAIT_MS = 30_000;
 
+/**
+ * Every table of the prototype. A reset empties all of them in one statement,
+ * so a harness cannot leave behind a table that refers to one it emptied. A
+ * table added to the map and not named here does not compile.
+ */
+const EVERY_TABLE: Record<keyof PrototypeDatabase, true> = {
+  security_events: true,
+  browser_proofs: true,
+  sessions: true,
+  user_application_grants: true,
+  applications: true,
+  role_pending_sweeps: true,
+  roles: true,
+  pending_magic_links: true,
+  pending_password_resets: true,
+  pending_registrations: true,
+  mail_counters: true,
+  passkey_challenges: true,
+  passkeys: true,
+  two_factor_challenges: true,
+  user_recovery_codes: true,
+  user_two_factor: true,
+  user_linked_accounts: true,
+  users: true,
+};
+const RESET_TABLES = sql.join(
+  Object.keys(EVERY_TABLE).map((table) => sql.table(table)),
+);
+
 export interface PrototypeConnection<
   Dialect extends PostgresDialect = PostgresDialect,
 > {
@@ -38,6 +67,8 @@ export interface PrototypeConnection<
    * the next case's reset. Call it first in every `reset`.
    */
   readonly rollBackOpenWork: () => Promise<void>;
+  /** Rolls open work back, then empties every table. The reset of a harness. */
+  readonly reset: () => Promise<void>;
   /**
    * Stops the server whatever state the cases left: open transactions are
    * rolled back, and a connection a case never handed back is not waited for.
@@ -110,13 +141,18 @@ export async function openPrototypeConnectionOn<
     const appliedMigrations = await migratePrototypeDatabase(pool);
     const dialect = makeDialect(pool);
     const database = openPrototypeDatabase(pool, dialect);
+    const rollBackOpenWork = (): Promise<void> => endSessions(WITH_OPEN_WORK);
     return {
       server,
       dialect,
       pool,
       database,
       appliedMigrations,
-      rollBackOpenWork: () => endSessions(WITH_OPEN_WORK),
+      rollBackOpenWork,
+      reset: async () => {
+        await rollBackOpenWork();
+        await sql`TRUNCATE ${RESET_TABLES}`.execute(database);
+      },
       close,
     };
   } catch (error) {

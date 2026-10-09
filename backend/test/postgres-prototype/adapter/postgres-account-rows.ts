@@ -106,9 +106,23 @@ export async function linkedAccountsOf(
   }));
 }
 
+/** Whether the account's second factor is confirmed and on. */
+export async function secondFactorEnabled(
+  reader: AccountReader,
+  userId: string,
+): Promise<boolean> {
+  const row = await reader
+    .selectFrom('user_two_factor')
+    .select('enabled')
+    .where('user_id', '=', userId)
+    .executeTakeFirst();
+  return row?.enabled === true;
+}
+
 export function toStoredAccount(
   row: AccountRow,
   linkedAccounts: LinkedAccountRecord[],
+  twoFactorEnabled = false,
 ): StoredAccount {
   const authProvider = row.auth_provider ?? EMAIL_PROVIDER;
   return {
@@ -129,7 +143,7 @@ export function toStoredAccount(
     primaryProvider: row.primary_provider ?? undefined,
     profileSyncedAt: row.profile_synced_at ?? undefined,
     lastSyncedProvider: row.last_synced_provider ?? undefined,
-    twoFactorEnabled: false,
+    twoFactorEnabled,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -152,7 +166,11 @@ export async function readAccount(
     take ? query.forNoKeyUpdate().noWait() : query
   ).executeTakeFirst();
   return row
-    ? toStoredAccount(row, await linkedAccountsOf(reader, row.id))
+    ? toStoredAccount(
+        row,
+        await linkedAccountsOf(reader, row.id),
+        await secondFactorEnabled(reader, row.id),
+      )
     : null;
 }
 

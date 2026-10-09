@@ -22,6 +22,10 @@ import {
 } from './schemas/passkey-challenge.schema';
 import { VerifyPasskeyRegistrationDto } from './dto/verify-passkey-registration.dto';
 import { PasskeyChallengeService } from './services/passkey-challenge.service';
+import { MongoPasskeyAccounts } from './persistence/mongo/mongo-passkey-accounts';
+import { MongoPasskeyChallengeStore } from './persistence/mongo/mongo-passkey-challenge.store';
+import { MongoPasskeyStore } from './persistence/mongo/mongo-passkey.store';
+import { MongoUnitOfWorkRunner } from '../../session/persistence/mongo/mongo-unit-of-work';
 import { PasskeyConfigService } from './services/passkey-config.service';
 import { PasskeyManagementService } from './services/passkey-management.service';
 import { PasskeyRegistrationService } from './services/passkey-registration.service';
@@ -115,22 +119,23 @@ describe('passkey ObjectId round trip', () => {
 
         const config = new ConfigService(TEST_CONFIGURATION);
         const challengeService = new PasskeyChallengeService(
-          challenges,
+          new MongoPasskeyChallengeStore(challenges),
           config,
         );
         const adapter = new WebAuthnAdapter();
         jest.spyOn(adapter, 'verifyAttestation').mockResolvedValue(ATTESTATION);
         const registration = new PasskeyRegistrationService(
-          passkeys,
-          users,
+          new MongoPasskeyStore(passkeys),
+          new MongoPasskeyAccounts(users),
           adapter,
           new PasskeyConfigService(config),
           challengeService,
         );
         const management = new PasskeyManagementService(
-          passkeys,
-          users,
+          new MongoPasskeyStore(passkeys),
+          new MongoPasskeyAccounts(users),
           new AuthFeaturesService(config),
+          new MongoUnitOfWorkRunner(connection),
         );
 
         await users.create({

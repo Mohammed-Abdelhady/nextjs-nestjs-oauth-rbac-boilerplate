@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { MONGO_PASSKEY_STORES } from './persistence/mongo/mongo-passkey-stores';
 import { AuthModule } from '../auth.module';
+import { SessionModule } from '../../session/session.module';
 import { PasskeysController } from './passkeys.controller';
 import { PasskeyLoginController } from './passkey-login.controller';
 import { PasskeyAssertionService } from './services/passkey-assertion.service';
@@ -37,6 +39,8 @@ import { User, UserSchema } from '../../user/schemas/user.schema';
       { name: User.name, schema: UserSchema },
     ]),
     AuthModule,
+    // The unit of work a passkey removal runs in.
+    SessionModule,
   ],
   controllers: [PasskeysController, PasskeyLoginController],
   providers: [
@@ -48,6 +52,7 @@ import { User, UserSchema } from '../../user/schemas/user.schema';
     PasskeyLoginService,
     PasskeyManagementService,
     PasskeySecondFactorVerifier,
+    ...MONGO_PASSKEY_STORES,
   ],
   exports: [
     PasskeyAssertionService,

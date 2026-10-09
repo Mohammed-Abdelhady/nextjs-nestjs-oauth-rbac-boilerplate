@@ -1,0 +1,38 @@
+import {
+  PostgresPasskeyAccounts,
+  PostgresPasskeyStore,
+} from '../../../../test/postgres-prototype/adapter/postgres-passkey.store';
+import { bootPostgresAccountsHarness } from '../../../../test/postgres-prototype/postgres-accounts-harness';
+import {
+  POSTGRES_BOOT_TIMEOUT_MS,
+  POSTGRES_TEARDOWN_TIMEOUT_MS,
+} from '../../../../test/postgres-prototype/server/postgres-test-server';
+import { describePasskeysAfterDeletion } from './passkeys-account-deletion.harness-spec';
+
+// The account services and the passkey stores must run here without the other
+// database's driver. Loading any of these modules fails the suite.
+jest.mock('mongoose', () => {
+  throw new Error('mongoose was loaded on the PostgreSQL path');
+});
+jest.mock('mongodb', () => {
+  throw new Error('mongodb was loaded on the PostgreSQL path');
+});
+jest.mock('@nestjs/mongoose', () => {
+  throw new Error('@nestjs/mongoose was loaded on the PostgreSQL path');
+});
+
+describePasskeysAfterDeletion(
+  'PostgreSQL',
+  async () => {
+    const accounts = await bootPostgresAccountsHarness();
+    return {
+      accounts,
+      passkeys: new PostgresPasskeyStore(accounts.database, accounts.clock),
+      passkeyAccounts: new PostgresPasskeyAccounts(accounts.database),
+    };
+  },
+  {
+    bootMs: POSTGRES_BOOT_TIMEOUT_MS,
+    teardownMs: POSTGRES_TEARDOWN_TIMEOUT_MS,
+  },
+);

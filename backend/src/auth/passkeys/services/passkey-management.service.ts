@@ -1,19 +1,21 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User, UserDocument } from '../../../user/schemas/user.schema';
 import { ApiResponse } from '../../../common/dto/api-response.dto';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
+import {
+  UnitOfWork,
+  UnitOfWorkRunner,
+} from '../../../common/persistence/unit-of-work';
 import { AuthFeature } from '../../enums/auth-feature.enum';
 import { AuthFeaturesService } from '../../services/features/auth-features.service';
-import { Passkey, PasskeyDocument } from '../schemas/passkey.schema';
 import {
   PasskeyListResponseDto,
   PasskeySummaryDto,
 } from '../dto/passkey-summary.dto';
 import { RenamePasskeyDto } from '../dto/rename-passkey.dto';
 import { toPasskeySummary } from '../utils/passkey-summary.util';
+import { PasskeyAccounts } from '../stores/passkey-accounts';
+import { PasskeyStore, StoredPasskey } from '../stores/passkey.store';
 
 /**
  * The passkeys on an account, from the account settings. Every lookup is
@@ -25,16 +27,14 @@ export class PasskeyManagementService {
   private readonly logger = new Logger(PasskeyManagementService.name);
 
   constructor(
-    @InjectModel(Passkey.name)
-    private readonly passkeyModel: Model<PasskeyDocument>,
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    private readonly passkeys: PasskeyStore,
+    private readonly accounts: PasskeyAccounts,
     private readonly authFeaturesService: AuthFeaturesService,
+    private readonly runner: UnitOfWorkRunner,
   ) {}
 
   async list(userId: string): Promise<ApiResponse<PasskeyListResponseDto>> {
-    const passkeys = await this.passkeyModel
-      .find({ user: userId })
-      .sort({ createdAt: -1 });
+    const passkeys = await this.passkeys.listForAccount(userId);
 
     return ApiResponse.success({ passkeys: passkeys.map(toPasskeySummary) });
   }
@@ -46,11 +46,9 @@ export class PasskeyManagementService {
     dto: RenamePasskeyDto,
   ): Promise<ApiResponse<PasskeySummaryDto>> {
     const passkey = await this.findOwned(userId, passkeyId);
+    const renamed = await this.passkeys.rename(passkey, dto.name.trim());
 
-    passkey.name = dto.name.trim();
-    await passkey.save();
-
-    return ApiResponse.success(toPasskeySummary(passkey), 'Passkey renamed');
+    return ApiResponse.success(toPasskeySummary(renamed), 'Passkey renamed');
   }
 
   /**
@@ -63,9 +61,12 @@ export class PasskeyManagementService {
     passkeyId: string,
   ): Promise<ApiResponse<{ message: string }>> {
     const passkey = await this.findOwned(userId, passkeyId);
-    await this.assertNotTheLastWayIn(userId);
-
-    await this.passkeyModel.deleteOne({ _id: passkey._id });
+    // The count and the removal commit or abort together, so two removals at
+    // once cannot each count the other's passkey as the one that stays.
+    await this.runner.run(async (unitOfWork) => {
+      await this.assertNotTheLastWayIn(unitOfWork, userId);
+      await this.passkeys.remove(unitOfWork, passkey);
+    });
 
     this.logger.log(`Passkey removed for user ${userId}`);
     return ApiResponse.success({ message: 'Passkey removed' });
@@ -74,11 +75,8 @@ export class PasskeyManagementService {
   private async findOwned(
     userId: string,
     passkeyId: string,
-  ): Promise<PasskeyDocument> {
-    const passkey = await this.passkeyModel.findOne({
-      _id: passkeyId,
-      user: userId,
-    });
+  ): Promise<StoredPasskey> {
+    const passkey = await this.passkeys.findOwned(userId, passkeyId);
 
     if (!passkey) {
       throw new AppException(
@@ -96,23 +94,26 @@ export class PasskeyManagementService {
    * passkey, no password to sign in with, no linked OAuth account, and no
    * magic link. Any one of those, and the passkey goes.
    */
-  private async assertNotTheLastWayIn(userId: string): Promise<void> {
-    const remaining = await this.passkeyModel.countDocuments({ user: userId });
+  private async assertNotTheLastWayIn(
+    unitOfWork: UnitOfWork,
+    userId: string,
+  ): Promise<void> {
+    const remaining = await this.passkeys.holdForAccount(unitOfWork, userId);
 
     if (remaining > 1) {
       return;
     }
 
-    const user = await this.userModel.findById(userId).select('+password');
+    const stored = await this.accounts.findSignInMethods(userId);
 
-    if (!user) {
+    if (!stored) {
       return;
     }
 
     const hasPassword =
       this.authFeaturesService.isEnabled(AuthFeature.PASSWORD) &&
-      Boolean(user.password);
-    const hasOAuth = (user.linkedAccounts ?? []).length > 0;
+      stored.hasPassword;
+    const hasOAuth = stored.hasLinkedAccount;
     const hasMagicLink = this.authFeaturesService.isEnabled(
       AuthFeature.MAGIC_LINK,
     );

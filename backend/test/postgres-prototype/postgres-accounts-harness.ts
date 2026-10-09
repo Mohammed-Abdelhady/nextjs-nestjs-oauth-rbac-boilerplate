@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Kysely, sql } from 'kysely';
+import { Kysely } from 'kysely';
 import { SessionRevoker } from '../../src/session/revocation/session-revoker';
 import { RevokerAccountSessions } from '../../src/user/stores/revoker-account-sessions';
 import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
@@ -241,12 +241,7 @@ export async function bootPostgresAccountsHarness(): Promise<PostgresAccountsHar
       return issueOnlyTheRefusedEventId();
     },
 
-    reset: async () => {
-      await connection.rollBackOpenWork();
-      await sql`TRUNCATE security_events, role_pending_sweeps, roles, sessions, user_application_grants, user_linked_accounts, pending_registrations, mail_counters, users`.execute(
-        database,
-      );
-    },
+    reset: connection.reset,
     close: connection.close,
   };
 }

@@ -1,7 +1,14 @@
 import { generateSync } from 'otplib';
 import { ConfigService } from '@nestjs/config';
 import { Types } from 'mongoose';
-import { TwoFactorVerificationService } from './two-factor-verification.service';
+import {
+  SecondFactorInput,
+  TwoFactorVerificationService,
+} from './two-factor-verification.service';
+import {
+  MongoSecondFactorStore,
+  toSecondFactorAccount,
+} from '../persistence/mongo/mongo-second-factor.store';
 import { TotpSecretCryptoService } from './totp-secret-crypto.service';
 import { generateTotpSecret } from '../utils/totp.util';
 import { hashRecoveryCode } from '../utils/recovery-code.util';
@@ -57,8 +64,21 @@ export interface MockUser {
   markModified: jest.Mock;
 }
 
+/**
+ * The service as these specs call it, with the document they hold. Each call
+ * reads the document into a record first, the way a store read does.
+ */
+export interface VerificationOnDocuments {
+  verifySecondFactor(
+    user: UserDocument,
+    input: SecondFactorInput,
+  ): Promise<void>;
+  verifyTotpCode(user: UserDocument, code: string): Promise<void>;
+  verifyRecoveryCode(user: UserDocument, recoveryCode: string): Promise<void>;
+}
+
 export interface VerificationHarness {
-  service: TwoFactorVerificationService;
+  service: VerificationOnDocuments;
   secret: string;
   user: UserDocument;
   save: jest.Mock;
@@ -94,13 +114,27 @@ export function createVerificationHarness(
     markModified,
   });
 
-  return {
-    service: new TwoFactorVerificationService(
-      createModelMock<
-        ConstructorParameters<typeof TwoFactorVerificationService>[0]
-      >(userModel),
-      crypto,
+  const verification = new TwoFactorVerificationService(
+    new MongoSecondFactorStore(
+      createModelMock<ConstructorParameters<typeof MongoSecondFactorStore>[0]>(
+        userModel,
+      ),
     ),
+    crypto,
+  );
+
+  return {
+    service: {
+      verifySecondFactor: (document, input) =>
+        verification.verifySecondFactor(toSecondFactorAccount(document), input),
+      verifyTotpCode: (document, code) =>
+        verification.verifyTotpCode(toSecondFactorAccount(document), code),
+      verifyRecoveryCode: (document, recoveryCode) =>
+        verification.verifyRecoveryCode(
+          toSecondFactorAccount(document),
+          recoveryCode,
+        ),
+    },
     secret,
     user,
     save,

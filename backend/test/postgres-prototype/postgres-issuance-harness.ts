@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
-import { Kysely, sql } from 'kysely';
+import { Kysely } from 'kysely';
 import { Pool } from 'pg';
 import { RerunPause } from '../../src/common/persistence/unit-of-work';
 import { AuthEpochService } from '../../src/common/services/auth-epoch.service';
@@ -240,12 +240,7 @@ export async function bootPostgresIssuanceHarness(): Promise<PostgresIssuanceHar
     },
     loseCommitAnswers: (fault) => dialect.loseCommitAnswers(fault),
 
-    reset: async () => {
-      await connection.rollBackOpenWork();
-      await sql`TRUNCATE security_events, sessions, user_application_grants, applications, user_linked_accounts, users`.execute(
-        database,
-      );
-    },
+    reset: connection.reset,
     close: connection.close,
   };
 }

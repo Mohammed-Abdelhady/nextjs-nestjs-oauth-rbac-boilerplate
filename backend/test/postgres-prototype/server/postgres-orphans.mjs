@@ -13,11 +13,14 @@ const POSTMASTER_PID_FILE = 'postmaster.pid';
 const POSTMASTER_STOP_SIGNAL = 'SIGQUIT';
 
 export const systemProbes = {
-  isAlive: (pid) => processExists(pid, (candidate) => process.kill(candidate, 0)),
+  isAlive: (pid) =>
+    processExists(pid, (candidate) => process.kill(candidate, 0)),
   // The process's command line, or nothing when it cannot be read.
   commandOf: (pid) => {
     try {
-      return execFileSync('ps', ['-o', 'command=', '-p', String(pid)], { encoding: 'utf8' });
+      return execFileSync('ps', ['-o', 'command=', '-p', String(pid)], {
+        encoding: 'utf8',
+      });
     } catch {
       return undefined;
     }
@@ -33,7 +36,9 @@ function ownerOf(directory, prefix) {
 function postmasterOf(dataDirectory) {
   let firstLine;
   try {
-    firstLine = readFileSync(join(dataDirectory, POSTMASTER_PID_FILE), 'utf8').split('\n')[0].trim();
+    firstLine = readFileSync(join(dataDirectory, POSTMASTER_PID_FILE), 'utf8')
+      .split('\n')[0]
+      .trim();
   } catch {
     return Number.NaN;
   }
@@ -48,7 +53,8 @@ export function stopOrphanedPostmasters(parentDirectory, prefix, probes) {
   for (const entry of readdirSync(parentDirectory, { withFileTypes: true })) {
     if (!entry.isDirectory() || !entry.name.startsWith(prefix)) continue;
     const owner = ownerOf(entry.name, prefix);
-    if (!Number.isInteger(owner) || owner < 1 || probes.isAlive(owner)) continue;
+    if (!Number.isInteger(owner) || owner < 1 || probes.isAlive(owner))
+      continue;
     const dataDirectory = join(parentDirectory, entry.name);
     const postmaster = postmasterOf(dataDirectory);
     if (!Number.isInteger(postmaster) || postmaster < 1) continue;
@@ -60,7 +66,10 @@ export function stopOrphanedPostmasters(parentDirectory, prefix, probes) {
 }
 
 // Stops abandoned servers, then removes the data folders dead processes left.
-export function removeOrphanedPostgresData(parentDirectory, probes = systemProbes) {
+export function removeOrphanedPostgresData(
+  parentDirectory,
+  probes = systemProbes,
+) {
   const stopped = stopOrphanedPostmasters(
     parentDirectory,
     BACKEND_TEST_POSTGRES_DATA_PREFIX,

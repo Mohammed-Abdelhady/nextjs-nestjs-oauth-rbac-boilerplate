@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Kysely, sql } from 'kysely';
+import { Kysely } from 'kysely';
 import { PendingCodesContractHarness } from '../utils/auth/pending-codes-contract/pending-codes-contract-harness';
 import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
 import { PrototypeDatabase } from './adapter/postgres-database';
@@ -155,12 +155,7 @@ export async function bootPostgresPendingCodesHarness(): Promise<PostgresPending
     accountId: () => randomUUID(),
     foreignId: () => AN_OBJECT_ID,
 
-    reset: async () => {
-      await connection.rollBackOpenWork();
-      await sql`TRUNCATE mail_counters, pending_registrations, pending_password_resets`.execute(
-        database,
-      );
-    },
+    reset: connection.reset,
     close: connection.close,
   };
 }

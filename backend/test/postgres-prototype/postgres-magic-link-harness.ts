@@ -1,4 +1,3 @@
-import { sql } from 'kysely';
 import { MagicLinkContractHarness } from '../../src/auth/magic-link/contract/magic-link-contract.harness-spec';
 import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
 import {
@@ -89,12 +88,7 @@ export async function bootPostgresMagicLinkHarness(): Promise<MagicLinkContractH
     },
     accountCount: () => countRows('users'),
 
-    reset: async () => {
-      await connection.rollBackOpenWork();
-      await sql`TRUNCATE pending_magic_links, security_events, sessions, user_application_grants, user_linked_accounts, users`.execute(
-        database,
-      );
-    },
+    reset: connection.reset,
     close: connection.close,
   };
 }
