@@ -6,6 +6,8 @@ import {
   ROOT_PACKAGE_JSON,
   DEFAULT_RULES_POLICY,
 } from '../constants/index.js';
+import { defaultOwnership, type Ownership } from '../manifest/ownership.js';
+import { pruneIgnoreFile } from './ignore-file.js';
 import { pruneLintStaged } from './lint-staged.js';
 import { pruneRules } from './rules.js';
 import { removeDocMarkers } from './doc-markers.js';
@@ -39,9 +41,9 @@ function removedEnvVars(manifest: Manifest, selected: Set<string>): EnvRemovals 
 }
 
 /**
- * Removes everything the unselected features and options own, marked lines and
- * sections included, then reports imports and scripts into deleted files and
- * missing relative documentation links.
+ * Removes everything the unselected features, options and clients own, marked
+ * lines and sections included, then reports imports and scripts into deleted
+ * files and missing relative documentation links.
  */
 export async function prune(
   root: string,
@@ -49,6 +51,7 @@ export async function prune(
   selectedFeatures: string[],
   selectedOptions: string[],
   rules: RulesPolicy = DEFAULT_RULES_POLICY,
+  ownership: Ownership = defaultOwnership(manifest),
 ): Promise<PruneResult> {
   const selected = new Set(selectedFeatures);
   const removed = Object.keys(manifest.features).filter((id) => !selected.has(id));
@@ -69,6 +72,8 @@ export async function prune(
     doomedDocs.push(...option.docs);
   }
 
+  doomedFiles.push(...ownership.removedFiles);
+
   const deletedFiles = await deleteMatchingFiles(root, [
     ...manifest.core.alwaysRemoveFiles,
     ...doomedFiles,
@@ -77,18 +82,16 @@ export async function prune(
   deletedFiles.push(...(await pruneRules(root, rules)));
 
   // Runs for every selection, not only a partial one: the full project has to
-  // come out without marker comments too. Option ids are valid marker names.
-  const markerIds = [...Object.keys(manifest.features), ...Object.keys(manifest.options)];
-  const markers = await removeFeatureLines(
-    root,
-    [...selectedFeatures, ...selectedOptions],
-    markerIds,
-  );
-  const docMarkers = await removeDocMarkers(
-    root,
-    [...selectedFeatures, ...selectedOptions],
-    markerIds,
-  );
+  // come out without marker comments too. Option, client and shared ids are
+  // valid marker names.
+  const markerIds = [
+    ...Object.keys(manifest.features),
+    ...Object.keys(manifest.options),
+    ...ownership.knownIds,
+  ];
+  const keptIds = [...selectedFeatures, ...selectedOptions, ...ownership.keptIds];
+  const markers = await removeFeatureLines(root, keptIds, markerIds);
+  const docMarkers = await removeDocMarkers(root, keptIds, markerIds);
 
   const removedMarkdown = deletedFiles.filter((path) => path.endsWith('.md'));
   const docs = await removeDocLinks(root, [...doomedDocs, ...removedMarkdown]);
@@ -97,6 +100,7 @@ export async function prune(
   const workspaceChanged = await renderWorkspace(root);
   await pruneRootPackage(root, deletedFiles);
   await pruneLintStaged(root);
+  await pruneIgnoreFile(root, ownership.removedFiles);
   await pruneDependabot(root, deletedFiles);
   const editedCatalogues = await pruneMessageCatalogues(root, manifest, removedOptions);
 

@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import {
   BACKEND_PACKAGE_JSON,
   BROWSER_STACK_PACKAGES,
+  ENGINE_SUITE_PACKAGES,
   PLAYWRIGHT_SCRIPT_NAMES,
   POSTGRES_PROTOTYPE_PACKAGES,
 } from '../constants/index.js';
@@ -31,21 +32,24 @@ export async function setProjectName(root: string, projectName: string): Promise
     if (frontend.devDependencies) delete frontend.devDependencies[dependency];
   }
   await writeFile(frontendPath, `${JSON.stringify(frontend, null, 2)}\n`, 'utf8');
-  await removePostgresPrototypePackages(root);
+  await removeRepositoryOnlyPackages(root);
   return packageName;
 }
 
-/** Drops the PostgreSQL prototype's tooling from the backend, whose files never ship. */
-async function removePostgresPrototypePackages(root: string): Promise<void> {
+/** Drops what only repository suites use from the backend: their files never ship. */
+async function removeRepositoryOnlyPackages(root: string): Promise<void> {
   const backendPath = join(root, BACKEND_PACKAGE_JSON);
   const source = await readFileIfExists(backendPath);
   if (source === undefined) return;
 
   const backend: unknown = JSON.parse(source);
   if (!isRecord(backend) || !isRecord(backend.devDependencies)) return;
-  const prototypeOnly = new Set<string>(POSTGRES_PROTOTYPE_PACKAGES);
+  const repositoryOnly = new Set<string>([
+    ...POSTGRES_PROTOTYPE_PACKAGES,
+    ...ENGINE_SUITE_PACKAGES,
+  ]);
   const declared = Object.entries(backend.devDependencies);
-  const kept = declared.filter(([name]) => !prototypeOnly.has(name));
+  const kept = declared.filter(([name]) => !repositoryOnly.has(name));
   if (kept.length === declared.length) return;
   backend.devDependencies = Object.fromEntries(kept);
   await writeFile(backendPath, `${JSON.stringify(backend, null, 2)}\n`, 'utf8');

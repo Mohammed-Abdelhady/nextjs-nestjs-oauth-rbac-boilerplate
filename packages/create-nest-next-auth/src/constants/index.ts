@@ -103,6 +103,12 @@ export const POSTGRES_PROTOTYPE_PACKAGES = [
   '@types/pg',
 ] as const;
 
+/**
+ * The mobile engine, which the backend needs only for the suites that drive it
+ * against the real server. Those suites are in alwaysRemoveFiles too.
+ */
+export const ENGINE_SUITE_PACKAGES = ['@app/native-auth'] as const;
+
 /** Build approvals that exist only for the prototype's bundled test server. */
 export const POSTGRES_PROTOTYPE_BUILD_APPROVALS = [
   '@embedded-postgres/darwin-arm64',

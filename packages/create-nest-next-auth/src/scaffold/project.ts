@@ -2,7 +2,9 @@ import { existsSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { log, outro, spinner } from '@clack/prompts';
 import { RULES_HOOK_PATHS, RULES_WORKFLOW_PATH } from '../constants/rules.js';
+import { resolveOwnership } from '../manifest/ownership.js';
 import type { Plan } from '../manifest/plan.js';
+import { applyMobileIdentity } from '../mobile/apply.js';
 import { templateDir } from '../paths.js';
 import { prune } from '../prune/index.js';
 import { describeDangling, describeSelection } from '../report.js';
@@ -39,7 +41,15 @@ export async function scaffoldProject(
   pruning.start('Removing what you did not pick');
   let result: PruneResult;
   try {
-    result = await prune(target, manifest, plan.features, plan.options, plan.rules);
+    result = await prune(
+      target,
+      manifest,
+      plan.features,
+      plan.options,
+      plan.rules,
+      resolveOwnership(manifest, plan),
+    );
+    if (plan.mobile !== undefined) await applyMobileIdentity(target, plan.targets, plan.mobile);
   } catch (error) {
     pruning.stop('Pruning failed');
     const reason = error instanceof Error ? error.message : String(error);

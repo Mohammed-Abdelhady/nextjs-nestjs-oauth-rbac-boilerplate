@@ -6,6 +6,7 @@ import {
   MISSING_PNPM_MESSAGE,
   RULES_POLICY,
 } from '../constants/index.js';
+import { MOBILE_RUN_COMMAND } from '../constants/mobile.js';
 import { RULES_HOOK_PATHS } from '../constants/rules.js';
 import { SETUP_CHECK, SETUP_STATUS } from '../constants/setup.js';
 import type { Plan } from '../manifest/plan.js';
@@ -118,6 +119,7 @@ export async function finishSetup(
       installed: install.status === SETUP_STATUS.INSTALLED,
       docker: plan.options.includes(DOCKER_OPTION_ID),
       scripts: await readWorkspaceStartScripts(target),
+      ...(plan.mobile === undefined ? {} : { mobile: MOBILE_RUN_COMMAND }),
     }),
     docs: buildDocLinks(manifest, plan.features),
   });
