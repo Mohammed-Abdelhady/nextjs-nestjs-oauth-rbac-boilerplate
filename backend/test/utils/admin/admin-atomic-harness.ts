@@ -17,6 +17,14 @@ import {
   SecurityEventDocument,
 } from '../../../src/session/schemas/security-event.schema';
 import { partialMock } from '../../../src/common/testing/test-doubles.harness-spec';
+import { UnitOfWorkRunner } from '../../../src/common/persistence/unit-of-work';
+import { MongoRoleCatalogStore } from '../../../src/role/persistence/mongo/mongo-role-catalog.store';
+import { MongoRoleChangeStore } from '../../../src/role/persistence/mongo/mongo-role-change.store';
+import { MongoRoleSweepStore } from '../../../src/role/persistence/mongo/mongo-role-sweep.store';
+import { RoleCatalogStore } from '../../../src/role/stores/role-catalog.store';
+import { RoleChangeStore } from '../../../src/role/stores/role-change.store';
+import { RoleSweepStore } from '../../../src/role/stores/role-sweep.store';
+import { MongoUnitOfWorkRunner } from '../../../src/session/persistence/mongo/mongo-unit-of-work';
 import { FrozenClock, TEST_NOW } from '../frozen-clock';
 import {
   bootSessionAuthority,
@@ -47,6 +55,10 @@ export async function bootAdminAtomic(
       RoleHierarchyService,
       RoleService,
       RoleEditService,
+      { provide: RoleCatalogStore, useClass: MongoRoleCatalogStore },
+      { provide: RoleChangeStore, useClass: MongoRoleChangeStore },
+      { provide: RoleSweepStore, useClass: MongoRoleSweepStore },
+      { provide: UnitOfWorkRunner, useClass: MongoUnitOfWorkRunner },
       { provide: getModelToken(User.name), useValue: harness.users },
       {
         provide: getModelToken(Role.name),

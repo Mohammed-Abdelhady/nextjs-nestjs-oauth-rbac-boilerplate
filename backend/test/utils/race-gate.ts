@@ -96,7 +96,7 @@ export function pauseQuery<Result>(
 
 type AsyncMethod = (...args: never[]) => Promise<unknown>;
 
-type AsyncMethodName<Service> = {
+export type AsyncMethodName<Service> = {
   [Key in keyof Service]: Service[Key] extends AsyncMethod ? Key : never;
 }[keyof Service] &
   string;

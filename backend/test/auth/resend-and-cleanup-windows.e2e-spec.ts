@@ -7,7 +7,8 @@ import { PendingRegistration } from '../../src/auth/schemas/pending-registration
 import { PENDING_PURPOSE } from '../../src/auth/constants/registration';
 import { bootE2eApp, browserAgent, type E2eApp } from '../utils/e2e-app';
 import { TEST_NOW } from '../utils/frozen-clock';
-import { inWindow, pauseQueryCall } from '../utils/pending-race';
+import { holdStoreCall, inWindow } from '../utils/pending-race';
+import { PendingRegistrationStore } from '../../src/auth/pending-codes/pending-registration.store';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
@@ -31,6 +32,7 @@ describe('Resend and expired cleanup windows (e2e)', () => {
   let e2e: E2eApp;
   let pendingRegistrations: Model<PendingRegistration>;
   let hashService: HashService;
+  let registrationStore: PendingRegistrationStore;
 
   beforeAll(async () => {
     e2e = await bootE2eApp();
@@ -38,6 +40,7 @@ describe('Resend and expired cleanup windows (e2e)', () => {
       getModelToken('PendingRegistration'),
     );
     hashService = e2e.app.get(HashService);
+    registrationStore = e2e.app.get(PendingRegistrationStore);
   }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   beforeEach(async () => {
@@ -157,7 +160,7 @@ describe('Resend and expired cleanup windows (e2e)', () => {
     await seedPendingRegistration(email, { expiresAt: EXPIRED_EXPIRY });
 
     const response = await inWindow(
-      (gate) => pauseQueryCall(pendingRegistrations, 'deleteOne', gate, 0),
+      (gate) => holdStoreCall(registrationStore, 'dropExpiredRecord', gate, 0),
       () =>
         post('/api/auth/activate', {
           email,

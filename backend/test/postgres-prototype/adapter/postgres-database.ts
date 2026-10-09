@@ -10,6 +10,35 @@ export interface UsersTable {
   is_deleted: Generated<boolean>;
   session_version: Generated<number>;
   issuance_fence: Generated<number>;
+  role: Generated<string>;
+  permissions: Generated<string[]>;
+  email: string | null;
+  name: string | null;
+  is_verified: Generated<boolean>;
+  auth_provider: string | null;
+  primary_provider: string | null;
+}
+
+export interface RolesTable {
+  id: Generated<string>;
+  name: string;
+  slug: string;
+  description: string | null;
+  is_system_role: Generated<boolean>;
+  is_protected: Generated<boolean>;
+  level: number | null;
+  permissions: Generated<string[]>;
+  created_at: Timestamp;
+  updated_at: Timestamp;
+}
+
+export interface RolePendingSweepsTable {
+  id: Generated<string>;
+  owner_role_id: string;
+  role_id: string;
+  previous_slug: string;
+  actor_id: string;
+  sweep_id: string | null;
 }
 
 export interface ApplicationsTable {
@@ -71,6 +100,55 @@ export interface SecurityEventsTable {
   action: string;
   outcome: string;
   occurred_at: Timestamp;
+  actor_id: string | null;
+  reason_code: string | null;
+  assigned_role_id: string | null;
+  previous_role_id: string | null;
+  assignment_session_version: number | null;
+  deleted_role_id: string | null;
+  deleted_role_slug: string | null;
+  deletion_sweep_id: string | null;
+  deletion_pending: boolean | null;
+}
+
+export interface MailCountersTable {
+  id: Generated<string>;
+  email: string;
+  purpose: string;
+  mailed_codes: Generated<number>;
+  window_started_at: Timestamp;
+  expires_at: Timestamp;
+}
+
+export interface PendingRegistrationsTable {
+  id: Generated<string>;
+  email: string;
+  purpose: string;
+  user_id: string | null;
+  address_generation: number | null;
+  hashed_code: string;
+  attempts: Generated<number>;
+  expires_at: Timestamp;
+}
+
+export interface PendingPasswordResetsTable {
+  id: Generated<string>;
+  email: string;
+  hashed_code: string;
+  attempts: Generated<number>;
+  expires_at: Timestamp;
+}
+
+export interface PendingMagicLinksTable {
+  id: Generated<string>;
+  email: string;
+  token_hash: string;
+  expires_at: Timestamp;
+  consumed_at: ColumnType<Date | null, Date | null | undefined, Date | null>;
+  request_ip: string | null;
+  user_agent: string | null;
+  redirect: string | null;
+  created_at: ColumnType<Date, Date | undefined, never>;
 }
 
 export interface PrototypeDatabase {
@@ -79,6 +157,12 @@ export interface PrototypeDatabase {
   user_application_grants: UserApplicationGrantsTable;
   sessions: SessionsTable;
   security_events: SecurityEventsTable;
+  roles: RolesTable;
+  role_pending_sweeps: RolePendingSweepsTable;
+  mail_counters: MailCountersTable;
+  pending_registrations: PendingRegistrationsTable;
+  pending_password_resets: PendingPasswordResetsTable;
+  pending_magic_links: PendingMagicLinksTable;
 }
 
 export function openPrototypeDatabase(

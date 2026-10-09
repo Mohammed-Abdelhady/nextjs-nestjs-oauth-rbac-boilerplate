@@ -11,11 +11,8 @@ import {
 import { bootE2eApp, browserAgent, type E2eApp } from '../utils/e2e-app';
 import { TEST_NOW } from '../utils/frozen-clock';
 import { RaceGate } from '../utils/race-gate';
-import {
-  inWindow,
-  pauseCreateCall,
-  pauseQueryCall,
-} from '../utils/pending-race';
+import { holdStoreCall, inWindow } from '../utils/pending-race';
+import { PendingRegistrationStore } from '../../src/auth/pending-codes/pending-registration.store';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
@@ -29,12 +26,14 @@ describe('Pending registration windows (e2e)', () => {
   let e2e: E2eApp;
   let pendingRegistrations: Model<PendingRegistration>;
   let mailCounters: Model<MailCounter>;
+  let registrationStore: PendingRegistrationStore;
 
   beforeAll(async () => {
     e2e = await bootE2eApp();
     pendingRegistrations = e2e.app.get<Model<PendingRegistration>>(
       getModelToken('PendingRegistration'),
     );
+    registrationStore = e2e.app.get(PendingRegistrationStore);
     mailCounters = e2e.app.get<Model<MailCounter>>(
       getModelToken('MailCounter'),
     );
@@ -96,8 +95,7 @@ describe('Pending registration windows (e2e)', () => {
     await seedPendingRegistration(email, { expiresAt: EXPIRED_EXPIRY });
 
     const response = await inWindow(
-      (gate) =>
-        pauseQueryCall(pendingRegistrations, 'findOneAndUpdate', gate, 1),
+      (gate) => holdStoreCall(registrationStore, 'replaceExpiredCode', gate, 0),
       () => post('/api/auth/register', { email }),
       () => pendingRegistrations.deleteOne({ email }),
     );
@@ -115,7 +113,7 @@ describe('Pending registration windows (e2e)', () => {
     const email = 'window-create@example.test';
 
     const response = await inWindow(
-      (gate) => pauseCreateCall(pendingRegistrations, gate, 0),
+      (gate) => holdStoreCall(registrationStore, 'insertRecord', gate, 0),
       () => post('/api/auth/register', { email }),
       () =>
         pendingRegistrations.create({
@@ -158,13 +156,13 @@ describe('Pending registration windows (e2e)', () => {
         createCall += 1;
         return gate.hold().then(() => originalCreate(...args));
       });
-    // The loser's second pass reaches this live refresh (call 4) after its
-    // create lost the unique index.
-    const restoreQuery = pauseQueryCall(
-      pendingRegistrations,
-      'findOneAndUpdate',
+    // The loser's second pass reaches this live refresh (the third one made)
+    // after its create lost the unique index.
+    const restoreQuery = holdStoreCall(
+      registrationStore,
+      'rotateLiveCode',
       retryGate,
-      4,
+      2,
     );
 
     try {

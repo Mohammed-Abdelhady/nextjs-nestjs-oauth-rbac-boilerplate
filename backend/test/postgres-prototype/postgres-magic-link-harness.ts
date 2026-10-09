@@ -1,0 +1,109 @@
+import { sql } from 'kysely';
+import { Pool } from 'pg';
+import { MagicLinkContractHarness } from '../../src/auth/magic-link/contract/magic-link-contract.harness-spec';
+import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
+import { openPrototypeDatabase } from './adapter/postgres-database';
+import {
+  PostgresMagicLinkAccounts,
+  PostgresMagicLinkStore,
+} from './adapter/postgres-magic-link.store';
+import { migratePrototypeDatabase } from './adapter/postgres-migrations';
+import { startPostgresTestServer } from './server/postgres-test-server';
+
+export async function bootPostgresMagicLinkHarness(): Promise<MagicLinkContractHarness> {
+  const server = await startPostgresTestServer();
+  const pool = new Pool(server.connection);
+  // An idle connection the server drops must not take the test process down.
+  pool.on('error', () => undefined);
+  await migratePrototypeDatabase(pool);
+  const database = openPrototypeDatabase(pool);
+  const countRows = async (
+    table: 'pending_magic_links' | 'users',
+  ): Promise<number> => {
+    const row = await database
+      .selectFrom(table)
+      .select((select) => select.fn.countAll<string>().as('rows'))
+      .executeTakeFirstOrThrow();
+    return Number(row.rows);
+  };
+
+  return {
+    clock: new FrozenClock(TEST_NOW),
+    links: new PostgresMagicLinkStore(database),
+    accounts: new PostgresMagicLinkAccounts(database),
+
+    seedLink: async (link) => {
+      await database
+        .insertInto('pending_magic_links')
+        .values({
+          email: link.email,
+          token_hash: link.tokenHash,
+          expires_at: link.expiresAt,
+          created_at: link.createdAt,
+          consumed_at: link.consumedAt ?? null,
+          redirect: link.redirect ?? null,
+        })
+        .execute();
+    },
+    link: async (tokenHash) => {
+      const row = await database
+        .selectFrom('pending_magic_links')
+        .selectAll()
+        .where('token_hash', '=', tokenHash)
+        .executeTakeFirst();
+      return row
+        ? {
+            email: row.email,
+            tokenHash: row.token_hash,
+            expiresAt: row.expires_at,
+            consumedAt: row.consumed_at,
+            requestIp: row.request_ip,
+            userAgent: row.user_agent,
+            redirect: row.redirect,
+          }
+        : null;
+    },
+    linkCount: () => countRows('pending_magic_links'),
+
+    seedAccount: async (account) => {
+      const row = await database
+        .insertInto('users')
+        .values({
+          email: account.email,
+          name: 'Contract Tester',
+          is_verified: account.isVerified,
+          is_deleted: account.isDeleted,
+        })
+        .returning('id')
+        .executeTakeFirstOrThrow();
+      return row.id;
+    },
+    account: async (email) => {
+      const row = await database
+        .selectFrom('users')
+        .select(['id', 'name', 'is_verified', 'is_deleted', 'auth_provider'])
+        .where('email', '=', email)
+        .executeTakeFirst();
+      return row
+        ? {
+            id: row.id,
+            name: row.name,
+            isVerified: row.is_verified,
+            isDeleted: row.is_deleted,
+            authProvider: row.auth_provider,
+          }
+        : null;
+    },
+    accountCount: () => countRows('users'),
+
+    reset: async () => {
+      await sql`TRUNCATE pending_magic_links, security_events, sessions, user_application_grants, users`.execute(
+        database,
+      );
+    },
+    close: async () => {
+      await database.destroy();
+      await server.stop();
+    },
+  };
+}
