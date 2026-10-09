@@ -5,6 +5,7 @@ import {
 } from '../../../../src/auth/pending-codes/activation-accounts';
 import { MailCounterStore } from '../../../../src/auth/pending-codes/mail-counter.store';
 import { PendingRegistrationStore } from '../../../../src/auth/pending-codes/pending-registration.store';
+import { IdFormat } from '../../../../src/common/persistence/id-format';
 import {
   RerunPause,
   UnitOfWorkRunner,
@@ -86,6 +87,8 @@ export interface AccountsContractHarness {
   readonly roleSweeps: RoleSweepStore;
   readonly registrations: PendingRegistrationStore;
   readonly mailCounters: MailCounterStore;
+  /** What this database takes as an id, as a route asks it. */
+  readonly ids: IdFormat;
   /** The adapter's runner, pausing before a rerun the way the case says. */
   runner(pause: RerunPause): UnitOfWorkRunner;
 

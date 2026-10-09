@@ -5,6 +5,7 @@ import {
 } from '../../src/auth/passkeys/contract/passkeys-contract.harness-spec';
 import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
 import { PostgresAccountProfileStore } from './adapter/postgres-account-profile.store';
+import { PostgresIdFormat } from './adapter/postgres-id-format';
 import { PostgresPasskeyChallengeStore } from './adapter/postgres-passkey-challenge.store';
 import {
   PostgresPasskeyAccounts,
@@ -135,6 +136,7 @@ export async function bootPostgresPasskeysHarness(): Promise<PasskeysContractHar
       }));
     },
 
+    ids: new PostgresIdFormat(),
     absentId: () => randomUUID(),
     foreignId: () => AN_OBJECT_ID,
 

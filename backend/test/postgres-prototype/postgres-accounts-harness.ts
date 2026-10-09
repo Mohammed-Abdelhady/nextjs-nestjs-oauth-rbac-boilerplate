@@ -16,6 +16,7 @@ import {
   PostgresActivationAccounts,
   PostgresActivationSignIn,
 } from './adapter/postgres-activation-accounts';
+import { PostgresIdFormat } from './adapter/postgres-id-format';
 import { PostgresAdminAccountStore } from './adapter/postgres-admin-account.store';
 import { PrototypeDatabase } from './adapter/postgres-database';
 import { PostgresMailCounterStore } from './adapter/postgres-mail-counter.store';
@@ -224,6 +225,7 @@ export async function bootPostgresAccountsHarness(): Promise<PostgresAccountsHar
       return Number(row.rows);
     },
 
+    ids: new PostgresIdFormat(),
     absentId: () => randomUUID(),
     foreignId: () => AN_OBJECT_ID,
 

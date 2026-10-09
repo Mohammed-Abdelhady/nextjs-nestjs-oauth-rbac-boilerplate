@@ -8,6 +8,7 @@ import { AccountsContractHarness } from './accounts-contract-harness';
 import { accountLeavingCases } from './accounts-contract-leaving';
 import { accountProfileCases } from './accounts-contract-profile';
 import { accountRaceCases } from './accounts-contract-races';
+import { accountRouteIdCases } from './accounts-contract-route-ids';
 import { accountSeamCases } from './accounts-contract-seam';
 import {
   AccountsFixture,
@@ -65,5 +66,6 @@ export function describeAccountStoresContract(
     accountActivationCases(current, seeded);
     accountSeamCases(current, seeded);
     accountAbortCases(current, seeded);
+    accountRouteIdCases(current, seeded);
   });
 }

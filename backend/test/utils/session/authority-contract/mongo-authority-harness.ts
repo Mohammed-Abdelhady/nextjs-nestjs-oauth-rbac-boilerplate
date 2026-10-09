@@ -1,4 +1,5 @@
 import { Types } from 'mongoose';
+import { MongoIdFormat } from '../../../../src/common/persistence/mongo/mongo-id-format';
 import { AuthEpochService } from '../../../../src/common/services/auth-epoch.service';
 import { AuthorityApplications } from '../../../../src/session/authority/authority-applications';
 import { SessionAuthorityStore } from '../../../../src/session/authority/session-authority.store';
@@ -107,6 +108,7 @@ export async function bootMongoAuthority(
         reasonCode: event.reasonCode ?? null,
       }));
     },
+    ids: new MongoIdFormat(),
     absentSessionId: () => new Types.ObjectId().toString(),
     foreignSessionId: () => A_UUID,
   };
