@@ -489,6 +489,8 @@
       "backend/src/auth/pending-codes/pending-code-outages.postgres.spec.ts",
       "backend/src/auth/magic-link/contract/magic-link-outages.postgres.spec.ts",
       "backend/src/role/stores/role-stores.contract.postgres.integration.spec.ts",
+      "backend/src/session/events/proofs-events.contract.postgres.integration.spec.ts",
+      "backend/src/session/events/proofs-events-outages.postgres.spec.ts",
       "frontend/README.maintainer.md",
       "template.manifest.json",
       "scripts/ci/*.test.mjs",
