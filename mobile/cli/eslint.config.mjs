@@ -16,7 +16,12 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: ['vitest.config.mts', 'metro.config.js'],
+          allowDefaultProject: [
+            'vitest.config.mts',
+            'metro.config.js',
+            'babel.config.js',
+            'index.js',
+          ],
         },
         tsconfigRootDir: import.meta.dirname,
       },
@@ -32,8 +37,12 @@ export default tseslint.config(
   },
   {
     // Metro loads its configuration with require.
-    files: ['metro.config.js'],
+    files: ['metro.config.js', 'babel.config.js'],
     languageOptions: { sourceType: 'commonjs', globals: globals.node },
     rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
+  {
+    files: ['index.js'],
+    languageOptions: { sourceType: 'module' },
   },
 );
