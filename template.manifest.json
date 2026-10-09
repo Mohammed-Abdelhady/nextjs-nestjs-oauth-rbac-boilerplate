@@ -142,6 +142,7 @@
         "backend/src/user/dto/account-linking.dto.ts",
         "backend/test/constants/oauth-boot-env.ts",
         "backend/test/auth/oauth-link.e2e-spec.ts",
+        "backend/src/auth/passkeys/contract/passkeys-contract-unlink-race.harness-spec.ts",
         "frontend/src/modules/oauth/**",
         "frontend/src/modules/account/api/accountLinkingApi.ts",
         "frontend/src/modules/account/api/profileSyncApi.ts",
@@ -276,6 +277,7 @@
       "files": [
         "backend/src/auth/passkeys/**",
         "backend/src/auth/passkeys/schemas/passkey.schema.ts",
+        "backend/test/auth/passkey-removal.e2e-spec.ts",
         "frontend/src/modules/passkeys/**"
       ],
       "envVars": [
