@@ -1,9 +1,9 @@
 import { Role, RoleDocument } from '../../schemas/role.schema';
 import { MongoNetworkError } from 'mongodb';
 import { Types } from 'mongoose';
-import { RoleSweepBootstrapService } from './role-sweep-bootstrap.service';
 import { SecurityEventService } from '../../../session/services/security-event.service';
 import { finishBootstrap } from './role-bootstrap.harness-spec';
+import { mongoRoleSweepBootstrap } from '../../../../test/utils/role/mongo-role-services';
 import { useAdminRoundFour } from '../../../admin/services/admin-round-four.harness-spec';
 
 const FAILED_OWNERS = 16;
@@ -67,7 +67,7 @@ describe('startup owner queue makes progress', () => {
           throw new MongoNetworkError('pending owner unavailable');
         return read(...args);
       });
-    const bootstrap = new RoleSweepBootstrapService(
+    const bootstrap = mongoRoleSweepBootstrap(
       h.connection.model<RoleDocument>(Role.name),
       h.users,
       h.connection,

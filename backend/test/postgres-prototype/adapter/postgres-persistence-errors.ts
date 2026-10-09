@@ -5,6 +5,7 @@ import {
   RetryableAbortError,
   UniqueConflictError,
 } from '../../../src/common/persistence/persistence-errors';
+import { ROLE_CONSTRAINT } from '../../../src/role/stores/role-records';
 import { ISSUANCE_CONSTRAINT } from '../../../src/session/issuance/browser-issuance.store';
 
 /** SQLSTATE codes the adapter gives a meaning to. */
@@ -53,6 +54,7 @@ const POSTGRES_CONSTRAINTS: Readonly<Record<string, string>> = {
   security_event_id_unique: ISSUANCE_CONSTRAINT.SECURITY_EVENT_ID,
   session_token_hash_unique: ISSUANCE_CONSTRAINT.SESSION_TOKEN_HASH,
   grant_user_client_unique: ISSUANCE_CONSTRAINT.GRANT_USER_CLIENT,
+  role_slug_unique: ROLE_CONSTRAINT.SLUG,
 };
 
 const UNNAMED_CONSTRAINT = 'unnamed';

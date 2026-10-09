@@ -1,4 +1,4 @@
-import { DynamicModule, Module, Type, forwardRef } from '@nestjs/common';
+import { DynamicModule, Module, Type } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from '../auth.module';
@@ -29,8 +29,10 @@ export class OAuthModule {
       imports: [
         ConfigModule,
         MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
-        forwardRef(() => AuthModule),
-        forwardRef(() => UserModule),
+        // Named directly. A forward reference inside a dynamic module's imports
+        // makes Nest register the module a second time under another key.
+        AuthModule,
+        UserModule,
       ],
       controllers: [OAuthController],
       providers: [

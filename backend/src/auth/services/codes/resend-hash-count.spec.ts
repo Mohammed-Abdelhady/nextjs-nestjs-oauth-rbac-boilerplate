@@ -33,9 +33,14 @@ import {
   PENDING_PURPOSE,
 } from '../../constants/registration';
 import { FrozenClock, TEST_NOW } from '../../../../test/utils/frozen-clock';
+import {
+  MONGO_PENDING_REGISTRATION_STORE,
+  MONGO_MAIL_COUNTER_STORE,
+} from '../../persistence/mongo/mongo-pending-code-stores';
 import { seedMailCounter } from '../../../../test/utils/mail-counter-seed';
 import { RaceGate } from '../../../../test/utils/race-gate';
-import { pauseQueryCall } from '../../../../test/utils/pending-race';
+import { holdStoreCall } from '../../../../test/utils/pending-race';
+import { PendingRegistrationStore } from '../../pending-codes/pending-registration.store';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
@@ -59,6 +64,7 @@ describe('resend activation hash count', () => {
   let counters: Model<MailCounter>;
   let registrationService: RegistrationService;
   let service: VerificationCodeService;
+  let registrationStore: PendingRegistrationStore;
   let hashSpy: jest.SpyInstance;
 
   beforeAll(async () => {
@@ -80,6 +86,8 @@ describe('resend activation hash count', () => {
     };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        MONGO_PENDING_REGISTRATION_STORE,
+        MONGO_MAIL_COUNTER_STORE,
         RegistrationService,
         VerificationCodeService,
         HashService,
@@ -112,6 +120,7 @@ describe('resend activation hash count', () => {
     }).compile();
     registrationService = module.get<RegistrationService>(RegistrationService);
     service = module.get<VerificationCodeService>(VerificationCodeService);
+    registrationStore = module.get(PendingRegistrationStore);
     hashSpy = jest.spyOn(HashService.prototype, 'hash');
   }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
@@ -224,7 +233,12 @@ describe('resend activation hash count', () => {
     );
 
     const gate = new RaceGate();
-    const restore = pauseQueryCall(registrations, 'deleteOne', gate, 0);
+    const restore = holdStoreCall(
+      registrationStore,
+      'dropExpiredRecord',
+      gate,
+      0,
+    );
     let resendResult: unknown;
     try {
       const resend = Promise.resolve(

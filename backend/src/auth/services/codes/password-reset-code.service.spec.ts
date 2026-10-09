@@ -10,6 +10,7 @@ import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { partialMock } from '../../../common/testing/test-doubles.harness-spec';
 import { rejectionOf } from '../../../../test/utils/rejection';
 import { FrozenClock, TEST_NOW } from '../../../../test/utils/frozen-clock';
+import { MONGO_PASSWORD_RESET_CODE_STORE } from '../../persistence/mongo/mongo-pending-code-stores';
 
 const RESET_ID = new Types.ObjectId('507f1f77bcf86cd799439011');
 
@@ -48,6 +49,7 @@ describe('PasswordResetCodeService', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        MONGO_PASSWORD_RESET_CODE_STORE,
         PasswordResetCodeService,
         {
           provide: getModelToken(PendingPasswordReset.name),

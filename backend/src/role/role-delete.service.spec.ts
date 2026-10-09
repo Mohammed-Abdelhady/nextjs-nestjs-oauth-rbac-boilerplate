@@ -13,6 +13,9 @@ import {
   createChainableQueryMock,
   createConnectionMock,
 } from '../common/testing/test-doubles.harness-spec';
+import { RoleCatalogStore } from './stores/role-catalog.store';
+import { MongoRoleCatalogStore } from './persistence/mongo/mongo-role-catalog.store';
+import { mongoRoleEdit } from '../../test/utils/role/mongo-role-services';
 
 interface MockRole {
   _id: Types.ObjectId;
@@ -78,6 +81,7 @@ describe('RoleService delete', () => {
         { provide: getModelToken(Role.name), useValue: mockRoleModel },
         { provide: getModelToken(User.name), useValue: mockUserModel },
         { provide: RoleEditService, useValue: mockRoleEditService },
+        { provide: RoleCatalogStore, useClass: MongoRoleCatalogStore },
       ],
     }).compile();
 
@@ -85,7 +89,7 @@ describe('RoleService delete', () => {
     jest.clearAllMocks();
     mockRoleEditService.delete.mockImplementation(
       async (roleId: Types.ObjectId, id: string) => {
-        const editor = new RoleEditService(
+        const editor = mongoRoleEdit(
           partialMock<Model<RoleDocument>>(mockRoleModel),
           partialMock<Model<UserDocument>>(mockUserModel),
           createConnectionMock(),

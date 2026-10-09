@@ -9,11 +9,8 @@ import { bootE2eApp, browserAgent, type E2eApp } from '../utils/e2e-app';
 import { TEST_NOW } from '../utils/frozen-clock';
 import { RaceGate } from '../utils/race-gate';
 import { expectSameAnswer } from '../utils/stable-answer';
-import {
-  inWindow,
-  pauseCreateCall,
-  pauseQueryCall,
-} from '../utils/pending-race';
+import { holdStoreCall, inWindow } from '../utils/pending-race';
+import { PasswordResetCodeStore } from '../../src/auth/pending-codes/password-reset-code.store';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
@@ -38,10 +35,12 @@ describe('Password reset code step and pending reset windows (e2e)', () => {
   let e2e: E2eApp;
   let users: Model<UserDocument>;
   let pendingPasswordResets: Model<PendingPasswordReset>;
+  let resetStore: PasswordResetCodeStore;
 
   beforeAll(async () => {
     e2e = await bootE2eApp();
     users = e2e.app.get<Model<UserDocument>>(getModelToken('User'));
+    resetStore = e2e.app.get(PasswordResetCodeStore);
     pendingPasswordResets = e2e.app.get<Model<PendingPasswordReset>>(
       getModelToken('PendingPasswordReset'),
     );
@@ -231,7 +230,7 @@ describe('Password reset code step and pending reset windows (e2e)', () => {
     await createVerifiedAccount(email);
 
     const response = await inWindow(
-      (gate) => pauseCreateCall(pendingPasswordResets, gate, 0),
+      (gate) => holdStoreCall(resetStore, 'insertRecord', gate, 0),
       () => post('/api/auth/forgot-password', { email }),
       async () =>
         pendingPasswordResets.create({
@@ -272,12 +271,7 @@ describe('Password reset code step and pending reset windows (e2e)', () => {
       });
     // Both first updates ran before the creates; the loser's second pass
     // reaches update call 2 after its create lost the unique index.
-    const restoreQuery = pauseQueryCall(
-      pendingPasswordResets,
-      'updateOne',
-      retryGate,
-      2,
-    );
+    const restoreQuery = holdStoreCall(resetStore, 'rotateCode', retryGate, 2);
 
     let firstResult: Response;
     let secondResult: Response;
@@ -317,7 +311,7 @@ describe('Password reset code step and pending reset windows (e2e)', () => {
     await seedPendingPasswordReset(email, { expiresAt: EXPIRED_EXPIRY });
 
     const response = await inWindow(
-      (gate) => pauseQueryCall(pendingPasswordResets, 'deleteOne', gate, 0),
+      (gate) => holdStoreCall(resetStore, 'dropExpiredRecord', gate, 0),
       () =>
         post('/api/auth/reset-password', {
           email,

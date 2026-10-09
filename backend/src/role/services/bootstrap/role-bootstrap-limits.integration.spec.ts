@@ -1,10 +1,10 @@
 import { Role, RoleDocument } from '../../schemas/role.schema';
 import { Logger } from '@nestjs/common';
 import { Types } from 'mongoose';
-import { RoleSweepBootstrapService } from './role-sweep-bootstrap.service';
 import { SecurityEventService } from '../../../session/services/security-event.service';
 import { ROLE_SWEEP_BOOTSTRAP_BUDGET_EXHAUSTED } from '../../../common/constants/roles';
 import { RaceGate } from '../../../../test/utils/race-gate';
+import { mongoRoleSweepBootstrap } from '../../../../test/utils/role/mongo-role-services';
 import { finishBootstrap } from './role-bootstrap.harness-spec';
 import { useAdminRoundFour } from '../../../admin/services/admin-round-four.harness-spec';
 
@@ -88,7 +88,7 @@ describe('startup stops between repair entries', () => {
           )
             void warned.hold();
         });
-      const bootstrap = new RoleSweepBootstrapService(
+      const bootstrap = mongoRoleSweepBootstrap(
         h.connection.model<RoleDocument>(Role.name),
         h.users,
         h.connection,

@@ -1,7 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { MongoClient, MongoNetworkError } from 'mongodb';
 import { Mongoose } from 'mongoose';
-import { RoleSweepBootstrapService } from './role-sweep-bootstrap.service';
 import { Role, RoleSchema, RoleDocument } from '../../schemas/role.schema';
 import {
   User,
@@ -21,6 +20,7 @@ import {
 import { finishBootstrap } from './role-bootstrap.harness-spec';
 import { FrozenClock, TEST_NOW } from '../../../../test/utils/frozen-clock';
 import { RaceGate } from '../../../../test/utils/race-gate';
+import { mongoRoleSweepBootstrap } from '../../../../test/utils/role/mongo-role-services';
 
 describe('startup repair discovery failure', () => {
   afterEach(() => jest.restoreAllMocks());
@@ -53,7 +53,7 @@ describe('startup repair discovery failure', () => {
     });
     const find = jest.spyOn(roles.collection, 'find').mockReturnValue(cursor);
     const log = jest.spyOn(Logger.prototype, 'error');
-    const bootstrap = new RoleSweepBootstrapService(
+    const bootstrap = mongoRoleSweepBootstrap(
       roles,
       users,
       mongoose.connection,
@@ -128,7 +128,7 @@ describe('startup repair discovery failure', () => {
       const warnings = jest
         .spyOn(Logger.prototype, 'warn')
         .mockImplementation(() => {});
-      const bootstrap = new RoleSweepBootstrapService(
+      const bootstrap = mongoRoleSweepBootstrap(
         roles,
         users,
         mongoose.connection,
@@ -185,7 +185,7 @@ describe('startup repair discovery failure', () => {
     const scans = jest
       .spyOn(events.collection, 'find')
       .mockReturnValue(eventCursor);
-    const bootstrap = new RoleSweepBootstrapService(
+    const bootstrap = mongoRoleSweepBootstrap(
       roles,
       users,
       mongoose.connection,

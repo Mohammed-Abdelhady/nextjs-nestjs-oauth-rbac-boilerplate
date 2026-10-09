@@ -17,6 +17,7 @@ import {
   MAILED_CODE_LIMIT_PER_ADDRESS,
 } from '../../constants/registration';
 import { FrozenClock, TEST_NOW } from '../../../../test/utils/frozen-clock';
+import { MONGO_MAIL_COUNTER_STORE } from '../../persistence/mongo/mongo-pending-code-stores';
 import { RaceGate } from '../../../../test/utils/race-gate';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
@@ -46,6 +47,7 @@ describe('MailCounterService', () => {
     };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        MONGO_MAIL_COUNTER_STORE,
         MailCounterService,
         { provide: ConfigService, useValue: config },
         { provide: Clock, useValue: clock },

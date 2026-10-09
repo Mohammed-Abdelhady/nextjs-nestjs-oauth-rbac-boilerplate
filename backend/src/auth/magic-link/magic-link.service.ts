@@ -1,12 +1,12 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 import { Request, Response } from 'express';
+import { MagicLinkStore } from './stores/magic-link.store';
 import {
-  PendingMagicLink,
-  PendingMagicLinkDocument,
-} from './schemas/pending-magic-link.schema';
+  MagicLinkAccount,
+  MagicLinkAccounts,
+  MagicLinkSignIn,
+} from './stores/magic-link-accounts';
 import { RequestMagicLinkDto } from './dto/request-magic-link.dto';
 import { VerifyMagicLinkDto } from './dto/verify-magic-link.dto';
 import { MagicLinkRequestResponseDto } from './dto/magic-link-request-response.dto';
@@ -22,13 +22,10 @@ import {
 import { buildClientUrl } from '../../common/utils/client-url.util';
 import { LoginResponseDto } from '../dto/login-response.dto';
 import { AuthMailService } from '../services/mail/auth-mail.service';
-import { SignInService } from '../services/sessions/sign-in.service';
-import { User, UserDocument } from '../../user/schemas/user.schema';
-import { AuthProvider } from '../../user/enums/auth-provider.enum';
 import { ApiResponse } from '../../common/dto/api-response.dto';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
-import { isMongoDuplicateKeyError } from '../../common/utils/mongo-error.util';
+import { UniqueConflictError } from '../../common/persistence/persistence-errors';
 import { Clock } from '../../common/services/clock';
 import { currentRequestId } from '../../common/context/request-context';
 import { getAllowedNativeAuthorizeContinuation } from './utils/magic-link-continuation.util';
@@ -47,12 +44,11 @@ export class MagicLinkService {
   private readonly maxPerHour: number;
 
   constructor(
-    @InjectModel(PendingMagicLink.name)
-    private readonly pendingMagicLinkModel: Model<PendingMagicLinkDocument>,
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    private readonly links: MagicLinkStore,
+    private readonly accounts: MagicLinkAccounts,
     private readonly configService: ConfigService,
     private readonly authMailService: AuthMailService,
-    private readonly signInService: SignInService,
+    private readonly signIn: MagicLinkSignIn,
     private readonly clock: Clock,
   ) {
     this.expiresIn = this.configService.get<number>(
@@ -72,7 +68,7 @@ export class MagicLinkService {
     request: Request,
   ): Promise<ApiResponse<MagicLinkRequestResponseDto>> {
     const now = this.clock.now();
-    const user = await this.userModel.findOne({ email: { $eq: dto.email } });
+    const user = await this.accounts.findByEmail(dto.email);
 
     if (user?.isDeleted) {
       this.spendTokenHashingTime();
@@ -80,10 +76,10 @@ export class MagicLinkService {
       return MagicLinkRequestResponseDto.success(dto.email);
     }
 
-    const recentLinks = await this.pendingMagicLinkModel.countDocuments({
-      email: { $eq: dto.email },
-      createdAt: { $gte: new Date(now.getTime() - MAGIC_LINK_RATE_WINDOW_MS) },
-    });
+    const recentLinks = await this.links.countRequestedSince(
+      dto.email,
+      new Date(now.getTime() - MAGIC_LINK_RATE_WINDOW_MS),
+    );
 
     if (recentLinks >= this.maxPerHour) {
       this.spendTokenHashingTime();
@@ -95,11 +91,10 @@ export class MagicLinkService {
 
     const token = createMagicLinkToken();
     const redirect = getAllowedNativeAuthorizeContinuation(dto.redirect);
-    await this.pendingMagicLinkModel.create({
+    await this.links.insertLink({
       email: dto.email,
       tokenHash: hashMagicLinkToken(token),
       expiresAt: new Date(now.getTime() + this.expiresIn),
-      consumedAt: null,
       requestIp: request.ip,
       userAgent: request.headers['user-agent'],
       ...(redirect ? { redirect } : {}),
@@ -131,11 +126,7 @@ export class MagicLinkService {
     response: Response,
   ): Promise<ApiResponse<MagicLinkLoginResponseData>> {
     const now = this.clock.now();
-    const link = await this.pendingMagicLinkModel.findOneAndUpdate(
-      { tokenHash: hashMagicLinkToken(dto.token), consumedAt: null },
-      { $set: { consumedAt: now } },
-      { new: true },
-    );
+    const link = await this.links.claimLink(hashMagicLinkToken(dto.token), now);
 
     if (!link) {
       throw this.invalidLink('token is unknown or already used');
@@ -146,18 +137,14 @@ export class MagicLinkService {
     }
 
     const user = await this.resolveUser(link.email);
-    const outcome = await this.signInService.completeSignIn(user, response);
+    const outcome = await this.signIn.complete(user, response);
 
     let loginResponse: ApiResponse<LoginResponseDto>;
     if (outcome.requiresTwoFactor) {
-      this.logger.log(
-        `Link spent, second factor owed: userId=${user._id.toString()}`,
-      );
+      this.logger.log(`Link spent, second factor owed: userId=${user.id}`);
       loginResponse = LoginResponseDto.twoFactorRequired();
     } else {
-      this.logger.log(
-        `User signed in with a magic link: userId=${user._id.toString()}`,
-      );
+      this.logger.log(`User signed in with a magic link: userId=${user.id}`);
       loginResponse = LoginResponseDto.success(outcome.user);
     }
 
@@ -172,8 +159,8 @@ export class MagicLinkService {
    * The account behind a spent link. Following the link proves control of the
    * address, so it both creates the account and verifies an existing one.
    */
-  private async resolveUser(email: string): Promise<UserDocument> {
-    const existing = await this.userModel.findOne({ email: { $eq: email } });
+  private async resolveUser(email: string): Promise<MagicLinkAccount> {
+    const existing = await this.accounts.findByEmail(email);
 
     if (existing?.isDeleted) {
       throw this.invalidLink('account is deleted');
@@ -181,8 +168,7 @@ export class MagicLinkService {
 
     if (existing) {
       if (!existing.isVerified) {
-        existing.isVerified = true;
-        await existing.save();
+        await this.accounts.markVerified(existing);
       }
       return existing;
     }
@@ -194,27 +180,26 @@ export class MagicLinkService {
    * Create the passwordless account. It carries no password hash, which is how
    * the rest of the application tells that password sign-in does not apply.
    */
-  private async createUser(email: string): Promise<UserDocument> {
+  private async createUser(email: string): Promise<MagicLinkAccount> {
     try {
-      const user = await this.userModel.create({
+      const user = await this.accounts.createPasswordless({
         email,
         name: deriveNameFromEmail(email),
-        isVerified: true,
-        authProvider: AuthProvider.EMAIL,
-        primaryProvider: AuthProvider.EMAIL,
       });
 
       this.logger.log('Created a new account from a magic link');
       return user;
     } catch (error) {
-      if (!isMongoDuplicateKeyError(error)) {
+      if (!(error instanceof UniqueConflictError)) {
         throw error;
       }
 
       // Two links for the same new address were spent at once.
-      const created = await this.userModel.findOne({ email: { $eq: email } });
+      const created = await this.accounts.findByEmail(email);
       if (!created) {
-        throw error;
+        // Still the database's own refusal, which is what the global filter
+        // answers with a conflict.
+        throw error.cause instanceof Error ? error.cause : error;
       }
       return created;
     }

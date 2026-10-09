@@ -21,6 +21,8 @@ import {
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
 } from '../../../../test/utils/session-authority-harness';
 import { FrozenClock, TEST_NOW } from '../../../../test/utils/frozen-clock';
+import { mongoUnitOfWork } from '../../../session/persistence/mongo/mongo-unit-of-work';
+import { MONGO_PENDING_REGISTRATION_STORE } from '../../persistence/mongo/mongo-pending-code-stores';
 
 describe('VerificationCodeService concurrency', () => {
   let mongo: MemoryReplSet;
@@ -43,6 +45,7 @@ describe('VerificationCodeService concurrency', () => {
     };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        MONGO_PENDING_REGISTRATION_STORE,
         VerificationCodeService,
         HashService,
         { provide: ConfigService, useValue: config },
@@ -101,8 +104,8 @@ describe('VerificationCodeService concurrency', () => {
     );
 
     const results = await Promise.all([
-      service.consumeCode(first, await startSession()),
-      service.consumeCode(second, await startSession()),
+      service.consumeCode(first, mongoUnitOfWork(await startSession())),
+      service.consumeCode(second, mongoUnitOfWork(await startSession())),
     ]);
 
     expect(results.filter(Boolean)).toHaveLength(1);
@@ -163,7 +166,10 @@ describe('VerificationCodeService concurrency', () => {
     releaseCompare();
 
     const reserved = await verify;
-    const consumed = await service.consumeCode(reserved, await startSession());
+    const consumed = await service.consumeCode(
+      reserved,
+      mongoUnitOfWork(await startSession()),
+    );
 
     expect(consumed).toBe(false);
     expect(await model.findOne({ email: { $eq: email } })).not.toBeNull();
@@ -200,7 +206,10 @@ describe('VerificationCodeService concurrency', () => {
     releaseCompare();
 
     const reserved = await verify;
-    const consumed = await service.consumeCode(reserved, await startSession());
+    const consumed = await service.consumeCode(
+      reserved,
+      mongoUnitOfWork(await startSession()),
+    );
 
     expect(consumed).toBe(false);
     jest.restoreAllMocks();

@@ -11,8 +11,9 @@ import { matchesAnyGlob } from '../src/utils/glob.js';
 
 const REPOSITORY = fileURLToPath(new URL('../../../', import.meta.url));
 const BACKEND_SOURCES = /^backend\/(?:src|test)\/.*\.(?:ts|mts|mjs)$/;
+// A prototype package by name, or any path into the prototype folder.
 const PROTOTYPE_IMPORT = new RegExp(
-  `(?:from|import|require)\\s*\\(?\\s*['"](?:${POSTGRES_PROTOTYPE_PACKAGES.join('|')})(?:/[^'"]*)?['"]`,
+  `(?:from|import|require)\\s*\\(?\\s*['"](?:(?:${POSTGRES_PROTOTYPE_PACKAGES.join('|')})(?:/[^'"]*)?|[^'"]*/postgres-prototype/[^'"]*)['"]`,
 );
 
 const roots: string[] = [];
@@ -34,19 +35,46 @@ it('removes the PostgreSQL prototype from a generated project and keeps the shar
   const root = await mkdtemp(join(tmpdir(), 'cna-postgres-prototype-'));
   roots.push(root);
   const prototype = [
+    'backend/src/auth/magic-link/contract/magic-link-outages.postgres.spec.ts',
+    'backend/src/auth/magic-link/contract/magic-link.contract.postgres.integration.spec.ts',
+    'backend/src/auth/pending-codes/pending-code-outages.postgres.spec.ts',
+    'backend/src/auth/pending-codes/pending-codes.contract.postgres.integration.spec.ts',
+    'backend/src/role/stores/role-stores.contract.postgres.integration.spec.ts',
     'backend/src/session/issuance/browser-issuance.contract.postgres.integration.spec.ts',
     'backend/src/session/issuance/postgres-prototype-errors.spec.ts',
     'backend/src/session/issuance/postgres-prototype.integration.spec.ts',
     'backend/test/postgres-prototype/adapter/migrations/0001_browser_issuance.sql',
+    'backend/test/postgres-prototype/adapter/migrations/0002_roles.sql',
+    'backend/test/postgres-prototype/adapter/migrations/0003_pending_codes.sql',
     'backend/test/postgres-prototype/adapter/postgres-browser-issuance.store.ts',
+    'backend/test/postgres-prototype/adapter/postgres-magic-link.store.ts',
+    'backend/test/postgres-prototype/adapter/postgres-pending-registration.store.ts',
+    'backend/test/postgres-prototype/adapter/postgres-role-change.store.ts',
     'backend/test/postgres-prototype/postgres-issuance-harness.ts',
+    'backend/test/postgres-prototype/postgres-magic-link-harness.ts',
+    'backend/test/postgres-prototype/postgres-pending-codes-harness.ts',
+    'backend/test/postgres-prototype/postgres-role-harness.ts',
     'backend/test/postgres-prototype/server/postgres-orphans.test.mjs',
     'backend/test/postgres-prototype/server/postgres-server.mjs',
   ];
   const shipped = [
+    'backend/src/auth/magic-link/contract/magic-link-outage-cases.harness-spec.ts',
+    'backend/src/auth/magic-link/contract/magic-link.contract.mongo.integration.spec.ts',
+    'backend/src/auth/magic-link/persistence/mongo/mongo-magic-link-outages.spec.ts',
+    'backend/src/auth/magic-link/stores/magic-link.store.ts',
+    'backend/src/auth/pending-codes/pending-codes.contract.mongo.integration.spec.ts',
+    'backend/src/auth/pending-codes/pending-registration.store.ts',
+    'backend/src/auth/persistence/mongo/mongo-pending-registration.store.ts',
+    'backend/src/auth/persistence/mongo/mongo-store-outages.spec.ts',
+    'backend/src/role/persistence/mongo/mongo-role-change.store.ts',
+    'backend/src/role/stores/role-change.store.ts',
+    'backend/src/role/stores/role-stores.contract.mongo.integration.spec.ts',
     'backend/src/session/issuance/browser-issuance.contract.mongo.integration.spec.ts',
     'backend/src/session/issuance/browser-issuance.store.ts',
     'backend/src/session/persistence/mongo/mongo-browser-issuance.store.ts',
+    'backend/test/utils/auth/pending-codes-contract/pending-codes-contract.ts',
+    'backend/test/utils/auth/store-outage-cases.ts',
+    'backend/test/utils/role/role-contract/role-contract.ts',
     'backend/test/utils/session/issuance-contract/issuance-contract.ts',
   ];
   for (const file of [...prototype, ...shipped]) {
@@ -62,7 +90,7 @@ it('removes the PostgreSQL prototype from a generated project and keeps the shar
   });
 });
 
-it('ships no backend file that imports the prototype packages', async () => {
+it('ships no backend file that imports the prototype packages or the prototype folder', async () => {
   const removed = await alwaysRemoved();
   const sources = (await listFiles(join(REPOSITORY, 'backend')))
     .map((file) => `backend/${file}`)

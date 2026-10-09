@@ -124,9 +124,17 @@ describe('PostgreSQL prototype adapter', () => {
       again,
       recorded: recorded.rows.map(({ name }) => name),
     }).toEqual({
-      first: ['0001_browser_issuance.sql'],
+      first: [
+        '0001_browser_issuance.sql',
+        '0002_roles.sql',
+        '0003_pending_codes.sql',
+      ],
       again: [],
-      recorded: ['0001_browser_issuance.sql'],
+      recorded: [
+        '0001_browser_issuance.sql',
+        '0002_roles.sql',
+        '0003_pending_codes.sql',
+      ],
     });
   });
 
