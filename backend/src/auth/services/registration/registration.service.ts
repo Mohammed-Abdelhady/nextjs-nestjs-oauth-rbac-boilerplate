@@ -34,6 +34,7 @@ import {
 import { REGISTRATION_CONTRACT_OUTDATED_MESSAGE } from '../../constants/auth-messages';
 import { logUnknownCommit } from '../../utils/unknown-commit.util';
 import { asAuthorityUnavailable } from '../../../session/utils/authority/authority-unavailable';
+import { mongoUnitOfWork } from '../../../session/persistence/mongo/mongo-unit-of-work';
 
 /**
  * The sign-up code flows: start a registration, activate with the mailed code,
@@ -131,7 +132,7 @@ export class RegistrationService {
       user = await withMajorityTransaction(this.connection, async (session) => {
         const consumed = await this.verificationCodeService.consumeCode(
           reserved,
-          session,
+          mongoUnitOfWork(session),
         );
         if (!consumed) {
           throw activationCodeInvalid();

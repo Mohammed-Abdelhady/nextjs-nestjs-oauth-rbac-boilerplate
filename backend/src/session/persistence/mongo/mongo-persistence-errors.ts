@@ -15,6 +15,7 @@ import {
   isDatabaseUnavailableError,
   isMongoDuplicateKeyError,
 } from '../../../common/utils/mongo-error.util';
+import { ROLE_CONSTRAINT } from '../../../role/stores/role-records';
 import { ISSUANCE_CONSTRAINT } from '../../issuance/browser-issuance.store';
 
 /** MaxTimeMSExpired, NetworkTimeout, ExceededTimeLimit. */
@@ -27,6 +28,7 @@ const MONGO_INDEX_CONSTRAINTS: Readonly<Record<string, string>> = {
   eventId_1: ISSUANCE_CONSTRAINT.SECURITY_EVENT_ID,
   tokenHash_unique: ISSUANCE_CONSTRAINT.SESSION_TOKEN_HASH,
   grant_user_client_unique: ISSUANCE_CONSTRAINT.GRANT_USER_CLIENT,
+  slug_1: ROLE_CONSTRAINT.SLUG,
 };
 
 const UNNAMED_CONSTRAINT = 'unnamed';

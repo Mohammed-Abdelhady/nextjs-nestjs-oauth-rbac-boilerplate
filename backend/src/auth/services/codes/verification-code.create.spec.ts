@@ -27,6 +27,10 @@ import {
 } from '../../constants/registration';
 import { rejectionOf } from '../../../../test/utils/rejection';
 import { FrozenClock, TEST_NOW } from '../../../../test/utils/frozen-clock';
+import {
+  MONGO_PENDING_REGISTRATION_STORE,
+  MONGO_MAIL_COUNTER_STORE,
+} from '../../persistence/mongo/mongo-pending-code-stores';
 import { seedMailCounter } from '../../../../test/utils/mail-counter-seed';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
@@ -65,6 +69,8 @@ describe('VerificationCodeService pending registration', () => {
     };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        MONGO_PENDING_REGISTRATION_STORE,
+        MONGO_MAIL_COUNTER_STORE,
         VerificationCodeService,
         MailCounterService,
         HashService,

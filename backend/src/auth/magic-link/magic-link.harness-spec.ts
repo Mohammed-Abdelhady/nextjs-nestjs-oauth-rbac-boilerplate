@@ -5,6 +5,16 @@ import { Types } from 'mongoose';
 import type { Request } from 'express';
 import { MagicLinkService } from './magic-link.service';
 import { PendingMagicLink } from './schemas/pending-magic-link.schema';
+import { MagicLinkStore } from './stores/magic-link.store';
+import {
+  MagicLinkAccounts,
+  MagicLinkSignIn,
+} from './stores/magic-link-accounts';
+import { MongoMagicLinkStore } from './persistence/mongo/mongo-magic-link.store';
+import {
+  MongoMagicLinkAccounts,
+  MongoMagicLinkSignIn,
+} from './persistence/mongo/mongo-magic-link-accounts';
 import { AuthMailService } from '../services/mail/auth-mail.service';
 import { SignInService } from '../services/sessions/sign-in.service';
 import { User } from '../../user/schemas/user.schema';
@@ -109,6 +119,9 @@ export async function createMagicLinkHarness(): Promise<MagicLinkHarness> {
   const module: TestingModule = await Test.createTestingModule({
     providers: [
       MagicLinkService,
+      { provide: MagicLinkStore, useClass: MongoMagicLinkStore },
+      { provide: MagicLinkAccounts, useClass: MongoMagicLinkAccounts },
+      { provide: MagicLinkSignIn, useClass: MongoMagicLinkSignIn },
       {
         provide: getModelToken(PendingMagicLink.name),
         useValue: pendingModel,

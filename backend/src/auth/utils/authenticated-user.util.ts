@@ -2,17 +2,9 @@ import { Model } from 'mongoose';
 import { UserDocument } from '../../user/schemas/user.schema';
 import { RoleDocument } from '../../role/schemas/role.schema';
 import { getEffectivePermissions } from './permissions.util';
+import type { AuthenticatedUserSummary } from '../interfaces/authenticated-user.interface';
 
-/** Account summary every sign-in route returns alongside the session cookie. */
-export interface AuthenticatedUserSummary {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  authProvider: string;
-  isVerified: boolean;
-  permissions: string[];
-}
+export type { AuthenticatedUserSummary };
 
 /**
  * Build the summary of a signed-in account, permissions included.

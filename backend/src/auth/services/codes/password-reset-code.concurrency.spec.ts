@@ -19,6 +19,7 @@ import {
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
 } from '../../../../test/utils/session-authority-harness';
 import { FrozenClock, TEST_NOW } from '../../../../test/utils/frozen-clock';
+import { MONGO_PASSWORD_RESET_CODE_STORE } from '../../persistence/mongo/mongo-pending-code-stores';
 
 const ROUNDS = 4;
 
@@ -39,6 +40,7 @@ describe('PasswordResetCodeService concurrency', () => {
     const config = new ConfigService({ bcrypt: { rounds: ROUNDS } });
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        MONGO_PASSWORD_RESET_CODE_STORE,
         PasswordResetCodeService,
         HashService,
         { provide: ConfigService, useValue: config },

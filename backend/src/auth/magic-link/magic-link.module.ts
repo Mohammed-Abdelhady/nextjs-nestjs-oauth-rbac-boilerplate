@@ -11,6 +11,16 @@ import {
 import { User, UserSchema } from '../../user/schemas/user.schema';
 import { Role, RoleSchema } from '../../role/schemas/role.schema';
 import { CommonModule } from '../../common/common.module';
+import { MagicLinkStore } from './stores/magic-link.store';
+import {
+  MagicLinkAccounts,
+  MagicLinkSignIn,
+} from './stores/magic-link-accounts';
+import { MongoMagicLinkStore } from './persistence/mongo/mongo-magic-link.store';
+import {
+  MongoMagicLinkAccounts,
+  MongoMagicLinkSignIn,
+} from './persistence/mongo/mongo-magic-link-accounts';
 
 /**
  * Passwordless sign-in. Sessions, mail and the feature switch come from
@@ -28,7 +38,12 @@ import { CommonModule } from '../../common/common.module';
     AuthModule,
   ],
   controllers: [MagicLinkController],
-  providers: [MagicLinkService],
+  providers: [
+    MagicLinkService,
+    { provide: MagicLinkStore, useClass: MongoMagicLinkStore },
+    { provide: MagicLinkAccounts, useClass: MongoMagicLinkAccounts },
+    { provide: MagicLinkSignIn, useClass: MongoMagicLinkSignIn },
+  ],
   exports: [MagicLinkService],
 })
 export class MagicLinkModule {}

@@ -1,0 +1,43 @@
+import { TEST_NOW } from '../../../../test/utils/frozen-clock';
+import { magicLinkCases } from './magic-link-contract-cases.harness-spec';
+import { magicLinkSeamCases } from './magic-link-contract-seam.harness-spec';
+import { magicLinkVerifyCases } from './magic-link-contract-verify.harness-spec';
+import { MagicLinkContractHarness } from './magic-link-contract.harness-spec';
+
+/**
+ * The mailed sign-in link contract. Every database runs these same cases
+ * through its own harness.
+ */
+export function describeMagicLinkContract(
+  database: string,
+  boot: () => Promise<MagicLinkContractHarness>,
+  budgets: { bootMs: number; teardownMs: number },
+): void {
+  describe(`magic link contract on ${database}`, () => {
+    let harness: MagicLinkContractHarness | undefined;
+
+    const current = (): MagicLinkContractHarness => {
+      if (!harness) {
+        throw new Error(`the ${database} harness did not start`);
+      }
+      return harness;
+    };
+
+    beforeAll(async () => {
+      harness = await boot();
+    }, budgets.bootMs);
+
+    afterAll(async () => {
+      await harness?.close();
+    }, budgets.teardownMs);
+
+    beforeEach(async () => {
+      current().clock.set(TEST_NOW);
+      await current().reset();
+    });
+
+    describe('requesting a link', () => magicLinkCases(current));
+    describe('spending a link', () => magicLinkVerifyCases(current));
+    describe('the seam', () => magicLinkSeamCases(current));
+  });
+}

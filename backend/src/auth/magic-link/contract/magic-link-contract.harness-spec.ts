@@ -1,0 +1,201 @@
+import { ConfigService } from '@nestjs/config';
+import { Request, Response } from 'express';
+import { recorded } from '../../../../test/utils/auth/pending-codes-contract/pending-codes-contract-support';
+import { FrozenClock } from '../../../../test/utils/frozen-clock';
+import {
+  createRequestMock,
+  createResponseMock,
+} from '../../../common/testing/test-doubles.harness-spec';
+import { MailDispatcherService } from '../../../mail/mail-dispatcher.service';
+import { MailOptions } from '../../../mail/interfaces/mail-options.interface';
+import { MailService } from '../../../mail/mail.service';
+import { AuthMailService } from '../../services/mail/auth-mail.service';
+import { MagicLinkService } from '../magic-link.service';
+import {
+  MagicLinkAccount,
+  MagicLinkAccounts,
+  MagicLinkSignIn,
+  MagicLinkSignInOutcome,
+} from '../stores/magic-link-accounts';
+import { MagicLinkStore } from '../stores/magic-link.store';
+
+/** Jest budget for a contract case, the one the sign-in contract established. */
+export const MAGIC_LINK_CONTRACT_CASE_TIMEOUT_MS = 60000;
+
+/** Written out, so a changed constant cannot agree with itself. */
+export const LINK_LIFETIME_MS = 900_000;
+export const LINKS_PER_HOUR = 5;
+export const ONE_HOUR_MS = 3_600_000;
+
+export interface SeedLink {
+  email: string;
+  tokenHash: string;
+  expiresAt: Date;
+  createdAt: Date;
+  consumedAt?: Date;
+  redirect?: string;
+}
+
+export interface StoredLink {
+  email: string;
+  tokenHash: string;
+  expiresAt: Date;
+  consumedAt: Date | null;
+  requestIp: string | null;
+  userAgent: string | null;
+  redirect: string | null;
+}
+
+export interface StoredLinkAccount {
+  id: string;
+  name: string | null;
+  isVerified: boolean;
+  isDeleted: boolean;
+  authProvider: string | null;
+}
+
+/**
+ * What one database gives the shared link cases: the adapters under test and
+ * plain reads and writes of stored rows that go around them.
+ */
+export interface MagicLinkContractHarness {
+  readonly clock: FrozenClock;
+  readonly links: MagicLinkStore;
+  readonly accounts: MagicLinkAccounts;
+
+  seedLink(link: SeedLink): Promise<void>;
+  link(tokenHash: string): Promise<StoredLink | null>;
+  linkCount(): Promise<number>;
+
+  seedAccount(account: {
+    email: string;
+    isVerified: boolean;
+    isDeleted: boolean;
+  }): Promise<string>;
+  /** Looked up by the stored form of the address. */
+  account(email: string): Promise<StoredLinkAccount | null>;
+  accountCount(): Promise<number>;
+
+  reset(): Promise<void>;
+  close(): Promise<void>;
+}
+
+export type MagicLinkHarnessSource = () => MagicLinkContractHarness;
+
+const SUMMARY = {
+  email: 'signed-in@example.test',
+  name: 'Signed In',
+  role: 'user',
+  authProvider: 'email',
+  isVerified: true,
+  permissions: [],
+};
+
+/**
+ * Stands where the shared sign-in stands. Sessions move behind the seam in a
+ * later step, so the link cases only record which account was handed over.
+ */
+class RecordingSignIn extends MagicLinkSignIn {
+  readonly accountIds: string[] = [];
+
+  complete(account: MagicLinkAccount): Promise<MagicLinkSignInOutcome> {
+    this.accountIds.push(account.id);
+    return Promise.resolve({
+      requiresTwoFactor: false,
+      user: { ...SUMMARY, id: account.id },
+    });
+  }
+}
+
+export interface LinkServices {
+  service: MagicLinkService;
+  /** Every mail handed to the transport, which never connects. */
+  mail: MailOptions[];
+  /** Accounts handed to sign-in, in order. */
+  signedIn: string[];
+  /** Every store call the service made, in order. */
+  storeCalls: string[];
+  /** The token the last mail carried in its link. */
+  mailedToken(): string;
+}
+
+export const LINK_REQUEST: Request = createRequestMock({
+  ip: '127.0.0.1',
+  headers: { 'user-agent': 'Contract/1' },
+});
+
+export const LINK_RESPONSE: Response = createResponseMock({});
+
+/** The real service on one database's adapters, with mail kept in memory. */
+export function linkServices(harness: MagicLinkContractHarness): LinkServices {
+  const config = new ConfigService({
+    magicLink: { expiresIn: LINK_LIFETIME_MS, maxPerHour: LINKS_PER_HOUR },
+    cors: { clientUrl: 'http://localhost:3000' },
+    smtp: { from: 'contract@example.test' },
+  });
+  const mail: MailOptions[] = [];
+  const mailService = new MailService(config);
+  mailService.sendMail = (options: MailOptions): Promise<void> => {
+    mail.push(options);
+    return Promise.resolve();
+  };
+  const authMail = new AuthMailService(
+    mailService,
+    new MailDispatcherService(config, mailService),
+  );
+  const signIn = new RecordingSignIn();
+  const storeCalls: string[] = [];
+
+  return {
+    service: new MagicLinkService(
+      recorded(harness.links, 'links', storeCalls),
+      recorded(harness.accounts, 'accounts', storeCalls),
+      config,
+      authMail,
+      signIn,
+      harness.clock,
+    ),
+    mail,
+    signedIn: signIn.accountIds,
+    storeCalls,
+    mailedToken: () => {
+      const last = mail[mail.length - 1];
+      const token = /token=([A-Za-z0-9_-]+)/.exec(last?.text ?? '')?.[1];
+      if (!token) {
+        throw new Error('the last mail carried no link token');
+      }
+      return token;
+    },
+  };
+}
+
+/** The application error code of a rejection, or the error's own name. */
+function codeOf(error: unknown): string {
+  if (typeof error === 'object' && error !== null && 'getCode' in error) {
+    const getCode: unknown = error.getCode;
+    if (typeof getCode === 'function') {
+      return String(Reflect.apply(getCode, error, []));
+    }
+  }
+  return error instanceof Error ? error.name : typeof error;
+}
+
+/** Awaits a promise that must reject and hands back its application code. */
+export async function refusalOf(promise: Promise<unknown>): Promise<string> {
+  try {
+    await promise;
+  } catch (error) {
+    return codeOf(error);
+  }
+  throw new Error('expected a rejection');
+}
+
+/** How one use of a link ended: signed in, or the code it was refused with. */
+export async function useOutcome(use: Promise<unknown>): Promise<string> {
+  try {
+    await use;
+  } catch (error) {
+    return codeOf(error);
+  }
+  return 'signed in';
+}

@@ -15,6 +15,7 @@ import { ReservedCode } from '../../interfaces/pending-code.interface';
 import { ConfirmEmailChangeDto } from '../../dto/confirm-email-change.dto';
 import { logUnknownCommit } from '../../utils/unknown-commit.util';
 import { asAuthorityUnavailable } from '../../../session/utils/authority/authority-unavailable';
+import { mongoUnitOfWork } from '../../../session/persistence/mongo/mongo-unit-of-work';
 
 /**
  * Confirms the new address an admin moved an account to. It is its own
@@ -44,7 +45,7 @@ export class EmailChangeConfirmationService {
       await withMajorityTransaction(this.connection, async (session) => {
         const consumed = await this.verificationCodeService.consumeCode(
           reserved,
-          session,
+          mongoUnitOfWork(session),
         );
         if (!consumed) {
           throw activationCodeInvalid();

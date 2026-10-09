@@ -16,6 +16,7 @@ import { HashService } from '../../../common/services/hash.service';
 import { Clock } from '../../../common/services/clock';
 import { rejectionOf } from '../../../../test/utils/rejection';
 import { FrozenClock, TEST_NOW } from '../../../../test/utils/frozen-clock';
+import { MONGO_PASSWORD_RESET_CODE_STORE } from '../../persistence/mongo/mongo-pending-code-stores';
 import { RaceGate } from '../../../../test/utils/race-gate';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import {
@@ -52,6 +53,7 @@ describe('PasswordResetCodeService pending reset', () => {
     };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        MONGO_PASSWORD_RESET_CODE_STORE,
         PasswordResetCodeService,
         HashService,
         { provide: ConfigService, useValue: config },
