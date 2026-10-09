@@ -105,8 +105,13 @@ Checker logic and other tests are scanned. Source files in directories named `no
 
 <!-- repository-only:start -->
 
-Generated Expo output under `mobile/expo/ios/`, `mobile/expo/android/`, and `.expo/` output directly under the repository root or a declared workspace is skipped. A project outside the declared workspaces receives no directory-name skip; for example, `mobile/expo/.expo/` is scanned when `mobile/expo` is not declared. Hand-written native source under `mobile/cli/` and `mobile/device-key/` is still scanned.
+A project outside the declared workspaces receives no directory-name skip; for example, `mobile/expo/.expo/` is scanned when `mobile/expo` is not declared. Hand-written native source under `mobile/cli/` is still scanned.
 <!-- repository-only:end -->
+
+<!-- feature:native-expo:start -->
+
+Generated Expo output under `mobile/expo/ios/` and `mobile/expo/android/` is skipped, and so is `.expo/` output directly under a declared workspace. Hand-written native source under `mobile/device-key/` is still scanned.
+<!-- feature:native-expo:end -->
 
 A hit fails the hook:
 
@@ -128,8 +133,13 @@ Human-maintained files selected by `CAPPED_PATH` must stay at 350 lines or fewer
 
 <!-- repository-only:start -->
 
-The repository also caps `frontend/e2e/**`, `packages/*/src/**`, `packages/*/test/**`, `packages/*/scripts/**`, `mobile/*/src/**`, `mobile/*/app/**`, `mobile/*/test/**`, and `mobile/*/conformance/**`.
+The repository also caps `frontend/e2e/**`, `packages/*/src/**`, `packages/*/test/**`, and `packages/*/scripts/**`.
 <!-- repository-only:end -->
+
+<!-- feature:native-core:start -->
+
+The mobile workspaces are capped too: `mobile/*/src/**`, `mobile/*/app/**`, `mobile/*/test/**`, and `mobile/*/conformance/**`.
+<!-- feature:native-core:end -->
 
 <!-- repository-only:start -->
 

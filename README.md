@@ -148,6 +148,39 @@ See [docs/README.md](docs/README.md) for provider-specific credentials and mail 
 
 For a host-run backend with MongoDB in Docker Compose, use `MONGO_URI=mongodb://USER:PASS@localhost:27017/authboiler?authSource=admin&directConnection=true`. The replica set advertises `mongodb:27017`, which only containers on the Compose network can resolve. <!-- feature:docker -->
 
+<!-- feature:native-expo:start -->
+
+## Mobile app
+
+The Expo app lives in `mobile/expo`. It signs in on the web sign-in page in the system browser, then shows the profile and the sessions.
+
+It has been built and run on an iOS simulator against this server. Android has not been built or run, so treat it as unverified.
+
+### What the server needs
+
+Set these in `backend/.env` before you start the backend:
+
+- `AUTH_NATIVE_ENABLED=true`
+- `AUTH_NATIVE_DPOP_NONCE_SECRET` with a random value of at least 32 characters. `openssl rand -hex 32` makes one.
+- `API_URL` with the address the app uses to reach the API. On a simulator that is `http://localhost:5001`.
+- `AUTH_NATIVE_APPLICATIONS` as `backend/.env.example` writes it. Its client id and return address come from the `scheme` in `mobile/expo/app.json`. If you change the scheme, change this line to match.
+
+The web app must be running too, because sign-in happens on its pages.
+
+### Run it on an iOS simulator
+
+You need a Mac with Xcode and CocoaPods. Expo creates the native iOS project the first time you run the app.
+
+```bash
+pnpm --filter @app/mobile-expo run ios
+```
+
+A development build talks to `http://localhost:5001`. Set `EXPO_PUBLIC_API_ORIGIN` to use another address. A release build does not start without it.
+
+The app name, slug, application id and scheme live in `mobile/expo/app.json` and nowhere else. Signing a build for a device or a store is yours to set up.
+
+<!-- feature:native-expo:end -->
+
 ## Seed data
 
 Run the database seed script from the backend directory:
