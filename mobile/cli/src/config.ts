@@ -1,4 +1,5 @@
 import type { AuthConfiguration } from '@app/native-auth';
+import appConfig from '../app.json';
 import {
   APP_CALLBACK_URI,
   APP_CLIENT_ID,
@@ -22,3 +23,6 @@ export const AUTH_CONFIGURATION: AuthConfiguration = {
 };
 
 export const EPHEMERAL_BROWSER_SESSION = true;
+
+/** The product name the sign-in screen shows, as the home screen shows it. */
+export const APP_NAME = appConfig.displayName;
