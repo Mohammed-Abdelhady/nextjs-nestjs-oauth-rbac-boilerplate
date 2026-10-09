@@ -39,8 +39,10 @@ it('ships the lockfile without the installer workspace importer', () => {
     'mobile/adapters',
     'mobile/auth',
     'mobile/cli',
+    'mobile/device-key',
     'mobile/expo',
     'mobile/metro',
+    'mobile/ui',
     'shared/core',
     'shared/sdk',
   ]);

@@ -17,8 +17,10 @@ const MOBILE_WORKSPACES = [
   'mobile/adapters',
   'mobile/auth',
   'mobile/cli',
+  'mobile/device-key',
   'mobile/expo',
   'mobile/metro',
+  'mobile/ui',
 ];
 
 let root = '';

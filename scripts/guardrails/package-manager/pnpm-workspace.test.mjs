@@ -9,8 +9,9 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const MANIFESTS = [
   'package.json', 'backend/package.json', 'frontend/package.json',
   'mobile/adapters/package.json', 'mobile/auth/package.json', 'mobile/cli/package.json',
-  'mobile/expo/package.json',
-  'mobile/metro/package.json', 'packages/create-nest-next-auth/package.json',
+  'mobile/device-key/package.json', 'mobile/expo/package.json',
+  'mobile/metro/package.json', 'mobile/ui/package.json',
+  'packages/create-nest-next-auth/package.json',
   'shared/core/package.json', 'shared/sdk/package.json',
 ];
 const readManifest = (file) => JSON.parse(readFileSync(join(ROOT, file), 'utf8'));
@@ -74,6 +75,10 @@ test('repository manifests pin the package manager and supported Node major with
   );
   assert.deepEqual(readManifest('mobile/adapters/package.json').dependencies, {
     '@app/native-auth': 'workspace:*', '@app/sdk': 'workspace:*',
+  });
+  // No Expo or React Native here: the shell that owns them hands the native module in.
+  assert.deepEqual(readManifest('mobile/device-key/package.json').dependencies, {
+    '@app/native-auth': 'workspace:*',
   });
 });
 

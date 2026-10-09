@@ -9,15 +9,19 @@ const MOBILE_FOLDERS = [
   'mobile/adapters',
   'mobile/auth',
   'mobile/cli',
+  'mobile/device-key',
   'mobile/expo',
   'mobile/metro',
+  'mobile/ui',
 ];
 const MOBILE_PACKAGES = [
+  '@app/device-key',
   '@app/native-adapters',
   '@app/native-auth',
   '@app/metro-config',
   '@app/mobile-cli',
   '@app/mobile-expo',
+  '@app/native-ui',
 ];
 const NATIVE_RUNTIMES = ['expo', 'react-native'];
 const DEPENDENCY_SECTIONS = ['dependencies', 'devDependencies', 'peerDependencies'] as const;
@@ -90,8 +94,9 @@ export async function expectPlannedMobileWorkspaceIsPruned(
       'mobile/cli/**',
       'mobile/expo/**',
       'mobile/metro/**',
+      'mobile/ui/**',
     ]),
   );
-  expect(manifest.shared['native-core'].files).toContain('mobile/auth/**');
-  expect(manifest.shared['native-core'].workspaces).toContain('mobile/auth');
+  expect(manifest.shared['native-core'].files).toEqual(['mobile/auth/**', 'mobile/device-key/**']);
+  expect(manifest.shared['native-core'].workspaces).toEqual(['mobile/auth', 'mobile/device-key']);
 }

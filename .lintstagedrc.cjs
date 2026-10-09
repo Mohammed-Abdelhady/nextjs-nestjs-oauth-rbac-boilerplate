@@ -16,9 +16,11 @@ module.exports = {
   ],
   'mobile/auth/**/*.ts': ['pnpm --filter @app/native-auth exec eslint --fix --max-warnings 0'],
   'mobile/cli/**/*.{ts,tsx}': ['pnpm --filter @app/mobile-cli exec eslint --fix --max-warnings 0'],
+  'mobile/device-key/**/*.ts': ['pnpm --filter @app/device-key exec eslint --fix --max-warnings 0'],
   'mobile/expo/**/*.{ts,tsx}': ['pnpm --filter @app/mobile-expo exec eslint --fix --max-warnings 0'],
   'mobile/metro/**/*.{ts,cjs}': [
     'pnpm --filter @app/metro-config exec eslint --fix --max-warnings 0',
   ],
+  'mobile/ui/**/*.{ts,tsx}': ['pnpm --filter @app/native-ui exec eslint --fix --max-warnings 0'],
   '*.{md,yml,yaml}': ['prettier --write'],
 };
