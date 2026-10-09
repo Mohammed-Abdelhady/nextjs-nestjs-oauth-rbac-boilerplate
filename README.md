@@ -134,6 +134,7 @@ Endpoints:
 | `SESSION_SECRET`                | Secret used to sign session cookies                                    | Required in production                                |
 | `OAUTH_STATE_SECRET`            | Secret used to sign OAuth state cookies                                | Required in production                                |
 | `AUTH_NATIVE_DPOP_NONCE_SECRET` | HMAC secret for DPoP nonces; required when `AUTH_NATIVE_ENABLED=true`  | At least 32 characters when native sign-in is enabled |
+| `API_URL`                       | Public origin of the API; required when `AUTH_NATIVE_ENABLED=true`     | `http://localhost:<PORT>`; https origin in production |
 | `AUTH_NATIVE_DPOP_REQUIRED`     | Reject native exchanges without DPoP and refreshes of unbound families | `false`                                               |
 | `TOTP_ENCRYPTION_KEY`           | 32-byte hex key to encrypt TOTP secrets                                | Required for 2FA                                      |
 
