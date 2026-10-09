@@ -23,7 +23,7 @@ export const PermissionGroupGrid = memo(function PermissionGroupGrid({
   const formatPermissionLabel = usePermissionLabel();
 
   return (
-    <div className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-muted p-4">
+    <div className="grid grid-cols-1 gap-3 rounded-lg border border-border bg-muted p-4 sm:grid-cols-2">
       {Object.entries(permissions).map(([, permission]) => {
         const id = `permission-${permission}${prefix ? `-${prefix}` : ''}`;
         return (

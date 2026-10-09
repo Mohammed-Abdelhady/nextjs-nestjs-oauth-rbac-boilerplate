@@ -36,6 +36,7 @@ export function TwoFactorDisableDialog({
   hasPassword,
 }: TwoFactorDisableDialogProps) {
   const t = useTranslations('settings.twoFactor.disable');
+  const tCommon = useTranslations('common');
   const tCodes = useTranslations('errors.codes');
   const tAnswer = useTranslations('auth.twoFactor');
   const [disableTwoFactor, { isLoading }] = useDisableTwoFactorMutation();
@@ -105,7 +106,7 @@ export function TwoFactorDisableDialog({
               <FormPassword<DisableFormData>
                 name="password"
                 label={t('password')}
-                placeholder="********"
+                placeholder={tCommon('passwordPlaceholder')}
                 autoComplete="current-password"
                 disabled={isLoading}
                 data-testid="two-factor-disable-password"
