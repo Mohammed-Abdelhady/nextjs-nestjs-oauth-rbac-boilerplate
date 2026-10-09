@@ -1,3 +1,6 @@
+import { DEVICE_KIND } from '../../common/constants/session';
+import { CREDENTIAL_PURPOSE } from '../../session/constants/credential-purpose';
+import { parseUserAgent } from '../../common/utils/parse-user-agent';
 import { Injectable, Logger, HttpStatus } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { SessionService } from '../../auth/services/sessions/session.service';
@@ -35,6 +38,12 @@ export class UserSessionsService {
       userAgent: session.userAgent,
       ip: session.ip,
       deviceName: session.deviceName,
+      deviceParts: {
+        ...parseUserAgent(session.userAgent).parts,
+        ...(session.credentialPurpose === CREDENTIAL_PURPOSE.NATIVE_ACCESS
+          ? { kind: DEVICE_KIND.MOBILE_APP }
+          : {}),
+      },
       createdAt: session.createdAt,
       lastUsedAt: session.lastUsedAt,
       isCurrent:
