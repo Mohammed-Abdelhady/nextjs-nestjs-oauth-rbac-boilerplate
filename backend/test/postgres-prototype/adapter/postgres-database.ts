@@ -71,6 +71,14 @@ export interface ApplicationsTable {
   allowed_scopes: Generated<string[]>;
   absolute_lifetime_ms: BigIntColumn;
   idle_lifetime_ms: BigIntColumn;
+  display_name: string;
+  client_type: string;
+  redirect_uris: Generated<string[]>;
+  allowed_origins: Generated<string[]>;
+  audiences: Generated<string[]>;
+  policy_version: Generated<number>;
+  created_at: ColumnType<Date, Date | undefined, never>;
+  updated_at: ColumnType<Date, Date | undefined, Date>;
 }
 
 export interface UserApplicationGrantsTable {

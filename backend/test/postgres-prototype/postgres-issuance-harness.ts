@@ -20,6 +20,8 @@ import {
 import { commitCheckedPool } from './adapter/postgres-commit-tag';
 import { PostgresBrowserIssuanceStore } from './adapter/postgres-browser-issuance.store';
 import { PrototypeDatabase } from './adapter/postgres-database';
+import { ApplicationRegistry } from '../../src/session/applications/application-registry';
+import { PostgresApplicationRegistryStore } from './adapter/postgres-application-registry.store';
 import { PostgresIssuanceApplications } from './adapter/postgres-issuance-applications';
 import { PostgresSecurityEventStore } from './adapter/postgres-security-event.store';
 import { PostgresUnitOfWorkRunner } from './adapter/postgres-unit-of-work';
@@ -28,6 +30,9 @@ import { CommitFaultDialect } from './postgres-commit-faults';
 import { PostgresTestServer } from './server/postgres-test-server';
 
 const AN_OBJECT_ID = '65f000000000000000000001';
+const CLIENT_TYPES: Readonly<Record<string, string>> = {
+  admin: 'confidential',
+};
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -49,12 +54,18 @@ export async function bootPostgresIssuanceHarness(): Promise<PostgresIssuanceHar
     clock,
     new PostgresSecurityEventStore(database),
   );
-  const applications = new PostgresIssuanceApplications(CONTRACT_ENVIRONMENT);
   const authEpoch = new AuthEpochService(
     new ConfigService({
       auth: { epoch: CONTRACT_AUTH_EPOCH, nativeEnabled: false },
       server: { nodeEnv: CONTRACT_ENVIRONMENT },
     }),
+  );
+  const applications = new PostgresIssuanceApplications(
+    new ApplicationRegistry(
+      new PostgresUnitOfWorkRunner(database),
+      new PostgresApplicationRegistryStore(database),
+      authEpoch,
+    ),
   );
   const runner = (pause: RerunPause) =>
     new PostgresUnitOfWorkRunner(database, pause);
@@ -88,6 +99,8 @@ export async function bootPostgresIssuanceHarness(): Promise<PostgresIssuanceHar
     },
     seedApplication: async (application) => {
       const values = {
+        display_name: application.clientId,
+        client_type: CLIENT_TYPES[application.clientId] ?? 'public',
         platform: application.platform,
         enabled: application.enabled,
         session_version: application.sessionVersion,
