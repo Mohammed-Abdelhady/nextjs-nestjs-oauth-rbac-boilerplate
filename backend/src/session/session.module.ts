@@ -2,6 +2,7 @@ import { Module, OnModuleInit, type INestApplication } from '@nestjs/common';
 import { InjectConnection, MongooseModule } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { CommonModule } from '../common/common.module';
+import { UnitOfWorkRunner } from '../common/persistence/unit-of-work';
 import { User, UserSchema } from '../user/schemas/user.schema';
 import { Application, ApplicationSchema } from './schemas/application.schema';
 import {
@@ -33,6 +34,11 @@ import {
   UserApplicationGrant,
   UserApplicationGrantSchema,
 } from './schemas/user-application-grant.schema';
+import { BrowserIssuanceStore } from './issuance/browser-issuance.store';
+import { IssuanceApplications } from './issuance/issuance-applications';
+import { MongoBrowserIssuanceStore } from './persistence/mongo/mongo-browser-issuance.store';
+import { MongoIssuanceApplications } from './persistence/mongo/mongo-issuance-applications';
+import { MongoUnitOfWorkRunner } from './persistence/mongo/mongo-unit-of-work';
 import { BrowserProofService } from './services/browser-proof.service';
 import { ApplicationAccessService } from './services/application-access.service';
 import { ApplicationRegistryService } from './services/application-registry.service';
@@ -68,6 +74,9 @@ import { NativeAccessService } from './native/access/native-access.service';
     BrowserProofService,
     NativeSessionRevocationService,
     SecurityEventService,
+    { provide: UnitOfWorkRunner, useClass: MongoUnitOfWorkRunner },
+    { provide: BrowserIssuanceStore, useClass: MongoBrowserIssuanceStore },
+    { provide: IssuanceApplications, useClass: MongoIssuanceApplications },
     SessionIssuanceService,
     SessionAuthorityService,
     SessionRevocationService,
@@ -81,6 +90,9 @@ import { NativeAccessService } from './native/access/native-access.service';
     BrowserProofService,
     NativeSessionRevocationService,
     SecurityEventService,
+    UnitOfWorkRunner,
+    BrowserIssuanceStore,
+    IssuanceApplications,
     SessionIssuanceService,
     SessionAuthorityService,
     SessionRevocationService,

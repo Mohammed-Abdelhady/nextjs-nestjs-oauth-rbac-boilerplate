@@ -31,6 +31,11 @@ import { hashToken } from '../../utils/hashing/token-hash';
 import { NativeCredentialIssuer } from './native-credential.issuer';
 import { NativeRefreshService } from '../refresh/native-refresh.service';
 import { NativeRevokeService } from '../revoke/native-revoke.service';
+import {
+  toIssuanceAccount,
+  toIssuanceApplication,
+} from '../../persistence/mongo/mongo-issuance-mappers';
+import { mongoUnitOfWork } from '../../persistence/mongo/mongo-unit-of-work';
 import { SessionIssuanceService } from '../../services/session-issuance.service';
 import { SecurityEventService } from '../../services/security-event.service';
 import { NativeDpopProofResult } from '../proof/native-dpop-proof';
@@ -259,7 +264,12 @@ export class NativeTokenService {
         .updateOne({ _id: user._id }, { $inc: { issuanceFence: 1 } })
         .session(db)
         .exec();
-      await this.sessionIssuance.assertSessionLimit(db, user, application, now);
+      await this.sessionIssuance.assertSessionLimit(
+        mongoUnitOfWork(db),
+        toIssuanceAccount(user),
+        toIssuanceApplication(application),
+        now,
+      );
     }
     const claimed = await this.transactions
       .updateOne(

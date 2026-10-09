@@ -1,5 +1,9 @@
 import { ClientSession, Connection } from 'mongoose';
 import { UnknownTransactionOutcomeError } from '../../../common/exceptions/unknown-transaction-outcome.error';
+import {
+  pauseBeforeRerun,
+  RerunPause,
+} from '../../../common/persistence/unit-of-work';
 
 export {
   isUnknownTransactionOutcome,
@@ -45,6 +49,7 @@ function isCatalogRetry(error: unknown, seen: Set<unknown>): boolean {
 export async function withMajorityTransaction<T>(
   connection: Connection,
   work: (session: ClientSession) => Promise<T>,
+  pause: RerunPause = pauseBeforeRerun,
 ): Promise<T> {
   const session = await connection.startSession();
   try {
@@ -98,9 +103,7 @@ export async function withMajorityTransaction<T>(
         if (!canRetry) {
           throw error;
         }
-        await new Promise<void>((resolve) => {
-          setTimeout(resolve, 50 * (attempt + 1));
-        });
+        await pause(attempt + 1);
       }
     }
     throw lastError;

@@ -1,8 +1,6 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Connection, Model } from 'mongoose';
-import { AppException } from '../../common/exceptions/app.exception';
-import { ErrorCode } from '../../common/enums/error-code.enum';
 import { AuthEpochService } from '../../common/services/auth-epoch.service';
 import { isMongoDuplicateKeyError } from '../../common/utils/mongo-error.util';
 import {
@@ -26,6 +24,7 @@ import {
   Application,
   ApplicationDocument,
 } from '../schemas/application.schema';
+import { requireEnabledApplication } from '../utils/authority/application-rule';
 import { linearizable } from '../utils/authority/linearizable-query';
 import { withMajorityTransaction } from '../utils/transactions/mongo-transaction';
 
@@ -48,23 +47,7 @@ export class ApplicationRegistryService {
       ? await query.session(session).exec()
       : await linearizable(query).exec();
 
-    if (!application) {
-      throw new AppException(
-        ErrorCode.APPLICATION_NOT_FOUND,
-        'Application is not registered',
-        HttpStatus.NOT_FOUND,
-      );
-    }
-
-    if (!application.enabled) {
-      throw new AppException(
-        ErrorCode.APPLICATION_DISABLED,
-        'Application is disabled',
-        HttpStatus.FORBIDDEN,
-      );
-    }
-
-    return application;
+    return requireEnabledApplication(application);
   }
 
   async findByClientId(clientId: string): Promise<ApplicationDocument | null> {
