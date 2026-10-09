@@ -1,13 +1,13 @@
 import { createApiClient } from '@app/sdk';
-import { createBearerTransport } from './bearer-transport';
-import { AuthSessionError } from './errors';
-import { createRefreshCoordinator } from './refresh';
-import { createRefreshNow } from './refresh-now';
-import { createRestoreOperation } from './restore';
-import { AuthRuntime } from './runtime';
-import { createSignInController } from './sign-in';
-import { createSignOutOperation } from './sign-out';
-import { validateConfiguration } from './redirect';
+import { createBearerTransport } from './transport/bearer-transport';
+import { AuthSessionError } from './errors/errors';
+import { createRefreshCoordinator } from './refresh/refresh';
+import { createRefreshNow } from './refresh/refresh-now';
+import { createRestoreOperation } from './storage/restore';
+import { AuthRuntime } from './runtime/runtime';
+import { createSignInController } from './sign-in/sign-in';
+import { createSignOutOperation } from './sign-out/sign-out';
+import { validateConfiguration } from './sign-in/redirect';
 import type { AuthConfiguration, AuthDependencies, AuthEngine, AuthSnapshot } from './types/auth';
 
 export function createAuthEngine(
@@ -60,6 +60,6 @@ export function createAuthEngine(
   return engine;
 }
 
-export { PortAbortController } from './abort-controller';
-export * from './errors';
+export { PortAbortController } from './runtime/abort-controller';
+export * from './errors/errors';
 export * from './types';
