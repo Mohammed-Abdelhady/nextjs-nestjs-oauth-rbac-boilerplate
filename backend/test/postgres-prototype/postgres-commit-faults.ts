@@ -1,9 +1,22 @@
-import { Driver, PostgresDialect, PostgresDialectConfig } from 'kysely';
+import {
+  DatabaseConnection,
+  Driver,
+  PostgresDialect,
+  PostgresDialectConfig,
+} from 'kysely';
 import { LostCommitAnswers } from '../utils/session/issuance-contract/issuance-contract-harness';
 
-interface CommitFault {
+export interface CommitFault {
   lands: boolean;
+  /**
+   * How many commit answers are lost. Left out, every answer is lost until
+   * restored, and so is the answer to "what became of that transaction": the
+   * database cannot be reached at all.
+   */
+  times?: number;
 }
+
+const STATUS_QUESTION = 'pg_xact_status';
 
 /** What the driver raises when the connection drops before an answer arrives. */
 function connectionLost(): Error {
@@ -20,6 +33,7 @@ function connectionLost(): Error {
 export class CommitFaultDialect extends PostgresDialect {
   private fault: CommitFault | undefined;
   private attempts = 0;
+  private readonly watched = new WeakSet<DatabaseConnection>();
 
   constructor(config: PostgresDialectConfig) {
     super(config);
@@ -39,9 +53,13 @@ export class CommitFaultDialect extends PostgresDialect {
   createDriver(): Driver {
     const driver = super.createDriver();
     const commit = driver.commitTransaction.bind(driver);
+    const acquire = driver.acquireConnection.bind(driver);
     driver.commitTransaction = async (connection) => {
       const fault = this.fault;
-      if (!fault) {
+      if (
+        !fault ||
+        (fault.times !== undefined && this.attempts >= fault.times)
+      ) {
         return commit(connection);
       }
       this.attempts += 1;
@@ -52,6 +70,24 @@ export class CommitFaultDialect extends PostgresDialect {
       }
       throw connectionLost();
     };
+    driver.acquireConnection = async () => this.watch(await acquire());
     return driver;
+  }
+
+  /** Loses the answer to the status question while nothing can be reached. */
+  private watch(connection: DatabaseConnection): DatabaseConnection {
+    if (this.watched.has(connection)) {
+      return connection;
+    }
+    this.watched.add(connection);
+    const execute = connection.executeQuery.bind(connection);
+    connection.executeQuery = (query) => {
+      const unreachable = this.fault && this.fault.times === undefined;
+      if (unreachable && query.sql.includes(STATUS_QUESTION)) {
+        return Promise.reject(connectionLost());
+      }
+      return execute(query);
+    };
+    return connection;
   }
 }

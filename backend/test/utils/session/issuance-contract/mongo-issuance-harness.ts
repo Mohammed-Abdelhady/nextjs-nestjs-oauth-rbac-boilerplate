@@ -12,7 +12,10 @@ import {
 import { SessionIssuanceService } from '../../../../src/session/services/session-issuance.service';
 import { FrozenClock, TEST_NOW } from '../../frozen-clock';
 import { startMemoryReplSet } from '../../memory-replset';
-import { bootSessionAuthority } from '../../session-authority-harness';
+import {
+  bootSessionAuthority,
+  SessionAuthorityHarness,
+} from '../../session-authority-harness';
 import {
   loseCommitAnswers,
   REFUSED_EVENT_SEED_ACTION,
@@ -28,13 +31,23 @@ const CLIENT_TYPES: Readonly<Record<string, string>> = {
   admin: 'confidential',
 };
 
+export interface MongoIssuanceBoot {
+  harness: IssuanceContractHarness;
+  /** The booted application, for a contract that needs more of it. */
+  booted: SessionAuthorityHarness;
+  events: Model<SecurityEventDocument>;
+}
+
 export async function bootMongoIssuanceHarness(): Promise<IssuanceContractHarness> {
+  return (await bootMongoIssuance('issuance_contract')).harness;
+}
+
+export async function bootMongoIssuance(
+  databaseName: string,
+): Promise<MongoIssuanceBoot> {
   const mongo = await startMemoryReplSet();
   const clock = new FrozenClock(TEST_NOW);
-  const booted = await bootSessionAuthority(
-    mongo.uri('issuance_contract'),
-    clock,
-  );
+  const booted = await bootSessionAuthority(mongo.uri(databaseName), clock);
   const { app, users, sessions, grants, applications, connection } = booted;
   const events = app.get<Model<SecurityEventDocument>>(
     getModelToken(SecurityEvent.name),
@@ -46,7 +59,7 @@ export async function bootMongoIssuanceHarness(): Promise<IssuanceContractHarnes
     new MongoUnitOfWorkRunner(connection, pause);
   let accounts = 0;
 
-  return {
+  const harness: IssuanceContractHarness = {
     clock,
     store,
     applications: issuanceApplications,
@@ -172,10 +185,10 @@ export async function bootMongoIssuanceHarness(): Promise<IssuanceContractHarnes
     foreignAccountId: () => A_UUID,
 
     refuseSecurityEvents: () => refuseSecurityEvents(events, TEST_NOW),
-    loseCommitAnswers: ({ lands }) =>
+    loseCommitAnswers: ({ lands, times }) =>
       loseCommitAnswers(connection, {
         lands,
-        times: Number.MAX_SAFE_INTEGER,
+        times: times ?? Number.MAX_SAFE_INTEGER,
       }),
 
     reset: async () => {
@@ -190,4 +203,5 @@ export async function bootMongoIssuanceHarness(): Promise<IssuanceContractHarnes
       await mongo.stop();
     },
   };
+  return { harness, booted, events };
 }

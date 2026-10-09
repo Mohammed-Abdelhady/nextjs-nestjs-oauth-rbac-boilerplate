@@ -43,9 +43,6 @@ export interface IssuedBrowserSession {
   csrfToken: string;
 }
 
-/** An account id as a caller holds it: the opaque string, or a value that prints as it. */
-export type AccountIdSource = string | { toString(): string };
-
 @Injectable()
 export class SessionIssuanceService {
   constructor(
@@ -57,15 +54,14 @@ export class SessionIssuanceService {
   ) {}
 
   async createBrowserSession(
-    userId: AccountIdSource,
+    userId: string,
     userAgent: string,
     ip: string,
     clientId = WEB_CLIENT_ID,
   ): Promise<IssuedBrowserSession> {
-    const accountId = typeof userId === 'string' ? userId : userId.toString();
     try {
       return await this.unitOfWork.run((unitOfWork) =>
-        this.issue(unitOfWork, accountId, userAgent, ip, clientId),
+        this.issue(unitOfWork, userId, userAgent, ip, clientId),
       );
     } catch (error) {
       asAuthorityUnavailable(error);

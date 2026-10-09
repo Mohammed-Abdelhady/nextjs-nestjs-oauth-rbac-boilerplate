@@ -10,7 +10,7 @@ import { RoleService } from '../../../src/role/role.service';
 import { RoleEditService } from '../../../src/role/services/edit/role-edit.service';
 import { Role, RoleSchema } from '../../../src/role/schemas/role.schema';
 import { User } from '../../../src/user/schemas/user.schema';
-import { SessionService } from '../../../src/auth/services/sessions/session.service';
+import { SessionRevoker } from '../../../src/session/revocation/session-revoker';
 import { SecurityEventService } from '../../../src/session/services/security-event.service';
 import {
   SecurityEvent,
@@ -71,7 +71,7 @@ export async function bootAdminAtomic(
           connection.model(Role.name, RoleSchema),
       },
       { provide: getConnectionToken(), useValue: harness.connection },
-      { provide: SessionService, useValue: harness.sessionService },
+      { provide: SessionRevoker, useValue: harness.app.get(SessionRevoker) },
       {
         provide: SecurityEventService,
         useValue: harness.app.get(SecurityEventService),

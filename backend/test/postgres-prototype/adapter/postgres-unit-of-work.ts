@@ -1,4 +1,4 @@
-import { ControlledTransaction, Kysely, Transaction } from 'kysely';
+import { ControlledTransaction, Kysely, sql, Transaction } from 'kysely';
 import { UnknownTransactionOutcomeError } from '../../../src/common/exceptions/unknown-transaction-outcome.error';
 import { RetryableAbortError } from '../../../src/common/persistence/persistence-errors';
 import {
@@ -25,6 +25,34 @@ export function postgresTransactionOf(
     throw new Error('This unit of work was not opened on PostgreSQL');
   }
   return unitOfWork.transaction;
+}
+
+/** What `pg_xact_status` says of a transaction whose commit was not answered. */
+export const TRANSACTION_STATUS = {
+  COMMITTED: 'committed',
+  ABORTED: 'aborted',
+} as const;
+
+export const LOST_ANSWER = {
+  COMMITTED: 'committed',
+  NOT_COMMITTED: 'not_committed',
+  UNKNOWN: 'unknown',
+} as const;
+
+export type LostAnswerOutcome = (typeof LOST_ANSWER)[keyof typeof LOST_ANSWER];
+
+/**
+ * Only the two final states settle a lost answer. `in progress`, a transaction
+ * too old to be known, or anything else leaves the outcome unknown.
+ */
+export function lostAnswerOutcome(status: unknown): LostAnswerOutcome {
+  if (status === TRANSACTION_STATUS.COMMITTED) {
+    return LOST_ANSWER.COMMITTED;
+  }
+  if (status === TRANSACTION_STATUS.ABORTED) {
+    return LOST_ANSWER.NOT_COMMITTED;
+  }
+  return LOST_ANSWER.UNKNOWN;
 }
 
 /**
@@ -60,7 +88,9 @@ export class PostgresUnitOfWorkRunner extends UnitOfWorkRunner {
   ): Promise<Result> {
     const transaction = await this.begin();
     let result: Result;
+    let transactionId: string;
     try {
+      transactionId = await transactionIdOf(transaction);
       result = await work(new PostgresUnitOfWork(transaction));
     } catch (error) {
       await this.release(transaction);
@@ -70,9 +100,42 @@ export class PostgresUnitOfWorkRunner extends UnitOfWorkRunner {
       await transaction.commit().execute();
     } catch (error) {
       await this.release(transaction);
-      throw commitFailure(error);
+      if (sqlStateOf(error) !== undefined) {
+        throw commitFailure(error);
+      }
+      return this.afterLostAnswer(error, transactionId, result);
     }
     return result;
+  }
+
+  /**
+   * The commit was sent and no answer came. The transaction's id was noted
+   * before the work ran, so the primary is asked what became of it, on another
+   * connection. Committed: the work is stored and its result stands. Aborted:
+   * nothing is stored, and running the work again is safe. Anything else, or no
+   * answer to the question either, is an unknown outcome and is never rerun.
+   */
+  private async afterLostAnswer<Result>(
+    lost: unknown,
+    transactionId: string,
+    result: Result,
+  ): Promise<Result> {
+    let outcome: LostAnswerOutcome;
+    try {
+      const asked = await sql<{ status: string | null }>`
+        SELECT pg_xact_status(${transactionId}::xid8) AS status
+      `.execute(this.database);
+      outcome = lostAnswerOutcome(asked.rows[0]?.status);
+    } catch {
+      outcome = LOST_ANSWER.UNKNOWN;
+    }
+    if (outcome === LOST_ANSWER.COMMITTED) {
+      return result;
+    }
+    if (outcome === LOST_ANSWER.NOT_COMMITTED) {
+      throw new RetryableAbortError(lost);
+    }
+    throw new UnknownTransactionOutcomeError(lost);
   }
 
   private async begin(): Promise<ControlledTransaction<PrototypeDatabase>> {
@@ -103,10 +166,25 @@ export class PostgresUnitOfWorkRunner extends UnitOfWorkRunner {
  * includes a COMMIT answered with ROLLBACK because `work` swallowed a store
  * failure: the connection reads the command tag (`commitCheckedPool`), so a
  * normal return from `run` always means the work was committed. Without a
- * SQLSTATE the answer was lost, and the transaction may or may not be stored.
+ * SQLSTATE the answer was lost, and `afterLostAnswer` asks what happened.
  */
 function commitFailure(error: unknown): unknown {
-  return sqlStateOf(error) === undefined
-    ? new UnknownTransactionOutcomeError(error)
-    : mapPostgresError(error);
+  return mapPostgresError(error);
+}
+
+/**
+ * Gives the transaction its id now, while the connection is known to work. The
+ * id is what `pg_xact_status` is asked about if the commit's answer is lost.
+ */
+async function transactionIdOf(
+  transaction: Transaction<PrototypeDatabase>,
+): Promise<string> {
+  const assigned = await sql<{ id: string }>`
+    SELECT pg_current_xact_id()::text AS id
+  `.execute(transaction);
+  const id = assigned.rows[0]?.id;
+  if (id === undefined) {
+    throw new Error('The transaction was given no id');
+  }
+  return id;
 }

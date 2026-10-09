@@ -94,6 +94,11 @@ export interface SessionsTable {
   ip: string;
   is_valid: Generated<boolean>;
   revoked_at: ColumnType<Date | null, Date | null | undefined, Date | null>;
+  revoked_reason: ColumnType<
+    string | null,
+    string | null | undefined,
+    string | null
+  >;
   client_id: string;
   user_version: number;
   client_version: number;

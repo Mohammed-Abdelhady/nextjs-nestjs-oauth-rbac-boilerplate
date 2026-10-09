@@ -35,6 +35,7 @@ import {
   RoleDocument,
   RoleSchema,
 } from '../../../../src/role/schemas/role.schema';
+import { SessionRevoker } from '../../../../src/session/revocation/session-revoker';
 import { MongoUnitOfWorkRunner } from '../../../../src/session/persistence/mongo/mongo-unit-of-work';
 import {
   SecurityEvent,
@@ -44,7 +45,7 @@ import { SecurityEventService } from '../../../../src/session/services/security-
 import { hashToken } from '../../../../src/session/utils/hashing/token-hash';
 import { MongoAccountPermissionStore } from '../../../../src/user/persistence/mongo/mongo-account-permission.store';
 import { MongoAccountProfileStore } from '../../../../src/user/persistence/mongo/mongo-account-profile.store';
-import { MongoAccountSessions } from '../../../../src/user/persistence/mongo/mongo-account-sessions';
+import { RevokerAccountSessions } from '../../../../src/user/stores/revoker-account-sessions';
 import { FrozenClock, TEST_NOW } from '../../frozen-clock';
 import { MemoryReplSet, startMemoryReplSet } from '../../memory-replset';
 import {
@@ -126,7 +127,7 @@ export async function bootMongoAccountsHarness(): Promise<MongoAccountsHarness> 
       passkeys, // feature:passkeys
     ),
     permissions: new MongoAccountPermissionStore(users),
-    sessions: new MongoAccountSessions(booted.sessionService),
+    sessions: new RevokerAccountSessions(app.get(SessionRevoker)),
     admin: new MongoAdminAccountStore(users, roles),
     activation: new MongoActivationAccounts(users),
     signIn: new SummarySignIn(),

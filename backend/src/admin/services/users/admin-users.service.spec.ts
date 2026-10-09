@@ -23,7 +23,7 @@ import { RoleChangeStore } from '../../../role/stores/role-change.store';
 import { RoleSweepStore } from '../../../role/stores/role-sweep.store';
 import { MongoUnitOfWorkRunner } from '../../../session/persistence/mongo/mongo-unit-of-work';
 import { MONGO_ADMIN_ACCOUNT_STORE } from '../../persistence/mongo/mongo-admin-stores';
-import { MONGO_ACCOUNT_SESSIONS } from '../../../user/persistence/mongo/mongo-account-stores';
+import { recordedAccountSessions } from '../../../../test/utils/user/recorded-account-sessions';
 
 const LEVELS: Record<string, number> = {
   user: 1,
@@ -129,7 +129,7 @@ describe('AdminUsersService', () => {
         { provide: UnitOfWorkRunner, useClass: MongoUnitOfWorkRunner },
         { provide: RoleChangeStore, useClass: MongoRoleChangeStore },
         { provide: RoleSweepStore, useClass: MongoRoleSweepStore },
-        MONGO_ACCOUNT_SESSIONS,
+        recordedAccountSessions(mockSessionService),
         { provide: getModelToken(User.name), useValue: mockUserModel },
         { provide: getModelToken(Role.name), useValue: mockRoleModel },
         { provide: SessionService, useValue: mockSessionService },
