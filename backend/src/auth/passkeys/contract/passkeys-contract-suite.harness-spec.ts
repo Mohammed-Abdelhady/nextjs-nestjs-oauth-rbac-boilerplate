@@ -9,6 +9,7 @@ import { routeIdCases } from './passkeys-contract-route-ids.harness-spec';
 import { seamCases } from './passkeys-contract-seam.harness-spec';
 import { signInRuleCases } from './passkeys-contract-sign-in-rules.harness-spec';
 import { signInCases } from './passkeys-contract-sign-in.harness-spec';
+import { unlinkRaceCases } from './passkeys-contract-unlink-race.harness-spec'; // feature:oauth-core
 import {
   BCRYPT_ROUNDS,
   OTHER_EMAIL,
@@ -81,6 +82,7 @@ export function describePasskeysContract(
     counterCases(current, seeded);
     managementCases(current, seeded);
     removalRaceCases(current);
+    unlinkRaceCases(current); // feature:oauth-core
     seamCases(current, seeded);
     routeIdCases(current, seeded);
   });

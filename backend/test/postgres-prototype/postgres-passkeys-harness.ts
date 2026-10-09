@@ -6,6 +6,8 @@ import {
 import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
 import { PostgresAccountProfileStore } from './adapter/postgres-account-profile.store';
 import { PostgresIdFormat } from './adapter/postgres-id-format';
+import { PostgresLinkedAccountStore } from './adapter/postgres-linked-account.store';
+import { PostgresSignInMethodStore } from './adapter/postgres-sign-in-method.store';
 import { PostgresPasskeyChallengeStore } from './adapter/postgres-passkey-challenge.store';
 import {
   PostgresPasskeyAccounts,
@@ -27,6 +29,8 @@ export async function bootPostgresPasskeysHarness(): Promise<PasskeysContractHar
     passkeys: new PostgresPasskeyStore(database, clock),
     challenges: new PostgresPasskeyChallengeStore(database),
     accounts: new PostgresPasskeyAccounts(database),
+    links: new PostgresLinkedAccountStore(database, clock),
+    signInMethods: new PostgresSignInMethodStore(),
     runner: (pause) => new PostgresUnitOfWorkRunner(database, pause),
 
     profilePasskeyCount: (userId) => profiles.countPasskeys(userId),
@@ -64,6 +68,15 @@ export async function bootPostgresPasskeysHarness(): Promise<PasskeysContractHar
     },
     removeAccount: async (userId) => {
       await database.deleteFrom('users').where('id', '=', userId).execute();
+    },
+    storedProviders: async (userId) => {
+      const rows = await database
+        .selectFrom('user_linked_accounts')
+        .select('provider')
+        .where('user_id', '=', userId)
+        .orderBy('id')
+        .execute();
+      return rows.map((row) => row.provider);
     },
 
     seedPasskey: async (passkey) => {

@@ -8,6 +8,7 @@ import {
   createRequestMock,
   createResponseMock,
 } from '../../../common/testing/test-doubles.harness-spec';
+import { SignInMethodRule } from '../../../user/services/sign-in-method.rule';
 import { AuthFeaturesService } from '../../services/features/auth-features.service';
 import { PasskeyCredentialDto } from '../dto/passkey-credential.dto';
 import { PasskeyAssertionService } from '../services/passkey-assertion.service';
@@ -69,6 +70,8 @@ export interface PasskeyServices {
   challenge: PasskeyChallengeService;
   authenticator: ScriptedAuthenticator;
   signIn: RecordingSignIn;
+  /** The rule every removal of a way in asks, on the same feature switches. */
+  signInRule: SignInMethodRule;
   /** Every store call the services made, in order. */
   storeCalls: string[];
 }
@@ -131,6 +134,10 @@ export function passkeyServices(
     challenge,
   );
   const signIn = new RecordingSignIn();
+  const signInRule = new SignInMethodRule(
+    harness.signInMethods,
+    featureSwitches,
+  );
 
   return {
     registration: new PasskeyRegistrationService(
@@ -144,14 +151,14 @@ export function passkeyServices(
     login: new PasskeyLoginService(accounts, assertion, signIn),
     management: new PasskeyManagementService(
       passkeys,
-      accounts,
-      featureSwitches,
+      signInRule,
       harness.runner(pause),
     ),
     verifier: new PasskeySecondFactorVerifier(featureSwitches, assertion),
     challenge,
     authenticator,
     signIn,
+    signInRule,
     storeCalls,
   };
 }

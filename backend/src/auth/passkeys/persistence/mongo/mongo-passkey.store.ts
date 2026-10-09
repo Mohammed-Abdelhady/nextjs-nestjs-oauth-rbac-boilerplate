@@ -183,20 +183,6 @@ export class MongoPasskeyStore extends PasskeyStore {
     return toStoredPasskey(document);
   }
 
-  async holdForAccount(
-    unitOfWork: UnitOfWork,
-    userId: string,
-  ): Promise<number> {
-    // A write to each passkey conflicts with any other open transaction that
-    // wrote one, which is what refuses a second removal until this one ends.
-    const held = await this.passkeyModel.updateMany(
-      { user: toObjectId(userId) },
-      { $inc: { __v: 1 } },
-      { session: mongoSessionOf(unitOfWork), timestamps: false },
-    );
-    return held.matchedCount;
-  }
-
   async remove(unitOfWork: UnitOfWork, passkey: StoredPasskey): Promise<void> {
     const document = documentOf(passkey);
     await this.passkeyModel

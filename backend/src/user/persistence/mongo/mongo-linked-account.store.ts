@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { UnitOfWork } from '../../../common/persistence/unit-of-work';
+import { mongoSessionOf } from '../../../session/persistence/mongo/mongo-unit-of-work';
 import { User, UserDocument } from '../../schemas/user.schema';
 import {
   LinkedAccountStore,
@@ -97,7 +99,19 @@ export class MongoLinkedAccountStore extends LinkedAccountStore {
     return this.read.remember(user, account.id);
   }
 
+  async readAccount(
+    unitOfWork: UnitOfWork,
+    userId: string,
+  ): Promise<StoredAccount | null> {
+    const user = await this.userModel
+      .findById(userId)
+      .session(mongoSessionOf(unitOfWork))
+      .exec();
+    return this.read.remember(user, userId);
+  }
+
   async removeLink(
+    unitOfWork: UnitOfWork,
     account: StoredAccount,
     unlink: { provider: string; primaryProvider: string | undefined },
   ): Promise<StoredAccount> {
@@ -108,7 +122,7 @@ export class MongoLinkedAccountStore extends LinkedAccountStore {
     if (user.primaryProvider !== unlink.primaryProvider) {
       user.primaryProvider = unlink.primaryProvider;
     }
-    await user.save();
+    await user.save({ session: mongoSessionOf(unitOfWork) });
     return this.read.remember(user, account.id);
   }
 

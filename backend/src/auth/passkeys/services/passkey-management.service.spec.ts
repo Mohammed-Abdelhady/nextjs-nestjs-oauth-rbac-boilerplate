@@ -2,9 +2,10 @@ import { ConfigService } from '@nestjs/config';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { AuthFeaturesService } from '../../services/features/auth-features.service';
 import { PasskeyManagementService } from './passkey-management.service';
-import { MongoPasskeyAccounts } from '../persistence/mongo/mongo-passkey-accounts';
 import { MongoPasskeyStore } from '../persistence/mongo/mongo-passkey.store';
 import { MongoUnitOfWorkRunner } from '../../../session/persistence/mongo/mongo-unit-of-work';
+import { MongoSignInMethodStore } from '../../../user/persistence/mongo/mongo-sign-in-method.store';
+import { SignInMethodRule } from '../../../user/services/sign-in-method.rule';
 import { createModelMock } from '../../../common/testing/test-doubles.harness-spec';
 import {
   createMockPasskey,
@@ -55,7 +56,10 @@ function createHarness(state: AccountState = {}): Harness {
       sort: jest.fn().mockResolvedValue([createMockPasskey()]),
     }),
     findOne: jest.fn().mockResolvedValue(passkey),
-    countDocuments: jest.fn().mockResolvedValue(state.passkeyCount ?? 1),
+    countDocuments: jest.fn().mockReturnValue({
+      session: jest.fn().mockReturnThis(),
+      exec: jest.fn().mockResolvedValue(state.passkeyCount ?? 1),
+    }),
     updateMany: jest
       .fn()
       .mockResolvedValue({ matchedCount: state.passkeyCount ?? 1 }),
@@ -65,8 +69,13 @@ function createHarness(state: AccountState = {}): Harness {
   };
 
   const userModel = {
+    updateOne: jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue({ matchedCount: 1 }),
+    }),
     findById: jest.fn().mockReturnValue({
-      select: jest.fn().mockResolvedValue({
+      select: jest.fn().mockReturnThis(),
+      session: jest.fn().mockReturnThis(),
+      exec: jest.fn().mockResolvedValue({
         _id: USER_ID,
         password: state.password,
         linkedAccounts: state.linkedAccounts ?? [],
@@ -94,12 +103,17 @@ function createHarness(state: AccountState = {}): Harness {
           passkeyModel,
         ),
       ),
-      new MongoPasskeyAccounts(
-        createModelMock<ConstructorParameters<typeof MongoPasskeyAccounts>[0]>(
-          userModel,
+      new SignInMethodRule(
+        new MongoSignInMethodStore(
+          createModelMock<
+            ConstructorParameters<typeof MongoSignInMethodStore>[0]
+          >(userModel),
+          createModelMock<
+            ConstructorParameters<typeof MongoSignInMethodStore>[1]
+          >(passkeyModel),
         ),
+        authFeaturesService,
       ),
-      authFeaturesService,
       new MongoUnitOfWorkRunner(
         createModelMock<ConstructorParameters<typeof MongoUnitOfWorkRunner>[0]>(
           { startSession: jest.fn().mockResolvedValue(transactionSession()) },

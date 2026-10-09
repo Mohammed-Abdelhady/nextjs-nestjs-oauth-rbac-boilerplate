@@ -20,6 +20,7 @@ import {
   PasskeyChallengeSchema,
 } from './schemas/passkey-challenge.schema';
 import { User, UserSchema } from '../../user/schemas/user.schema';
+import { UserModule } from '../../user/user.module';
 
 /**
  * WebAuthn sign-in and passkey management. Sessions and the feature switch
@@ -41,6 +42,8 @@ import { User, UserSchema } from '../../user/schemas/user.schema';
     AuthModule,
     // The unit of work a passkey removal runs in.
     SessionModule,
+    // The rule that keeps a way to sign in on the account.
+    UserModule,
   ],
   controllers: [PasskeysController, PasskeyLoginController],
   providers: [

@@ -7,6 +7,7 @@ import { UserProvidersController } from './user-providers.controller'; // featur
 import { UserProfileService } from './services/user-profile.service';
 import { UserSessionsService } from './services/user-sessions.service';
 import { UserPermissionsService } from './services/user-permissions.service';
+import { SignInMethodRule } from './services/sign-in-method.rule';
 import { User, UserSchema } from './schemas/user.schema';
 import { Session, SessionSchema } from '../session/schemas/session.schema';
 import { Role, RoleSchema } from '../role/schemas/role.schema';
@@ -48,6 +49,7 @@ import { AccountSessions } from './stores/account-sessions';
     UserProfileService,
     UserSessionsService,
     UserPermissionsService,
+    SignInMethodRule,
     AccountLinkingService, // feature:oauth-core
     ProfileSyncService, // feature:oauth-core
     ...MONGO_ACCOUNT_STORES,
@@ -59,6 +61,7 @@ import { AccountSessions } from './stores/account-sessions';
     UserProfileService,
     UserSessionsService,
     UserPermissionsService,
+    SignInMethodRule,
     AccountLinkingService, // feature:oauth-core
     ProfileSyncService, // feature:oauth-core
   ],

@@ -26,6 +26,8 @@ import { MongoPasskeyAccounts } from './persistence/mongo/mongo-passkey-accounts
 import { MongoPasskeyChallengeStore } from './persistence/mongo/mongo-passkey-challenge.store';
 import { MongoPasskeyStore } from './persistence/mongo/mongo-passkey.store';
 import { MongoUnitOfWorkRunner } from '../../session/persistence/mongo/mongo-unit-of-work';
+import { MongoSignInMethodStore } from '../../user/persistence/mongo/mongo-sign-in-method.store';
+import { SignInMethodRule } from '../../user/services/sign-in-method.rule';
 import { PasskeyConfigService } from './services/passkey-config.service';
 import { PasskeyManagementService } from './services/passkey-management.service';
 import { PasskeyRegistrationService } from './services/passkey-registration.service';
@@ -133,8 +135,10 @@ describe('passkey ObjectId round trip', () => {
         );
         const management = new PasskeyManagementService(
           new MongoPasskeyStore(passkeys),
-          new MongoPasskeyAccounts(users),
-          new AuthFeaturesService(config),
+          new SignInMethodRule(
+            new MongoSignInMethodStore(users, passkeys),
+            new AuthFeaturesService(config),
+          ),
           new MongoUnitOfWorkRunner(connection),
         );
 

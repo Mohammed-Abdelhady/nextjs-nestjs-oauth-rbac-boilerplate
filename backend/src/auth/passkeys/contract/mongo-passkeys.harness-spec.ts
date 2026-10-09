@@ -7,7 +7,11 @@ import { MongoIdFormat } from '../../../common/persistence/mongo/mongo-id-format
 import { Role, RoleSchema } from '../../../role/schemas/role.schema';
 import { MongoUnitOfWorkRunner } from '../../../session/persistence/mongo/mongo-unit-of-work';
 import { MongoAccountProfileStore } from '../../../user/persistence/mongo/mongo-account-profile.store';
+import { MongoLinkedAccountStore } from '../../../user/persistence/mongo/mongo-linked-account.store'; // feature:oauth-core
+import { MongoSignInMethodStore } from '../../../user/persistence/mongo/mongo-sign-in-method.store';
 import { User, UserSchema } from '../../../user/schemas/user.schema';
+import { LinkedAccountStore } from '../../../user/stores/linked-account.store'; // feature:oauth-core
+import { SignInMethodStore } from '../../../user/stores/sign-in-method.store';
 import { MongoPasskeyAccounts } from '../persistence/mongo/mongo-passkey-accounts';
 import { MongoPasskeyChallengeStore } from '../persistence/mongo/mongo-passkey-challenge.store';
 import { MongoPasskeyStore } from '../persistence/mongo/mongo-passkey.store';
@@ -46,6 +50,8 @@ export async function bootMongoPasskeysHarness(): Promise<PasskeysContractHarnes
       { provide: PasskeyChallengeStore, useClass: MongoPasskeyChallengeStore },
       { provide: PasskeyAccounts, useClass: MongoPasskeyAccounts },
       MongoAccountProfileStore,
+      { provide: LinkedAccountStore, useClass: MongoLinkedAccountStore }, // feature:oauth-core
+      { provide: SignInMethodStore, useClass: MongoSignInMethodStore },
       { provide: getModelToken(User.name), useValue: users },
       { provide: getModelToken(Role.name), useValue: roles },
       { provide: getModelToken(Passkey.name), useValue: passkeys },
@@ -59,6 +65,8 @@ export async function bootMongoPasskeysHarness(): Promise<PasskeysContractHarnes
     passkeys: module.get(PasskeyStore),
     challenges: module.get(PasskeyChallengeStore),
     accounts: module.get(PasskeyAccounts),
+    links: module.get(LinkedAccountStore), // feature:oauth-core
+    signInMethods: module.get(SignInMethodStore),
     runner: (pause) => new MongoUnitOfWorkRunner(connection, pause),
 
     profilePasskeyCount: (userId) => profiles.countPasskeys(userId),
@@ -89,6 +97,10 @@ export async function bootMongoPasskeysHarness(): Promise<PasskeysContractHarnes
     },
     removeAccount: async (userId) => {
       await users.deleteOne({ _id: new Types.ObjectId(userId) });
+    },
+    storedProviders: async (userId) => {
+      const user = await users.findById(userId).lean().exec();
+      return (user?.linkedAccounts ?? []).map((linked) => linked.provider);
     },
 
     seedPasskey: async (passkey) => {

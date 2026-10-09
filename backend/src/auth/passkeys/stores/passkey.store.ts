@@ -89,17 +89,7 @@ export abstract class PasskeyStore {
     passkeyId: string,
   ): Promise<StoredPasskey | null>;
   abstract rename(passkey: StoredPasskey, name: string): Promise<StoredPasskey>;
-  /**
-   * Counts the account's passkeys and holds them until the unit of work ends.
-   * No other unit of work can hold or remove one of them meanwhile: a second
-   * one that tries is refused at once with a retryable abort, runs again, and
-   * counts what is left then.
-   */
-  abstract holdForAccount(
-    unitOfWork: UnitOfWork,
-    userId: string,
-  ): Promise<number>;
-  /** Removes a passkey of an account whose passkeys the unit of work holds. */
+  /** Removes a passkey of an account whose ways in the unit of work holds. */
   abstract remove(
     unitOfWork: UnitOfWork,
     passkey: StoredPasskey,

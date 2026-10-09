@@ -6,6 +6,14 @@ import { User } from '../schemas/user.schema';
 import { EMAIL_PROVIDER } from '../../common/constants/oauth-providers';
 import { OAuthProfile } from '../../auth/oauth/oauth-provider.interface';
 import { MONGO_LINKED_ACCOUNT_STORE } from '../persistence/mongo/mongo-linked-account-stores';
+import { MONGO_SIGN_IN_METHOD_STORE } from '../persistence/mongo/mongo-account-stores';
+import { Passkey } from '../../auth/passkeys/schemas/passkey.schema'; // feature:passkeys
+import { UnitOfWorkRunner } from '../../common/persistence/unit-of-work';
+import { MongoUnitOfWorkRunner } from '../../session/persistence/mongo/mongo-unit-of-work';
+import { createModelMock } from '../../common/testing/test-doubles.harness-spec';
+import { SignInMethodRule } from './sign-in-method.rule';
+import { ConfigService } from '@nestjs/config';
+import { AuthFeaturesService } from '../../auth/services/features/auth-features.service';
 
 /**
  * Shared setup for the AccountLinkingService specs.
@@ -73,13 +81,51 @@ export function linkedAccount(provider: string): LinkedAccount {
 }
 
 export async function createHarness(): Promise<AccountLinkingHarness> {
-  const userModel = { findById: jest.fn() };
+  const userModel = {
+    findById: jest.fn(),
+    // The fence every unlink passes.
+    updateOne: jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue({ matchedCount: 1 }),
+    }),
+  };
+  // feature:passkeys:start
+  const passkeyModel = {
+    countDocuments: jest.fn().mockReturnValue({
+      session: jest.fn().mockReturnThis(),
+      exec: jest.fn().mockResolvedValue(0),
+    }),
+  };
+  // feature:passkeys:end
+  // A driver session whose transaction commits.
+  const session = {
+    startTransaction: jest.fn(),
+    commitTransaction: jest.fn().mockResolvedValue(undefined),
+    abortTransaction: jest.fn().mockResolvedValue(undefined),
+    endSession: jest.fn().mockResolvedValue(undefined),
+    inTransaction: jest.fn().mockReturnValue(true),
+  };
 
   const module: TestingModule = await Test.createTestingModule({
     providers: [
       AccountLinkingService,
       MONGO_LINKED_ACCOUNT_STORE,
+      SignInMethodRule,
+      MONGO_SIGN_IN_METHOD_STORE,
+      // The switches at their defaults: password sign-in on, magic links off.
+      {
+        provide: AuthFeaturesService,
+        useValue: new AuthFeaturesService(new ConfigService()),
+      },
+      {
+        provide: UnitOfWorkRunner,
+        useValue: new MongoUnitOfWorkRunner(
+          createModelMock<
+            ConstructorParameters<typeof MongoUnitOfWorkRunner>[0]
+          >({ startSession: jest.fn().mockResolvedValue(session) }),
+        ),
+      },
       { provide: getModelToken(User.name), useValue: userModel },
+      { provide: getModelToken(Passkey.name), useValue: passkeyModel }, // feature:passkeys
     ],
   }).compile();
 
@@ -88,6 +134,7 @@ export async function createHarness(): Promise<AccountLinkingHarness> {
     resolveUser: (user: MockUser | null) => {
       userModel.findById.mockReturnValue({
         select: jest.fn().mockReturnThis(),
+        session: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(user),
       });
     },

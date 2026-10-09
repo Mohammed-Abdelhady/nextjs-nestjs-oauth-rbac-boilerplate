@@ -6,16 +6,29 @@ import {
   UnitOfWork,
   UnitOfWorkRunner,
 } from '../../../common/persistence/unit-of-work';
-import { AuthFeature } from '../../enums/auth-feature.enum';
-import { AuthFeaturesService } from '../../services/features/auth-features.service';
+import {
+  SignInMethodRule,
+  WAY_IN_OUTCOME,
+  WaysLeft,
+} from '../../../user/services/sign-in-method.rule';
 import {
   PasskeyListResponseDto,
   PasskeySummaryDto,
 } from '../dto/passkey-summary.dto';
 import { RenamePasskeyDto } from '../dto/rename-passkey.dto';
 import { toPasskeySummary } from '../utils/passkey-summary.util';
-import { PasskeyAccounts } from '../stores/passkey-accounts';
 import { PasskeyStore, StoredPasskey } from '../stores/passkey.store';
+
+/**
+ * What a passkey removal accepts as left: another passkey, a stored password
+ * while password sign-in is on, a linked provider, and magic links.
+ */
+const waysLeftWithoutOnePasskey: WaysLeft = (held, switches) =>
+  held.passkeys -
+  1 +
+  (switches.password && held.hasPassword ? 1 : 0) +
+  held.linkedProviders.length +
+  (switches.magicLink ? 1 : 0);
 
 /**
  * The passkeys on an account, from the account settings. Every lookup is
@@ -28,8 +41,7 @@ export class PasskeyManagementService {
 
   constructor(
     private readonly passkeys: PasskeyStore,
-    private readonly accounts: PasskeyAccounts,
-    private readonly authFeaturesService: AuthFeaturesService,
+    private readonly signInMethods: SignInMethodRule,
     private readonly runner: UnitOfWorkRunner,
   ) {}
 
@@ -92,33 +104,20 @@ export class PasskeyManagementService {
   /**
    * The last passkey stays when it is the only way into the account: no second
    * passkey, no password to sign in with, no linked OAuth account, and no
-   * magic link. Any one of those, and the passkey goes.
+   * magic link. Any one of those, and the passkey goes. So does the passkey
+   * of an account that is gone: nobody can be locked out of it.
    */
   private async assertNotTheLastWayIn(
     unitOfWork: UnitOfWork,
     userId: string,
   ): Promise<void> {
-    const remaining = await this.passkeys.holdForAccount(unitOfWork, userId);
-
-    if (remaining > 1) {
-      return;
-    }
-
-    const stored = await this.accounts.findSignInMethods(userId);
-
-    if (!stored) {
-      return;
-    }
-
-    const hasPassword =
-      this.authFeaturesService.isEnabled(AuthFeature.PASSWORD) &&
-      stored.hasPassword;
-    const hasOAuth = stored.hasLinkedAccount;
-    const hasMagicLink = this.authFeaturesService.isEnabled(
-      AuthFeature.MAGIC_LINK,
+    const wayIn = await this.signInMethods.holdForRemoval(
+      unitOfWork,
+      userId,
+      waysLeftWithoutOnePasskey,
     );
 
-    if (hasPassword || hasOAuth || hasMagicLink) {
+    if (wayIn !== WAY_IN_OUTCOME.LAST) {
       return;
     }
 

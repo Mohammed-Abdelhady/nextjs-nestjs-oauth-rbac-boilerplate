@@ -11,6 +11,7 @@ import {
   StoredAccount,
 } from '../../../src/user/stores/stored-account';
 import { EMAIL_PROVIDER } from '../../../src/common/constants/oauth-providers';
+import { UnitOfWork } from '../../../src/common/persistence/unit-of-work';
 import {
   accountStatement,
   linkedAccountsOf,
@@ -19,6 +20,7 @@ import {
 } from './postgres-account-rows';
 import { PrototypeDatabase } from './postgres-database';
 import { toUuid } from './postgres-issuance-mappers';
+import { postgresTransactionOf } from './postgres-unit-of-work';
 
 /**
  * Links are rows of their own, under one unique rule over provider and
@@ -99,21 +101,33 @@ export class PostgresLinkedAccountStore extends LinkedAccountStore {
     });
   }
 
-  removeLink(
+  readAccount(
+    unitOfWork: UnitOfWork,
+    userId: string,
+  ): Promise<StoredAccount | null> {
+    return readAccount(postgresTransactionOf(unitOfWork), userId);
+  }
+
+  async removeLink(
+    unitOfWork: UnitOfWork,
     account: StoredAccount,
     unlink: { provider: string; primaryProvider: string | undefined },
   ): Promise<StoredAccount> {
     const id = storedId(account);
-    return this.change(id, async (work) => {
-      await work
-        .deleteFrom('user_linked_accounts')
-        .where('user_id', '=', id)
-        .where('provider', '=', unlink.provider)
-        .execute();
-      await this.touch(work, id, {
-        primary_provider: unlink.primaryProvider ?? null,
-      });
+    const work = postgresTransactionOf(unitOfWork);
+    await work
+      .deleteFrom('user_linked_accounts')
+      .where('user_id', '=', id)
+      .where('provider', '=', unlink.provider)
+      .execute();
+    await this.touch(work, id, {
+      primary_provider: unlink.primaryProvider ?? null,
     });
+    const saved = await readAccount(work, id);
+    if (!saved) {
+      throw new Error('the account vanished while it was saved');
+    }
+    return saved;
   }
 
   savePrimaryProvider(

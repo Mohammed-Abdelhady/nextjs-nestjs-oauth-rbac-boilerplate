@@ -1,5 +1,6 @@
 import { LinkedAccountsContractHarness } from '../../src/user/linked-accounts-contract/linked-accounts-contract.harness-spec';
 import { PostgresLinkedAccountStore } from './adapter/postgres-linked-account.store';
+import { PostgresSignInMethodStore } from './adapter/postgres-sign-in-method.store';
 import { bootPostgresAccountsHarness } from './postgres-accounts-harness';
 
 export async function bootPostgresLinkedAccountsHarness(): Promise<LinkedAccountsContractHarness> {
@@ -8,6 +9,7 @@ export async function bootPostgresLinkedAccountsHarness(): Promise<LinkedAccount
 
   return Object.assign(accounts, {
     links: new PostgresLinkedAccountStore(database, clock),
+    signInMethods: new PostgresSignInMethodStore(),
     storedLinks: async (userId: string) => {
       const rows = await database
         .selectFrom('user_linked_accounts')
@@ -45,6 +47,13 @@ export async function bootPostgresLinkedAccountsHarness(): Promise<LinkedAccount
       await database
         .updateTable('users')
         .set({ profile_synced_at: at })
+        .where('id', '=', userId)
+        .execute();
+    },
+    setAuthProvider: async (userId: string, provider: string) => {
+      await database
+        .updateTable('users')
+        .set({ auth_provider: provider })
         .where('id', '=', userId)
         .execute();
     },
