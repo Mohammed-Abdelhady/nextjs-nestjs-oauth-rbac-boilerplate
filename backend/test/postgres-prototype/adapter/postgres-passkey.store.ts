@@ -212,22 +212,6 @@ export class PostgresPasskeyStore extends PasskeyStore {
     });
   }
 
-  async holdForAccount(
-    unitOfWork: UnitOfWork,
-    userId: string,
-  ): Promise<number> {
-    // Row locks on the passkeys counted, refused at once when another unit of
-    // work holds one, so the count stays true until this one ends.
-    const held = await postgresTransactionOf(unitOfWork)
-      .selectFrom('passkeys')
-      .select('id')
-      .where('user_id', '=', toUuid(userId))
-      .forUpdate()
-      .noWait()
-      .execute();
-    return held.length;
-  }
-
   async remove(unitOfWork: UnitOfWork, passkey: StoredPasskey): Promise<void> {
     await postgresTransactionOf(unitOfWork)
       .deleteFrom('passkeys')
