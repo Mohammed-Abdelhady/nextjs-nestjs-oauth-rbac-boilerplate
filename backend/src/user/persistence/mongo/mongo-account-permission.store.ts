@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { castingId } from '../../../session/persistence/mongo/mongo-session-records';
 import { User, UserDocument } from '../../schemas/user.schema';
 import {
   AccountGrants,
@@ -24,10 +25,9 @@ export class MongoAccountPermissionStore extends AccountPermissionStore {
   }
 
   async findGrants(userId: string): Promise<AccountGrants | null> {
-    const user = await this.userModel
-      .findById(userId)
-      .select('permissions role')
-      .exec();
+    const user = await castingId(() =>
+      this.userModel.findById(userId).select('permissions role').exec(),
+    );
     if (!user) return null;
     return {
       id: user._id.toString(),
@@ -38,7 +38,7 @@ export class MongoAccountPermissionStore extends AccountPermissionStore {
   }
 
   async findAccount(userId: string): Promise<StoredAccount | null> {
-    const user = await this.userModel.findById(userId).exec();
+    const user = await castingId(() => this.userModel.findById(userId).exec());
     return this.read.remember(user, userId);
   }
 

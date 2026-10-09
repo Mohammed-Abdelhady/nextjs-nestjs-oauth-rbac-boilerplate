@@ -34,7 +34,7 @@ import { ApiResponse } from '../common/dto/api-response.dto';
 import { AdminUserDto, UserListData } from './dto/admin-user-response.dto';
 import { USER_PERMISSIONS } from '../common/constants/permissions';
 import { SESSION_SWAGGER_AUTH_NAME } from '../common/constants/session';
-import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
+import { RouteIdPipe } from '../common/pipes/route-id.pipe';
 
 /**
  * Admin endpoints for user records.
@@ -151,7 +151,7 @@ export class AdminUsersController {
     example: '507f1f77bcf86cd799439011',
   })
   async getUserById(
-    @Param('id', ParseObjectIdPipe) id: string,
+    @Param('id', RouteIdPipe) id: string,
     @CurrentUser('role') actorRole: string,
   ): Promise<ApiResponse<AdminUserDto>> {
     return this.adminUserQueriesService.getUserById(id, actorRole);
@@ -179,7 +179,7 @@ export class AdminUsersController {
   })
   @ApiBody({ type: UpdateUserDto })
   async updateUser(
-    @Param('id', ParseObjectIdPipe) id: string,
+    @Param('id', RouteIdPipe) id: string,
     @Body() dto: UpdateUserDto,
     @CurrentUser('id') actorId: string,
     @CurrentUser('role') actorRole: string,
@@ -208,7 +208,7 @@ export class AdminUsersController {
     example: '507f1f77bcf86cd799439011',
   })
   async resendEmailChange(
-    @Param('id', ParseObjectIdPipe) id: string,
+    @Param('id', RouteIdPipe) id: string,
     @CurrentUser('id') actorId: string,
     @CurrentUser('role') actorRole: string,
   ): Promise<ApiResponse<{ message: string }>> {
@@ -235,7 +235,7 @@ export class AdminUsersController {
   })
   @ApiBody({ type: UpdateUserStatusDto })
   async updateUserStatus(
-    @Param('id', ParseObjectIdPipe) id: string,
+    @Param('id', RouteIdPipe) id: string,
     @Body() dto: UpdateUserStatusDto,
     @CurrentUser('id') actorId: string,
   ): Promise<
@@ -264,7 +264,7 @@ export class AdminUsersController {
   })
   @ApiBody({ type: UpdateUserRoleDto })
   async updateUserRole(
-    @Param('id', ParseObjectIdPipe) id: string,
+    @Param('id', RouteIdPipe) id: string,
     @Body() dto: UpdateUserRoleDto,
     @CurrentUser('id') actorId: string,
     @CurrentUser('role') actorRole: string,
@@ -292,7 +292,7 @@ export class AdminUsersController {
     example: '507f1f77bcf86cd799439011',
   })
   async deleteUser(
-    @Param('id', ParseObjectIdPipe) id: string,
+    @Param('id', RouteIdPipe) id: string,
     @CurrentUser('id') actorId: string,
   ): Promise<void> {
     return this.adminUsersService.deleteUser(id, actorId);

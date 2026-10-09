@@ -1,4 +1,5 @@
 import { FrozenClock } from '../../../../test/utils/frozen-clock';
+import { IdFormat } from '../../../common/persistence/id-format';
 import {
   RerunPause,
   UnitOfWorkRunner,
@@ -76,6 +77,8 @@ export interface PasskeysContractHarness {
   /** Every stored challenge, by hash. */
   storedChallenges(): Promise<StoredPasskeyChallengeFacts[]>;
 
+  /** What this database takes as an id, as a route asks it. */
+  readonly ids: IdFormat;
   /** A well-formed id that names nothing. */
   absentId(): string;
   /** Well-formed for another database and malformed for this one. */

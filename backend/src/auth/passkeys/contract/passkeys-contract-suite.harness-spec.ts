@@ -5,6 +5,7 @@ import { managementCases } from './passkeys-contract-management.harness-spec';
 import { removalRaceCases } from './passkeys-contract-removal-race.harness-spec';
 import { registrationRuleCases } from './passkeys-contract-registration-rules.harness-spec';
 import { registrationCases } from './passkeys-contract-registration.harness-spec';
+import { routeIdCases } from './passkeys-contract-route-ids.harness-spec';
 import { seamCases } from './passkeys-contract-seam.harness-spec';
 import { signInRuleCases } from './passkeys-contract-sign-in-rules.harness-spec';
 import { signInCases } from './passkeys-contract-sign-in.harness-spec';
@@ -81,5 +82,6 @@ export function describePasskeysContract(
     managementCases(current, seeded);
     removalRaceCases(current);
     seamCases(current, seeded);
+    routeIdCases(current, seeded);
   });
 }
