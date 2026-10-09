@@ -28,6 +28,8 @@ export interface ShellSettings {
 export interface ShellAuth {
   engine: AuthEngine;
   client: ApiClient<AbortSignalPort>;
+  /** Wall time from the same clock the engine reads. */
+  now(): number;
 }
 
 /** Builds one engine over the native module APIs owned by this shell. */
@@ -45,5 +47,9 @@ export function createShellAuth<TAlgorithm, TSignal, THandle>(
     makeTransport: (baseAddress) =>
       createFetchTransport(modules.http, ports.timer, baseAddress, REQUEST_DEADLINE_MS),
   });
-  return { engine, client: createApiClient(engine.transport) };
+  return {
+    engine,
+    client: createApiClient(engine.transport),
+    now: () => ports.clock.wallTime(),
+  };
 }

@@ -3,8 +3,8 @@ import { EN, type MessageKey } from './en';
 
 export type { MessageKey } from './en';
 
-export const LOCALE = { EN: 'en', AR: 'ar' } as const;
-export type Locale = (typeof LOCALE)[keyof typeof LOCALE];
+/** The screens package decides the locale. This catalogue only has to cover the same two. */
+export type Locale = 'en' | 'ar';
 export type Direction = 'ltr' | 'rtl';
 
 export const DIRECTION: Record<Locale, Direction> = { en: 'ltr', ar: 'rtl' };
@@ -13,11 +13,6 @@ export const MESSAGES: Record<Locale, Record<MessageKey, string>> = { en: EN, ar
 
 export const VALUE_PLACEHOLDER = '{value}';
 export const DETAIL_PLACEHOLDER = '{detail}';
-
-/** Any Arabic locale tag, such as `ar-SA` or `ar_EG`, reads Arabic. Others read English. */
-export function resolveLocale(tag: string | undefined): Locale {
-  return /^ar(?:[-_]|$)/i.test(tag ?? '') ? LOCALE.AR : LOCALE.EN;
-}
 
 export function translate(
   locale: Locale,

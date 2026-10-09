@@ -2,13 +2,7 @@ import { AuthPortError, CredentialStoreError } from '@app/native-auth';
 import { ApiError, OAuthError, TransportError } from '@app/sdk';
 import { SERVER_USER } from '@app/native-adapters/testing';
 import { describe, expect, it } from 'vitest';
-import {
-  DIRECTION,
-  MESSAGES,
-  resolveLocale,
-  translate,
-  type MessageKey,
-} from '../src/i18n/messages';
+import { DIRECTION, MESSAGES, translate, type MessageKey } from '../src/i18n/messages';
 import {
   describeError,
   describeRestore,
@@ -91,20 +85,6 @@ describe('messages', () => {
         expect(MESSAGES[locale][key].trim(), key).not.toBe('');
       }
     }
-  });
-
-  it.each([
-    ['ar', 'ar'],
-    ['ar-SA', 'ar'],
-    ['ar_EG', 'ar'],
-    ['AR-eg', 'ar'],
-    ['en-US', 'en'],
-    ['arn-CL', 'en'],
-    ['fr', 'en'],
-    ['', 'en'],
-    [undefined, 'en'],
-  ])('reads the locale tag %j as %s', (tag, expected) => {
-    expect(resolveLocale(tag)).toBe(expected);
   });
 
   it('lays Arabic out right to left and English left to right', () => {
