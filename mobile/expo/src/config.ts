@@ -1,4 +1,4 @@
-import { resolveConfig } from './logic/resolve-config';
+import { resolveConfig, resolveKeyProtection } from './logic/resolve-config';
 
 /** Expo replaces the variable at bundle time, so it has to be read by its full name. */
 export const AUTH_CONFIGURATION = resolveConfig({
@@ -11,3 +11,6 @@ export const AUTH_CONFIGURATION = resolveConfig({
  * case, and iOS does not ask for permission to share one.
  */
 export const EPHEMERAL_BROWSER_SESSION = true;
+
+/** The one place that decides whether this build may sign with a software key. */
+export const DEVICE_KEY_PROTECTION = resolveKeyProtection(__DEV__);

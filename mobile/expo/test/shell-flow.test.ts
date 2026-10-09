@@ -107,7 +107,7 @@ describe('the shell from sign-in to sign-out, over fakes of the native modules',
 
     expect(profile).toEqual(SERVER_USER);
     expect(server.refreshes).toBe(1);
-    expect(relaunched.debug.refreshRequests()).toBe(1);
+    expect(relaunched.debug.refreshTokenRequests()).toBe(1);
   });
 
   it('refreshes once when the app asks, and the profile loads on the new token', async () => {
@@ -121,7 +121,7 @@ describe('the shell from sign-in to sign-out, over fakes of the native modules',
     expect(outcome).toEqual({ kind: 'refreshed' });
     expect(profile.email).toBe('person@example.test');
     expect(server.refreshes).toBe(1);
-    expect(app.debug.refreshRequests()).toBe(1);
+    expect(app.debug.refreshTokenRequests()).toBe(1);
   });
 
   it('keeps the rotated token, so a second cold start can still refresh', async () => {

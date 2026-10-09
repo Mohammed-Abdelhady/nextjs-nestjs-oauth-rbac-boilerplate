@@ -1,19 +1,23 @@
+import { NATIVE_MODULE_NAME, type DeviceKeyNativeApi, type KeyProtection } from '@app/device-key';
 import { INSTALL_MARKER_FILE, recordMarkerFile } from '@app/native-adapters';
 import type { AuthConfiguration } from '@app/native-auth';
+import { requireNativeModule } from 'expo';
 import * as Crypto from 'expo-crypto';
 import { File, Paths } from 'expo-file-system';
 import * as Linking from 'expo-linking';
 import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
-import { createShellAuth, type ShellAuth } from './shell';
+import { startShellAuth, type StartedShellAuth } from './shell';
 
 /** The only file that imports the native modules. The shared adapters receive them from here. */
 export function createNativeShellAuth(
   configuration: AuthConfiguration,
   ephemeralBrowserSession: boolean,
-): ShellAuth {
-  return createShellAuth(
+  keyProtection: KeyProtection,
+): Promise<StartedShellAuth> {
+  return startShellAuth(
     {
+      deviceKey: requireNativeModule<DeviceKeyNativeApi>(NATIVE_MODULE_NAME),
       secureStore: SecureStore,
       // Readable in the background after the first unlock, and never copied to another device.
       keychainOptions: { keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY },
@@ -38,6 +42,6 @@ export function createNativeShellAuth(
         createAbort: () => new AbortController(),
       },
     },
-    { configuration, ephemeralBrowserSession },
+    { configuration, ephemeralBrowserSession, keyProtection },
   );
 }

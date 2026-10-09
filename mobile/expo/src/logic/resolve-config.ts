@@ -1,3 +1,4 @@
+import { KEY_PROTECTION, type KeyProtection } from '@app/device-key';
 import type { AuthConfiguration } from '@app/native-auth';
 
 /** The server's own example entry in `AUTH_NATIVE_APPLICATIONS`. */
@@ -26,4 +27,9 @@ export function resolveConfig({ apiOrigin, development }: ConfigInput): AuthConf
     redirectUri: REDIRECT_URI,
     scopes: SCOPES,
   };
+}
+
+/** A software key exists so a simulator can run the bound flow. A release build never makes one. */
+export function resolveKeyProtection(development: boolean): KeyProtection {
+  return development ? KEY_PROTECTION.SOFTWARE_ALLOWED : KEY_PROTECTION.HARDWARE_ONLY;
 }

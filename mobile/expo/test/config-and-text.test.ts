@@ -1,3 +1,6 @@
+import { AuthPortError, CredentialStoreError } from '@app/native-auth';
+import { ApiError, OAuthError, TransportError } from '@app/sdk';
+import { SERVER_USER } from '@app/native-adapters/testing';
 import { describe, expect, it } from 'vitest';
 import {
   DIRECTION,
@@ -6,7 +9,16 @@ import {
   translate,
   type MessageKey,
 } from '../src/i18n/messages';
-import { resolveConfig } from '../src/logic/resolve-config';
+import {
+  describeError,
+  describeRestore,
+  describeSignIn,
+  describeSignOut,
+  describeRefresh,
+  render,
+  type Described,
+} from '../src/logic/outcome-text';
+import { resolveConfig, resolveKeyProtection } from '../src/logic/resolve-config';
 
 describe('app configuration', () => {
   it('points a development build at the local server when no origin is set', () => {
@@ -37,6 +49,11 @@ describe('app configuration', () => {
       'EXPO_PUBLIC_API_ORIGIN is not set.',
     );
   });
+
+  it('lets only a development build sign with a software key', () => {
+    expect(resolveKeyProtection(true)).toBe('softwareAllowed');
+    expect(resolveKeyProtection(false)).toBe('hardwareOnly');
+  });
 });
 
 describe('messages', () => {
@@ -51,6 +68,28 @@ describe('messages', () => {
         MESSAGES.en[key].includes('{detail}'),
       );
       expect(MESSAGES.ar[key].replace(/\{(?:value|detail)\}/g, ''), key).not.toMatch(/[A-Za-z]/);
+    }
+  });
+
+  it('includes startup, device key, and token request messages in both catalogues', () => {
+    const addedKeys: MessageKey[] = [
+      'starting',
+      'startFailed',
+      'deviceKey',
+      'deviceKeySecureEnclave',
+      'deviceKeyStrongBox',
+      'deviceKeyTrustedEnvironment',
+      'deviceKeySoftware',
+      'deviceKeyNoSecureHardware',
+      'deviceKeyUnavailable',
+      'deviceKeyInvalidated',
+      'refreshTokenRequests',
+    ];
+    for (const locale of ['en', 'ar'] as const) {
+      for (const key of addedKeys) {
+        expect(MESSAGES[locale][key], key).toBeDefined();
+        expect(MESSAGES[locale][key].trim(), key).not.toBe('');
+      }
     }
   });
 
@@ -90,5 +129,95 @@ describe('messages', () => {
 
   it('returns a message without a value unchanged', () => {
     expect(translate('ar', 'signIn')).toBe(MESSAGES.ar.signIn);
+  });
+});
+
+describe.each(['en', 'ar'] as const)('incoming outcome cases in %s', (locale) => {
+  const cases: [Described, MessageKey, string?, string?][] = [
+    [
+      describeRestore({ kind: 'restored', status: 'signedIn' }),
+      'restoreRestored',
+      MESSAGES[locale].statusSignedIn,
+    ],
+    [
+      describeRestore({ kind: 'storageBlocked', reason: 'locked' }),
+      'restoreStorageBlocked',
+      MESSAGES[locale].blockLocked,
+    ],
+    [describeSignIn({ kind: 'signedIn', profile: SERVER_USER }), 'statusSignedIn'],
+    [describeSignIn({ kind: 'cancelled' }), 'signInCancelled'],
+    [describeSignIn({ kind: 'disposed' }), 'engineDisposed'],
+    [
+      describeSignIn({ kind: 'browserFailure', reason: 'browserLocked' }),
+      'signInBrowserFailure',
+      MESSAGES[locale].browserLocked,
+    ],
+    [
+      describeSignIn({ kind: 'invalidCallback', reason: 'stateMismatch' }),
+      'signInInvalidCallback',
+      MESSAGES[locale].callbackStateMismatch,
+    ],
+    [
+      describeSignIn({ kind: 'authorizationDenied', error: 'access_denied' }),
+      'signInAuthorizationDenied',
+      'access_denied',
+    ],
+    [
+      describeSignOut({ kind: 'signedOut', revocation: 'revoked' }),
+      'signOutSignedOut',
+      MESSAGES[locale].revocationRevoked,
+    ],
+    [describeRefresh({ kind: 'refreshed' }), 'refreshRefreshed'],
+    [describeRefresh({ kind: 'notSignedIn' }), 'refreshNotSignedIn'],
+  ];
+
+  it.each(cases)('describes %# through the catalogue', (described, key, value, detail) => {
+    expect(render(locale, described)).toBe(translate(locale, key, value, detail));
+  });
+
+  it('names the error an outcome carries', () => {
+    const oauth = new OAuthError({ status: 400, error: 'invalid_grant' });
+    expect(render(locale, describeSignIn({ kind: 'oauthFailure', error: oauth }))).toBe(
+      translate(locale, 'signInOauthFailure', translate(locale, 'errorOAuth', '400 invalid_grant')),
+    );
+    expect(
+      render(
+        locale,
+        describeSignOut({ kind: 'signedOut', revocation: 'failed', error: new TransportError() }),
+      ),
+    ).toBe(
+      translate(
+        locale,
+        'signOutSignedOutWithError',
+        MESSAGES[locale].revocationFailed,
+        MESSAGES[locale].errorNoResponse,
+      ),
+    );
+  });
+
+  it('says why the store refused a write', () => {
+    const locked = new CredentialStoreError('credentials.replace', 'locked');
+    const expected = translate(
+      locale,
+      'errorStore',
+      MESSAGES[locale].portCredentialsReplace,
+      MESSAGES[locale].blockLocked,
+    );
+    expect(render(locale, describeError(locked))).toBe(expected);
+    expect(render(locale, describeRefresh({ kind: 'failed', error: locked }))).toBe(
+      translate(locale, 'refreshFailed', expected),
+    );
+  });
+
+  it('describes each error a request can reject with', () => {
+    const api = new ApiError({ status: 403, code: 'FORBIDDEN', message: 'No access' });
+    expect(render(locale, describeError(api))).toBe(translate(locale, 'errorApi', '403 FORBIDDEN'));
+    expect(render(locale, describeError(new AuthPortError('credentials.read', 'timedOut')))).toBe(
+      translate(locale, 'errorPortTimedOut', MESSAGES[locale].portCredentialsRead),
+    );
+    expect(render(locale, describeError(new RangeError('too large')))).toBe(
+      translate(locale, 'errorUnexpected', 'RangeError'),
+    );
+    expect(render(locale, describeError('text'))).toBe(MESSAGES[locale].errorUnknown);
   });
 });

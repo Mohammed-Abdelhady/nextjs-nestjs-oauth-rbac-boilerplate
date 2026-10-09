@@ -12,6 +12,6 @@
     "android": {
       "package": "com.example.mobileexpo"
     },
-    "plugins": ["expo-secure-store", "expo-web-browser"]
+    "plugins": ["expo-secure-store", "expo-web-browser", "./plugins/with-scene-lifecycle"]
   }
 }

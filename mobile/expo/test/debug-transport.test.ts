@@ -36,12 +36,12 @@ describe('debug transport', () => {
       debug.transport.request({ method: 'POST', path: '/api/oauth/token', body });
 
     await token({ grant_type: 'authorization_code', code: 'c' });
-    expect(debug.refreshRequests()).toBe(0);
+    expect(debug.refreshTokenRequests()).toBe(0);
     await token({ grant_type: 'refresh_token', refresh_token: 'r' });
     await token({ grant_type: 'refresh_token', refresh_token: 'r2' });
     await token(undefined);
 
-    expect(debug.refreshRequests()).toBe(2);
+    expect(debug.refreshTokenRequests()).toBe(2);
   });
 
   it('does not count a refresh-shaped body sent to another path', async () => {
@@ -53,6 +53,6 @@ describe('debug transport', () => {
       body: { grant_type: 'refresh_token' },
     });
 
-    expect(debug.refreshRequests()).toBe(0);
+    expect(debug.refreshTokenRequests()).toBe(0);
   });
 });
