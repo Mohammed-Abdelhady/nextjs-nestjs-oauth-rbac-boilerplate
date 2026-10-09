@@ -130,6 +130,7 @@ describe('PostgreSQL prototype adapter', () => {
         '0003_pending_codes.sql',
         '0004_browser_proofs_security_events.sql',
         '0005_accounts.sql',
+        '0006_session_authority_revocation.sql',
       ],
       again: [],
       recorded: [
@@ -138,6 +139,7 @@ describe('PostgreSQL prototype adapter', () => {
         '0003_pending_codes.sql',
         '0004_browser_proofs_security_events.sql',
         '0005_accounts.sql',
+        '0006_session_authority_revocation.sql',
       ],
     });
   });

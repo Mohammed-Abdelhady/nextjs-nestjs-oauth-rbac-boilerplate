@@ -96,7 +96,12 @@ describe('native session limit', () => {
     const results = await runForcedIssuanceRace(
       issuance,
       ctx.harness.users,
-      () => issuance.createBrowserSession(user._id, 'Browser/1', '127.0.0.1'),
+      () =>
+        issuance.createBrowserSession(
+          user._id.toString(),
+          'Browser/1',
+          '127.0.0.1',
+        ),
       () => exchange(ctx, approved.code, approved.verifier),
     );
 
@@ -181,7 +186,11 @@ describe('native session limit', () => {
     const issuance = ctx.harness.app.get(SessionIssuanceService);
 
     await expect(
-      issuance.createBrowserSession(user._id, 'Browser/1', '127.0.0.1'),
+      issuance.createBrowserSession(
+        user._id.toString(),
+        'Browser/1',
+        '127.0.0.1',
+      ),
     ).rejects.toMatchObject({ code: ErrorCode.SESSION_LIMIT_REACHED });
     expect(
       await ctx.harness.sessions.countDocuments({
@@ -215,7 +224,11 @@ async function seedBrowserSessions(
   count: number,
 ): Promise<void> {
   const issuance = ctx.harness.app.get(SessionIssuanceService);
-  await issuance.createBrowserSession(userId, 'Browser/1', '127.0.0.1');
+  await issuance.createBrowserSession(
+    userId.toString(),
+    'Browser/1',
+    '127.0.0.1',
+  );
   const remaining = count - 1;
   if (remaining <= 0) {
     return;

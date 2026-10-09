@@ -10,7 +10,7 @@ import {
 } from '../../auth/passkeys/schemas/passkey.schema';
 // feature:passkeys:end
 import { Role, RoleSchema } from '../../role/schemas/role.schema';
-import { SessionService } from '../../auth/services/sessions/session.service';
+import { SessionRevoker } from '../../session/revocation/session-revoker';
 import { User } from '../schemas/user.schema';
 import { Clock } from '../../common/services/clock';
 import { UserProfileService } from './user-profile.service';
@@ -64,7 +64,7 @@ describe('password change keeps the calling session (plan S1)', () => {
             connection.model(Passkey.name, PasskeySchema),
         },
         // feature:passkeys:end
-        { provide: SessionService, useValue: harness.sessionService },
+        { provide: SessionRevoker, useValue: harness.app.get(SessionRevoker) },
         { provide: getConnectionToken(), useValue: harness.connection },
       ],
     }).compile();

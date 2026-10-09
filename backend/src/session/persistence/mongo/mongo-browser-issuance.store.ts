@@ -27,7 +27,7 @@ import {
 } from '../../schemas/user-application-grant.schema';
 import { ApplicationRegistryService } from '../../services/application-registry.service';
 import { SecurityEventService } from '../../services/security-event.service';
-import { currentSessionCandidateFilter } from '../../utils/authority/current-session-authority';
+import { currentSessionCandidateFilter } from './mongo-session-candidate-filter';
 import {
   toIssuanceAccount,
   toIssuanceApplication,

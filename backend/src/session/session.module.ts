@@ -34,16 +34,24 @@ import {
   UserApplicationGrant,
   UserApplicationGrantSchema,
 } from './schemas/user-application-grant.schema';
+import { AuthorityApplications } from './authority/authority-applications';
+import { SessionAuthorityStore } from './authority/session-authority.store';
+import { SessionValidator } from './authority/session-validator';
 import { SecurityEventRecorder } from './events/security-event-recorder';
 import { SecurityEventStore } from './events/security-event.store';
 import { BrowserIssuanceStore } from './issuance/browser-issuance.store';
 import { IssuanceApplications } from './issuance/issuance-applications';
+import { MongoAuthorityApplications } from './persistence/mongo/mongo-authority-applications';
 import { MongoBrowserIssuanceStore } from './persistence/mongo/mongo-browser-issuance.store';
 import { MongoBrowserProofStore } from './persistence/mongo/mongo-browser-proof.store';
 import { MongoIssuanceApplications } from './persistence/mongo/mongo-issuance-applications';
 import { MongoSecurityEventStore } from './persistence/mongo/mongo-security-event.store';
+import { MongoSessionAuthorityStore } from './persistence/mongo/mongo-session-authority.store';
+import { MongoSessionRevocationStore } from './persistence/mongo/mongo-session-revocation.store';
 import { MongoUnitOfWorkRunner } from './persistence/mongo/mongo-unit-of-work';
 import { BrowserProofStore } from './proofs/browser-proof.store';
+import { SessionRevocationStore } from './revocation/session-revocation.store';
+import { SessionRevoker } from './revocation/session-revoker';
 import { BrowserProofService } from './services/browser-proof.service';
 import { ApplicationAccessService } from './services/application-access.service';
 import { ApplicationRegistryService } from './services/application-registry.service';
@@ -86,7 +94,12 @@ import { NativeAccessService } from './native/access/native-access.service';
     { provide: BrowserIssuanceStore, useClass: MongoBrowserIssuanceStore },
     { provide: IssuanceApplications, useClass: MongoIssuanceApplications },
     SessionIssuanceService,
+    { provide: SessionAuthorityStore, useClass: MongoSessionAuthorityStore },
+    { provide: AuthorityApplications, useClass: MongoAuthorityApplications },
+    SessionValidator,
     SessionAuthorityService,
+    { provide: SessionRevocationStore, useClass: MongoSessionRevocationStore },
+    SessionRevoker,
     SessionRevocationService,
     NativeAccessService,
   ],
@@ -105,7 +118,12 @@ import { NativeAccessService } from './native/access/native-access.service';
     BrowserIssuanceStore,
     IssuanceApplications,
     SessionIssuanceService,
+    SessionAuthorityStore,
+    AuthorityApplications,
+    SessionValidator,
     SessionAuthorityService,
+    SessionRevocationStore,
+    SessionRevoker,
     SessionRevocationService,
     NativeAccessService,
   ],

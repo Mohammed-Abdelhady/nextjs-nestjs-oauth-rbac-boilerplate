@@ -1,16 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { SESSION_LAST_USED_UPDATE_INTERVAL_MS } from '../../common/constants/session';
 import { Clock } from '../../common/services/clock';
 import { AuthEpochService } from '../../common/services/auth-epoch.service';
 import { User, UserDocument } from '../../user/schemas/user.schema';
+import { StoredSession } from '../authority/session-authority.store';
 import {
-  CREDENTIAL_PURPOSE,
-  CredentialPurpose,
-} from '../constants/credential-purpose';
-import { AUTH_SCHEMA_VERSION } from '../constants/session-policy';
-import { ApplicationDocument } from '../schemas/application.schema';
+  SessionValidator,
+  ValidatedSession,
+} from '../authority/session-validator';
+import { MongoAuthorityApplications } from '../persistence/mongo/mongo-authority-applications';
+import { MongoSessionAuthorityStore } from '../persistence/mongo/mongo-session-authority.store';
+import {
+  leanSessionOf,
+  leanUserOf,
+} from '../persistence/mongo/mongo-session-records';
 import {
   LeanSession,
   Session,
@@ -20,293 +24,90 @@ import {
   UserApplicationGrant,
   UserApplicationGrantDocument,
 } from '../schemas/user-application-grant.schema';
-import { asAuthorityUnavailable } from '../utils/authority/authority-unavailable';
-import { linearizable } from '../utils/authority/linearizable-query';
-import { addMs, capIdleByAbsolute } from '../utils/session/session-deadline';
-import {
-  currentSessionCandidateFilter,
-  currentSessionDeadlines,
-  isValidDate,
-} from '../utils/authority/current-session-authority';
-import { hashToken } from '../utils/hashing/token-hash';
 import { ApplicationRegistryService } from './application-registry.service';
 
 export interface ValidateSessionOptions {
   extendIdle?: boolean;
 }
 
+/**
+ * The MongoDB face of session validation, for callers that still hold Mongoose
+ * ids and read Mongoose documents. Every decision is `SessionValidator`'s; this
+ * hands back the documents behind what it decided. It goes away when the guard
+ * and the account module read sessions and accounts through stores.
+ */
 @Injectable()
 export class SessionAuthorityService {
+  private readonly validator: SessionValidator;
+
   constructor(
     @InjectModel(Session.name)
-    private readonly sessionModel: Model<SessionDocument>,
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    sessionModel: Model<SessionDocument>,
+    @InjectModel(User.name) userModel: Model<UserDocument>,
     @InjectModel(UserApplicationGrant.name)
-    private readonly grantModel: Model<UserApplicationGrantDocument>,
-    private readonly applications: ApplicationRegistryService,
-    private readonly clock: Clock,
-    private readonly authEpoch: AuthEpochService,
-  ) {}
+    grantModel: Model<UserApplicationGrantDocument>,
+    applications: ApplicationRegistryService,
+    clock: Clock,
+    authEpoch: AuthEpochService,
+    @Optional() validator?: SessionValidator,
+  ) {
+    this.validator =
+      validator ??
+      new SessionValidator(
+        new MongoSessionAuthorityStore(sessionModel, userModel, grantModel),
+        new MongoAuthorityApplications(applications),
+        clock,
+        authEpoch,
+      );
+  }
 
   async validate(
     token: string,
     options: ValidateSessionOptions = {},
   ): Promise<LeanSession | null> {
-    const extendIdle = options.extendIdle !== false;
-    try {
-      return await this.validateAuthoritative(token, extendIdle);
-    } catch (error) {
-      asAuthorityUnavailable(error);
-    }
+    return withAccount(
+      await this.validator.validateByToken(token, options.extendIdle !== false),
+    );
   }
 
   async listActive(userId: Types.ObjectId): Promise<LeanSession[]> {
-    try {
-      const now = this.clock.now();
-      const user = await linearizable(this.userModel.findById(userId)).exec();
-      if (!user || user.isDeleted) {
-        return [];
-      }
-      const userVersion = user.sessionVersion ?? 0;
-      const authEpoch = this.authEpoch.current();
-      const candidates = await this.sessionModel
-        .find(
-          currentSessionCandidateFilter(userId, now, userVersion, authEpoch, [
-            CREDENTIAL_PURPOSE.BROWSER_SESSION,
-            CREDENTIAL_PURPOSE.NATIVE_ACCESS,
-          ]),
-        )
-        .sort({ lastUsedAt: -1 })
-        .lean<LeanSession[]>()
-        .exec();
-      const clientIds = [
-        ...new Set(candidates.map((session) => session.clientId)),
-      ];
-      const [applications, grants] = await Promise.all([
-        this.applications.findByClientIds(clientIds),
-        clientIds.length === 0
-          ? Promise.resolve<UserApplicationGrant[]>([])
-          : linearizable(
-              this.grantModel.find({
-                userId,
-                clientId: { $in: clientIds },
-              }),
-            )
-              .lean<UserApplicationGrant[]>()
-              .exec(),
-      ]);
-      const applicationByClientId = new Map<string, ApplicationDocument>();
-      for (const application of applications) {
-        applicationByClientId.set(application.clientId, application);
-      }
-      const grantByClientId = new Map<string, UserApplicationGrant>();
-      for (const grant of grants) {
-        grantByClientId.set(grant.clientId, grant);
-      }
-
-      return candidates.filter(
-        (candidate) =>
-          currentSessionDeadlines(
-            candidate,
-            user,
-            applicationByClientId.get(candidate.clientId),
-            grantByClientId.get(candidate.clientId),
-            now,
-            authEpoch,
-            candidate.credentialPurpose,
-          ) !== null,
-      );
-    } catch (error) {
-      asAuthorityUnavailable(error);
-    }
+    const sessions = await this.validator.listActive(userId.toString());
+    return sessions.map(leanSessionOf);
   }
 
   async getById(sessionId: string): Promise<LeanSession | null> {
-    try {
-      return await this.sessionModel
-        .findById(sessionId)
-        .lean<LeanSession | null>()
-        .exec();
-    } catch (error) {
-      asAuthorityUnavailable(error);
-    }
+    return leanOrNull(await this.validator.findById(sessionId));
   }
 
   async getByToken(token: string): Promise<LeanSession | null> {
-    try {
-      return await this.sessionModel
-        .findOne({ tokenHash: hashToken(token) })
-        .lean<LeanSession | null>()
-        .exec();
-    } catch (error) {
-      asAuthorityUnavailable(error);
-    }
+    return leanOrNull(await this.validator.findByToken(token));
   }
 
   async validateById(
     sessionId: Types.ObjectId,
     extendIdle: boolean,
   ): Promise<LeanSession | null> {
-    try {
-      const session = await linearizable(
-        this.sessionModel.findById(sessionId),
-      ).exec();
-      return await this.authorizeLoaded(
-        session,
-        extendIdle,
-        CREDENTIAL_PURPOSE.NATIVE_ACCESS,
-      );
-    } catch (error) {
-      asAuthorityUnavailable(error);
-    }
-  }
-
-  private async validateAuthoritative(
-    token: string,
-    extendIdle: boolean,
-  ): Promise<LeanSession | null> {
-    const session = await linearizable(
-      this.sessionModel.findOne({ tokenHash: hashToken(token) }),
-    ).exec();
-    return this.authorizeLoaded(
-      session,
-      extendIdle,
-      CREDENTIAL_PURPOSE.BROWSER_SESSION,
+    return withAccount(
+      await this.validator.validateById(sessionId.toString(), extendIdle),
     );
   }
+}
 
-  private async authorizeLoaded(
-    session: SessionDocument | null,
-    extendIdle: boolean,
-    purpose: CredentialPurpose,
-  ): Promise<LeanSession | null> {
-    if (!session || !this.hasRequiredAuthorityFields(session)) {
-      return null;
-    }
-    if (
-      !session.isValid ||
-      session.revokedAt ||
-      session.credentialPurpose !== purpose
-    ) {
-      return null;
-    }
-    if (session.authEpoch !== this.authEpoch.current()) {
-      return null;
-    }
-    if (session.schemaVersion !== AUTH_SCHEMA_VERSION) {
-      return null;
-    }
+function leanOrNull(stored: StoredSession | null): LeanSession | null {
+  return stored ? leanSessionOf(stored) : null;
+}
 
-    const user = await linearizable(
-      this.userModel.findById(session.user),
-    ).exec();
-    if (!user || user.isDeleted) {
-      return null;
-    }
-    if ((session.userVersion ?? -1) !== (user.sessionVersion ?? 0)) {
-      return null;
-    }
-
-    const application = await this.applications.findByClientId(
-      session.clientId,
-    );
-    if (!application || !application.enabled) {
-      return null;
-    }
-    if ((session.clientVersion ?? -1) !== (application.sessionVersion ?? 0)) {
-      return null;
-    }
-
-    const grant = await linearizable(
-      this.grantModel.findOne({
-        userId: user._id,
-        clientId: session.clientId,
-      }),
-    ).exec();
-    if (!grant || !grant.allowed) {
-      return null;
-    }
-
-    const now = this.clock.now();
-    const deadlines = currentSessionDeadlines(
-      session,
-      user,
-      application,
-      grant,
-      now,
-      this.authEpoch.current(),
-      purpose,
-    );
-    if (!deadlines) {
-      return null;
-    }
-
-    if (extendIdle) {
-      await this.maybeExtendIdle(
-        session,
-        now,
-        deadlines.absolute,
-        deadlines.idle,
-        application.policy.idleLifetimeMs,
-      );
-    }
-
-    const lean = session.toObject() as LeanSession;
-    lean.user = { ...user.toObject() };
-    return lean;
+/** The session document with its account attached, as the guard reads it. */
+function withAccount(validated: ValidatedSession | null): LeanSession | null {
+  if (!validated) {
+    return null;
   }
-
-  private hasRequiredAuthorityFields(session: SessionDocument): boolean {
-    return Boolean(
-      session.clientId &&
-      isValidDate(session.authenticatedAt) &&
-      isValidDate(session.expiresAt) &&
-      isValidDate(session.idleExpiresAt) &&
-      isValidDate(session.lastActivityAt) &&
-      typeof session.userVersion === 'number' &&
-      typeof session.clientVersion === 'number' &&
-      typeof session.grantVersion === 'number' &&
-      typeof session.authEpoch === 'number' &&
-      typeof session.schemaVersion === 'number',
-    );
+  const lean = leanSessionOf(validated.session);
+  if (validated.extended) {
+    lean.lastUsedAt = validated.session.lastUsedAt ?? undefined;
+    lean.lastActivityAt = validated.session.lastActivityAt;
+    lean.idleExpiresAt = validated.session.idleExpiresAt;
   }
-
-  private async maybeExtendIdle(
-    session: SessionDocument,
-    now: Date,
-    absolute: Date,
-    idle: Date,
-    idleLifetimeMs: number,
-  ): Promise<void> {
-    const lastActivity = session.lastActivityAt.getTime();
-    const remainingIdle = idle.getTime() - now.getTime();
-    const stale =
-      now.getTime() - lastActivity > SESSION_LAST_USED_UPDATE_INTERVAL_MS;
-    if (!stale && remainingIdle > SESSION_LAST_USED_UPDATE_INTERVAL_MS) {
-      return;
-    }
-
-    const nextIdle = capIdleByAbsolute(addMs(now, idleLifetimeMs), absolute);
-    const result = await this.sessionModel.updateOne(
-      {
-        _id: session._id,
-        isValid: true,
-        revokedAt: { $exists: false },
-        idleExpiresAt: { $gt: now },
-        expiresAt: { $gt: now },
-      },
-      {
-        $set: {
-          lastUsedAt: now,
-          lastActivityAt: now,
-          idleExpiresAt: nextIdle,
-        },
-      },
-    );
-    if (result.modifiedCount > 0) {
-      session.lastUsedAt = now;
-      session.lastActivityAt = now;
-      session.idleExpiresAt = nextIdle;
-    }
-  }
+  lean.user = leanUserOf(validated.account);
+  return lean;
 }
