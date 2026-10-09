@@ -9,7 +9,8 @@ import type { ConfigSelection } from './config-file.js';
  */
 export function toPlanRequest(options: CliOptions, config?: ConfigSelection): PlanRequest {
   const request: PlanRequest = {};
-  if (options.rules !== undefined) request.rules = options.rules;
+  const rules = options.rules ?? config?.rules;
+  if (rules !== undefined) request.rules = rules;
 
   const targets = options.targets ?? config?.targets;
   if (targets !== undefined) request.targets = targets;

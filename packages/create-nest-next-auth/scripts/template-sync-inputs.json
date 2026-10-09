@@ -2,5 +2,8 @@
   "script": "scripts/sync-template.mjs",
   "manager": "src/constants/package-manager.json",
   "inputs": "scripts/template-sync-inputs.json",
-  "policy": "src/constants/template-tests.json"
+  "policy": "src/constants/template-tests.json",
+  "paths": "scripts/manifest-paths.mjs",
+  "glob": "scripts/glob.mjs",
+  "gitEnvironment": "src/constants/git-environment.json"
 }

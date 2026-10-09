@@ -1,12 +1,13 @@
-import { copyFileSync, cpSync, lstatSync, symlinkSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, lstatSync, symlinkSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { isExcluded } from '../scripts/sync-template.mjs';
+import { isExcluded, trackedFiles } from '../scripts/sync-template.mjs';
 import {
   MANIFEST_FILE,
   TEMPLATE_DIR_NAME,
   TEMPLATE_IDENTITY_FILE,
 } from '../src/constants/index.js';
+import { fixtureGit } from './sync-template-fixture.js';
 
 export const PACKAGE_DIR = fileURLToPath(new URL('..', import.meta.url));
 const REPO_ROOT = dirname(dirname(PACKAGE_DIR));
@@ -26,10 +27,30 @@ function shipsFrom(root: string, source: string): boolean {
 }
 
 /**
+ * Makes the stage a repository that tracks what the source tracks. The build
+ * ships only tracked files, so a stage without an index would ship nothing
+ * and one that tracked everything would ship the source's untracked files.
+ */
+function trackLikeSource(workspace: string, stage: string, repoRoot: string): void {
+  const tracked = trackedFiles(repoRoot).filter((path) => existsSync(join(stage, path)));
+  const pathspec = join(workspace, 'stage-tracked-paths');
+  writeFileSync(pathspec, tracked.join('\0'));
+  fixtureGit(stage, ['init', '--quiet']);
+  fixtureGit(stage, [
+    '--literal-pathspecs',
+    'add',
+    '--force',
+    `--pathspec-from-file=${pathspec}`,
+    '--pathspec-file-nul',
+  ]);
+}
+
+/**
  * Copies the repository and the installer package into `workspace` and returns
  * the staged package. The sync script resolves the repository from its own
  * location, so a build run there writes template/, the manifest, the identity
  * and dist/ into the stage and leaves the checked-out package folder alone.
+ * The stage tracks the same files as the source, so the same files ship.
  */
 export function stagePackage(workspace: string, repoRoot = REPO_ROOT): string {
   const stage = join(workspace, 'repository');
@@ -42,6 +63,9 @@ export function stagePackage(workspace: string, repoRoot = REPO_ROOT): string {
     recursive: true,
     filter: (path) => !GENERATED_INPUTS.has(relative(source, path)) && shipsFrom(repoRoot, path),
   });
+  // Tracked before the borrowed dependencies are linked in: Git refuses a
+  // path that sits behind a symbolic link.
+  trackLikeSource(workspace, stage, repoRoot);
   symlinkSync(join(source, DEPENDENCIES_DIR), join(staged, DEPENDENCIES_DIR), 'dir');
   return staged;
 }

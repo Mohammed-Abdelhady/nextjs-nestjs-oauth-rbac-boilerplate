@@ -30,6 +30,7 @@ must not exist, or must be empty. With `--yes` and no directory the CLI uses
 | `--database <id>`  | Database id; only `mongodb` is available today                                     |
 | `--preset <id>`    | Apply a preset: `minimal`, `standard`, `everything`                                |
 | `--config <file>`  | JSON file with the same selection keys                                             |
+| `--rules <level>`  | Rules level: `strict` (the default) or `standard`                                  |
 | `--locales <list>` | Locale ids; `en` is required, `en,ar` adds Arabic                                  |
 | `--no-docker`      | Leave out the Docker files and the commands that run them                          |
 | `--no-production`  | Leave out nginx, the production compose file and the production docs               |
@@ -41,6 +42,10 @@ must not exist, or must be empty. With `--yes` and no directory the CLI uses
 Without `--yes`, `--features`, `--targets`, `--database`, `--preset` or `--config`
 the CLI asks for a directory and shows the methods grouped by kind. It needs a
 terminal for that.
+
+The rules level is asked for in a terminal. Without a terminal and without
+`--rules` or a `rules` value in the config file, the level is `strict` and
+nothing is asked.
 
 Feature ids: `email-password`, `magic-link`, `totp`, `passkeys`, and the
 providers `google`, `github`, `facebook`, `microsoft`, `apple`, `discord`,
@@ -58,30 +63,16 @@ An unknown id, or an id that is not available yet, in `--features`, `--targets`,
 code 2 before anything is written or asked. This replaces the older behaviour
 where an unknown `--features` id was skipped with a warning. Other usage errors
 (a bad flag value, a missing or invalid config file, a wrong type, an unknown
-key) also exit 2. Exit 1 is for a run that failed after scaffolding, such as a
-leftover import. Exit 3 means the installed package itself is damaged, for
+key) also exit 2. Exit 1 is for a run that failed after scaffolding: a leftover
+import, a failed install, a `git init` or first commit that failed when git was
+requested, or a lockfile that had to be removed. The summary names the failed
+step and its reason, and the closing `Done.` is printed only for a clean run. Exit 3 means the installed package itself is damaged, for
 example a missing or malformed identity file or package manifest. Reinstall it
 and run again.
 
 ### Config file
 
-`--config` reads a JSON object with these keys, all optional:
-
-```json
-{
-  "targets": ["web"],
-  "database": "mongodb",
-  "features": ["email-password", "google"],
-  "locales": ["en", "ar"],
-  "docker": true,
-  "production": true,
-  "preset": "standard"
-}
-```
-
-A flag overrides the config file, the config file overrides the preset, and the
-preset overrides the manifest defaults. A UTF-8 byte order mark is accepted and
-stripped.
+See [Config file](docs/config.md) for selection keys, precedence and rules validation.
 
 ### Presets
 
@@ -106,8 +97,8 @@ check list, and package manager. `CLAUDE.md` points to it. The generated
 Generated projects use pnpm 12.6.0 with an isolated dependency layout. On Node 22,
 run `corepack enable` and `corepack prepare pnpm@12.6.0 --activate`. When pnpm is
 available, the installer updates the lockfile before the first commit. Without the
-pinned pnpm version, it removes the bundled lockfile and prints `pnpm install` as
-the next step.
+pinned pnpm version, it removes the bundled lockfile, prints `pnpm install` as
+the next step and exits 1.
 
 ## What the CLI does
 

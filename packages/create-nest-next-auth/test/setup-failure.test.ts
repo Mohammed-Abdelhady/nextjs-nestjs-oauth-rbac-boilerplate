@@ -47,7 +47,7 @@ const CASES = [
     installFails: false,
     git: { status: 'failed', reason: 'spawn git ENOENT' },
     install: { status: 'installed' },
-    exitCode: 0,
+    exitCode: 1,
     hooks: { included: true, active: false, activationCommand: 'git init && pnpm exec husky' },
   },
   {
@@ -58,7 +58,7 @@ const CASES = [
     installFails: false,
     git: { status: 'failed', reason: 'commit blocked' },
     install: { status: 'installed' },
-    exitCode: 0,
+    exitCode: 1,
     hooks: { included: true, active: true },
   },
   {

@@ -1,3 +1,4 @@
+import GIT_ENVIRONMENT from './git-environment.json' with { type: 'json' };
 import PACKAGE_MANAGER_CONFIG from './package-manager.json' with { type: 'json' };
 import type { FeatureKind, RulesPolicy } from '../types.js';
 
@@ -179,32 +180,8 @@ export const GIT_PUSH_TIMEOUT_MS = 30_000;
 export const GIT_PUSH_KILL_SIGNAL = 'SIGKILL';
 
 /** Repository-local paths and config overrides must not escape the caller. */
-export const GIT_REPOSITORY_ENV_VARS: readonly string[] = [
-  'GIT_DIR',
-  'GIT_WORK_TREE',
-  'GIT_INDEX_FILE',
-  'GIT_OBJECT_DIRECTORY',
-  'GIT_ALTERNATE_OBJECT_DIRECTORIES',
-  'GIT_COMMON_DIR',
-  'GIT_QUARANTINE_PATH',
-  'GIT_NAMESPACE',
-  'GIT_PREFIX',
-  'GIT_CEILING_DIRECTORIES',
-  'GIT_DISCOVERY_ACROSS_FILESYSTEM',
-  'GIT_IMPLICIT_WORK_TREE',
-  'GIT_SHALLOW_FILE',
-  'GIT_GRAFT_FILE',
-  'GIT_REPLACE_REF_BASE',
-  'GIT_NO_REPLACE_OBJECTS',
-  'GIT_REFERENCE_BACKEND',
-  'GIT_CONFIG',
-  'GIT_CONFIG_GLOBAL',
-  'GIT_CONFIG_SYSTEM',
-  'GIT_CONFIG_COUNT',
-  'GIT_CONFIG_PARAMETERS',
-];
-
-export const GIT_REPOSITORY_ENV_PREFIXES = ['GIT_CONFIG_KEY_', 'GIT_CONFIG_VALUE_'] as const;
+export const GIT_REPOSITORY_ENV_VARS: readonly string[] = GIT_ENVIRONMENT.variables;
+export const GIT_REPOSITORY_ENV_PREFIXES: readonly string[] = GIT_ENVIRONMENT.prefixes;
 
 export const {
   PACKAGE_MANAGER,

@@ -103,7 +103,7 @@ export async function main(
 
     const needs: PromptNeeds = {
       directory: !options.dryRun && options.directory === undefined,
-      ...planPromptNeeds(manifest, request),
+      ...planPromptNeeds(manifest, request, process.stdin.isTTY === true),
     };
     requireInteractive(options, needs);
 

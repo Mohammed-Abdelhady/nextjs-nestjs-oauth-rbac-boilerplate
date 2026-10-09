@@ -5,7 +5,7 @@ import { afterEach, expect, it } from 'vitest';
 import { parseAllDocuments } from 'yaml';
 import { templateContent } from '../scripts/sync-template.mjs';
 import { isRecord } from '../src/manifest/read.js';
-import { newFixture, runScript } from './sync-template-fixture.js';
+import { newFixture, runScript, trackAll } from './sync-template-fixture.js';
 
 const REPOSITORY_ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const roots: string[] = [];
@@ -54,6 +54,7 @@ it('ships the project ignore list without only the instruction-file entries', ()
   const source = readFileSync(join(REPOSITORY_ROOT, '.gitignore'), 'utf8');
   const removed = source.split('\n').filter((line) => line === 'AGENTS.md' || line === 'CLAUDE.md');
   writeFileSync(join(fixture, '.gitignore'), source, 'utf8');
+  trackAll(fixture);
   runScript(fixture);
 
   const shipped = readFileSync(

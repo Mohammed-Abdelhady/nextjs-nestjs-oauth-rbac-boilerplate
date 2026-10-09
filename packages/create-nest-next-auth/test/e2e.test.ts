@@ -54,6 +54,9 @@ describe('the packed CLI', () => {
   it('refuses a pre-hook local violation inherited by a clean generated branch', () => {
     checkGeneratedHookHistory(packed);
   });
+  it('pushes the same inherited violation at standard, where only the gates run', () => {
+    checkGeneratedHookHistory(packed, 'standard');
+  });
 
   it('scans a default Git project cleanly', () => {
     checkGeneratedGuardrails(packed);

@@ -85,6 +85,14 @@ Only root scripts `lint`, `typecheck`, `test` and `build` can become project gat
 Missing scripts are listed as not added.
 Template-specific dependency inventory and backend suites are omitted.
 No lint configuration is changed.
+
+The commitlint configuration checks the commit type and the subject length.
+It accepts any scope, because scope names belong to your project.
+
+At strict, the file length ceiling covers matching project folders and the bundled guardrail files.
+The plan and `AGENTS.md` list which of your source folders match the policy.
+When none match, both say so. Edit `CAPPED_PATH` in `scripts/guardrails/policy.mjs`
+to cover your source folders. The bundled guardrail files are still capped.
 CI requires GitHub Actions. Merge blocking requires branch protection.
 
 ## What blocks it and how to resolve it
@@ -137,8 +145,8 @@ Add these dependencies yourself. The command never installs them:
 | prettier                        | ^3.9.9  |
 | @commitlint/cli                 | ^18.6.1 |
 | @commitlint/config-conventional | ^18.6.3 |
-| ignore                          | 5.3.2   |
 
-After adding them, run the activation command printed in the summary.
+After adding them, run the activation command printed in the summary:
+`node node_modules/husky/bin.js`.
 It includes `git init` when the project has no Git repository.
 Hooks remain inactive until you activate them.

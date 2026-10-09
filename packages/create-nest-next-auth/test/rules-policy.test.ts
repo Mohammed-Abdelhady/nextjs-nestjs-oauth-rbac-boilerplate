@@ -138,6 +138,43 @@ describe('generation-time rules policy', () => {
     ]);
   });
 
+  it.each(['strict', 'standard'] as const)(
+    'states at %s that the commit message hook runs and removes tool attribution',
+    async (level) => {
+      const root = await fixture();
+      await prune(root, FIXTURE_MANIFEST, ['email-password', 'alpha', 'beta'], [], level);
+      const hook = await readFile(join(root, '.husky/commit-msg'), 'utf8');
+      const withHooks = await renderRulesText({
+        projectRoot: root,
+        level,
+        delivery: { hooks: true, actions: true },
+      });
+      const withoutHooks = await renderRulesText({
+        projectRoot: root,
+        level,
+        delivery: { hooks: false, actions: true },
+      });
+      const statement =
+        'The commit message hook checks this format. It also removes tool attribution trailers, such as a `Co-Authored-By` line that names a coding tool, and prints each line it removes.';
+      const commitSection = (agents: string): string[] =>
+        (agents.split('## Commit messages\n\n')[1]?.split('\n\n## ')[0] ?? '').split('\n');
+
+      expect({
+        hookStripsAttribution: hook
+          .split('\n')
+          .includes('node scripts/check-hard-bans.mjs --commit-msg "$1"'),
+        stated: commitSection(withHooks.agents).includes(statement),
+        statedWithoutHooks: commitSection(withoutHooks.agents).includes(statement),
+        saysNothingRunsThePolicy: /nothing runs/i.test(withHooks.agents),
+      }).toEqual({
+        hookStripsAttribution: true,
+        stated: true,
+        statedWithoutHooks: false,
+        saysNothingRunsThePolicy: false,
+      });
+    },
+  );
+
   it('renders standard without an enforced ban list or ceiling and states the generation choice', async () => {
     const root = await fixture();
     await prune(root, FIXTURE_MANIFEST, ['email-password', 'alpha', 'beta'], [], 'standard');

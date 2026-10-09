@@ -1,12 +1,29 @@
 import { spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { SHA256_HEX_PATTERN, TEMPLATE_IDENTITY_FILE } from '../src/constants/index.js';
 import { prunePackageScripts } from '../src/prune/package-scripts.js';
-import { buildTemplate, newFixture, runScript } from './sync-template-fixture.js';
+import {
+  buildTemplate,
+  fixtureGit,
+  newFixture,
+  runScript,
+  templateOf,
+  trackAll,
+} from './sync-template-fixture.js';
 
 const roots: string[] = [];
+const SCRATCH_IDENTITY = ['-c', 'user.name=Scratch User', '-c', 'user.email=scratch@example.test'];
 
 afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
@@ -28,11 +45,19 @@ function identityOf(template: string): string {
 
 describe('sync-template exclusions', () => {
   it('leaves a .git pointer file out of the template', () => {
-    const template = buildTemplate(roots, (fixture) => {
-      writeFileSync(join(fixture, '.git'), 'gitdir: /elsewhere/worktrees/app\n');
-      writeFileSync(join(fixture, 'kept.txt'), 'keep\n');
-    });
+    const main = newFixture(roots);
+    writeFileSync(join(main, 'kept.txt'), 'keep\n');
+    trackAll(main);
+    fixtureGit(main, [...SCRATCH_IDENTITY, 'commit', '--quiet', '-m', 'test: seed']);
+    const holder = mkdtempSync(join(tmpdir(), 'cna-sync-linked-'));
+    roots.push(holder);
+    const linked = join(holder, 'tree');
+    fixtureGit(main, ['worktree', 'add', '--quiet', '--detach', linked]);
+    const template = templateOf(linked);
 
+    runScript(linked);
+
+    expect(readFileSync(join(linked, '.git'), 'utf8')).toMatch(/^gitdir: /);
     expect(existsSync(join(template, '.git'))).toBe(false);
     expect(existsSync(join(template, 'kept.txt'))).toBe(true);
   });
@@ -266,6 +291,7 @@ describe('template identity', () => {
     const fixture = newFixture(roots);
     writeFileSync(join(fixture, '.gitignore'), 'ignored\n');
     writeFileSync(join(fixture, '_gitignore'), 'literal\n');
+    trackAll(fixture);
     const packageDir = join(fixture, 'packages/create-nest-next-auth');
     writeFileSync(join(packageDir, TEMPLATE_IDENTITY_FILE), '{"sha256":"deadbeef"}\n', 'utf8');
     const script = join(packageDir, 'scripts/sync-template.mjs');
@@ -280,6 +306,7 @@ describe('template identity', () => {
     const fixture = newFixture(roots);
     writeFileSync(join(fixture, '.gitignore'), 'ignored\n');
     writeFileSync(join(fixture, '_gitignore'), 'literal\n');
+    trackAll(fixture);
     const script = join(fixture, 'packages/create-nest-next-auth/scripts/sync-template.mjs');
 
     const result = spawnSync(process.execPath, [script], { timeout: 10_000, encoding: 'utf8' });

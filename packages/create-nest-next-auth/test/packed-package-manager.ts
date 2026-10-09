@@ -130,7 +130,7 @@ export function packageManagerCases(getPacked: () => Packed): void {
           timeout: BUILD_TIMEOUT,
         },
       );
-      expect(result.status, `${result.stdout}${result.stderr}`).toBe(0);
+      expect(result.status, `${result.stdout}${result.stderr}`).toBe(1);
       expect(existsSync(join(project, 'pnpm-lock.yaml'))).toBe(false);
       expect(`${result.stdout}${result.stderr}`).toContain('pnpm-lock.yaml removed');
       expect(`${result.stdout}${result.stderr}`).toContain('pnpm lockfile update failed');
@@ -150,7 +150,7 @@ export function packageManagerCases(getPacked: () => Packed): void {
       env: { ...process.env, PATH: '' },
     });
     const project = join(packed.workspace, 'without-pnpm');
-    expect(result.status, `${result.stdout}${result.stderr}`).toBe(0);
+    expect(result.status, `${result.stdout}${result.stderr}`).toBe(1);
     expect(String(result.stdout)).toContain('pnpm install');
     expect(String(result.stdout)).toContain('pnpm-lock.yaml removed');
     expect(String(result.stdout)).not.toContain('--frozen-lockfile');

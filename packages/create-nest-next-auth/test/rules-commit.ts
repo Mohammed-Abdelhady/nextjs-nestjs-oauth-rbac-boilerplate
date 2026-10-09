@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { chmodSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { delimiter, join } from 'node:path';
 import { expect } from 'vitest';
+import { ADD_RULES_HUSKY_ENTRY } from '../src/constants/rules.js';
 import type { RulesPolicy } from '../src/types.js';
 import { git, isolatedGit } from './answers-helpers.js';
 import { linkDependencies } from './combination-helpers.js';
@@ -46,7 +47,7 @@ process.exit(result.status ?? 2);
     ...env,
     PATH: [bin, join(project, 'node_modules/.bin'), env.PATH ?? ''].join(delimiter),
   };
-  const activate = spawnSync(process.execPath, ['node_modules/husky/bin.js'], {
+  const activate = spawnSync(process.execPath, [ADD_RULES_HUSKY_ENTRY], {
     cwd: project,
     env: hookEnv,
     encoding: 'utf8',

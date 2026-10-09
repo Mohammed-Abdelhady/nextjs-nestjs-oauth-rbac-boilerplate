@@ -242,7 +242,7 @@ describe('renderRulesText', () => {
     );
   });
 
-  it('explains that the shipped standard policy is inactive and requires strict regeneration', async () => {
+  it('explains that standard still loads the policy file and needs strict regeneration for the scan', async () => {
     const projectRoot = await projectFixture();
     const rendered = await renderRulesText({
       projectRoot,
@@ -251,7 +251,7 @@ describe('renderRulesText', () => {
     });
 
     expect(sectionBody(rendered.agents, 'Where things are')?.split('\n')).toContain(
-      '- `scripts/guardrails/policy.mjs`: This file ships, but nothing runs it at the standard rules level. Generate again with strict to restore the scan.',
+      '- `scripts/guardrails/policy.mjs`: `scripts/check-hard-bans.mjs --commit-msg` and `scripts/ci.mjs` load this file, so keep it. The banned-construct scan and file length ceiling it defines are off at the standard rules level. Generate again with strict to turn them on.',
     );
   });
 

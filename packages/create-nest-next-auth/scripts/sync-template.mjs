@@ -1,10 +1,12 @@
 import { realpathSync } from 'node:fs';
 // Copies the repository into template/ so the published package carries the
 // boilerplate. Runs from the package's prebuild script. template/ is gitignored.
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { cp, lstat, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { manifestPathProblems } from './manifest-paths.mjs';
 import TEMPLATE_SYNC_INPUTS from './template-sync-inputs.json' with { type: 'json' };
 const PACKAGE_DIR = dirname(dirname(fileURLToPath(import.meta.url)));
 const PACKAGE_MANAGER_CONFIG = JSON.parse(
@@ -12,6 +14,10 @@ const PACKAGE_MANAGER_CONFIG = JSON.parse(
 );
 const TEMPLATE_TEST_POLICY = JSON.parse(
   await readFile(join(PACKAGE_DIR, TEMPLATE_SYNC_INPUTS.policy), 'utf8'),
+);
+
+const GIT_ENVIRONMENT = JSON.parse(
+  await readFile(join(PACKAGE_DIR, TEMPLATE_SYNC_INPUTS.gitEnvironment), 'utf8'),
 );
 
 const REPOSITORY_TEST_PATHS = TEMPLATE_TEST_POLICY.EXCLUDED_PATH_PATTERNS.map(
@@ -175,23 +181,83 @@ function entryLine(path, mode, bytes) {
   return `${path}\0${(mode & 0o111) === 0 ? '0' : '1'}\0${digest}`;
 }
 
-async function copyTree(sourceDir, targetDir, counters, hashes, shippedBy) {
-  const entries = await readdir(sourceDir, { withFileTypes: true });
-  await mkdir(targetDir, { recursive: true });
+// Git decides which repository a command reads from these before it looks at
+// the working directory. A hook exports them, so they are dropped here.
+const GIT_OUTPUT_LIMIT = 64 * 1024 * 1024;
 
-  for (const entry of entries) {
-    const source = join(sourceDir, entry.name);
-    const relativePath = relative(REPO_ROOT, source);
-    if (isExcluded(relativePath, entry.name, entry.isDirectory())) continue;
+function git(root, args) {
+  const env = { ...process.env };
+  for (const variable of Object.keys(env)) {
+    if (
+      GIT_ENVIRONMENT.variables.includes(variable) ||
+      GIT_ENVIRONMENT.prefixes.some((prefix) => variable.startsWith(prefix))
+    )
+      delete env[variable];
+  }
+  const result = spawnSync('git', args, {
+    cwd: root,
+    env,
+    encoding: 'utf8',
+    maxBuffer: GIT_OUTPUT_LIMIT,
+  });
+  if (result.error) {
+    throw new Error(
+      `Template sync copies only files tracked by Git, and git could not be run: ${result.error.message}`,
+    );
+  }
+  if (result.status !== 0) {
+    throw new Error(
+      `Template sync copies only files tracked by Git, and ${root} is not the root of a Git repository: ${result.stderr.trim()}`,
+    );
+  }
+  return result.stdout;
+}
 
-    if (entry.isDirectory()) {
-      await copyTree(source, join(targetDir, entry.name), counters, hashes, shippedBy);
-      continue;
+// An untracked file never ships, whatever its name: a local .npmrc, an editor
+// folder or a scratch file is not part of the template.
+export function trackedFiles(root) {
+  const prefix = git(root, ['rev-parse', '--show-prefix']).trim();
+  if (prefix !== '') {
+    throw new Error(
+      `Template sync copies only files tracked by Git, and ${root} is not the root of a Git repository: it sits inside another repository at ${prefix}`,
+    );
+  }
+  return git(root, ['ls-files', '-z']).split('\0').filter(Boolean);
+}
+
+function isExcludedPath(segments) {
+  return segments.some((name, index) =>
+    isExcluded(segments.slice(0, index + 1).join(sep), name, index < segments.length - 1),
+  );
+}
+
+async function fileStats(source) {
+  try {
+    const stats = await lstat(source);
+    if (!stats.isFile()) return null;
+    // A tracked child must not make a replaced parent symlink traversable.
+    for (let directory = dirname(source); directory !== REPO_ROOT; directory = dirname(directory)) {
+      if (!(await lstat(directory)).isDirectory()) return null;
     }
-    if (!entry.isFile()) continue;
+    return stats;
+  } catch (error) {
+    // Tracked, then deleted from the working tree: there is nothing to ship.
+    if (error.code === 'ENOENT') return null;
+    throw error;
+  }
+}
 
-    const targetName = RENAMED_FILES.get(entry.name) ?? entry.name;
-    const shipped = relative(TEMPLATE_DIR, join(targetDir, targetName)).split(sep).join('/');
+async function copyTracked(trackedPaths, counters, hashes, shippedBy) {
+  for (const tracked of trackedPaths) {
+    const segments = tracked.split('/');
+    if (isExcludedPath(segments)) continue;
+    const relativePath = segments.join(sep);
+    const source = join(REPO_ROOT, relativePath);
+    const stats = await fileStats(source);
+    if (stats === null) continue;
+
+    const name = segments.at(-1);
+    const shipped = [...segments.slice(0, -1), RENAMED_FILES.get(name) ?? name].join('/');
     const clash = shippedBy.get(shipped);
     if (clash !== undefined) {
       // The rename table could map two sources onto one shipped path; only one
@@ -200,11 +266,12 @@ async function copyTree(sourceDir, targetDir, counters, hashes, shippedBy) {
     }
     shippedBy.set(shipped, relativePath);
 
-    const stats = await stat(source);
+    const target = join(TEMPLATE_DIR, ...shipped.split('/'));
     const original = await readFile(source);
-    const bytes = templateContent(relativePath.split(sep).join('/'), original);
-    await cp(source, join(targetDir, targetName));
-    if (!bytes.equals(original)) await writeFile(join(targetDir, targetName), bytes);
+    const bytes = templateContent(tracked, original);
+    await mkdir(dirname(target), { recursive: true });
+    await cp(source, target);
+    if (!bytes.equals(original)) await writeFile(target, bytes);
     counters.files += 1;
     counters.bytes += bytes.length;
     hashes.push(entryLine(shipped, stats.mode, bytes));
@@ -219,11 +286,17 @@ async function main() {
   const counters = { files: 0, bytes: 0 };
   const hashes = [];
   const shippedBy = new Map();
-  await copyTree(REPO_ROOT, TEMPLATE_DIR, counters, hashes, shippedBy);
+  await mkdir(TEMPLATE_DIR, { recursive: true });
+  const trackedPaths = trackedFiles(REPO_ROOT);
+  await copyTracked(trackedPaths, counters, hashes, shippedBy);
 
   const manifestPath = join(REPO_ROOT, MANIFEST_NAME);
   const manifestBytes = await readFile(manifestPath);
   const manifest = manifestBytes.toString('utf8');
+  const problems = manifestPathProblems(JSON.parse(manifest), trackedPaths);
+  if (problems.length > 0) {
+    throw new Error(`template.manifest.json is invalid:\n  ${problems.join('\n  ')}`);
+  }
   await writeFile(join(PACKAGE_DIR, MANIFEST_NAME), manifest, 'utf8');
 
   // One identity for what ships: every template file's shipped path,

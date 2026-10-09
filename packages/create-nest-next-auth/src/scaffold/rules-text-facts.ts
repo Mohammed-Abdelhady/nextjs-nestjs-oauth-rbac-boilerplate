@@ -5,7 +5,11 @@ import { RULES_POLICY } from '../constants/index.js';
 import { isRecord } from '../manifest/read.js';
 import type { RulesPolicy } from '../types.js';
 import { isErrnoException } from '../utils/fs.js';
-import { AGENT_RULE_COPY, KNOWN_WORKSPACE_COPY } from './rules-text-template.js';
+import {
+  AGENT_RULE_COPY,
+  KNOWN_WORKSPACE_COPY,
+  STANDARD_POLICY_LOCATION,
+} from './rules-text-template.js';
 import { workspaceDirectories } from './workspace.js';
 
 export const POLICY_PATH = 'scripts/guardrails/policy.mjs';
@@ -172,7 +176,7 @@ export async function workspaceLocationLines(
   });
   workspaces.push(
     level === RULES_POLICY.STANDARD
-      ? `- \`${POLICY_PATH}\`: This file ships, but nothing runs it at the standard rules level. Generate again with strict to restore the scan.`
+      ? `- \`${POLICY_PATH}\`: ${STANDARD_POLICY_LOCATION}`
       : `- \`${POLICY_PATH}\`: Change the policy here. AGENTS.md is a snapshot rendered at scaffolding time. Later policy changes do not update it.`,
   );
   return workspaces.join('\n');

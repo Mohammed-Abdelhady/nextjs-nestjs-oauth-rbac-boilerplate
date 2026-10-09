@@ -24,16 +24,13 @@ export async function put(root: string, path: string, content: string): Promise<
   await mkdir(dirname(join(root, path)), { recursive: true });
   await writeFile(join(root, path), content);
 }
+/** No inherited repository, no developer git configuration, husky not switched off. */
+export function fixtureEnvironment(root: string): NodeJS.ProcessEnv {
+  const { HUSKY: _husky, ...env } = commandEnvironment();
+  return { ...env, GIT_CONFIG_GLOBAL: join(root, 'absent-global'), GIT_CONFIG_NOSYSTEM: '1' };
+}
 export function fixtureGit(root: string, args: string[]): string {
-  return execFileSync('git', args, {
-    cwd: root,
-    encoding: 'utf8',
-    env: {
-      ...commandEnvironment(),
-      GIT_CONFIG_GLOBAL: join(root, 'absent-global'),
-      GIT_CONFIG_NOSYSTEM: '1',
-    },
-  });
+  return execFileSync('git', args, { cwd: root, encoding: 'utf8', env: fixtureEnvironment(root) });
 }
 export async function cleanRulesFixtures(): Promise<void> {
   for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true });
