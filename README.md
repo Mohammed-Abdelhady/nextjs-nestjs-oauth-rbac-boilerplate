@@ -5,9 +5,9 @@ Production boilerplate with a NestJS 11 backend and a Next.js 16 frontend. Uses 
 ## Features
 
 - Email and password registration with a 6-digit verification code sent by email
-- Magic link sign-in sent by email
-- Two-factor authentication (TOTP) with single-use recovery codes
-- Passkey (WebAuthn) registration and authentication
+- Magic link sign-in sent by email <!-- feature:magic-link -->
+- Two-factor authentication (TOTP) with single-use recovery codes <!-- feature:totp -->
+- Passkey (WebAuthn) registration and authentication <!-- feature:passkeys -->
 - 12 OAuth providers plus generic OIDC
 - Dynamic role-based access control with role hierarchy, custom permissions, and direct user overrides
 - Multi-session management with device, browser, OS, and IP tracking
@@ -41,22 +41,22 @@ At runtime, the frontend calls `GET /api/auth/methods` to learn which authentica
 
 | Method              | Type                  | Setup guide                                            |
 | ------------------- | --------------------- | ------------------------------------------------------ |
-| Email and password  | Credential            | [SMTP setup](docs/setup/setup-smtp.md)                 |
-| Magic link          | Passwordless          | [Magic link setup](docs/setup/setup-magic-link.md)     |
-| Two-factor (TOTP)   | Second factor         | [Two-factor setup](docs/setup/setup-two-factor.md)     |
-| Passkeys (WebAuthn) | Credential / 2FA      | [Passkey setup](docs/setup/setup-passkeys.md)          |
-| Google              | OAuth 2.0             | [Google setup](docs/setup/setup-google-oauth.md)       |
-| GitHub              | OAuth 2.0             | [GitHub setup](docs/setup/setup-github-oauth.md)       |
-| Facebook            | OAuth 2.0             | [Facebook setup](docs/setup/setup-facebook-oauth.md)   |
-| Apple               | OAuth 2.0 / Form post | [Apple setup](docs/setup/setup-apple-oauth.md)         |
-| Discord             | OAuth 2.0             | [Discord setup](docs/setup/setup-discord-oauth.md)     |
-| GitLab              | OIDC                  | [GitLab setup](docs/setup/setup-gitlab-oauth.md)       |
-| LinkedIn            | OIDC                  | [LinkedIn setup](docs/setup/setup-linkedin-oauth.md)   |
-| Microsoft           | OAuth 2.0             | [Microsoft setup](docs/setup/setup-microsoft-oauth.md) |
-| Generic OIDC        | OIDC                  | [OIDC setup](docs/setup/setup-oidc-oauth.md)           |
-| Slack               | OIDC                  | [Slack setup](docs/setup/setup-slack-oauth.md)         |
-| Twitch              | OIDC                  | [Twitch setup](docs/setup/setup-twitch-oauth.md)       |
-| X (Twitter)         | OAuth 2.0 with PKCE   | [X setup](docs/setup/setup-x-oauth.md)                 |
+| Email and password  | Credential            | [SMTP setup](docs/setup/setup-smtp.md)                 | <!-- feature:email-password --> |
+| Magic link          | Passwordless          | [Magic link setup](docs/setup/setup-magic-link.md)     | <!-- feature:magic-link -->     |
+| Two-factor (TOTP)   | Second factor         | [Two-factor setup](docs/setup/setup-two-factor.md)     | <!-- feature:totp -->           |
+| Passkeys (WebAuthn) | Credential / 2FA      | [Passkey setup](docs/setup/setup-passkeys.md)          | <!-- feature:passkeys -->       |
+| Google              | OAuth 2.0             | [Google setup](docs/setup/setup-google-oauth.md)       | <!-- feature:google -->         |
+| GitHub              | OAuth 2.0             | [GitHub setup](docs/setup/setup-github-oauth.md)       | <!-- feature:github -->         |
+| Facebook            | OAuth 2.0             | [Facebook setup](docs/setup/setup-facebook-oauth.md)   | <!-- feature:facebook -->       |
+| Apple               | OAuth 2.0 / Form post | [Apple setup](docs/setup/setup-apple-oauth.md)         | <!-- feature:apple -->          |
+| Discord             | OAuth 2.0             | [Discord setup](docs/setup/setup-discord-oauth.md)     | <!-- feature:discord -->        |
+| GitLab              | OIDC                  | [GitLab setup](docs/setup/setup-gitlab-oauth.md)       | <!-- feature:gitlab -->         |
+| LinkedIn            | OIDC                  | [LinkedIn setup](docs/setup/setup-linkedin-oauth.md)   | <!-- feature:linkedin -->       |
+| Microsoft           | OAuth 2.0             | [Microsoft setup](docs/setup/setup-microsoft-oauth.md) | <!-- feature:microsoft -->      |
+| Generic OIDC        | OIDC                  | [OIDC setup](docs/setup/setup-oidc-oauth.md)           | <!-- feature:oidc -->           |
+| Slack               | OIDC                  | [Slack setup](docs/setup/setup-slack-oauth.md)         | <!-- feature:slack -->          |
+| Twitch              | OIDC                  | [Twitch setup](docs/setup/setup-twitch-oauth.md)       | <!-- feature:twitch -->         |
+| X (Twitter)         | OAuth 2.0 with PKCE   | [X setup](docs/setup/setup-x-oauth.md)                 | <!-- feature:x -->              |
 
 ## Quick start
 
@@ -141,11 +141,37 @@ Endpoints:
 | `NODE_ENV`                      | Environment name                                                       | `development`                                         |
 | `MONGO_URI`                     | MongoDB URI                                                            | `mongodb://localhost:27017/authboiler?replicaSet=rs0` |
 | `CLIENT_URL`                    | Frontend origin for CORS and cookie domain                             | `http://localhost:3000`                               |
-| `OAUTH_STATE_SECRET`            | Secret used to sign OAuth state cookies                                | Required in production                                |
-| `AUTH_NATIVE_DPOP_NONCE_SECRET` | HMAC secret for DPoP nonces; required when `AUTH_NATIVE_ENABLED=true`  | At least 32 characters when native sign-in is enabled |
-| `API_URL`                       | Public origin of the API; required when `AUTH_NATIVE_ENABLED=true`     | None. Use an https origin in production               |
-| `AUTH_NATIVE_DPOP_REQUIRED`     | Reject native exchanges without DPoP and refreshes of unbound families | `false`                                               |
-| `TOTP_ENCRYPTION_KEY`           | 32-byte hex key to encrypt TOTP secrets                                | Required for 2FA                                      |
+| `OAUTH_STATE_SECRET`            | Secret used to sign OAuth state cookies                                | Required in production                                | <!-- feature:oauth-core,passkeys --> |
+| `AUTH_NATIVE_DPOP_NONCE_SECRET` | HMAC secret for DPoP nonces; required when `AUTH_NATIVE_ENABLED=true`  | At least 32 characters when native sign-in is enabled | <!-- feature:native-core -->         |
+| `API_URL`                       | Public API origin used for OAuth callbacks and native sign-in          | None. Use an https origin in production               | <!-- feature:native-core -->         |
+| `AUTH_NATIVE_DPOP_REQUIRED`     | Reject native exchanges without DPoP and refreshes of unbound families | `false`                                               | <!-- feature:native-core -->         |
+| `TOTP_ENCRYPTION_KEY`           | 32-byte hex key to encrypt TOTP secrets                                | Required for 2FA                                      | <!-- feature:totp -->                |
+
+### Optional authentication settings
+
+| Variables                                                                                                                                                                                                                                                                              | Purpose                                                  | Example files                                      |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------- |
+| `OAUTH_GOOGLE_CLIENT_ID`, `OAUTH_GOOGLE_CLIENT_SECRET`, `OAUTH_GOOGLE_CALLBACK_URL`, `NEXT_PUBLIC_GOOGLE_CLIENT_ID`                                                                                                                                                                    | Google configuration. See its setup guide.               | `backend/.env.example` and `frontend/.env.example` | <!-- feature:google -->                    |
+| `OAUTH_GITHUB_CLIENT_ID`, `OAUTH_GITHUB_CLIENT_SECRET`, `OAUTH_GITHUB_CALLBACK_URL`, `NEXT_PUBLIC_GITHUB_CLIENT_ID`                                                                                                                                                                    | GitHub configuration. See its setup guide.               | `backend/.env.example` and `frontend/.env.example` | <!-- feature:github -->                    |
+| `OAUTH_FACEBOOK_CLIENT_ID`, `OAUTH_FACEBOOK_CLIENT_SECRET`, `OAUTH_FACEBOOK_CALLBACK_URL`, `NEXT_PUBLIC_FACEBOOK_APP_ID`                                                                                                                                                               | Facebook configuration. See its setup guide.             | `backend/.env.example` and `frontend/.env.example` | <!-- feature:facebook -->                  |
+| `MAGIC_LINK_ENABLED`, `MAGIC_LINK_EXPIRES_IN`, `MAGIC_LINK_MAX_PER_HOUR`                                                                                                                                                                                                               | Magic link configuration. See its setup guide.           | `backend/.env.example` and `frontend/.env.example` | <!-- feature:magic-link -->                |
+| `TWO_FACTOR_ENABLED`                                                                                                                                                                                                                                                                   | TOTP two-factor configuration. See its setup guide.      | `backend/.env.example` and `frontend/.env.example` | <!-- feature:totp -->                      |
+| `PASSKEYS_ENABLED`, `WEBAUTHN_RP_ID`, `WEBAUTHN_RP_NAME`, `WEBAUTHN_ORIGIN`                                                                                                                                                                                                            | Passkeys configuration. See its setup guide.             | `backend/.env.example` and `frontend/.env.example` | <!-- feature:passkeys -->                  |
+| `OAUTH_MICROSOFT_CLIENT_ID`, `OAUTH_MICROSOFT_CLIENT_SECRET`, `OAUTH_MICROSOFT_CALLBACK_URL`, `OAUTH_MICROSOFT_TENANT`                                                                                                                                                                 | Microsoft configuration. See its setup guide.            | `backend/.env.example` and `frontend/.env.example` | <!-- feature:microsoft -->                 |
+| `OAUTH_APPLE_CLIENT_ID`, `OAUTH_APPLE_CALLBACK_URL`, `OAUTH_APPLE_TEAM_ID`, `OAUTH_APPLE_KEY_ID`, `OAUTH_APPLE_PRIVATE_KEY`                                                                                                                                                            | Apple configuration. See its setup guide.                | `backend/.env.example` and `frontend/.env.example` | <!-- feature:apple -->                     |
+| `OAUTH_DISCORD_CLIENT_ID`, `OAUTH_DISCORD_CLIENT_SECRET`, `OAUTH_DISCORD_CALLBACK_URL`                                                                                                                                                                                                 | Discord configuration. See its setup guide.              | `backend/.env.example` and `frontend/.env.example` | <!-- feature:discord -->                   |
+| `OAUTH_LINKEDIN_CLIENT_ID`, `OAUTH_LINKEDIN_CLIENT_SECRET`, `OAUTH_LINKEDIN_CALLBACK_URL`                                                                                                                                                                                              | LinkedIn configuration. See its setup guide.             | `backend/.env.example` and `frontend/.env.example` | <!-- feature:linkedin -->                  |
+| `OAUTH_GITLAB_CLIENT_ID`, `OAUTH_GITLAB_CLIENT_SECRET`, `OAUTH_GITLAB_CALLBACK_URL`, `OAUTH_GITLAB_BASE_URL`                                                                                                                                                                           | GitLab configuration. See its setup guide.               | `backend/.env.example` and `frontend/.env.example` | <!-- feature:gitlab -->                    |
+| `OAUTH_X_CLIENT_ID`, `OAUTH_X_CLIENT_SECRET`, `OAUTH_X_CALLBACK_URL`                                                                                                                                                                                                                   | X configuration. See its setup guide.                    | `backend/.env.example` and `frontend/.env.example` | <!-- feature:x -->                         |
+| `OAUTH_SLACK_CLIENT_ID`, `OAUTH_SLACK_CLIENT_SECRET`, `OAUTH_SLACK_CALLBACK_URL`                                                                                                                                                                                                       | Slack configuration. See its setup guide.                | `backend/.env.example` and `frontend/.env.example` | <!-- feature:slack -->                     |
+| `OAUTH_TWITCH_CLIENT_ID`, `OAUTH_TWITCH_CLIENT_SECRET`, `OAUTH_TWITCH_CALLBACK_URL`                                                                                                                                                                                                    | Twitch configuration. See its setup guide.               | `backend/.env.example` and `frontend/.env.example` | <!-- feature:twitch -->                    |
+| `OAUTH_OIDC_CLIENT_ID`, `OAUTH_OIDC_CLIENT_SECRET`, `OAUTH_OIDC_CALLBACK_URL`, `OAUTH_OIDC_ISSUER`, `OAUTH_OIDC_PROVIDER_ID`, `OAUTH_OIDC_DISPLAY_NAME`, `OAUTH_OIDC_SCOPES`, `OAUTH_OIDC_AUTHORIZATION_URL`, `OAUTH_OIDC_TOKEN_URL`, `OAUTH_OIDC_USERINFO_URL`, `OAUTH_OIDC_JWKS_URL` | Generic OIDC configuration. See its setup guide.         | `backend/.env.example` and `frontend/.env.example` | <!-- feature:oidc -->                      |
+| `SMTP_HOST`                                                                                                                                                                                                                                                                            | Mail delivery shared by password and magic link sign-in. | `backend/.env.example`                             | <!-- feature:email-password,magic-link --> |
+| `SMTP_PORT`                                                                                                                                                                                                                                                                            | Mail delivery shared by password and magic link sign-in. | `backend/.env.example`                             | <!-- feature:email-password,magic-link --> |
+| `SMTP_SECURE`                                                                                                                                                                                                                                                                          | Mail delivery shared by password and magic link sign-in. | `backend/.env.example`                             | <!-- feature:email-password,magic-link --> |
+| `SMTP_USER`                                                                                                                                                                                                                                                                            | Mail delivery shared by password and magic link sign-in. | `backend/.env.example`                             | <!-- feature:email-password,magic-link --> |
+| `SMTP_PASS`                                                                                                                                                                                                                                                                            | Mail delivery shared by password and magic link sign-in. | `backend/.env.example`                             | <!-- feature:email-password,magic-link --> |
+| `EMAIL_FROM`                                                                                                                                                                                                                                                                           | Mail delivery shared by password and magic link sign-in. | `backend/.env.example`                             | <!-- feature:email-password,magic-link --> |
 
 ### Key frontend variables (`frontend/.env.local`)
 
@@ -256,9 +282,9 @@ pnpm --filter backend run seed:reset
 | [Database schema](docs/reference/DATABASE_SCHEMA.md)    | MongoDB collections, indexes, and migrations                           |
 | [RBAC system](docs/access-control/RBAC-SYSTEM.md)       | Role levels, permission inheritance, and enforcement guards            |
 | [Migration guide](docs/operations/MIGRATION-GUIDE.md)   | Database migration scripts and versioning                              |
-| [Production setup](docs/operations/PRODUCTION-SETUP.md) | Domain configuration, SSL termination, and Nginx reverse proxy         |
+| [Production setup](docs/operations/PRODUCTION-SETUP.md) | Domain configuration, SSL termination, and Nginx reverse proxy         | <!-- feature:production --> |
 | [Code quality](docs/reference/code-quality.md)          | Linting, formatting, git hooks, and E2E tests                          |
-| [Deployment](docs/operations/deployment.md)             | Docker Compose and cloud deployment guides                             |
+| [Deployment](docs/operations/deployment.md)             | Docker Compose and cloud deployment guides                             | <!-- feature:production --> |
 | [Backend guide](backend/README.md)                      | Backend modules, controllers, and configuration schema                 |
 | [Frontend guide](frontend/README.md)                    | Frontend routing, components, and internationalization                 |
 

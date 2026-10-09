@@ -50,17 +50,20 @@ test('init writes OAuth and native DPoP secrets into backend configuration', asy
     randomSizes.push(size);
     return Buffer.from(randomSizes.length === 1 ? 'A'.repeat(size) : 'B'.repeat(size));
   });
-  const backendEnv = generateBackendEnv({
-    appTitle: 'Test Application',
-    env: { backendPort: 5001, frontendPort: 3000, mongoUri: 'mongodb://localhost/test' },
-    smtp: { host: '', port: '587', secure: 'false', user: '', pass: '', from: '' },
-    oauth: {
-      google: { clientId: '', clientSecret: '' },
-      facebook: { clientId: '', clientSecret: '' },
-      github: { clientId: '', clientSecret: '' },
+  const backendEnv = generateBackendEnv(
+    {
+      appTitle: 'Test Application',
+      env: { backendPort: 5001, frontendPort: 3000, mongoUri: 'mongodb://localhost/test' },
+      smtp: { host: '', port: '587', secure: 'false', user: '', pass: '', from: '' },
+      oauth: {
+        google: { clientId: '', clientSecret: '' },
+        facebook: { clientId: '', clientSecret: '' },
+        github: { clientId: '', clientSecret: '' },
+      },
+      ...secrets,
     },
-    ...secrets,
-  });
+    'AUTH_NATIVE_APPLICATIONS=[]\n', // feature:native-core
+  );
 
   assert.deepEqual(randomSizes, [48, 48]);
   assert.equal(
@@ -78,6 +81,7 @@ test('init writes OAuth and native DPoP secrets into backend configuration', asy
       'OAUTH_STATE_SECRET=QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFB',
     ),
   );
+  // feature:native-core:start
   assert.ok(
     backendEnv.includes(
       'AUTH_NATIVE_DPOP_NONCE_SECRET=QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJC',
@@ -85,7 +89,92 @@ test('init writes OAuth and native DPoP secrets into backend configuration', asy
   );
   assert.match(backendEnv, /AUTH_NATIVE_ENABLED=false/);
   assert.match(backendEnv, /AUTH_NATIVE_DPOP_REQUIRED=false/);
+  // feature:native-core:end
   assert.match(source, /\.\.\.createSetupSecrets\(\)/);
   assert.match(source, /mode: 0o600/);
   assert.doesNotMatch(backendEnv, /frontendPort\}\/auth\/oauth\/callback/);
+});
+
+const INIT_CONFIG = {
+  appTitle: 'Test Application',
+  env: { backendPort: 5001, frontendPort: 3000, mongoUri: 'mongodb://localhost/test' },
+  smtp: { host: '', port: '587', secure: 'false', user: '', pass: '', from: '' },
+  oauth: {
+    google: { clientId: '', clientSecret: '' },
+    facebook: { clientId: '', clientSecret: '' },
+    github: { clientId: '', clientSecret: '' },
+  },
+  stateSecret: 'fixed-oauth-secret',
+  nativeDpopNonceSecret: 'fixed-native-secret',
+};
+
+// feature:native-core:start
+const NATIVE_APPLICATIONS_LINE = /^AUTH_NATIVE_APPLICATIONS=/;
+const REGISTRATION =
+  'AUTH_NATIVE_APPLICATIONS=\'[ {"clientId":"custom.$client", "redirectUris":["custom://auth/callback"], "name":"A\\\\B"} ]\'  ';
+
+test('init carries the example registration exactly and leaves native sign-in off', () => {
+  const content = generateBackendEnv(
+    INIT_CONFIG,
+    `${REGISTRATION}\r\nAUTH_NATIVE_ENABLED=true\r\n`,
+  );
+  assert.equal(
+    content.split('\n').find((line) => NATIVE_APPLICATIONS_LINE.test(line)),
+    REGISTRATION,
+  );
+  assert.match(content, /^AUTH_NATIVE_ENABLED=false$/m);
+});
+// feature:native-core:end
+
+for (const example of ['', '# AUTH_NATIVE_APPLICATIONS=example\n', 'PORT=5001\n']) {
+  test(`init omits mobile configuration without active registration: ${JSON.stringify(example)}`, () => {
+    assert.doesNotMatch(generateBackendEnv(INIT_CONFIG, example), /^AUTH_NATIVE_/m);
+  });
+}
+
+test('init backs up then replaces an existing backend environment from the example', async (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: 0 });
+  const directory = await mkdtemp(join(tmpdir(), 'init-registration-'));
+  try {
+    const { mkdir } = await import('node:fs/promises');
+    const { writeBackendEnvironment } = await import('../lib/init-environment.js');
+    await mkdir(join(directory, 'backend'));
+    const envPath = join(directory, 'backend', '.env');
+    await writeFile(envPath, 'EXISTING=keep-in-backup\n');
+    await writeFile(join(directory, 'backend', '.env.example'), 'PORT=5001\n');
+    const backup = writeBackendEnvironment(INIT_CONFIG, directory);
+    assert.equal(backup, `${envPath}.backup.1970-01-01T00-00-00-000Z`);
+    assert.equal(await readFile(backup, 'utf8'), 'EXISTING=keep-in-backup\n');
+    const content = await readFile(envPath, 'utf8');
+    assert.doesNotMatch(content, /^EXISTING=/m);
+    assert.doesNotMatch(content, /^AUTH_NATIVE_/m);
+    assert.equal((await stat(envPath)).mode & 0o777, 0o600);
+    // feature:native-core:start
+    await writeFile(join(directory, 'backend', '.env.example'), `${REGISTRATION}\n`);
+    writeBackendEnvironment(INIT_CONFIG, directory);
+    assert.equal(
+      (await readFile(envPath, 'utf8'))
+        .split('\n')
+        .find((line) => NATIVE_APPLICATIONS_LINE.test(line)),
+      REGISTRATION,
+    );
+    // feature:native-core:end
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('init creates a private backend environment without an example or existing file', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'init-no-example-'));
+  try {
+    const { writeBackendEnvironment } = await import('../lib/init-environment.js');
+    assert.equal(writeBackendEnvironment(INIT_CONFIG, directory), null);
+    const envPath = join(directory, 'backend', '.env');
+    const content = await readFile(envPath, 'utf8');
+    assert.match(content, /^PORT=5001$/m);
+    assert.doesNotMatch(content, /^AUTH_NATIVE_/m);
+    assert.equal((await stat(envPath)).mode & 0o777, 0o600);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
