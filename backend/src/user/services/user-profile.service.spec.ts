@@ -14,6 +14,9 @@ import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 
 import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
+import { UnitOfWorkRunner } from '../../common/persistence/unit-of-work';
+import { MongoUnitOfWorkRunner } from '../../session/persistence/mongo/mongo-unit-of-work';
+import { MONGO_ACCOUNT_STORES } from '../persistence/mongo/mongo-account-stores';
 
 jest.mock('bcrypt');
 
@@ -71,6 +74,8 @@ describe('UserProfileService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserProfileService,
+        ...MONGO_ACCOUNT_STORES,
+        { provide: UnitOfWorkRunner, useClass: MongoUnitOfWorkRunner },
         { provide: Clock, useValue: new FrozenClock(TEST_NOW) },
         { provide: getModelToken(User.name), useValue: mockUserModel },
         { provide: getModelToken(Role.name), useValue: mockRoleModel },

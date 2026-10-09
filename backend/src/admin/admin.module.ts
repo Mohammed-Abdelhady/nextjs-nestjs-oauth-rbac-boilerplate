@@ -15,6 +15,7 @@ import { MailModule } from '../mail/mail.module';
 import { SessionModule } from '../session/session.module';
 import { RoleModule } from '../role/role.module';
 import { UserModule } from '../user/user.module';
+import { MONGO_ADMIN_ACCOUNT_STORE } from './persistence/mongo/mongo-admin-stores';
 
 /**
  * Admin module for user management operations.
@@ -41,6 +42,7 @@ import { UserModule } from '../user/user.module';
     AdminUserAccessService,
     AdminEmailChangeService,
     AdminPermissionsService,
+    MONGO_ADMIN_ACCOUNT_STORE,
   ],
   exports: [AdminUsersService],
 })

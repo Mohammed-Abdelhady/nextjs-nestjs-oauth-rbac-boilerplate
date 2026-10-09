@@ -6,7 +6,7 @@ import { PENDING_PURPOSE } from '../../constants/registration';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { ReservedCode } from '../../interfaces/pending-code.interface';
 import { partialMock } from '../../../common/testing/test-doubles.harness-spec';
-import { EmailChangeConfirmationService } from './email-change-confirmation.service';
+import { mongoEmailChangeConfirmation } from '../../../../test/utils/auth/mongo-activation';
 import { VerificationCodeService } from '../codes/verification-code.service';
 
 describe('EmailChangeConfirmationService', () => {
@@ -44,7 +44,7 @@ describe('EmailChangeConfirmationService', () => {
     jest.spyOn(session, 'commitTransaction').mockRejectedValue(commitFailure);
     jest.spyOn(session, 'endSession').mockResolvedValue(undefined);
     const log = jest.spyOn(Logger.prototype, 'error').mockImplementation();
-    const service = new EmailChangeConfirmationService(
+    const service = mongoEmailChangeConfirmation(
       model,
       connection,
       verification,

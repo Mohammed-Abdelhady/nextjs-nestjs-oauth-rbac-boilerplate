@@ -2,7 +2,7 @@ import { Role, RoleDocument } from '../../schemas/role.schema';
 import { Logger } from '@nestjs/common';
 import { UserRole } from '../../../user/enums/user-role.enum';
 import { SecurityEventService } from '../../../session/services/security-event.service';
-import { sweepRoleHolders } from './role-holder.util';
+import { sweepRoleHolders } from '../../../../test/utils/role/mongo-role-holder-sweeps';
 import {
   EDITOR_SLUG,
   useAdminRoundFour,

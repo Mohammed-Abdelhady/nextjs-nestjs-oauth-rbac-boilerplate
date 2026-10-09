@@ -129,6 +129,7 @@ describe('PostgreSQL prototype adapter', () => {
         '0002_roles.sql',
         '0003_pending_codes.sql',
         '0004_browser_proofs_security_events.sql',
+        '0005_accounts.sql',
       ],
       again: [],
       recorded: [
@@ -136,6 +137,7 @@ describe('PostgreSQL prototype adapter', () => {
         '0002_roles.sql',
         '0003_pending_codes.sql',
         '0004_browser_proofs_security_events.sql',
+        '0005_accounts.sql',
       ],
     });
   });

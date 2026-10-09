@@ -14,7 +14,7 @@ import {
 import { AuthMailService } from '../mail/auth-mail.service';
 import { HashService } from '../../../common/services/hash.service';
 import { MailCounterService } from '../mail/mail-counter.service';
-import { RegistrationService } from './registration.service';
+import { mongoRegistrationService } from '../../../../test/utils/auth/mongo-activation';
 import { SignInService } from '../sessions/sign-in.service';
 import { VerificationCodeService } from '../codes/verification-code.service';
 
@@ -53,7 +53,7 @@ describe('RegistrationService unknown commit re-read', () => {
     jest.spyOn(session, 'commitTransaction').mockRejectedValue(commitFailure);
     jest.spyOn(session, 'endSession').mockResolvedValue(undefined);
     const log = jest.spyOn(Logger.prototype, 'error').mockImplementation();
-    const service = new RegistrationService(
+    const service = mongoRegistrationService(
       model,
       connection,
       hash,

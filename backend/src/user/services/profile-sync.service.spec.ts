@@ -7,6 +7,7 @@ import { User } from '../schemas/user.schema';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { EMAIL_PROVIDER } from '../../common/constants/oauth-providers';
 import { OAuthProfile } from '../../auth/oauth/oauth-provider.interface';
+import { MONGO_LINKED_ACCOUNT_STORE } from '../persistence/mongo/mongo-linked-account-stores';
 
 const USER_ID = new Types.ObjectId().toString();
 
@@ -56,6 +57,7 @@ describe('ProfileSyncService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProfileSyncService,
+        MONGO_LINKED_ACCOUNT_STORE,
         { provide: getModelToken(User.name), useValue: mockUserModel },
         { provide: ConfigService, useValue: mockConfigService },
       ],

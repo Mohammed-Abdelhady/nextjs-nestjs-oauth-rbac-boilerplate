@@ -7,6 +7,8 @@ import { RoleHierarchyService } from '../../../role/services/role-hierarchy.serv
 import { User } from '../../../user/schemas/user.schema';
 import { UserRole } from '../../../user/enums/user-role.enum';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
+import { Role } from '../../../role/schemas/role.schema';
+import { MONGO_ADMIN_ACCOUNT_STORE } from '../../persistence/mongo/mongo-admin-stores';
 
 const LEVELS: Record<string, number> = {
   user: 1,
@@ -59,6 +61,8 @@ describe('AdminUserQueriesService', () => {
       providers: [
         AdminUserQueriesService,
         AdminUserAccessService,
+        MONGO_ADMIN_ACCOUNT_STORE,
+        { provide: getModelToken(Role.name), useValue: {} },
         { provide: getModelToken(User.name), useValue: mockUserModel },
         { provide: RoleHierarchyService, useValue: mockRoleHierarchyService },
       ],

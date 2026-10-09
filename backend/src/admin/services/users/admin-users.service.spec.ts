@@ -16,6 +16,14 @@ import {
   createChainableQueryMock,
   createConnectionMock,
 } from '../../../common/testing/test-doubles.harness-spec';
+import { UnitOfWorkRunner } from '../../../common/persistence/unit-of-work';
+import { MongoRoleChangeStore } from '../../../role/persistence/mongo/mongo-role-change.store';
+import { MongoRoleSweepStore } from '../../../role/persistence/mongo/mongo-role-sweep.store';
+import { RoleChangeStore } from '../../../role/stores/role-change.store';
+import { RoleSweepStore } from '../../../role/stores/role-sweep.store';
+import { MongoUnitOfWorkRunner } from '../../../session/persistence/mongo/mongo-unit-of-work';
+import { MONGO_ADMIN_ACCOUNT_STORE } from '../../persistence/mongo/mongo-admin-stores';
+import { MONGO_ACCOUNT_SESSIONS } from '../../../user/persistence/mongo/mongo-account-stores';
 
 const LEVELS: Record<string, number> = {
   user: 1,
@@ -117,6 +125,11 @@ describe('AdminUsersService', () => {
       providers: [
         AdminUsersService,
         AdminUserAccessService,
+        MONGO_ADMIN_ACCOUNT_STORE,
+        { provide: UnitOfWorkRunner, useClass: MongoUnitOfWorkRunner },
+        { provide: RoleChangeStore, useClass: MongoRoleChangeStore },
+        { provide: RoleSweepStore, useClass: MongoRoleSweepStore },
+        MONGO_ACCOUNT_SESSIONS,
         { provide: getModelToken(User.name), useValue: mockUserModel },
         { provide: getModelToken(Role.name), useValue: mockRoleModel },
         { provide: SessionService, useValue: mockSessionService },
@@ -283,7 +296,7 @@ describe('AdminUsersService', () => {
 
   describe('updateUser email change', () => {
     it('should hand an email change to the email change service', async () => {
-      const target = expectTarget(UserRole.USER);
+      expectTarget(UserRole.USER);
 
       await service.updateUser(
         targetId.toString(),
@@ -293,7 +306,10 @@ describe('AdminUsersService', () => {
       );
 
       expect(mockEmailChangeService.apply).toHaveBeenCalledWith(
-        target,
+        expect.objectContaining({
+          id: targetId.toString(),
+          email: 'target@example.com',
+        }),
         'new@example.com',
         LEVELS.admin,
       );

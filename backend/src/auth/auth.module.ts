@@ -42,6 +42,7 @@ import { UserModule } from '../user/user.module';
 import { SessionModule } from '../session/session.module';
 import { BrowserProofGuard } from './guards/browser-proof.guard';
 import { MONGO_PENDING_CODE_STORES } from './persistence/mongo/mongo-pending-code-stores';
+import { MONGO_ACTIVATION_STORES } from './persistence/mongo/mongo-activation-accounts';
 import { AuthGuard } from './guards/auth.guard';
 
 @Module({
@@ -74,6 +75,7 @@ import { AuthGuard } from './guards/auth.guard';
     AuthMailService,
     AuthFeaturesService,
     ...MONGO_PENDING_CODE_STORES,
+    ...MONGO_ACTIVATION_STORES,
     // feature:totp:start
     // The second factor hooks into every sign-in path, so the pieces those
     // paths need are declared here rather than in TwoFactorModule.

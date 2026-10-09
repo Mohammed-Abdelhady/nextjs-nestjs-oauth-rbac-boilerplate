@@ -1,12 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Connection, Model } from 'mongoose';
-import { User, UserDocument } from '../../../user/schemas/user.schema';
 import { ApiResponse } from '../../../common/dto/api-response.dto';
-import {
-  isUnknownTransactionOutcome,
-  withMajorityTransaction,
-} from '../../../session/utils/transactions/mongo-transaction';
+import { isUnknownTransactionOutcome } from '../../../common/exceptions/unknown-transaction-outcome.error';
+import { storeFailureCause } from '../../../common/persistence/store-failure';
+import { UnitOfWorkRunner } from '../../../common/persistence/unit-of-work';
+import { ActivationAccounts } from '../../pending-codes/activation-accounts';
 import { VerificationCodeService } from '../codes/verification-code.service';
 import { confirmEmailChange } from '../../utils/activation.util';
 import { activationCodeInvalid } from '../../utils/activation-error.util';
@@ -15,7 +12,6 @@ import { ReservedCode } from '../../interfaces/pending-code.interface';
 import { ConfirmEmailChangeDto } from '../../dto/confirm-email-change.dto';
 import { logUnknownCommit } from '../../utils/unknown-commit.util';
 import { asAuthorityUnavailable } from '../../../session/utils/authority/authority-unavailable';
-import { mongoUnitOfWork } from '../../../session/persistence/mongo/mongo-unit-of-work';
 
 /**
  * Confirms the new address an admin moved an account to. It is its own
@@ -27,8 +23,8 @@ export class EmailChangeConfirmationService {
   private readonly logger = new Logger(EmailChangeConfirmationService.name);
 
   constructor(
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-    @InjectConnection() private readonly connection: Connection,
+    private readonly accounts: ActivationAccounts,
+    private readonly runner: UnitOfWorkRunner,
     private readonly verificationCodeService: VerificationCodeService,
   ) {}
 
@@ -42,19 +38,19 @@ export class EmailChangeConfirmationService {
     );
 
     try {
-      await withMajorityTransaction(this.connection, async (session) => {
+      await this.runner.run(async (unitOfWork) => {
         const consumed = await this.verificationCodeService.consumeCode(
           reserved,
-          mongoUnitOfWork(session),
+          unitOfWork,
         );
         if (!consumed) {
           throw activationCodeInvalid();
         }
-        await confirmEmailChange(reserved, this.userModel, session);
+        await confirmEmailChange(this.accounts, unitOfWork, reserved);
       });
     } catch (error) {
       if (!isUnknownTransactionOutcome(error)) {
-        throw error;
+        throw storeFailureCause(error);
       }
       // The commit may have landed. Only a verified generation answers
       // success; an absent or unreadable row remains an unknown outcome.
@@ -83,11 +79,13 @@ export class EmailChangeConfirmationService {
     if (!reserved.userId) {
       return false;
     }
-    const user = await this.userModel.findById(reserved.userId);
+    const user = await this.accounts.findAddressConfirmation(
+      reserved.userId.toString(),
+    );
     return (
       user !== null &&
-      user.isVerified === true &&
-      (user.addressGeneration ?? 0) === (reserved.addressGeneration ?? 0)
+      user.isVerified &&
+      user.addressGeneration === (reserved.addressGeneration ?? 0)
     );
   }
 }

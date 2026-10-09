@@ -1,28 +1,23 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User, UserDocument } from '../schemas/user.schema';
 import { EMAIL_PROVIDER } from '../../common/constants/oauth-providers';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
-import { isMongoDuplicateKeyError } from '../../common/utils/mongo-error.util';
+import { UniqueConflictError } from '../../common/persistence/persistence-errors';
 import { OAuthProfile } from '../../auth/oauth/oauth-provider.interface';
-
-const LINKED_ACCOUNT_FIELDS = 'linkedAccounts authProvider primaryProvider';
+import { LinkedAccountStore } from '../stores/linked-account.store';
+import { StoredAccount } from '../stores/stored-account';
 
 /**
  * Links and unlinks OAuth accounts on a user.
  *
- * Provider ids come from the OAuth registry; this service only stores them as
- * entries of `linkedAccounts` and derives `linkedProviders` from that array.
+ * Provider ids come from the OAuth registry; this service only hands them to
+ * the store as links and reads `linkedProviders` back.
  */
 @Injectable()
 export class AccountLinkingService {
   private readonly logger = new Logger(AccountLinkingService.name);
 
-  constructor(
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-  ) {}
+  constructor(private readonly links: LinkedAccountStore) {}
 
   /**
    * Adds a provider account to a user.
@@ -34,7 +29,7 @@ export class AccountLinkingService {
     userId: string,
     provider: string,
     profile: OAuthProfile,
-  ): Promise<UserDocument> {
+  ): Promise<StoredAccount> {
     const user = await this.requireUser(userId);
 
     if (user.linkedProviders.includes(provider)) {
@@ -56,20 +51,15 @@ export class AccountLinkingService {
       );
     }
 
-    user.linkedAccounts.push({
-      provider,
-      providerId: profile.providerId,
-      linkedAt: new Date(),
-    });
-
-    if (!user.primaryProvider) {
-      user.primaryProvider = provider;
-    }
-
+    let linked: StoredAccount;
     try {
-      await user.save();
+      linked = await this.links.addLink(user, {
+        provider,
+        providerId: profile.providerId,
+        ...(user.primaryProvider ? {} : { primaryProvider: provider }),
+      });
     } catch (error) {
-      if (isMongoDuplicateKeyError(error)) {
+      if (error instanceof UniqueConflictError) {
         throw new AppException(
           ErrorCode.OAUTH_ACCOUNT_LINKED_ELSEWHERE,
           `This ${provider} account is already linked to another user`,
@@ -81,7 +71,7 @@ export class AccountLinkingService {
     }
 
     this.logger.log(`User ${userId} linked a ${provider} account`);
-    return user;
+    return linked;
   }
 
   /**
@@ -93,7 +83,7 @@ export class AccountLinkingService {
   async unlinkProvider(
     userId: string,
     provider: string,
-  ): Promise<UserDocument> {
+  ): Promise<StoredAccount> {
     const user = await this.requireUser(userId);
 
     if (provider === EMAIL_PROVIDER) {
@@ -123,31 +113,29 @@ export class AccountLinkingService {
       );
     }
 
-    user.linkedAccounts = user.linkedAccounts.filter(
+    const remaining = user.linkedAccounts.filter(
       (account) => account.provider !== provider,
     );
-
-    if (user.primaryProvider === provider) {
-      user.primaryProvider = user.linkedAccounts[0]?.provider;
-    }
-
-    await user.save();
+    const unlinked = await this.links.removeLink(user, {
+      provider,
+      primaryProvider:
+        user.primaryProvider === provider
+          ? remaining[0]?.provider
+          : user.primaryProvider,
+    });
 
     this.logger.log(`User ${userId} unlinked their ${provider} account`);
-    return user;
+    return unlinked;
   }
 
   /** Every sign-in method on the account, including 'email'. */
   async getLinkedProviders(userId: string): Promise<string[]> {
-    const user = await this.requireUser(userId, LINKED_ACCOUNT_FIELDS);
-    return user.linkedProviders;
+    const user = await this.links.findLinks(userId);
+    return this.active(user).linkedProviders;
   }
 
   async canUnlinkProvider(userId: string, provider: string): Promise<boolean> {
-    const user = await this.userModel
-      .findById(userId)
-      .select(LINKED_ACCOUNT_FIELDS)
-      .exec();
+    const user = await this.links.findLinkedProviders(userId);
 
     if (!user || user.isDeleted) {
       return false;
@@ -161,10 +149,7 @@ export class AccountLinkingService {
   }
 
   async isPrimaryProvider(userId: string, provider: string): Promise<boolean> {
-    const user = await this.userModel
-      .findById(userId)
-      .select('primaryProvider isDeleted')
-      .exec();
+    const user = await this.links.findPrimaryProviderState(userId);
 
     if (!user || user.isDeleted) {
       return false;
@@ -181,7 +166,7 @@ export class AccountLinkingService {
   async setPrimaryProvider(
     userId: string,
     provider: string,
-  ): Promise<UserDocument> {
+  ): Promise<StoredAccount> {
     const user = await this.requireUser(userId);
 
     if (provider === EMAIL_PROVIDER) {
@@ -202,23 +187,17 @@ export class AccountLinkingService {
       );
     }
 
-    user.primaryProvider = provider;
-    await user.save();
+    const saved = await this.links.savePrimaryProvider(user, provider);
 
     this.logger.log(`User ${userId} set ${provider} as primary provider`);
-    return user;
+    return saved;
   }
 
-  private async requireUser(
-    userId: string,
-    fields?: string,
-  ): Promise<UserDocument> {
-    const query = this.userModel.findById(userId);
-    if (fields) {
-      query.select(`${fields} isDeleted`);
-    }
-    const user = await query.exec();
+  private async requireUser(userId: string): Promise<StoredAccount> {
+    return this.active(await this.links.findAccount(userId));
+  }
 
+  private active(user: StoredAccount | null): StoredAccount {
     if (!user || user.isDeleted) {
       throw new AppException(
         ErrorCode.USER_NOT_FOUND,

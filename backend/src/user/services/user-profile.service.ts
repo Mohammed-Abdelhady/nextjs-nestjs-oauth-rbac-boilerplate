@@ -1,18 +1,6 @@
 import { Injectable, Logger, HttpStatus } from '@nestjs/common';
-import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Connection, Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
-import { User, UserDocument } from '../schemas/user.schema';
 import { UserRole } from '../enums/user-role.enum';
-import { Role, RoleDocument } from '../../role/schemas/role.schema';
-// feature:passkeys:start
-import {
-  Passkey,
-  PasskeyDocument,
-} from '../../auth/passkeys/schemas/passkey.schema';
-// feature:passkeys:end
-import { SessionService } from '../../auth/services/sessions/session.service';
-import { withMajorityTransaction } from '../../session/utils/transactions/mongo-transaction';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { UserProfileDto } from '../dto/user-profile.dto';
@@ -20,15 +8,19 @@ import { AppException } from '../../common/exceptions/app.exception';
 import { Clock } from '../../common/services/clock';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { ApiResponse } from '../../common/dto/api-response.dto';
-import { getEffectivePermissions } from '../../auth/utils/permissions.util';
+import { runLeavingFailuresAsRaised } from '../../common/persistence/store-failure';
 import {
-  PASSWORD_SALT_ROUNDS,
-  USER_HIDDEN_FIELDS,
-} from '../constants/user.constants';
+  UnitOfWork,
+  UnitOfWorkRunner,
+} from '../../common/persistence/unit-of-work';
+import { PASSWORD_SALT_ROUNDS } from '../constants/user.constants';
+import { AccountProfileStore } from '../stores/account-profile.store';
+import { AccountSessions } from '../stores/account-sessions';
+import { StoredAccount } from '../stores/stored-account';
 import {
+  assertAccountId,
   assertActiveUser,
-  assertValidObjectId,
-} from '../utils/user-lookup.util';
+} from '../utils/account-lookup.util';
 
 /**
  * Self-service profile operations: reading and updating the profile,
@@ -39,14 +31,9 @@ export class UserProfileService {
   private readonly logger = new Logger(UserProfileService.name);
 
   constructor(
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-    @InjectModel(Role.name) private readonly roleModel: Model<RoleDocument>,
-    // feature:passkeys:start
-    @InjectModel(Passkey.name)
-    private readonly passkeyModel: Model<PasskeyDocument>,
-    // feature:passkeys:end
-    private readonly sessionService: SessionService,
-    @InjectConnection() private readonly connection: Connection,
+    private readonly accounts: AccountProfileStore,
+    private readonly sessions: AccountSessions,
+    private readonly runner: UnitOfWorkRunner,
     private readonly clock: Clock,
   ) {}
 
@@ -54,16 +41,13 @@ export class UserProfileService {
    * Get current user profile.
    */
   async getProfile(userId: string): Promise<ApiResponse<UserProfileDto>> {
-    assertValidObjectId(userId, 'Invalid user ID format');
+    this.assertAccountId(userId);
 
-    const user = await this.userModel
-      .findById(userId)
-      .select(USER_HIDDEN_FIELDS)
-      .exec();
+    const user = await this.accounts.findProfile(userId);
 
     assertActiveUser(user);
 
-    this.logger.log(`Profile retrieved: userId=${user._id.toString()}`);
+    this.logger.log(`Profile retrieved: userId=${user.id}`);
     const profileDto = await this.mapToProfileDto(user);
     return ApiResponse.success(profileDto);
   }
@@ -75,20 +59,16 @@ export class UserProfileService {
     userId: string,
     dto: UpdateProfileDto,
   ): Promise<ApiResponse<UserProfileDto>> {
-    assertValidObjectId(userId, 'Invalid user ID format');
+    this.assertAccountId(userId);
 
-    const user = await this.userModel.findById(userId).exec();
+    const user = await this.accounts.findAccount(userId);
     assertActiveUser(user);
 
-    // Update only provided fields
-    if (dto.name !== undefined) {
-      user.name = dto.name;
-    }
+    // Only a provided name is written.
+    const saved = await this.accounts.saveProfile(user, { name: dto.name });
 
-    await user.save();
-
-    this.logger.log(`Profile updated: userId=${user._id.toString()}`);
-    const profileDto = await this.mapToProfileDto(user);
+    this.logger.log(`Profile updated: userId=${saved.id}`);
+    const profileDto = await this.mapToProfileDto(saved);
     return ApiResponse.success(profileDto, 'Profile updated successfully');
   }
 
@@ -100,7 +80,7 @@ export class UserProfileService {
     dto: ChangePasswordDto,
     currentSessionId: string | null,
   ): Promise<ApiResponse<{ message: string }>> {
-    assertValidObjectId(userId, 'Invalid user ID format');
+    this.assertAccountId(userId);
 
     if (currentSessionId === null) {
       throw new AppException(
@@ -110,15 +90,12 @@ export class UserProfileService {
       );
     }
 
-    const user = await this.userModel
-      .findById(userId)
-      .select('+password')
-      .exec();
+    const user = await this.accounts.findPassword(userId);
 
     assertActiveUser(user);
 
     // Check if user has a password (OAuth users might not)
-    if (!user.password) {
+    if (!user.passwordHash) {
       throw new AppException(
         ErrorCode.INVALID_CURRENT_PASSWORD,
         'Cannot change password for OAuth-only accounts',
@@ -128,7 +105,7 @@ export class UserProfileService {
 
     const isPasswordValid = await bcrypt.compare(
       dto.currentPassword,
-      user.password,
+      user.passwordHash,
     );
 
     if (!isPasswordValid) {
@@ -139,7 +116,10 @@ export class UserProfileService {
       );
     }
 
-    const isSamePassword = await bcrypt.compare(dto.newPassword, user.password);
+    const isSamePassword = await bcrypt.compare(
+      dto.newPassword,
+      user.passwordHash,
+    );
 
     if (isSamePassword) {
       throw new AppException(
@@ -155,22 +135,17 @@ export class UserProfileService {
     );
 
     // The password save and the revocation of the other sessions share one
-    // transaction: a revocation failure leaves the old password in place.
-    // The document is loaded per attempt: one that already saved it has no
-    // modified paths left, so a retried attempt would store nothing.
-    await withMajorityTransaction(this.connection, async (db) => {
-      const current = await this.userModel.findById(userId).session(db).exec();
+    // unit of work: a revocation failure leaves the old password in place.
+    // The account is read per attempt, so a rerun writes the hash again
+    // instead of trusting what a refused attempt already wrote.
+    await runLeavingFailuresAsRaised(this.runner, async (unitOfWork) => {
+      const current = await this.accounts.readAccount(unitOfWork, userId);
       assertActiveUser(current);
-      current.password = hashedPassword;
-      await current.save({ session: db });
-      await this.sessionService.invalidateAllSessionsExceptSession(
-        new Types.ObjectId(userId),
-        currentSessionId,
-        db,
-      );
+      await this.accounts.savePasswordHash(unitOfWork, current, hashedPassword);
+      await this.sessions.revokeAllExcept(unitOfWork, userId, currentSessionId);
     });
 
-    this.logger.log(`Password changed: userId=${user._id.toString()}`);
+    this.logger.log(`Password changed: userId=${user.id}`);
     return ApiResponse.success({
       message:
         'Password changed successfully. Other sessions have been logged out.',
@@ -185,18 +160,16 @@ export class UserProfileService {
     userId: string,
   ): Promise<ApiResponse<{ message: string }>> {
     // The check, the soft delete and the revocation commit or abort together.
-    await withMajorityTransaction(this.connection, async (db) => {
-      const user = await this.userModel.findById(userId).session(db).exec();
+    await runLeavingFailuresAsRaised(this.runner, async (unitOfWork) => {
+      const user = await this.accounts.readAccount(unitOfWork, userId);
       assertActiveUser(user);
       if (user.role === (UserRole.ADMIN as string)) {
-        await this.assertAnotherActiveAdmin(user._id, db);
+        await this.assertAnotherActiveAdmin(unitOfWork, user.id);
       }
 
-      user.isDeleted = true;
-      user.deletedAt = this.clock.now();
-      await user.save({ session: db });
+      await this.accounts.saveDeactivation(unitOfWork, user, this.clock.now());
 
-      await this.sessionService.invalidateAllSessions(user._id, db);
+      await this.sessions.revokeAll(unitOfWork, user.id);
     });
 
     this.logger.log(`Account deactivated: userId=${userId}`);
@@ -206,17 +179,13 @@ export class UserProfileService {
   }
 
   private async assertAnotherActiveAdmin(
-    userId: Types.ObjectId,
-    db: ClientSession,
+    unitOfWork: UnitOfWork,
+    userId: string,
   ): Promise<void> {
-    const others = await this.userModel
-      .countDocuments({
-        _id: { $ne: userId },
-        role: UserRole.ADMIN,
-        isDeleted: { $ne: true },
-      })
-      .session(db)
-      .exec();
+    const others = await this.accounts.countOtherActiveAdmins(
+      unitOfWork,
+      userId,
+    );
     if (others === 0) {
       throw new AppException(
         ErrorCode.ADMIN_CANNOT_DEACTIVATE_SELF,
@@ -224,16 +193,10 @@ export class UserProfileService {
         HttpStatus.FORBIDDEN,
       );
     }
-    // Two admins leaving at once each see the other in their own snapshot.
-    // Both write the admin role here, so one conflicts and counts again.
-    const fenced = await this.roleModel
-      .updateOne(
-        { slug: UserRole.ADMIN },
-        { $inc: { __v: 1 } },
-        { session: db, timestamps: false },
-      )
-      .exec();
-    if (fenced.matchedCount !== 1) {
+    // Two admins leaving at once each count the other. Both pass the same
+    // fence here, so one is refused, runs again and counts again.
+    const fence = await this.accounts.fenceAdminRole(unitOfWork);
+    if (fence !== 'fenced') {
       throw new AppException(
         ErrorCode.AUTHORITY_UNAVAILABLE,
         'Administrator role is unavailable',
@@ -246,38 +209,38 @@ export class UserProfileService {
    * Provider a user syncs its profile from, if any.
    */
   async getPrimaryProvider(userId: string): Promise<string | undefined> {
-    const user = await this.userModel
-      .findById(userId)
-      .select('primaryProvider')
-      .exec();
+    return this.accounts.findPrimaryProvider(userId);
+  }
 
-    return user?.primaryProvider;
+  private assertAccountId(userId: string): void {
+    assertAccountId(
+      this.accounts.isAccountId(userId),
+      'Invalid user ID format',
+    );
   }
 
   /**
-   * Map user document to profile DTO.
+   * Map a stored account to the profile DTO.
    */
-  private async mapToProfileDto(user: UserDocument): Promise<UserProfileDto> {
-    // Compute effective permissions (role + direct)
-    const effectivePermissions = await getEffectivePermissions(
-      user,
-      this.roleModel,
-    );
-    // feature:passkeys:start
-    const passkeyCount = await this.passkeyModel.countDocuments({
-      user: user._id,
-    });
-    // feature:passkeys:end
+  private async mapToProfileDto(user: StoredAccount): Promise<UserProfileDto> {
+    // Effective permissions are the role's and the account's own.
+    const rolePermissions = user.role
+      ? ((await this.accounts.findRolePermissions(user.role)) ?? [])
+      : [];
+    const effectivePermissions = [
+      ...new Set([...rolePermissions, ...(user.permissions || [])]),
+    ];
+    const passkeyCount = await this.accounts.countPasskeys(user.id); // feature:passkeys
 
     return {
-      id: user._id.toString(),
+      id: user.id,
       email: user.email,
       name: user.name,
       role: user.role,
       permissions: effectivePermissions,
       authProvider: user.authProvider,
       isVerified: user.isVerified,
-      twoFactorEnabled: user.twoFactor?.enabled === true, // feature:totp
+      twoFactorEnabled: user.twoFactorEnabled, // feature:totp
       passkeyCount, // feature:passkeys
       avatarUrl: user.avatarUrl,
       linkedProviders: user.linkedProviders,

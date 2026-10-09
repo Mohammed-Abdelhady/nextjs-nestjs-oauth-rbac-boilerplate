@@ -37,6 +37,9 @@ import {
   MONGO_PENDING_REGISTRATION_STORE,
   MONGO_MAIL_COUNTER_STORE,
 } from '../../persistence/mongo/mongo-pending-code-stores';
+import { MONGO_ACTIVATION_STORES } from '../../persistence/mongo/mongo-activation-accounts';
+import { UnitOfWorkRunner } from '../../../common/persistence/unit-of-work';
+import { MongoUnitOfWorkRunner } from '../../../session/persistence/mongo/mongo-unit-of-work';
 import { seedMailCounter } from '../../../../test/utils/mail-counter-seed';
 import { RaceGate } from '../../../../test/utils/race-gate';
 import { holdStoreCall } from '../../../../test/utils/pending-race';
@@ -88,6 +91,8 @@ describe('resend activation hash count', () => {
       providers: [
         MONGO_PENDING_REGISTRATION_STORE,
         MONGO_MAIL_COUNTER_STORE,
+        ...MONGO_ACTIVATION_STORES,
+        { provide: UnitOfWorkRunner, useClass: MongoUnitOfWorkRunner },
         RegistrationService,
         VerificationCodeService,
         HashService,

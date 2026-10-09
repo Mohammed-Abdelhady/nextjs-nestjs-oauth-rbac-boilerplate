@@ -1,15 +1,7 @@
 import { Connection, Model } from 'mongoose';
-import {
-  RerunPause,
-  UnitOfWork,
-  UnitOfWorkRunner,
-} from '../../../common/persistence/unit-of-work';
-import {
-  MongoUnitOfWorkRunner,
-  mongoUnitOfWork,
-} from '../../../session/persistence/mongo/mongo-unit-of-work';
+import { RerunPause } from '../../../common/persistence/unit-of-work';
+import { MongoUnitOfWorkRunner } from '../../../session/persistence/mongo/mongo-unit-of-work';
 import { SecurityEventService } from '../../../session/services/security-event.service';
-import { withMajorityTransaction } from '../../../session/utils/transactions/mongo-transaction';
 import { UserDocument } from '../../../user/schemas/user.schema';
 import { RoleDocument } from '../../schemas/role.schema';
 import { RoleSweepStores } from '../../sweeps/role-holder-sweep';
@@ -40,23 +32,4 @@ export function mongoRoleStores(
     changes: new MongoRoleChangeStore(roleModel, userModel, events),
     sweeps: new MongoRoleSweepStore(roleModel, userModel, events),
   };
-}
-
-/**
- * Runs work in a transaction and lets the driver's own errors through, for
- * callers outside the role module that still read them. It goes away when
- * those callers move behind a store.
- */
-export class MongoDriverErrorRunner extends UnitOfWorkRunner {
-  constructor(private readonly connection: Connection) {
-    super();
-  }
-
-  run<Result>(
-    work: (unitOfWork: UnitOfWork) => Promise<Result>,
-  ): Promise<Result> {
-    return withMajorityTransaction(this.connection, (session) =>
-      work(mongoUnitOfWork(session)),
-    );
-  }
 }
