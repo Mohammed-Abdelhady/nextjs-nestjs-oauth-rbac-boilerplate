@@ -217,7 +217,7 @@ export function legacyDimensions(): Dimensions {
         label: 'Web app (Next.js)',
         default: true,
         files: [],
-        workspaces: ['frontend'],
+        workspaces: [],
         envFiles: [],
         requires: { shared: [], targets: [] },
       },

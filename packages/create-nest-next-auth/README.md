@@ -156,7 +156,7 @@ with `web`, `mongodb` and no options.
 {
   "version": 2,
   "targets": {
-    "web": { "label": "Web app (Next.js)", "default": true, "files": ["frontend/**"] },
+    "web": { "label": "Web app (Next.js)", "default": true, "files": [] },
     "native-expo": {
       "label": "Mobile app, Expo",
       "default": false,
@@ -166,7 +166,7 @@ with `web`, `mongodb` and no options.
     }
   },
   "shared": {
-    "native-core": { "files": ["mobile/core/**"], "workspaces": ["mobile/core"] }
+    "native-core": { "files": [], "workspaces": [] }
   },
   "databases": {
     "mongodb": { "label": "MongoDB", "default": true, "files": [], "envVars": ["MONGO_URI"] },
@@ -241,6 +241,13 @@ with `web`, `mongodb` and no options.
 | `docs`          | Markdown files deleted with the method, along with links to them                                                             |
 | `catalogueKeys` | For an option: catalogue paths and dotted keys removed when it is off                                                        |
 | `status`        | `planned` hides the entry from the prompt and from `--features`; omit it for a working method                                |
+
+Generation currently keeps the web client and removes every mobile workspace. Target
+and shared file ownership is reserved for future generation work. Loading a
+generation manifest rejects nonempty target `files`, `workspaces` or `envFiles`
+and shared `files` or `workspaces`. Native targets remain planned and cannot be
+selected. The planner can describe their dependencies, but does not copy or
+remove their files.
 
 `targets`, `databases` and `options` share `label`, `default` and `status`. A
 target also has `files`, `workspaces`, `envFiles`, `requires` (with `shared` and
