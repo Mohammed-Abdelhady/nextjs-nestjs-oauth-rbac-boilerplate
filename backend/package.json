@@ -61,7 +61,7 @@
     "@app/sdk": "workspace:*",
     "@eslint/eslintrc": "^3.3.7",
     "@eslint/js": "^9.39.5",
-    "@nestjs/cli": "^11.0.24",
+    "@nestjs/cli": "^12.0.8",
     "@nestjs/schematics": "^11.1.0",
     "@nestjs/testing": "^11.2.3",
     "@types/bcrypt": "^6.0.0",
