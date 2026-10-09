@@ -14,6 +14,15 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gitEnvironment } from './git/git-environment.mjs';
 
+const GIT_FIXTURE_CONFIG = {
+  'gc.auto': '0',
+  'maintenance.auto': 'false',
+  'maintenance.autoDetach': 'false',
+  'gc.autoDetach': 'false',
+  'core.fsmonitor': 'false',
+  'fetch.writeCommitGraph': 'false',
+};
+
 export function installChecker(root, { directory: target = '.guardrails-runner' } = {}) {
   if (target === 'scripts') {
     // These synthetic projects borrow installed tools without installing packages.
@@ -106,6 +115,8 @@ export function repository(t, initArgs = []) {
   const check = (...args) => checkAt(root, ...args);
   const checkInput = (input, ...args) => runCheck(root, args, input);
   git('init', '--initial-branch=feature', ...initArgs);
+  // Local config also constrains Git children that remote transports start.
+  for (const [key, value] of Object.entries(GIT_FIXTURE_CONFIG)) git('config', key, value);
   entry = installChecker(root);
   appendFileSync(
     resolve(root, git('rev-parse', '--git-path', 'info/exclude')),

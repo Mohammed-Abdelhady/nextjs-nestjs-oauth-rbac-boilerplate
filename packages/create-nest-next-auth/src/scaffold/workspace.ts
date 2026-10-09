@@ -1,7 +1,11 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join, posix } from 'node:path';
 import { parseDocument } from 'yaml';
-import { PACKAGE_MANIFEST, PNPM_WORKSPACE_FILE } from '../constants/index.js';
+import {
+  PACKAGE_MANIFEST,
+  PNPM_WORKSPACE_FILE,
+  POSTGRES_PROTOTYPE_BUILD_APPROVALS,
+} from '../constants/index.js';
 import { isRecord } from '../manifest/read.js';
 import { isErrnoException, listFiles } from '../utils/fs.js';
 import { matchesAnyGlob } from '../utils/glob.js';
@@ -47,7 +51,17 @@ export async function workspaceDirectories(root: string): Promise<string[]> {
   ].sort();
 }
 
-/** Keeps security settings and lists only workspaces left in the scaffold. */
+/** Build approvals the workspace file carries for tooling that never ships. */
+function repositoryOnlyApprovals(config: unknown): string[] {
+  if (!isRecord(config) || !isRecord(config.allowBuilds)) return [];
+  const approvals = config.allowBuilds;
+  return POSTGRES_PROTOTYPE_BUILD_APPROVALS.filter((name) => name in approvals);
+}
+
+/**
+ * Keeps security settings, lists only workspaces left in the scaffold, and
+ * drops build approvals for repository-only tooling.
+ */
 export async function renderWorkspace(root: string): Promise<boolean> {
   const workspace = await readWorkspace(root);
   if (workspace === undefined) return false;
@@ -57,9 +71,12 @@ export async function renderWorkspace(root: string): Promise<boolean> {
   const packages = workspace.packages.filter((pattern) =>
     manifests.some((file) => matchesAnyGlob(file, [`${pattern}/${PACKAGE_MANIFEST}`])),
   );
-  if (packages.length === workspace.packages.length) return false;
+  const approvals = repositoryOnlyApprovals(workspace.document.toJS());
+  const packagesChanged = packages.length !== workspace.packages.length;
+  if (!packagesChanged && approvals.length === 0) return false;
 
-  workspace.document.set('packages', packages);
+  if (packagesChanged) workspace.document.set('packages', packages);
+  for (const name of approvals) workspace.document.deleteIn(['allowBuilds', name]);
   await writeFile(join(root, PNPM_WORKSPACE_FILE), workspace.document.toString(), 'utf8');
   return true;
 }
