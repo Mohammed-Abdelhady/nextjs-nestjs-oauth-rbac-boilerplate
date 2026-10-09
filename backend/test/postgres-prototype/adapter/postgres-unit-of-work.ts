@@ -1,4 +1,4 @@
-import { ControlledTransaction, Kysely, sql, Transaction } from 'kysely';
+import { ControlledTransaction, Kysely, Transaction } from 'kysely';
 import { UnknownTransactionOutcomeError } from '../../../src/common/exceptions/unknown-transaction-outcome.error';
 import { RetryableAbortError } from '../../../src/common/persistence/persistence-errors';
 import {
@@ -62,7 +62,6 @@ export class PostgresUnitOfWorkRunner extends UnitOfWorkRunner {
     let result: Result;
     try {
       result = await work(new PostgresUnitOfWork(transaction));
-      await assertNoStatementFailed(transaction);
     } catch (error) {
       await this.release(transaction);
       throw mapPostgresError(error);
@@ -100,19 +99,11 @@ export class PostgresUnitOfWorkRunner extends UnitOfWorkRunner {
 }
 
 /**
- * PostgreSQL answers COMMIT on a failed transaction with ROLLBACK and no error.
- * If `work` swallowed a store failure, this statement fails in its place, so a
- * normal return from `run` always means the work was committed.
- */
-async function assertNoStatementFailed(
-  transaction: Transaction<PrototypeDatabase>,
-): Promise<void> {
-  await sql`SELECT 1`.execute(transaction);
-}
-
-/**
- * A SQLSTATE means the server answered and the commit did not happen. Without
- * one the answer was lost, and the transaction may or may not be stored.
+ * A SQLSTATE means the server answered and the commit did not happen. That
+ * includes a COMMIT answered with ROLLBACK because `work` swallowed a store
+ * failure: the connection reads the command tag (`commitCheckedPool`), so a
+ * normal return from `run` always means the work was committed. Without a
+ * SQLSTATE the answer was lost, and the transaction may or may not be stored.
  */
 function commitFailure(error: unknown): unknown {
   return sqlStateOf(error) === undefined

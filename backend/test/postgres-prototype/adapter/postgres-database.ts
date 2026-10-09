@@ -1,5 +1,6 @@
 import { ColumnType, Generated, Kysely, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
+import { commitCheckedPool } from './postgres-commit-tag';
 
 type Timestamp = ColumnType<Date, Date, Date>;
 /** `bigint` comes back as text. Lifetimes in milliseconds fit a number. */
@@ -109,6 +110,16 @@ export interface SecurityEventsTable {
   deleted_role_slug: string | null;
   deletion_sweep_id: string | null;
   deletion_pending: boolean | null;
+  request_id: string | null;
+  purge_after: ColumnType<Date, Date | undefined, never>;
+}
+
+export interface BrowserProofsTable {
+  id: Generated<string>;
+  proof_id_hash: string;
+  token_hash: string;
+  expires_at: Timestamp;
+  spent: Generated<boolean>;
 }
 
 export interface MailCountersTable {
@@ -163,11 +174,18 @@ export interface PrototypeDatabase {
   pending_registrations: PendingRegistrationsTable;
   pending_password_resets: PendingPasswordResetsTable;
   pending_magic_links: PendingMagicLinksTable;
+  browser_proofs: BrowserProofsTable;
 }
 
+/**
+ * Opens the database on a pool that reads every COMMIT's command tag. A caller
+ * that passes its own dialect builds it on `commitCheckedPool` too.
+ */
 export function openPrototypeDatabase(
   pool: Pool,
-  dialect: PostgresDialect = new PostgresDialect({ pool }),
+  dialect: PostgresDialect = new PostgresDialect({
+    pool: commitCheckedPool(pool),
+  }),
 ): Kysely<PrototypeDatabase> {
   return new Kysely<PrototypeDatabase>({ dialect });
 }
