@@ -12,23 +12,34 @@ import {
   CONTRACT_AUTH_EPOCH,
   CONTRACT_ENVIRONMENT,
 } from '../utils/session/issuance-contract/issuance-contract-harness';
+import { ApplicationRegistry } from '../../src/session/applications/application-registry';
+import { PostgresApplicationRegistryStore } from './adapter/postgres-application-registry.store';
 import { PostgresAuthorityApplications } from './adapter/postgres-authority-applications';
 import { PostgresSecurityEventStore } from './adapter/postgres-security-event.store';
 import { PostgresSessionAuthorityStore } from './adapter/postgres-session-authority.store';
 import { PostgresSessionRevocationStore } from './adapter/postgres-session-revocation.store';
 import { PostgresUnitOfWorkRunner } from './adapter/postgres-unit-of-work';
-import { bootPostgresIssuanceHarness } from './postgres-issuance-harness';
+import {
+  bootPostgresIssuanceHarness,
+  PostgresIssuanceHarness,
+} from './postgres-issuance-harness';
 
 const AN_OBJECT_ID = '65f000000000000000000001';
 
+export interface PostgresAuthorityBoot {
+  harness: AuthorityContractHarness;
+  /** The same database, for a contract that needs more of it. */
+  issuance: PostgresIssuanceHarness;
+}
+
 export async function bootPostgresAuthorityHarness(): Promise<AuthorityContractHarness> {
+  return (await bootPostgresAuthority()).harness;
+}
+
+export async function bootPostgresAuthority(): Promise<PostgresAuthorityBoot> {
   const issuance = await bootPostgresIssuanceHarness();
   const { database, clock } = issuance;
   const authorityStore = new PostgresSessionAuthorityStore(database);
-  const authorityApplications = new PostgresAuthorityApplications(
-    database,
-    CONTRACT_ENVIRONMENT,
-  );
   const revocationStore = new PostgresSessionRevocationStore(
     clock,
     new PostgresSecurityEventStore(database),
@@ -39,8 +50,15 @@ export async function bootPostgresAuthorityHarness(): Promise<AuthorityContractH
       server: { nodeEnv: CONTRACT_ENVIRONMENT },
     }),
   );
+  const authorityApplications = new PostgresAuthorityApplications(
+    new ApplicationRegistry(
+      new PostgresUnitOfWorkRunner(database),
+      new PostgresApplicationRegistryStore(database),
+      authEpoch,
+    ),
+  );
 
-  return {
+  const harness: AuthorityContractHarness = {
     issuance,
     accountTakenAt: ACCOUNT_TAKEN_AT.FIRST_READ,
     authorityStore,
@@ -137,4 +155,5 @@ export async function bootPostgresAuthorityHarness(): Promise<AuthorityContractH
     absentSessionId: () => randomUUID(),
     foreignSessionId: () => AN_OBJECT_ID,
   };
+  return { harness, issuance };
 }

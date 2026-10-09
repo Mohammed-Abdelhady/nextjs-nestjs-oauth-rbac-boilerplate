@@ -131,6 +131,7 @@ describe('PostgreSQL prototype adapter', () => {
         '0004_browser_proofs_security_events.sql',
         '0005_accounts.sql',
         '0006_session_authority_revocation.sql',
+        '0007_applications_grants.sql',
       ],
       again: [],
       recorded: [
@@ -140,6 +141,7 @@ describe('PostgreSQL prototype adapter', () => {
         '0004_browser_proofs_security_events.sql',
         '0005_accounts.sql',
         '0006_session_authority_revocation.sql',
+        '0007_applications_grants.sql',
       ],
     });
   });

@@ -498,6 +498,7 @@
       "backend/src/session/events/proofs-events-outages.postgres.spec.ts",
       "backend/src/session/authority/session-authority.contract.postgres.integration.spec.ts",
       "backend/src/session/authority/postgres-lost-answer.spec.ts",
+      "backend/src/session/applications/applications.contract.postgres.integration.spec.ts",
       "backend/src/user/stores/account-stores.contract.postgres.integration.spec.ts",
       "backend/src/user/linked-accounts-contract/linked-accounts.contract.postgres.integration.spec.ts",
       "frontend/README.maintainer.md",

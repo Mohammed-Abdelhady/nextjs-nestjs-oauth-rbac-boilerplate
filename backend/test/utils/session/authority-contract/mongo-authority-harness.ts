@@ -6,6 +6,7 @@ import { SessionValidator } from '../../../../src/session/authority/session-vali
 import { MongoUnitOfWorkRunner } from '../../../../src/session/persistence/mongo/mongo-unit-of-work';
 import { SessionRevocationStore } from '../../../../src/session/revocation/session-revocation.store';
 import { SessionRevoker } from '../../../../src/session/revocation/session-revoker';
+import { SessionAuthorityHarness } from '../../session-authority-harness';
 import { REFUSED_EVENT_SEED_ACTION } from '../../transaction-failure';
 import { bootMongoIssuance } from '../issuance-contract/mongo-issuance-harness';
 import {
@@ -15,19 +16,31 @@ import {
 
 const A_UUID = '018f4d2e-7b1a-7c3d-9e2f-0a1b2c3d4e5f';
 
+export interface MongoAuthorityBoot {
+  harness: AuthorityContractHarness;
+  /** The booted application, for a contract that needs more of it. */
+  booted: SessionAuthorityHarness;
+}
+
 export async function bootMongoAuthorityHarness(): Promise<AuthorityContractHarness> {
+  return (await bootMongoAuthority('authority_contract')).harness;
+}
+
+export async function bootMongoAuthority(
+  databaseName: string,
+): Promise<MongoAuthorityBoot> {
   const {
     harness: issuance,
     booted,
     events,
-  } = await bootMongoIssuance('authority_contract');
+  } = await bootMongoIssuance(databaseName);
   const { app, users, sessions, grants, connection } = booted;
   const authorityStore = app.get(SessionAuthorityStore);
   const authorityApplications = app.get(AuthorityApplications);
   const revocationStore = app.get(SessionRevocationStore);
   const authEpoch = app.get(AuthEpochService);
 
-  return {
+  const harness: AuthorityContractHarness = {
     issuance,
     accountTakenAt: ACCOUNT_TAKEN_AT.FIRST_WRITE,
     authorityStore,
@@ -97,4 +110,5 @@ export async function bootMongoAuthorityHarness(): Promise<AuthorityContractHarn
     absentSessionId: () => new Types.ObjectId().toString(),
     foreignSessionId: () => A_UUID,
   };
+  return { harness, booted };
 }

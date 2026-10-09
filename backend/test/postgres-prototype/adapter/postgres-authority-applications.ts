@@ -1,51 +1,27 @@
-import { Kysely } from 'kysely';
+import { ApplicationRegistry } from '../../../src/session/applications/application-registry';
+import { issuanceApplicationOf } from '../../../src/session/applications/application-registry.store';
 import {
   AuthorityApplication,
   AuthorityApplications,
 } from '../../../src/session/authority/authority-applications';
-import { PrototypeDatabase } from './postgres-database';
-import {
-  APPLICATION_COLUMNS,
-  toIssuanceApplication,
-} from './postgres-issuance-mappers';
-import { autocommit } from './postgres-pending-codes-database';
 
 /**
- * Stands in for the application registry until that service has a store of its
- * own. Each read is a committed authority read: one statement on the primary.
+ * Validation's view of the registry: the registry itself, on its real store.
+ * Each read is a committed authority read.
  */
 export class PostgresAuthorityApplications extends AuthorityApplications {
-  constructor(
-    private readonly database: Kysely<PrototypeDatabase>,
-    private readonly environment: string,
-  ) {
+  constructor(private readonly registry: ApplicationRegistry) {
     super();
   }
 
   async findByClientId(clientId: string): Promise<AuthorityApplication | null> {
-    const row = await autocommit({}, () =>
-      this.database
-        .selectFrom('applications')
-        .select(APPLICATION_COLUMNS)
-        .where('client_id', '=', clientId)
-        .where('environment', '=', this.environment)
-        .executeTakeFirst(),
-    );
-    return row ? toIssuanceApplication(row) : null;
+    const application = await this.registry.findByClientId(clientId);
+    return application ? issuanceApplicationOf(application) : null;
   }
 
   async findByClientIds(clientIds: string[]): Promise<AuthorityApplication[]> {
-    if (clientIds.length === 0) {
-      return [];
-    }
-    const rows = await autocommit({}, () =>
-      this.database
-        .selectFrom('applications')
-        .select(APPLICATION_COLUMNS)
-        .where('client_id', 'in', clientIds)
-        .where('environment', '=', this.environment)
-        .execute(),
+    return (await this.registry.findByClientIds(clientIds)).map(
+      issuanceApplicationOf,
     );
-    return rows.map(toIssuanceApplication);
   }
 }
