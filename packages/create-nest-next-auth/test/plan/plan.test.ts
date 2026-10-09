@@ -65,8 +65,8 @@ describe('resolvePlan rules', () => {
 
   it('rule 4: a planned id from a flag is an error that names it', async () => {
     const manifest = await loadManifest(REPO_ROOT);
-    const plan = resolvePlan(manifest, { targets: ['native-expo'] });
-    expect(plan.errors).toContainEqual({ id: 'native-expo', reason: 'planned' });
+    const plan = resolvePlan(manifest, { targets: ['native-cli'] });
+    expect(plan.errors).toContainEqual({ id: 'native-cli', reason: 'planned' });
   });
 
   it('rule 4: an unknown id is an error that names it', () => {

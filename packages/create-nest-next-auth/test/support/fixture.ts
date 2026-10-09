@@ -51,6 +51,27 @@ export const FIXTURE_MANIFEST: Manifest = validateManifest({
   core: { alwaysRemoveFiles: ['tooling/**'] },
 });
 
+/**
+ * The same manifest with the client and shared ids the repository's own
+ * tooling files mark lines for, for trees that copy those files.
+ */
+export const TOOLING_MANIFEST: Manifest = {
+  ...FIXTURE_MANIFEST,
+  targets: {
+    ...FIXTURE_MANIFEST.targets,
+    'native-expo': {
+      label: 'Expo app',
+      default: false,
+      files: [],
+      workspaces: [],
+      envFiles: [],
+      requires: { shared: ['native-core'], targets: [] },
+      needsSignInSite: true,
+    },
+  },
+  shared: { 'native-core': { files: [], workspaces: [] } },
+};
+
 const FILES: Record<string, string> = {
   'src/strategies/alpha-oauth.strategy.ts': 'export class AlphaStrategy {}\n',
   'src/strategies/alpha-oauth.strategy.spec.ts': "import '../strategies/alpha-oauth.strategy';\n",

@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { loadManifest } from '../../src/manifest/load.js';
+import { defaultOwnership } from '../../src/manifest/ownership.js';
 import { availableFeatures, resolveSelection } from '../../src/manifest/select.js';
 import type { Manifest } from '../../src/types.js';
 import {
@@ -120,14 +121,18 @@ describe('generated projects', () => {
 
     // Retained application and API test files differ only by feature markers.
     const selected = resolveSelection(manifest, requested).selected;
-    const markerIds = [...Object.keys(manifest.features), ...Object.keys(manifest.options)];
-    const kept = [...selected, ...Object.keys(manifest.options)];
-    const differences = await compareWithRepository(
-      project,
-      kept,
-      markerIds,
-      manifest.core.alwaysRemoveFiles,
-    );
+    // No client was named, so the project is the web app and the mobile folders are gone.
+    const ownership = defaultOwnership(manifest);
+    const markerIds = [
+      ...Object.keys(manifest.features),
+      ...Object.keys(manifest.options),
+      ...ownership.knownIds,
+    ];
+    const kept = [...selected, ...Object.keys(manifest.options), ...ownership.keptIds];
+    const differences = await compareWithRepository(project, kept, markerIds, [
+      ...manifest.core.alwaysRemoveFiles,
+      ...ownership.removedFiles,
+    ]);
     expect(differences, JSON.stringify(differences, null, 2)).toEqual([]);
   });
 

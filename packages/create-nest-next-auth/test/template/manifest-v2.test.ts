@@ -156,22 +156,42 @@ describe('validateManifest version 2', () => {
     ).toThrow(/id "web" is used by both targets and shared/);
   });
 
-  it('rejects a planned target that lists files', () => {
+  it('rejects a planned database that lists files', () => {
+    expect(() =>
+      validateManifest(
+        manifest({
+          databases: {
+            mongodb: {
+              label: 'MongoDB',
+              default: true,
+              files: [],
+              envVars: [],
+              composeServices: [],
+            },
+            later: { label: 'Later', default: false, status: 'planned', files: ['later/**'] },
+          },
+        }),
+      ),
+    ).toThrow(/databases\.later is planned and must not list files yet/);
+  });
+
+  it('rejects a non-string target description', () => {
     expect(() =>
       validateManifest(
         manifest({
           targets: {
-            web: { label: 'Web', default: true, files: [], workspaces: [], envFiles: [] },
-            'native-x': {
-              label: 'Native',
-              default: false,
-              status: 'planned',
-              files: ['mobile/**'],
+            web: {
+              label: 'Web',
+              description: 5,
+              default: true,
+              files: [],
+              workspaces: [],
+              envFiles: [],
             },
           },
         }),
       ),
-    ).toThrow(/targets\.native-x is planned and must not list files yet/);
+    ).toThrow(/targets\.web\.description must be a non-empty string/);
   });
 
   it('rejects an unknown preset key', () => {

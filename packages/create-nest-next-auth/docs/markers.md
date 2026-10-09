@@ -28,6 +28,8 @@ Rules:
 - Several ids on one marker, `// feature:totp,passkeys`, mean **any of them**:
   the line stays if at least one is selected. For **all of them**, nest blocks.
 - Blocks nest. The `:end` has to name the block it closes.
+- A client id or a shared id is a marker name too: `// feature:native-expo` marks
+  a line only the Expo app needs, `// feature:native-core` one any mobile app needs.
 - Every id has to exist in the manifest, and a marker that names something else
   fails the run with the file and line. That is on purpose: a typo would
   otherwise delete the line from every project.

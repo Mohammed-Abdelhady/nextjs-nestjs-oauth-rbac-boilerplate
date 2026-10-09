@@ -14,7 +14,14 @@ const roots: string[] = [];
 const manifestRoot = fixtureRoot();
 const ttyDescriptor = Object.getOwnPropertyDescriptor(process.stdin, 'isTTY');
 /** Every dimension but the rules level is fixed, so only that could prompt. */
-const ALL_BUT_RULES = ['--dry-run', '--features', 'email-password', '--no-production'];
+const ALL_BUT_RULES = [
+  '--dry-run',
+  '--targets',
+  'web',
+  '--features',
+  'email-password',
+  '--no-production',
+];
 
 function setTerminal(present: boolean): void {
   Object.defineProperty(process.stdin, 'isTTY', { configurable: true, value: present });

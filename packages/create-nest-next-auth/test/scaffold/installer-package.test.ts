@@ -119,3 +119,30 @@ it('keeps a production dependency of the same name: only development tooling is 
     devDependencies: {},
   });
 });
+
+it('removes the mobile engine from the backend, whose only users stay in this repository', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'cna-package-'));
+  roots.push(root);
+  await mkdir(join(root, 'frontend'));
+  await mkdir(join(root, 'backend'));
+  await writeFile(join(root, 'package.json'), '{"name":"template"}');
+  await writeFile(join(root, 'frontend/package.json'), '{"name":"frontend"}');
+  await writeFile(
+    join(root, 'backend/package.json'),
+    JSON.stringify({
+      name: 'backend',
+      devDependencies: {
+        '@app/native-auth': 'workspace:*',
+        '@app/sdk': 'workspace:*',
+        jest: '^30.0.0',
+      },
+    }),
+  );
+
+  await setProjectName(root, 'my-app');
+
+  expect(JSON.parse(await readFile(join(root, 'backend/package.json'), 'utf8'))).toEqual({
+    name: 'backend',
+    devDependencies: { '@app/sdk': 'workspace:*', jest: '^30.0.0' },
+  });
+});

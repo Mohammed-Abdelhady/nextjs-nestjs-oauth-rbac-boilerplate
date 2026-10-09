@@ -56,11 +56,11 @@ describe('--dry-run', () => {
       '--no-git',
       '--dry-run',
       '--targets',
-      'native-expo',
+      'native-cli',
     ]);
 
     expect(code).toBe(2);
-    expect(output).toContain('native-expo');
+    expect(output).toContain('"native-cli" is not available yet.');
     expect(readdirSync(target)).toEqual([]);
   });
 

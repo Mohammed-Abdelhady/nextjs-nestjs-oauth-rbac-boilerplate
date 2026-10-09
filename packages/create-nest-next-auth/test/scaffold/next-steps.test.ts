@@ -32,6 +32,32 @@ describe('buildNextSteps', () => {
     ]);
   });
 
+  it('ends with the mobile app command when the project has the app', () => {
+    const mobile = 'pnpm --filter @app/mobile-expo run ios';
+
+    expect(
+      buildNextSteps({
+        directoryLabel: 'app',
+        installed: true,
+        docker: true,
+        scripts: SCRIPTS,
+        mobile,
+      }).slice(-2),
+    ).toEqual([
+      '# Mobile app on an iOS simulator (needs Xcode and CocoaPods, see "Mobile app" in README.md):',
+      mobile,
+    ]);
+    expect(
+      buildNextSteps({
+        directoryLabel: 'app',
+        installed: true,
+        docker: false,
+        scripts: SCRIPTS,
+        mobile,
+      }).at(-1),
+    ).toBe(mobile);
+  });
+
   it('prints the local replica-set path when docker is off', () => {
     expect(
       buildNextSteps({ directoryLabel: 'app', installed: false, docker: false, scripts: SCRIPTS }),
