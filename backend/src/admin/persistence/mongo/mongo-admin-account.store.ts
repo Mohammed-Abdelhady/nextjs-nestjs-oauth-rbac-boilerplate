@@ -4,6 +4,7 @@ import { ClientSession, Model } from 'mongoose';
 import { singleStatement } from '../../../auth/persistence/mongo/mongo-unique-conflict';
 import { UnitOfWork } from '../../../common/persistence/unit-of-work';
 import { Role, RoleDocument } from '../../../role/schemas/role.schema';
+import { castingId } from '../../../session/persistence/mongo/mongo-session-records';
 import { mongoSessionOf } from '../../../session/persistence/mongo/mongo-unit-of-work';
 import { AuthProvider } from '../../../user/enums/auth-provider.enum';
 import {
@@ -42,14 +43,16 @@ export class MongoAdminAccountStore extends AdminAccountStore {
 
   async findAccount(userId: string): Promise<StoredAccount | null> {
     const user = await singleStatement(() =>
-      this.userModel.findById(userId).exec(),
+      castingId(() => this.userModel.findById(userId).exec()),
     );
     return this.read.remember(user, userId);
   }
 
   async findAccountView(userId: string): Promise<StoredAccount | null> {
     const user = await singleStatement(() =>
-      this.userModel.findById(userId).select(ADMIN_USER_HIDDEN_FIELDS).exec(),
+      castingId(() =>
+        this.userModel.findById(userId).select(ADMIN_USER_HIDDEN_FIELDS).exec(),
+      ),
     );
     return this.read.remember(user, userId);
   }

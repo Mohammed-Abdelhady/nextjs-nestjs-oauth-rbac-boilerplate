@@ -1,3 +1,4 @@
+import { IdFormat } from '../../../../src/common/persistence/id-format';
 import { RerunPause } from '../../../../src/common/persistence/unit-of-work';
 import { AuthorityApplications } from '../../../../src/session/authority/authority-applications';
 import { SessionAuthorityStore } from '../../../../src/session/authority/session-authority.store';
@@ -71,6 +72,8 @@ export interface AuthorityContractHarness {
   readonly authorityStore: SessionAuthorityStore;
   readonly authorityApplications: AuthorityApplications;
   readonly revocationStore: SessionRevocationStore;
+  /** What this database takes as an id, as a route asks it. */
+  readonly ids: IdFormat;
   validator(): SessionValidator;
   /** The real revocation service on this adapter, pausing as the case says. */
   revoker(pause: RerunPause): SessionRevoker;

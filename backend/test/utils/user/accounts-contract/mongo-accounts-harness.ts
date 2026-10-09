@@ -12,6 +12,7 @@ import {
   MongoActivationAccounts,
   activatedDocumentOf,
 } from '../../../../src/auth/persistence/mongo/mongo-activation-accounts';
+import { MongoIdFormat } from '../../../../src/common/persistence/mongo/mongo-id-format';
 import { MongoMailCounterStore } from '../../../../src/auth/persistence/mongo/mongo-mail-counter.store';
 import { MongoPendingRegistrationStore } from '../../../../src/auth/persistence/mongo/mongo-pending-registration.store';
 import {
@@ -255,6 +256,7 @@ export async function bootMongoAccountsHarness(): Promise<MongoAccountsHarness> 
     },
     pendingRegistrations: (email) => registrations.countDocuments({ email }),
 
+    ids: new MongoIdFormat(),
     absentId: () => new Types.ObjectId().toString(),
     foreignId: () => A_UUID,
 

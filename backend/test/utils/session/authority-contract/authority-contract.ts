@@ -9,6 +9,7 @@ import { authorityReadCases } from './authority-read-cases';
 import { authorityValidationCases } from './authority-validation-cases';
 import { accountRaceCases } from './revocation-account-race-cases';
 import { revocationAtomicityCases } from './revocation-atomicity-cases';
+import { revocationRouteIdCases } from './revocation-route-id-cases';
 import { revocationRuleCases } from './revocation-rule-cases';
 import { sessionRaceCases } from './revocation-session-race-cases';
 import { revocationStoreCases } from './revocation-store-cases';
@@ -55,5 +56,6 @@ export function describeSessionAuthorityContract(
     revocationAtomicityCases(current);
     sessionRaceCases(current);
     accountRaceCases(current);
+    revocationRouteIdCases(current);
   });
 }

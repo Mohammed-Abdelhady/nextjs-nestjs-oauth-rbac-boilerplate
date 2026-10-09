@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { createConnection, Types } from 'mongoose';
 import { FrozenClock, TEST_NOW } from '../../../../test/utils/frozen-clock';
 import { startMemoryReplSet } from '../../../../test/utils/memory-replset';
+import { MongoIdFormat } from '../../../common/persistence/mongo/mongo-id-format';
 import { Role, RoleSchema } from '../../../role/schemas/role.schema';
 import { MongoUnitOfWorkRunner } from '../../../session/persistence/mongo/mongo-unit-of-work';
 import { MongoAccountProfileStore } from '../../../user/persistence/mongo/mongo-account-profile.store';
@@ -143,6 +144,7 @@ export async function bootMongoPasskeysHarness(): Promise<PasskeysContractHarnes
       }));
     },
 
+    ids: new MongoIdFormat(),
     absentId: () => new Types.ObjectId().toString(),
     foreignId: () => A_UUID,
 

@@ -33,7 +33,7 @@ import { RequiresFeature } from '../decorators/requires-feature.decorator';
 import { AuthFeature } from '../enums/auth-feature.enum';
 import { SESSION_SWAGGER_AUTH_NAME } from '../../common/constants/session';
 import { ApiResponse } from '../../common/dto/api-response.dto';
-import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe';
+import { RouteIdPipe } from '../../common/pipes/route-id.pipe';
 
 /**
  * Passkeys on an account that is already signed in: adding one, and the list
@@ -123,7 +123,7 @@ export class PasskeysController {
   @ApiBody({ type: RenamePasskeyDto })
   async rename(
     @CurrentUser('id') userId: string,
-    @Param('id', ParseObjectIdPipe) passkeyId: string,
+    @Param('id', RouteIdPipe) passkeyId: string,
     @Body() dto: RenamePasskeyDto,
   ): Promise<ApiResponse<PasskeySummaryDto>> {
     return this.managementService.rename(userId, passkeyId, dto);
@@ -145,7 +145,7 @@ export class PasskeysController {
   @ApiParam({ name: 'id', example: '507f1f77bcf86cd799439011' })
   async remove(
     @CurrentUser('id') userId: string,
-    @Param('id', ParseObjectIdPipe) passkeyId: string,
+    @Param('id', RouteIdPipe) passkeyId: string,
   ): Promise<ApiResponse<{ message: string }>> {
     return this.managementService.remove(userId, passkeyId);
   }

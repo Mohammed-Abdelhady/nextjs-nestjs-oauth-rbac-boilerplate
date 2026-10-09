@@ -15,6 +15,7 @@ import {
 import { ApplicationRegistry } from '../../src/session/applications/application-registry';
 import { PostgresApplicationRegistryStore } from './adapter/postgres-application-registry.store';
 import { PostgresAuthorityApplications } from './adapter/postgres-authority-applications';
+import { PostgresIdFormat } from './adapter/postgres-id-format';
 import { PostgresSecurityEventStore } from './adapter/postgres-security-event.store';
 import { PostgresSessionAuthorityStore } from './adapter/postgres-session-authority.store';
 import { PostgresSessionRevocationStore } from './adapter/postgres-session-revocation.store';
@@ -153,6 +154,7 @@ export async function bootPostgresAuthority(): Promise<PostgresAuthorityBoot> {
       }));
     },
     absentSessionId: () => randomUUID(),
+    ids: new PostgresIdFormat(),
     foreignSessionId: () => AN_OBJECT_ID,
   };
   return { harness, issuance };
