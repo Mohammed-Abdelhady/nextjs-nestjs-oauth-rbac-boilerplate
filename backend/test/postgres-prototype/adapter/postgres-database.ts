@@ -40,6 +40,56 @@ export interface UserLinkedAccountsTable {
   linked_at: Timestamp;
 }
 
+export interface UserTwoFactorTable {
+  user_id: string;
+  enabled: Generated<boolean>;
+  secret_ciphertext: string | null;
+  secret_iv: string | null;
+  secret_tag: string | null;
+  confirmed_at: ColumnType<Date | null, Date | null | undefined, Date | null>;
+  last_used_step: number | null;
+}
+
+export interface UserRecoveryCodesTable {
+  id: Generated<string>;
+  user_id: string;
+  hash: string;
+  used_at: ColumnType<Date | null, Date | null | undefined, Date | null>;
+}
+
+export interface TwoFactorChallengesTable {
+  id: Generated<string>;
+  user_id: string;
+  nonce_hash: string;
+  attempts: Generated<number>;
+  claimed_at: ColumnType<Date | null, Date | null | undefined, Date | null>;
+  expires_at: Timestamp;
+}
+
+export interface PasskeysTable {
+  id: Generated<string>;
+  user_id: string;
+  credential_id: string;
+  public_key: Buffer;
+  /** A signature count is an unsigned 32 bit number, past what `integer` holds. */
+  counter: BigIntColumn;
+  transports: Generated<string[]>;
+  device_type: string | null;
+  backed_up: Generated<boolean>;
+  name: string;
+  last_used_at: ColumnType<Date | null, Date | null | undefined, Date | null>;
+  created_at: Timestamp;
+  updated_at: Timestamp;
+}
+
+export interface PasskeyChallengesTable {
+  id: Generated<string>;
+  challenge_hash: string;
+  purpose: string;
+  user_id: string | null;
+  expires_at: Timestamp;
+}
+
 export interface RolesTable {
   id: Generated<string>;
   name: string;
@@ -209,6 +259,11 @@ export interface PrototypeDatabase {
   pending_magic_links: PendingMagicLinksTable;
   browser_proofs: BrowserProofsTable;
   user_linked_accounts: UserLinkedAccountsTable;
+  user_two_factor: UserTwoFactorTable;
+  user_recovery_codes: UserRecoveryCodesTable;
+  two_factor_challenges: TwoFactorChallengesTable;
+  passkeys: PasskeysTable;
+  passkey_challenges: PasskeyChallengesTable;
 }
 
 /**
