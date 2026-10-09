@@ -35,7 +35,19 @@ Rules:
   otherwise delete the line from every project.
 - Markers are read in `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs` and `.cjs` files.
   JSON is left alone; markdown uses `<!-- feature:id:start -->` and
-  `<!-- feature:id:end -->` blocks with the same rules.
+  `<!-- feature:id:end -->` blocks with the same rules, and `<!-- feature:id -->`
+  at the end of a line.
+- A markdown table row carries its marker as one extra last cell that holds
+  nothing else. Prettier keeps that shape, and GitHub does not render a cell the
+  header has no column for. The cell goes with the marker, so the row that stays
+  has the header's columns. A header or separator row cannot be marked. To make
+  a whole table optional, put block markers around it.
+
+```md
+| Method     | Setup guide                       |
+| ---------- | --------------------------------- |
+| Magic link | [Magic link](setup-magic-link.md) | <!-- feature:magic-link --> |
+```
 
 Mark the smallest thing that compiles on its own. An import that only one method
 uses, the provider line in a module, the JSX element, the assertion in a spec.
