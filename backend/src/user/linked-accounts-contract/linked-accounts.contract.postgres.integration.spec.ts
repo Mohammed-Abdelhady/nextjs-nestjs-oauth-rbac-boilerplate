@@ -1,6 +1,7 @@
 import { bootPostgresLinkedAccountsHarness } from '../../../test/postgres-prototype/postgres-linked-accounts-harness';
 import {
   POSTGRES_BOOT_TIMEOUT_MS,
+  POSTGRES_RESET_TIMEOUT_MS,
   POSTGRES_TEARDOWN_TIMEOUT_MS,
 } from '../../../test/postgres-prototype/server/postgres-test-server';
 import { describeLinkedAccountsContract } from './linked-accounts-contract-suite.harness-spec';
@@ -23,5 +24,6 @@ describeLinkedAccountsContract(
   {
     bootMs: POSTGRES_BOOT_TIMEOUT_MS,
     teardownMs: POSTGRES_TEARDOWN_TIMEOUT_MS,
+    resetMs: POSTGRES_RESET_TIMEOUT_MS,
   },
 );

@@ -21,7 +21,7 @@ import {
 export function describeAccountStoresContract(
   database: string,
   boot: () => Promise<AccountsContractHarness>,
-  budgets: { bootMs: number; teardownMs: number },
+  budgets: { bootMs: number; teardownMs: number; resetMs: number },
 ): void {
   describe(`account stores contract on ${database}`, () => {
     let harness: AccountsContractHarness | undefined;
@@ -52,7 +52,7 @@ export function describeAccountStoresContract(
       current().clock.set(TEST_NOW);
       await current().reset();
       fixture = await seedAccountsFixture(current());
-    });
+    }, budgets.resetMs);
 
     afterEach(() => jest.restoreAllMocks());
 

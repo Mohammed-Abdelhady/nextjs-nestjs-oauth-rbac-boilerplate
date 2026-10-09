@@ -9,16 +9,17 @@ import {
 
 const ABANDONING_SUITE = 'a suite whose cases abandon open work';
 const NEXT_SUITE = 'the suite that runs next';
+const CUT_SHORT_SUITE = 'a suite whose reset is cut short';
 const FAILED_BOOT_SUITE = 'a suite whose boot fails part way';
-// Three suites boot a server each and stop it, on the budgets those hooks have.
-const THREE_SUITES_MS =
-  3 * (POSTGRES_BOOT_TIMEOUT_MS + POSTGRES_TEARDOWN_TIMEOUT_MS);
+// Four suites boot a server each and stop it, on the budgets those hooks have.
+const FOUR_SUITES_MS =
+  4 * (POSTGRES_BOOT_TIMEOUT_MS + POSTGRES_TEARDOWN_TIMEOUT_MS);
 
 /**
  * A case that fails or runs out of its budget leaves a transaction open and a
- * connection checked out, and a boot can fail with its server already up. The
- * harness must still leave the next case empty tables, stop its server and let
- * the process end.
+ * connection checked out, a reset that runs out of its budget is still running,
+ * and a boot can fail with its server already up. The harness must still leave
+ * the next case empty tables, stop its server and let the process end.
  */
 describe('PostgreSQL harness teardown after abandoned work', () => {
   let run: StartedFixtureRun | undefined;
@@ -29,7 +30,7 @@ describe('PostgreSQL harness teardown after abandoned work', () => {
   });
 
   it(
-    'cleans up after each failed case and a failed boot, lets the next suite start, and the process exits by itself',
+    'cleans up after each failed case, a reset cut short and a failed boot, lets the next suite start, and the process exits by itself',
     async () => {
       run = startFixtureSuites();
 
@@ -60,6 +61,18 @@ describe('PostgreSQL harness teardown after abandoned work', () => {
             status: 'passed',
           },
           {
+            suite: CUT_SHORT_SUITE,
+            title:
+              'fails with its reset still waiting on an account taken after it began',
+            status: 'failed',
+          },
+          {
+            suite: CUT_SHORT_SUITE,
+            title:
+              'starts the next case on empty tables and keeps what it stores',
+            status: 'passed',
+          },
+          {
             suite: FAILED_BOOT_SUITE,
             title: 'never runs its case',
             status: 'failed',
@@ -67,6 +80,6 @@ describe('PostgreSQL harness teardown after abandoned work', () => {
         ],
       });
     },
-    THREE_SUITES_MS,
+    FOUR_SUITES_MS,
   );
 });

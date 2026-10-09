@@ -8,6 +8,9 @@ export const POSTGRES_BOOT_TIMEOUT_MS = 120000;
 /** Jest hook budget for stopping the server and removing its data. */
 export const POSTGRES_TEARDOWN_TIMEOUT_MS = 60000;
 
+/** Jest hook budget for emptying every table and seeding a case's first rows under load. */
+export const POSTGRES_RESET_TIMEOUT_MS = 10000;
+
 const LAUNCHER = join(__dirname, 'postgres-server.mjs');
 const HOST = '127.0.0.1';
 const USER = 'postgres';

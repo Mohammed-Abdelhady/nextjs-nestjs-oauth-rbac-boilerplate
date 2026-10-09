@@ -21,7 +21,7 @@ import { applicationStoreCases } from './applications-store-cases';
 export function describeApplicationsContract(
   database: string,
   boot: () => Promise<ApplicationsContractHarness>,
-  budgets: { bootMs: number; teardownMs: number },
+  budgets: { bootMs: number; teardownMs: number; resetMs: number },
 ): void {
   describe(`applications and grants contract on ${database}`, () => {
     let harness: ApplicationsContractHarness | undefined;
@@ -46,7 +46,7 @@ export function describeApplicationsContract(
       await issuance.reset();
       await issuance.seedApplication(WEB_APPLICATION);
       await issuance.seedApplication(ADMIN_APPLICATION);
-    });
+    }, budgets.resetMs);
 
     applicationRegistryCases(current);
     reconciliationCases(current);

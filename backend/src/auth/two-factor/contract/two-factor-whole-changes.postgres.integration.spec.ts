@@ -1,6 +1,7 @@
 import { bootPostgresTwoFactorHarness } from '../../../../test/postgres-prototype/postgres-two-factor-harness';
 import {
   POSTGRES_BOOT_TIMEOUT_MS,
+  POSTGRES_RESET_TIMEOUT_MS,
   POSTGRES_TEARDOWN_TIMEOUT_MS,
 } from '../../../../test/postgres-prototype/server/postgres-test-server';
 import { UniqueConflictError } from '../../../common/persistence/persistence-errors';
@@ -54,7 +55,7 @@ describe('second factor changes on PostgreSQL are whole', () => {
     const read = await harness.accounts.findAccount(ownerId);
     if (!read) throw new Error('the seeded account was not found');
     account = read;
-  });
+  }, POSTGRES_RESET_TIMEOUT_MS);
 
   it(
     'leaves the factor off and the old codes in place when a confirmation is refused part way',

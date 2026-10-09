@@ -28,7 +28,7 @@ import { NativeContractHarness } from './native-contract-harness';
 export function describeNativeSignInContract(
   database: string,
   boot: () => Promise<NativeContractHarness>,
-  budgets: { bootMs: number; teardownMs: number },
+  budgets: { bootMs: number; teardownMs: number; resetMs: number },
 ): void {
   describe(`mobile sign-in contract on ${database}`, () => {
     let harness: NativeContractHarness | undefined;
@@ -52,7 +52,7 @@ export function describeNativeSignInContract(
       await current().reset();
       await current().issuance.seedApplication(WEB_APPLICATION);
       await current().seedNativeApplication();
-    });
+    }, budgets.resetMs);
 
     authorizationRuleCases(current);
     authorizationGuardCases(current);

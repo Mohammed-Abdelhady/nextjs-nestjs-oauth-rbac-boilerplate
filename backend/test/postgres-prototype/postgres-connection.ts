@@ -53,9 +53,19 @@ const EVERY_TABLE: Record<keyof PrototypeDatabase, true> = {
   user_linked_accounts: true,
   users: true,
 };
-const RESET_TABLES = sql.join(
-  Object.keys(EVERY_TABLE).map((table) => sql.table(table)),
-);
+const [FIRST_TABLE, ...OTHER_TABLES] = Object.keys(EVERY_TABLE);
+/**
+ * Deletes the rows of every table in one statement, which checks the foreign
+ * keys once, after all of them are gone. Not TRUNCATE: that gives every table
+ * and index a new file, 124 files a reset, and a reset then waits on the
+ * file system whenever other suites are creating and removing their own data.
+ */
+const EMPTY_EVERY_TABLE = sql`WITH ${sql.join(
+  OTHER_TABLES.map(
+    (table, index) =>
+      sql`${sql.ref(`emptied_${index}`)} AS (DELETE FROM ${sql.table(table)})`,
+  ),
+)} DELETE FROM ${sql.table(FIRST_TABLE)}`;
 
 export interface PrototypeConnection<
   Dialect extends PostgresDialect = PostgresDialect,
@@ -154,7 +164,7 @@ export async function openPrototypeConnectionOn<
       rollBackOpenWork,
       reset: async () => {
         await rollBackOpenWork();
-        await sql`TRUNCATE ${RESET_TABLES}`.execute(database);
+        await EMPTY_EVERY_TABLE.execute(database);
       },
       close,
     };

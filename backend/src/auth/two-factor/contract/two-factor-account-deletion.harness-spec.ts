@@ -42,7 +42,7 @@ async function enrol(store: SecondFactorStore, userId: string): Promise<void> {
 export function describeSecondFactorAfterDeletion(
   database: string,
   boot: () => Promise<SecondFactorDeletionHarness>,
-  budgets: { bootMs: number; teardownMs: number },
+  budgets: { bootMs: number; teardownMs: number; resetMs: number },
 ): void {
   describe(`second factor of a deleted account on ${database}`, () => {
     let harness: SecondFactorDeletionHarness | undefined;
@@ -65,7 +65,7 @@ export function describeSecondFactorAfterDeletion(
     beforeEach(async () => {
       current().accounts.clock.set(TEST_NOW);
       await current().accounts.reset();
-    });
+    }, budgets.resetMs);
 
     accountCase(
       'keeps the second factor of an account that left and of one an admin deleted',

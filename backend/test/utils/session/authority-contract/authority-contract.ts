@@ -21,7 +21,7 @@ import { revocationStoreCases } from './revocation-store-cases';
 export function describeSessionAuthorityContract(
   database: string,
   boot: () => Promise<AuthorityContractHarness>,
-  budgets: { bootMs: number; teardownMs: number },
+  budgets: { bootMs: number; teardownMs: number; resetMs: number },
 ): void {
   describe(`session authority contract on ${database}`, () => {
     let harness: AuthorityContractHarness | undefined;
@@ -45,7 +45,7 @@ export function describeSessionAuthorityContract(
       await current().issuance.reset();
       await current().issuance.seedApplication(WEB_APPLICATION);
       await current().issuance.seedApplication(ADMIN_APPLICATION);
-    });
+    }, budgets.resetMs);
 
     authorityValidationCases(current);
     authorityExtensionCases(current);

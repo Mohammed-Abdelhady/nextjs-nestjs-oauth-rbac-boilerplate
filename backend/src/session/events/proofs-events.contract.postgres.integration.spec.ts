@@ -1,6 +1,7 @@
 import { bootPostgresProofsEventsHarness } from '../../../test/postgres-prototype/postgres-proofs-events-harness';
 import {
   POSTGRES_BOOT_TIMEOUT_MS,
+  POSTGRES_RESET_TIMEOUT_MS,
   POSTGRES_TEARDOWN_TIMEOUT_MS,
 } from '../../../test/postgres-prototype/server/postgres-test-server';
 import { describeProofsEventsContract } from '../../../test/utils/session/proofs-events-contract/proofs-events-contract';
@@ -20,4 +21,5 @@ jest.mock('@nestjs/mongoose', () => {
 describeProofsEventsContract('PostgreSQL', bootPostgresProofsEventsHarness, {
   bootMs: POSTGRES_BOOT_TIMEOUT_MS,
   teardownMs: POSTGRES_TEARDOWN_TIMEOUT_MS,
+  resetMs: POSTGRES_RESET_TIMEOUT_MS,
 });
