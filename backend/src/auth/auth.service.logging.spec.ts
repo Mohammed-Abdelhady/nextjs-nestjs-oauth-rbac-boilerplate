@@ -1,6 +1,6 @@
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
-import { PasswordResetCodeService } from './services/password-reset-code.service';
+import { PasswordResetCodeService } from './services/codes/password-reset-code.service';
 import {
   bootLoggingServices,
   LoggingServices,

@@ -16,7 +16,7 @@ import {
   ApiParam,
   ApiCookieAuth,
 } from '@nestjs/swagger';
-import { AdminPermissionsService } from './services/admin-permissions.service';
+import { AdminPermissionsService } from './services/roles/admin-permissions.service';
 import { PermissionGuard } from '../common/guards/permission.guard';
 import { RequirePermissions } from '../common/decorators/permissions.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';

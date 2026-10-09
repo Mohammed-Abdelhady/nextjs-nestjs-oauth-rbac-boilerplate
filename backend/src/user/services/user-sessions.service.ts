@@ -1,6 +1,6 @@
 import { Injectable, Logger, HttpStatus } from '@nestjs/common';
 import { Types } from 'mongoose';
-import { SessionService } from '../../auth/services/session.service';
+import { SessionService } from '../../auth/services/sessions/session.service';
 import { SessionDto, SessionListData } from '../dto/user-profile.dto';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';

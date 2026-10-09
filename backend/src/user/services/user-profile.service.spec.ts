@@ -8,7 +8,7 @@ import { UserRole } from '../enums/user-role.enum';
 import { AuthProvider } from '../enums/auth-provider.enum';
 import { Role } from '../../role/schemas/role.schema';
 import { Passkey } from '../../auth/passkeys/schemas/passkey.schema'; // feature:passkeys
-import { SessionService } from '../../auth/services/session.service';
+import { SessionService } from '../../auth/services/sessions/session.service';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 

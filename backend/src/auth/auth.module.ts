@@ -3,7 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { AuthService } from './auth.service';
-import { RegistrationService } from './services/registration.service';
+import { RegistrationService } from './services/registration/registration.service';
 import { AuthController } from './auth.controller';
 import {
   PendingRegistration,
@@ -23,18 +23,18 @@ import {
 import { User, UserSchema } from '../user/schemas/user.schema';
 import { Session, SessionSchema } from '../session/schemas/session.schema';
 import { Role, RoleSchema } from '../role/schemas/role.schema';
-import { SessionService } from './services/session.service';
-import { SessionCookieService } from './services/session-cookie.service';
-import { SignInService } from './services/sign-in.service';
+import { SessionService } from './services/sessions/session.service';
+import { SessionCookieService } from './services/sessions/session-cookie.service';
+import { SignInService } from './services/sessions/sign-in.service';
 import { TotpSecretCryptoService } from './two-factor/services/totp-secret-crypto.service'; // feature:totp
 import { TwoFactorChallengeService } from './two-factor/services/two-factor-challenge.service'; // feature:totp
 import { TwoFactorVerificationService } from './two-factor/services/two-factor-verification.service'; // feature:totp
-import { VerificationCodeService } from './services/verification-code.service';
-import { MailCounterService } from './services/mail-counter.service';
-import { EmailChangeConfirmationService } from './services/email-change-confirmation.service';
-import { PasswordResetCodeService } from './services/password-reset-code.service';
-import { AuthMailService } from './services/auth-mail.service';
-import { AuthFeaturesService } from './services/auth-features.service';
+import { VerificationCodeService } from './services/codes/verification-code.service';
+import { MailCounterService } from './services/mail/mail-counter.service';
+import { EmailChangeConfirmationService } from './services/registration/email-change-confirmation.service';
+import { PasswordResetCodeService } from './services/codes/password-reset-code.service';
+import { AuthMailService } from './services/mail/auth-mail.service';
+import { AuthFeaturesService } from './services/features/auth-features.service';
 import { FeatureEnabledGuard } from './guards/feature-enabled.guard';
 import { CommonModule } from '../common/common.module';
 import { MailModule } from '../mail/mail.module';

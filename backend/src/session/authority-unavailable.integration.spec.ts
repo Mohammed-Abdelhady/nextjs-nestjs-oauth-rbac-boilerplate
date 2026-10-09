@@ -4,7 +4,7 @@ import { MongoNetworkError } from 'mongodb';
 import type { Server } from 'node:net';
 import request from 'supertest';
 import { GlobalExceptionFilter } from '../common/filters/global-exception.filter';
-import { asAuthorityUnavailable } from './utils/authority-unavailable';
+import { asAuthorityUnavailable } from './utils/authority/authority-unavailable';
 
 const DRIVER_TEXT =
   'connect failed to db.internal:27017, duplicate key member@example.test';

@@ -33,15 +33,15 @@ import {
   UserApplicationGrant,
   UserApplicationGrantDocument,
 } from '../schemas/user-application-grant.schema';
-import { boundLabel } from '../utils/bound-label';
-import { addMs, capIdleByAbsolute } from '../utils/session-deadline';
-import { withMajorityTransaction } from '../utils/mongo-transaction';
-import { asAuthorityUnavailable } from '../utils/authority-unavailable';
-import { hashToken, randomSecret } from '../utils/token-hash';
+import { boundLabel } from '../utils/session/bound-label';
+import { addMs, capIdleByAbsolute } from '../utils/session/session-deadline';
+import { withMajorityTransaction } from '../utils/transactions/mongo-transaction';
+import { asAuthorityUnavailable } from '../utils/authority/authority-unavailable';
+import { hashToken, randomSecret } from '../utils/hashing/token-hash';
 import {
   currentSessionCandidateFilter,
   currentSessionDeadlines,
-} from '../utils/current-session-authority';
+} from '../utils/authority/current-session-authority';
 import { ApplicationRegistryService } from './application-registry.service';
 import { SecurityEventService } from './security-event.service';
 

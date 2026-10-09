@@ -7,7 +7,7 @@ import {
   IssuedBrowserSession,
   SessionIssuanceService,
 } from './services/session-issuance.service';
-import { hashToken } from './utils/token-hash';
+import { hashToken } from './utils/hashing/token-hash';
 import { startMemoryReplSet } from '../../test/utils/memory-replset';
 import { FrozenClock, TEST_NOW } from '../../test/utils/frozen-clock';
 import {

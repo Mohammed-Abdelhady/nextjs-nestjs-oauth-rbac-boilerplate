@@ -7,7 +7,7 @@ import {
   Response,
 } from 'express';
 import { Mongoose, Types } from 'mongoose';
-import { AuthFeaturesService } from '../services/auth-features.service';
+import { AuthFeaturesService } from '../services/features/auth-features.service';
 import { User, UserDocument, UserSchema } from '../../user/schemas/user.schema';
 import { PASSKEY_CHALLENGE_COOKIE } from './constants/passkeys.constants';
 import {
@@ -30,7 +30,7 @@ import {
   WebAuthnAdapter,
 } from './services/webauthn.adapter';
 import { startMemoryReplSet } from '../../../test/utils/memory-replset';
-import { runMigrateMongo } from '../../../test/utils/migrate-mongo-cli';
+import { runMigrateMongo } from '../../../test/migrations/migrate-mongo-cli';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,

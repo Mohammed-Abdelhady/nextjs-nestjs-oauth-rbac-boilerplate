@@ -14,7 +14,11 @@ import {
   BrowserProof,
   BrowserProofDocument,
 } from '../schemas/browser-proof.schema';
-import { hashEquals, hashToken, randomSecret } from '../utils/token-hash';
+import {
+  hashEquals,
+  hashToken,
+  randomSecret,
+} from '../utils/hashing/token-hash';
 
 @Injectable()
 export class BrowserProofService {

@@ -4,12 +4,12 @@ import { Reflector } from '@nestjs/core';
 import { getModelToken } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 import { AuthGuard } from './auth.guard';
-import { SessionService } from '../services/session.service';
-import { SessionCookieService } from '../services/session-cookie.service';
+import { SessionService } from '../services/sessions/session.service';
+import { SessionCookieService } from '../services/sessions/session-cookie.service';
 import { Public } from '../decorators/public.decorator';
 import { Role } from '../../role/schemas/role.schema';
 import { ErrorCode } from '../../common/enums/error-code.enum';
-import { NativeAccessService } from '../../session/native/native-access.service';
+import { NativeAccessService } from '../../session/native/access/native-access.service';
 import { createExecutionContextMock } from '../../common/testing/test-doubles.harness-spec';
 
 class GuardedRoutes {

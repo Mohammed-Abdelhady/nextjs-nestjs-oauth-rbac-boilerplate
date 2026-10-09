@@ -3,7 +3,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { AppException } from '../common/exceptions/app.exception';
 import { ErrorCode } from '../common/enums/error-code.enum';
 import { SECURITY_EVENT_ACTION } from './constants/security-event-action';
-import { hashToken } from './utils/token-hash';
+import { hashToken } from './utils/hashing/token-hash';
 import {
   SecurityEvent,
   SecurityEventDocument,

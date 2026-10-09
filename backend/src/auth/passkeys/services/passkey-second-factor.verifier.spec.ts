@@ -2,7 +2,7 @@ import { Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { UserDocument } from '../../../user/schemas/user.schema';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
-import { AuthFeaturesService } from '../../services/auth-features.service';
+import { AuthFeaturesService } from '../../services/features/auth-features.service';
 import { PasskeyAssertionService } from './passkey-assertion.service';
 import { PasskeySecondFactorVerifier } from './passkey-second-factor.verifier';
 import {

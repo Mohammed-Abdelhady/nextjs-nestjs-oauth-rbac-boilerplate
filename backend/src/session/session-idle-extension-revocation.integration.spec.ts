@@ -4,7 +4,7 @@ import {
   WEB_IDLE_LIFETIME_MS,
 } from './constants/session-policy';
 import { ApplicationRegistryService } from './services/application-registry.service';
-import { hashToken } from './utils/token-hash';
+import { hashToken } from './utils/hashing/token-hash';
 import { SESSION_LAST_USED_UPDATE_INTERVAL_MS } from '../common/constants/session';
 import { startMemoryReplSet } from '../../test/utils/memory-replset';
 import { FrozenClock, TEST_NOW } from '../../test/utils/frozen-clock';

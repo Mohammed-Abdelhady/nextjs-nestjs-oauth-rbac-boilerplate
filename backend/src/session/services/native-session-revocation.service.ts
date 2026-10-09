@@ -10,8 +10,8 @@ import {
   NativeCredentialDocument,
 } from '../schemas/native-credential.schema';
 import { Session, SessionDocument } from '../schemas/session.schema';
-import { asAuthorityUnavailable } from '../utils/authority-unavailable';
-import { withMajorityTransaction } from '../utils/mongo-transaction';
+import { asAuthorityUnavailable } from '../utils/authority/authority-unavailable';
+import { withMajorityTransaction } from '../utils/transactions/mongo-transaction';
 import { SecurityEventService } from './security-event.service';
 
 /**

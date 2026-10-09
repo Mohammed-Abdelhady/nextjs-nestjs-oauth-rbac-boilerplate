@@ -23,7 +23,7 @@ import {
 import { escapeRegex } from '../common/utils/escape-regex';
 import { ErrorCode } from '../common/enums/error-code.enum';
 import { AppException } from '../common/exceptions/app.exception';
-import { RoleEditService } from './services/role-edit.service';
+import { RoleEditService } from './services/edit/role-edit.service';
 
 @Injectable()
 export class RoleService {

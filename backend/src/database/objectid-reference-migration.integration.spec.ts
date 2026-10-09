@@ -2,7 +2,7 @@ import { BSON, Document, MongoClient, ObjectId } from 'mongodb';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { startMemoryReplSet } from '../../test/utils/memory-replset';
-import { runMigrateMongo } from '../../test/utils/migrate-mongo-cli';
+import { runMigrateMongo } from '../../test/migrations/migrate-mongo-cli';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,

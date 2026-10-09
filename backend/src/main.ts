@@ -8,7 +8,7 @@ import { Express } from 'express';
 import { useContainer } from 'class-validator';
 import { AppModule } from './app.module';
 import { reconcileStartupApplications } from './session/session.module';
-import { SessionCookieService } from './auth/services/session-cookie.service';
+import { SessionCookieService } from './auth/services/sessions/session-cookie.service';
 import { ErrorResponse, ErrorDetails } from './common/dto/api-response.dto';
 import { DEVELOPMENT_CONTENT_SECURITY_POLICY } from './common/security/content-security-policy';
 import { browserCors } from './common/security/browser-cors';

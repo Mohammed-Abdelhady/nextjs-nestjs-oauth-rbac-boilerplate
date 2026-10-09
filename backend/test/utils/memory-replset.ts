@@ -7,7 +7,7 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 import type { Db } from 'mongodb';
 import { BACKEND_TEST_MONGO_URIS_ENV } from '../constants/mongo';
-import type { SharedMongoServer } from './mongo-server-state';
+import type { SharedMongoServer } from './mongo/mongo-server-state';
 
 const REPLICA_SET_NAME = 'rs0';
 const DEFAULT_DATABASE_NAME = 'test';

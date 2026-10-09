@@ -9,8 +9,8 @@ import { Reflector } from '@nestjs/core';
 import { Model, Types } from 'mongoose';
 import { Request, Response } from 'express';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
-import { SessionService } from '../services/session.service';
-import { SessionCookieService } from '../services/session-cookie.service';
+import { SessionService } from '../services/sessions/session.service';
+import { SessionCookieService } from '../services/sessions/session-cookie.service';
 import {
   SessionDocument,
   LeanSession,
@@ -23,11 +23,11 @@ import { getEffectivePermissions } from '../utils/permissions.util';
 import {
   NativeAccessService,
   readBearerToken,
-} from '../../session/native/native-access.service';
+} from '../../session/native/access/native-access.service';
 import {
   REQUEST_CREDENTIAL,
   selectRequestCredential,
-} from '../../session/utils/request-credential';
+} from '../../session/utils/request/request-credential';
 
 /**
  * A lean session read populates `user` with the account; an unpopulated read

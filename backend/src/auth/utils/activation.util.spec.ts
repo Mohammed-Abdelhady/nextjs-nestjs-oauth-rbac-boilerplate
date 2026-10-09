@@ -5,7 +5,7 @@ import { User, UserDocument, UserSchema } from '../../user/schemas/user.schema';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { AuthProvider } from '../../user/enums/auth-provider.enum';
 import { createActivatedAccount, confirmEmailChange } from './activation.util';
-import { withMajorityTransaction } from '../../session/utils/mongo-transaction';
+import { withMajorityTransaction } from '../../session/utils/transactions/mongo-transaction';
 import { PENDING_PURPOSE } from '../constants/registration';
 import { ReservedCode } from '../interfaces/pending-code.interface';
 import {

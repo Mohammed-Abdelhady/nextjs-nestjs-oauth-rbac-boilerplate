@@ -14,8 +14,8 @@ import {
   UserApplicationGrant,
   UserApplicationGrantDocument,
 } from '../schemas/user-application-grant.schema';
-import { asAuthorityUnavailable } from '../utils/authority-unavailable';
-import { withMajorityTransaction } from '../utils/mongo-transaction';
+import { asAuthorityUnavailable } from '../utils/authority/authority-unavailable';
+import { withMajorityTransaction } from '../utils/transactions/mongo-transaction';
 import { SecurityEventService } from './security-event.service';
 
 @Injectable()

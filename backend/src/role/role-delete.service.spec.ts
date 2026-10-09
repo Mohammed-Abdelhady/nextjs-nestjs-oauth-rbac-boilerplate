@@ -5,7 +5,7 @@ import { SecurityEventService } from '../session/services/security-event.service
 import { RoleDocument } from './schemas/role.schema';
 import { UserDocument } from '../user/schemas/user.schema';
 import { RoleService } from './role.service';
-import { RoleEditService } from './services/role-edit.service';
+import { RoleEditService } from './services/edit/role-edit.service';
 import { Role } from './schemas/role.schema';
 import { User } from '../user/schemas/user.schema';
 import {

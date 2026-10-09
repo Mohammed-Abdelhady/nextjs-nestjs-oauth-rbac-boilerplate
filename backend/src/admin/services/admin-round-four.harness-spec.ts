@@ -4,7 +4,7 @@ import { startMemoryReplSet } from '../../../test/utils/memory-replset';
 import {
   bootAdminAtomic,
   AdminAtomicHarness,
-} from '../../../test/utils/admin-atomic-harness';
+} from '../../../test/utils/admin/admin-atomic-harness';
 import { TEST_NOW } from '../../../test/utils/frozen-clock';
 import { RaceGate } from '../../../test/utils/race-gate';
 import {

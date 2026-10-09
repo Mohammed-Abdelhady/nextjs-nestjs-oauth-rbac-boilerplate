@@ -21,8 +21,8 @@ import {
 } from './utils/magic-link-token.util';
 import { buildClientUrl } from '../../common/utils/client-url.util';
 import { LoginResponseDto } from '../dto/login-response.dto';
-import { AuthMailService } from '../services/auth-mail.service';
-import { SignInService } from '../services/sign-in.service';
+import { AuthMailService } from '../services/mail/auth-mail.service';
+import { SignInService } from '../services/sessions/sign-in.service';
 import { User, UserDocument } from '../../user/schemas/user.schema';
 import { AuthProvider } from '../../user/enums/auth-provider.enum';
 import { ApiResponse } from '../../common/dto/api-response.dto';

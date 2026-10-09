@@ -9,7 +9,7 @@ import {
   WEB_ABSOLUTE_LIFETIME_MS,
   WEB_IDLE_LIFETIME_MS,
 } from '../constants/session-policy';
-import { isAcceptableRedirectUri } from '../utils/redirect-uri.util';
+import { isAcceptableRedirectUri } from '../utils/oauth/redirect-uri.util';
 
 @Schema({ _id: false })
 export class ApplicationPolicy {

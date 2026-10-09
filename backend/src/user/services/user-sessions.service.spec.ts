@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 import { UserSessionsService } from './user-sessions.service';
-import { SessionService } from '../../auth/services/session.service';
+import { SessionService } from '../../auth/services/sessions/session.service';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 
 describe('UserSessionsService', () => {

@@ -6,7 +6,7 @@ import { AuthProvider } from '../../user/enums/auth-provider.enum';
 import { isMongoDuplicateKeyError } from '../../common/utils/mongo-error.util';
 import { ApiResponse } from '../../common/dto/api-response.dto';
 import { ActivateResponseDto } from '../dto/activate-response.dto';
-import { SignInService } from '../services/sign-in.service';
+import { SignInService } from '../services/sessions/sign-in.service';
 import { ReservedCode } from '../interfaces/pending-code.interface';
 import { activationCodeInvalid } from './activation-error.util';
 

@@ -7,8 +7,8 @@ import { CREDENTIAL_PURPOSE } from '../../session/constants/credential-purpose';
 import { WEB_CLIENT_ID } from '../../session/constants/client-ids';
 import { ApplicationRegistryService } from '../../session/services/application-registry.service';
 import { BrowserProofService } from '../../session/services/browser-proof.service';
-import { SessionService } from '../services/session.service';
-import { SessionCookieService } from '../services/session-cookie.service';
+import { SessionService } from '../services/sessions/session.service';
+import { SessionCookieService } from '../services/sessions/session-cookie.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { BrowserProofGuard } from './browser-proof.guard';
 

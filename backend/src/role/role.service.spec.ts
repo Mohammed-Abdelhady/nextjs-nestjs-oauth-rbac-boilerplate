@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 import { RoleService } from './role.service';
-import { RoleEditService } from './services/role-edit.service';
+import { RoleEditService } from './services/edit/role-edit.service';
 import { Role } from './schemas/role.schema';
 import { User } from '../user/schemas/user.schema';
 

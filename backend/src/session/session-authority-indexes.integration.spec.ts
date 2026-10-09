@@ -4,7 +4,7 @@ import { basename, extname, resolve } from 'node:path';
 import type { Db, IndexDescription, MongoClient } from 'mongodb';
 import { Connection } from 'mongoose';
 import { startMemoryReplSet } from '../../test/utils/memory-replset';
-import { runMigrateMongo } from '../../test/utils/migrate-mongo-cli';
+import { runMigrateMongo } from '../../test/migrations/migrate-mongo-cli';
 import {
   bootSessionAuthority,
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,

@@ -1,5 +1,5 @@
 import { ErrorCode } from '../../../common/enums/error-code.enum';
-import { SignInService } from '../../services/sign-in.service';
+import { SignInService } from '../../services/sessions/sign-in.service';
 import { PasskeyAssertionService } from './passkey-assertion.service';
 import { PasskeyLoginService } from './passkey-login.service';
 import {
