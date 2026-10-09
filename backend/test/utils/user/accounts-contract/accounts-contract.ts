@@ -1,4 +1,5 @@
 import { TEST_NOW } from '../../frozen-clock';
+import { accountAbortCases } from './accounts-contract-abort';
 import { accountActivationCases } from './accounts-contract-activation';
 import { accountAdminCases } from './accounts-contract-admin';
 import { accountFreshnessCases } from './accounts-contract-fresh';
@@ -63,5 +64,6 @@ export function describeAccountStoresContract(
     accountRaceCases(current, seeded);
     accountActivationCases(current, seeded);
     accountSeamCases(current, seeded);
+    accountAbortCases(current, seeded);
   });
 }

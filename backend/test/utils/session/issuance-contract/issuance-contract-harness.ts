@@ -96,8 +96,14 @@ export interface IssuanceContractHarness {
 
   /** Until restored, the database refuses every security event as a duplicate. */
   refuseSecurityEvents(): Promise<() => void>;
-  /** Loses the answer to every commit asked for until restored. */
-  loseCommitAnswers(options: { lands: boolean }): LostCommitAnswers;
+  /**
+   * Loses the answer to the next `times` commits. Left out, it loses every
+   * answer until restored: the database cannot be reached to ask again.
+   */
+  loseCommitAnswers(options: {
+    lands: boolean;
+    times?: number;
+  }): LostCommitAnswers;
 
   reset(): Promise<void>;
   close(): Promise<void>;

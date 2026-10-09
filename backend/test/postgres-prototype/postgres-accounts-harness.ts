@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Kysely, sql } from 'kysely';
+import { SessionRevoker } from '../../src/session/revocation/session-revoker';
+import { RevokerAccountSessions } from '../../src/user/stores/revoker-account-sessions';
 import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
 import {
   issueOnlyTheRefusedEventId,
@@ -10,7 +12,6 @@ import {
 import { AccountsContractHarness } from '../utils/user/accounts-contract/accounts-contract-harness';
 import { PostgresAccountPermissionStore } from './adapter/postgres-account-permission.store';
 import { PostgresAccountProfileStore } from './adapter/postgres-account-profile.store';
-import { PostgresAccountSessions } from './adapter/postgres-account-sessions';
 import {
   PostgresActivationAccounts,
   PostgresActivationSignIn,
@@ -23,6 +24,7 @@ import { PostgresRoleCatalogStore } from './adapter/postgres-role-catalog.store'
 import { PostgresRoleChangeStore } from './adapter/postgres-role-change.store';
 import { PostgresRoleSweepStore } from './adapter/postgres-role-sweep.store';
 import { PostgresSecurityEventStore } from './adapter/postgres-security-event.store';
+import { PostgresSessionRevocationStore } from './adapter/postgres-session-revocation.store';
 import { PostgresUnitOfWorkRunner } from './adapter/postgres-unit-of-work';
 import { openPrototypeConnection } from './postgres-connection';
 
@@ -45,7 +47,13 @@ export async function bootPostgresAccountsHarness(): Promise<PostgresAccountsHar
     clock,
     profiles: new PostgresAccountProfileStore(database, clock),
     permissions: new PostgresAccountPermissionStore(database, clock),
-    sessions: new PostgresAccountSessions(clock, events),
+    sessions: new RevokerAccountSessions(
+      new SessionRevoker(
+        new PostgresUnitOfWorkRunner(database),
+        new PostgresSessionRevocationStore(clock, events),
+        clock,
+      ),
+    ),
     admin: new PostgresAdminAccountStore(database, clock),
     activation: new PostgresActivationAccounts(database, clock),
     signIn: new PostgresActivationSignIn(),
