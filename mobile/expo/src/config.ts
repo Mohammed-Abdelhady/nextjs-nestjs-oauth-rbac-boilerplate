@@ -1,10 +1,14 @@
 import appConfig from '../app.json';
 import { resolveConfig, resolveDebugAccess, resolveKeyProtection } from './logic/resolve-config';
 
-/** Expo replaces the variable at bundle time, so it has to be read by its full name. */
+/**
+ * Expo replaces the variable at bundle time, so it has to be read by its full name.
+ * The client id and the return address come from the scheme in app.json, nowhere else.
+ */
 export const AUTH_CONFIGURATION = resolveConfig({
   apiOrigin: process.env.EXPO_PUBLIC_API_ORIGIN,
   development: __DEV__,
+  scheme: appConfig.expo.scheme,
 });
 
 /**
