@@ -1,5 +1,6 @@
 'use client';
 
+import { Heading } from '@/components/design-system';
 import { useEffect, useRef } from 'react';
 import { LogIn } from 'lucide-react';
 import { IconLinkButton } from '@/components/ui/icon-link-button';
@@ -29,15 +30,17 @@ export function AuthCompletionNotice({
 
   return (
     <section className="mt-12 flex flex-col items-center" aria-labelledby={`${testId}-heading`}>
-      <h1
+      <Heading
+        level={1}
+        variant="display"
         ref={headingRef}
         tabIndex={-1}
         id={`${testId}-heading`}
         aria-describedby={testId}
-        className="text-2xl xl:text-3xl font-extrabold text-foreground text-center"
+        className="text-center"
       >
         {title}
-      </h1>
+      </Heading>
       <p id={testId} role="status" data-testid={testId} className="mt-4 max-w-xs text-center">
         {message}
       </p>

@@ -1,5 +1,6 @@
 'use client';
 
+import { Description, Heading } from '@/components/design-system';
 import { memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
@@ -80,8 +81,10 @@ export const RoleDetailPanel = memo(function RoleDetailPanel({
       <div className={cn('flex items-center justify-center py-16 text-center', className)}>
         <div className="space-y-3">
           <Shield className="h-12 w-12 mx-auto text-muted-foreground" aria-hidden="true" />
-          <h2 className="text-lg font-medium">{t('noRoleSelected')}</h2>
-          <p className="text-sm text-muted-foreground max-w-sm">{t('selectRoleHint')}</p>
+          <Heading level={2} variant="sectionTitle">
+            {t('noRoleSelected')}
+          </Heading>
+          <Description className="max-w-sm">{t('selectRoleHint')}</Description>
         </div>
       </div>
     );
@@ -96,8 +99,10 @@ export const RoleDetailPanel = memo(function RoleDetailPanel({
       <header className="pb-4 border-b border-border">
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1">
-            <h2 className="text-lg font-medium tracking-tight">{role.name}</h2>
-            <p className="text-sm text-muted-foreground mt-1">{role.slug}</p>
+            <Heading level={2} variant="sectionTitle">
+              {role.name}
+            </Heading>
+            <Description className="mt-1">{role.slug}</Description>
           </div>
           <div className="flex gap-2">
             {role.isSystemRole && (
@@ -119,16 +124,16 @@ export const RoleDetailPanel = memo(function RoleDetailPanel({
       {/* Description */}
       {role.description && (
         <section>
-          <p className="text-sm leading-relaxed text-muted-foreground">{role.description}</p>
+          <Description>{role.description}</Description>
         </section>
       )}
 
       {/* Permissions Section */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs uppercase tracking-widest text-tertiary">
+          <Heading level={3} variant="eyebrow">
             {t('permissionsHeading', { count: role.permissions.length })}
-          </h3>
+          </Heading>
           {role.permissions.includes('*') && (
             <Badge
               variant="outline"

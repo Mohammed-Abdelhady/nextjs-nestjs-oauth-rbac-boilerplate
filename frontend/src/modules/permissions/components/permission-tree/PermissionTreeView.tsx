@@ -1,3 +1,4 @@
+import { Heading } from '@/components/design-system';
 import { useTranslations } from 'next-intl';
 import { PermissionNode } from './PermissionNode';
 import { Shield } from 'lucide-react';
@@ -95,7 +96,9 @@ export function PermissionTreeView({
           <div key={resource} className="space-y-2">
             {/* Resource Header */}
             {showHeaders && resource !== 'wildcard' && (
-              <h4 className="text-xs uppercase tracking-widest text-tertiary">{resource}</h4>
+              <Heading level={4} variant="eyebrow">
+                {resource}
+              </Heading>
             )}
 
             {/* Permission Nodes */}

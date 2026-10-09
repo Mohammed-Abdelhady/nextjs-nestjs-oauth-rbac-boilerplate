@@ -1,5 +1,6 @@
 'use client';
 
+import { Description, Heading } from '@/components/design-system';
 import { useState, useMemo, useCallback, useEffect, lazy, Suspense, Activity } from 'react';
 import { useTranslations } from 'next-intl';
 import { RefreshCw, Users } from 'lucide-react';
@@ -101,10 +102,10 @@ export default function AdminUsersPage() {
         <div className="my-8">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                {t('count', { count: totalCount })}
-              </p>
+              <Heading level={1} variant="pageTitle">
+                {t('title')}
+              </Heading>
+              <Description className="mt-1">{t('count', { count: totalCount })}</Description>
             </div>
             <div className="flex gap-2">
               <Button
@@ -177,10 +178,12 @@ export default function AdminUsersPage() {
             data-testid="empty-state"
           >
             <Users className="h-10 w-10 text-muted-foreground mb-3" aria-hidden="true" />
-            <h2 className="text-lg font-semibold">{isFiltered ? t('noUsers') : t('noUsersYet')}</h2>
-            <p className="text-sm text-muted-foreground max-w-sm mt-1 mb-4">
+            <Heading level={2} variant="sectionTitle">
+              {isFiltered ? t('noUsers') : t('noUsersYet')}
+            </Heading>
+            <Description className="max-w-sm mt-1 mb-4">
               {isFiltered ? t('noUsersHint') : t('noUsersYetHint')}
-            </p>
+            </Description>
             {isFiltered ? (
               <Button
                 variant="outline"

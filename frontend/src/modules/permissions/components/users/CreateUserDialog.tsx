@@ -131,10 +131,8 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
     <Dialog open={open} onOpenChange={(next) => (next ? onOpenChange(true) : handleClose())}>
       <DialogContent className="sm:max-w-[500px]" data-testid="create-user-dialog">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold tracking-tight">{t('title')}</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">
-            {t('description')}
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} noValidate className="space-y-5">

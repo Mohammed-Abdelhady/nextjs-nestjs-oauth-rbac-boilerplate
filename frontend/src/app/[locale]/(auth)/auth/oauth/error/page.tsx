@@ -1,5 +1,6 @@
 'use client';
 
+import { Description, Heading } from '@/components/design-system';
 import { Link, useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
@@ -31,13 +32,19 @@ export default function OAuthErrorPage() {
         </div>
 
         {/* Error Message */}
-        <h1 className="mb-2 text-3xl font-bold text-foreground">{t('title')}</h1>
+        <Heading level={1} variant="display" className="mb-2">
+          {t('title')}
+        </Heading>
 
-        <p className="mb-6 text-lg text-muted-foreground">{t('description')}</p>
+        <Description variant="lead" className="mb-6">
+          {t('description')}
+        </Description>
 
         {/* Helpful Information */}
         <div className="mb-8 rounded-lg bg-muted/50 p-6 text-start">
-          <h2 className="mb-3 text-lg font-semibold text-foreground">{t('reasonsTitle')}</h2>
+          <Heading level={2} variant="sectionTitle" className="mb-3">
+            {t('reasonsTitle')}
+          </Heading>
           <ul className="space-y-2 text-sm text-muted-foreground">
             {REASON_KEYS.map((key) => (
               <li key={key} className="flex items-start">

@@ -1,5 +1,6 @@
 'use client';
 
+import { Heading } from '@/components/design-system';
 import { useTranslations } from 'next-intl';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SearchPermissionGrid } from './SearchPermissionGrid';
@@ -88,7 +89,9 @@ export function SearchPermissionTabs({
           return (
             <div key={group.id} className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold tracking-tight">{t(`groups.${group.id}`)}</h3>
+                <Heading level={3} variant="subsectionTitle">
+                  {t(`groups.${group.id}`)}
+                </Heading>
                 <button
                   type="button"
                   onClick={() => onSelectAll(group.filteredPermissions)}

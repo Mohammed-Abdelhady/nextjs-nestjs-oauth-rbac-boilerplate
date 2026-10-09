@@ -1,5 +1,6 @@
 'use client';
 
+import { Description, Heading } from '@/components/design-system';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from '@/lib/toast';
@@ -83,7 +84,9 @@ export function LinkedAccountCard({
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-medium">{displayName}</h3>
+                  <Heading level={3} variant="subsectionTitle">
+                    {displayName}
+                  </Heading>
                   {isPrimary && (
                     <Badge variant="default" className="text-xs">
                       <CheckCircle2 className="me-1 h-3 w-3" />
@@ -91,9 +94,9 @@ export function LinkedAccountCard({
                     </Badge>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <Description>
                   {isPrimary ? t('primaryDescription') : t('linkedDescription')}
-                </p>
+                </Description>
               </div>
             </div>
 

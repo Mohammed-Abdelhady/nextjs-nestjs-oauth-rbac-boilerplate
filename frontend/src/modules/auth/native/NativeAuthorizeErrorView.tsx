@@ -1,5 +1,6 @@
 'use client';
 
+import { Heading } from '@/components/design-system';
 import type { RefObject } from 'react';
 import { useTranslations } from 'next-intl';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -21,9 +22,9 @@ export function NativeAuthorizeErrorView({
 
   return (
     <section className="mx-auto mt-12 max-w-sm" data-testid="native-authorize-error">
-      <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-extrabold text-foreground">
+      <Heading level={1} variant="display" ref={headingRef} tabIndex={-1}>
         {t('errorTitle')}
-      </h1>
+      </Heading>
       <Alert variant="destructive" role="alert" className="mt-4">
         <AlertDescription>{message}</AlertDescription>
       </Alert>

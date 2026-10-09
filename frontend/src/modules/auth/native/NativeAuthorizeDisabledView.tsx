@@ -1,5 +1,6 @@
 'use client';
 
+import { Heading } from '@/components/design-system';
 import type { RefObject } from 'react';
 import { useTranslations } from 'next-intl';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -16,9 +17,9 @@ export function NativeAuthorizeDisabledView({ headingRef }: NativeAuthorizeDisab
 
   return (
     <section className="mx-auto mt-12 max-w-sm" data-testid="native-authorize-disabled">
-      <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-extrabold text-foreground">
+      <Heading level={1} variant="display" ref={headingRef} tabIndex={-1}>
         {t('disabledTitle')}
-      </h1>
+      </Heading>
       <Alert variant="warning" role="note" className="mt-4">
         <AlertDescription>{tCodes(ErrorCode.NATIVE_AUTH_DISABLED)}</AlertDescription>
       </Alert>

@@ -1,5 +1,6 @@
 'use client';
 
+import { Heading } from '@/components/design-system';
 import type { RefObject } from 'react';
 import { useTranslations } from 'next-intl';
 import { Loader2 } from 'lucide-react';
@@ -28,9 +29,9 @@ export function NativeAuthorizeReturningView({
         className="mx-auto h-8 w-8 motion-safe:animate-spin text-primary"
         aria-hidden="true"
       />
-      <h1 ref={headingRef} tabIndex={-1} className="mt-4 text-2xl font-extrabold text-foreground">
+      <Heading level={1} variant="display" ref={headingRef} tabIndex={-1} className="mt-4">
         {t('returning')}
-      </h1>
+      </Heading>
       {canReopen && (
         <Button
           type="button"

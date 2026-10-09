@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { RefreshCw, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { TimelineList } from '@/components/design-system';
+import { Description, Heading, TimelineList } from '@/components/design-system';
 import {
   SessionCardTimeline,
   RevokeAllSessionsButton,
@@ -50,8 +50,10 @@ export default function SessionsPage() {
       <div className="my-8 ">
         <div className="flex items-center justify-between flex-wrap gap-4 mb-2">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{t('description')}</p>
+            <Heading level={1} variant="pageTitle">
+              {t('title')}
+            </Heading>
+            <Description className="mt-1">{t('description')}</Description>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
@@ -109,10 +111,10 @@ export default function SessionsPage() {
           data-testid="empty-state"
         >
           <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-3" aria-hidden="true" />
-          <h2 className="text-lg font-semibold">{t('noSessions')}</h2>
-          <p className="text-sm text-muted-foreground max-w-sm mt-1 mb-4">
-            {t('noSessionsDescription')}
-          </p>
+          <Heading level={2} variant="sectionTitle">
+            {t('noSessions')}
+          </Heading>
+          <Description className="max-w-sm mt-1 mb-4">{t('noSessionsDescription')}</Description>
           <Button
             variant="outline"
             size="sm"

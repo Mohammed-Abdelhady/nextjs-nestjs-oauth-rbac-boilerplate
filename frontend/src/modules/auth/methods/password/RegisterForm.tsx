@@ -1,5 +1,6 @@
 'use client';
 
+import { Description, Heading } from '@/components/design-system';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { z } from 'zod';
@@ -123,17 +124,19 @@ export function RegisterForm() {
   return (
     <section className="mt-12 flex flex-col items-center" aria-labelledby="register-heading">
       {/* Title */}
-      <h1
+      <Heading
+        level={1}
+        variant="display"
         id="register-heading"
-        className="text-2xl xl:text-3xl font-extrabold text-foreground"
+
         data-testid="register-title"
       >
         {t('title')}
-      </h1>
+      </Heading>
 
-      <p className="text-base text-muted-foreground mt-4 text-center max-w-md">
+      <Description variant="lead" className="mt-4 text-center max-w-md">
         {t('description')}
-      </p>
+      </Description>
 
       <div className="w-full flex-1 mt-8">
         {/* Sign In Link */}

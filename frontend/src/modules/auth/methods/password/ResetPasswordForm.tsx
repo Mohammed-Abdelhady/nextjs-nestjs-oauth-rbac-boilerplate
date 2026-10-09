@@ -1,5 +1,6 @@
 'use client';
 
+import { Description, Heading } from '@/components/design-system';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { z } from 'zod';
@@ -162,16 +163,20 @@ export function ResetPasswordForm() {
   return (
     <section className="mt-12 flex flex-col items-center" aria-labelledby="reset-password-heading">
       {/* Title */}
-      <h1
+      <Heading
+        level={1}
+        variant="display"
         id="reset-password-heading"
-        className="text-2xl xl:text-3xl font-extrabold text-foreground"
+
         data-testid="reset-password-title"
       >
         {t('title')}
-      </h1>
+      </Heading>
 
       {/* Subtitle */}
-      <p className="text-base text-muted-foreground mt-4 text-center max-w-md">{t('subtitle')}</p>
+      <Description variant="lead" className="mt-4 text-center max-w-md">
+        {t('subtitle')}
+      </Description>
 
       <div className="w-full flex-1 mt-8">
         <FormProvider {...form}>

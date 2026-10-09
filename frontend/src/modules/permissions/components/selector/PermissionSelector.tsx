@@ -1,5 +1,6 @@
 'use client';
 
+import { Heading } from '@/components/design-system';
 import { useState, useMemo, useCallback, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -197,9 +198,9 @@ export const PermissionSelector = memo(function PermissionSelector({
               return (
                 <div key={group.id} className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold tracking-tight">
+                    <Heading level={3} variant="subsectionTitle">
                       {t(`groups.${group.id}`)}
-                    </h3>
+                    </Heading>
                     <button
                       type="button"
                       onClick={() => handleSelectAll(group.permissions)}

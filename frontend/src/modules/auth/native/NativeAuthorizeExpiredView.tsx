@@ -1,5 +1,6 @@
 'use client';
 
+import { Description, Heading } from '@/components/design-system';
 import type { RefObject } from 'react';
 import { useTranslations } from 'next-intl';
 import { AlertCircle } from 'lucide-react';
@@ -15,10 +16,12 @@ export function NativeAuthorizeExpiredView({ headingRef }: NativeAuthorizeExpire
   return (
     <section className="mx-auto mt-12 max-w-sm text-center" data-testid="native-authorize-expired">
       <AlertCircle className="mx-auto h-8 w-8 text-destructive" aria-hidden="true" />
-      <h1 ref={headingRef} tabIndex={-1} className="mt-4 text-2xl font-extrabold text-foreground">
+      <Heading level={1} variant="display" ref={headingRef} tabIndex={-1} className="mt-4">
         {t('expiredTitle')}
-      </h1>
-      <p className="mt-2 text-sm text-muted-foreground">{t('expiredBody')}</p>
+      </Heading>
+      <Description variant="lead" className="mt-2">
+        {t('expiredBody')}
+      </Description>
     </section>
   );
 }

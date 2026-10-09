@@ -1,10 +1,10 @@
 import { forwardRef, HTMLAttributes, ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { FOCUS_RING_CLASSES } from '@/constants/focusStyles';
+import { HEADING_ROLE_CLASSES } from '@/constants/typography';
 import { cn } from '@/lib/utils';
 
-const TITLE_CLASSES =
-  'flex items-center gap-2 text-xs uppercase tracking-widest text-tertiary font-medium';
+const TITLE_CLASSES = cn('flex items-center gap-2', HEADING_ROLE_CLASSES.eyebrow);
 
 export interface SectionHeaderProps extends HTMLAttributes<HTMLDivElement> {
   /**

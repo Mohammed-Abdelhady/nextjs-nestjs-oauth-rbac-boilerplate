@@ -1,5 +1,7 @@
 'use client';
 
+import { HEADING_ROLE_CLASSES } from '@/constants/typography';
+import { Heading } from '@/components/design-system';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
@@ -142,9 +144,9 @@ export function UserPermissionsDialog({
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                    <Heading level={3} variant="subsectionTitle">
                       {t('inheritedFromRole', { role: data?.role || '' })}
-                    </h3>
+                    </Heading>
                     {data?.role && (
                       <Badge variant="secondary" className="text-xs">
                         {data.role}
@@ -170,9 +172,9 @@ export function UserPermissionsDialog({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                      <h3 className="font-semibold text-foreground">
+                      <Heading level={3} variant="subsectionTitle">
                         {t('directPermissions', { count: directPermissions.length })}
-                      </h3>
+                      </Heading>
                     </div>
                     <Button
                       size="sm"
@@ -198,9 +200,7 @@ export function UserPermissionsDialog({
 
                       {/* Remove Actions Section */}
                       <div className="space-y-2 pt-2 border-t border-border">
-                        <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                          {t('removePermissions')}
-                        </p>
+                        <p className={HEADING_ROLE_CLASSES.eyebrow}>{t('removePermissions')}</p>
                         <div className="grid gap-2">
                           {directPermissions.map((permission) => (
                             <div

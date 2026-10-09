@@ -1,5 +1,6 @@
 'use client';
 
+import { HEADING_ROLE_CLASSES } from '@/constants/typography';
 import { useCallback, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { ArrowRight, Check, Copy } from 'lucide-react';
@@ -35,9 +36,7 @@ export function ScanStep({ setup, onContinue }: ScanStepProps) {
       </div>
 
       <div className="space-y-2">
-        <p className="text-xs uppercase tracking-widest text-muted-foreground">
-          {t('secretLabel')}
-        </p>
+        <p className={HEADING_ROLE_CLASSES.eyebrow}>{t('secretLabel')}</p>
         <div className="flex items-center gap-2">
           <code
             className="flex-1 overflow-x-auto rounded-md bg-muted px-3 py-2 font-mono text-sm"
