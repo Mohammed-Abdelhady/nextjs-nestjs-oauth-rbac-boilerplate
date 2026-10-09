@@ -48,7 +48,7 @@ the way `TWO_FACTOR_CLIENT_PATH` sits in `common/constants/client-paths.ts`.
 2. Add the entry, listing every file that belongs to that method alone and every
    env var it reads.
 3. Mark the lines shared files needed for it.
-4. Add the combination to `test/combinations.slow.test.ts` and run
+4. Add the combination to `test/combinations/combinations.slow.test.ts` and run
    `pnpm --filter create-nest-next-auth run test:combinations`. It scaffolds a
    project per combination and typechecks both workspaces, and it checks that a
    project with everything selected matches the repository with the markers

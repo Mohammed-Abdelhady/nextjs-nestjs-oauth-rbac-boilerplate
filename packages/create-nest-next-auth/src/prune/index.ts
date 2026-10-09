@@ -6,6 +6,7 @@ import {
   ROOT_PACKAGE_JSON,
   DEFAULT_RULES_POLICY,
 } from '../constants/index.js';
+import { pruneLintStaged } from './lint-staged.js';
 import { pruneRules } from './rules.js';
 import { removeDocMarkers } from './doc-markers.js';
 import { removeDocLinks } from './docs.js';
@@ -95,6 +96,7 @@ export async function prune(
   await writeFeatureFlag(root, selectedFeatures);
   const workspaceChanged = await renderWorkspace(root);
   await pruneRootPackage(root, deletedFiles);
+  await pruneLintStaged(root);
   await pruneDependabot(root, deletedFiles);
   const editedCatalogues = await pruneMessageCatalogues(root, manifest, removedOptions);
 

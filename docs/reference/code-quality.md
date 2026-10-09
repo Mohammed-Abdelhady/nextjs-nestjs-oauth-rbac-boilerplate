@@ -124,7 +124,12 @@ The token checker does not parse TypeScript types. Every workspace enforces the 
 The config suite expands the root package's declared workspaces and skips absent packages. It checks the inventoried TypeScript files through ESLint's own config and ignore APIs: the file is not ignored, the type rule is an error, and inline configuration is disabled. This covers inventoried files actually present, not hypothetical future paths or undeclared workspaces. The repository test uses filesystem inventory so its Git subprocesses never target this worktree; explicit project checks can use tracked Git inventory. Filesystem inventory excludes paths ignored by Git ignore files, including files that happen to be tracked. A present workspace with no lintable files fails the check. Without Git, an equivalent filesystem inventory respects the scan skip list and applicable ignore files. Paths are relative to the project root, including projects nested in another repository. The read-only Git inventory preserves global configuration, including ownership exceptions.
 <!-- repository-only:end -->
 
-Human-maintained files in the source and test directories selected by `CAPPED_PATH` in the policy must stay at 350 lines or fewer. The guardrail modules and hook entry are also capped.
+Human-maintained files selected by `CAPPED_PATH` must stay at 350 lines or fewer. Covered paths are `backend/src/**`, `backend/test/**`, `backend/scripts/**`, `backend/migrations/**`, `frontend/src/**`, `shared/*/src/**`, and `scripts/**`. JSON, snapshot and CSS files are exempt from the line limit.
+
+<!-- repository-only:start -->
+
+The repository also caps `frontend/e2e/**`, `packages/*/src/**`, `packages/*/test/**`, `packages/*/scripts/**`, `mobile/*/src/**`, `mobile/*/app/**`, `mobile/*/test/**`, and `mobile/*/conformance/**`.
+<!-- repository-only:end -->
 
 <!-- repository-only:start -->
 
