@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { singleStatement } from '../../../auth/persistence/mongo/mongo-unique-conflict';
+import { MalformedIdError } from '../../../common/persistence/persistence-errors';
 import { UnitOfWork } from '../../../common/persistence/unit-of-work';
 import {
   AccessGrant,
@@ -20,6 +22,7 @@ import {
 } from '../../schemas/user-application-grant.schema';
 import { SecurityEventService } from '../../services/security-event.service';
 import { toObjectId } from './mongo-issuance-mappers';
+import { isStorableId } from './mongo-session-records';
 import { mongoSessionOf } from './mongo-unit-of-work';
 
 function toAccessGrant(grant: {
@@ -56,6 +59,20 @@ export class MongoApplicationAccessStore extends ApplicationAccessStore {
     private readonly events: SecurityEventService,
   ) {
     super();
+  }
+
+  async readGrant(
+    userId: string,
+    clientId: string,
+  ): Promise<AccessGrant | null> {
+    // Mongoose decides what an id is here, as it did before this read moved.
+    if (!isStorableId(userId)) {
+      throw new MalformedIdError();
+    }
+    const grant = await singleStatement(() =>
+      this.grantModel.findOne({ userId, clientId }).exec(),
+    );
+    return grant ? toAccessGrant(grant) : null;
   }
 
   async takeGrantForChange(

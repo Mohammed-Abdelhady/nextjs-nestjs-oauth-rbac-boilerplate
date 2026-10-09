@@ -134,6 +134,7 @@ describe('PostgreSQL prototype adapter', () => {
         '0007_applications_grants.sql',
         '0008_two_factor.sql',
         '0009_passkeys.sql',
+        '0010_native_sign_in.sql',
       ],
       again: [],
       recorded: [
@@ -146,6 +147,7 @@ describe('PostgreSQL prototype adapter', () => {
         '0007_applications_grants.sql',
         '0008_two_factor.sql',
         '0009_passkeys.sql',
+        '0010_native_sign_in.sql',
       ],
     });
   });

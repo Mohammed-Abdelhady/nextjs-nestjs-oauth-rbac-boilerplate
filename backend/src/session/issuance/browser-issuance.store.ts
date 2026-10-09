@@ -116,8 +116,18 @@ export interface IssuanceSecurityEvent {
  * version, until this one ends. An adapter may take the account earlier, at
  * `readAccountForIssuance`. A second unit of work that reaches a taken account
  * is refused at once with a retryable abort. It does not wait.
+ *
+ * `findAccount` never takes the account. It serves a unit of work that renews
+ * what an earlier sign-in issued, or that takes the account later by another
+ * rule, and must not keep a sign-in for the same account out meanwhile.
  */
 export abstract class BrowserIssuanceStore {
+  /** The account as the unit of work sees it. Takes nothing. */
+  abstract findAccount(
+    unitOfWork: UnitOfWork,
+    userId: string,
+  ): Promise<IssuanceAccount | null>;
+
   abstract readAccountForIssuance(
     unitOfWork: UnitOfWork,
     userId: string,

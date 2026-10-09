@@ -10,6 +10,7 @@ import {
   FirstPartyRegistration,
   NativeRegistration,
   RegisteredApplication,
+  RegisteredClient,
   StoredRegistration,
 } from '../../applications/application-registry.store';
 import {
@@ -21,7 +22,10 @@ import {
   ApplicationDocument,
 } from '../../schemas/application.schema';
 import { linearizable } from '../../utils/authority/linearizable-query';
-import { toRegisteredApplication } from './mongo-application-records';
+import {
+  toRegisteredApplication,
+  toRegisteredClient,
+} from './mongo-application-records';
 import { mongoSessionOf } from './mongo-unit-of-work';
 
 const PUBLIC_NATIVE = {
@@ -96,6 +100,28 @@ export class MongoApplicationRegistryStore extends ApplicationRegistryStore {
       .session(mongoSessionOf(unitOfWork))
       .exec();
     return applications.map(toRegisteredApplication);
+  }
+
+  async lookUpClient(
+    environment: string,
+    clientId: string,
+  ): Promise<RegisteredClient | null> {
+    const application = await singleStatement(() =>
+      this.applicationModel.findOne({ clientId, environment }).exec(),
+    );
+    return application ? toRegisteredClient(application) : null;
+  }
+
+  async findClient(
+    unitOfWork: UnitOfWork,
+    environment: string,
+    clientId: string,
+  ): Promise<RegisteredClient | null> {
+    const application = await this.applicationModel
+      .findOne({ clientId, environment })
+      .session(mongoSessionOf(unitOfWork))
+      .exec();
+    return application ? toRegisteredClient(application) : null;
   }
 
   async registerFirstParty(

@@ -98,6 +98,12 @@ function leanOrNull(stored: StoredSession | null): LeanSession | null {
 }
 
 /** The session document with its account attached, as the guard reads it. */
+export function leanValidatedSession(
+  validated: ValidatedSession | null,
+): LeanSession | null {
+  return withAccount(validated);
+}
+
 function withAccount(validated: ValidatedSession | null): LeanSession | null {
   if (!validated) {
     return null;

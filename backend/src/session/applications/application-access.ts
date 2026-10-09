@@ -32,6 +32,15 @@ export class ApplicationAccess {
     private readonly authEpoch: AuthEpochService,
   ) {}
 
+  /**
+   * Whether the person holds an allowed grant for the client, on a plain read.
+   * Good for telling someone what they agreed to before. Not an authority read.
+   */
+  async isGrantAllowed(userId: string, clientId: string): Promise<boolean> {
+    const grant = await this.store.readGrant(userId, clientId);
+    return grant?.allowed === true;
+  }
+
   async blockGrant(userId: string, clientId: string): Promise<void> {
     await this.run(async (unitOfWork) => {
       const grant = await this.store.takeGrantForChange(
