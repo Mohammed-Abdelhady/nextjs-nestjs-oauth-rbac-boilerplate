@@ -1,7 +1,11 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { MOBILE_RUN_COMMAND } from '../../src/constants/mobile.js';
+import {
+  DOCKER_API_ORIGIN,
+  MOBILE_API_ORIGIN_VAR,
+  MOBILE_RUN_COMMAND,
+} from '../../src/constants/mobile.js';
 import { nativeRegistration } from '../../src/mobile/apply.js';
 import {
   expectEngineSuitesStayInRepository,
@@ -57,6 +61,46 @@ function mobileDocs(project: string): Record<string, boolean> {
   };
 }
 
+/** What the README tells the reader to set on the server before the app can sign in. */
+const SERVER_VARIABLES = [
+  'AUTH_NATIVE_ENABLED',
+  'AUTH_NATIVE_DPOP_NONCE_SECRET',
+  'API_URL',
+  'AUTH_NATIVE_APPLICATIONS',
+];
+const WORKSPACE_FOLDERS: Record<string, string> = {
+  backend: 'backend',
+  frontend: 'frontend',
+  '@app/mobile-expo': 'mobile/expo',
+};
+const FILTERED_COMMAND = /pnpm --filter (\S+) run ([\w:-]+)/g;
+const DOCKER_RUN = `${MOBILE_API_ORIGIN_VAR}=${DOCKER_API_ORIGIN} ${MOBILE_RUN_COMMAND}`;
+
+/** Commands in the README that name a workspace or a script the project does not have. */
+function commandsThatDoNotExist(project: string): string[] {
+  const missing: string[] = [];
+  for (const [command, workspace, script] of read(project, 'README.md').matchAll(
+    FILTERED_COMMAND,
+  )) {
+    const folder = WORKSPACE_FOLDERS[workspace];
+    const scripts =
+      folder === undefined
+        ? {}
+        : (JSON.parse(read(project, `${folder}/package.json`)) as { scripts: object }).scripts;
+    if (!Object.hasOwn(scripts, script)) missing.push(command);
+  }
+  return missing;
+}
+
+/** Server variables the README names that an example file neither sets nor shows commented out. */
+function variablesMissingFrom(project: string, example: string): string[] {
+  const readme = read(project, 'README.md');
+  const content = read(project, example);
+  return SERVER_VARIABLES.filter(
+    (name) => !readme.includes(`\`${name}`) || !new RegExp(`^(?:# )?${name}=`, 'm').test(content),
+  );
+}
+
 export function mobileTargetCases(getPacked: () => Packed): void {
   describe('the clients a project is generated with', () => {
     it('leaves a web project with no mobile workspace and no word about one', () => {
@@ -96,10 +140,43 @@ export function mobileTargetCases(getPacked: () => Packed): void {
         agentsAndroid: true,
         agentsScope: true,
       });
+      expect({
+        commands: commandsThatDoNotExist(project),
+        backendExample: variablesMissingFrom(project, 'backend/.env.example'),
+        dockerExample: variablesMissingFrom(project, '.env.docker.example'),
+        dockerRun: read(project, 'README.md').includes(DOCKER_RUN),
+      }).toEqual({ commands: [], backendExample: [], dockerExample: [], dockerRun: true });
       const answers = JSON.parse(read(project, '.create-nest-next-auth.json')) as {
         answers: { targets: string[] };
       };
       expect(answers.answers.targets).toEqual(recorded);
+    });
+
+    it('says nothing about Docker in the mobile steps of a project without Docker', () => {
+      const project = generate(getPacked(), 'clients-no-docker', [
+        '--targets',
+        'web,native-expo',
+        '--no-docker',
+        '--no-production',
+        ...IDENTITY_FLAGS,
+      ]);
+      const readme = read(project, 'README.md');
+
+      expect({
+        runs: readme.includes(MOBILE_RUN_COMMAND),
+        dockerPort: readme.includes(DOCKER_API_ORIGIN),
+        dockerFile: readme.includes('.env.docker'),
+        marker: readme.includes('feature:'),
+        commands: commandsThatDoNotExist(project),
+        backendExample: variablesMissingFrom(project, 'backend/.env.example'),
+      }).toEqual({
+        runs: true,
+        dockerPort: false,
+        dockerFile: false,
+        marker: false,
+        commands: [],
+        backendExample: [],
+      });
     });
 
     it('writes the identity into the app config and the server examples, and nowhere twice', () => {

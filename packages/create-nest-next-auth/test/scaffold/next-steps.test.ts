@@ -1,8 +1,12 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { parse } from 'yaml';
+import { DOCKER_API_ORIGIN } from '../../src/constants/mobile.js';
+import { isRecord } from '../../src/manifest/read.js';
 import { buildNextSteps, readWorkspaceStartScripts } from '../../src/scaffold/next-steps.js';
+import { REPO_ROOT } from '../support/combination-helpers.js';
 
 const SCRIPTS = {
   backend: 'pnpm --filter backend run start:dev',
@@ -32,21 +36,9 @@ describe('buildNextSteps', () => {
     ]);
   });
 
-  it('ends with the mobile app command when the project has the app', () => {
+  it('ends with the mobile app command, after a line that sends the reader to the server setup', () => {
     const mobile = 'pnpm --filter @app/mobile-expo run ios';
 
-    expect(
-      buildNextSteps({
-        directoryLabel: 'app',
-        installed: true,
-        docker: true,
-        scripts: SCRIPTS,
-        mobile,
-      }).slice(-2),
-    ).toEqual([
-      '# Mobile app on an iOS simulator (needs Xcode and CocoaPods, see "Mobile app" in README.md):',
-      mobile,
-    ]);
     expect(
       buildNextSteps({
         directoryLabel: 'app',
@@ -54,8 +46,37 @@ describe('buildNextSteps', () => {
         docker: false,
         scripts: SCRIPTS,
         mobile,
-      }).at(-1),
-    ).toBe(mobile);
+      }).slice(-2),
+    ).toEqual([
+      '# Mobile app on an iOS simulator. Turn on mobile sign-in on the server first, see "Mobile app" in README.md:',
+      'pnpm --filter @app/mobile-expo run ios',
+    ]);
+  });
+
+  it('points the mobile app at the port Docker serves the API on', () => {
+    expect(
+      buildNextSteps({
+        directoryLabel: 'app',
+        installed: true,
+        docker: true,
+        scripts: SCRIPTS,
+        mobile: 'pnpm --filter @app/mobile-expo run ios',
+      }).slice(-2),
+    ).toEqual([
+      '# Mobile app on an iOS simulator. Turn on mobile sign-in on the server first, see "Mobile app" in README.md:',
+      'EXPO_PUBLIC_API_ORIGIN=http://localhost:5000 pnpm --filter @app/mobile-expo run ios',
+    ]);
+  });
+
+  it('names the port the Compose file publishes the API on', async () => {
+    const compose: unknown = parse(await readFile(join(REPO_ROOT, 'docker-compose.yml'), 'utf8'));
+    const published =
+      isRecord(compose) && isRecord(compose.services) && isRecord(compose.services.backend)
+        ? compose.services.backend.ports
+        : undefined;
+
+    expect(published).toEqual(['5000:5000']);
+    expect(DOCKER_API_ORIGIN).toBe('http://localhost:5000');
   });
 
   it('prints the local replica-set path when docker is off', () => {
