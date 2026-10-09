@@ -1,28 +1,21 @@
 import { ConfigService } from '@nestjs/config';
 import { sql } from 'kysely';
-import { Pool } from 'pg';
 import { SecurityEventRecorder } from '../../src/session/events/security-event-recorder';
 import { BrowserProofService } from '../../src/session/services/browser-proof.service';
 import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
 import { ProofsEventsContractHarness } from '../utils/session/proofs-events-contract/proofs-events-contract-harness';
 import { PostgresBrowserProofStore } from './adapter/postgres-browser-proof.store';
-import { openPrototypeDatabase } from './adapter/postgres-database';
-import { migratePrototypeDatabase } from './adapter/postgres-migrations';
 import { PostgresSecurityEventStore } from './adapter/postgres-security-event.store';
 import { PostgresUnitOfWorkRunner } from './adapter/postgres-unit-of-work';
-import { startPostgresTestServer } from './server/postgres-test-server';
+import { openPrototypeConnection } from './postgres-connection';
 
 const AN_OBJECT_ID = '65f000000000000000000001';
 const A_UUID = '018f4d2e-7b1a-7c3d-9e2f-0a1b2c3d4e5f';
 const SEEDED_OUTCOME = 'seeded';
 
 export async function bootPostgresProofsEventsHarness(): Promise<ProofsEventsContractHarness> {
-  const server = await startPostgresTestServer();
-  const pool = new Pool(server.connection);
-  // An idle connection the server drops must not take the test process down.
-  pool.on('error', () => undefined);
-  await migratePrototypeDatabase(pool);
-  const database = openPrototypeDatabase(pool);
+  const connection = await openPrototypeConnection();
+  const { database } = connection;
   const clock = new FrozenClock(TEST_NOW);
   const proofs = new PostgresBrowserProofStore(database);
   const events = new PostgresSecurityEventStore(database);
@@ -98,11 +91,9 @@ export async function bootPostgresProofsEventsHarness(): Promise<ProofsEventsCon
     foreignAccountId: () => AN_OBJECT_ID,
 
     reset: async () => {
+      await connection.rollBackOpenWork();
       await sql`TRUNCATE browser_proofs, security_events`.execute(database);
     },
-    close: async () => {
-      await database.destroy();
-      await server.stop();
-    },
+    close: connection.close,
   };
 }

@@ -1,21 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { Kysely, sql } from 'kysely';
-import { Pool } from 'pg';
 import { PendingCodesContractHarness } from '../utils/auth/pending-codes-contract/pending-codes-contract-harness';
 import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
-import {
-  openPrototypeDatabase,
-  PrototypeDatabase,
-} from './adapter/postgres-database';
+import { PrototypeDatabase } from './adapter/postgres-database';
 import { PostgresMailCounterStore } from './adapter/postgres-mail-counter.store';
-import { migratePrototypeDatabase } from './adapter/postgres-migrations';
 import { PostgresPasswordResetCodeStore } from './adapter/postgres-password-reset-code.store';
 import { PostgresPendingRegistrationStore } from './adapter/postgres-pending-registration.store';
 import { PostgresUnitOfWorkRunner } from './adapter/postgres-unit-of-work';
-import {
-  PostgresTestServer,
-  startPostgresTestServer,
-} from './server/postgres-test-server';
+import { openPrototypeConnection } from './postgres-connection';
+import { PostgresTestServer } from './server/postgres-test-server';
 
 const AN_OBJECT_ID = '65f000000000000000000001';
 
@@ -44,12 +37,8 @@ const MAIL_PURPOSES = [
 const PENDING_PURPOSES = ['signup', 'email-change'] as const;
 
 export async function bootPostgresPendingCodesHarness(): Promise<PostgresPendingCodesHarness> {
-  const server = await startPostgresTestServer();
-  const pool = new Pool(server.connection);
-  // An idle connection the server drops must not take the test process down.
-  pool.on('error', () => undefined);
-  await migratePrototypeDatabase(pool);
-  const database = openPrototypeDatabase(pool);
+  const connection = await openPrototypeConnection();
+  const { server, database } = connection;
   const clock = new FrozenClock(TEST_NOW);
 
   return {
@@ -167,14 +156,12 @@ export async function bootPostgresPendingCodesHarness(): Promise<PostgresPending
     foreignId: () => AN_OBJECT_ID,
 
     reset: async () => {
+      await connection.rollBackOpenWork();
       await sql`TRUNCATE mail_counters, pending_registrations, pending_password_resets`.execute(
         database,
       );
     },
-    close: async () => {
-      await database.destroy();
-      await server.stop();
-    },
+    close: connection.close,
   };
 }
 
