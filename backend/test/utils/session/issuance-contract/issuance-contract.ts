@@ -1,4 +1,5 @@
 import { TEST_NOW } from '../../frozen-clock';
+import { issuanceAccountReadCases } from './issuance-contract-account-read';
 import { issuanceAtomicityCases } from './issuance-contract-atomicity';
 import { IssuanceContractHarness } from './issuance-contract-harness';
 import { issuanceRaceCases } from './issuance-contract-races';
@@ -47,5 +48,6 @@ export function describeBrowserIssuanceContract(
     issuanceSeamCases(current);
     issuanceAtomicityCases(current);
     issuanceRaceCases(current);
+    issuanceAccountReadCases(current);
   });
 }

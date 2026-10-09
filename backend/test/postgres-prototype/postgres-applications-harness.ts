@@ -18,6 +18,7 @@ export async function bootPostgresApplicationsHarness(): Promise<ApplicationsCon
     authority,
     registryStore: new PostgresApplicationRegistryStore(database),
     accessStore: new PostgresApplicationAccessStore(
+      database,
       clock,
       new PostgresSecurityEventStore(database),
     ),

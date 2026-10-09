@@ -5,6 +5,7 @@ import {
 } from '../issuance-contract/issuance-contract-support';
 import { applicationAccessCases } from './applications-access-cases';
 import { applicationAtomicityCases } from './applications-atomicity-cases';
+import { applicationClientReadCases } from './applications-client-read-cases';
 import { ApplicationsContractHarness } from './applications-contract-harness';
 import { applicationRaceCases } from './applications-race-cases';
 import { reconciliationCases } from './applications-reconcile-cases';
@@ -53,5 +54,6 @@ export function describeApplicationsContract(
     applicationStoreCases(current);
     applicationAtomicityCases(current);
     applicationRaceCases(current);
+    applicationClientReadCases(current);
   });
 }
