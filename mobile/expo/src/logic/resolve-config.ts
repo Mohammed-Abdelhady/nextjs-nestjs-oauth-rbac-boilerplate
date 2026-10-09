@@ -33,3 +33,8 @@ export function resolveConfig({ apiOrigin, development }: ConfigInput): AuthConf
 export function resolveKeyProtection(development: boolean): KeyProtection {
   return development ? KEY_PROTECTION.SOFTWARE_ALLOWED : KEY_PROTECTION.HARDWARE_ONLY;
 }
+
+/** The sign-in check screen is a development tool. A release build never opens it. */
+export function resolveDebugAccess(development: boolean): boolean {
+  return development;
+}
