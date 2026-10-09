@@ -77,19 +77,19 @@ describe('what a session row is called', () => {
       { kind: 'named', name: 'Android' },
     ],
     [
-      "the server's placeholder is not a name, so the app's agent names the device",
+      'a legacy phrase is retained without parts',
       {
         deviceName: 'Unknown device',
         userAgent: 'MobileExpo/1 CFNetwork/3896.100.1.2.1 Darwin/27.0.0',
       },
       true,
-      { kind: 'named', name: 'iOS' },
+      { kind: 'named', name: 'Unknown device' },
     ],
     [
       "the server's placeholder over an agent that names nothing stays unknown",
       { deviceName: ' unknown device ', userAgent: 'curl/8.9.1' },
       false,
-      { kind: 'unknown' },
+      { kind: 'named', name: 'unknown device' },
     ],
     ['an agent that names nothing', { userAgent: 'curl/8.9.1' }, false, { kind: 'unknown' }],
     ['an empty agent', { userAgent: '' }, true, { kind: 'unknown' }],

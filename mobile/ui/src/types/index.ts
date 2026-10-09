@@ -84,6 +84,7 @@ export interface ApiFailure {
 export type DeviceName =
   | { kind: 'named'; name: string }
   | { kind: 'browser'; browser: string; system: string }
+  | { kind: 'mobileApp'; system: string }
   | { kind: 'unknown' };
 
 export interface SessionRow {
