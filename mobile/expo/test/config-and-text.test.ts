@@ -13,8 +13,14 @@ import {
   type Described,
 } from '../src/logic/outcome-text';
 import { resolveConfig, resolveKeyProtection } from '../src/logic/resolve-config';
+import typescriptConfig from '../tsconfig.json';
 
 describe('app configuration', () => {
+  it('already extends the Expo base, so starting the app rewrites no tracked file', () => {
+    // Expo adds this line to any config without it, each time the app starts.
+    expect(typescriptConfig).toMatchObject({ extends: 'expo/tsconfig.base' });
+  });
+
   it('points a development build at the local server when no origin is set', () => {
     expect(
       resolveConfig({ apiOrigin: undefined, development: true, scheme: 'com.example.mobile' }),

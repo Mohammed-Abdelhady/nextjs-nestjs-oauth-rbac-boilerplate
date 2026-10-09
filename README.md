@@ -106,6 +106,16 @@ cp frontend/.env.example frontend/.env.local
 
 ### Start manually
 
+The backend needs MongoDB running as a replica set, because sign-in uses transactions. `MONGO_URI` in `backend/.env` expects one named `rs0` on port 27017:
+
+```bash
+mkdir -p ./mongodb-data
+mongod --replSet rs0 --dbpath ./mongodb-data
+
+# Leave mongod running. In another terminal, once:
+mongosh --eval "rs.initiate()"
+```
+
 ```bash
 # In one terminal, start the backend:
 pnpm --filter backend run start:dev
@@ -130,11 +140,10 @@ Endpoints:
 | `PORT`                          | API server port. Example file sets `5001`.                             | `3000` when unset                                     |
 | `NODE_ENV`                      | Environment name                                                       | `development`                                         |
 | `MONGO_URI`                     | MongoDB URI                                                            | `mongodb://localhost:27017/authboiler?replicaSet=rs0` |
-| `FRONTEND_URL`                  | Frontend origin for CORS and cookie domain                             | `http://localhost:3000`                               |
-| `SESSION_SECRET`                | Secret used to sign session cookies                                    | Required in production                                |
+| `CLIENT_URL`                    | Frontend origin for CORS and cookie domain                             | `http://localhost:3000`                               |
 | `OAUTH_STATE_SECRET`            | Secret used to sign OAuth state cookies                                | Required in production                                |
 | `AUTH_NATIVE_DPOP_NONCE_SECRET` | HMAC secret for DPoP nonces; required when `AUTH_NATIVE_ENABLED=true`  | At least 32 characters when native sign-in is enabled |
-| `API_URL`                       | Public origin of the API; required when `AUTH_NATIVE_ENABLED=true`     | `http://localhost:<PORT>`; https origin in production |
+| `API_URL`                       | Public origin of the API; required when `AUTH_NATIVE_ENABLED=true`     | None. Use an https origin in production               |
 | `AUTH_NATIVE_DPOP_REQUIRED`     | Reject native exchanges without DPoP and refreshes of unbound families | `false`                                               |
 | `TOTP_ENCRYPTION_KEY`           | 32-byte hex key to encrypt TOTP secrets                                | Required for 2FA                                      |
 
@@ -165,17 +174,51 @@ Set these in `backend/.env` before you start the backend:
 - `API_URL` with the address the app uses to reach the API. On a simulator that is `http://localhost:5001`.
 - `AUTH_NATIVE_APPLICATIONS` as `backend/.env.example` writes it. Its client id and return address come from the `scheme` in `mobile/expo/app.json`. If you change the scheme, change this line to match.
 
-The web app must be running too, because sign-in happens on its pages.
+If you start the server with Docker, set the same four in `.env.docker` instead. Docker serves the API on port 5000, so `API_URL` is `http://localhost:5000` there. <!-- feature:docker -->
+
+The backend does not start with `AUTH_NATIVE_ENABLED=true` until the secret and `API_URL` are set.
+
+The web app must be running too, because sign-in happens on its pages. You also need an account to sign in with. [Seed data](#seed-data) makes two.
 
 ### Run it on an iOS simulator
 
 You need a Mac with Xcode and CocoaPods. Expo creates the native iOS project the first time you run the app.
 
+From a fresh folder, in this order:
+
 ```bash
+pnpm install
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env.local
+
+# Edit backend/.env as described above. Start MongoDB, then in one terminal:
+pnpm --filter backend run start:dev
+
+# In a second terminal:
+pnpm --filter frontend run dev
+
+# In a third terminal, once, to make the two seed accounts:
+pnpm --filter backend run seed
+
+# Then build the app and open it on a simulator:
 pnpm --filter @app/mobile-expo run ios
 ```
 
+The last command builds the app, installs it and keeps running to serve the JavaScript. Leave it open while you use the app. If the simulator asks whether to open the page in your app, choose Open.
+
+After the first build, `pnpm --filter @app/mobile-expo run start` serves the JavaScript without building again. Open the app from the simulator's home screen.
+
 A development build talks to `http://localhost:5001`. Set `EXPO_PUBLIC_API_ORIGIN` to use another address. A release build does not start without it.
+
+With Docker the API is on port 5000, so run the app like this: <!-- feature:docker -->
+
+<!-- feature:docker:start -->
+
+```bash
+EXPO_PUBLIC_API_ORIGIN=http://localhost:5000 pnpm --filter @app/mobile-expo run ios
+```
+
+<!-- feature:docker:end -->
 
 The app name, slug, application id and scheme live in `mobile/expo/app.json` and nowhere else. Signing a build for a device or a store is yours to set up.
 

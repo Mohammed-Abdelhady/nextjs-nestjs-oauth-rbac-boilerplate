@@ -109,3 +109,9 @@ export const MOBILE_DEFAULT_PROJECT_NAME = 'my-app';
 
 /** Builds the native iOS project and starts the app on a simulator. */
 export const MOBILE_RUN_COMMAND = 'pnpm --filter @app/mobile-expo run ios';
+
+/** The variable a development build reads the API address from. */
+export const MOBILE_API_ORIGIN_VAR = 'EXPO_PUBLIC_API_ORIGIN';
+
+/** Where docker-compose.yml publishes the API. The app looks on another port unless told. */
+export const DOCKER_API_ORIGIN = 'http://localhost:5000';

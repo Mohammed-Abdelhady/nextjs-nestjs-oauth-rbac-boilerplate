@@ -37,9 +37,10 @@ export const MOBILE_APP_TEXT = `## Mobile app
 
 The Expo app is in \`mobile/expo\`. It has been built and run on an iOS simulator. Android has not been built or run, so treat it as unverified.
 
-- Run it on a simulator with \`pnpm --filter @app/mobile-expo run ios\`. This needs a Mac with Xcode and CocoaPods.
-- The server needs \`AUTH_NATIVE_ENABLED=true\`, \`AUTH_NATIVE_DPOP_NONCE_SECRET\`, \`API_URL\` and \`AUTH_NATIVE_APPLICATIONS\`. \`backend/.env.example\` has the entry that matches the app.
-- The web app must be running, because sign-in happens on its pages.
+- Run it on a simulator with \`pnpm --filter @app/mobile-expo run ios\`. This needs a Mac with Xcode and CocoaPods. The command keeps running to serve the JavaScript.
+- The server needs \`AUTH_NATIVE_ENABLED=true\`, \`AUTH_NATIVE_DPOP_NONCE_SECRET\`, \`API_URL\` and \`AUTH_NATIVE_APPLICATIONS\`. \`backend/.env.example\` has the entry that matches the app. The backend does not start with the first one on until the secret and \`API_URL\` are set.
+- The app talks to \`http://localhost:5001\` in development. Set \`EXPO_PUBLIC_API_ORIGIN\` when the API is somewhere else. \`API_URL\` on the server must be the same address.
+- The web app must be running, because sign-in happens on its pages. Sign in with an account the server has, for example one from \`pnpm --filter backend run seed\`.
 - The app name, slug, application id and scheme are in \`mobile/expo/app.json\`. The client id and the return address are built from the scheme. Do not copy them anywhere else.`;
 
 export const STANDARD_CODE_TEXT =
