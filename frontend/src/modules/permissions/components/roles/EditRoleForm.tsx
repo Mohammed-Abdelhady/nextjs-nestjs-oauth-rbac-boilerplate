@@ -77,8 +77,7 @@ export function EditRoleForm({ role, isLoading, onSubmit, onCancel }: EditRoleFo
         {isBaseRole && (
           <Alert variant="info" role="note" data-testid="base-role-note">
             <AlertDescription>
-              <strong>Base Role:</strong> User and Admin roles are fundamental to the system. Name
-              and description cannot be modified, but you can update permissions.
+              <strong>{t('baseRoleAlertTitle')}</strong> {t('baseRoleAlert')}
             </AlertDescription>
           </Alert>
         )}
@@ -86,8 +85,7 @@ export function EditRoleForm({ role, isLoading, onSubmit, onCancel }: EditRoleFo
         {isProtected && !isBaseRole && (
           <Alert variant="warning" role="note" data-testid="protected-role-note">
             <AlertDescription>
-              <strong>Protected Role:</strong> This role cannot be deleted and its core permissions
-              are managed by the system.
+              <strong>{t('protectedRoleAlertTitle')}</strong> {t('protectedRoleAlert')}
             </AlertDescription>
           </Alert>
         )}
@@ -113,9 +111,7 @@ export function EditRoleForm({ role, isLoading, onSubmit, onCancel }: EditRoleFo
           <FieldError id={nameErrorId} message={errors.name} testId="edit-role-name-error" />
           {(isProtected || isBaseRole) && (
             <p className="text-xs text-tertiary">
-              {isBaseRole
-                ? 'Base role names cannot be changed'
-                : 'Protected role names cannot be changed'}
+              {isBaseRole ? t('baseRoleNameImmutable') : t('protectedRoleNameImmutable')}
             </p>
           )}
         </div>

@@ -66,6 +66,7 @@ type ResetPasswordFormData = z.infer<ReturnType<typeof createResetPasswordSchema
  */
 export function ResetPasswordForm() {
   const t = useTranslations('auth.resetPassword');
+  const tCommon = useTranslations('common');
   const tPassword = useTranslations('auth.passwordRules.errors');
   const tToast = useTranslations('toast');
   const tCodes = useTranslations('errors.codes');
@@ -201,7 +202,7 @@ export function ResetPasswordForm() {
               data-testid="reset-password-email-input"
               type="email"
               label={t('email')}
-              placeholder="name@example.com"
+              placeholder={tCommon('emailPlaceholder')}
               autoComplete="email"
               disabled={isLoading}
               readOnly
@@ -216,7 +217,7 @@ export function ResetPasswordForm() {
               type="text"
               inputMode="numeric"
               label={t('code')}
-              placeholder="123456"
+              placeholder={tCommon('codePlaceholder')}
               autoComplete="one-time-code"
               disabled={isLoading}
               maxLength={6}
@@ -230,7 +231,7 @@ export function ResetPasswordForm() {
               name="password"
               data-testid="reset-password-password-input"
               label={t('password')}
-              placeholder="••••••••"
+              placeholder={tCommon('passwordPlaceholder')}
               autoComplete="new-password"
               disabled={isLoading}
               className={FORM_STYLES.authField}
@@ -243,7 +244,7 @@ export function ResetPasswordForm() {
               name="confirmPassword"
               data-testid="reset-password-confirmPassword-input"
               label={t('confirmPassword')}
-              placeholder="••••••••"
+              placeholder={tCommon('passwordPlaceholder')}
               autoComplete="new-password"
               disabled={isLoading}
               className={FORM_STYLES.authField}

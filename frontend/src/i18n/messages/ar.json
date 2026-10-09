@@ -1,5 +1,21 @@
 {
   "common": {
+    "view": "عرض",
+    "selectOption": "اختر خيارًا",
+    "copyright": "© 2024 تطبيق المصادقة",
+    "emailPlaceholder": "name@example.com",
+    "passwordPlaceholder": "••••••••",
+    "codePlaceholder": "123456",
+    "recoveryCodePlaceholder": "K3M7QRTVWX",
+    "status": {
+      "verified": "تم التحقق",
+      "pending": "قيد الانتظار",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "success": "نجاح",
+      "warning": "تحذير",
+      "danger": "خطر"
+    },
     "appName": "منصة المصادقة",
     "welcome": "مرحباً",
     "language": "اللغة",
@@ -694,6 +710,7 @@
     "cancel": "إلغاء"
   },
   "users": {
+    "addUser": "إضافة مستخدم",
     "title": "المستخدمون",
     "count": "{count, plural, zero {لا يوجد مستخدمون مسجلون} one {مستخدم واحد مسجل} two {مستخدمان مسجلان} few {{count} مستخدمين مسجلين} many {{count} مستخدماً مسجلاً} other {{count} مستخدم مسجل}}",
     "refresh": "تحديث",
@@ -858,6 +875,38 @@
     }
   },
   "permissions": {
+    "demo": {
+      "title": "عرض نظام الصلاحيات",
+      "description": "توضح هذه الصفحة كيفية استخدام حواجز الصلاحيات في التطبيق.",
+      "singleTitle": "حاجز صلاحية واحدة",
+      "singleDescription": "تُخفى العناصر داخل PermissionGuard بالكامل إذا لم يكن لدى المستخدم الصلاحية المطلوبة.",
+      "singleAllowed": "لديك صلاحية USER_PERMISSIONS.LIST_ALL، لذلك يظهر هذا العنصر.",
+      "singleDenied": "يتطلب هذا العنصر صلاحية fake:permission ليظهر.",
+      "allTitle": "صلاحيات متعددة، جميع الصلاحيات مطلوبة",
+      "allDescription": "استخدم الخاصية permissions لاشتراط جميع الصلاحيات المدرجة.",
+      "allAllowed": "لديك كلتا الصلاحيتين USER_PERMISSIONS.LIST_ALL وROLE_PERMISSIONS.LIST_ALL.",
+      "allDenied": "يتطلب هذا العنصر صلاحية fake:permission ويُخفى حتى إذا كانت لديك إحدى الصلاحيات.",
+      "anyTitle": "صلاحيات متعددة، إحدى الصلاحيات مطلوبة",
+      "anyDescription": "استخدم الخاصية anyPermissions لإظهار العنصر إذا كانت لدى المستخدم إحدى الصلاحيات المدرجة.",
+      "anyAllowed": "لديك صلاحية READ_ALL أو READ_OWN للجلسات.",
+      "actionsTitle": "أزرار الإجراءات مع حواجز الصلاحيات",
+      "actionsDescription": "ضع أزرار الإجراءات داخل PermissionGuard لإخفاء الإجراءات غير المصرح بها بالكامل.",
+      "sampleName": "مستخدم تجريبي",
+      "sampleEmail": "john@example.com",
+      "tip": "تُخفى الأزرار بالكامل لمنع المستخدمين من رؤية الإجراءات غير المصرح لهم بتنفيذها.",
+      "fallbackTitle": "المحتوى البديل",
+      "fallbackDescription": "استخدم الخاصية fallback لإظهار محتوى بديل عند رفض الصلاحية.",
+      "fallbackDenied": "ليست لديك صلاحية عرض هذا المحتوى.",
+      "secretContent": "هذا المحتوى مخصص للمستخدمين المصرح لهم فقط.",
+      "wildcardTitle": "صلاحية الوصول الشامل (*)",
+      "wildcardDescription": "تمنح صلاحية الوصول الشامل الوصول إلى جميع الموارد. يجب إسنادها إلى المسؤولين ذوي الصلاحيات العليا فقط.",
+      "wildcardNotice": "لديك صلاحية الوصول الشامل، ويمكنك عرض جميع الموارد وتنفيذ جميع الإجراءات.",
+      "codeTitle": "أمثلة الشفرة",
+      "componentCodeTitle": "حاجز على مستوى المكوّن",
+      "routeCodeTitle": "حاجز على مستوى المسار",
+      "allCodeTitle": "صلاحيات متعددة، جميع الصلاحيات",
+      "anyCodeTitle": "صلاحيات متعددة، إحدى الصلاحيات"
+    },
     "actions": {
       "read": "قراءة",
       "list": "عرض",
@@ -881,6 +930,7 @@
       "title": "إدارة صلاحيات المستخدم",
       "descriptionWithUser": "إدارة صلاحيات {name}",
       "descriptionGeneric": "إضافة أو إزالة صلاحيات لهذا المستخدم",
+      "noRole": "لا يوجد",
       "currentRole": "الدور الحالي:",
       "totalPermissions": "{count, plural, zero {لا توجد صلاحيات} one {صلاحية واحدة إجمالاً} two {صلاحيتان إجمالاً} few {{count} صلاحيات إجمالية} many {{count} صلاحية إجمالية} other {{count} صلاحية إجمالية}}",
       "inheritedAndDirect": "{inherited} موروثة + {direct} مباشرة",

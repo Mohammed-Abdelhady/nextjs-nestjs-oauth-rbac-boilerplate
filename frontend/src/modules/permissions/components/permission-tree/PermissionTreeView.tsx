@@ -1,3 +1,4 @@
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Heading } from '@/components/design-system';
 import { useTranslations } from 'next-intl';
 import { PermissionNode } from './PermissionNode';
@@ -82,12 +83,12 @@ export function PermissionTreeView({
     <div className={className} data-testid="permission-tree-view">
       {/* Wildcard Warning */}
       {hasWildcard && (
-        <div className="mb-4 p-3 rounded-lg bg-warning/10 border border-warning/30">
-          <p className="text-sm text-warning-foreground flex items-center gap-2">
+        <Alert variant="warning" role="note" className="mb-4">
+          <AlertDescription className="flex items-center gap-2">
             <Shield className="h-4 w-4" aria-hidden="true" />
             <strong>{t('wildcardLabel')}</strong> {t('wildcardNotice')}
-          </p>
-        </div>
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Grouped Permissions */}

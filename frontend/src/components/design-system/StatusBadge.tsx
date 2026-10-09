@@ -1,4 +1,5 @@
 import { forwardRef, HTMLAttributes } from 'react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 export interface StatusBadgeProps extends HTMLAttributes<HTMLSpanElement> {
@@ -45,6 +46,7 @@ export const StatusBadge = forwardRef<HTMLSpanElement, StatusBadgeProps>(
     { status, size = 'md', variant = 'soft', pulse = false, className, children, ...props },
     ref,
   ) => {
+    const t = useTranslations('common.status');
     const statusColors = {
       verified: {
         solid: 'bg-success text-success-foreground',
@@ -122,7 +124,7 @@ export const StatusBadge = forwardRef<HTMLSpanElement, StatusBadgeProps>(
           />
         )}
 
-        {children || status.charAt(0).toUpperCase() + status.slice(1)}
+        {children || t(status)}
       </span>
     );
   },

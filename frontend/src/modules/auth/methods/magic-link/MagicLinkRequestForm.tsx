@@ -39,6 +39,7 @@ type MagicLinkFormData = z.infer<ReturnType<typeof createMagicLinkSchema>>;
  */
 export function MagicLinkRequestForm({ isOnlyMethod, redirect }: AuthMethodFormProps) {
   const t = useTranslations('auth.magicLink');
+  const tCommon = useTranslations('common');
   const tCodes = useTranslations('errors.codes');
   const [requestMagicLink, { isLoading }] = useRequestMagicLinkMutation();
   const handleFeatureDisabled = useFeatureDisabledHandler();
@@ -133,7 +134,7 @@ export function MagicLinkRequestForm({ isOnlyMethod, redirect }: AuthMethodFormP
           name="email"
           type="email"
           label={t('email')}
-          placeholder="name@example.com"
+          placeholder={tCommon('emailPlaceholder')}
           autoComplete="email"
           disabled={isLoading}
           autoFocus={isOnlyMethod}

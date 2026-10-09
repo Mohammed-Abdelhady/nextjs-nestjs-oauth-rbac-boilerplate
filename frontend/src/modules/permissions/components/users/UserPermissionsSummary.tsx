@@ -25,7 +25,7 @@ export function UserPermissionsSummary({
           <div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               <span className="font-medium">{t('currentRole')}</span>{' '}
-              <Badge variant="secondary">{role || 'None'}</Badge>
+              <Badge variant="secondary">{role || t('noRole')}</Badge>
             </p>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
               {t('totalPermissions', { count: totalCount })} (

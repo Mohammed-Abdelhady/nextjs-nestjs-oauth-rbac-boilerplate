@@ -1,5 +1,21 @@
 {
   "common": {
+    "view": "View",
+    "selectOption": "Select an option",
+    "copyright": "© 2024 Auth App",
+    "emailPlaceholder": "name@example.com",
+    "passwordPlaceholder": "••••••••",
+    "codePlaceholder": "123456",
+    "recoveryCodePlaceholder": "K3M7QRTVWX",
+    "status": {
+      "verified": "Verified",
+      "pending": "Pending",
+      "active": "Active",
+      "inactive": "Inactive",
+      "success": "Success",
+      "warning": "Warning",
+      "danger": "Danger"
+    },
     "appName": "Auth Boilerplate",
     "welcome": "Welcome",
     "language": "Language",
@@ -694,6 +710,7 @@
     "cancel": "Cancel"
   },
   "users": {
+    "addUser": "Add User",
     "title": "Users",
     "count": "{count} {count, plural, =1 {user} other {users}} registered",
     "refresh": "Refresh",
@@ -858,6 +875,38 @@
     }
   },
   "permissions": {
+    "demo": {
+      "title": "Permissions System Demo",
+      "description": "This page demonstrates how to use permission guards throughout the application.",
+      "singleTitle": "Single Permission Guard",
+      "singleDescription": "Elements wrapped in PermissionGuard are completely hidden if the user lacks permission.",
+      "singleAllowed": "✓ You have USER_PERMISSIONS.LIST_ALL - this element is visible",
+      "singleDenied": "✗ This element requires fake:permission - you will never see this",
+      "allTitle": "Multiple Permissions (Require ALL)",
+      "allDescription": "Use the permissions prop to require ALL listed permissions.",
+      "allAllowed": "✓ You have both USER_PERMISSIONS.LIST_ALL AND ROLE_PERMISSIONS.LIST_ALL",
+      "allDenied": "✗ This requires fake:permission - hidden even if you have one permission",
+      "anyTitle": "Any Permissions (Require ANY)",
+      "anyDescription": "Use the anyPermissions prop to show if user has ANY of the listed permissions.",
+      "anyAllowed": "✓ You have either READ_ALL or READ_OWN session permissions",
+      "actionsTitle": "Action Buttons with Permission Guards",
+      "actionsDescription": "Wrap action buttons with PermissionGuard to completely hide unauthorized actions.",
+      "sampleName": "John Doe",
+      "sampleEmail": "john@example.com",
+      "tip": "Buttons are completely hidden to prevent users from seeing actions they cannot perform.",
+      "fallbackTitle": "Fallback Content",
+      "fallbackDescription": "Use the fallback prop to show alternative content when permission is denied.",
+      "fallbackDenied": "You don't have permission to view this content.",
+      "secretContent": "This secret content is only for authorized users!",
+      "wildcardTitle": "Wildcard Permission (*)",
+      "wildcardDescription": "The wildcard permission grants access to everything. Only assign to super admin users.",
+      "wildcardNotice": "⚠️ You have wildcard permission - you can see and do everything!",
+      "codeTitle": "Code Examples",
+      "componentCodeTitle": "Component-level Guard:",
+      "routeCodeTitle": "Route-level Guard:",
+      "allCodeTitle": "Multiple Permissions (ALL):",
+      "anyCodeTitle": "Any Permissions (OR):"
+    },
     "actions": {
       "read": "Read",
       "list": "List",
@@ -881,6 +930,7 @@
       "title": "Manage User Permissions",
       "descriptionWithUser": "Manage permissions for {name}",
       "descriptionGeneric": "Add or remove permissions for this user",
+      "noRole": "None",
       "currentRole": "Current Role:",
       "totalPermissions": "{count} total {count, plural, =1 {permission} other {permissions}}",
       "inheritedAndDirect": "{inherited} inherited + {direct} direct",

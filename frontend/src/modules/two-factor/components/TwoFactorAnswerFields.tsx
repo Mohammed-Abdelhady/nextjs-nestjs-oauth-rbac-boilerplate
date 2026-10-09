@@ -24,6 +24,7 @@ export function TwoFactorAnswerFields({
   isBusy,
 }: TwoFactorAnswerFieldsProps) {
   const t = useTranslations('auth.twoFactor');
+  const tCommon = useTranslations('common');
 
   return (
     <>
@@ -31,7 +32,7 @@ export function TwoFactorAnswerFields({
         <FormInput<AnswerFormData>
           name="recoveryCode"
           label={t('recoveryCode')}
-          placeholder="K3M7QRTVWX"
+          placeholder={tCommon('recoveryCodePlaceholder')}
           autoComplete="one-time-code"
           disabled={isBusy}
           autoFocus
