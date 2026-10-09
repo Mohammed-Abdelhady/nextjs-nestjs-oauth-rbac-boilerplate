@@ -15,6 +15,10 @@ import { ErrorCode } from '../enums/error-code.enum';
 import { ErrorResponse } from '../dto/api-response.dto';
 import { RequestWithId } from '../interfaces/request-with-id.interface';
 import {
+  MalformedIdError,
+  UniqueConflictError,
+} from '../persistence/persistence-errors';
+import {
   isCastError,
   isMongoDuplicateKeyError,
   isDuplicateEmailError,
@@ -58,6 +62,20 @@ function describeDuplicateKeys(error: unknown): string {
     );
   }
   return 'unknown';
+}
+
+const EMAIL_RULE = /email/i;
+
+/**
+ * Whether a refused unique rule is the one on an account's address. The driver
+ * error under it decides, as it does when it arrives bare, and the rule's
+ * shared name decides for an adapter whose driver error says nothing.
+ */
+function isAddressConflict(conflict: UniqueConflictError): boolean {
+  return (
+    isDuplicateEmailError(conflict.cause) ||
+    EMAIL_RULE.test(conflict.constraint)
+  );
 }
 
 /** Facts an unknown exception may share in its log line without its text. */
@@ -106,7 +124,7 @@ function stackFrames(error: unknown): string | undefined {
 
 /**
  * Global exception filter that transforms exceptions into standardized error responses.
- * Handles AppException, ThrottlerException, HttpException, CastError, MongoServerError 11000, and unknown errors.
+ * Handles AppException, ThrottlerException, HttpException, CastError, MongoServerError 11000, the shared persistence errors, and unknown errors.
  */
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -164,6 +182,28 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       // Framework messages quote the raw request body, so the line names
       // the status and the mapped code and nothing of the payload.
       this.logger.warn(`HttpException (${statusCode}): ${code}${tag}`);
+    } else if (exception instanceof MalformedIdError) {
+      // The other shared errors answer as the driver errors under them do
+      // today, through the last branch.
+      statusCode = HttpStatus.BAD_REQUEST;
+      const cast = exception.cause;
+      errorResponse = ErrorResponse.error(
+        ErrorCode.INVALID_INPUT,
+        (isCastError(cast) && cast.message) || 'Invalid input',
+      );
+      this.logger.warn(
+        `MalformedIdError: ${isCastError(cast) ? describeCastError(cast) : describeDriverError(exception)}${tag}`,
+      );
+    } else if (exception instanceof UniqueConflictError) {
+      statusCode = HttpStatus.CONFLICT;
+      const isEmail = isAddressConflict(exception);
+      errorResponse = ErrorResponse.error(
+        isEmail ? ErrorCode.EMAIL_ALREADY_EXISTS : ErrorCode.CONFLICT,
+        isEmail ? 'Email already registered' : 'Resource conflict occurred',
+      );
+      this.logger.warn(
+        `UniqueConflictError: constraint=${errorToken(exception.constraint)} keys=${describeDuplicateKeys(exception.cause)}${tag}`,
+      );
     } else if (isCastError(exception)) {
       statusCode = HttpStatus.BAD_REQUEST;
       errorResponse = ErrorResponse.error(
