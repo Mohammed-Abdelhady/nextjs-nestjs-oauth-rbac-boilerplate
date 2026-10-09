@@ -21,6 +21,7 @@ import {
 } from '../../../test/utils/logging-services';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
+  SESSION_AUTHORITY_RESET_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
 } from '../../../test/utils/session-authority-harness';
 
@@ -31,7 +32,7 @@ describe('TwoFactorService and TwoFactorLoginService logging with real repositor
   }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
   beforeEach(async () => {
     await fixture.reset();
-  });
+  }, SESSION_AUTHORITY_RESET_TIMEOUT_MS);
   afterEach(() => {
     jest.restoreAllMocks();
   });

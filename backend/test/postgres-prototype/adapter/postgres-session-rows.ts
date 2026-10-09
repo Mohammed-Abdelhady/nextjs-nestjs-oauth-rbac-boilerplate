@@ -27,6 +27,7 @@ export const STORED_SESSION_COLUMNS = [
   'expires_at',
   'idle_expires_at',
   'last_activity_at',
+  'proof_key_thumbprint',
 ] as const;
 
 export interface StoredSessionRow {
@@ -50,6 +51,7 @@ export interface StoredSessionRow {
   expires_at: Date;
   idle_expires_at: Date;
   last_activity_at: Date;
+  proof_key_thumbprint: string | null;
 }
 
 export const REVOCABLE_SESSION_COLUMNS = [
@@ -116,7 +118,7 @@ export function toStoredSession(row: StoredSessionRow): StoredSession {
     device: toDeviceLabel(row.device),
     deviceName: row.device_name,
     lastUsedAt: row.last_used_at,
-    proofKeyThumbprint: null,
+    proofKeyThumbprint: row.proof_key_thumbprint,
     isValid: row.is_valid,
     revokedAt: row.revoked_at,
     credentialPurpose: toCredentialPurpose(row.credential_purpose),

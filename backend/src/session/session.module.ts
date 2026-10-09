@@ -67,6 +67,13 @@ import { SessionAuthorityService } from './services/session-authority.service';
 import { SessionIssuanceService } from './services/session-issuance.service';
 import { SessionRevocationService } from './services/session-revocation.service';
 import { NativeAccessService } from './native/access/native-access.service';
+import { NativeAccessValidator } from './native/access/native-access-validator';
+import { NativeAccessStore } from './native/credentials/native-access.store';
+import { NativeCredentialStore } from './native/credentials/native-credential.store';
+import { NativeSecurityEvents } from './native/credentials/native-security-events';
+import { MongoNativeAccessStore } from './native/persistence/mongo/mongo-native-access.store';
+import { MongoNativeCredentialStore } from './native/persistence/mongo/mongo-native-credential.store';
+import { MongoNativeSecurityEvents } from './native/persistence/mongo/mongo-native-security-events';
 
 @Module({
   imports: [
@@ -114,6 +121,10 @@ import { NativeAccessService } from './native/access/native-access.service';
     { provide: SessionRevocationStore, useClass: MongoSessionRevocationStore },
     SessionRevoker,
     SessionRevocationService,
+    { provide: NativeCredentialStore, useClass: MongoNativeCredentialStore },
+    { provide: NativeAccessStore, useClass: MongoNativeAccessStore },
+    { provide: NativeSecurityEvents, useClass: MongoNativeSecurityEvents },
+    NativeAccessValidator,
     NativeAccessService,
   ],
   exports: [
@@ -142,6 +153,10 @@ import { NativeAccessService } from './native/access/native-access.service';
     SessionRevocationStore,
     SessionRevoker,
     SessionRevocationService,
+    NativeCredentialStore,
+    NativeAccessStore,
+    NativeSecurityEvents,
+    NativeAccessValidator,
     NativeAccessService,
   ],
 })

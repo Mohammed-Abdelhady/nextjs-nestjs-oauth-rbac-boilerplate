@@ -5,6 +5,7 @@ import {
 } from '../issuance-contract/issuance-contract-support';
 import { applicationAccessCases } from './applications-access-cases';
 import { applicationAtomicityCases } from './applications-atomicity-cases';
+import { applicationClientReadCases } from './applications-client-read-cases';
 import { ApplicationsContractHarness } from './applications-contract-harness';
 import { applicationRaceCases } from './applications-race-cases';
 import { reconciliationCases } from './applications-reconcile-cases';
@@ -20,7 +21,7 @@ import { applicationStoreCases } from './applications-store-cases';
 export function describeApplicationsContract(
   database: string,
   boot: () => Promise<ApplicationsContractHarness>,
-  budgets: { bootMs: number; teardownMs: number },
+  budgets: { bootMs: number; teardownMs: number; resetMs: number },
 ): void {
   describe(`applications and grants contract on ${database}`, () => {
     let harness: ApplicationsContractHarness | undefined;
@@ -45,7 +46,7 @@ export function describeApplicationsContract(
       await issuance.reset();
       await issuance.seedApplication(WEB_APPLICATION);
       await issuance.seedApplication(ADMIN_APPLICATION);
-    });
+    }, budgets.resetMs);
 
     applicationRegistryCases(current);
     reconciliationCases(current);
@@ -53,5 +54,6 @@ export function describeApplicationsContract(
     applicationStoreCases(current);
     applicationAtomicityCases(current);
     applicationRaceCases(current);
+    applicationClientReadCases(current);
   });
 }

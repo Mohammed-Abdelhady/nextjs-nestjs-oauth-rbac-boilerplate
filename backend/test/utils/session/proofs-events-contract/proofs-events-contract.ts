@@ -12,7 +12,7 @@ import { ProofsEventsContractHarness } from './proofs-events-contract-harness';
 export function describeProofsEventsContract(
   database: string,
   boot: () => Promise<ProofsEventsContractHarness>,
-  budgets: { bootMs: number; teardownMs: number },
+  budgets: { bootMs: number; teardownMs: number; resetMs: number },
 ): void {
   describe(`browser proof and security event contract on ${database}`, () => {
     let harness: ProofsEventsContractHarness | undefined;
@@ -35,7 +35,7 @@ export function describeProofsEventsContract(
     beforeEach(async () => {
       current().clock.set(TEST_NOW);
       await current().reset();
-    });
+    }, budgets.resetMs);
 
     proofStoreCases(current);
     proofServiceCases(current);

@@ -11,7 +11,7 @@ import { MagicLinkContractHarness } from './magic-link-contract.harness-spec';
 export function describeMagicLinkContract(
   database: string,
   boot: () => Promise<MagicLinkContractHarness>,
-  budgets: { bootMs: number; teardownMs: number },
+  budgets: { bootMs: number; teardownMs: number; resetMs: number },
 ): void {
   describe(`magic link contract on ${database}`, () => {
     let harness: MagicLinkContractHarness | undefined;
@@ -34,7 +34,7 @@ export function describeMagicLinkContract(
     beforeEach(async () => {
       current().clock.set(TEST_NOW);
       await current().reset();
-    });
+    }, budgets.resetMs);
 
     describe('requesting a link', () => magicLinkCases(current));
     describe('spending a link', () => magicLinkVerifyCases(current));

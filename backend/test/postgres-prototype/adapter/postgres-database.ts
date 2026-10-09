@@ -1,6 +1,17 @@
 import { ColumnType, Generated, Kysely, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
 import { commitCheckedPool } from './postgres-commit-tag';
+import {
+  AuthorizationTransactionsTable,
+  NativeCredentialsTable,
+  NativeDpopProofIdsTable,
+} from './postgres-native-tables';
+
+export type {
+  AuthorizationTransactionsTable,
+  NativeCredentialsTable,
+  NativeDpopProofIdsTable,
+} from './postgres-native-tables';
 
 type Timestamp = ColumnType<Date, Date, Date>;
 /** `bigint` comes back as text. Lifetimes in milliseconds fit a number. */
@@ -173,6 +184,11 @@ export interface SessionsTable {
   last_activity_at: Timestamp;
   expires_at: Timestamp;
   idle_expires_at: Timestamp;
+  proof_key_thumbprint: ColumnType<
+    string | null,
+    string | null | undefined,
+    string | null
+  >;
 }
 
 export interface SecurityEventsTable {
@@ -264,6 +280,9 @@ export interface PrototypeDatabase {
   two_factor_challenges: TwoFactorChallengesTable;
   passkeys: PasskeysTable;
   passkey_challenges: PasskeyChallengesTable;
+  authorization_transactions: AuthorizationTransactionsTable;
+  native_credentials: NativeCredentialsTable;
+  native_dpop_proof_ids: NativeDpopProofIdsTable;
 }
 
 /**

@@ -1,6 +1,7 @@
 import { bootPostgresPendingCodesHarness } from '../../../test/postgres-prototype/postgres-pending-codes-harness';
 import {
   POSTGRES_BOOT_TIMEOUT_MS,
+  POSTGRES_RESET_TIMEOUT_MS,
   POSTGRES_TEARDOWN_TIMEOUT_MS,
 } from '../../../test/postgres-prototype/server/postgres-test-server';
 import { describePendingCodesContract } from '../../../test/utils/auth/pending-codes-contract/pending-codes-contract';
@@ -20,4 +21,5 @@ jest.mock('@nestjs/mongoose', () => {
 describePendingCodesContract('PostgreSQL', bootPostgresPendingCodesHarness, {
   bootMs: POSTGRES_BOOT_TIMEOUT_MS,
   teardownMs: POSTGRES_TEARDOWN_TIMEOUT_MS,
+  resetMs: POSTGRES_RESET_TIMEOUT_MS,
 });

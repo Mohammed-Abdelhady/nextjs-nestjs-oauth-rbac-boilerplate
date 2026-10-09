@@ -1,6 +1,7 @@
 import { bootPostgresAuthorityHarness } from '../../../test/postgres-prototype/postgres-authority-harness';
 import {
   POSTGRES_BOOT_TIMEOUT_MS,
+  POSTGRES_RESET_TIMEOUT_MS,
   POSTGRES_TEARDOWN_TIMEOUT_MS,
 } from '../../../test/postgres-prototype/server/postgres-test-server';
 import { describeSessionAuthorityContract } from '../../../test/utils/session/authority-contract/authority-contract';
@@ -20,4 +21,5 @@ jest.mock('@nestjs/mongoose', () => {
 describeSessionAuthorityContract('PostgreSQL', bootPostgresAuthorityHarness, {
   bootMs: POSTGRES_BOOT_TIMEOUT_MS,
   teardownMs: POSTGRES_TEARDOWN_TIMEOUT_MS,
+  resetMs: POSTGRES_RESET_TIMEOUT_MS,
 });

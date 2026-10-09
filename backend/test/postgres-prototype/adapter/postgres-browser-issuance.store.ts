@@ -59,6 +59,24 @@ export class PostgresBrowserIssuanceStore extends BrowserIssuanceStore {
     super();
   }
 
+  async findAccount(
+    unitOfWork: UnitOfWork,
+    userId: string,
+  ): Promise<IssuanceAccount | null> {
+    const row = await postgresTransactionOf(unitOfWork)
+      .selectFrom('users')
+      .select(['id', 'is_deleted', 'session_version'])
+      .where('id', '=', toUuid(userId))
+      .executeTakeFirst();
+    return row
+      ? {
+          id: row.id,
+          isDeleted: row.is_deleted,
+          sessionVersion: row.session_version,
+        }
+      : null;
+  }
+
   async readAccountForIssuance(
     unitOfWork: UnitOfWork,
     userId: string,

@@ -30,6 +30,7 @@ import {
   ApplicationRegistryStore,
   FirstPartyKey,
   RegisteredApplication,
+  RegisteredClient,
   StoredRegistration,
 } from './application-registry.store';
 
@@ -102,6 +103,27 @@ export class ApplicationRegistry {
       unitOfWork,
       this.authEpoch.environment(),
       clientIds,
+    );
+  }
+
+  /**
+   * The client as an authorization request reads it, enabled or not, on a plain
+   * read. It may be a moment old: a caller that issues reads it again inside
+   * its unit of work.
+   */
+  lookUpClient(clientId: string): Promise<RegisteredClient | null> {
+    return this.store.lookUpClient(this.authEpoch.environment(), clientId);
+  }
+
+  /** The client, enabled or not, as the caller's unit of work sees it. */
+  findClientIn(
+    unitOfWork: UnitOfWork,
+    clientId: string,
+  ): Promise<RegisteredClient | null> {
+    return this.store.findClient(
+      unitOfWork,
+      this.authEpoch.environment(),
+      clientId,
     );
   }
 

@@ -62,7 +62,7 @@ async function passkeysOf(
 export function describePasskeysAfterDeletion(
   database: string,
   boot: () => Promise<PasskeyDeletionHarness>,
-  budgets: { bootMs: number; teardownMs: number },
+  budgets: { bootMs: number; teardownMs: number; resetMs: number },
 ): void {
   describe(`passkeys of a deleted account on ${database}`, () => {
     let harness: PasskeyDeletionHarness | undefined;
@@ -85,7 +85,7 @@ export function describePasskeysAfterDeletion(
     beforeEach(async () => {
       current().accounts.clock.set(TEST_NOW);
       await current().accounts.reset();
-    });
+    }, budgets.resetMs);
 
     accountCase(
       'keeps the passkeys of an account that left and of one an admin deleted',

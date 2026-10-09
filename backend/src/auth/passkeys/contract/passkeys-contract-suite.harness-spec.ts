@@ -24,7 +24,7 @@ import {
 export function describePasskeysContract(
   database: string,
   boot: () => Promise<PasskeysContractHarness>,
-  budgets: { bootMs: number; teardownMs: number },
+  budgets: { bootMs: number; teardownMs: number; resetMs: number },
 ): void {
   describe(`passkeys contract on ${database}`, () => {
     let harness: PasskeysContractHarness | undefined;
@@ -69,7 +69,7 @@ export function describePasskeysContract(
           passwordHash,
         }),
       };
-    });
+    }, budgets.resetMs);
 
     afterEach(() => jest.restoreAllMocks());
 

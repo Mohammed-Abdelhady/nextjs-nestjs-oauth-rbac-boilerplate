@@ -21,7 +21,11 @@ import {
   TokenSuccess,
 } from '../oauth/native-oauth.types';
 import { NativeTokenService } from '../token/native-token.service';
-import { signNativeDpopProof } from './native-dpop-test-vectors.harness-spec';
+import {
+  NATIVE_DPOP_TEST_SECRET,
+  NATIVE_PUBLIC_API_ORIGIN,
+  signNativeDpopProof,
+} from './native-dpop-test-vectors.harness-spec';
 import {
   AuthorizationTransaction,
   AuthorizationTransactionDocument,
@@ -49,9 +53,7 @@ import {
 export const NATIVE_CLIENT_ID = 'native-app';
 export const NATIVE_REDIRECT = 'myapp://callback';
 export const NATIVE_META = { ip: '203.0.113.10', userAgent: 'NativeTest/1' };
-export const NATIVE_DPOP_TEST_SECRET =
-  'native-dpop-test-secret-at-least-32-chars';
-export const NATIVE_PUBLIC_API_ORIGIN = 'https://api.example.test';
+export { NATIVE_DPOP_TEST_SECRET, NATIVE_PUBLIC_API_ORIGIN };
 
 export interface NativeOauthHarness {
   mongo: Awaited<ReturnType<typeof startMemoryReplSet>>;

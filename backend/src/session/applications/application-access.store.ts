@@ -25,8 +25,10 @@ export interface NewBlockedGrant {
 
 /**
  * What switching an application off and on, and blocking a person from one,
- * needs from a database. Every method takes part in one atomic change with its
- * security event, so every method requires the unit of work.
+ * needs from a database. Every write takes part in one atomic change with its
+ * security event, so every write requires the unit of work. `readGrant` alone
+ * commits by itself: it is a plain read, not an authority read, and nothing
+ * that issues or keeps a session may rest on it.
  *
  * `takeGrantForChange` takes the account's grants: once it has returned, no
  * other unit of work can issue a session for the account or change this grant
@@ -38,6 +40,12 @@ export interface NewBlockedGrant {
  * unique conflict named `ISSUANCE_CONSTRAINT.GRANT_USER_CLIENT`.
  */
 export abstract class ApplicationAccessStore {
+  /** A plain read of the person's grant for the client. Takes nothing. */
+  abstract readGrant(
+    userId: string,
+    clientId: string,
+  ): Promise<AccessGrant | null>;
+
   abstract takeGrantForChange(
     unitOfWork: UnitOfWork,
     userId: string,

@@ -17,7 +17,7 @@ import { roleSweepStoreCases } from './role-contract-sweeps';
 export function describeRoleStoresContract(
   database: string,
   boot: () => Promise<RoleContractHarness>,
-  budgets: { bootMs: number; teardownMs: number },
+  budgets: { bootMs: number; teardownMs: number; resetMs: number },
 ): void {
   describe(`role stores contract on ${database}`, () => {
     let harness: RoleContractHarness | undefined;
@@ -48,7 +48,7 @@ export function describeRoleStoresContract(
       current().clock.set(TEST_NOW);
       await current().reset();
       fixture = await seedRoleFixture(current());
-    });
+    }, budgets.resetMs);
 
     afterEach(() => jest.restoreAllMocks());
 

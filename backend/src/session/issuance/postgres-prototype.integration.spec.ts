@@ -13,6 +13,7 @@ import {
 } from '../../../test/postgres-prototype/postgres-issuance-harness';
 import {
   POSTGRES_BOOT_TIMEOUT_MS,
+  POSTGRES_RESET_TIMEOUT_MS,
   POSTGRES_TEARDOWN_TIMEOUT_MS,
 } from '../../../test/postgres-prototype/server/postgres-test-server';
 import { holdBefore, RaceGate } from '../../../test/utils/race-gate';
@@ -47,7 +48,7 @@ describe('PostgreSQL prototype adapter', () => {
   beforeEach(async () => {
     await harness.reset();
     await harness.seedApplication(WEB_APPLICATION);
-  });
+  }, POSTGRES_RESET_TIMEOUT_MS);
 
   afterEach(() => {
     for (const gate of gates) gate.release();
@@ -134,6 +135,7 @@ describe('PostgreSQL prototype adapter', () => {
         '0007_applications_grants.sql',
         '0008_two_factor.sql',
         '0009_passkeys.sql',
+        '0010_native_sign_in.sql',
       ],
       again: [],
       recorded: [
@@ -146,6 +148,7 @@ describe('PostgreSQL prototype adapter', () => {
         '0007_applications_grants.sql',
         '0008_two_factor.sql',
         '0009_passkeys.sql',
+        '0010_native_sign_in.sql',
       ],
     });
   });

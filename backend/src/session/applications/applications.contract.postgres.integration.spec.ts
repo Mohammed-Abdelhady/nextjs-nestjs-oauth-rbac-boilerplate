@@ -1,6 +1,7 @@
 import { bootPostgresApplicationsHarness } from '../../../test/postgres-prototype/postgres-applications-harness';
 import {
   POSTGRES_BOOT_TIMEOUT_MS,
+  POSTGRES_RESET_TIMEOUT_MS,
   POSTGRES_TEARDOWN_TIMEOUT_MS,
 } from '../../../test/postgres-prototype/server/postgres-test-server';
 import { describeApplicationsContract } from '../../../test/utils/session/applications-contract/applications-contract';
@@ -20,4 +21,5 @@ jest.mock('@nestjs/mongoose', () => {
 describeApplicationsContract('PostgreSQL', bootPostgresApplicationsHarness, {
   bootMs: POSTGRES_BOOT_TIMEOUT_MS,
   teardownMs: POSTGRES_TEARDOWN_TIMEOUT_MS,
+  resetMs: POSTGRES_RESET_TIMEOUT_MS,
 });

@@ -1,4 +1,4 @@
-import { sql } from 'kysely';
+import { Kysely, sql } from 'kysely';
 import { UnitOfWork } from '../../../src/common/persistence/unit-of-work';
 import {
   AccessGrant,
@@ -12,7 +12,9 @@ import {
   RecordSecurityEventInput,
 } from '../../../src/session/events/security-event-recorder';
 import { SecurityEventStore } from '../../../src/session/events/security-event.store';
+import { PrototypeDatabase } from './postgres-database';
 import { toUuid } from './postgres-issuance-mappers';
+import { autocommit } from './postgres-pending-codes-database';
 import { postgresTransactionOf } from './postgres-unit-of-work';
 
 const GRANT_COLUMNS = [
@@ -47,10 +49,27 @@ function toAccessGrant(row: {
  */
 export class PostgresApplicationAccessStore extends ApplicationAccessStore {
   constructor(
+    private readonly database: Kysely<PrototypeDatabase>,
     private readonly clock: { now(): Date },
     private readonly events: SecurityEventStore,
   ) {
     super();
+  }
+
+  async readGrant(
+    userId: string,
+    clientId: string,
+  ): Promise<AccessGrant | null> {
+    const account = toUuid(userId);
+    const row = await autocommit({}, () =>
+      this.database
+        .selectFrom('user_application_grants')
+        .select(GRANT_COLUMNS)
+        .where('user_id', '=', account)
+        .where('client_id', '=', clientId)
+        .executeTakeFirst(),
+    );
+    return row ? toAccessGrant(row) : null;
   }
 
   async takeGrantForChange(

@@ -16,7 +16,7 @@ import { registrationVerifyCases } from './pending-codes-contract-verify';
 export function describePendingCodesContract(
   database: string,
   boot: () => Promise<PendingCodesContractHarness>,
-  budgets: { bootMs: number; teardownMs: number },
+  budgets: { bootMs: number; teardownMs: number; resetMs: number },
 ): void {
   describe(`pending codes contract on ${database}`, () => {
     let harness: PendingCodesContractHarness | undefined;
@@ -39,7 +39,7 @@ export function describePendingCodesContract(
     beforeEach(async () => {
       current().clock.set(TEST_NOW);
       await current().reset();
-    });
+    }, budgets.resetMs);
 
     describe('mail counters', () => mailCounterCases(current));
     describe('issuing a sign-up code', () => registrationIssueCases(current));

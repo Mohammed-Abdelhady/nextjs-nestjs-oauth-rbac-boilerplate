@@ -1,6 +1,7 @@
 import { bootPostgresRoleHarness } from '../../../test/postgres-prototype/postgres-role-harness';
 import {
   POSTGRES_BOOT_TIMEOUT_MS,
+  POSTGRES_RESET_TIMEOUT_MS,
   POSTGRES_TEARDOWN_TIMEOUT_MS,
 } from '../../../test/postgres-prototype/server/postgres-test-server';
 import { describeRoleStoresContract } from '../../../test/utils/role/role-contract/role-contract';
@@ -20,4 +21,5 @@ jest.mock('@nestjs/mongoose', () => {
 describeRoleStoresContract('PostgreSQL', bootPostgresRoleHarness, {
   bootMs: POSTGRES_BOOT_TIMEOUT_MS,
   teardownMs: POSTGRES_TEARDOWN_TIMEOUT_MS,
+  resetMs: POSTGRES_RESET_TIMEOUT_MS,
 });

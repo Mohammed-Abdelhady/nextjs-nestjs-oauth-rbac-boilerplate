@@ -9,6 +9,7 @@ import {
   AUTH_SCHEMA_VERSION,
   MAX_SESSIONS_PER_USER,
 } from '../../constants/session-policy';
+import { BrowserIssuanceStore } from '../../issuance/browser-issuance.store';
 import { SessionIssuanceService } from '../../services/session-issuance.service';
 import { addMs, capIdleByAbsolute } from '../../utils/session/session-deadline';
 import { hashToken, randomSecret } from '../../utils/hashing/token-hash';
@@ -59,7 +60,7 @@ describe('native session limit', () => {
 
     const results = await runForcedIssuanceRace(
       issuance,
-      ctx.harness.users,
+      ctx.harness.app.get(BrowserIssuanceStore),
       () => exchange(ctx, firstCode.code, firstCode.verifier),
       () => exchange(ctx, secondCode.code, secondCode.verifier),
     );
@@ -95,7 +96,7 @@ describe('native session limit', () => {
 
     const results = await runForcedIssuanceRace(
       issuance,
-      ctx.harness.users,
+      ctx.harness.app.get(BrowserIssuanceStore),
       () =>
         issuance.createBrowserSession(
           user._id.toString(),

@@ -24,7 +24,7 @@ import {
 export function describeTwoFactorContract(
   database: string,
   boot: () => Promise<TwoFactorContractHarness>,
-  budgets: { bootMs: number; teardownMs: number },
+  budgets: { bootMs: number; teardownMs: number; resetMs: number },
 ): void {
   describe(`second factor contract on ${database}`, () => {
     let harness: TwoFactorContractHarness | undefined;
@@ -69,7 +69,7 @@ export function describeTwoFactorContract(
           passwordHash,
         }),
       };
-    });
+    }, budgets.resetMs);
 
     afterEach(() => jest.restoreAllMocks());
 

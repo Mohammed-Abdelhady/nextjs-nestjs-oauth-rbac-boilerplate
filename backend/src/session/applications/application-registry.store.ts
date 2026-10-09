@@ -6,6 +6,16 @@ export interface RegisteredApplication extends IssuanceApplication {
   allowedOrigins: string[];
 }
 
+/**
+ * A registered application with what an authorization request reads beyond
+ * authority: its client type, its redirect addresses and the name people see.
+ */
+export interface RegisteredClient extends RegisteredApplication {
+  clientType: string;
+  redirectUris: string[];
+  displayName: string;
+}
+
 /** What a reconciliation needs to know of an application already stored. */
 export interface StoredRegistration {
   clientId: string;
@@ -73,6 +83,10 @@ export function issuanceApplicationOf(
  * that had returned before it started. A read inside a unit of work sees what
  * that unit of work sees.
  *
+ * `lookUpClient` is neither. It is one plain read that may miss a change that
+ * returned just before it, so nothing that issues or keeps a session may rest
+ * on it alone: the unit of work that issues reads the client again.
+ *
  * A reconciliation takes the environment's registry at `takeRegistrations`:
  * once it has returned, no other reconciliation of that environment can store
  * or disable an application until this unit of work ends. An adapter may take
@@ -102,6 +116,19 @@ export abstract class ApplicationRegistryStore {
     environment: string,
     clientIds: string[],
   ): Promise<RegisteredApplication[]>;
+
+  /** A plain read of the client, enabled or not. Not an authority read. */
+  abstract lookUpClient(
+    environment: string,
+    clientId: string,
+  ): Promise<RegisteredClient | null>;
+
+  /** The client, enabled or not, as the unit of work sees it. */
+  abstract findClient(
+    unitOfWork: UnitOfWork,
+    environment: string,
+    clientId: string,
+  ): Promise<RegisteredClient | null>;
 
   /**
    * Creates the application, or brings its configured fields up to date. An

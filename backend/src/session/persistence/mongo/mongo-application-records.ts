@@ -1,5 +1,8 @@
 import { ApplicationDocument } from '../../schemas/application.schema';
-import { RegisteredApplication } from '../../applications/application-registry.store';
+import {
+  RegisteredApplication,
+  RegisteredClient,
+} from '../../applications/application-registry.store';
 import { toIssuanceApplication } from './mongo-issuance-mappers';
 
 /**
@@ -20,6 +23,18 @@ export function toRegisteredApplication(
   };
   applicationRecords.set(registered, document);
   return registered;
+}
+
+export function toRegisteredClient(
+  document: ApplicationDocument,
+): RegisteredClient {
+  return {
+    ...toIssuanceApplication(document),
+    allowedOrigins: [...document.allowedOrigins],
+    clientType: document.clientType,
+    redirectUris: [...document.redirectUris],
+    displayName: document.displayName,
+  };
 }
 
 /** The application as Mongoose callers know it. Throws for one this adapter did not read. */

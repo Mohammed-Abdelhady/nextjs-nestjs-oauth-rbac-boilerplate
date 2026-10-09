@@ -7,6 +7,7 @@ import {
   FirstPartyRegistration,
   NativeRegistration,
   RegisteredApplication,
+  RegisteredClient,
   StoredRegistration,
 } from '../../../src/session/applications/application-registry.store';
 import {
@@ -30,6 +31,29 @@ function toRegisteredApplication(
   return {
     ...toIssuanceApplication(row),
     allowedOrigins: row.allowed_origins,
+  };
+}
+
+const CLIENT_COLUMNS = [
+  ...REGISTERED_COLUMNS,
+  'client_type',
+  'redirect_uris',
+  'display_name',
+] as const;
+
+function toRegisteredClient(
+  row: ApplicationRow & {
+    allowed_origins: string[];
+    client_type: string;
+    redirect_uris: string[];
+    display_name: string;
+  },
+): RegisteredClient {
+  return {
+    ...toRegisteredApplication(row),
+    clientType: row.client_type,
+    redirectUris: row.redirect_uris,
+    displayName: row.display_name,
   };
 }
 
@@ -103,6 +127,35 @@ export class PostgresApplicationRegistryStore extends ApplicationRegistryStore {
       .where('environment', '=', environment)
       .execute();
     return rows.map(toRegisteredApplication);
+  }
+
+  async lookUpClient(
+    environment: string,
+    clientId: string,
+  ): Promise<RegisteredClient | null> {
+    const row = await autocommit({}, () =>
+      this.database
+        .selectFrom('applications')
+        .select(CLIENT_COLUMNS)
+        .where('client_id', '=', clientId)
+        .where('environment', '=', environment)
+        .executeTakeFirst(),
+    );
+    return row ? toRegisteredClient(row) : null;
+  }
+
+  async findClient(
+    unitOfWork: UnitOfWork,
+    environment: string,
+    clientId: string,
+  ): Promise<RegisteredClient | null> {
+    const row = await postgresTransactionOf(unitOfWork)
+      .selectFrom('applications')
+      .select(CLIENT_COLUMNS)
+      .where('client_id', '=', clientId)
+      .where('environment', '=', environment)
+      .executeTakeFirst();
+    return row ? toRegisteredClient(row) : null;
   }
 
   async registerFirstParty(

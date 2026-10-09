@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { MalformedIdError } from '../../../common/persistence/persistence-errors';
 import { UnitOfWork } from '../../../common/persistence/unit-of-work';
 import { User, UserDocument } from '../../../user/schemas/user.schema';
 import {
@@ -34,6 +35,7 @@ import {
   toIssuanceGrant,
   toObjectId,
 } from './mongo-issuance-mappers';
+import { isStorableId } from './mongo-session-records';
 import { mongoSessionOf } from './mongo-unit-of-work';
 
 type LeanGrant = UserApplicationGrant & { _id: Types.ObjectId };
@@ -55,6 +57,21 @@ export class MongoBrowserIssuanceStore extends BrowserIssuanceStore {
     private readonly events: SecurityEventService,
   ) {
     super();
+  }
+
+  async findAccount(
+    unitOfWork: UnitOfWork,
+    userId: string,
+  ): Promise<IssuanceAccount | null> {
+    // Mongoose decides what an id is here, as it did before this read moved.
+    if (!isStorableId(userId)) {
+      throw new MalformedIdError();
+    }
+    const user = await this.userModel
+      .findById(userId)
+      .session(mongoSessionOf(unitOfWork))
+      .exec();
+    return user ? toIssuanceAccount(user) : null;
   }
 
   async readAccountForIssuance(
