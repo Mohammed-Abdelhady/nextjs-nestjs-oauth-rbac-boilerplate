@@ -17,6 +17,7 @@ import {
   CONTRACT_ENVIRONMENT,
   IssuanceContractHarness,
 } from '../utils/session/issuance-contract/issuance-contract-harness';
+import { commitCheckedPool } from './adapter/postgres-commit-tag';
 import { PostgresBrowserIssuanceStore } from './adapter/postgres-browser-issuance.store';
 import {
   openPrototypeDatabase,
@@ -24,6 +25,7 @@ import {
 } from './adapter/postgres-database';
 import { PostgresIssuanceApplications } from './adapter/postgres-issuance-applications';
 import { migratePrototypeDatabase } from './adapter/postgres-migrations';
+import { PostgresSecurityEventStore } from './adapter/postgres-security-event.store';
 import { PostgresUnitOfWorkRunner } from './adapter/postgres-unit-of-work';
 import { CommitFaultDialect } from './postgres-commit-faults';
 import {
@@ -48,10 +50,14 @@ export async function bootPostgresIssuanceHarness(): Promise<PostgresIssuanceHar
   // An idle connection the server drops must not take the test process down.
   pool.on('error', () => undefined);
   const appliedMigrations = await migratePrototypeDatabase(pool);
-  const dialect = new CommitFaultDialect({ pool });
+  const dialect = new CommitFaultDialect({ pool: commitCheckedPool(pool) });
   const database = openPrototypeDatabase(pool, dialect);
   const clock = new FrozenClock(TEST_NOW);
-  const store = new PostgresBrowserIssuanceStore(CONTRACT_ENVIRONMENT, clock);
+  const store = new PostgresBrowserIssuanceStore(
+    CONTRACT_ENVIRONMENT,
+    clock,
+    new PostgresSecurityEventStore(database),
+  );
   const applications = new PostgresIssuanceApplications(CONTRACT_ENVIRONMENT);
   const authEpoch = new AuthEpochService(
     new ConfigService({

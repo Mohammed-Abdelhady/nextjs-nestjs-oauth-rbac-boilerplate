@@ -34,11 +34,16 @@ import {
   UserApplicationGrant,
   UserApplicationGrantSchema,
 } from './schemas/user-application-grant.schema';
+import { SecurityEventRecorder } from './events/security-event-recorder';
+import { SecurityEventStore } from './events/security-event.store';
 import { BrowserIssuanceStore } from './issuance/browser-issuance.store';
 import { IssuanceApplications } from './issuance/issuance-applications';
 import { MongoBrowserIssuanceStore } from './persistence/mongo/mongo-browser-issuance.store';
+import { MongoBrowserProofStore } from './persistence/mongo/mongo-browser-proof.store';
 import { MongoIssuanceApplications } from './persistence/mongo/mongo-issuance-applications';
+import { MongoSecurityEventStore } from './persistence/mongo/mongo-security-event.store';
 import { MongoUnitOfWorkRunner } from './persistence/mongo/mongo-unit-of-work';
+import { BrowserProofStore } from './proofs/browser-proof.store';
 import { BrowserProofService } from './services/browser-proof.service';
 import { ApplicationAccessService } from './services/application-access.service';
 import { ApplicationRegistryService } from './services/application-registry.service';
@@ -71,8 +76,11 @@ import { NativeAccessService } from './native/access/native-access.service';
   providers: [
     ApplicationAccessService,
     ApplicationRegistryService,
+    { provide: BrowserProofStore, useClass: MongoBrowserProofStore },
     BrowserProofService,
     NativeSessionRevocationService,
+    { provide: SecurityEventStore, useClass: MongoSecurityEventStore },
+    SecurityEventRecorder,
     SecurityEventService,
     { provide: UnitOfWorkRunner, useClass: MongoUnitOfWorkRunner },
     { provide: BrowserIssuanceStore, useClass: MongoBrowserIssuanceStore },
@@ -87,8 +95,11 @@ import { NativeAccessService } from './native/access/native-access.service';
     CommonModule,
     ApplicationAccessService,
     ApplicationRegistryService,
+    BrowserProofStore,
     BrowserProofService,
     NativeSessionRevocationService,
+    SecurityEventStore,
+    SecurityEventRecorder,
     SecurityEventService,
     UnitOfWorkRunner,
     BrowserIssuanceStore,

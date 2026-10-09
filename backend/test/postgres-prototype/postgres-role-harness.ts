@@ -14,6 +14,7 @@ import { migratePrototypeDatabase } from './adapter/postgres-migrations';
 import { PostgresRoleCatalogStore } from './adapter/postgres-role-catalog.store';
 import { PostgresRoleChangeStore } from './adapter/postgres-role-change.store';
 import { PostgresRoleSweepStore } from './adapter/postgres-role-sweep.store';
+import { PostgresSecurityEventStore } from './adapter/postgres-security-event.store';
 import { PostgresUnitOfWorkRunner } from './adapter/postgres-unit-of-work';
 import { startPostgresTestServer } from './server/postgres-test-server';
 
@@ -33,7 +34,10 @@ export async function bootPostgresRoleHarness(): Promise<RoleContractHarness> {
   return {
     clock,
     catalog: new PostgresRoleCatalogStore(database),
-    changes: new PostgresRoleChangeStore(clock),
+    changes: new PostgresRoleChangeStore(
+      clock,
+      new PostgresSecurityEventStore(database),
+    ),
     sweeps: new PostgresRoleSweepStore(database, clock),
     runner: (pause) => new PostgresUnitOfWorkRunner(database, pause),
 

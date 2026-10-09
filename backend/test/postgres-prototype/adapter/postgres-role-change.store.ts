@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto';
 import { Transaction } from 'kysely';
 import { UnitOfWork } from '../../../src/common/persistence/unit-of-work';
 import { RoleChangeStore } from '../../../src/role/stores/role-change.store';
@@ -14,10 +13,10 @@ import {
   StoredRole,
 } from '../../../src/role/stores/role-records';
 import {
-  ROLE_DELETION_EVENT_PREFIX,
-  SECURITY_EVENT_ACTION,
-  SECURITY_EVENT_OUTCOME,
-} from '../../../src/session/constants/security-event-action';
+  newSecurityEvent,
+  roleDeletionEvent,
+} from '../../../src/session/events/security-event-recorder';
+import { SecurityEventStore } from '../../../src/session/events/security-event.store';
 import { PrototypeDatabase } from './postgres-database';
 import { toUuid } from './postgres-issuance-mappers';
 import {
@@ -63,7 +62,10 @@ export async function replacePendingSweeps(
  * account, so a sign-in and a role change cannot both write one account.
  */
 export class PostgresRoleChangeStore extends RoleChangeStore {
-  constructor(private readonly clock: { now(): Date }) {
+  constructor(
+    private readonly clock: { now(): Date },
+    private readonly events: SecurityEventStore,
+  ) {
     super();
   }
 
@@ -219,20 +221,10 @@ export class PostgresRoleChangeStore extends RoleChangeStore {
     unitOfWork: UnitOfWork,
     deletion: RoleDeletionRecord,
   ): Promise<void> {
-    await postgresTransactionOf(unitOfWork)
-      .insertInto('security_events')
-      .values({
-        event_id: `${ROLE_DELETION_EVENT_PREFIX}${deletion.roleId}`,
-        actor_id: deletion.actorId,
-        action: SECURITY_EVENT_ACTION.ROLE_DELETED,
-        outcome: SECURITY_EVENT_OUTCOME.SUCCEEDED,
-        occurred_at: this.clock.now(),
-        deleted_role_id: deletion.roleId,
-        deleted_role_slug: deletion.previousSlug,
-        deletion_sweep_id: deletion.sweepId ?? null,
-        deletion_pending: true,
-      })
-      .execute();
+    await this.events.append(
+      unitOfWork,
+      roleDeletionEvent(deletion, this.clock.now()),
+    );
   }
 
   async removeRole(unitOfWork: UnitOfWork, roleId: string): Promise<void> {
@@ -283,22 +275,11 @@ export class PostgresRoleChangeStore extends RoleChangeStore {
     unitOfWork: UnitOfWork,
     revocations: HolderRevocation[],
   ): Promise<void> {
-    if (revocations.length === 0) return;
     const occurredAt = this.clock.now();
-    await postgresTransactionOf(unitOfWork)
-      .insertInto('security_events')
-      .values(
-        revocations.map((revocation) => ({
-          event_id: randomUUID(),
-          actor_id: revocation.actorId,
-          target_user_id: revocation.targetUserId,
-          action: revocation.action,
-          reason_code: revocation.reasonCode,
-          outcome: SECURITY_EVENT_OUTCOME.SUCCEEDED,
-          occurred_at: occurredAt,
-        })),
-      )
-      .execute();
+    await this.events.appendMany(
+      unitOfWork,
+      revocations.map((revocation) => newSecurityEvent(revocation, occurredAt)),
+    );
   }
 
   private async stored(work: Work, roleId: string): Promise<StoredRole> {

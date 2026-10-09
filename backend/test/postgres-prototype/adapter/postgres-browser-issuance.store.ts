@@ -1,6 +1,6 @@
-import { randomUUID } from 'crypto';
 import { UnitOfWork } from '../../../src/common/persistence/unit-of-work';
-import { SECURITY_EVENT_OUTCOME } from '../../../src/session/constants/security-event-action';
+import { newSecurityEvent } from '../../../src/session/events/security-event-recorder';
+import { SecurityEventStore } from '../../../src/session/events/security-event.store';
 import { AUTH_SCHEMA_VERSION } from '../../../src/session/constants/session-policy';
 import {
   ACCOUNT_ISSUANCE_MARK,
@@ -54,6 +54,7 @@ export class PostgresBrowserIssuanceStore extends BrowserIssuanceStore {
   constructor(
     private readonly environment: string,
     private readonly clock: { now(): Date },
+    private readonly events: SecurityEventStore,
   ) {
     super();
   }
@@ -232,17 +233,9 @@ export class PostgresBrowserIssuanceStore extends BrowserIssuanceStore {
     unitOfWork: UnitOfWork,
     event: IssuanceSecurityEvent,
   ): Promise<void> {
-    await postgresTransactionOf(unitOfWork)
-      .insertInto('security_events')
-      .values({
-        event_id: randomUUID(),
-        target_user_id: event.targetUserId,
-        client_id: event.clientId,
-        session_id: event.sessionId,
-        action: event.action,
-        outcome: SECURITY_EVENT_OUTCOME.SUCCEEDED,
-        occurred_at: this.clock.now(),
-      })
-      .execute();
+    await this.events.append(
+      unitOfWork,
+      newSecurityEvent(event, this.clock.now()),
+    );
   }
 }

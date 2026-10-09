@@ -1,5 +1,6 @@
 import { UnitOfWork } from '../../common/persistence/unit-of-work';
 import { CredentialPurpose } from '../constants/credential-purpose';
+import { SECURITY_EVENT_CONSTRAINT } from '../events/security-event.store';
 import {
   AccountAuthorityFields,
   ApplicationAuthorityFields,
@@ -9,7 +10,7 @@ import {
 
 /** Shared names of the unique rules issuance can run into, on any database. */
 export const ISSUANCE_CONSTRAINT = {
-  SECURITY_EVENT_ID: 'security_event.event_id',
+  SECURITY_EVENT_ID: SECURITY_EVENT_CONSTRAINT.EVENT_ID,
   SESSION_TOKEN_HASH: 'session.token_hash',
   GRANT_USER_CLIENT: 'grant.user_client',
 } as const;
