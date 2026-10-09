@@ -18,6 +18,14 @@ export interface EdgeInsets {
   end: number;
 }
 
+/** The same space as a safe-area library reports it, by physical side. */
+export interface PhysicalInsets {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+}
+
 export interface ConfirmRequest {
   title: string;
   message: string;

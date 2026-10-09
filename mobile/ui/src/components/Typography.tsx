@@ -47,6 +47,7 @@ function RoleText({
     <Text
       testID={testID}
       accessibilityRole={header ? 'header' : 'text'}
+      maxFontSizeMultiplier={TYPE_ROLE[role].maxFontScale}
       style={[
         ROLE_STYLE[role],
         centered ? ROLE_STYLE.center : ROLE_STYLE.start,
