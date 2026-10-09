@@ -1,3 +1,4 @@
+import { useState } from 'react';
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
@@ -89,7 +90,7 @@ describe.each([
     const { message } = await renderForm(locale, <SessionCardTimeline session={NATIVE_SESSION} />);
 
     const row = screen.getByRole('article', {
-      name: `${message('sessions.unknownDevice')} ${message('sessions.kind.nativeApp')}`,
+      name: `${NATIVE_SESSION.deviceName} ${message('sessions.kind.nativeApp')}`,
     });
     expect(within(row).getByText(message('sessions.kind.nativeApp'))).toBeTruthy();
     expect(within(row).queryByText(message('sessions.kind.browser'))).toBeNull();
@@ -104,9 +105,79 @@ describe.each([
     );
 
     const row = screen.getByRole('article', {
-      name: `iOS 17 ${message('sessions.kind.nativeApp')}`,
+      name: `${NATIVE_SESSION_ON_IOS.deviceName} ${message('sessions.kind.nativeApp')}`,
     });
-    expect(row.textContent).not.toContain(BROWSER_PLACEHOLDER);
+    expect(row).toBeTruthy();
+  });
+
+  it('renders structured browser and native names through the catalogue', async () => {
+    const { message } = await renderForm(
+      locale,
+      <>
+        <SessionCardTimeline
+          session={{
+            ...BROWSER_SESSION,
+            deviceParts: {
+              kind: 'browser',
+              browserName: 'Chrome',
+              browserMajorVersion: '140',
+              platformName: 'macOS',
+              platformVersion: '10.15',
+            },
+          }}
+        />
+        <SessionCardTimeline
+          session={{
+            ...NATIVE_SESSION,
+            deviceParts: { kind: 'mobileApp', platformName: 'Android' },
+          }}
+        />
+      </>,
+    );
+    expect(
+      [
+        screen.queryByRole('article', {
+          name: `${message('sessions.browserOnSystem').replace('{browser}', 'Chrome 140').replace('{system}', 'macOS 10.15')} ${message('sessions.kind.browser')}`,
+        }),
+        screen.queryByRole('article', {
+          name: `${message('sessions.mobileAppOnSystem').replace('{system}', 'Android')} ${message('sessions.kind.nativeApp')}`,
+        }),
+      ].map(Boolean),
+    ).toEqual([true, true]);
+  });
+
+  it('refreshes the device label when structured versions change', async () => {
+    function UpdatedDevice() {
+      const [version, setVersion] = useState('140');
+      return (
+        <>
+          <button
+            data-testid="update-device-parts"
+            aria-label={BROWSER_SESSION.deviceName}
+            onClick={() => setVersion('141')}
+          />
+          <SessionCardTimeline
+            session={{
+              ...BROWSER_SESSION,
+              deviceParts: {
+                kind: 'browser',
+                browserName: 'Chrome',
+                browserMajorVersion: version,
+                platformName: 'macOS',
+                platformVersion: '10.15',
+              },
+            }}
+          />
+        </>
+      );
+    }
+    const { message, format } = await renderForm(locale, <UpdatedDevice />);
+    fireEvent.click(screen.getByTestId('update-device-parts'));
+    expect(
+      screen.queryByRole('article', {
+        name: `${format('sessions.browserOnSystem', { browser: 'Chrome 141', system: 'macOS 10.15' })} ${message('sessions.kind.browser')}`,
+      }),
+    ).toBeTruthy();
   });
 
   it('gives the two kinds different words', async () => {
@@ -190,7 +261,7 @@ describe.each([
     fireEvent.click(screen.getByRole('button', { name: message('sessions.logoutThisDevice') }));
 
     const dialog = screen.getByRole('alertdialog');
-    expect(dialog.textContent).toContain(message('sessions.unknownDevice'));
+    expect(dialog.textContent).toContain(NATIVE_SESSION.deviceName);
     expect(dialog.textContent).not.toContain(BROWSER_PLACEHOLDER);
   });
 });

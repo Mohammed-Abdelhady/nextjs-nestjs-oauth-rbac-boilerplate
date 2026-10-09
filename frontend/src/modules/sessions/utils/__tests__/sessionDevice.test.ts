@@ -1,5 +1,8 @@
+import { createTranslator } from 'next-intl';
+import en from '@/i18n/messages/session-kinds.en.json';
+import ar from '@/i18n/messages/session-kinds.ar.json'; // feature:locale-ar
 import { describe, expect, it } from 'vitest';
-import { describeNativeDevice, sessionKindOf } from '../sessionDevice';
+import { sessionDeviceText, describeNativeDevice, sessionKindOf } from '../sessionDevice';
 
 describe('sessionKindOf', () => {
   it.each([
@@ -38,5 +41,69 @@ describe('describeNativeDevice', () => {
     ['Acme/2.1 (Linux; Android 14; Pixel Tablet)', 'Android 14'],
   ])('keeps a tablet a tablet for %s', (userAgent, os) => {
     expect(describeNativeDevice(userAgent)).toEqual({ deviceType: 'Tablet', os });
+  });
+});
+
+describe('structured device naming', () => {
+  it.each([
+    [
+      {
+        kind: 'browser',
+        browserName: 'Chrome',
+        browserMajorVersion: '140',
+        platformName: 'macOS',
+        platformVersion: '10.15',
+      },
+      'browserOnSystem',
+      { browser: 'Chrome 140', system: 'macOS 10.15' },
+    ],
+    [{ kind: 'mobileApp', platformName: 'Android' }, 'mobileAppOnSystem', { system: 'Android' }],
+    [{ kind: 'mobileApp' }, 'kind.nativeApp', undefined],
+    [{ kind: 'unknown' }, 'unknownDevice', undefined],
+  ] as const)('uses catalogue arguments for %j', (parts, key, values) => {
+    const calls: [string, Record<string, string> | undefined][] = [];
+    sessionDeviceText({ deviceParts: parts }, (asked, args) => {
+      calls.push([asked, args]);
+      return asked;
+    });
+    expect(calls).toEqual([[key, values]]);
+  });
+
+  it('retains the stored phrase for an older server', () => {
+    expect(sessionDeviceText({ deviceName: 'Legacy phrase' }, () => 'unused')).toBe(
+      'Legacy phrase',
+    );
+  });
+});
+
+describe.each([
+  ['en', en],
+  ['ar', ar], // feature:locale-ar
+] as const)('device catalogue in %s', (locale, messages) => {
+  it('composes browser and native names with isolated arguments', () => {
+    const t = createTranslator({ locale, messages, namespace: 'sessions' });
+    const browser = sessionDeviceText(
+      {
+        deviceParts: {
+          kind: 'browser',
+          browserName: 'Chrome',
+          browserMajorVersion: '140',
+          platformName: 'macOS',
+          platformVersion: '10.15',
+        },
+      },
+      t,
+    );
+    const native = sessionDeviceText(
+      { deviceParts: { kind: 'mobileApp', platformName: 'iOS' } },
+      t,
+    );
+    expect({ browser, native, isolated: browser.includes('\u2066macOS 10.15\u2069') }).toEqual({
+      browser: messages.sessions.browserOnSystem
+        .replace('{browser}', 'Chrome 140')
+        .replace('{system}', 'macOS 10.15'),
+      native: messages.sessions.mobileAppOnSystem.replace('{system}', 'iOS'),
+      isolated: true,
+    });
   });
 });

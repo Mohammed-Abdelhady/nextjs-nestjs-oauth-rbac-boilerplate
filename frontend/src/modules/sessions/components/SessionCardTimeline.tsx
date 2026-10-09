@@ -20,8 +20,8 @@ import { DeviceIcon } from './DeviceIcon';
 import { CurrentSessionBadge } from './CurrentSessionBadge';
 import { SessionKindBadge } from './SessionKindBadge';
 import { SESSION_KIND } from '../constants';
-import { describeNativeDevice, sessionKindOf } from '../utils/sessionDevice';
-import { parseUserAgent, getDeviceLabel } from '@/lib/parseUserAgent';
+import { describeNativeDevice, sessionKindOf, sessionDeviceText } from '../utils/sessionDevice';
+import { parseUserAgent } from '@/lib/parseUserAgent';
 import type { Session } from '@app/sdk';
 import { toast } from '@/lib/toast';
 import { reportUnlessHandled } from '@/lib/requestFailure';
@@ -57,7 +57,6 @@ export const SessionCardTimeline = memo(
     const [deleteSession, { isLoading }] = useDeleteSessionMutation();
 
     const { device, browser, os } = parseUserAgent(session.userAgent);
-    const deviceLabel = getDeviceLabel(session.userAgent);
 
     const titleId = useId();
     const kindId = useId();
@@ -65,7 +64,7 @@ export const SessionCardTimeline = memo(
     // The app's user agent is not a browser, so a native row is named by its system alone.
     const nativeDevice =
       kind === SESSION_KIND.NATIVE_APP ? describeNativeDevice(session.userAgent) : null;
-    const nativeName = nativeDevice ? (nativeDevice.os ?? t('unknownDevice')) : null;
+    const displayedName = sessionDeviceText(session, t);
 
     const handleLogout = useCallback(async () => {
       try {
@@ -109,7 +108,7 @@ export const SessionCardTimeline = memo(
               <div className="flex-1">
                 <Heading level={3} variant="subsectionTitle" className="flex items-center gap-2">
                   <span id={titleId} data-testid="session-device-label">
-                    {nativeName ?? (session.deviceName || deviceLabel)}
+                    {displayedName}
                   </span>
                   {session.isCurrent && <CurrentSessionBadge pulse />}
                 </Heading>
@@ -170,7 +169,7 @@ export const SessionCardTimeline = memo(
               <AlertDialogTitle>{t('logoutConfirmTitle')}</AlertDialogTitle>
               <AlertDialogDescription>
                 {t.rich('logoutConfirmDescription', {
-                  device: nativeName ?? deviceLabel,
+                  device: displayedName,
                   strong: (chunks) => <strong>{chunks}</strong>,
                 })}
               </AlertDialogDescription>
@@ -202,7 +201,15 @@ export const SessionCardTimeline = memo(
     return (
       prevProps.session.id === nextProps.session.id &&
       prevProps.session.lastUsedAt === nextProps.session.lastUsedAt &&
-      prevProps.session.isCurrent === nextProps.session.isCurrent
+      prevProps.session.isCurrent === nextProps.session.isCurrent &&
+      prevProps.session.deviceName === nextProps.session.deviceName &&
+      prevProps.session.deviceParts?.kind === nextProps.session.deviceParts?.kind &&
+      prevProps.session.deviceParts?.browserName === nextProps.session.deviceParts?.browserName &&
+      prevProps.session.deviceParts?.browserMajorVersion ===
+        nextProps.session.deviceParts?.browserMajorVersion &&
+      prevProps.session.deviceParts?.platformName === nextProps.session.deviceParts?.platformName &&
+      prevProps.session.deviceParts?.platformVersion ===
+        nextProps.session.deviceParts?.platformVersion
     );
   },
 );
