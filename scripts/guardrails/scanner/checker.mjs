@@ -2,13 +2,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { scannerWorkspaceRoots } from '../workspace/workspace-roots.mjs';
 import {
-  ATTRIBUTION_PATTERNS,
+  ATTRIBUTION_RULES,
+  FOLDED_ATTRIBUTION,
   BANNED_CONSTRUCTS,
-  CAPPED_FILES,
   CAPPED_PATH,
   DOM_TOKENS,
   EXEMPT_PATHS,
   FILE_LINE_LIMIT,
+  LIMITED_SCAN_TARGETS,
   LINE_ENDINGS,
   PROTECTED_FILE_PATTERN,
   BINARY_EXTENSIONS,
@@ -52,7 +53,7 @@ export function isProtectedPath(filePath) {
 
 export function isContentTarget(filePath) {
   if (isProtectedPath(filePath)) return false;
-  if (isScanTarget(filePath)) return true;
+  if (isScanTarget(filePath) || limitedScanTokens(filePath)) return true;
   return (
     isCappedPath(filePath) &&
     !BINARY_EXTENSIONS.includes(path.posix.extname(filePath).toLowerCase())
@@ -88,17 +89,28 @@ export function isScanTarget(filePath, roots = defaultWorkspaceRoots()) {
   return SCAN_EXTENSIONS.includes(path.posix.extname(normalized).toLowerCase());
 }
 
+function isSkippedPath(filePath, roots) {
+  return (
+    SKIPPED_PATH_PREFIXES.some((prefix) => filePath.startsWith(prefix)) ||
+    skippedDirectory(filePath, roots)
+  );
+}
+
+/** The tokens a file outside the source extensions is read for, or null when it is not read. */
+export function limitedScanTokens(filePath, roots = defaultWorkspaceRoots()) {
+  if (isProtectedPath(filePath) || isScanTarget(filePath, roots)) return null;
+  if (isSkippedPath(filePath, roots)) return null;
+  return LIMITED_SCAN_TARGETS.find(({ path: target }) => target.test(filePath))?.tokens ?? null;
+}
+
 export function isAllowlistedChecker(filePath) {
   return EXEMPT_PATHS.includes(filePath);
 }
 
 export function isCappedPath(filePath) {
   if (UNCAPPED_EXTENSIONS.includes(path.posix.extname(filePath).toLowerCase())) return false;
-  if (!isScanTarget(filePath)) {
-    if (SKIPPED_PATH_PREFIXES.some((prefix) => filePath.startsWith(prefix))) return false;
-    if (skippedDirectory(filePath, defaultWorkspaceRoots())) return false;
-  }
-  return CAPPED_PATH.test(filePath) || CAPPED_FILES.includes(filePath);
+  if (!isScanTarget(filePath) && isSkippedPath(filePath, defaultWorkspaceRoots())) return false;
+  return CAPPED_PATH.test(filePath);
 }
 
 export function isTestFile(filePath) {
@@ -145,9 +157,10 @@ function separatorEndpoints(text) {
   return endpoints;
 }
 
-function findBannedMatch(text, { testFile = false } = {}) {
+function findBannedMatch(text, { testFile = false, tokens } = {}) {
   let endpoints;
-  const hits = TOKEN_PATTERNS.flatMap(({ token, pattern, followingCast }) =>
+  const patterns = tokens ? TOKEN_PATTERNS.filter(({ token }) => tokens.includes(token)) : TOKEN_PATTERNS;
+  const hits = patterns.flatMap(({ token, pattern, followingCast }) =>
     [...text.matchAll(pattern)]
       .filter((match) => {
         if (!followingCast || match[2]) return true;
@@ -227,9 +240,11 @@ export function evaluateChanges({ added, lineCounts }) {
   const bans = [];
   const caps = [];
   for (const file of added) {
-    if (!isScanTarget(file.path) || isAllowlistedChecker(file.path)) continue;
+    if (isAllowlistedChecker(file.path)) continue;
+    const tokens = isScanTarget(file.path) ? undefined : limitedScanTokens(file.path);
+    if (tokens === null) continue;
     for (const { line, text } of file.addedLines) {
-      const hit = findBannedMatch(text, { testFile: isTestFile(file.path) });
+      const hit = findBannedMatch(text, { testFile: isTestFile(file.path), tokens });
       if (hit)
         bans.push({ path: file.path, line, token: hit.token, text: excerpt(text, hit.index) });
     }
@@ -240,14 +255,30 @@ export function evaluateChanges({ added, lineCounts }) {
   return { bans, caps, ok: bans.length === 0 && caps.length === 0 };
 }
 
+function attributionReason(line) {
+  return ATTRIBUTION_RULES.find(({ pattern }) => pattern.test(line))?.reason;
+}
+
+/** Splits a commit message into what stays and the tool attribution lines that leave. */
+export function removeAttribution(message) {
+  const kept = [];
+  const removed = [];
+  message.split('\n').forEach((text, index) => {
+    const reason = attributionReason(text);
+    if (reason) removed.push({ line: index + 1, text: text.trim(), reason });
+    else kept.push(text);
+  });
+  if (removed.length === 0) return { message, removed };
+  while (kept.length > 0 && kept[kept.length - 1].trim() === '') kept.pop();
+  return { message: `${kept.join('\n')}\n`, removed };
+}
+
 export function findAttributionHits(message) {
-  return ATTRIBUTION_PATTERNS.filter((pattern) => pattern.test(message)).map(
-    (pattern) => pattern.source,
-  );
+  const reasons = removeAttribution(message).removed.map(({ reason }) => reason);
+  if (FOLDED_ATTRIBUTION.pattern.test(message)) reasons.push(FOLDED_ATTRIBUTION.reason);
+  return reasons;
 }
 
 export function stripAttribution(message) {
-  const kept = message.split('\n').filter((line) => findAttributionHits(line).length === 0);
-  while (kept.length > 0 && kept[kept.length - 1] === '') kept.pop();
-  return `${kept.join('\n')}\n`;
+  return removeAttribution(message).message;
 }

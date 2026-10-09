@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { isatty } from 'node:tty';
-import { findAttributionHits, stripAttribution } from './checker.mjs';
+import { findAttributionHits, removeAttribution } from './checker.mjs';
 import { checkRange, checkStaged, checkTree, resolveCommit } from '../git/git.mjs';
 import { EMPTY_PUSH_MESSAGE, EXIT_CODES, FILE_LINE_LIMIT, LINE_ENDINGS } from '../policy.mjs';
 import { checkPush } from '../git/push.mjs';
@@ -57,7 +57,9 @@ export function main(argv = process.argv.slice(2)) {
       });
     } else if (argv[0] === '--commit-msg' && argv.length === 2) {
       const original = readFileSync(argv[1], 'utf8');
-      const stripped = stripAttribution(original);
+      const { message: stripped, removed } = removeAttribution(original);
+      for (const { line, text, reason } of removed)
+        console.error(`Removed commit message line ${line} (${reason}): ${text}`);
       if (stripped !== original) writeFileSync(argv[1], stripped);
       if (findAttributionHits(stripped).length > 0) {
         throw new Error('Commit message credits a tool. Commit as the author only.');

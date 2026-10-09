@@ -110,8 +110,7 @@ export const BINARY_EXTENSIONS = [
   '.mp3',
 ];
 export const CAPPED_PATH =
-  /^(backend\/(src|test)|frontend\/(src|e2e)|packages\/[^/]+\/src|shared\/[^/]+\/src|mobile\/[^/]+\/(src|app|test|conformance)|scripts\/guardrails)\//;
-export const CAPPED_FILES = ['scripts/check-hard-bans.mjs', 'scripts/guardrails/scanner/check-hard-bans.test.mjs'];
+  /^(backend\/(src|test|scripts|migrations)|frontend\/(src|e2e)|packages\/[^/]+\/(src|test|scripts)|shared\/[^/]+\/src|mobile\/[^/]+\/(src|app|test|conformance)|scripts)\//;
 export const DOM_TOKENS = [
   'dangerouslySetInnerHTML',
   'insertAdjacentHTML',
@@ -119,6 +118,8 @@ export const DOM_TOKENS = [
   'outerHTML',
   'innerHTML',
 ];
+// Whitespace or block comments may sit between the two words of a type escape.
+const WORD_GAP = String.raw`(?:\s|\/\*(?:[^*]|\*(?!\/))*\*\/)+`;
 export const RULE_REASONS = {
   DOM: 'Markup injection bypasses safe text and children.',
   TYPE: 'Type escapes bypass compile-time checking.',
@@ -138,7 +139,11 @@ export const BANNED_CONSTRUCTS = [
     followingCast: true,
     reason: RULE_REASONS.TYPE,
   },
-  { token: 'satisfies any', reason: RULE_REASONS.TYPE },
+  {
+    token: 'satisfies any',
+    pattern: new RegExp(String.raw`\bsatisfies${WORD_GAP}any\b`, 'g'),
+    reason: RULE_REASONS.TYPE,
+  },
   { token: 'prettier-ignore', reason: RULE_REASONS.SUPPRESSION },
   { token: 'deno-lint-ignore', reason: RULE_REASONS.SUPPRESSION },
   { token: 'oxlint-disable', reason: RULE_REASONS.SUPPRESSION },
@@ -157,7 +162,11 @@ export const BANNED_CONSTRUCTS = [
   { token: 'pylint: disable', reason: RULE_REASONS.SUPPRESSION },
   { token: 'ruff: noqa', reason: RULE_REASONS.SUPPRESSION },
   { token: '# noqa', reason: RULE_REASONS.SUPPRESSION },
-  { token: 'as any', reason: RULE_REASONS.TYPE },
+  {
+    token: 'as any',
+    pattern: new RegExp(String.raw`\bas${WORD_GAP}any\b`, 'g'),
+    reason: RULE_REASONS.TYPE,
+  },
   { token: 'outerHTML', reason: RULE_REASONS.DOM },
   { token: 'innerHTML', reason: RULE_REASONS.DOM },
 ];
@@ -173,11 +182,43 @@ BANNED_CONSTRUCTS.push(
     reason: RULE_REASONS.SUPPRESSION,
   },
 );
-export const ATTRIBUTION_PATTERNS = [
-  /Co-authored-by:\s*Cursor/i,
-  /Co-authored-by:\s*cursoragent/i,
-  /Made-with:\s*Cursor/i,
-  /cursoragent@cursor\.com/i,
-  /Generated with.+(Cursor|Claude|ChatGPT|GPT-|Anthropic|OpenAI|Copilot)/i,
-  /Co-Authored-By:.+(Claude|ChatGPT|GPT-|Anthropic|Cursor)/i,
+const BYPASS_TOKENS = BANNED_CONSTRUCTS.filter(({ reason }) => reason === RULE_REASONS.BYPASS).map(
+  ({ token }) => token,
+);
+// These files are read for the listed tokens only, not for the whole ban list.
+export const LIMITED_SCAN_TARGETS = [
+  { path: /\.ya?ml$/i, tokens: BYPASS_TOKENS },
+  { path: /(?:^|\/)Dockerfile[^/]*$/, tokens: BYPASS_TOKENS },
+  { path: /\.css$/i, tokens: ['stylelint-disable'] },
+];
+const TOOL_NAME = String.raw`(?:cursor(?:\s*agent)?|claude(?:\s+(?:code|opus|sonnet|haiku))?|chatgpt|gpt-[\w.]+|anthropic|openai|(?:github\s+)?copilot)(?:\s+v?\d[\w.-]*)?(?:\s*\([^()]*\))?`;
+const TOOL_ADDRESS = String.raw`(?:cursoragent@cursor\.com|noreply@anthropic\.com|noreply@openai\.com|(?:\d+\+)?copilot@users\.noreply\.github\.com)`;
+// A trailer split over two lines cannot be removed line by line, so the hook refuses it.
+export const FOLDED_ATTRIBUTION = {
+  reason: 'tool trailer folded across lines',
+  pattern: new RegExp(
+    String.raw`^[ \t]*(?:co-authored-by|made-with)[ \t]*:[ \t]*\r?\n[ \t]*(?:${TOOL_NAME}[ \t]*(?:<[^<>\n]*>)?|[^<>\n]*<[ \t]*${TOOL_ADDRESS}[ \t]*>)[ \t]*\r?$`,
+    'im',
+  ),
+};
+// Each pattern matches a whole line, so prose that names a tool is never a hit.
+export const ATTRIBUTION_RULES = [
+  {
+    reason: 'tool co-author trailer',
+    pattern: new RegExp(
+      String.raw`^\s*co-authored-by\s*:\s*(?:${TOOL_NAME}\s*(?:<[^<>]*>)?|[^<>]*<\s*${TOOL_ADDRESS}\s*>)\s*$`,
+      'i',
+    ),
+  },
+  {
+    reason: 'tool made-with trailer',
+    pattern: new RegExp(String.raw`^\s*made-with\s*:\s*${TOOL_NAME}\s*$`, 'i'),
+  },
+  {
+    reason: 'tool generator footer',
+    pattern: new RegExp(
+      String.raw`^\s*(?:\p{Extended_Pictographic}️?\s*)*generated\s+with\s+(?:\[${TOOL_NAME}\]\([^()\s]*\)|${TOOL_NAME})(?:\s+https?:\/\/\S+)?\s*\.?\s*$`,
+      'iu',
+    ),
+  },
 ];

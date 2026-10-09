@@ -7,6 +7,7 @@ import test from 'node:test';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const EXCEPTION_KEY = /^["']?minimumReleaseAgeExclude["']?\s*:(.*)$/;
 const STRICT_KEY = /^["']?minimumReleaseAgeStrict["']?\s*:\s*true\s*(#.*)?$/m;
+const AGE_KEY = /^["']?minimumReleaseAge["']?\s*:\s*(\d+)\s*(#.*)?$/m;
 const LIST_ITEM = /^\s*-\s+/;
 const BLANK_OR_COMMENT = /^\s*(#.*)?$/;
 const unquote = (item) => item.trim().replace(/\s+#.*$/, '').replace(/^["']|["']$/g, '');
@@ -25,14 +26,32 @@ export function releaseAgeExceptions(source) {
   return items.map(unquote).filter(Boolean);
 }
 
+/** The cooldown in minutes the workspace file sets, or undefined when it leaves it to pnpm. */
+export function releaseAgeMinutes(source) {
+  const match = source.match(AGE_KEY);
+  return match ? Number.parseInt(match[1], 10) : undefined;
+}
+
 const workspaceFile = () => readFileSync(join(ROOT, 'pnpm-workspace.yaml'), 'utf8');
 
 test('the workspace file lets no package skip the release-age cooldown', () => {
   assert.deepEqual(releaseAgeExceptions(workspaceFile()), []);
 });
 
-test('the workspace file stops an install that needs a package too new for the cooldown', () => {
+test('the workspace file sets strict release-age mode and a 1440 minute cooldown', () => {
   assert.equal(STRICT_KEY.test(workspaceFile()), true);
+  assert.equal(releaseAgeMinutes(workspaceFile()), 1440);
+});
+
+test('the cooldown has to be a written number of minutes, not the strict flag or a comment', () => {
+  assert.equal(releaseAgeMinutes('minimumReleaseAge: 1440\n'), 1440);
+  assert.equal(releaseAgeMinutes('a: 1\n"minimumReleaseAge":  60 # one hour\r\n'), 60);
+  assert.equal(releaseAgeMinutes('minimumReleaseAge: 0\n'), 0);
+  assert.equal(releaseAgeMinutes('minimumReleaseAgeStrict: true\n'), undefined);
+  assert.equal(releaseAgeMinutes('# minimumReleaseAge: 1440\n'), undefined);
+  assert.equal(releaseAgeMinutes('minimumReleaseAge: soon\n'), undefined);
+  assert.equal(releaseAgeMinutes('minimumReleaseAge:\n'), undefined);
+  assert.equal(releaseAgeMinutes(''), undefined);
 });
 
 test('exceptions written as a block are found, with and without quotes', () => {

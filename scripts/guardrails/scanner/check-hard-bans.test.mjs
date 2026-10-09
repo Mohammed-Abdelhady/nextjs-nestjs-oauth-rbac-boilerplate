@@ -144,13 +144,14 @@ test('the adapter conformance suite is capped like source files', () => {
   assert.equal(over.ok, false);
 });
 
-test('root scripts over the cap are not gated', () => {
-  assert.equal(isCappedPath('scripts/init.js'), false);
+test('root scripts over the cap are gated', () => {
+  assert.equal(isCappedPath('scripts/init.js'), true);
   const result = evaluateChanges({
     added: [added('scripts/init.js', ['console.log(1);'])],
     lineCounts: [{ path: 'scripts/init.js', lines: 500 }],
   });
-  assert.equal(result.ok, true);
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.caps, [{ path: 'scripts/init.js', lines: 500 }]);
 });
 
 test('countLines matches visible lines', () => {

@@ -26,6 +26,7 @@ test('the pinned pnpm reads workspace patterns, overrides and explicit build dec
   assert.deepEqual({
     packages: config.packages, overrides: config.overrides,
     allowBuilds: config.allowBuilds, enablePrePostScripts: config.enablePrePostScripts,
+    releaseAge: config.minimumReleaseAge,
     releaseAgeStrict: config.minimumReleaseAgeStrict,
     releaseAgeExceptions: config.minimumReleaseAgeExclude ?? [],
   }, {
@@ -36,6 +37,7 @@ test('the pinned pnpm reads workspace patterns, overrides and explicit build dec
       bcrypt: true, fsevents: true, 'mongodb-memory-server': true, 'unrs-resolver': true,
     },
     enablePrePostScripts: true,
+    releaseAge: 1440,
     releaseAgeStrict: true,
     releaseAgeExceptions: [],
   });
