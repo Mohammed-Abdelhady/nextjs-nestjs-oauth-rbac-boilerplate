@@ -4,7 +4,7 @@ import { cacheMetadata, gateEnvironment } from './ci/cache.mjs';
 import { fetchTrustedObjects } from './ci/fetch.mjs';
 import { eventRange } from './ci/event-range.mjs';
 import { runGates, selectGates } from './ci/runner.mjs';
-import { gitEnvironment } from './guardrails/git-environment.mjs';
+import { gitEnvironment } from './guardrails/git/git-environment.mjs';
 import { CI_SCAN_MODES, EXIT_CODES } from './guardrails/policy.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));

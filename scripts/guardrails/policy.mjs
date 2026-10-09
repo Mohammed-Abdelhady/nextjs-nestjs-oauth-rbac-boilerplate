@@ -20,7 +20,7 @@ export const SKIPPED_PATH_PREFIXES = ['mobile/expo/ios/', 'mobile/expo/android/'
 export const PROTECTED_FILE_PATTERN =
   /(?:^|\/)(?:\.ssh\/.+|\.aws\/(?:credentials|config)|\.kube\/config|\.config\/gcloud\/.+)$/;
 export const PROTECTED_EXTENSION = /\.(pem|key|crt)$/;
-export const EXEMPT_PATHS = ['scripts/guardrails/policy.mjs', 'scripts/check-hard-bans.test.mjs'];
+export const EXEMPT_PATHS = ['scripts/guardrails/policy.mjs', 'scripts/guardrails/scanner/check-hard-bans.test.mjs'];
 export const GIT_REPOSITORY_VARIABLES = [
   'GIT_DIR',
   'GIT_WORK_TREE',
@@ -111,7 +111,7 @@ export const BINARY_EXTENSIONS = [
 ];
 export const CAPPED_PATH =
   /^(backend\/(src|test)|frontend\/(src|e2e)|packages\/[^/]+\/src|shared\/[^/]+\/src|mobile\/[^/]+\/(src|app|test|conformance)|scripts\/guardrails)\//;
-export const CAPPED_FILES = ['scripts/check-hard-bans.mjs', 'scripts/check-hard-bans.test.mjs'];
+export const CAPPED_FILES = ['scripts/check-hard-bans.mjs', 'scripts/guardrails/scanner/check-hard-bans.test.mjs'];
 export const DOM_TOKENS = [
   'dangerouslySetInnerHTML',
   'insertAdjacentHTML',

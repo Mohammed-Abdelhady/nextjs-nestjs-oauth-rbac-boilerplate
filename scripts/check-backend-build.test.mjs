@@ -71,7 +71,7 @@ for (const directory of ['test', 'nested/test', '__tests__']) {
 
 for (const artifact of [
   'auth/service.spec.js',
-  'native/native-oauth.harness-spec.js',
+  'native/harness/native-oauth.harness-spec.js',
   'nested/session.fixture.js',
   'nested/service.mock.js',
   'auth/service.e2e-spec.d.ts',

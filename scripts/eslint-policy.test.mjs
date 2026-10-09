@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { workspacePolicyProblems } from './guardrails/workspace-policy.mjs';
+import { workspacePolicyProblems } from './guardrails/workspace/workspace-policy.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const INVENTORY_OPTIONS = { filesystem: true };

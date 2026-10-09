@@ -2,14 +2,14 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { isProtectedPath, isTextContent } from './guardrails/checker.mjs';
-import { gitEnvironment } from './guardrails/git-environment.mjs';
+import { isProtectedPath, isTextContent } from './guardrails/scanner/checker.mjs';
+import { gitEnvironment } from './guardrails/git/git-environment.mjs';
 import {
   PROTECTED_FILE_PATTERN,
   PROTECTED_EXTENSION,
   SKIPPED_DIRECTORY_PARTS,
 } from './guardrails/policy.mjs';
-import { decodeContent, isUtf16 } from './guardrails/text-content.mjs';
+import { decodeContent, isUtf16 } from './guardrails/scanner/text-content.mjs';
 
 const LEGACY_MANAGER = 'n' + 'pm';
 const LEGACY_LOCKFILE = 'package' + '-lock';

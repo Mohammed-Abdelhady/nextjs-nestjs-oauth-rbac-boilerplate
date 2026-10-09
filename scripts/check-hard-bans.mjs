@@ -1,10 +1,10 @@
 import { existsSync, realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { main } from './guardrails/cli.mjs';
+import { main } from './guardrails/scanner/cli.mjs';
 
-export * from './guardrails/checker.mjs';
-export { main } from './guardrails/cli.mjs';
-export { resolvePushRange } from './guardrails/git.mjs';
+export * from './guardrails/scanner/checker.mjs';
+export { main } from './guardrails/scanner/cli.mjs';
+export { resolvePushRange } from './guardrails/git/git.mjs';
 
 if (
   process.argv[1] &&
