@@ -4,14 +4,20 @@
   "description": "Bare React Native shell for the mobile sign-in engine",
   "private": true,
   "scripts": {
+    "start": "react-native start",
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "bundle:ios": "react-native bundle --platform ios --dev false --entry-file index.js --bundle-output /tmp/mobile-cli.main.jsbundle --assets-dest /tmp/mobile-cli-assets",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
+    "@app/native-adapters": "workspace:*",
     "@app/native-auth": "workspace:*",
     "@app/sdk": "workspace:*",
+    "@babel/runtime": "7.29.7",
     "expo": "57.0.26",
     "expo-crypto": "57.0.3",
     "expo-file-system": "57.0.7",

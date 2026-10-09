@@ -59,11 +59,14 @@ test('repository manifests pin the package manager and supported Node major with
     const manifest = readManifest(shell);
     assert.deepEqual({
       engine: manifest.dependencies['@app/native-auth'],
+      adapters: manifest.dependencies['@app/native-adapters'],
       sdk: manifest.dependencies['@app/sdk'],
       metro: manifest.devDependencies['@app/metro-config'],
-    }, { engine: 'workspace:*', sdk: 'workspace:*', metro: 'workspace:*' }, shell);
+    }, {
+      engine: 'workspace:*', adapters: 'workspace:*', sdk: 'workspace:*', metro: 'workspace:*',
+    }, shell);
   }
-  // The bare shell joins this list when it drops its own copy of the adapters.
+  // Both shells use the shared native adapters.
   assert.equal(
     readManifest('mobile/expo/package.json').dependencies['@app/native-adapters'], 'workspace:*',
   );
