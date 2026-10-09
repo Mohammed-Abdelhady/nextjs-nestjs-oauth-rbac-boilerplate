@@ -1,22 +1,15 @@
 import { sql } from 'kysely';
-import { Pool } from 'pg';
 import { MagicLinkContractHarness } from '../../src/auth/magic-link/contract/magic-link-contract.harness-spec';
 import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
-import { openPrototypeDatabase } from './adapter/postgres-database';
 import {
   PostgresMagicLinkAccounts,
   PostgresMagicLinkStore,
 } from './adapter/postgres-magic-link.store';
-import { migratePrototypeDatabase } from './adapter/postgres-migrations';
-import { startPostgresTestServer } from './server/postgres-test-server';
+import { openPrototypeConnection } from './postgres-connection';
 
 export async function bootPostgresMagicLinkHarness(): Promise<MagicLinkContractHarness> {
-  const server = await startPostgresTestServer();
-  const pool = new Pool(server.connection);
-  // An idle connection the server drops must not take the test process down.
-  pool.on('error', () => undefined);
-  await migratePrototypeDatabase(pool);
-  const database = openPrototypeDatabase(pool);
+  const connection = await openPrototypeConnection();
+  const { database } = connection;
   const countRows = async (
     table: 'pending_magic_links' | 'users',
   ): Promise<number> => {
@@ -97,13 +90,11 @@ export async function bootPostgresMagicLinkHarness(): Promise<MagicLinkContractH
     accountCount: () => countRows('users'),
 
     reset: async () => {
-      await sql`TRUNCATE pending_magic_links, security_events, sessions, user_application_grants, users`.execute(
+      await connection.rollBackOpenWork();
+      await sql`TRUNCATE pending_magic_links, security_events, sessions, user_application_grants, user_linked_accounts, users`.execute(
         database,
       );
     },
-    close: async () => {
-      await database.destroy();
-      await server.stop();
-    },
+    close: connection.close,
   };
 }

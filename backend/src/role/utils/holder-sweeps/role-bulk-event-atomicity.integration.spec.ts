@@ -2,7 +2,7 @@ import { MongoNetworkError, MongoServerError } from 'mongodb';
 import { SecurityEventService } from '../../../session/services/security-event.service';
 import { withMajorityTransaction } from '../../../session/utils/transactions/mongo-transaction';
 import { MONGO_TRANSIENT_TRANSACTION_LABEL } from '../../../common/constants/mongo-errors';
-import { moveRoleHolders } from './role-holder.util';
+import { moveRoleHolders } from '../../../../test/utils/role/mongo-role-holder-sweeps';
 import { UserRole } from '../../../user/enums/user-role.enum';
 import {
   EDITOR_SLUG,

@@ -20,20 +20,4 @@ export function assertValidObjectId(id: string, message: string): void {
   }
 }
 
-/**
- * Reject a user document that is missing or soft deleted.
- *
- * @param user - Result of a user lookup
- * @throws AppException USER_NOT_FOUND
- */
-export function assertActiveUser<T extends { isDeleted: boolean }>(
-  user: T | null,
-): asserts user is T {
-  if (!user || user.isDeleted) {
-    throw new AppException(
-      ErrorCode.USER_NOT_FOUND,
-      'User not found',
-      HttpStatus.NOT_FOUND,
-    );
-  }
-}
+export { assertActiveUser } from './account-lookup.util';

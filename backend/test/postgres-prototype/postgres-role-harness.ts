@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
 import { sql } from 'kysely';
-import { Pool } from 'pg';
 import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
 import {
   issueOnlyTheRefusedEventId,
@@ -9,25 +8,19 @@ import {
   REFUSED_EVENT_SEED_OUTCOME,
 } from '../utils/refused-event';
 import { RoleContractHarness } from '../utils/role/role-contract/role-contract-harness';
-import { openPrototypeDatabase } from './adapter/postgres-database';
-import { migratePrototypeDatabase } from './adapter/postgres-migrations';
 import { PostgresRoleCatalogStore } from './adapter/postgres-role-catalog.store';
 import { PostgresRoleChangeStore } from './adapter/postgres-role-change.store';
 import { PostgresRoleSweepStore } from './adapter/postgres-role-sweep.store';
 import { PostgresSecurityEventStore } from './adapter/postgres-security-event.store';
 import { PostgresUnitOfWorkRunner } from './adapter/postgres-unit-of-work';
-import { startPostgresTestServer } from './server/postgres-test-server';
+import { openPrototypeConnection } from './postgres-connection';
 
 const AN_OBJECT_ID = '65f000000000000000000001';
 const ASSIGNMENT_ACTION = 'test.role-assigned';
 
 export async function bootPostgresRoleHarness(): Promise<RoleContractHarness> {
-  const server = await startPostgresTestServer();
-  const pool = new Pool(server.connection);
-  // An idle connection the server drops must not take the test process down.
-  pool.on('error', () => undefined);
-  await migratePrototypeDatabase(pool);
-  const database = openPrototypeDatabase(pool);
+  const connection = await openPrototypeConnection();
+  const { database } = connection;
   const clock = new FrozenClock(TEST_NOW);
   let assignments = 0;
 
@@ -187,13 +180,11 @@ export async function bootPostgresRoleHarness(): Promise<RoleContractHarness> {
     },
 
     reset: async () => {
-      await sql`TRUNCATE security_events, role_pending_sweeps, roles, sessions, user_application_grants, users`.execute(
+      await connection.rollBackOpenWork();
+      await sql`TRUNCATE security_events, role_pending_sweeps, roles, sessions, user_application_grants, user_linked_accounts, users`.execute(
         database,
       );
     },
-    close: async () => {
-      await database.destroy();
-      await server.stop();
-    },
+    close: connection.close,
   };
 }

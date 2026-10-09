@@ -5,6 +5,7 @@ import { AccountLinkingService } from './account-linking.service';
 import { User } from '../schemas/user.schema';
 import { EMAIL_PROVIDER } from '../../common/constants/oauth-providers';
 import { OAuthProfile } from '../../auth/oauth/oauth-provider.interface';
+import { MONGO_LINKED_ACCOUNT_STORE } from '../persistence/mongo/mongo-linked-account-stores';
 
 /**
  * Shared setup for the AccountLinkingService specs.
@@ -77,6 +78,7 @@ export async function createHarness(): Promise<AccountLinkingHarness> {
   const module: TestingModule = await Test.createTestingModule({
     providers: [
       AccountLinkingService,
+      MONGO_LINKED_ACCOUNT_STORE,
       { provide: getModelToken(User.name), useValue: userModel },
     ],
   }).compile();

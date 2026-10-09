@@ -23,6 +23,9 @@ import {
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
   type SessionAuthorityHarness,
 } from '../../../test/utils/session-authority-harness';
+import { UnitOfWorkRunner } from '../../common/persistence/unit-of-work';
+import { MongoUnitOfWorkRunner } from '../../session/persistence/mongo/mongo-unit-of-work';
+import { MONGO_ACCOUNT_STORES } from '../persistence/mongo/mongo-account-stores';
 
 jest.setTimeout(60000);
 
@@ -43,6 +46,8 @@ describe('password change keeps the calling session (plan S1)', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserProfileService,
+        ...MONGO_ACCOUNT_STORES,
+        { provide: UnitOfWorkRunner, useClass: MongoUnitOfWorkRunner },
         { provide: Clock, useValue: harness.clock },
         { provide: getModelToken(User.name), useValue: harness.users },
         {

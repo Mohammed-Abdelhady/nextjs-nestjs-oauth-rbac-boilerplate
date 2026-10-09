@@ -1,8 +1,5 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User, UserDocument } from '../../../user/schemas/user.schema';
 import { VerificationCodeService } from '../../../auth/services/codes/verification-code.service';
 import { AuthMailService } from '../../../auth/services/mail/auth-mail.service';
 import {
@@ -13,6 +10,11 @@ import {
 import { AppException } from '../../../common/exceptions/app.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { ADMIN_LEVEL } from '../../../common/utils/role-hierarchy';
+import { StoredAccount } from '../../../user/stores/stored-account';
+import {
+  AddressMove,
+  AdminAccountStore,
+} from '../../stores/admin-account.store';
 
 /**
  * Admin-initiated email changes.
@@ -25,7 +27,7 @@ export class AdminEmailChangeService {
   private readonly retryMinutes: number;
 
   constructor(
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    private readonly accounts: AdminAccountStore,
     private readonly verificationCodeService: VerificationCodeService,
     private readonly authMailService: AuthMailService,
     configService: ConfigService,
@@ -41,29 +43,26 @@ export class AdminEmailChangeService {
   }
 
   /**
-   * Point an account at a new address and mail a fresh verification code.
-   * The pending record is bound to this user and this address generation, so
-   * a later move supersedes it. The caller saves the document; the pending
-   * record and the mail are written first, and the account is left unchanged
-   * if the mail fails.
+   * Prepare an account's move to a new address and mail a fresh verification
+   * code. The pending record is bound to this user and the address generation
+   * the move opens, so a later move supersedes it. Nothing is written to the
+   * account here: the caller stores the move this returns, and a failed mail
+   * returns none.
    *
-   * @param user - Target user document, mutated in place
+   * @param user - The target account as it was read
    * @param email - New address
    * @param actorLevel - Hierarchy level of the acting admin
    * @throws AppException EMAIL_CHANGE_NOT_ALLOWED, EMAIL_ALREADY_EXISTS,
    * EMAIL_SEND_LIMIT_REACHED or EMAIL_SEND_FAILED
    */
   async apply(
-    user: UserDocument,
+    user: Pick<StoredAccount, 'id' | 'addressGeneration'>,
     email: string,
     actorLevel: number,
-  ): Promise<void> {
+  ): Promise<AddressMove> {
     this.assertAdmin(actorLevel);
 
-    const taken = await this.userModel
-      .findOne({ email: { $eq: email } })
-      .exec();
-    if (taken) {
+    if (await this.accounts.isAddressTaken(email)) {
       throw new AppException(
         ErrorCode.EMAIL_ALREADY_EXISTS,
         'Email already in use',
@@ -71,12 +70,12 @@ export class AdminEmailChangeService {
       );
     }
 
-    const addressGeneration = (user.addressGeneration ?? 0) + 1;
+    const addressGeneration = user.addressGeneration + 1;
     const issued =
       await this.verificationCodeService.createOrUpdatePendingRegistration(
         email,
         PENDING_PURPOSE.EMAIL_CHANGE,
-        { userId: user._id, addressGeneration },
+        { userId: user.id, addressGeneration },
       );
 
     if (!issued) {
@@ -85,9 +84,7 @@ export class AdminEmailChangeService {
 
     await this.sendCode(email, issued.code);
 
-    user.addressGeneration = addressGeneration;
-    user.email = email;
-    user.isVerified = false;
+    return { email, addressGeneration, isVerified: false };
   }
 
   /**
@@ -96,12 +93,18 @@ export class AdminEmailChangeService {
    * attempt count, up to the per-address mail cap. Does not change the address
    * or the generation.
    *
-   * @param user - Target user document
+   * @param user - The target account as it was read
    * @param actorLevel - Hierarchy level of the acting admin
    * @throws AppException EMAIL_CHANGE_NOT_ALLOWED, EMAIL_SEND_LIMIT_REACHED or
    * EMAIL_SEND_FAILED
    */
-  async resend(user: UserDocument, actorLevel: number): Promise<void> {
+  async resend(
+    user: Pick<
+      StoredAccount,
+      'id' | 'email' | 'isVerified' | 'addressGeneration'
+    >,
+    actorLevel: number,
+  ): Promise<void> {
     this.assertAdmin(actorLevel);
 
     if (user.isVerified) {
@@ -117,8 +120,8 @@ export class AdminEmailChangeService {
         user.email,
         PENDING_PURPOSE.EMAIL_CHANGE,
         {
-          userId: user._id,
-          addressGeneration: user.addressGeneration ?? 0,
+          userId: user.id,
+          addressGeneration: user.addressGeneration,
         },
       );
 

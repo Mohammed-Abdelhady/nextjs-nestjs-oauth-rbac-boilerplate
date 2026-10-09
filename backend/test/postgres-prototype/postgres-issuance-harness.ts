@@ -19,19 +19,13 @@ import {
 } from '../utils/session/issuance-contract/issuance-contract-harness';
 import { commitCheckedPool } from './adapter/postgres-commit-tag';
 import { PostgresBrowserIssuanceStore } from './adapter/postgres-browser-issuance.store';
-import {
-  openPrototypeDatabase,
-  PrototypeDatabase,
-} from './adapter/postgres-database';
+import { PrototypeDatabase } from './adapter/postgres-database';
 import { PostgresIssuanceApplications } from './adapter/postgres-issuance-applications';
-import { migratePrototypeDatabase } from './adapter/postgres-migrations';
 import { PostgresSecurityEventStore } from './adapter/postgres-security-event.store';
 import { PostgresUnitOfWorkRunner } from './adapter/postgres-unit-of-work';
+import { openPrototypeConnectionOn } from './postgres-connection';
 import { CommitFaultDialect } from './postgres-commit-faults';
-import {
-  PostgresTestServer,
-  startPostgresTestServer,
-} from './server/postgres-test-server';
+import { PostgresTestServer } from './server/postgres-test-server';
 
 const AN_OBJECT_ID = '65f000000000000000000001';
 const UUID_PATTERN =
@@ -45,13 +39,10 @@ export interface PostgresIssuanceHarness extends IssuanceContractHarness {
 }
 
 export async function bootPostgresIssuanceHarness(): Promise<PostgresIssuanceHarness> {
-  const server = await startPostgresTestServer();
-  const pool = new Pool(server.connection);
-  // An idle connection the server drops must not take the test process down.
-  pool.on('error', () => undefined);
-  const appliedMigrations = await migratePrototypeDatabase(pool);
-  const dialect = new CommitFaultDialect({ pool: commitCheckedPool(pool) });
-  const database = openPrototypeDatabase(pool, dialect);
+  const connection = await openPrototypeConnectionOn(
+    (pool) => new CommitFaultDialect({ pool: commitCheckedPool(pool) }),
+  );
+  const { server, pool, database, appliedMigrations, dialect } = connection;
   const clock = new FrozenClock(TEST_NOW);
   const store = new PostgresBrowserIssuanceStore(
     CONTRACT_ENVIRONMENT,
@@ -237,13 +228,11 @@ export async function bootPostgresIssuanceHarness(): Promise<PostgresIssuanceHar
     loseCommitAnswers: (fault) => dialect.loseCommitAnswers(fault),
 
     reset: async () => {
-      await sql`TRUNCATE security_events, sessions, user_application_grants, applications, users`.execute(
+      await connection.rollBackOpenWork();
+      await sql`TRUNCATE security_events, sessions, user_application_grants, applications, user_linked_accounts, users`.execute(
         database,
       );
     },
-    close: async () => {
-      await database.destroy();
-      await server.stop();
-    },
+    close: connection.close,
   };
 }

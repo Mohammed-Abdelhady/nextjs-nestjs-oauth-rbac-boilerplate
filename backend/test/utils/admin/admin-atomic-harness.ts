@@ -25,6 +25,8 @@ import { RoleCatalogStore } from '../../../src/role/stores/role-catalog.store';
 import { RoleChangeStore } from '../../../src/role/stores/role-change.store';
 import { RoleSweepStore } from '../../../src/role/stores/role-sweep.store';
 import { MongoUnitOfWorkRunner } from '../../../src/session/persistence/mongo/mongo-unit-of-work';
+import { MONGO_ADMIN_ACCOUNT_STORE } from '../../../src/admin/persistence/mongo/mongo-admin-stores';
+import { MONGO_ACCOUNT_SESSIONS } from '../../../src/user/persistence/mongo/mongo-account-stores';
 import { FrozenClock, TEST_NOW } from '../frozen-clock';
 import {
   bootSessionAuthority,
@@ -59,6 +61,8 @@ export async function bootAdminAtomic(
       { provide: RoleChangeStore, useClass: MongoRoleChangeStore },
       { provide: RoleSweepStore, useClass: MongoRoleSweepStore },
       { provide: UnitOfWorkRunner, useClass: MongoUnitOfWorkRunner },
+      MONGO_ADMIN_ACCOUNT_STORE,
+      MONGO_ACCOUNT_SESSIONS,
       { provide: getModelToken(User.name), useValue: harness.users },
       {
         provide: getModelToken(Role.name),

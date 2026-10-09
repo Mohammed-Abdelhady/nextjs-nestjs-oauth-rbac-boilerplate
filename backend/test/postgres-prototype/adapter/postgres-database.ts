@@ -18,6 +18,26 @@ export interface UsersTable {
   is_verified: Generated<boolean>;
   auth_provider: string | null;
   primary_provider: string | null;
+  password_hash: string | null;
+  avatar_url: string | null;
+  deleted_at: ColumnType<Date | null, Date | null | undefined, Date | null>;
+  address_generation: Generated<number>;
+  profile_synced_at: ColumnType<
+    Date | null,
+    Date | null | undefined,
+    Date | null
+  >;
+  last_synced_provider: string | null;
+  created_at: ColumnType<Date, Date | undefined, never>;
+  updated_at: ColumnType<Date, Date | undefined, Date>;
+}
+
+export interface UserLinkedAccountsTable {
+  id: Generated<string>;
+  user_id: string;
+  provider: string;
+  provider_id: string;
+  linked_at: Timestamp;
 }
 
 export interface RolesTable {
@@ -175,6 +195,7 @@ export interface PrototypeDatabase {
   pending_password_resets: PendingPasswordResetsTable;
   pending_magic_links: PendingMagicLinksTable;
   browser_proofs: BrowserProofsTable;
+  user_linked_accounts: UserLinkedAccountsTable;
 }
 
 /**

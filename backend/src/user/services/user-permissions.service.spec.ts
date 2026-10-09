@@ -5,6 +5,7 @@ import { UserPermissionsService } from './user-permissions.service';
 import { User } from '../schemas/user.schema';
 import { UserRole } from '../enums/user-role.enum';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import { MONGO_ACCOUNT_PERMISSION_STORE } from '../persistence/mongo/mongo-account-stores';
 
 interface MockUser {
   _id: Types.ObjectId;
@@ -46,6 +47,7 @@ describe('UserPermissionsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserPermissionsService,
+        MONGO_ACCOUNT_PERMISSION_STORE,
         { provide: getModelToken(User.name), useValue: mockUserModel },
       ],
     }).compile();

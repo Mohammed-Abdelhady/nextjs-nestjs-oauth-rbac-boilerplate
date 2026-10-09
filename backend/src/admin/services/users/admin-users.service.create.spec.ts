@@ -12,6 +12,13 @@ import {
   createConnectionMock,
   createChainableQueryMock,
 } from '../../../common/testing/test-doubles.harness-spec';
+import { UnitOfWorkRunner } from '../../../common/persistence/unit-of-work';
+import { MongoRoleChangeStore } from '../../../role/persistence/mongo/mongo-role-change.store';
+import { MongoRoleSweepStore } from '../../../role/persistence/mongo/mongo-role-sweep.store';
+import { RoleChangeStore } from '../../../role/stores/role-change.store';
+import { RoleSweepStore } from '../../../role/stores/role-sweep.store';
+import { MongoUnitOfWorkRunner } from '../../../session/persistence/mongo/mongo-unit-of-work';
+import { MONGO_ADMIN_ACCOUNT_STORE } from '../../persistence/mongo/mongo-admin-stores';
 
 interface CreatedDoc extends Record<string, unknown> {
   _id: Types.ObjectId;
@@ -72,6 +79,10 @@ describe('AdminUserCreateService.createUser (D-12)', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AdminUserCreateService,
+        MONGO_ADMIN_ACCOUNT_STORE,
+        { provide: UnitOfWorkRunner, useClass: MongoUnitOfWorkRunner },
+        { provide: RoleChangeStore, useClass: MongoRoleChangeStore },
+        { provide: RoleSweepStore, useClass: MongoRoleSweepStore },
         { provide: getConnectionToken(), useValue: createConnectionMock() },
         { provide: SecurityEventService, useValue: { recordMany: jest.fn() } },
         { provide: getModelToken(User.name), useValue: userModel },

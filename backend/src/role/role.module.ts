@@ -37,6 +37,6 @@ import { MongoRoleSweepStore } from './persistence/mongo/mongo-role-sweep.store'
     { provide: RoleChangeStore, useClass: MongoRoleChangeStore },
     { provide: RoleSweepStore, useClass: MongoRoleSweepStore },
   ],
-  exports: [RoleService, RoleHierarchyService],
+  exports: [RoleService, RoleHierarchyService, RoleChangeStore, RoleSweepStore],
 })
 export class RoleModule {}

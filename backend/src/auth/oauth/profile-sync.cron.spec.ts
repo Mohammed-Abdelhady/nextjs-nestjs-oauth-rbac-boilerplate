@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { createConnection } from 'mongoose';
 import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
 import { User, UserSchema } from '../../user/schemas/user.schema';
+import { MONGO_LINKED_ACCOUNT_STORE } from '../../user/persistence/mongo/mongo-linked-account-stores';
 import { ProfileSyncService } from '../../user/services/profile-sync.service';
 
 describe('ProfileSyncService scheduled failure logging', () => {
@@ -22,6 +23,7 @@ describe('ProfileSyncService scheduled failure logging', () => {
       const module = await Test.createTestingModule({
         providers: [
           ProfileSyncService,
+          MONGO_LINKED_ACCOUNT_STORE,
           ConfigService,
           { provide: getModelToken(User.name), useValue: users },
         ],
