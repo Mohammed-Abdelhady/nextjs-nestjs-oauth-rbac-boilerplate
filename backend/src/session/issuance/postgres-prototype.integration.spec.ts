@@ -128,12 +128,14 @@ describe('PostgreSQL prototype adapter', () => {
         '0001_browser_issuance.sql',
         '0002_roles.sql',
         '0003_pending_codes.sql',
+        '0004_browser_proofs_security_events.sql',
       ],
       again: [],
       recorded: [
         '0001_browser_issuance.sql',
         '0002_roles.sql',
         '0003_pending_codes.sql',
+        '0004_browser_proofs_security_events.sql',
       ],
     });
   });

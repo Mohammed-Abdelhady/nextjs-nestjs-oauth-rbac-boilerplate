@@ -1,50 +1,56 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model, Types } from 'mongoose';
-import { randomUUID } from 'crypto';
+import { isPersistenceError } from '../../common/persistence/persistence-errors';
 import { Clock } from '../../common/services/clock';
 import {
   SecurityEvent,
   SecurityEventDocument,
 } from '../schemas/security-event.schema';
-import {
-  ROLE_DELETION_EVENT_PREFIX,
-  SECURITY_EVENT_ACTION,
-  SECURITY_EVENT_OUTCOME,
-} from '../constants/security-event-action';
+import { ROLE_DELETION_EVENT_PREFIX } from '../constants/security-event-action';
 import { RoleDeletionSweep } from '../types/role-deletion-sweep';
 import { LINEARIZABLE_QUERY_MAX_TIME_MS } from '../constants/session-policy';
 import { RoleAssignmentEvent } from '../types/role-assignment-event';
+import {
+  newSecurityEvent,
+  RecordSecurityEventInput,
+  SecurityEventRecorder,
+} from '../events/security-event-recorder';
+import { MongoSecurityEventStore } from '../persistence/mongo/mongo-security-event.store';
+import { mongoUnitOfWork } from '../persistence/mongo/mongo-unit-of-work';
 
-export interface RecordSecurityEventInput {
-  actorId?: string;
-  targetUserId?: string;
-  clientId?: string;
-  sessionId?: string;
-  action: string;
-  reasonCode?: string;
-  requestId?: string;
-  outcome?: string;
-  roleAssignment?: RoleAssignmentEvent;
-}
+export type { RecordSecurityEventInput };
 
+/**
+ * The MongoDB face of the event record, for callers that still own a driver
+ * transaction. It hands each write to `SecurityEventRecorder` and wraps the
+ * caller's session as the unit of work. It goes away when those callers move
+ * behind stores.
+ */
 @Injectable()
 export class SecurityEventService {
+  private readonly recorder: SecurityEventRecorder;
+
   constructor(
     @InjectModel(SecurityEvent.name)
     private readonly eventModel: Model<SecurityEventDocument>,
     private readonly clock: Clock,
-  ) {}
+    @Optional() recorder?: SecurityEventRecorder,
+  ) {
+    this.recorder =
+      recorder ??
+      new SecurityEventRecorder(new MongoSecurityEventStore(eventModel), clock);
+  }
 
   async record(
     input: RecordSecurityEventInput,
     session?: ClientSession,
   ): Promise<void> {
-    const occurredAt = this.clock.now();
-    await this.eventModel.create(
-      [this.buildEvent(input, occurredAt)],
-      session ? { session } : undefined,
-    );
+    if (session) {
+      await this.recorder.record(mongoUnitOfWork(session), input);
+      return;
+    }
+    await asDriverError(this.recorder.recordOutsideUnitOfWork(input));
   }
 
   /**
@@ -56,38 +62,26 @@ export class SecurityEventService {
     inputs: RecordSecurityEventInput[],
     session?: ClientSession,
   ): Promise<void> {
+    if (session) {
+      await this.recorder.recordMany(mongoUnitOfWork(session), inputs);
+      return;
+    }
     if (inputs.length === 0) {
       return;
     }
+    // No store offers this: outside a transaction MongoDB cannot make many
+    // inserts all or nothing. Nothing in the server calls it this way.
     const occurredAt = this.clock.now();
-    const documents = inputs.map((input) => this.buildEvent(input, occurredAt));
-    if (session) {
-      await this.eventModel.insertMany(documents, { session });
-    } else {
-      await this.eventModel.insertMany(documents);
-    }
+    await this.eventModel.insertMany(
+      inputs.map((input) => newSecurityEvent(input, occurredAt)),
+    );
   }
 
   async recordRoleDeletion(
     ref: Omit<RoleDeletionSweep, 'pending'>,
     session: ClientSession,
   ): Promise<void> {
-    await this.eventModel.create(
-      [
-        {
-          ...this.buildEvent(
-            {
-              action: SECURITY_EVENT_ACTION.ROLE_DELETED,
-              actorId: ref.actorId,
-            },
-            this.clock.now(),
-          ),
-          eventId: `${ROLE_DELETION_EVENT_PREFIX}${ref.roleId}`,
-          roleDeletionSweep: { ...ref, pending: true },
-        },
-      ],
-      { session },
-    );
+    await this.recorder.recordRoleDeletion(mongoUnitOfWork(session), ref);
   }
 
   async roleDeletionSweep(
@@ -165,23 +159,15 @@ export class SecurityEventService {
     }
     return previous;
   }
+}
 
-  private buildEvent(
-    input: RecordSecurityEventInput,
-    occurredAt: Date,
-  ): Record<string, unknown> {
-    return {
-      eventId: randomUUID(),
-      actorId: input.actorId,
-      targetUserId: input.targetUserId,
-      clientId: input.clientId,
-      sessionId: input.sessionId,
-      action: input.action,
-      reasonCode: input.reasonCode,
-      requestId: input.requestId,
-      roleAssignment: input.roleAssignment,
-      outcome: input.outcome ?? SECURITY_EVENT_OUTCOME.SUCCEEDED,
-      occurredAt,
-    };
+/** Callers of this class still read the driver's own error. */
+async function asDriverError(write: Promise<void>): Promise<void> {
+  try {
+    await write;
+  } catch (error) {
+    throw isPersistenceError(error) && error.cause !== undefined
+      ? error.cause
+      : error;
   }
 }

@@ -1,6 +1,6 @@
 import { getModelToken } from '@nestjs/mongoose';
 import type { Request } from 'express';
-import mongoose, { Model } from 'mongoose';
+import { Model } from 'mongoose';
 import { ErrorCode } from '../common/enums/error-code.enum';
 import {
   BROWSER_PROOF_TTL_MS,
@@ -15,6 +15,7 @@ import {
   BrowserProof,
   BrowserProofDocument,
 } from './schemas/browser-proof.schema';
+import { BrowserProofStore } from './proofs/browser-proof.store';
 import { BrowserProofService } from './services/browser-proof.service';
 import { hashToken, randomSecret } from './utils/hashing/token-hash';
 import { startMemoryReplSet } from '../../test/utils/memory-replset';
@@ -25,22 +26,18 @@ import {
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
   SessionAuthorityHarness,
 } from '../../test/utils/session-authority-harness';
-import { RaceBarrier, pauseQuery } from '../../test/utils/race-gate';
+import { RaceBarrier, holdBefore } from '../../test/utils/race-gate';
 
 describe('browser proof single use race', () => {
   let mongo: Awaited<ReturnType<typeof startMemoryReplSet>>;
   let harness: SessionAuthorityHarness;
   let proofs: Model<BrowserProofDocument>;
   let service: BrowserProofService;
-  const originalNow = mongoose.now;
+  let store: BrowserProofStore;
 
   beforeAll(async () => {
     mongo = await startMemoryReplSet();
     const clock = new FrozenClock(TEST_NOW);
-    // Mongoose stamps updateOne with this.model.base.now() while the query runs.
-    // Driving it from the frozen clock lets the test order the two guarded
-    // writes and move their timestamps apart without touching real time.
-    mongoose.now = () => clock.now();
     harness = await bootSessionAuthority(
       mongo.uri('browser_proof_concurrency'),
       clock,
@@ -49,10 +46,10 @@ describe('browser proof single use race', () => {
       getModelToken(BrowserProof.name),
     );
     service = harness.app.get(BrowserProofService);
+    store = harness.app.get(BrowserProofStore);
   }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   afterAll(async () => {
-    mongoose.now = originalNow;
     if (harness) {
       await harness.app.close();
     }
@@ -92,21 +89,14 @@ describe('browser proof single use race', () => {
         cookies: { [browserProofCookieName(process.env.NODE_ENV)]: proofId },
       } as Request;
 
-      // Both consumes read the unspent proof before either writes: the first is
-      // held at its guarded update, then the second is started and held too.
+      // Both consumes read the unspent proof before either writes: each is
+      // held at the store's guarded claim, after its read and its comparison.
       const barrier = new RaceBarrier();
       const firstSpend = barrier.point('first-spend');
       const secondSpend = barrier.point('second-spend');
-      const updateOne = proofs.updateOne.bind(proofs);
-      let call = 0;
-      const spy = jest
-        .spyOn(proofs, 'updateOne')
-        .mockImplementation((...args) => {
-          const query = updateOne(...args);
-          pauseQuery(query, call === 0 ? firstSpend : secondSpend);
-          call += 1;
-          return query;
-        });
+      const restore = holdBefore(store, 'claimBrowserProof', (call) =>
+        call === 0 ? firstSpend : secondSpend,
+      );
 
       let first: Promise<void> | undefined;
       let second: Promise<void> | undefined;
@@ -117,8 +107,7 @@ describe('browser proof single use race', () => {
         second = service.consume(request, presented);
         await secondSpend.reached(1);
 
-        // Order the writes and their Mongoose timestamps: first spends at
-        // TEST_NOW, then the clock moves on, then the second spends.
+        // Order the writes: the first spends, then the second is let go.
         firstSpend.release();
         await first;
         harness.clock.advance(1000);
@@ -127,7 +116,7 @@ describe('browser proof single use race', () => {
       } finally {
         firstSpend.release();
         secondSpend.release();
-        spy.mockRestore();
+        restore();
       }
       if (!results) {
         throw new Error('browser proof race did not run');
