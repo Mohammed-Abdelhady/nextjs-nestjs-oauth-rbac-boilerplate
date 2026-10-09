@@ -1,9 +1,9 @@
 import { MongoNetworkError } from 'mongodb';
-import { RoleSweepBootstrapService } from './role-sweep-bootstrap.service';
 import { Role, RoleDocument } from '../../schemas/role.schema';
 import { User, UserDocument } from '../../../user/schemas/user.schema';
 import { SecurityEventService } from '../../../session/services/security-event.service';
 import { RaceGate } from '../../../../test/utils/race-gate';
+import { mongoRoleSweepBootstrap } from '../../../../test/utils/role/mongo-role-services';
 import { finishBootstrap } from './role-bootstrap.harness-spec';
 import {
   EDITOR_SLUG,
@@ -70,7 +70,7 @@ describe('startup cleanup preserves newer pending work', () => {
           throw new MongoNetworkError('new sweep unavailable');
         return read(...args);
       });
-    const bootstrap = new RoleSweepBootstrapService(
+    const bootstrap = mongoRoleSweepBootstrap(
       h.connection.model<RoleDocument>(Role.name),
       h.connection.model<UserDocument>(User.name),
       h.connection,

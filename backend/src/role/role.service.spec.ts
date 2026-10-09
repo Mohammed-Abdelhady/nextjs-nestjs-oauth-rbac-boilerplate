@@ -5,6 +5,8 @@ import { RoleService } from './role.service';
 import { RoleEditService } from './services/edit/role-edit.service';
 import { Role } from './schemas/role.schema';
 import { User } from '../user/schemas/user.schema';
+import { RoleCatalogStore } from './stores/role-catalog.store';
+import { MongoRoleCatalogStore } from './persistence/mongo/mongo-role-catalog.store';
 
 interface MockRole {
   _id: Types.ObjectId;
@@ -54,6 +56,7 @@ describe('RoleService', () => {
         { provide: getModelToken(Role.name), useValue: mockRoleModel },
         { provide: getModelToken(User.name), useValue: {} },
         { provide: RoleEditService, useValue: mockRoleEditService },
+        { provide: RoleCatalogStore, useClass: MongoRoleCatalogStore },
       ],
     }).compile();
 

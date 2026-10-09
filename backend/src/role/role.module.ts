@@ -10,6 +10,12 @@ import { User, UserSchema } from '../user/schemas/user.schema';
 import { AuthModule } from '../auth/auth.module';
 import { CommonModule } from '../common/common.module';
 import { SessionModule } from '../session/session.module';
+import { RoleCatalogStore } from './stores/role-catalog.store';
+import { RoleChangeStore } from './stores/role-change.store';
+import { RoleSweepStore } from './stores/role-sweep.store';
+import { MongoRoleCatalogStore } from './persistence/mongo/mongo-role-catalog.store';
+import { MongoRoleChangeStore } from './persistence/mongo/mongo-role-change.store';
+import { MongoRoleSweepStore } from './persistence/mongo/mongo-role-sweep.store';
 
 @Module({
   imports: [
@@ -19,7 +25,7 @@ import { SessionModule } from '../session/session.module';
     ]),
     AuthModule, // Session services used by the global AuthGuard
     CommonModule, // Required for RolesGuard
-    SessionModule, // Security event recording for role edits
+    SessionModule, // Security events and the unit of work for role edits
   ],
   controllers: [RoleController],
   providers: [
@@ -27,6 +33,9 @@ import { SessionModule } from '../session/session.module';
     RoleEditService,
     RoleHierarchyService,
     RoleSweepBootstrapService,
+    { provide: RoleCatalogStore, useClass: MongoRoleCatalogStore },
+    { provide: RoleChangeStore, useClass: MongoRoleChangeStore },
+    { provide: RoleSweepStore, useClass: MongoRoleSweepStore },
   ],
   exports: [RoleService, RoleHierarchyService],
 })

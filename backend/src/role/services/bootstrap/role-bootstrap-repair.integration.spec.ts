@@ -2,13 +2,13 @@ import { Logger } from '@nestjs/common';
 import { MongoNetworkError } from 'mongodb';
 import { ClientSessionOptions } from 'mongoose';
 import { ROLE_SWEEP_PENDING } from '../../../common/constants/roles';
-import { RoleSweepBootstrapService } from './role-sweep-bootstrap.service';
 import { Role, RoleDocument } from '../../schemas/role.schema';
 import { User, UserDocument } from '../../../user/schemas/user.schema';
 import { UserRole } from '../../../user/enums/user-role.enum';
 import { SecurityEventService } from '../../../session/services/security-event.service';
 import { withMajorityTransaction } from '../../../session/utils/transactions/mongo-transaction';
 import { RaceGate } from '../../../../test/utils/race-gate';
+import { mongoRoleSweepBootstrap } from '../../../../test/utils/role/mongo-role-services';
 import { finishBootstrap } from './role-bootstrap.harness-spec';
 import {
   EDITOR_SLUG,
@@ -20,7 +20,7 @@ describe('startup retries durable role repairs', () => {
   const fixture = useAdminRoundFour('round_seven_bootstrap');
   function instance() {
     const { h } = fixture;
-    return new RoleSweepBootstrapService(
+    return mongoRoleSweepBootstrap(
       h.connection.model<RoleDocument>(Role.name),
       h.connection.model<UserDocument>(User.name),
       h.connection,

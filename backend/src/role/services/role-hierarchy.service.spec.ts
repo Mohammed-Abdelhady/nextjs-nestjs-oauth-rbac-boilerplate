@@ -2,6 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { RoleHierarchyService } from './role-hierarchy.service';
 import { Role } from '../schemas/role.schema';
+import { User } from '../../user/schemas/user.schema';
+import { RoleCatalogStore } from '../stores/role-catalog.store';
+import { MongoRoleCatalogStore } from '../persistence/mongo/mongo-role-catalog.store';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { UNKNOWN_ROLE_LEVEL } from '../../common/utils/role-hierarchy';
 
@@ -39,6 +42,8 @@ describe('RoleHierarchyService', () => {
       providers: [
         RoleHierarchyService,
         { provide: getModelToken(Role.name), useValue: mockRoleModel },
+        { provide: getModelToken(User.name), useValue: {} },
+        { provide: RoleCatalogStore, useClass: MongoRoleCatalogStore },
       ],
     }).compile();
 

@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model } from 'mongoose';
 import { User, UserDocument } from '../../../user/schemas/user.schema';
 import { RoleHierarchyService } from '../../../role/services/role-hierarchy.service';
+import { mongoUnitOfWork } from '../../../session/persistence/mongo/mongo-unit-of-work';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import {
@@ -159,11 +160,11 @@ export class AdminUserAccessService {
 
     const actorLevel = await this.roleHierarchyService.getLevel(
       actor.role,
-      session,
+      mongoUnitOfWork(session),
     );
     const targetLevel = await this.roleHierarchyService.getLevel(
       targetRole,
-      session,
+      mongoUnitOfWork(session),
     );
     if (requireAdmin && actorLevel < ADMIN_LEVEL) {
       throw new AppException(
