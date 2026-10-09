@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { isRecord } from '../manifest/read.js';
 import {
   AGENTS_TEMPLATE,
+  COMMIT_MESSAGE_HOOK_TEXT,
   STANDARD_CODE_TEXT,
   STANDARD_NOT_ENFORCED,
 } from './rules-text-template.js';
@@ -208,8 +209,9 @@ export async function renderRulesText(input: RulesTextInput): Promise<RenderedRu
     bannedConstructs: renderBannedConstructs(policy),
     explicitTypeLint: explicitTypeLint === '' ? '' : `\n\n${explicitTypeLint}`,
     commitTypes: commits.types.join(', '),
-    commitScopes: commits.scopes.join(', '),
+    commitScopes: input.facts?.commitScopes ?? commits.scopes.join(', '),
     subjectLimit: String(commits.subjectLimit),
+    commitHook: input.delivery.hooks ? `\n\n${COMMIT_MESSAGE_HOOK_TEXT}` : '',
     checks: renderChecks(gates),
     packageManager: manager.name,
     packageManagerVersion: manager.version,

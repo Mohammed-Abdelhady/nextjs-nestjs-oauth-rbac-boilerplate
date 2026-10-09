@@ -117,7 +117,7 @@ const CASES: {
       install: { status: 'not-requested' },
     },
     expected: {
-      exitCode: 0,
+      exitCode: 1,
       hooks: { included: true, active: false, activationCommand: 'pnpm install' },
     },
   },
@@ -137,14 +137,14 @@ const CASES: {
       git: { status: 'failed', reason: 'git error' },
     },
     expected: {
-      exitCode: 0,
+      exitCode: 1,
       hooks: { included: true, active: false, activationCommand: 'git init && pnpm exec husky' },
     },
   },
   {
     name: 'first commit failed hooks active',
     facts: { git: { status: 'failed', reason: 'commit error' } },
-    expected: { exitCode: 0, hooks: { included: true, active: true } },
+    expected: { exitCode: 1, hooks: { included: true, active: true } },
   },
   {
     name: 'install did not activate hooks',

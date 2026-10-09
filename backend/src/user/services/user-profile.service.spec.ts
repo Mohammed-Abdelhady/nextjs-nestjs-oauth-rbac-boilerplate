@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
+import { Clock } from '../../common/services/clock';
 import { UserProfileService } from './user-profile.service';
 import { User } from '../schemas/user.schema';
 import { UserRole } from '../enums/user-role.enum';
@@ -11,6 +12,8 @@ import { Passkey } from '../../auth/passkeys/schemas/passkey.schema'; // feature
 import { SessionService } from '../../auth/services/sessions/session.service';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+
+import { FrozenClock, TEST_NOW } from '../../../test/utils/frozen-clock';
 
 jest.mock('bcrypt');
 
@@ -68,6 +71,7 @@ describe('UserProfileService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserProfileService,
+        { provide: Clock, useValue: new FrozenClock(TEST_NOW) },
         { provide: getModelToken(User.name), useValue: mockUserModel },
         { provide: getModelToken(Role.name), useValue: mockRoleModel },
         { provide: getModelToken(Passkey.name), useValue: mockPasskeyModel }, // feature:passkeys
@@ -177,6 +181,7 @@ describe('UserProfileService', () => {
       };
       mockUserModel.findById.mockReturnValue({
         select: jest.fn().mockReturnThis(),
+        session: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(userToUpdate),
       });
       (bcrypt.compare as jest.Mock)
@@ -262,6 +267,7 @@ describe('UserProfileService', () => {
         save: jest.fn().mockResolvedValue(true),
       };
       mockUserModel.findById.mockReturnValue({
+        session: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(userToDeactivate),
       });
 
@@ -274,6 +280,7 @@ describe('UserProfileService', () => {
 
     it('should throw error if user not found', async () => {
       mockUserModel.findById.mockReturnValue({
+        session: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(null),
       });
 

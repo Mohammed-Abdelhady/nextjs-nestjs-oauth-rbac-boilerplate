@@ -27,7 +27,7 @@ it.each(['strict', 'standard'] as const)(
       active: false,
       checks: [],
       install: 'not-requested',
-      activation: 'git init && node node_modules/husky/bin.mjs',
+      activation: 'git init && node node_modules/husky/bin.js',
     });
     const result = await applyRules(plan);
     const precommit = await readFile(join(root, '.husky/pre-commit'), 'utf8');

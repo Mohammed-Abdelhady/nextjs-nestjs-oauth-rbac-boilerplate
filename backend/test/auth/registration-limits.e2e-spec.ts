@@ -12,6 +12,7 @@ import {
 import { bootE2eApp, browserAgent, type E2eApp } from '../utils/e2e-app';
 import { REGISTRATION_NOTICE_EMAIL_SUBJECT } from '../../src/mail/constants/mail.constants';
 import { TEST_NOW } from '../utils/frozen-clock';
+import { seedMailCounter } from '../utils/mail-counter-seed';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
@@ -165,11 +166,10 @@ describe('Registration limits (e2e)', () => {
 
   it('answers an over-cap address with the same shape as a normal registration', async () => {
     const capped = 'capped@example.test';
-    await mailCounters.create({
+    await seedMailCounter(mailCounters, {
       email: capped,
       purpose: MAIL_COUNTER_PURPOSE.SIGNUP,
       mailedCodes: 5,
-      windowStartedAt: TEST_NOW,
     });
 
     const normal = await post('/api/auth/register', {
@@ -196,11 +196,10 @@ describe('Registration limits (e2e)', () => {
   it('answers an over-cap reset address like an unknown one and mails nothing', async () => {
     const capped = 'reset-capped@example.test';
     await users.create({ email: capped, name: 'Known', isVerified: true });
-    await mailCounters.create({
+    await seedMailCounter(mailCounters, {
       email: capped,
       purpose: MAIL_COUNTER_PURPOSE.PASSWORD_RESET,
       mailedCodes: 5,
-      windowStartedAt: TEST_NOW,
     });
 
     const cappedResponse = await post('/api/auth/forgot-password', {

@@ -24,7 +24,11 @@ class FakeHttp implements HttpApi<FakeSignal> {
     if (init.signal.aborted) return Promise.reject(new Error('Aborted'));
     if (answer instanceof Error) return Promise.reject(answer);
     if (answer !== 'hang') {
-      return Promise.resolve({ status: answer.status, text: async () => answer.text });
+      return Promise.resolve({
+        status: answer.status,
+        text: async () => answer.text,
+        headers: { get: () => null },
+      });
     }
     return new Promise((_resolve, reject) => {
       this.rejectHanging = () => reject(new Error('Aborted'));

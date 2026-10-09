@@ -68,6 +68,7 @@ export interface FetchInit<TSignal> {
 
 export interface FetchResponseApi {
   status: number;
+  headers: { get(name: string): string | null };
   text(): Promise<string>;
 }
 

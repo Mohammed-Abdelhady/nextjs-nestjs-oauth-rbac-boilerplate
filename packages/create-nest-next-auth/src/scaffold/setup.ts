@@ -66,7 +66,7 @@ export async function finishSetup(
       log.warn(`Target is inside the git work tree at ${outcome.enclosingWorkTree}. ${status}.`);
     }
     if (outcome.ok) log.step('Created a git repository with a first commit');
-    else log.warn(`Skipped git: ${outcome.reason ?? 'git is not available'}`);
+    else log.error(`Git setup failed: ${outcome.reason ?? 'git is not available'}`);
   } else skipped.push({ check: SETUP_CHECK.GIT, reason: '--no-git' });
 
   let install: SetupOutcome = { status: SETUP_STATUS.NOT_REQUESTED };

@@ -1,5 +1,5 @@
 import type { AbortSignalPort, TimerPort } from '@app/native-auth';
-import type { Transport, TransportRequest } from '@app/sdk';
+import { DPOP_NONCE_HEADER, type Transport, type TransportRequest } from '@app/sdk';
 import { HEADER, JSON_MEDIA_TYPE, REQUEST_DEADLINE_MESSAGE } from './constants';
 import type { HttpApi } from './types/modules';
 
@@ -52,7 +52,13 @@ export function createFetchTransport<TSignal>(
           credentials: 'omit',
           signal: abort.signal,
         });
-        return { status: response.status, body: parseJson(await response.text()) };
+        // A device-bound session repeats its request with this nonce when the server asks for one.
+        const nonce = response.headers.get(DPOP_NONCE_HEADER);
+        return {
+          status: response.status,
+          body: parseJson(await response.text()),
+          ...(nonce ? { headers: { [DPOP_NONCE_HEADER]: nonce } } : {}),
+        };
       } catch (error) {
         throw pastDeadline ? new Error(REQUEST_DEADLINE_MESSAGE, { cause: error }) : error;
       } finally {

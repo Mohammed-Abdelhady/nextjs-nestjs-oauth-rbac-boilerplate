@@ -28,6 +28,7 @@ import { hashToken } from '../../utils/hashing/token-hash';
 import { withMajorityTransaction } from '../../utils/transactions/mongo-transaction';
 import { resolveNativeBoundThumbprint } from '../proof/native-bound-thumbprint';
 import { NativeBoundRetryService } from '../retry/native-bound-retry.service';
+import { asAuthorityUnavailable } from '../../utils/authority/authority-unavailable';
 import {
   BoundProofEventContext,
   NativeBoundProofService,
@@ -161,7 +162,7 @@ export class NativeRefreshService {
           NATIVE_DPOP_FAILURE_REASON.PROOF_REPLAYED,
         );
       }
-      throw error;
+      asAuthorityUnavailable(error);
     }
   }
 

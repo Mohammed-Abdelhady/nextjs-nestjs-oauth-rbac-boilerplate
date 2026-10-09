@@ -1,11 +1,14 @@
 import { Button, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { ShellAuth } from '../shell';
 import { DIRECTION, translate, type Locale, type MessageKey } from '../i18n/messages';
+import { OPERATION_KEY, REASON_KEY, STATUS_KEY, STORAGE_WARNING_KEY } from '../logic/outcome-keys';
+import { render } from '../logic/outcome-text';
 import { useAuthDebug } from './use-auth-debug';
 
 export const TEST_ID = {
   STATUS: 'auth-status',
   OPERATION: 'auth-operation',
+  WARNING: 'auth-warning',
   LAST_OUTCOME: 'auth-last-outcome',
   REFRESH_REQUESTS: 'auth-refresh-requests',
   SIGN_IN: 'auth-sign-in',
@@ -27,12 +30,26 @@ interface DebugScreenProps {
 }
 
 export function DebugScreen({ auth, locale }: DebugScreenProps) {
-  const { snapshot, lastOutcome, refreshRequests, signIn, refresh, loadProfile, signOut } =
-    useAuthDebug(auth);
+  const {
+    snapshot,
+    lastOutcome,
+    storageWarning,
+    refreshRequests,
+    signIn,
+    refresh,
+    loadProfile,
+    signOut,
+  } = useAuthDebug(auth);
   const direction = DIRECTION[locale];
   const text = (key: MessageKey, value?: string): string => translate(locale, key, value);
   const none = text('none');
   const line = { writingDirection: direction } as const;
+  const reason = snapshot.reason === undefined ? none : text(REASON_KEY[snapshot.reason]);
+  const warning =
+    snapshot.warning === undefined || storageWarning === undefined
+      ? undefined
+      : text(STORAGE_WARNING_KEY[storageWarning]);
+  const outcome = lastOutcome === undefined ? none : render(locale, lastOutcome);
 
   return (
     <ScrollView contentContainerStyle={[styles.content, { direction }]}>
@@ -41,16 +58,20 @@ export function DebugScreen({ auth, locale }: DebugScreenProps) {
       </Text>
       <View>
         <Text testID={TEST_ID.STATUS} style={line}>
-          {text('status', snapshot.status)}
+          {text('status', text(STATUS_KEY[snapshot.status]))}
         </Text>
         <Text testID={TEST_ID.OPERATION} style={line}>
-          {text('operation', snapshot.operation)}
+          {text('operation', text(OPERATION_KEY[snapshot.operation]))}
         </Text>
-        <Text style={line}>{text('reason', snapshot.reason ?? none)}</Text>
+        <Text style={line}>{text('reason', reason)}</Text>
         <Text style={line}>{text('account', snapshot.profile?.email ?? none)}</Text>
-        {snapshot.warning === undefined ? null : <Text style={line}>{text('storageWarning')}</Text>}
+        {warning === undefined ? null : (
+          <Text testID={TEST_ID.WARNING} style={line}>
+            {text('warning', warning)}
+          </Text>
+        )}
         <Text testID={TEST_ID.LAST_OUTCOME} style={line}>
-          {text('lastOutcome', lastOutcome ?? none)}
+          {text('lastOutcome', outcome)}
         </Text>
         <Text testID={TEST_ID.REFRESH_REQUESTS} style={line}>
           {text('refreshRequests', String(refreshRequests))}

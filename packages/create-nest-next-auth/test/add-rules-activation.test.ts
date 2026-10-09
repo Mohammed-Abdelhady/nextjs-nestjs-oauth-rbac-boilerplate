@@ -1,9 +1,11 @@
-import { chmod, mkdir, rm } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
+import { chmod, mkdir, rm, symlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, expect, it } from 'vitest';
 import { applyRules, planRules } from '../src/add-rules/plan.js';
 import {
   cleanRulesFixtures,
+  fixtureEnvironment,
   fixtureGit,
   put,
   rulesFixture,
@@ -36,9 +38,39 @@ it.each(['active', 'overridden', 'empty', 'missing', 'not-executable', 'director
       blockers: plan.blockers,
     }).toEqual({
       active: state === 'active',
-      activation: state === 'active' ? undefined : 'node node_modules/husky/bin.mjs',
+      activation: state === 'active' ? undefined : 'node node_modules/husky/bin.js',
       files: [],
       blockers: [],
     });
   },
 );
+
+it('prints an activation command that the installed husky runs', async () => {
+  const root = await rulesFixture();
+  fixtureGit(root, ['init', '--quiet']);
+  const summary = await applyRules(await planRules(root, 'strict', TRUSTED_RULES_ROOT));
+  await mkdir(join(root, 'node_modules'));
+  await symlink(join(TRUSTED_RULES_ROOT, 'node_modules/husky'), join(root, 'node_modules/husky'));
+  const [program, ...args] = (summary.hooks.activationCommand ?? '').split(' ');
+
+  const activated = spawnSync(process.execPath, args, {
+    cwd: root,
+    env: fixtureEnvironment(root),
+    encoding: 'utf8',
+  });
+  const replay = await planRules(root, 'strict', TRUSTED_RULES_ROOT);
+
+  expect({
+    program,
+    status: activated.status,
+    hooksPath: fixtureGit(root, ['config', '--local', '--get-all', 'core.hooksPath']),
+    active: replay.summary.hooks.active,
+    activation: replay.summary.hooks.activationCommand,
+  }).toEqual({
+    program: 'node',
+    status: 0,
+    hooksPath: '.husky/_\n',
+    active: true,
+    activation: undefined,
+  });
+});

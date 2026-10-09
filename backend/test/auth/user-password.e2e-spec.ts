@@ -2,10 +2,14 @@ import { randomBytes } from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { getModelToken } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { MongoServerError } from 'mongodb';
 import request from 'supertest';
 import { CSRF_HEADER } from '../../src/session/constants/browser-proof';
 import { NativeAuthorizeService } from '../../src/session/native/authorize/native-authorize.service';
 import { NativeTokenService } from '../../src/session/native/token/native-token.service';
+import { RaceGate } from '../utils/race-gate';
+import { failNextVersionWrite } from '../utils/transaction-failure';
+import { MONGO_TRANSIENT_TRANSACTION_LABEL } from '../../src/common/constants/mongo-errors';
 import {
   NATIVE_CLIENT_ID,
   NATIVE_META,
@@ -89,6 +93,33 @@ describe('password change keeps the calling session (e2e)', () => {
     await browser.get('/api/user/profile').expect(200);
     const ended = await other.get('/api/user/profile');
     expect(ended.status).toBe(401);
+  });
+
+  it('stores the new password when the first transaction attempt is retried', async () => {
+    const browser = await loginAs(e2e.httpServer, SEED_USER);
+    const conflict = new MongoServerError({ message: 'write conflict' });
+    conflict.addErrorLabel(MONGO_TRANSIENT_TRANSACTION_LABEL);
+    const users = e2e.app.get<Model<UserDocument>>(getModelToken(User.name));
+    const gate = new RaceGate();
+    const restore = failNextVersionWrite(users, conflict, gate);
+    const changed = browser
+      .post('/api/user/password')
+      .send({ currentPassword: SEED_USER.password, newPassword: NEW_PASSWORD })
+      .expect(200)
+      .then((response) => response);
+    try {
+      await gate.reached();
+    } finally {
+      gate.release();
+    }
+    try {
+      await changed;
+    } finally {
+      restore();
+    }
+
+    await loginWithOldPassword(e2e);
+    expect(await loginWith(e2e, SEED_USER.email, NEW_PASSWORD)).toBe(200);
   });
 });
 

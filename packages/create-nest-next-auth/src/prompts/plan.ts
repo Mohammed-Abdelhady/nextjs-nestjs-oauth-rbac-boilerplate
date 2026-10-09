@@ -23,10 +23,15 @@ export interface PlanPromptNeeds {
  * manifest offers more than one available choice. A preset carries targets,
  * features and options but never a database, so it does not suppress that prompt.
  */
-export function planPromptNeeds(manifest: Manifest, request: PlanRequest): PlanPromptNeeds {
+export function planPromptNeeds(
+  manifest: Manifest,
+  request: PlanRequest,
+  terminal = true,
+): PlanPromptNeeds {
   const presetGiven = request.preset !== undefined;
   return {
-    rules: request.rules === undefined,
+    // Without a terminal the level is not asked for: the plan falls back to its default.
+    rules: terminal && request.rules === undefined,
     targets:
       !presetGiven && request.targets === undefined && availableTargetIds(manifest).length > 1,
     database: request.databases === undefined && availableDatabaseIds(manifest).length > 1,

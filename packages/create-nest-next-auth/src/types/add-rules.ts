@@ -23,6 +23,8 @@ export interface RulesPlan {
   observations: Map<string, string | undefined>;
   guards: Map<string, boolean>;
   gitHooks?: string[];
+  /** Strict only: project folders under the file length ceiling. Empty when none match. */
+  ceilingFolders?: string[];
   summary: SetupSummary;
 }
 export interface RulesTextFacts {
@@ -31,12 +33,14 @@ export interface RulesTextFacts {
   explicitTypeLint: string;
   whereThingsAre: string;
   standardCodeText?: string;
+  commitScopes?: string;
   standardNotEnforced?: string;
 }
 
 export interface RulesIntegration {
   files: RulesFile[];
   notAdded: { check: string; reason: string }[];
+  ceilingFolders?: string[];
 }
 
 export interface AddRulesOptions {

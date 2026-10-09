@@ -12,7 +12,7 @@ import { dirname, join } from 'node:path';
 import { afterEach, expect, it } from 'vitest';
 import { MANIFEST_FILE, TEMPLATE_IDENTITY_FILE } from '../src/constants/index.js';
 import { PACKAGE_PATH, stagePackage } from './package-stage.js';
-import { newFixture, runScript } from './sync-template-fixture.js';
+import { newFixture, runScript, trackAll } from './sync-template-fixture.js';
 
 const STALE_IDENTITY = '{"sha256":"stale"}\n';
 const roots: string[] = [];
@@ -37,6 +37,7 @@ function repository(): { root: string; packageDir: string } {
   put(packageDir, 'template/stale.txt', 'stale\n');
   put(packageDir, MANIFEST_FILE, '{"features":{"stale":{}}}');
   put(packageDir, TEMPLATE_IDENTITY_FILE, STALE_IDENTITY);
+  trackAll(root);
   return { root, packageDir };
 }
 
@@ -66,6 +67,26 @@ it('builds in the stage and leaves the source package folder as it was', () => {
     manifest: '{"features":{"stale":{}}}',
     identity: STALE_IDENTITY,
   });
+});
+
+it('ships a tracked file as it is on disk and leaves an untracked one out', () => {
+  const { root } = repository();
+  put(root, 'README.md', '# Edited and not committed\n');
+  put(root, 'scratch.txt', 'never added\n');
+  const staged = stagePackage(workspace(), root);
+
+  runScript(dirname(dirname(staged)));
+
+  expect({
+    template: readdirSync(join(staged, 'template')).sort(),
+    readme: readFileSync(join(staged, 'template/README.md'), 'utf8'),
+  }).toEqual({ template: ['README.md'], readme: '# Edited and not committed\n' });
+});
+
+it('refuses a source that is not a Git repository', () => {
+  const root = newFixture(roots);
+
+  expect(() => stagePackage(workspace(), root)).toThrow(/not the root of a Git repository/);
 });
 
 it('leaves an earlier build, secrets and the root dependencies out of the stage', () => {

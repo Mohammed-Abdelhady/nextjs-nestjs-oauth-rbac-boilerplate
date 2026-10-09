@@ -82,7 +82,24 @@ Android's backup from restoring secure store entries to another device.
 
 The transport sends no cookies, sets the JSON content type itself, joins the origin and the path by
 concatenation, forwards the caller's abort, ends a request at its deadline and resolves every HTTP
-status.
+status. It returns the `DPoP-Nonce` response header, which a device-bound session needs to answer
+the server's nonce challenge. The `fetch` a shell hands in must expose response headers.
+
+## Offline with an expired access token
+
+This is a product decision of the engine. It applies to every shell that wires no device key.
+A refresh that gets no answer ends the session. `fetch` rejects the same way for a request that
+never left the device and for an answer lost on the way back, and this transport passes that
+rejection on as it came. The engine cannot tell the two apart, and sending an unbound refresh token
+twice risks the server revoking the whole family for reuse.
+
+What the person sees: the access token has expired, the app makes a request in airplane mode or a
+tunnel, and the status becomes `reauthRequired` with the reason `refreshInterrupted`. It stays that
+way after a restart, and the person signs in through the browser again. A request made offline
+while the access token is still valid fails and keeps the session.
+
+A shell that wires a device key gets one resend of the refresh, sent at once with a fresh proof. If
+the device is still offline, that resend is lost too and the session ends the same way.
 
 ## Outcomes the platform cannot tell apart
 

@@ -200,6 +200,8 @@ export function createRestoreOperation(runtime: AuthRuntime, signIn: SignInContr
         try {
           currentThumbprint = await deviceKeyThumbprint(runtime.dependencies);
         } catch (error) {
+          if (!runtime.isEpochCurrent(epoch))
+            return { kind: 'restored', status: runtime.snapshot.status };
           if (!(error instanceof DeviceKeyAuthError) || error.reason === 'unavailable') {
             runtime.setState(SESSION_STATUS.STORAGE_BLOCKED, AUTH_OPERATION.NONE, {
               reason: AUTH_REASON.DEVICE_KEY_UNAVAILABLE,
@@ -212,6 +214,8 @@ export function createRestoreOperation(runtime: AuthRuntime, signIn: SignInContr
           });
           return { kind: 'restored', status: runtime.snapshot.status };
         }
+        if (!runtime.isEpochCurrent(epoch))
+          return { kind: 'restored', status: runtime.snapshot.status };
         if (currentThumbprint !== record.proofKeyThumbprint) {
           runtime.tokens = undefined;
           runtime.setState(SESSION_STATUS.REAUTH_REQUIRED, AUTH_OPERATION.NONE, {

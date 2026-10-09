@@ -139,7 +139,7 @@ describe('native auth engine bound lost-answer retry (e2e)', () => {
     );
     const final = refreshes.at(-1);
 
-    expect(competitorTokenType).toBe('DPoP');
+    expect(competitorTokenType).toBe('Bearer');
     expect(refreshes).toHaveLength(3);
     expect(
       refreshes.map(({ request }) => refreshTokenFrom(request.body)),

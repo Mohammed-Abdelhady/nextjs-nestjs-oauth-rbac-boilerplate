@@ -148,7 +148,11 @@ describe('fresh actors authorize administrative transactions', () => {
     const { h } = fixture;
     await h.roleModel.updateOne(
       { slug: UserRole.MANAGER },
-      { $set: { permissions: [ROLE_PERMISSIONS.UPDATE_ALL] } },
+      {
+        $set: {
+          permissions: [ROLE_PERMISSIONS.UPDATE_ALL, 'posts:write:all'],
+        },
+      },
     );
     const actor = await fixture.seed(
       'authorized-manager@example.test',

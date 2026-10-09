@@ -177,6 +177,23 @@ pending request exists, the record has expired, or the record is locked.
 | `NOT_FOUND`      | 404         | Resource not found    |
 | `FORBIDDEN`      | 403         | Access forbidden      |
 
+### Account and Role Administration Errors
+
+| Code                           | HTTP Status | Description                                                                                        |
+| ------------------------------ | ----------- | -------------------------------------------------------------------------------------------------- |
+| `ADMIN_CANNOT_DEACTIVATE_SELF` | 403         | `DELETE /user/account` by the last active administrator                                            |
+| `CANNOT_MODIFY_HIGHER_ROLE`    | 403         | The target user, or the role being edited, is at or above the caller's level                       |
+| `FORBIDDEN`                    | 403         | `POST /roles` or `PATCH /roles/:idOrSlug` adds a permission the caller does not hold, `*` included |
+| `USER_NOT_FOUND`               | 404         | The user does not exist, or is deactivated and the request is not a reactivation                   |
+
+`PATCH /admin/users/:id/status` with `isActive: true` reactivates a deactivated
+user. The caller must outrank the user, as for a deactivation. Sessions ended by
+the deactivation stay ended, so the user signs in again.
+
+Every permission added in a role update must be held by the caller. Permissions
+the role already carries may be retained without the caller holding them. No caller can edit
+a role at their own level, so the admin role cannot be edited through the API.
+
 ---
 
 ## Frontend Integration

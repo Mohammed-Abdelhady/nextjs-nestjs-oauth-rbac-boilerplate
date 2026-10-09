@@ -26,15 +26,15 @@
   },
   "shared": {
     "native-core": {
-      "files": ["mobile/auth/**", "mobile/device-key/**"],
-      "workspaces": ["mobile/auth", "mobile/device-key"]
+      "files": ["mobile/auth/**"],
+      "workspaces": ["mobile/auth"]
     }
   },
   "databases": {
     "mongodb": {
       "label": "MongoDB",
       "default": true,
-      "files": ["backend/src/persistence/mongo/**", "backend/migrations/**"],
+      "files": ["backend/migrations/**"],
       "envVars": ["MONGO_URI"],
       "composeServices": ["mongodb"]
     },
@@ -71,12 +71,18 @@
         "nginx/**",
         "docker-compose.prod.yml",
         "scripts/setup-production.js",
+        "scripts/lib/production-files.js",
+        "scripts/lib/production-prompts.js",
+        "scripts/lib/production-summary.js",
         "scripts/config-transforms-tests/config-transforms.test.mjs",
         "scripts/config-transforms-tests/config-transforms.probes.test.mjs",
         "scripts/config-transforms-tests/config-transforms.diagnostics.test.mjs",
         "scripts/lib/failure-diagnostics.mjs",
         "scripts/verify-docker.mjs",
-        "scripts/lib/docker-http-probes.mjs"
+        "scripts/lib/docker-http-probes.mjs",
+        "scripts/lib/docker-command.mjs",
+        "scripts/lib/docker-smoke-model.mjs",
+        "scripts/lib/docker-source-export.mjs"
       ],
       "docs": ["docs/operations/deployment.md", "docs/operations/deployment-custom-domain.md", "docs/operations/PRODUCTION-SETUP.md"],
       "catalogueKeys": []
@@ -466,6 +472,7 @@
       "backend/test/native/engine/native-auth-engine.e2e-spec.ts",
       "backend/test/native/engine/native-auth-engine-dpop.e2e-spec.ts",
       "backend/test/native/engine/native-auth-engine-dpop-retry.e2e-spec.ts",
+      "backend/test/native/engine/native-auth-engine-dpop-challenge.e2e-spec.ts",
       "backend/test/utils/native/native-auth-engine-harness.ts",
       "backend/test/utils/native/native-auth-engine-dpop-support.ts",
       "frontend/playwright.config.ts",

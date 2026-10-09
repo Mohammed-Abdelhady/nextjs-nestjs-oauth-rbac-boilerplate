@@ -47,6 +47,7 @@ import { NativeAuthorizeActionDto } from '../authorize/dto/native-authorize.dto'
 import {
   ApiNativeTokenExchange,
   ApiNativeAuthorizeApproveErrors,
+  ApiNativeAuthorizeDenyErrors,
   ApiNativeAuthorizeStart,
   ApiNativeRevoke,
 } from './native-oauth.swagger';
@@ -58,6 +59,7 @@ import {
   TokenSuccess,
 } from './native-oauth.types';
 import {
+  assertDisplayedAccount,
   readSessionCookie,
   requestIp,
   requestUserAgent,
@@ -170,6 +172,7 @@ export class NativeOAuthController {
     @Res() response: Response,
   ): Promise<void> {
     const userId = this.requireBrowserSession(request);
+    assertDisplayedAccount(userId, body.expectedUserId);
     const transactionId = body.transactionId.trim();
     if (!transactionId) {
       throw new AppException(
@@ -210,17 +213,15 @@ export class NativeOAuthController {
     },
   })
   @ApiUnauthorizedResponse({ description: 'A browser session is required' })
-  @ApiForbiddenResponse({
-    description: 'Browser proof is invalid or native sign-in is disabled',
-  })
-  @ApiNotFoundResponse({ description: 'The transaction is expired or ended' })
+  @ApiNativeAuthorizeDenyErrors()
   @Post('authorize/deny')
   async deny(
     @Body() body: NativeAuthorizeActionDto,
     @Req() request: RequestWithUser,
     @Res() response: Response,
   ): Promise<void> {
-    this.requireBrowserSession(request);
+    const userId = this.requireBrowserSession(request);
+    assertDisplayedAccount(userId, body.expectedUserId);
     const denied = await this.authorizeBrowser.deny(body.transactionId);
     response.setHeader('Cache-Control', 'no-store');
     response.status(HttpStatus.OK).json({ success: true, data: denied });

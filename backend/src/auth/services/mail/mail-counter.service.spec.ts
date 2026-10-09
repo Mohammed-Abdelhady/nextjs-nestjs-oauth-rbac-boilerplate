@@ -107,6 +107,121 @@ describe('MailCounterService', () => {
     );
   });
 
+  async function noticeCounter() {
+    return counters
+      .findOne({ email: noticeEmail, purpose: MAIL_COUNTER_PURPOSE.NOTICE })
+      .orFail();
+  }
+
+  async function fillNoticeCap(): Promise<void> {
+    for (let count = 0; count < MAILED_CODE_LIMIT_PER_ADDRESS; count += 1) {
+      await service.tryRecord(noticeEmail, MAIL_COUNTER_PURPOSE.NOTICE);
+    }
+  }
+
+  it('expires a new counter at the end of its window', async () => {
+    await service.tryRecord(noticeEmail, MAIL_COUNTER_PURPOSE.NOTICE);
+
+    expect((await noticeCounter()).expiresAt).toEqual(
+      new Date('2099-01-01T12:15:00.000Z'),
+    );
+  });
+
+  it('keeps the expiry while the window is still open', async () => {
+    await service.tryRecord(noticeEmail, MAIL_COUNTER_PURPOSE.NOTICE);
+    clock.advance(WINDOW_MS - 1);
+
+    await service.tryRecord(noticeEmail, MAIL_COUNTER_PURPOSE.NOTICE);
+
+    const record = await noticeCounter();
+    expect(record.mailedCodes).toBe(2);
+    expect(record.expiresAt).toEqual(new Date('2099-01-01T12:15:00.000Z'));
+  });
+
+  it('moves the expiry to the end of the new window on rollover', async () => {
+    await fillNoticeCap();
+    clock.advance(WINDOW_MS);
+
+    await service.tryRecord(noticeEmail, MAIL_COUNTER_PURPOSE.NOTICE);
+
+    expect((await noticeCounter()).expiresAt).toEqual(
+      new Date('2099-01-01T12:30:00.000Z'),
+    );
+  });
+
+  it('gives a counter written before the expiry field its expiry', async () => {
+    await counters.collection.insertOne({
+      email: noticeEmail,
+      purpose: MAIL_COUNTER_PURPOSE.NOTICE,
+      mailedCodes: 1,
+      windowStartedAt: new Date('2099-01-01T11:50:00.000Z'),
+    });
+
+    await service.tryRecord(noticeEmail, MAIL_COUNTER_PURPOSE.NOTICE);
+
+    const record = await noticeCounter();
+    expect(record.mailedCodes).toBe(2);
+    expect(record.expiresAt).toEqual(new Date('2099-01-01T12:05:00.000Z'));
+  });
+
+  it('deletes counters through a TTL index on the expiry', async () => {
+    const indexes = await counters.collection.indexes();
+
+    expect(
+      indexes
+        .filter((index) => Object.keys(index.key).includes('expiresAt'))
+        .map((index) => ({
+          key: index.key,
+          expireAfterSeconds: index.expireAfterSeconds,
+        })),
+    ).toEqual([{ key: { expiresAt: 1 }, expireAfterSeconds: 0 }]);
+  });
+
+  it('still refuses one millisecond before the counter can expire', async () => {
+    await fillNoticeCap();
+    clock.advance(WINDOW_MS - 1);
+
+    const expiresAt = (await noticeCounter()).expiresAt;
+
+    expect(expiresAt.getTime() - clock.now().getTime()).toBe(1);
+    await expect(
+      service.tryRecord(noticeEmail, MAIL_COUNTER_PURPOSE.NOTICE),
+    ).resolves.toBe(false);
+  });
+
+  it('counts the same after expiry deleted the counter as after a rollover', async () => {
+    await fillNoticeCap();
+    clock.advance(WINDOW_MS);
+    // What the TTL monitor does once the stored expiry has passed.
+    const expired = await counters.deleteMany({
+      expiresAt: { $lte: clock.now() },
+    });
+    expect(expired.deletedCount).toBe(1);
+
+    await expect(
+      service.tryRecord(noticeEmail, MAIL_COUNTER_PURPOSE.NOTICE),
+    ).resolves.toBe(true);
+    const record = await noticeCounter();
+    expect({
+      mailedCodes: record.mailedCodes,
+      windowStartedAt: record.windowStartedAt,
+      expiresAt: record.expiresAt,
+    }).toEqual({
+      mailedCodes: 1,
+      windowStartedAt: new Date('2099-01-01T12:15:00.000Z'),
+      expiresAt: new Date('2099-01-01T12:30:00.000Z'),
+    });
+
+    for (let count = 1; count < MAILED_CODE_LIMIT_PER_ADDRESS; count += 1) {
+      await expect(
+        service.tryRecord(noticeEmail, MAIL_COUNTER_PURPOSE.NOTICE),
+      ).resolves.toBe(true);
+    }
+    await expect(
+      service.tryRecord(noticeEmail, MAIL_COUNTER_PURPOSE.NOTICE),
+    ).resolves.toBe(false);
+  });
+
   it('keeps each purpose on its own counter', async () => {
     for (let count = 0; count < MAILED_CODE_LIMIT_PER_ADDRESS; count += 1) {
       await service.tryRecord(noticeEmail, MAIL_COUNTER_PURPOSE.NOTICE);

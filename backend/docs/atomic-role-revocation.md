@@ -2,6 +2,10 @@
 
 Users store their role as a slug string. An admin assignment, creation, rename or deletion reads and writes inside a majority transaction. Changes to existing holders and their session revocation events commit together.
 
+## Scale limit
+
+A role edit moves and revokes every holder in one transaction. A role with a very large number of holders can exceed the transaction limits. This is a known limit.
+
 Deleting a custom role requires the default role in the transaction's snapshot. The API cannot delete protected system roles. Direct database removal of the default after that snapshot is outside this guarantee. Unrelated deletes only read the default role.
 
 After commit, assignments resolve the assigned role by id. Renames and deletes also sweep holders left on an old slug. These two repairs cover both commit orders. If deletion restores the user before reconciliation's final user read, the assignment answers 404 in either commit order. Reconciliation re-checks the assigned role by id after that changed user read. A process crash after an assignment commits but before reconciliation can still leave a stale slug. Recorded sweeps retry on a later edit and once at application startup. Startup repair runs in the background, with bounded discovery and transaction passes. It logs failures and does not stop startup.

@@ -1,6 +1,14 @@
-import { chmodSync, copyFileSync, existsSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import {
+  chmodSync,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs';
+import { delimiter, join } from 'node:path';
 import { expect } from 'vitest';
+import type { RulesPolicy } from '../src/types.js';
 import { git, isolatedGit } from './answers-helpers.js';
 import { boundedGitPush } from './bounded-git-push.js';
 import { scaffold, type Packed } from './packed-cli.js';
@@ -9,12 +17,46 @@ const DOM_TOKEN = 'inner' + 'HTML';
 const SOURCE_PATH = 'backend/src/guardrail-probe.ts';
 const CLEAN = 'export const guardrailProbe = 1;\n';
 
-export function checkGeneratedHookHistory(packed: Packed): void {
+/**
+ * Stands in for pnpm at the dispatch boundary: `pnpm run <script>` starts the
+ * script's node command. Git, the hook and the scanner are real.
+ */
+function writeScriptRunner(project: string): string {
+  const bin = join(project, '.git/gate-bin');
+  mkdirSync(bin);
+  const pnpm = join(bin, 'pnpm');
+  writeFileSync(
+    pnpm,
+    `#!${process.execPath}
+import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+const [verb, name] = process.argv.slice(2);
+if (verb !== 'run') { console.error('Unexpected pnpm boundary call'); process.exit(2); }
+const [program, ...args] = JSON.parse(readFileSync('package.json', 'utf8')).scripts[name].split(' ');
+if (program !== 'node') { console.error('Unexpected gate script'); process.exit(2); }
+process.exit(spawnSync(process.execPath, args, { stdio: 'inherit' }).status ?? 2);
+`,
+  );
+  chmodSync(pnpm, 0o755);
+  return bin;
+}
+
+/**
+ * Pushes a branch whose history holds a banned token. Strict scans the push and
+ * refuses it before any gate; standard has no push scan, so the gates run and
+ * the branch lands.
+ */
+export function checkGeneratedHookHistory(packed: Packed, level: RulesPolicy = 'strict'): void {
   const { env } = isolatedGit(packed.workspace);
-  const generated = scaffold(packed, 'guardrails-hook-history', undefined, { git: true, env });
+  const name = level === 'strict' ? 'guardrails-hook-history' : `guardrails-hook-history-${level}`;
+  const generated = scaffold(packed, name, undefined, {
+    git: true,
+    env,
+    flags: ['--rules', level],
+  });
   expect(generated.status, `${generated.stdout}\n${generated.stderr}`).toBe(0);
-  const project = join(packed.workspace, 'guardrails-hook-history');
-  const remote = join(packed.workspace, 'guardrails-hook-history.git');
+  const project = join(packed.workspace, name);
+  const remote = join(packed.workspace, `${name}.git`);
   git(['config', 'user.name', 'Fixture'], project, env);
   git(['config', 'user.email', 'fixture@example.test'], project, env);
   git(['branch', '-M', 'main'], project, env);
@@ -50,19 +92,36 @@ export function checkGeneratedHookHistory(packed: Packed): void {
   copyFileSync(join(project, '.husky/pre-push'), hook);
   chmodSync(hook, 0o755);
 
-  const pushed = boundedGitPush(['origin', 'feat'], project, env);
+  const head = git(['rev-parse', 'HEAD'], project, env).trim();
+  const pushEnv = {
+    ...env,
+    PATH: [writeScriptRunner(project), env.PATH ?? ''].join(delimiter),
+  };
+
+  const pushed = boundedGitPush(['origin', 'feat'], project, pushEnv);
   const hits = [
     ...pushed.stderr.matchAll(/^\[([a-f0-9]+)\] (.+?):(\d+): banned token "((?:\\.|[^"\\])*)"/gm),
   ].map((match) => [match[1], match[2], Number(match[3]), JSON.parse(`"${match[4]}"`)]);
-  expect({
+  const gates = join(project, '.git/guardrail-gates');
+  const observed = {
     status: pushed.status,
     hits,
-    gatesRan: existsSync(join(project, '.git/guardrail-gates')),
+    gates: existsSync(gates) ? readFileSync(gates, 'utf8') : '',
     refs: git(['for-each-ref', '--format=%(objectname) %(refname)'], remote, env).trim(),
-  }).toEqual({
-    status: 1,
-    hits: [[offending.slice(0, 7), SOURCE_PATH, 2, DOM_TOKEN]],
-    gatesRan: false,
-    refs: `${baseline} refs/heads/main`,
+  };
+  if (level === 'strict') {
+    expect(observed, pushed.stderr).toEqual({
+      status: 1,
+      hits: [[offending.slice(0, 7), SOURCE_PATH, 2, DOM_TOKEN]],
+      gates: '',
+      refs: `${baseline} refs/heads/main`,
+    });
+    return;
+  }
+  expect(observed, pushed.stderr).toEqual({
+    status: 0,
+    hits: [],
+    gates: 'lint\ntypecheck\ntest\n',
+    refs: `${head} refs/heads/feat\n${baseline} refs/heads/main`,
   });
 }

@@ -102,7 +102,9 @@ export class UserProfileController {
   @ApiOperation({
     summary: 'Deactivate user account',
     description:
-      'Permanently deactivates the authenticated user account. This action cannot be undone.',
+      'Deactivates the authenticated user account and ends its sessions. ' +
+      'An administrator can reactivate it. The last active administrator ' +
+      'is refused with 403.',
   })
   async deactivateAccount(
     @CurrentUser('id') userId: string,

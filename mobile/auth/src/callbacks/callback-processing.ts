@@ -241,7 +241,8 @@ export function createCallbackProcessor(
         const written = await runtime.replaceRecord(
           tokenRecord,
           epoch,
-          { kind: 'replace', record: tokenRecord },
+          // Every path that abandons this write revokes the token, so a late landing is removed.
+          { kind: 'delete' },
           {
             kind: 'session',
             installDigest: consumed.installDigest,

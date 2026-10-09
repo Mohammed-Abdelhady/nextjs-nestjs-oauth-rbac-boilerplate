@@ -1,6 +1,12 @@
 import { readFile } from 'node:fs/promises';
-import { DOCKER_OPTION_ID, LOCALE_IDS, PRODUCTION_OPTION_ID } from '../constants/index.js';
+import {
+  DOCKER_OPTION_ID,
+  LOCALE_IDS,
+  PRODUCTION_OPTION_ID,
+  RULES_POLICIES,
+} from '../constants/index.js';
 import { isMember, isRecord, readBoolean, readString, readStringArray } from '../manifest/read.js';
+import type { RulesPolicy } from '../types.js';
 import { isErrnoException } from '../utils/fs.js';
 
 export class ConfigFileError extends Error {
@@ -18,6 +24,7 @@ export interface ConfigSelection {
   preset?: string;
   options?: Partial<Record<string, boolean>>;
   locales?: string[];
+  rules?: RulesPolicy;
 }
 
 const KEYS = new Set([
@@ -28,6 +35,7 @@ const KEYS = new Set([
   'docker',
   'production',
   'locales',
+  'rules',
 ]);
 
 /** Flags lower-case their lists, so config values are normalised the same way. */
@@ -63,6 +71,13 @@ function readLocales(value: unknown, problems: string[]): string[] {
     }
   }
   return locales;
+}
+
+/** The same exact choices `--rules` takes: no trimming, no case folding. */
+function readRules(value: unknown, problems: string[]): RulesPolicy | undefined {
+  if (isMember(RULES_POLICIES, value)) return value;
+  problems.push(`rules must be one of ${RULES_POLICIES.join(', ')}, got ${JSON.stringify(value)}`);
+  return undefined;
 }
 
 /** Validates a parsed config file. Throws ConfigFileError naming every problem. */
@@ -109,6 +124,11 @@ export function parseConfigFile(value: unknown): ConfigSelection {
 
   if (value.locales !== undefined) {
     selection.locales = readLocales(value.locales, problems);
+  }
+
+  if (value.rules !== undefined) {
+    const rules = readRules(value.rules, problems);
+    if (rules !== undefined) selection.rules = rules;
   }
 
   if (problems.length > 0) {

@@ -4,6 +4,7 @@ import {
   mkdirSync,
   mkdtempSync,
   rmSync,
+  symlinkSync,
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
@@ -15,6 +16,7 @@ import {
   countActiveRuns,
   processExists,
   normalizeWorkerArguments,
+  removeOrphanedDataDirectories,
   requestedWorkerCount,
   resolveJestCli,
   runWithMarker,
@@ -222,5 +224,107 @@ test('removes the marker when Jest cannot start', async (t) => {
   assert.deepEqual(
     { sameError: result === launchError, markerExists: existsSync(marker) },
     { sameError: true, markerExists: false },
+  );
+});
+
+const DATA_PREFIX = 'backend-jest-mongo-';
+
+function writeDataDirectory(directory, name) {
+  const path = join(directory, name);
+  mkdirSync(join(path, 'journal'), { recursive: true });
+  writeFileSync(join(path, 'journal', 'WiredTigerLog.0000000001'), 'log');
+  return path;
+}
+
+test('removes data directories of dead runs and keeps every live one', (t) => {
+  const directory = temporaryDirectory(t);
+  const dead = writeDataDirectory(directory, 'backend-jest-mongo-101-AbC123');
+  const live = writeDataDirectory(directory, 'backend-jest-mongo-202-AbC123');
+  const secondLive = writeDataDirectory(
+    directory,
+    'backend-jest-mongo-202-XyZ789',
+  );
+
+  const removed = removeOrphanedDataDirectories(
+    directory,
+    DATA_PREFIX,
+    (pid) => pid === 202,
+  );
+  assert.deepEqual(
+    removeOrphanedDataDirectories(directory, DATA_PREFIX, (pid) => pid === 202),
+    [],
+  );
+
+  assert.deepEqual(
+    {
+      removed,
+      deadExists: existsSync(dead),
+      liveExists: existsSync(live),
+      secondLiveExists: existsSync(secondLive),
+    },
+    {
+      removed: ['backend-jest-mongo-101-AbC123'],
+      deadExists: false,
+      liveExists: true,
+      secondLiveExists: true,
+    },
+  );
+});
+
+test('keeps a data directory whose PID exists but is not accessible', (t) => {
+  const directory = temporaryDirectory(t);
+  const guarded = writeDataDirectory(
+    directory,
+    'backend-jest-mongo-303-AbC123',
+  );
+  const gone = writeDataDirectory(directory, 'backend-jest-mongo-404-AbC123');
+
+  const removed = removeOrphanedDataDirectories(directory, DATA_PREFIX, (pid) =>
+    processExists(pid, (candidate) => {
+      throw Object.assign(new Error('lookup failed'), {
+        code: candidate === 303 ? 'EPERM' : 'ESRCH',
+      });
+    }),
+  );
+
+  assert.deepEqual(
+    {
+      removed,
+      guardedExists: existsSync(guarded),
+      goneExists: existsSync(gone),
+    },
+    {
+      removed: ['backend-jest-mongo-404-AbC123'],
+      guardedExists: true,
+      goneExists: false,
+    },
+  );
+});
+
+test('leaves entries it cannot attribute to a run', (t) => {
+  const directory = temporaryDirectory(t);
+  const link = join(directory, 'backend-jest-mongo-606-link');
+  const target = writeDataDirectory(directory, 'unrelated-target');
+  symlinkSync(target, link, 'dir');
+  const kept = [
+    link,
+    target,
+    writeDataDirectory(directory, 'backend-jest-mongo-abc-AbC123'),
+    writeDataDirectory(directory, 'backend-jest-mongo-0-AbC123'),
+    writeDataDirectory(directory, 'backend-jest-mongo-505'),
+    writeDataDirectory(directory, 'backend-jest-mongo-1e2-AbC123'),
+    writeDataDirectory(directory, 'other-backend-jest-mongo-505-AbC123'),
+    writeMarker(directory, 'backend-jest-mongo-505-file', 'not a directory'),
+  ];
+
+  const removed = removeOrphanedDataDirectories(
+    directory,
+    DATA_PREFIX,
+    () => false,
+  );
+
+  assert.deepEqual(
+    { removed, kept: kept.map((path) => existsSync(path)) },
+    { removed: [], kept: [true, true, true, true, true, true, true, true] },
   );
 });

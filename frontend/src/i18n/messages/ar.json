@@ -577,7 +577,7 @@
       "INVALID_CURRENT_PASSWORD": "كلمة المرور الحالية غير صحيحة",
       "SAME_PASSWORD": "يجب أن تكون كلمة المرور الجديدة مختلفة عن الحالية",
       "CANNOT_REVOKE_CURRENT_SESSION": "لا يمكنك إلغاء جلستك الحالية",
-      "ADMIN_CANNOT_DEACTIVATE_SELF": "لا يمكن للمشرفين إلغاء تنشيط حساباتهم",
+      "ADMIN_CANNOT_DEACTIVATE_SELF": "لا يمكن لآخر مشرف نشط إلغاء تنشيط حسابه",
       "REAUTH_REQUIRED": "يرجى إعادة المصادقة للقيام بهذا الإجراء",
       "NO_PENDING_PASSWORD_RESET": "لم يتم العثور على طلب إعادة تعيين كلمة المرور. يرجى طلب واحد جديد",
       "PASSWORD_RESET_CODE_EXPIRED": "انتهت صلاحية رمز إعادة تعيين كلمة المرور. يرجى طلب رمز جديد",

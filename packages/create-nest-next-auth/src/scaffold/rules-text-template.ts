@@ -30,6 +30,12 @@ export const STANDARD_CODE_TEXT =
 export const STANDARD_NOT_ENFORCED =
   'The banned-construct scan and file length ceiling are off. The rules level was chosen at generation. Editing `.create-nest-next-auth.json` does not switch it.';
 
+export const COMMIT_MESSAGE_HOOK_TEXT =
+  'The commit message hook checks this format. It also removes tool attribution trailers, such as a `Co-Authored-By` line that names a coding tool, and prints each line it removes.';
+
+export const STANDARD_POLICY_LOCATION =
+  '`scripts/check-hard-bans.mjs --commit-msg` and `scripts/ci.mjs` load this file, so keep it. The banned-construct scan and file length ceiling it defines are off at the standard rules level. Generate again with strict to turn them on.';
+
 export const AGENTS_TEMPLATE = `# Project instructions
 
 This file gives developers and coding agents the rules for this project.
@@ -52,7 +58,7 @@ Use the format \`type(scope): subject\` or \`type: subject\`.
 
 - Types: {{commitTypes}}
 - Scopes: {{commitScopes}}
-- Subject limit: {{subjectLimit}} characters.
+- Subject limit: {{subjectLimit}} characters.{{commitHook}}
 
 ## Checks
 

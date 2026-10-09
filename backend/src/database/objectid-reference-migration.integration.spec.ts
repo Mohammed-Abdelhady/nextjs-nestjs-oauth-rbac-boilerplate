@@ -22,6 +22,73 @@ const OTHER_OBJECT_ID_HEX = '507f1f77bcf86cd799439012';
 const MALFORMED_OBJECT_ID = '507f1f77bcf86cd79943901z';
 const TARGET_COLLECTIONS = ['passkeys', 'sessions'] as const;
 const UNCHANGED_FIXTURE_KEYS = ['objectId', 'malformed', 'number', 'array'];
+const GRANTS_COLLECTION = 'userapplicationgrants';
+const THIRD_OBJECT_ID_HEX = '507f1f77bcf86cd799439013';
+const WEB_CLIENT = 'web';
+const MOBILE_CLIENT = 'mobile';
+
+interface GrantFixture extends Document {
+  fixtureCase: string;
+  userId: ObjectId | string;
+  clientId: string;
+}
+
+/** A partial earlier run: one row already converted, its string twin left behind. */
+function createGrantFixtures(): GrantFixture[] {
+  return [
+    {
+      _id: new ObjectId('507f1f77bcf86cd799439201'),
+      fixtureCase: 'stringWithTwin',
+      userId: OBJECT_ID_HEX,
+      clientId: WEB_CLIENT,
+    },
+    {
+      _id: new ObjectId('507f1f77bcf86cd799439202'),
+      fixtureCase: 'twin',
+      userId: new ObjectId(OBJECT_ID_HEX),
+      clientId: WEB_CLIENT,
+    },
+    {
+      _id: new ObjectId('507f1f77bcf86cd799439203'),
+      fixtureCase: 'sameUserOtherClient',
+      userId: OBJECT_ID_HEX,
+      clientId: MOBILE_CLIENT,
+    },
+    {
+      _id: new ObjectId('507f1f77bcf86cd799439204'),
+      fixtureCase: 'stringAlone',
+      userId: OTHER_OBJECT_ID_HEX,
+      clientId: WEB_CLIENT,
+    },
+    {
+      _id: new ObjectId('507f1f77bcf86cd799439205'),
+      fixtureCase: 'alreadyConverted',
+      userId: new ObjectId(THIRD_OBJECT_ID_HEX),
+      clientId: WEB_CLIENT,
+    },
+    {
+      _id: new ObjectId('507f1f77bcf86cd799439206'),
+      fixtureCase: 'malformed',
+      userId: MALFORMED_OBJECT_ID,
+      clientId: WEB_CLIENT,
+    },
+  ];
+}
+
+async function readGrants(
+  database: ReturnType<MongoClient['db']>,
+): Promise<Record<string, string>> {
+  const documents = await database
+    .collection<GrantFixture>(GRANTS_COLLECTION)
+    .find({})
+    .toArray();
+  return Object.fromEntries(
+    documents.map(({ fixtureCase, userId, clientId }) => [
+      fixtureCase,
+      `${userId instanceof ObjectId ? 'ObjectId' : 'string'}:${String(userId)}:${clientId}`,
+    ]),
+  );
+}
 
 interface ReferenceFixture extends Document {
   fixtureCase: string;
@@ -166,6 +233,44 @@ describe('ObjectId reference data migration', () => {
         ),
       );
       expect(afterSecondRun).toEqual(beforeSecondRun);
+    } finally {
+      await database.dropDatabase();
+      await client.close();
+    }
+  });
+
+  it('drops a string grant whose ObjectId twin exists and can be re-run', async () => {
+    if (!mongo) {
+      throw new Error('expected a MongoDB replica set');
+    }
+
+    const databaseName = 'objectid_reference_twins';
+    const mongoUri = mongo.uri(databaseName);
+    const client = new MongoClient(mongoUri);
+    await client.connect();
+    const database = client.db(mongo.databaseName(databaseName));
+    const converted = {
+      twin: `ObjectId:${OBJECT_ID_HEX}:${WEB_CLIENT}`,
+      sameUserOtherClient: `ObjectId:${OBJECT_ID_HEX}:${MOBILE_CLIENT}`,
+      stringAlone: `ObjectId:${OTHER_OBJECT_ID_HEX}:${WEB_CLIENT}`,
+      alreadyConverted: `ObjectId:${THIRD_OBJECT_ID_HEX}:${WEB_CLIENT}`,
+      malformed: `string:${MALFORMED_OBJECT_ID}:${WEB_CLIENT}`,
+    };
+
+    try {
+      await database.dropDatabase();
+      await runMigrateMongo('up', mongoUri);
+      await database
+        .collection<GrantFixture>(GRANTS_COLLECTION)
+        .insertMany(createGrantFixtures());
+
+      await rerunReferenceMigration(database, mongoUri);
+
+      expect(await readGrants(database)).toEqual(converted);
+
+      await rerunReferenceMigration(database, mongoUri);
+
+      expect(await readGrants(database)).toEqual(converted);
     } finally {
       await database.dropDatabase();
       await client.close();

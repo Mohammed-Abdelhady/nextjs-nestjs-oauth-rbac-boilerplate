@@ -8,6 +8,7 @@ export const RULES_HOOK_PATHS = [
 export const RULES_WORKFLOW_PATH = '.github/workflows/ci.yml';
 export const RULES_TRUSTED_WORKFLOW_PATH = '.github/workflows/trusted-scan.yml';
 export const RULES_GATES_PATH = 'scripts/ci/gates.json';
+export const RULES_POLICY_PATH = TEMPLATE_TEST_POLICY.POLICY_PATH;
 export const RULES_SCANNER_ENTRY = 'scripts/check-hard-bans.mjs';
 export const RULES_SCAN_GATE = 'Full-tree hard bans';
 export const RULES_RANGE_JOB = 'range-scan';
@@ -63,8 +64,13 @@ export const ADD_RULES_DEPENDENCIES = [
   'prettier@^3.9.9',
   '@commitlint/cli@^18.6.1',
   '@commitlint/config-conventional@^18.6.3',
-  'ignore@5.3.2',
 ] as const;
+/** How many folder levels are compared with the policy's capped folders. */
+export const ADD_RULES_CEILING_DEPTH = 4;
+export const ADD_RULES_ANY_SCOPE = 'any. The commit check does not restrict scopes.';
+/** The entry husky 9.1 ships. The printed command and the tests that run it share it. */
+export const ADD_RULES_HUSKY_ENTRY = 'node_modules/husky/bin.js';
+export const ADD_RULES_HOOK_ACTIVATION = `node ${ADD_RULES_HUSKY_ENTRY}`;
 export const ADD_RULES_LOCKFILES = {
   pnpm: 'pnpm-lock.yaml',
   npm: ['package', 'lock.json'].join('-'),

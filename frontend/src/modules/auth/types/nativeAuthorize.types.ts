@@ -19,4 +19,6 @@ export interface NativeAuthorizeRedirect {
 /** Body of an approve or deny call. */
 export interface NativeAuthorizeActionRequest {
   transactionId: string;
+  /** The account the card showed; the server refuses any other session. */
+  expectedUserId: string;
 }

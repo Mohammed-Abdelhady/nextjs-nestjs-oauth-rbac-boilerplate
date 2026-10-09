@@ -23,10 +23,12 @@ import { runWithRequestContext } from '../../../common/context/request-context';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import {
   MAILED_CODE_LIMIT_PER_ADDRESS,
+  MailCounterPurpose,
   PENDING_PURPOSE,
 } from '../../constants/registration';
 import { rejectionOf } from '../../../../test/utils/rejection';
 import { FrozenClock, TEST_NOW } from '../../../../test/utils/frozen-clock';
+import { seedMailCounter } from '../../../../test/utils/mail-counter-seed';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
@@ -103,11 +105,10 @@ describe('VerificationCodeService limits', () => {
 
   async function seedCounter(
     email: string,
-    purpose: string,
+    purpose: MailCounterPurpose,
     mailedCodes: number,
-    windowStartedAt: Date = TEST_NOW,
   ): Promise<void> {
-    await counters.create({ email, purpose, mailedCodes, windowStartedAt });
+    await seedMailCounter(counters, { email, purpose, mailedCodes });
   }
 
   async function stored(email: string) {

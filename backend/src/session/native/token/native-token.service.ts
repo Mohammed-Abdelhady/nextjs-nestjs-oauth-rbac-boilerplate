@@ -35,6 +35,10 @@ import { SessionIssuanceService } from '../../services/session-issuance.service'
 import { SecurityEventService } from '../../services/security-event.service';
 import { NativeDpopProofResult } from '../proof/native-dpop-proof';
 import {
+  TOKEN_REQUEST_FIELDS,
+  readStringFields,
+} from '../oauth/native-request-shape';
+import {
   isNativeDpopProofIdConflict,
   NativeDpopService,
 } from '../proof/native-dpop.service';
@@ -42,7 +46,6 @@ import {
   ClientMeta,
   OAUTH_ERROR,
   OauthFailure,
-  RevokeRequest,
   RevokeSuccess,
   TokenRequest,
   TokenSuccess,
@@ -71,7 +74,7 @@ export class NativeTokenService {
   ) {}
 
   async grant(
-    body: TokenRequest,
+    request: unknown,
     meta: ClientMeta,
     dpopProof?: string,
   ): Promise<TokenSuccess | OauthFailure> {
@@ -82,32 +85,32 @@ export class NativeTokenService {
         ErrorCode.NATIVE_AUTH_DISABLED,
       );
     }
+    const body = readStringFields(request, TOKEN_REQUEST_FIELDS);
+    if (!body) {
+      return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_REQUEST);
+    }
     if (body.client_secret) {
       return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.INVALID_CLIENT);
     }
-    try {
-      if (body.grant_type === 'authorization_code') {
-        return await this.exchange(body, meta, dpopProof);
-      }
-      if (body.grant_type === 'refresh_token') {
-        return await this.refreshes.rotate(
-          body.refresh_token ?? '',
-          body.client_id ?? '',
-          meta,
-          dpopProof,
-        );
-      }
-      return oauthFailure(
-        HttpStatus.BAD_REQUEST,
-        OAUTH_ERROR.UNSUPPORTED_GRANT_TYPE,
-      );
-    } catch (error) {
-      asAuthorityUnavailable(error);
+    if (body.grant_type === 'authorization_code') {
+      return this.exchange(body, meta, dpopProof);
     }
+    if (body.grant_type === 'refresh_token') {
+      return this.refreshes.rotate(
+        body.refresh_token ?? '',
+        body.client_id ?? '',
+        meta,
+        dpopProof,
+      );
+    }
+    return oauthFailure(
+      HttpStatus.BAD_REQUEST,
+      OAUTH_ERROR.UNSUPPORTED_GRANT_TYPE,
+    );
   }
 
   async revoke(
-    body: RevokeRequest,
+    body: unknown,
     dpopProof?: string,
   ): Promise<RevokeSuccess | OauthFailure> {
     return this.revocations.revoke(body, dpopProof);
@@ -204,7 +207,7 @@ export class NativeTokenService {
       ) {
         return oauthFailure(HttpStatus.BAD_REQUEST, OAUTH_ERROR.ACCESS_DENIED);
       }
-      throw error;
+      asAuthorityUnavailable(error);
     }
   }
 

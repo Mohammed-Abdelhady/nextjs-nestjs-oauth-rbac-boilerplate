@@ -1,3 +1,5 @@
+import { NATIVE_ACCESS_TOKEN_TYPE } from '../../constants/session-policy';
+
 export const OAUTH_ERROR = {
   INVALID_REQUEST: 'invalid_request',
   INVALID_CLIENT: 'invalid_client',
@@ -41,7 +43,7 @@ export interface TokenSuccess {
   refreshToken: string;
   expiresIn: number;
   scope: string;
-  tokenType: 'Bearer' | 'DPoP';
+  tokenType: typeof NATIVE_ACCESS_TOKEN_TYPE;
 }
 
 export interface RevokeSuccess {

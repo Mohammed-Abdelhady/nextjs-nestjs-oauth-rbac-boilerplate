@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import { basename } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { startSharedMongoServer } from '../memory-replset';
@@ -7,15 +8,29 @@ import {
   type SharedMongoServer,
 } from './mongo-server-state';
 import {
+  BACKEND_TEST_MONGO_DATA_PREFIX,
   BACKEND_TEST_MONGO_INSTANCE_COUNT_ENV,
   BACKEND_TEST_MONGO_URIS_ENV,
 } from '../../constants/mongo';
+import {
+  processExists,
+  removeOrphanedDataDirectories,
+} from '../../run-jest-support.mjs';
 
 const DEFAULT_INSTANCE_COUNT = 1;
 
 export default async function mongoGlobalSetup(): Promise<void> {
   if (hasSharedMongoRun()) {
     throw new Error('The shared Jest MongoDB run is already set up');
+  }
+
+  const orphaned = removeOrphanedDataDirectories(
+    tmpdir(),
+    BACKEND_TEST_MONGO_DATA_PREFIX,
+    (pid) => processExists(pid, (candidate) => process.kill(candidate, 0)),
+  );
+  if (orphaned.length > 0) {
+    console.info(`[jest-mongo] removed orphaned data=${orphaned.join(',')}`);
   }
 
   const previousUris = process.env[BACKEND_TEST_MONGO_URIS_ENV];

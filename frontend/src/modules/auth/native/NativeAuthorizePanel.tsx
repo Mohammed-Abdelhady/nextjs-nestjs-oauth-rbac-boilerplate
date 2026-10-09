@@ -68,6 +68,7 @@ export function NativeAuthorizePanel({ transaction }: NativeAuthorizePanelProps)
           applicationName={view.applicationName}
           accountName={view.accountName}
           accountEmail={view.accountEmail}
+          accountChanged={view.accountChanged}
           action={view.action}
           headingRef={headingRef}
           onApprove={approve}

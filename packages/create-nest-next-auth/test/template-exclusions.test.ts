@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { expect, it } from 'vitest';
-import { copySyncTemplateInputs } from './sync-template-fixture.js';
+import { copySyncTemplateInputs, trackAll } from './sync-template-fixture.js';
 
 it('excludes runtime artifacts and prohibited names before copying template files', () => {
   const fixture = mkdtempSync(join(tmpdir(), 'cna-template-exclusions-'));
@@ -33,6 +33,7 @@ it('excludes runtime artifacts and prohibited names before copying template file
       writeFileSync(join(fixture, path), 'synthetic sentinel\n');
     }
     writeFileSync(join(fixture, 'template.manifest.json'), '{"features":{}}');
+    trackAll(fixture);
     execFileSync(process.execPath, [script], { timeout: 10_000, stdio: 'pipe' });
     const template = join(fixture, 'packages/create-nest-next-auth/template');
     for (const path of artifacts) expect(existsSync(join(template, path)), path).toBe(false);

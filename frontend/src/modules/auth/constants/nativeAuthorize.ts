@@ -5,6 +5,9 @@
  * transaction id, and the browser approves or denies that transaction.
  */
 
+import { ErrorCode } from '@app/core';
+import { HTTP_STATUS } from '@/constants/httpStatus';
+
 /** Web route the browser lands on, after the locale segment. */
 export const NATIVE_AUTHORIZE_PATH = '/auth/native/authorize';
 
@@ -37,4 +40,16 @@ export function nativeAuthorizeContinuation(transaction: string): string {
  */
 export function isNativeAuthorizeContinuation(path: string): boolean {
   return path.startsWith(`${NATIVE_AUTHORIZE_PATH}?${NATIVE_TRANSACTION_PARAM}=`);
+}
+
+/** Answers that mean the browser has no usable session and must sign in. */
+export const SIGN_IN_REQUIRED_CODES: ReadonlySet<string> = new Set([
+  ErrorCode.SESSION_REQUIRED,
+  ErrorCode.SESSION_INVALID,
+  ErrorCode.SESSION_EXPIRED,
+]);
+
+/** Every 401 means sign in, whatever code it carries, and so does each code above. */
+export function isSignInRequired(code: string, status?: number): boolean {
+  return status === HTTP_STATUS.UNAUTHORIZED || SIGN_IN_REQUIRED_CODES.has(code);
 }

@@ -5,6 +5,7 @@ import { dirname, join, resolve } from 'node:path';
 import {
   ADD_RULES_AGENT_COPY,
   ADD_RULES_DEPENDENCIES,
+  ADD_RULES_HOOK_ACTIVATION,
   ADD_RULES_RECEIPT,
   ADD_RULES_SCRIPT_NAMES,
   ADD_RULES_SETUP_PATHS,
@@ -18,6 +19,7 @@ import { isRecord } from '../manifest/read.js';
 import type { RulesPolicy } from '../types.js';
 import type { RulesFile, RulesLayout, RulesPlan } from '../types/add-rules.js';
 import type { SetupSummary } from '../types/setup.js';
+import { ceilingScopeText } from './ceiling.js';
 import { inspectGit } from './git.js';
 import { inspectLayout } from './layout.js';
 import { checkPath, inspectFile } from './paths.js';
@@ -33,7 +35,6 @@ function digest(content: string): string {
 
 function summary(layout: RulesLayout, level: RulesPolicy): SetupSummary {
   const missing = ADD_RULES_SCRIPT_NAMES.filter((name) => !hasProjectScript(layout.manifest, name));
-  const activation = `node node_modules/husky/bin.mjs`;
   return {
     files: { count: 0, instructions: [] },
     rules: level,
@@ -52,7 +53,7 @@ function summary(layout: RulesLayout, level: RulesPolicy): SetupSummary {
     hooks: {
       included: true,
       active: false,
-      activationCommand: (layout.repository ? '' : 'git init && ') + activation,
+      activationCommand: (layout.repository ? '' : 'git init && ') + ADD_RULES_HOOK_ACTIVATION,
     },
     checksRun: [],
     skipped: [
@@ -160,8 +161,9 @@ export async function planRules(
   const receiptSource = await inspectFile(plan.root, ADD_RULES_RECEIPT);
   const staging = await stagingTree(template);
   try {
-    const integration = await renderIntegration(template, staging, layout, level);
+    const integration = await renderIntegration(template, staging, layout, level, plan.root);
     plan.files = integration.files;
+    if (integration.ceilingFolders !== undefined) plan.ceilingFolders = integration.ceilingFolders;
     plan.summary.notAdded = integration.notAdded;
   } finally {
     await rm(staging, { recursive: true, force: true });
@@ -247,6 +249,9 @@ export function renderRulesPlan(plan: RulesPlan): string {
       ? 'Rules already present. Nothing changed.'
       : 'Proposed rules files:',
     ...plan.files.map(({ path, content }) => `\n--- ${path} ---\n${content}`),
+    ...(plan.ceilingFolders === undefined || plan.files.length === 0
+      ? []
+      : [ceilingScopeText(plan.ceilingFolders)]),
     ...plan.blockers.map((reason) => `Blocked: ${reason}`),
   ].join('\n');
 }

@@ -4,6 +4,7 @@ import { parseDocument } from 'yaml';
 import { isRecord } from '../manifest/read.js';
 import { RULES_POLICY } from '../constants/index.js';
 import {
+  ADD_RULES_ANY_SCOPE,
   ADD_RULES_SCRIPT_NAMES,
   RULES_GATES_PATH,
   RULES_COMMIT_CONFIG,
@@ -15,9 +16,11 @@ import {
   RULES_TRUSTED_WORKFLOW_PATH,
   RULES_WORKFLOW_PATH,
 } from '../constants/rules.js';
+import { ceilingFolders, readCeilingPattern } from './ceiling.js';
 import { hasProjectScript } from './scripts.js';
 import { pruneRules } from '../prune/rules.js';
 import { renderRulesText } from '../scaffold/rules-text.js';
+import { specializeCeilingText } from './ceiling.js';
 import type { RulesPolicy } from '../types.js';
 import type { RulesFile, RulesLayout, RulesIntegration } from '../types/add-rules.js';
 
@@ -32,6 +35,16 @@ async function moduleFiles(template: string): Promise<RulesFile[]> {
       queue.push(posix.normalize(posix.join(posix.dirname(path), match[1])));
   }
   return [...files].map(([path, content]) => ({ path, content }));
+}
+
+/** Scopes name this template's folders, so another project's commit check takes any scope. */
+function withoutScopeList(source: string): string {
+  const stripped = source.replace(
+    /[\t ]*'scope-enum':\s*\[[^\]]*\[[^\]]*\]\s*,?\s*\],?[\t ]*(?:\r?\n)?/,
+    '',
+  );
+  if (stripped.includes('scope-enum')) throw new Error('Invalid bundled commit configuration.');
+  return stripped;
 }
 
 function workflow(source: string, layout: RulesLayout, trusted: boolean): string {
@@ -72,6 +85,7 @@ export async function renderIntegration(
   staging: string,
   layout: RulesLayout,
   level: RulesPolicy,
+  root: string,
 ): Promise<RulesIntegration> {
   const original: unknown = JSON.parse(await readFile(join(template, RULES_GATES_PATH), 'utf8'));
   if (!isRecord(original) || !Array.isArray(original.gates))
@@ -149,8 +163,19 @@ export async function renderIntegration(
       ),
     });
   }
-  for (const path of [RULES_COMMIT_CONFIG, 'scripts/lib/require-package-manager.sh'])
-    files.push({ path, content: await readFile(join(template, path), 'utf8') });
+  files.push({
+    path: RULES_COMMIT_CONFIG,
+    content: withoutScopeList(await readFile(join(template, RULES_COMMIT_CONFIG), 'utf8')),
+  });
+  const packageManagerGuard = 'scripts/lib/require-package-manager.sh';
+  files.push({
+    path: packageManagerGuard,
+    content: await readFile(join(template, packageManagerGuard), 'utf8'),
+  });
+  const capped =
+    level === RULES_POLICY.STRICT
+      ? await ceilingFolders(root, await readCeilingPattern(template))
+      : undefined;
   files.push({
     path: RULES_STAGED_CONFIG,
     content:
@@ -164,6 +189,7 @@ export async function renderIntegration(
       gates,
       manager: { name: layout.manager, version: layout.version },
       explicitTypeLint: '',
+      commitScopes: ADD_RULES_ANY_SCOPE,
       standardNotEnforced:
         'The banned-construct scan and file length ceiling are off. The rules level was chosen when these files were added. Editing the rules receipt does not switch it.',
       standardCodeText:
@@ -178,7 +204,7 @@ export async function renderIntegration(
     {
       path: 'AGENTS.md',
       content:
-        rendered.agents +
+        specializeCeilingText(rendered.agents, capped) +
         '\nChanging the rules level after installation is not supported. Hooks are not active until you explicitly activate them. No project checks have been run by this installer.\n',
     },
     { path: 'CLAUDE.md', content: rendered.claude },
@@ -204,5 +230,5 @@ export async function renderIntegration(
               : 'Template-specific gate is not supported in existing projects.',
       };
     });
-  return { files, notAdded };
+  return { files, notAdded, ...(capped === undefined ? {} : { ceilingFolders: capped }) };
 }

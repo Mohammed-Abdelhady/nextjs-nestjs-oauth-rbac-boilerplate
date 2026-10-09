@@ -27,7 +27,7 @@ export const LOCK_FAILURE_FLAG_CASES = [
     expected: {
       git: { status: 'created' },
       install: { status: 'not-requested' },
-      exitCode: 0,
+      exitCode: 1,
       activationCommand: 'pnpm install',
       checksRun: [
         'template pruning',
@@ -47,7 +47,7 @@ export const LOCK_FAILURE_FLAG_CASES = [
     expected: {
       git: { status: 'not-requested' },
       install: { status: 'not-requested' },
-      exitCode: 0,
+      exitCode: 1,
       activationCommand: 'git init && pnpm install',
       checksRun: ['template pruning', 'dangling references', 'pnpm version', 'lockfile update'],
       skipped: [

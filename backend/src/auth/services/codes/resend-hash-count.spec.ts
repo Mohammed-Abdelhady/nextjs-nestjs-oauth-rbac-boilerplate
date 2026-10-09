@@ -29,9 +29,11 @@ import { SignInService } from '../sessions/sign-in.service';
 import {
   MAIL_COUNTER_PURPOSE,
   MAILED_CODE_LIMIT_PER_ADDRESS,
+  MailCounterPurpose,
   PENDING_PURPOSE,
 } from '../../constants/registration';
 import { FrozenClock, TEST_NOW } from '../../../../test/utils/frozen-clock';
+import { seedMailCounter } from '../../../../test/utils/mail-counter-seed';
 import { RaceGate } from '../../../../test/utils/race-gate';
 import { pauseQueryCall } from '../../../../test/utils/pending-race';
 import {
@@ -152,12 +154,11 @@ describe('resend activation hash count', () => {
     expect(await registrations.countDocuments({ email: DTO.email })).toBe(0);
   });
 
-  async function capTheCounter(purpose: string): Promise<void> {
-    await counters.create({
+  async function capTheCounter(purpose: MailCounterPurpose): Promise<void> {
+    await seedMailCounter(counters, {
       email: DTO.email,
       purpose,
       mailedCodes: MAILED_CODE_LIMIT_PER_ADDRESS,
-      windowStartedAt: TEST_NOW,
     });
   }
 

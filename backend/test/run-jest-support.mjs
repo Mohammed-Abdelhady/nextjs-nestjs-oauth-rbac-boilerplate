@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, unlinkSync } from 'node:fs';
+import { readdirSync, readFileSync, rmSync, unlinkSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 export function countActiveRuns(runDirectory, isProcessAlive) {
@@ -23,6 +23,28 @@ export function countActiveRuns(runDirectory, isProcessAlive) {
     activeRuns += 1;
   }
   return activeRuns;
+}
+
+// A run that was interrupted never reaches global teardown, so its data
+// directories are swept by the next run once their owning process is gone.
+export function removeOrphanedDataDirectories(
+  parentDirectory,
+  prefix,
+  isProcessAlive,
+) {
+  const removed = [];
+  for (const entry of readdirSync(parentDirectory, { withFileTypes: true })) {
+    if (!entry.isDirectory() || !entry.name.startsWith(prefix)) continue;
+    const owner = /^(\d+)-./.exec(entry.name.slice(prefix.length));
+    const pid = owner ? Number(owner[1]) : Number.NaN;
+    if (!Number.isInteger(pid) || pid < 1 || isProcessAlive(pid)) continue;
+    rmSync(resolve(parentDirectory, entry.name), {
+      recursive: true,
+      force: true,
+    });
+    removed.push(entry.name);
+  }
+  return removed;
 }
 
 export function processExists(pid, checkProcess) {
