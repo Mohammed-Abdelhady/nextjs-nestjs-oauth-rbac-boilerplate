@@ -1,20 +1,24 @@
 import type { AuthSnapshot } from '@app/native-auth';
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import type { ShellAuth } from '../shell';
-import { describeError, describeOutcome } from '../logic/outcome-text';
-
-export const DEBUG_ACTION = {
-  RESTORE: 'restore',
-  SIGN_IN: 'signIn',
-  REFRESH: 'refresh',
-  PROFILE: 'profile',
-  SIGN_OUT: 'signOut',
-} as const;
-type DebugAction = (typeof DEBUG_ACTION)[keyof typeof DEBUG_ACTION];
+import { DEBUG_ACTION, type DebugAction, type StorageWarning } from '../logic/outcome-keys';
+import {
+  describeAction,
+  describeError,
+  describeProfile,
+  describeRefresh,
+  describeRestore,
+  describeSignIn,
+  describeSignOut,
+  type Described,
+} from '../logic/outcome-text';
+import { storageWarningAfter } from '../logic/storage-warning';
 
 export interface AuthDebug {
   snapshot: AuthSnapshot;
-  lastOutcome: string | undefined;
+  lastOutcome: Described | undefined;
+  /** Set once the action that raised the snapshot's warning has finished. */
+  storageWarning: StorageWarning | undefined;
   refreshRequests: number;
   signIn(): void;
   refresh(): void;
@@ -27,40 +31,48 @@ export function useAuthDebug({ engine, client, debug }: ShellAuth): AuthDebug {
     useCallback((onChange: () => void) => engine.subscribe(onChange), [engine]),
     () => engine.snapshot,
   );
-  const [lastOutcome, setLastOutcome] = useState<string>();
+  const [lastOutcome, setLastOutcome] = useState<Described>();
+  const [storageWarning, setStorageWarning] = useState<StorageWarning>();
   const [refreshRequests, setRefreshRequests] = useState(0);
 
   const run = useCallback(
-    (action: DebugAction, work: () => Promise<string>): void => {
+    (action: DebugAction, work: () => Promise<Described>): void => {
+      const sentBefore = debug.refreshRequests();
       void work()
         .catch(describeError)
-        .then((text) => {
-          setLastOutcome(`${action}: ${text}`);
-          setRefreshRequests(debug.refreshRequests());
+        .then((result) => {
+          const sent = debug.refreshRequests();
+          const settled = engine.snapshot;
+          setLastOutcome(describeAction(action, result));
+          setRefreshRequests(sent);
+          setStorageWarning((previous) =>
+            storageWarningAfter(previous, settled, sent > sentBefore),
+          );
         });
     },
-    [debug],
+    [debug, engine],
   );
 
   const loadProfileText = useCallback(
-    async (): Promise<string> => (await client.profile.get()).email,
+    async (): Promise<Described> => describeProfile((await client.profile.get()).email),
     [client],
   );
 
   useEffect(() => {
-    run(DEBUG_ACTION.RESTORE, async () => describeOutcome(await engine.restore()));
+    run(DEBUG_ACTION.RESTORE, async () => describeRestore(await engine.restore()));
   }, [engine, run]);
 
   return {
     snapshot,
     lastOutcome,
+    storageWarning,
     refreshRequests,
     signIn: useCallback(
-      () => run(DEBUG_ACTION.SIGN_IN, async () => describeOutcome(await engine.signIn())),
+      () => run(DEBUG_ACTION.SIGN_IN, async () => describeSignIn(await engine.signIn())),
       [engine, run],
     ),
     refresh: useCallback(
-      () => run(DEBUG_ACTION.REFRESH, async () => describeOutcome(await engine.refresh())),
+      () => run(DEBUG_ACTION.REFRESH, async () => describeRefresh(await engine.refresh())),
       [engine, run],
     ),
     loadProfile: useCallback(
@@ -68,7 +80,7 @@ export function useAuthDebug({ engine, client, debug }: ShellAuth): AuthDebug {
       [loadProfileText, run],
     ),
     signOut: useCallback(
-      () => run(DEBUG_ACTION.SIGN_OUT, async () => describeOutcome(await engine.signOut())),
+      () => run(DEBUG_ACTION.SIGN_OUT, async () => describeSignOut(await engine.signOut())),
       [engine, run],
     ),
   };

@@ -1,0 +1,191 @@
+import { createFetchTransport, createNativePorts } from '@app/native-adapters';
+import {
+  FAKE_SHA256,
+  FakeCrypto,
+  FakeLinking,
+  FakeMarkerFile,
+  FakeSecureStore,
+  FakeServer,
+  FakeTime,
+  FakeUuid,
+  FakeWebBrowser,
+} from '@app/native-adapters/testing';
+import { createAuthEngine } from '@app/native-auth';
+import { describe, expect, it } from 'vitest';
+import { MESSAGES } from '../src/i18n/messages';
+import { createDebugTransport, type DebugTransport } from '../src/logic/debug-transport';
+import { STORAGE_WARNING_KEY, type StorageWarning } from '../src/logic/outcome-keys';
+import { resolveConfig } from '../src/logic/resolve-config';
+import { storageWarningAfter } from '../src/logic/storage-warning';
+
+const DEADLINE_MS = 20_000;
+const IO_ERROR = 'I/O error.';
+const WARNED = 'storageBlocked';
+
+/** A signed-in engine over the adapters, with the store and the server a test can break. */
+async function signedIn() {
+  const store = new FakeSecureStore();
+  const server = new FakeServer();
+  const browser = new FakeWebBrowser();
+  browser.respond = (url) => ({ type: 'success', url: server.authorize(url) });
+  const time = new FakeTime();
+  const configuration = resolveConfig({ apiOrigin: undefined, development: true });
+  const ports = createNativePorts(
+    {
+      secureStore: store,
+      keychainOptions: { keychainAccessible: 4 },
+      webBrowser: browser,
+      crypto: new FakeCrypto(),
+      sha256Algorithm: FAKE_SHA256,
+      linking: new FakeLinking(null),
+      installMarker: new FakeMarkerFile(),
+      recordMarker: new FakeMarkerFile(),
+      uuid: new FakeUuid(),
+      clock: time,
+      timers: time,
+    },
+    {
+      clientId: configuration.clientId,
+      environment: configuration.environment,
+      ephemeralBrowserSession: true,
+    },
+  );
+  const debugs: DebugTransport[] = [];
+  const engine = createAuthEngine(configuration, {
+    ...ports,
+    makeTransport(baseAddress) {
+      const debug = createDebugTransport(
+        createFetchTransport(server, ports.timer, baseAddress, DEADLINE_MS),
+      );
+      debugs.push(debug);
+      return debug.transport;
+    },
+  });
+  await engine.restore();
+  await engine.signIn();
+  const refreshesSent = (): number => debugs[0]?.refreshRequests() ?? 0;
+  return { engine, store, server, refreshesSent };
+}
+
+describe('which storage warning the screen shows, from what the engine did', () => {
+  it('says the session is in memory only after a refresh whose save was refused', async () => {
+    const { engine, store, server, refreshesSent } = await signedIn();
+    const send = server.fetch.bind(server);
+    server.fetch = (address, init) => {
+      if (address.endsWith('/api/oauth/token')) store.writeFailure = IO_ERROR;
+      return send(address, init);
+    };
+    const sentBefore = refreshesSent();
+
+    const outcome = await engine.refresh();
+
+    expect(outcome).toEqual({ kind: 'refreshed' });
+    expect(engine.snapshot).toMatchObject({ status: 'signedIn', warning: 'storageBlocked' });
+    expect(storageWarningAfter(undefined, engine.snapshot, refreshesSent() > sentBefore)).toBe(
+      'sessionInMemory',
+    );
+  });
+
+  it('says no refresh was sent when the write before it is refused', async () => {
+    const { engine, store, server, refreshesSent } = await signedIn();
+    store.failNextSet = true;
+    const sentBefore = refreshesSent();
+
+    const outcome = await engine.refresh();
+
+    expect(outcome.kind).toBe('failed');
+    expect(server.refreshes).toBe(0);
+    expect(engine.snapshot).toMatchObject({ status: 'signedIn', warning: 'storageBlocked' });
+    expect(storageWarningAfter(undefined, engine.snapshot, refreshesSent() > sentBefore)).toBe(
+      'refreshNotSent',
+    );
+  });
+
+  it('says the saved record could not be deleted after a sign-out whose delete failed', async () => {
+    const { engine, store, refreshesSent } = await signedIn();
+    store.writeFailure = IO_ERROR;
+    const sentBefore = refreshesSent();
+
+    await engine.signOut();
+
+    expect(engine.snapshot).toMatchObject({ status: 'signedOut', warning: 'storageBlocked' });
+    expect(storageWarningAfter(undefined, engine.snapshot, refreshesSent() > sentBefore)).toBe(
+      'deleteFailed',
+    );
+  });
+
+  it('shows no warning for a refresh that was saved', async () => {
+    const { engine, refreshesSent } = await signedIn();
+    const sentBefore = refreshesSent();
+
+    await engine.refresh();
+
+    expect(
+      storageWarningAfter('sessionInMemory', engine.snapshot, refreshesSent() > sentBefore),
+    ).toBeUndefined();
+  });
+});
+
+describe('a storage warning across later actions', () => {
+  it.each<[string, StorageWarning | undefined, string, boolean, StorageWarning]>([
+    [
+      'stays in memory only when a later write is refused',
+      'sessionInMemory',
+      'signedIn',
+      false,
+      'sessionInMemory',
+    ],
+    [
+      'stays on the refused write when a later action sends nothing',
+      'refreshNotSent',
+      'signedIn',
+      false,
+      'refreshNotSent',
+    ],
+    [
+      'moves to memory only once a refresh went out',
+      'refreshNotSent',
+      'signedIn',
+      true,
+      'sessionInMemory',
+    ],
+    [
+      'reads a new warning after a failed delete as the refused write',
+      'deleteFailed',
+      'signedIn',
+      false,
+      'refreshNotSent',
+    ],
+    [
+      'reads a signed-out warning as the failed delete',
+      'sessionInMemory',
+      'signedOut',
+      true,
+      'deleteFailed',
+    ],
+  ])('%s', (_name, previous, status, refreshSent, expected) => {
+    const snapshot = {
+      status: status === 'signedIn' ? 'signedIn' : 'signedOut',
+      warning: WARNED,
+    } as const;
+
+    expect(storageWarningAfter(previous, snapshot, refreshSent)).toBe(expected);
+  });
+
+  it('drops the warning when the snapshot has none', () => {
+    expect(storageWarningAfter('deleteFailed', { status: 'signedOut' }, false)).toBeUndefined();
+  });
+
+  it('has one sentence per case in both languages', () => {
+    expect(STORAGE_WARNING_KEY).toEqual({
+      sessionInMemory: 'warningSessionInMemory',
+      deleteFailed: 'warningDeleteFailed',
+      refreshNotSent: 'warningRefreshNotSent',
+    });
+    const sentences = Object.values(STORAGE_WARNING_KEY).flatMap((key) => [
+      MESSAGES.en[key],
+      MESSAGES.ar[key],
+    ]);
+    expect(new Set(sentences).size).toBe(6);
+  });
+});

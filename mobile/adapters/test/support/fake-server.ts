@@ -30,7 +30,7 @@ export interface ServerRequest {
 }
 
 function json(status: number, body: unknown): FetchResponseApi {
-  return { status, text: async () => JSON.stringify(body) };
+  return { status, text: async () => JSON.stringify(body), headers: { get: () => null } };
 }
 
 function parseBody(text: string | undefined): Record<string, unknown> {

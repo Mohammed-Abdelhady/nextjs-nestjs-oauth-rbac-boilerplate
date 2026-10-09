@@ -58,6 +58,8 @@ controller, and the transport must honor them. Set a deadline on ordinary API re
 engine bounds OAuth exchange, profile loading, refresh, storage, and revoke. If an ordinary API
 request never settles, that request stays pending. A later response cannot be retried after sign-out.
 The SDK forwards DPoP request headers and exposes the DPoP-Nonce response header on OAuth errors.
+The transport must return that response header in `headers`. Without it a device-bound session
+cannot answer the server's nonce challenge, and sign-in, refresh and revoke all end at the challenge.
 Web callers do not add proofs or change their requests.
 
 Sign-out calls `oauth.revoke` with the refresh token. The bearer logout route also ends the native
@@ -83,6 +85,24 @@ Only a bound refresh gets one extra send after an unknown answer. It uses the sa
 a fresh proof. The server can return one replacement pair while that retry window remains open and
 the replacement has not been used. If the answer is `NATIVE_DPOP_RETRY_IN_PROGRESS`, `invalid_grant`,
 or unknown again, the engine asks for sign-in. Unbound sessions never get this retry.
+
+### Offline with an expired access token
+
+This is a product decision. A refresh that gets no answer ends a session that has no device key.
+`fetch` reports a request that never left the device and an answer lost on the way back the same
+way, so the engine cannot tell them apart. If it sent the same refresh token again and the first
+request had arrived, the server would read the second one as reuse of a spent token and revoke the
+whole family.
+
+What the person sees: the access token has expired, the app makes a request with no connection, and
+the snapshot becomes `reauthRequired` with the reason `refreshInterrupted`. The request rejects with
+`TransportError` and the reason `no_response`. The saved marker keeps that state after a restart, so
+the person signs in through the browser again once online. A request made offline while the access
+token is still valid only fails with `no_response` and the session stays.
+
+A device-bound session gets one resend. The engine sends it at once, inside the same 15 second
+refresh deadline, with the same refresh token and a fresh proof. If the device is still offline the
+resend is lost too, and the session ends the same way.
 
 An unavailable key is transient, so the engine keeps the bound session and lets the caller try again.
 Cancellation, key invalidation, or a thumbprint mismatch makes that session unusable and asks for
@@ -152,10 +172,19 @@ Status and operation are separate snapshot fields.
 | `refreshing`  | One refresh is shared by requests that need it.                   |
 | `signingOut`  | Local credentials are cleared while server revocation runs.       |
 
-Snapshots are immutable. `warning: 'storageBlocked'` means a rotated token pair is only in memory.
-With the reason `storageLocked` the store refused the save because the device is locked: call
-`restore()` after unlock and the engine saves the pair it holds, without another refresh. Without
-that reason the engine does not try again until the next refresh writes its marker.
+Snapshots are immutable. `warning: 'storageBlocked'` means the store refused a write. It is set in
+three cases, and the snapshot does not say which:
+
+- `signedIn` after a refresh: the rotated pair could not be saved and is only in memory.
+- `signedIn` after a refresh that was not sent: the marker write before it was refused. Nothing
+  rotated and the saved record is unchanged.
+- `signedOut`: sign-out could not delete the saved record. Nothing is in memory and the old record
+  is still on disk.
+
+A shell tells the first two apart by whether a refresh request left the device. With the reason
+`storageLocked` the store refused the write because the device is locked: call `restore()` after
+unlock and the engine saves the pair it holds, without another refresh. Without that reason the
+engine does not try again until the next refresh writes its marker.
 
 ## Outcomes for the UI
 
@@ -171,8 +200,18 @@ refresh a request already started, and a request that needs a refresh joins it, 
 request is sent. It follows the same policy table, backoff and storage rules as an automatic refresh.
 
 After `dispose()`, pending public calls settle as `disposed`, subscriptions are removed, and the
-transport refuses new requests. Disposing does not sign out an established session. During refresh,
-the engine keeps the deadline armed. `OWN_SAME` keeps the exact rotated token without revoking it.
+transport refuses new requests. Disposing does not sign out an established session.
+
+The engine can still call its ports after `dispose()` returns. A timer does not outlive its own
+deadline, but timers and port calls do outlive the engine when disposal lands during a refresh or a
+sign-out. For a refresh the engine starts no new call later than 35 seconds after `dispose()`: 15
+for the answer (`OAUTH_REFRESH_TIMEOUT_MS`), 5 to save it (`CREDENTIAL_WRITE_TIMEOUT_MS`), 5 for the
+two ownership reads (`DISPOSED_RECORD_READ_ATTEMPTS` times `DISPOSED_RECORD_READ_ATTEMPT_TIMEOUT_MS`),
+5 for the revoke (`SIGN_OUT_REVOKE_TIMEOUT_MS`) and 5 for the ownership reads of the guarded delete.
+A sign-out interrupted by disposal runs its guarded delete and its revoke side by side, for up to 5
+seconds. One case has no bound: a storage write that answers after its own deadline is corrected
+when it answers. A host that tears down its native modules should wait those 35 seconds, or accept
+that the late calls fail. During refresh, the engine keeps the deadline armed. `OWN_SAME` keeps the exact rotated token without revoking it.
 `OWN_OTHER` keeps a token from that lineage only when it differs from both the late token and the
 sent token. `FOREIGN` or
 `EMPTY` revokes the late token and leaves any foreign record unchanged. `UNREADABLE` retries once; if
@@ -189,8 +228,11 @@ Known limits:
 
 - Credential storage has no compare-and-swap. Another engine can replace a record between its
   ownership read and a guarded write or delete.
-- A replace already inside the storage port when disposal lands can still overwrite a newer sign-in's
-  record. The newer session can be lost, and its refresh family may stay live until expiry.
+- A newer session's record is never overwritten by an older operation within one engine instance,
+  which orders its writes in one queue. Two instances share no queue. A replace already inside the
+  storage port when disposal lands can still overwrite the record a second engine saved for a newer
+  sign-in. The newer session can be lost, and its refresh family may stay live until expiry. Build a
+  new engine only after the old one's storage calls have returned.
 - An abandoned sign-in whose transaction discard failed is remembered only in the current process.
   After restart, a late link may still be exchanged by the original browser session.
 - A record without a lineage stays on disk until a later sign-in replaces it. Its refresh token stays
