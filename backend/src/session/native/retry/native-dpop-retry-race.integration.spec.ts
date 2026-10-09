@@ -7,7 +7,8 @@ import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
 } from '../../../../test/utils/session-authority-harness';
-import { RaceBarrier, pauseQuery } from '../../../../test/utils/race-gate';
+import { RaceGate, holdBefore } from '../../../../test/utils/race-gate';
+import { NativeBoundRetryService } from './native-bound-retry.service';
 import { signNativeDpopProof } from '../harness/native-dpop-test-vectors.harness-spec';
 import {
   issueBoundNativeGrant,
@@ -44,40 +45,44 @@ describe('native DPoP retry concurrency', () => {
   it('admits one replacement in two simultaneous retries and leaves the loser in progress', async () => {
     const initial = await issueBoundNativeGrant(ctx);
     await successfulRefresh(ctx, initial.refreshToken, 'race-first-rotation');
-    const barrier = new RaceBarrier();
-    const claim = barrier.point('retry-claim');
-    const updateOne = ctx.credentials.updateOne.bind(ctx.credentials);
-    const spy = jest
-      .spyOn(ctx.credentials, 'updateOne')
-      .mockImplementation((...args) => {
-        const query = updateOne(...args);
-        pauseQuery(query, claim);
-        return query;
-      });
+    // Each retry has read the token as spent and unclaimed; neither has claimed.
+    const firstRetry = new RaceGate();
+    const secondRetry = new RaceGate();
+    const restore = holdBefore(
+      ctx.harness.app.get(NativeBoundRetryService),
+      'retryOrReplay',
+      (call) => [firstRetry, secondRetry][call],
+    );
     let results: Array<TokenSuccess | OauthFailure> | undefined;
     try {
-      const first = refresh(
-        ctx,
-        initial.refreshToken,
-        signNativeDpopProof({
-          token: initial.refreshToken,
-          claims: { jti: 'retry-race-a' },
-        }),
-      );
-      const second = refresh(
-        ctx,
-        initial.refreshToken,
-        signNativeDpopProof({
-          token: initial.refreshToken,
-          claims: { jti: 'retry-race-b' },
-        }),
-      );
-      await claim.reached(2);
-      claim.release();
-      results = await Promise.all([first, second]);
+      const racers = [
+        refresh(
+          ctx,
+          initial.refreshToken,
+          signNativeDpopProof({
+            token: initial.refreshToken,
+            claims: { jti: 'retry-race-a' },
+          }),
+        ),
+        refresh(
+          ctx,
+          initial.refreshToken,
+          signNativeDpopProof({
+            token: initial.refreshToken,
+            claims: { jti: 'retry-race-b' },
+          }),
+        ),
+      ];
+      await firstRetry.reached(1);
+      await secondRetry.reached(1);
+      firstRetry.release();
+      await Promise.race(racers);
+      secondRetry.release();
+      results = await Promise.all(racers);
     } finally {
-      claim.release();
-      spy.mockRestore();
+      firstRetry.release();
+      secondRetry.release();
+      restore();
     }
     if (!results) {
       throw new Error('bound retry race did not run');

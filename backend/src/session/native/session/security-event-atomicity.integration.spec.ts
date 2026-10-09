@@ -23,6 +23,11 @@ import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
 } from '../../../../test/utils/session-authority-harness';
+import { TEST_NOW } from '../../../../test/utils/frozen-clock';
+import {
+  REFUSED_EVENT_SEED_ACTION,
+  refuseSecurityEvents,
+} from '../../../../test/utils/transaction-failure';
 
 describe('security event insert failure atomicity', () => {
   let ctx: NativeOauthHarness;
@@ -54,9 +59,7 @@ describe('security event insert failure atomicity', () => {
         'event-issuance@example.test',
       );
       const approved = await approveNativeCode(ctx, user);
-      const spy = jest
-        .spyOn(events, 'create')
-        .mockRejectedValueOnce(new Error('event insert failed'));
+      const allowEvents = await refuseSecurityEvents(events, TEST_NOW);
 
       try {
         await expect(
@@ -72,13 +75,15 @@ describe('security event insert failure atomicity', () => {
           ),
         ).rejects.toMatchObject({ code: ErrorCode.AUTHORITY_UNAVAILABLE });
       } finally {
-        spy.mockRestore();
+        allowEvents();
       }
 
       expect({
         sessions: await ctx.harness.sessions.countDocuments(),
         credentials: await ctx.credentials.countDocuments(),
-        events: await events.countDocuments(),
+        events: await events.countDocuments({
+          action: { $ne: REFUSED_EVENT_SEED_ACTION },
+        }),
         consumed: (
           await ctx.transactions.findOne({
             transactionId: approved.transactionId,
@@ -97,16 +102,14 @@ describe('security event insert failure atomicity', () => {
       if (!successor.ok) {
         throw new Error('setup rotation failed');
       }
-      const spy = jest
-        .spyOn(events, 'create')
-        .mockRejectedValueOnce(new Error('event insert failed'));
+      const allowEvents = await refuseSecurityEvents(events, TEST_NOW);
 
       try {
         await expect(rotate(ctx, granted.refreshToken)).rejects.toMatchObject({
           code: ErrorCode.AUTHORITY_UNAVAILABLE,
         });
       } finally {
-        spy.mockRestore();
+        allowEvents();
       }
 
       const session = await ctx.harness.sessions.findOne({
