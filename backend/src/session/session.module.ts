@@ -34,6 +34,10 @@ import {
   UserApplicationGrant,
   UserApplicationGrantSchema,
 } from './schemas/user-application-grant.schema';
+import { ApplicationAccess } from './applications/application-access';
+import { ApplicationAccessStore } from './applications/application-access.store';
+import { ApplicationRegistry } from './applications/application-registry';
+import { ApplicationRegistryStore } from './applications/application-registry.store';
 import { AuthorityApplications } from './authority/authority-applications';
 import { SessionAuthorityStore } from './authority/session-authority.store';
 import { SessionValidator } from './authority/session-validator';
@@ -41,6 +45,8 @@ import { SecurityEventRecorder } from './events/security-event-recorder';
 import { SecurityEventStore } from './events/security-event.store';
 import { BrowserIssuanceStore } from './issuance/browser-issuance.store';
 import { IssuanceApplications } from './issuance/issuance-applications';
+import { MongoApplicationAccessStore } from './persistence/mongo/mongo-application-access.store';
+import { MongoApplicationRegistryStore } from './persistence/mongo/mongo-application-registry.store';
 import { MongoAuthorityApplications } from './persistence/mongo/mongo-authority-applications';
 import { MongoBrowserIssuanceStore } from './persistence/mongo/mongo-browser-issuance.store';
 import { MongoBrowserProofStore } from './persistence/mongo/mongo-browser-proof.store';
@@ -82,6 +88,13 @@ import { NativeAccessService } from './native/access/native-access.service';
     ]),
   ],
   providers: [
+    {
+      provide: ApplicationRegistryStore,
+      useClass: MongoApplicationRegistryStore,
+    },
+    ApplicationRegistry,
+    { provide: ApplicationAccessStore, useClass: MongoApplicationAccessStore },
+    ApplicationAccess,
     ApplicationAccessService,
     ApplicationRegistryService,
     { provide: BrowserProofStore, useClass: MongoBrowserProofStore },
@@ -106,6 +119,10 @@ import { NativeAccessService } from './native/access/native-access.service';
   exports: [
     MongooseModule,
     CommonModule,
+    ApplicationRegistryStore,
+    ApplicationRegistry,
+    ApplicationAccessStore,
+    ApplicationAccess,
     ApplicationAccessService,
     ApplicationRegistryService,
     BrowserProofStore,
