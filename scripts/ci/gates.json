@@ -64,6 +64,13 @@
       "args": ["--filter", "backend", "run", "test:e2e"]
     },
     {
+      "name": "Backend end-to-end on PostgreSQL",
+      "group": "quality",
+      "command": "pnpm",
+      "args": ["--filter", "backend", "run", "test:e2e:postgres"],
+      "repositoryOnly": true
+    },
+    {
       "name": "Installer combinations",
       "group": "installer",
       "command": "pnpm",

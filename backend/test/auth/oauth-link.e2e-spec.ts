@@ -1,9 +1,3 @@
-import { getModelToken } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import {
-  User,
-  UserDocument,
-} from '../../src/user/persistence/mongo/schemas/user.schema';
 import { ErrorCode } from '../../src/common/enums/error-code.enum';
 import type { OAuthProviderStrategy } from '../../src/auth/oauth/oauth-provider.interface';
 import { SEED_USER } from '../constants/seed-users';
@@ -11,7 +5,7 @@ import { bootE2eApp, loginAs, type E2eApp } from '../utils/e2e-app';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
-} from '../utils/session-authority-harness';
+} from '../utils/hook-timeouts';
 import { TEST_NOW } from '../utils/frozen-clock';
 
 const GOOGLE_STRATEGY: OAuthProviderStrategy = {
@@ -76,17 +70,9 @@ describe('provider link start with both credentials (e2e)', () => {
 
   it('lists the sign-in methods with what an unlink of each would be told', async () => {
     const browser = await loginAs(e2e.httpServer, SEED_USER);
-    const users = e2e.app.get<Model<UserDocument>>(getModelToken(User.name));
-    await users.updateOne(
-      { email: SEED_USER.email },
-      {
-        $set: {
-          linkedAccounts: [
-            { provider: 'google', providerId: 'google-1', linkedAt: TEST_NOW },
-          ],
-        },
-      },
-    );
+    await e2e.state.auth.linkProviderAccounts(SEED_USER.email, [
+      { provider: 'google', providerId: 'google-1', linkedAt: TEST_NOW },
+    ]);
 
     const listed = await browser.get('/api/user/linked-providers').expect(200);
 
@@ -106,17 +92,9 @@ describe('provider link start with both credentials (e2e)', () => {
 
   it('lists which sign-in methods can be primary and answers each choice the same way', async () => {
     const browser = await loginAs(e2e.httpServer, SEED_USER);
-    const users = e2e.app.get<Model<UserDocument>>(getModelToken(User.name));
-    await users.updateOne(
-      { email: SEED_USER.email },
-      {
-        $set: {
-          linkedAccounts: [
-            { provider: 'google', providerId: 'google-1', linkedAt: TEST_NOW },
-          ],
-        },
-      },
-    );
+    await e2e.state.auth.linkProviderAccounts(SEED_USER.email, [
+      { provider: 'google', providerId: 'google-1', linkedAt: TEST_NOW },
+    ]);
 
     const listed = await browser.get('/api/user/linked-providers').expect(200);
 
@@ -148,7 +126,6 @@ describe('provider link start with both credentials (e2e)', () => {
 
   it('says whether email sign-in is usable, and nothing for an account a provider made', async () => {
     const browser = await loginAs(e2e.httpServer, SEED_USER);
-    const users = e2e.app.get<Model<UserDocument>>(getModelToken(User.name));
 
     const byEmail = await browser.get('/api/user/linked-providers').expect(200);
 
@@ -157,17 +134,9 @@ describe('provider link start with both credentials (e2e)', () => {
       data: { providers: ['email'], emailSignIn: 'usable' },
     });
 
-    await users.updateOne(
-      { email: SEED_USER.email },
-      {
-        $set: {
-          authProvider: 'google',
-          linkedAccounts: [
-            { provider: 'google', providerId: 'google-1', linkedAt: TEST_NOW },
-          ],
-        },
-      },
-    );
+    await e2e.state.auth.makeProviderCreated(SEED_USER.email, 'google', [
+      { provider: 'google', providerId: 'google-1', linkedAt: TEST_NOW },
+    ]);
     const byProvider = await browser
       .get('/api/user/linked-providers')
       .expect(200);

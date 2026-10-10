@@ -3,6 +3,10 @@ import { getModelToken } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Types } from 'mongoose';
 import type { Request } from 'express';
+import {
+  MAGIC_LINK_EXPIRES_IN,
+  MAGIC_LINK_MAX_PER_HOUR,
+} from '../../magic-link-limits.harness-spec';
 import { MagicLinkService } from '../../magic-link.service';
 import { PendingMagicLink } from './schemas/pending-magic-link.schema';
 import { MagicLinkStore } from '../../stores/magic-link.store';
@@ -45,8 +49,7 @@ export interface MagicLinkHarness {
   signInService: { completeSignIn: jest.Mock; issueSession: jest.Mock };
 }
 
-export const MAGIC_LINK_EXPIRES_IN = 900000;
-export const MAGIC_LINK_MAX_PER_HOUR = 5;
+export { MAGIC_LINK_EXPIRES_IN, MAGIC_LINK_MAX_PER_HOUR };
 
 export const MOCK_USER = {
   _id: new Types.ObjectId('507f1f77bcf86cd799439011'),

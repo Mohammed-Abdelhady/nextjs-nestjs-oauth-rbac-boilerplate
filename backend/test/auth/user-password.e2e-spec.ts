@@ -1,32 +1,23 @@
 import { randomBytes } from 'crypto';
 import { ConfigService } from '@nestjs/config';
-import { getModelToken } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { MongoServerError } from 'mongodb';
 import request from 'supertest';
 import { CSRF_HEADER } from '../../src/session/constants/browser-proof';
 import { NativeAuthorizeService } from '../../src/session/native/authorize/native-authorize.service';
 import { NativeTokenService } from '../../src/session/native/token/native-token.service';
 import { RaceGate } from '../utils/race-gate';
-import { failNextVersionWrite } from '../utils/transaction-failure';
-import { MONGO_TRANSIENT_TRANSACTION_LABEL } from '../../src/common/constants/mongo-errors';
 import {
   NATIVE_CLIENT_ID,
   NATIVE_META,
   NATIVE_REDIRECT,
   nativeAuthorizeQuery,
-} from '../../src/session/native/persistence/mongo/harness/native-oauth.harness-spec';
-import {
-  User,
-  UserDocument,
-} from '../../src/user/persistence/mongo/schemas/user.schema';
+} from '../../src/session/native/harness/native-oauth-requests.harness-spec';
 import { SEED_USER } from '../constants/seed-users';
 import { bootE2eApp, loginAs, type E2eApp } from '../utils/e2e-app';
 import { createNativeApplication } from '../utils/native/native-authorize.fixtures';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
-} from '../utils/session-authority-harness';
+} from '../utils/hook-timeouts';
 import { TEST_NOW } from '../utils/frozen-clock';
 
 const NEW_PASSWORD = 'NewPassword123!';
@@ -100,11 +91,8 @@ describe('password change keeps the calling session (e2e)', () => {
 
   it('stores the new password when the first transaction attempt is retried', async () => {
     const browser = await loginAs(e2e.httpServer, SEED_USER);
-    const conflict = new MongoServerError({ message: 'write conflict' });
-    conflict.addErrorLabel(MONGO_TRANSIENT_TRANSACTION_LABEL);
-    const users = e2e.app.get<Model<UserDocument>>(getModelToken(User.name));
     const gate = new RaceGate();
-    const restore = failNextVersionWrite(users, conflict, gate);
+    const restore = e2e.state.auth.abortNextSessionEndingWrite(gate);
     const changed = browser
       .post('/api/user/password')
       .send({ currentPassword: SEED_USER.password, newPassword: NEW_PASSWORD })
@@ -149,8 +137,7 @@ async function issueNativeGrantFor(
   e2e: E2eApp,
   email: string,
 ): Promise<NativeGrant> {
-  const users = e2e.app.get<Model<UserDocument>>(getModelToken(User.name));
-  const user = await users.findOne({ email }).exec();
+  const user = await e2e.state.accounts.accountWithAddress(email);
   if (!user) {
     throw new Error('seed user is missing');
   }

@@ -1,11 +1,5 @@
 import { ConfigService } from '@nestjs/config';
-import { getModelToken } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 import { ErrorCode } from '../../../src/common/enums/error-code.enum';
-import {
-  AuthorizationTransaction,
-  AuthorizationTransactionDocument,
-} from '../../../src/session/persistence/mongo/schemas/authorization-transaction.schema';
 import { SEED_USER } from '../../constants/seed-users';
 import {
   beginNativeAuthorization,
@@ -16,7 +10,7 @@ import { bootE2eApp, loginAs, type E2eApp } from '../../utils/e2e-app';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
-} from '../../utils/session-authority-harness';
+} from '../../utils/hook-timeouts';
 import { TEST_NOW } from '../../utils/frozen-clock';
 
 interface ApiErrorBody {
@@ -44,10 +38,7 @@ describe('native authorization claim races (e2e)', () => {
   it('denial wins against a paused approval without creating a code', async () => {
     const browser = await loginAs(e2e.httpServer, SEED_USER);
     const started = await beginNativeAuthorization(e2e);
-    const transactions = e2e.app.get<Model<AuthorizationTransactionDocument>>(
-      getModelToken(AuthorizationTransaction.name),
-    );
-    const gate = pauseNextNativeAuthorizationRead(transactions);
+    const gate = pauseNextNativeAuthorizationRead(e2e);
 
     try {
       const approval = browser
@@ -66,9 +57,9 @@ describe('native authorization claim races (e2e)', () => {
       expect((approvalResponse.body as ApiErrorBody).error.code).toBe(
         ErrorCode.NATIVE_TRANSACTION_EXPIRED,
       );
-      const transaction = await transactions.findOne({
-        transactionId: started.transactionId,
-      });
+      const transaction = await e2e.state.native.authorizationRequest(
+        started.transactionId,
+      );
       expect(transaction?.consumed).toBe(true);
       expect(transaction?.codeHash).toBeUndefined();
     } finally {
@@ -80,10 +71,7 @@ describe('native authorization claim races (e2e)', () => {
   it('approval wins against a paused denial and the denial gets expired', async () => {
     const browser = await loginAs(e2e.httpServer, SEED_USER);
     const started = await beginNativeAuthorization(e2e);
-    const transactions = e2e.app.get<Model<AuthorizationTransactionDocument>>(
-      getModelToken(AuthorizationTransaction.name),
-    );
-    const gate = pauseNextNativeAuthorizationRead(transactions);
+    const gate = pauseNextNativeAuthorizationRead(e2e);
 
     try {
       const denial = browser
@@ -102,9 +90,9 @@ describe('native authorization claim races (e2e)', () => {
       expect((denialResponse.body as ApiErrorBody).error.code).toBe(
         ErrorCode.NATIVE_TRANSACTION_EXPIRED,
       );
-      const transaction = await transactions.findOne({
-        transactionId: started.transactionId,
-      });
+      const transaction = await e2e.state.native.authorizationRequest(
+        started.transactionId,
+      );
       expect(transaction?.consumed).toBe(false);
       expect(typeof transaction?.codeHash).toBe('string');
     } finally {
@@ -116,10 +104,7 @@ describe('native authorization claim races (e2e)', () => {
   it('only one of two approvals can claim a transaction', async () => {
     const browser = await loginAs(e2e.httpServer, SEED_USER);
     const started = await beginNativeAuthorization(e2e);
-    const transactions = e2e.app.get<Model<AuthorizationTransactionDocument>>(
-      getModelToken(AuthorizationTransaction.name),
-    );
-    const gate = pauseNextNativeAuthorizationRead(transactions);
+    const gate = pauseNextNativeAuthorizationRead(e2e);
 
     try {
       const first = browser
@@ -139,10 +124,9 @@ describe('native authorization claim races (e2e)', () => {
         ErrorCode.NATIVE_TRANSACTION_EXPIRED,
       );
       expect(
-        await transactions.countDocuments({
-          transactionId: started.transactionId,
-          codeHash: { $exists: true },
-        }),
+        await e2e.state.native.approvedAuthorizationRequestCount(
+          started.transactionId,
+        ),
       ).toBe(1);
     } finally {
       gate.release();

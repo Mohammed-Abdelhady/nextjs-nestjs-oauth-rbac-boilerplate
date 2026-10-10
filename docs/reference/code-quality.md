@@ -231,6 +231,8 @@ Backend unit tests use Jest (`pnpm --filter backend test`). Frontend unit tests 
 
 <!-- repository-only:start -->
 
+The same backend end-to-end suite runs on PostgreSQL with `pnpm --filter backend run test:e2e:postgres`, on an embedded server it starts and removes itself. CI runs it as a quality gate right after the MongoDB run, and a red suite on either database fails the build.
+
 Frontend end-to-end tests use Playwright (`pnpm --filter frontend run test:e2e`). They run manually, outside commit and push, and are omitted from generated projects.
 <!-- repository-only:end -->
 

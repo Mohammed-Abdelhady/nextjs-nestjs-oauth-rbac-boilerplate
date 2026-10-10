@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'crypto';
+import { randomBytes } from 'crypto';
 import { INestApplication } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import type { Server } from 'node:http';
@@ -15,12 +15,15 @@ import {
 } from '../../../../constants/session-policy';
 import { NativeAccessService } from '../../../access/native-access.service';
 import { NativeAuthorizeService } from '../../../authorize/native-authorize.service';
-import {
-  AuthorizeQuery,
-  OauthFailure,
-  TokenSuccess,
-} from '../../../oauth/native-oauth.types';
+import { TokenSuccess } from '../../../oauth/native-oauth.types';
 import { NativeTokenService } from '../../../token/native-token.service';
+import {
+  approvalRedirectUri,
+  NATIVE_CLIENT_ID,
+  NATIVE_META,
+  NATIVE_REDIRECT,
+  nativeAuthorizeQuery,
+} from '../../../harness/native-oauth-requests.harness-spec';
 import {
   NATIVE_DPOP_TEST_SECRET,
   NATIVE_PUBLIC_API_ORIGIN,
@@ -53,9 +56,13 @@ import {
   SessionAuthorityHarness,
 } from '../../../../../../test/utils/session-authority-harness';
 
-export const NATIVE_CLIENT_ID = 'native-app';
-export const NATIVE_REDIRECT = 'myapp://callback';
-export const NATIVE_META = { ip: '203.0.113.10', userAgent: 'NativeTest/1' };
+export {
+  approvalRedirectUri,
+  NATIVE_CLIENT_ID,
+  NATIVE_META,
+  NATIVE_REDIRECT,
+  nativeAuthorizeQuery,
+};
 export { NATIVE_DPOP_TEST_SECRET, NATIVE_PUBLIC_API_ORIGIN };
 
 export interface NativeOauthHarness {
@@ -74,22 +81,6 @@ export interface ApprovedNativeCode {
   code: string;
   verifier: string;
   transactionId: string;
-}
-
-export function nativeAuthorizeQuery(
-  verifier: string,
-  overrides: Partial<AuthorizeQuery> = {},
-): AuthorizeQuery {
-  return {
-    response_type: 'code',
-    client_id: NATIVE_CLIENT_ID,
-    redirect_uri: NATIVE_REDIRECT,
-    code_challenge: createHash('sha256').update(verifier).digest('base64url'),
-    code_challenge_method: 'S256',
-    state: 'state-1',
-    scope: DEFAULT_API_AUDIENCE,
-    ...overrides,
-  };
 }
 
 export function nativeHttpServer(app: INestApplication): Server {
@@ -250,13 +241,4 @@ export async function approveNativeCode(
     throw new Error('missing code');
   }
   return { code, verifier, transactionId: begun.transactionId };
-}
-
-export function approvalRedirectUri(
-  approval: { redirectUri: string } | OauthFailure,
-): string {
-  if ('ok' in approval) {
-    throw new Error(approval.error);
-  }
-  return approval.redirectUri;
 }

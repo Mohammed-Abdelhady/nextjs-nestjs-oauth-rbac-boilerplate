@@ -1,6 +1,4 @@
 import { Logger } from '@nestjs/common';
-import { getModelToken } from '@nestjs/mongoose';
-import type { Model } from 'mongoose';
 import type { Response } from 'supertest';
 import {
   GENERIC_CODE_SENT_MESSAGE,
@@ -8,19 +6,16 @@ import {
 } from '../../src/auth/constants/auth-messages';
 // feature:magic-link:start
 import { randomUUID } from 'node:crypto';
-import { MAGIC_LINK_MAX_PER_HOUR } from '../../src/auth/magic-link/persistence/mongo/magic-link.harness-spec';
+import { MAGIC_LINK_MAX_PER_HOUR } from '../../src/auth/magic-link/magic-link-limits.harness-spec';
 import { MAGIC_LINK_SENT_MESSAGE } from '../../src/auth/magic-link/constants/magic-link.constants';
-import type { PendingMagicLinkDocument } from '../../src/auth/magic-link/persistence/mongo/schemas/pending-magic-link.schema';
 // feature:magic-link:end
-import type { PendingRegistrationDocument } from '../../src/auth/persistence/mongo/schemas/pending-registration.schema';
 import { REQUEST_ID_HEADER } from '../../src/common/constants/request-id';
-import type { UserDocument } from '../../src/user/persistence/mongo/schemas/user.schema';
 import { bootE2eApp, browserAgent, type E2eApp } from '../utils/e2e-app';
 import { TEST_NOW } from '../utils/frozen-clock';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
-} from '../utils/session-authority-harness';
+} from '../utils/hook-timeouts';
 import { expectSameAnswer } from '../utils/stable-answer';
 
 /** Success body every address-request route returns. */
@@ -37,26 +32,12 @@ interface AddressRequestResponse {
  */
 describe('Address-request routes with a failing mail boundary (e2e)', () => {
   let e2e: E2eApp;
-  let users: Model<UserDocument>;
-  let pendingRegistrations: Model<PendingRegistrationDocument>;
-  // feature:magic-link:start
-  let pendingMagicLinks: Model<PendingMagicLinkDocument>;
-  // feature:magic-link:end
 
   beforeAll(async () => {
     e2e = await bootE2eApp(0, {
       failMail: true,
       magicLinkEnabled: true, // feature:magic-link
     });
-    users = e2e.app.get<Model<UserDocument>>(getModelToken('User'));
-    pendingRegistrations = e2e.app.get<Model<PendingRegistrationDocument>>(
-      getModelToken('PendingRegistration'),
-    );
-    // feature:magic-link:start
-    pendingMagicLinks = e2e.app.get<Model<PendingMagicLinkDocument>>(
-      getModelToken('PendingMagicLink'),
-    );
-    // feature:magic-link:end
   }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   beforeEach(async () => {
@@ -81,12 +62,16 @@ describe('Address-request routes with a failing mail boundary (e2e)', () => {
   }
 
   function createVerifiedAccount(email: string): Promise<unknown> {
-    return users.create({ email, name: 'Existing Account', isVerified: true });
+    return e2e.state.accounts.createAccount({
+      email,
+      name: 'Existing Account',
+      isVerified: true,
+    });
   }
 
   // feature:magic-link:start
   async function seedCappedMagicLinks(email: string): Promise<void> {
-    await pendingMagicLinks.create(
+    await e2e.state.auth.storeMagicLinks(
       Array.from({ length: MAGIC_LINK_MAX_PER_HOUR }, () => ({
         email,
         tokenHash: randomUUID(),
@@ -95,7 +80,6 @@ describe('Address-request routes with a failing mail boundary (e2e)', () => {
         createdAt: TEST_NOW,
         updatedAt: TEST_NOW,
       })),
-      { timestamps: false },
     );
   }
   // feature:magic-link:end
@@ -128,7 +112,7 @@ describe('Address-request routes with a failing mail boundary (e2e)', () => {
     const unknown = await post('/api/auth/resend-activation', { email });
     expect((await e2e.captureMail()).length - unknownBefore).toBe(0);
 
-    await pendingRegistrations.create({
+    await e2e.state.auth.storePendingRegistration({
       email,
       purpose: 'signup',
       hashedCode: 'a-hashed-code',
@@ -156,7 +140,7 @@ describe('Address-request routes with a failing mail boundary (e2e)', () => {
     expect((await e2e.captureMail()).length - freeBefore).toBe(1);
 
     // Clear the free sign-up record so the taken path can be checked alone.
-    await pendingRegistrations.deleteMany({ email });
+    await e2e.state.auth.removeEveryPendingRegistration(email);
     await createVerifiedAccount(email);
 
     const takenBefore = (await e2e.captureMail()).length;
@@ -178,16 +162,13 @@ describe('Address-request routes with a failing mail boundary (e2e)', () => {
     );
     expect(takenMail?.html).toBeUndefined();
     expect(
-      await pendingRegistrations.countDocuments({
-        email,
-        purpose: 'signup',
-      }),
+      await e2e.state.auth.countPendingRegistrations(email, 'signup'),
     ).toBe(0);
   });
 
   it('mails nothing for forgot-password on a soft-deleted account', async () => {
     const email = 'forgot-deleted@example.test';
-    await users.create({
+    await e2e.state.accounts.createAccount({
       email,
       name: 'Deleted Account',
       isVerified: true,
@@ -241,7 +222,11 @@ describe('Address-request routes with a failing mail boundary (e2e)', () => {
     const mailed = await post('/api/auth/magic-link/request', { email });
     expect((await e2e.captureMail()).length - mailedBefore).toBe(1);
 
-    await users.create({ email, name: 'Deleted Account', isDeleted: true });
+    await e2e.state.accounts.createAccount({
+      email,
+      name: 'Deleted Account',
+      isDeleted: true,
+    });
 
     const deletedBefore = (await e2e.captureMail()).length;
     const deleted = await post('/api/auth/magic-link/request', { email });

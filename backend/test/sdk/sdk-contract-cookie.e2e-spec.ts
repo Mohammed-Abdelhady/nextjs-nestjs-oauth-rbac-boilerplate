@@ -2,6 +2,7 @@ import { OAUTH_ERROR as SDK_OAUTH_ERROR } from '@app/sdk';
 import { OAUTH_ERROR } from '../../src/session/native/oauth/native-oauth.types';
 import { SEED_USER } from '../constants/seed-users';
 import { loginAs } from '../utils/e2e-app';
+import { ISSUED_ID_FORM } from '../utils/route-id-answers';
 import {
   publicClient,
   apiErrorOf,
@@ -16,9 +17,7 @@ import {
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
-} from '../utils/session-authority-harness';
-
-const OBJECT_ID = /^[0-9a-f]{24}$/;
+} from '../utils/hook-timeouts';
 
 function isIsoDate(value: unknown): boolean {
   return typeof value === 'string' && new Date(value).toISOString() === value;
@@ -59,7 +58,7 @@ describe('sdk contract over a cookie transport', () => {
       isVerified: true,
       linkedProviders: ['email'],
     });
-    expect(profile.id).toMatch(OBJECT_ID);
+    expect(profile.id).toMatch(ISSUED_ID_FORM);
     expect(profile.permissions).toEqual(
       expect.arrayContaining(['profile:read:own', 'profile:update:own']),
     );
@@ -101,7 +100,7 @@ describe('sdk contract over a cookie transport', () => {
       true,
     ]);
     for (const session of list.sessions) {
-      expect(session.id).toMatch(OBJECT_ID);
+      expect(session.id).toMatch(ISSUED_ID_FORM);
       expect(session.userAgent.length).toBeGreaterThan(0);
       expect(session.ip.length).toBeGreaterThan(0);
       expect(isIsoDate(session.createdAt)).toBe(true);

@@ -1,14 +1,8 @@
 import { ConfigService } from '@nestjs/config';
-import { getModelToken } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 import request from 'supertest';
 import { ErrorCode } from '../../../src/common/enums/error-code.enum';
 import { CSRF_HEADER } from '../../../src/session/constants/browser-proof';
 import { PENDING_AUTH_LIFETIME_MS } from '../../../src/session/constants/session-policy';
-import {
-  Application,
-  ApplicationDocument,
-} from '../../../src/session/persistence/mongo/schemas/application.schema';
 import { SEED_USER } from '../../constants/seed-users';
 import {
   beginNativeAuthorization,
@@ -20,7 +14,7 @@ import { bootE2eApp, loginAs, type E2eApp } from '../../utils/e2e-app';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
-} from '../../utils/session-authority-harness';
+} from '../../utils/hook-timeouts';
 import { TEST_NOW } from '../../utils/frozen-clock';
 
 interface ApiErrorBody {
@@ -258,13 +252,9 @@ describe('native browser authorization (e2e)', () => {
   it('returns expired for a disabled app and disabled for the feature switch', async () => {
     const browser = await loginAs(e2e.httpServer, SEED_USER);
     const disabledApp = await beginNativeAuthorization(e2e);
-    const appModel = e2e.app.get<Model<ApplicationDocument>>(
-      getModelToken(Application.name),
-    );
-    await appModel.updateOne(
-      { clientId: NATIVE_CLIENT_ID },
-      { $set: { enabled: false } },
-    );
+    await e2e.state.applications.changeApplication(NATIVE_CLIENT_ID, {
+      enabled: false,
+    });
     const appRead = await browser.get(
       `/api/oauth/authorize/transaction/${disabledApp.transactionId}`,
     );
@@ -273,10 +263,9 @@ describe('native browser authorization (e2e)', () => {
       ErrorCode.NATIVE_TRANSACTION_EXPIRED,
     );
 
-    await appModel.updateOne(
-      { clientId: NATIVE_CLIENT_ID },
-      { $set: { enabled: true } },
-    );
+    await e2e.state.applications.changeApplication(NATIVE_CLIENT_ID, {
+      enabled: true,
+    });
     const readId = await beginNativeAuthorization(e2e);
     const approveId = await beginNativeAuthorization(e2e);
     const denyId = await beginNativeAuthorization(e2e);

@@ -53,13 +53,18 @@ export const MALFORMED_ID_ANSWER = refusal(
   'Invalid identifier format',
 );
 
-/** The ids of one database: one that names nothing, and the ones it refuses. */
+/**
+ * The ids of one database: the form it issues, one that names nothing, and
+ * the ones it refuses.
+ */
 interface RouteIds {
+  form: RegExp;
   absent: string;
   malformed: ReadonlyArray<readonly [string, string]>;
 }
 
 const MONGODB_IDS: RouteIds = {
+  form: /^[0-9a-f]{24}$/,
   absent: '507f1f77bcf86cd799439011',
   malformed: [
     ['a word', 'not-an-id'],
@@ -74,6 +79,7 @@ const MONGODB_IDS: RouteIds = {
 
 // feature:postgres:start
 const POSTGRES_IDS: RouteIds = {
+  form: /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
   absent: '018f4d2e-7b1a-7c3d-9e2f-0a1b2c3d4e5f',
   malformed: [
     ['a word', 'not-an-id'],
@@ -96,6 +102,9 @@ function routeIds(): RouteIds {
   // feature:postgres:end
   return MONGODB_IDS;
 }
+
+/** What an id issued by the database this run is on looks like. */
+export const ISSUED_ID_FORM = routeIds().form;
 
 /** Well-formed on the database this run is on, and naming nothing. */
 export const ABSENT_ID = routeIds().absent;

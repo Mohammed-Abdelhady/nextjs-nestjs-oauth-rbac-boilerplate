@@ -108,7 +108,7 @@ describe('the sign-in ports on the running database (e2e)', () => {
   });
 
   it('signs in a magic link account as the link flow left it: verified, with its role and its own permissions', async () => {
-    await e2e.state.seedAccounts([
+    await e2e.state.accounts.seedAccounts([
       {
         email: 'unverified@example.test',
         name: 'Not Verified Yet',

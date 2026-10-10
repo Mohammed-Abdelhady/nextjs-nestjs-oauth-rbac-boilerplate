@@ -3,6 +3,7 @@
   "rootDir": ".",
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
+  "testPathIgnorePatterns": ["/node_modules/", "\\.mongo\\.e2e-spec\\.ts$"],
   "globalSetup": "<rootDir>/postgres-prototype/e2e/postgres-global-setup.ts",
   "globalTeardown": "<rootDir>/postgres-prototype/e2e/postgres-global-teardown.ts",
   "setupFiles": [
