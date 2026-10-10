@@ -1,5 +1,6 @@
 import { TEST_NOW } from '../../../test/utils/frozen-clock';
 import { linkedAccountCases } from './linked-accounts-contract-cases.harness-spec';
+import { emailSignInHintCases } from './linked-accounts-contract-email-sign-in.harness-spec';
 import { firstProviderSignInCases } from './linked-accounts-contract-first-sign-in.harness-spec';
 import { providerSignInServiceCases } from './linked-accounts-contract-provider-sign-in.harness-spec';
 import { unlinkHintCases } from './linked-accounts-contract-hints.harness-spec';
@@ -58,6 +59,7 @@ export function describeLinkedAccountsContract(
     lastWayInCases(current, seeded);
     unlinkHintCases(current);
     primaryHintCases(current);
+    emailSignInHintCases(current);
     profileSyncCases(current, seeded);
     firstProviderSignInCases(current, seeded);
     providerSignInServiceCases(current, seeded);
