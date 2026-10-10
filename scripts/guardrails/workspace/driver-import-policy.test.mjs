@@ -22,7 +22,7 @@ const MONGO_ADAPTER_SPEC = 'src/user/persistence/mongo/services/account-linking.
 const MONGO_SCHEMA = 'src/user/persistence/mongo/schemas/user.schema.ts';
 const POSTGRES_ADAPTER = 'src/session/persistence/postgres/postgres-browser-issuance.store.ts';
 const TEST_SUPPORT = 'test/utils/session-authority-harness.ts';
-const PROTOTYPE = 'test/postgres-prototype/adapter/postgres-database.ts';
+const PROTOTYPE = 'test/postgres-prototype/postgres-connection.ts';
 
 let ESLint;
 let tseslint;
