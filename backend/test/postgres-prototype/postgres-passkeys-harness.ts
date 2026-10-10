@@ -30,7 +30,7 @@ export async function bootPostgresPasskeysHarness(): Promise<PasskeysContractHar
     challenges: new PostgresPasskeyChallengeStore(database),
     accounts: new PostgresPasskeyAccounts(database),
     links: new PostgresLinkedAccountStore(database, clock),
-    signInMethods: new PostgresSignInMethodStore(),
+    signInMethods: new PostgresSignInMethodStore(database),
     runner: (pause) => new PostgresUnitOfWorkRunner(database, pause),
 
     profilePasskeyCount: (userId) => profiles.countPasskeys(userId),

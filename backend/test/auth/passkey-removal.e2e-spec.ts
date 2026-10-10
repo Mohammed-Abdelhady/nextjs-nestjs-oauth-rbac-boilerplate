@@ -14,7 +14,7 @@ import {
 } from '../utils/session-authority-harness';
 
 interface PasskeyList {
-  data: { passkeys: { id: string }[] };
+  data: { passkeys: { id: string }[]; canRemove?: boolean };
 }
 
 describe('removing a passkey (e2e)', () => {
@@ -62,6 +62,8 @@ describe('removing a passkey (e2e)', () => {
     const browser = await loginAs(e2e.httpServer, SEED_USER);
     const passkeyId = await storePasskey();
 
+    const offered = await browser.get('/api/auth/passkeys').expect(200);
+    expect((offered.body as PasskeyList).data.canRemove).toBe(true);
     await browser.delete(`/api/auth/passkeys/${passkeyId}`).expect(200);
 
     const listed = await browser.get('/api/auth/passkeys').expect(200);
@@ -78,6 +80,9 @@ describe('removing a passkey (e2e)', () => {
       { $unset: { password: 1 } },
     );
 
+    // The list says so before the removal is tried.
+    const advised = await browser.get('/api/auth/passkeys').expect(200);
+    expect((advised.body as PasskeyList).data.canRemove).toBe(false);
     const refused = await browser.delete(`/api/auth/passkeys/${passkeyId}`);
 
     expect(refused.status).toBe(409);

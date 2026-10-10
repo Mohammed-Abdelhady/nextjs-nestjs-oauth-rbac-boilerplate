@@ -149,4 +149,31 @@ export function unlinkRaceCases(harness: PasskeysHarnessSource): void {
       expect(await harness().storedProviders(userId)).toEqual(['google']);
     },
   );
+
+  passkeyCase(
+    'tells the page what each removal answers when a passkey and a provider are all there is',
+    async () => {
+      const { userId, passkeyId } = await seedOneOfEach(harness);
+      const services = passkeyServices(harness(), NO_EMAIL_WAY_IN);
+      const linking = linkingOn(harness, services);
+
+      // An unlink does not count the passkey. A passkey removal counts the provider.
+      expect(
+        await linking.unlinkHints(
+          userId,
+          await linking.getLinkedProviders(userId),
+        ),
+      ).toEqual({ email: 'not_removable', google: 'last_sign_in_method' });
+      expect((await services.management.list(userId)).data.canRemove).toBe(
+        true,
+      );
+
+      expect(await refusalOf(linking.unlinkProvider(userId, 'google'))).toEqual(
+        LAST_PROVIDER,
+      );
+      await services.management.remove(userId, passkeyId);
+      expect(await harness().storedPasskeys()).toEqual([]);
+      expect(await harness().storedProviders(userId)).toEqual(['google']);
+    },
+  );
 }

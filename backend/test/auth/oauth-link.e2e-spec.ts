@@ -1,3 +1,6 @@
+import { getModelToken } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { User, UserDocument } from '../../src/user/schemas/user.schema';
 import { ErrorCode } from '../../src/common/enums/error-code.enum';
 import type { OAuthProviderStrategy } from '../../src/auth/oauth/oauth-provider.interface';
 import { SEED_USER } from '../constants/seed-users';
@@ -66,5 +69,35 @@ describe('provider link start with both credentials (e2e)', () => {
     expect(String(started.headers.location)).toBe(
       'https://provider.example/authorize',
     );
+  });
+
+  it('lists the sign-in methods with what an unlink of each would be told', async () => {
+    const browser = await loginAs(e2e.httpServer, SEED_USER);
+    const users = e2e.app.get<Model<UserDocument>>(getModelToken(User.name));
+    await users.updateOne(
+      { email: SEED_USER.email },
+      {
+        $set: {
+          linkedAccounts: [
+            { provider: 'google', providerId: 'google-1', linkedAt: TEST_NOW },
+          ],
+        },
+      },
+    );
+
+    const listed = await browser.get('/api/user/linked-providers').expect(200);
+
+    // Password sign-in is on, so the address still signs in without Google.
+    expect(listed.body).toMatchObject({
+      data: {
+        providers: ['email', 'google'],
+        unlinkHints: { email: 'not_removable', google: 'allowed' },
+      },
+    });
+    await browser.delete('/api/user/unlink-provider/google').expect(200);
+    const after = await browser.get('/api/user/linked-providers').expect(200);
+    expect(after.body).toMatchObject({
+      data: { providers: ['email'], unlinkHints: { email: 'not_removable' } },
+    });
   });
 });
