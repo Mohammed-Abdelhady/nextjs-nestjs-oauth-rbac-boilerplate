@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model } from 'mongoose';
-import { singleStatement } from '../../../auth/persistence/mongo/mongo-unique-conflict';
+import { singleStatement } from '../../../common/persistence/mongo/mongo-unique-conflict';
 import { UnitOfWork } from '../../../common/persistence/unit-of-work';
-import { Role, RoleDocument } from '../../../role/schemas/role.schema';
+import {
+  Role,
+  RoleDocument,
+} from '../../../role/persistence/mongo/schemas/role.schema';
 import { castingId } from '../../../session/persistence/mongo/mongo-session-records';
 import { mongoSessionOf } from '../../../session/persistence/mongo/mongo-unit-of-work';
 import { AuthProvider } from '../../../user/enums/auth-provider.enum';
@@ -11,7 +14,10 @@ import {
   accountConflictOr,
   MongoAccountDocuments,
 } from '../../../user/persistence/mongo/mongo-account-records';
-import { User, UserDocument } from '../../../user/schemas/user.schema';
+import {
+  User,
+  UserDocument,
+} from '../../../user/persistence/mongo/schemas/user.schema';
 import { StoredAccount } from '../../../user/stores/stored-account';
 import { ADMIN_USER_HIDDEN_FIELDS } from '../../constants/admin-user.constants';
 import {
