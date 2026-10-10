@@ -5,7 +5,7 @@ import { useId, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from '@/lib/toast';
 import { reportUnlessHandled } from '@/lib/requestFailure';
-import { Loader2, CheckCircle2, Link as LinkIcon, Unlink } from 'lucide-react';
+import { Loader2, CheckCircle2, Link as LinkIcon, Mail, Unlink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +21,15 @@ import {
 } from '@/components/ui/alert-dialog';
 import { OAuthProviderIcon } from '@/modules/oauth';
 import { useUnlinkProviderMutation, useSetPrimaryProviderMutation } from '../api';
-import { PRIMARY_HINT, UNLINK_HINT, type PrimaryHint, type UnlinkHint } from '../types';
+import {
+  EMAIL_PROVIDER,
+  EMAIL_SIGN_IN,
+  PRIMARY_HINT,
+  UNLINK_HINT,
+  type EmailSignInHint,
+  type PrimaryHint,
+  type UnlinkHint,
+} from '../types';
 
 interface LinkedAccountCardProps {
   providerId: string;
@@ -31,6 +39,8 @@ interface LinkedAccountCardProps {
   unlinkHint?: UnlinkHint;
   /** What the server says choosing this one as primary would be told. Without one, the server decides. */
   primaryHint?: PrimaryHint;
+  /** On the email row: whether the address can sign in now. Without one, it is shown as connected. */
+  emailSignIn?: EmailSignInHint;
   onChange?: () => void;
 }
 
@@ -44,6 +54,7 @@ export function LinkedAccountCard({
   isPrimary,
   unlinkHint,
   primaryHint,
+  emailSignIn,
   onChange,
 }: LinkedAccountCardProps) {
   const t = useTranslations('settings.accounts');
@@ -52,6 +63,10 @@ export function LinkedAccountCard({
   const offersPrimary = !isPrimary && primaryHint !== PRIMARY_HINT.NO_PROFILE_TO_SYNC;
   const offersUnlink = unlinkHint !== UNLINK_HINT.NOT_REMOVABLE;
   const isUnlinkBlocked = unlinkHint === UNLINK_HINT.LAST_SIGN_IN_METHOD;
+  const connectionKey = isPrimary ? 'primaryDescription' : 'linkedDescription';
+  // The address stays on the account, but it is not shown as a way to sign in.
+  const descriptionKey =
+    emailSignIn === EMAIL_SIGN_IN.SWITCHED_OFF ? 'emailSignInSwitchedOff' : connectionKey;
 
   const [unlinkProvider, { isLoading: isUnlinking }] = useUnlinkProviderMutation();
   const [setPrimaryProvider, { isLoading: isSettingPrimary }] = useSetPrimaryProviderMutation();
@@ -93,11 +108,15 @@ export function LinkedAccountCard({
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between flex-wrap">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-                <OAuthProviderIcon
-                  providerId={providerId}
-                  displayName={displayName}
-                  className="h-5 w-5"
-                />
+                {providerId === EMAIL_PROVIDER ? (
+                  <Mail className="h-5 w-5" aria-hidden="true" />
+                ) : (
+                  <OAuthProviderIcon
+                    providerId={providerId}
+                    displayName={displayName}
+                    className="h-5 w-5"
+                  />
+                )}
               </div>
 
               <div className="min-w-0 flex-1">
@@ -112,8 +131,8 @@ export function LinkedAccountCard({
                     </Badge>
                   )}
                 </div>
-                <Description>
-                  {isPrimary ? t('primaryDescription') : t('linkedDescription')}
+                <Description data-testid={`linked-account-status-${providerId}`}>
+                  {t(descriptionKey)}
                 </Description>
               </div>
             </div>

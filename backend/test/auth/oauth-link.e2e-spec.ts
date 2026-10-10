@@ -145,4 +145,36 @@ describe('provider link start with both credentials (e2e)', () => {
       },
     });
   });
+
+  it('says whether email sign-in is usable, and nothing for an account a provider made', async () => {
+    const browser = await loginAs(e2e.httpServer, SEED_USER);
+    const users = e2e.app.get<Model<UserDocument>>(getModelToken(User.name));
+
+    const byEmail = await browser.get('/api/user/linked-providers').expect(200);
+
+    // Password sign-in is on in this deployment.
+    expect(byEmail.body).toMatchObject({
+      data: { providers: ['email'], emailSignIn: 'usable' },
+    });
+
+    await users.updateOne(
+      { email: SEED_USER.email },
+      {
+        $set: {
+          authProvider: 'google',
+          linkedAccounts: [
+            { provider: 'google', providerId: 'google-1', linkedAt: TEST_NOW },
+          ],
+        },
+      },
+    );
+    const byProvider = await browser
+      .get('/api/user/linked-providers')
+      .expect(200);
+
+    expect(byProvider.body).toMatchObject({ data: { providers: ['google'] } });
+    expect(Object.keys(byProvider.body.data as object)).not.toContain(
+      'emailSignIn',
+    );
+  });
 });

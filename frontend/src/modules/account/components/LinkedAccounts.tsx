@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useGetEnabledProvidersQuery, getProviderDisplayName } from '@/modules/oauth';
 import { useGetLinkedProvidersQuery } from '../api';
+import { EMAIL_PROVIDER } from '../types';
 import { LinkedAccountCard } from './LinkedAccountCard';
 import { LinkProviderButton } from './LinkProviderButton';
 
@@ -35,6 +36,7 @@ export function LinkedAccounts() {
 
   const unlinkHints = linkedProvidersData?.unlinkHints;
   const primaryHints = linkedProvidersData?.primaryHints;
+  const emailSignIn = linkedProvidersData?.emailSignIn;
 
   if (isLoadingLinked || isLoadingEnabled) {
     return (
@@ -68,10 +70,16 @@ export function LinkedAccounts() {
                 <LinkedAccountCard
                   key={providerId}
                   providerId={providerId}
-                  displayName={getProviderDisplayName(providerId, enabledProviders)}
+                  displayName={
+                    // The server names providers only. Email sign-in is named here.
+                    providerId === EMAIL_PROVIDER
+                      ? t('emailSignInName')
+                      : getProviderDisplayName(providerId, enabledProviders)
+                  }
                   isPrimary={providerId === primaryProvider}
                   unlinkHint={unlinkHints?.[providerId]}
                   primaryHint={primaryHints?.[providerId]}
+                  emailSignIn={providerId === EMAIL_PROVIDER ? emailSignIn : undefined}
                   onChange={refetch}
                 />
               ))}
