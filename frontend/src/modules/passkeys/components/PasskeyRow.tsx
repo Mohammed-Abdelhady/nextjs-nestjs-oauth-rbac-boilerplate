@@ -1,7 +1,9 @@
 'use client';
 
+import { useId } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { KeyRound, Pencil, Trash2 } from 'lucide-react';
+import { Description } from '@/components/design-system';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatDateLong } from '@/lib/formatters';
@@ -10,6 +12,7 @@ import type { PasskeySummary } from '../types';
 
 interface PasskeyRowProps {
   passkey: PasskeySummary;
+  canRemove: boolean;
   onRename: (passkey: PasskeySummary) => void;
   onDelete: (passkey: PasskeySummary) => void;
 }
@@ -20,10 +23,17 @@ function deviceTypeOf(deviceType: string | undefined): PasskeyDeviceType | null 
 }
 
 /** One passkey in the settings list, with what it is and when it last worked. */
-export function PasskeyRow({ passkey, onRename, onDelete }: PasskeyRowProps) {
+export function PasskeyRow({ passkey, canRemove, onRename, onDelete }: PasskeyRowProps) {
   const t = useTranslations('settings.passkeys');
   const locale = useLocale();
   const deviceType = deviceTypeOf(passkey.deviceType);
+  const removalBlockedId = useId();
+
+  const requestRemoval = () => {
+    if (canRemove) {
+      onDelete(passkey);
+    }
+  };
 
   return (
     <li
@@ -59,6 +69,15 @@ export function PasskeyRow({ passkey, onRename, onDelete }: PasskeyRowProps) {
             ? t('neverUsed')
             : t('lastUsed', { date: formatDateLong(passkey.lastUsedAt, locale) })}
         </p>
+        {!canRemove && (
+          <Description
+            id={removalBlockedId}
+            className="mt-1.5"
+            data-testid={`passkey-delete-blocked-${passkey.id}`}
+          >
+            {t('delete.blockedLastSignInMethod')}
+          </Description>
+        )}
       </div>
 
       <div className="flex shrink-0 gap-1">
@@ -76,8 +95,11 @@ export function PasskeyRow({ passkey, onRename, onDelete }: PasskeyRowProps) {
           type="button"
           variant="ghost"
           size="icon"
-          onClick={() => onDelete(passkey)}
+          onClick={requestRemoval}
           aria-label={t('delete.label', { name: passkey.name })}
+          // Focusable while blocked, so the reason is read out with it.
+          aria-disabled={!canRemove || undefined}
+          aria-describedby={canRemove ? undefined : removalBlockedId}
           data-testid={`passkey-delete-${passkey.id}`}
         >
           <Trash2 className="h-4 w-4 text-destructive" aria-hidden="true" />

@@ -367,7 +367,7 @@
       "unlinkConfirmDescription": "Are you sure you want to unlink your {provider} account? You can always link it again later.",
       "cancel": "Cancel",
       "confirmUnlink": "Unlink Account",
-      "cannotUnlinkWarning": "You must keep at least one authentication method linked to your account",
+      "unlinkBlockedLastSignInMethod": "This is the only way to sign in to your account, so it cannot be unlinked.",
       "allProvidersLinked": "All available providers are already linked to your account"
     },
     "profileSync": {
@@ -506,7 +506,8 @@
         "description": "{name} stops working for sign-in. The key stays on your device until you delete it there.",
         "label": "Remove {name}",
         "submit": "Remove",
-        "success": "The passkey was removed"
+        "success": "The passkey was removed",
+        "blockedLastSignInMethod": "This is the only way to sign in to your account, so it cannot be removed."
       },
       "errors": {
         "nameRequired": "Enter a name",
