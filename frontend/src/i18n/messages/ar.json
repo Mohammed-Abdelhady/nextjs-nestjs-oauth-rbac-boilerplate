@@ -368,6 +368,8 @@
       "cancel": "إلغاء",
       "confirmUnlink": "إلغاء ربط الحساب",
       "unlinkBlockedLastSignInMethod": "هذه هي الطريقة الوحيدة لتسجيل الدخول إلى حسابك، لذا لا يمكن إلغاء ربطها.",
+      "emailSignInName": "البريد الإلكتروني",
+      "emailSignInSwitchedOff": "تسجيل الدخول بالبريد الإلكتروني متوقف. ما زال هذا العنوان يعرّف حسابك.",
       "allProvidersLinked": "جميع المزودين المتاحين مرتبطون بالفعل بحسابك"
     },
     "profileSync": {

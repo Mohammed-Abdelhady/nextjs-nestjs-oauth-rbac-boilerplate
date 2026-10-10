@@ -368,6 +368,8 @@
       "cancel": "Cancel",
       "confirmUnlink": "Unlink Account",
       "unlinkBlockedLastSignInMethod": "This is the only way to sign in to your account, so it cannot be unlinked.",
+      "emailSignInName": "Email",
+      "emailSignInSwitchedOff": "Email sign-in is turned off. This address still identifies your account.",
       "allProvidersLinked": "All available providers are already linked to your account"
     },
     "profileSync": {

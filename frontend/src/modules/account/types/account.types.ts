@@ -21,6 +21,18 @@ export const PRIMARY_HINT = {
 
 export type PrimaryHint = (typeof PRIMARY_HINT)[keyof typeof PRIMARY_HINT];
 
+/** The entry of `providers` that stands for the address the account was created with. */
+export const EMAIL_PROVIDER = 'email';
+
+/** Whether the account's email sign-in can be used on this deployment now. */
+export const EMAIL_SIGN_IN = {
+  USABLE: 'usable',
+  /** Password sign-in and magic links are both off. */
+  SWITCHED_OFF: 'switched_off',
+} as const;
+
+export type EmailSignInHint = (typeof EMAIL_SIGN_IN)[keyof typeof EMAIL_SIGN_IN];
+
 /**
  * Response type for linked providers endpoint.
  * Providers are 'email' plus the linked OAuth provider ids.
@@ -32,6 +44,8 @@ export interface LinkedProvidersResponse {
   unlinkHints?: Record<string, UnlinkHint>;
   /** Per entry of `providers`. Absent from a server that predates the hint. */
   primaryHints?: Record<string, PrimaryHint>;
+  /** Sent with an `email` entry. Absent from a server that predates the hint. */
+  emailSignIn?: EmailSignInHint;
 }
 // feature:oauth-core:end
 
