@@ -111,6 +111,7 @@ This legacy endpoint is retired. Requests to this route return HTTP 410 Gone.
 ```http
 GET    /api/user/linked-providers
 DELETE /api/user/unlink-provider/:provider
+POST   /api/user/set-primary-provider
 ```
 
 The list answers with the sign-in methods on the account and, for each one, what an unlink would be told now:
@@ -119,7 +120,8 @@ The list answers with the sign-in methods on the account and, for each one, what
 {
   "providers": ["email", "google"],
   "primaryProvider": "google",
-  "unlinkHints": { "email": "not_removable", "google": "allowed" }
+  "unlinkHints": { "email": "not_removable", "google": "allowed" },
+  "primaryHints": { "email": "no_profile_to_sync", "google": "allowed" }
 }
 ```
 
@@ -132,6 +134,15 @@ The list answers with the sign-in methods on the account and, for each one, what
 Email sign-in counts as a remaining way in only while password sign-in or magic links are enabled. With both off, the last provider stays. Passkeys do not count for an unlink.
 
 `unlinkHints` comes from the rule the unlink asks, and it is advice: the unlink still decides, so a page handles a refusal as well. The field is optional. A client that does not know it can ignore it.
+
+`primaryHints` says the same for choosing the provider that profile sync follows:
+
+| Hint                 | Meaning                                                                            |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| `allowed`            | The choice would go through. This includes the provider that is primary already.   |
+| `no_profile_to_sync` | Email sign-in has no provider profile. Choosing it answers `400 VALIDATION_ERROR`. |
+
+Every linked provider can be primary, so only email sign-in is refused. A provider that is not linked answers `400 PROVIDER_NOT_LINKED` and is not listed. The field is optional and is advice in the same way.
 
 ## Adding a new OAuth provider
 
