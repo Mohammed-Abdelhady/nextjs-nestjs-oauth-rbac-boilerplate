@@ -9,7 +9,7 @@ export async function bootPostgresLinkedAccountsHarness(): Promise<LinkedAccount
 
   return Object.assign(accounts, {
     links: new PostgresLinkedAccountStore(database, clock),
-    signInMethods: new PostgresSignInMethodStore(),
+    signInMethods: new PostgresSignInMethodStore(database),
     storedLinks: async (userId: string) => {
       const rows = await database
         .selectFrom('user_linked_accounts')

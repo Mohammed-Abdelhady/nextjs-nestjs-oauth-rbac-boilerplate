@@ -106,6 +106,33 @@ Handles Apple OAuth callbacks that use the `form_post` response mode.
 
 This legacy endpoint is retired. Requests to this route return HTTP 410 Gone.
 
+### 5. Linked providers and unlink hints
+
+```http
+GET    /api/user/linked-providers
+DELETE /api/user/unlink-provider/:provider
+```
+
+The list answers with the sign-in methods on the account and, for each one, what an unlink would be told now:
+
+```json
+{
+  "providers": ["email", "google"],
+  "primaryProvider": "google",
+  "unlinkHints": { "email": "not_removable", "google": "allowed" }
+}
+```
+
+| Hint                  | Meaning                                                                      |
+| --------------------- | ---------------------------------------------------------------------------- |
+| `allowed`             | The unlink would go through.                                                 |
+| `last_sign_in_method` | The unlink would be refused with `400 CANNOT_UNLINK_LAST_PROVIDER`.          |
+| `not_removable`       | Email sign-in is not a link. An unlink of it answers `400 VALIDATION_ERROR`. |
+
+Email sign-in counts as a remaining way in only while password sign-in or magic links are enabled. With both off, the last provider stays. Passkeys do not count for an unlink.
+
+`unlinkHints` comes from the rule the unlink asks, and it is advice: the unlink still decides, so a page handles a refusal as well. The field is optional. A client that does not know it can ignore it.
+
 ## Adding a new OAuth provider
 
 Follow these steps to add a new provider:

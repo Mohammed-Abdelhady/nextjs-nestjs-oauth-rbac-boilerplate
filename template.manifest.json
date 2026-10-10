@@ -150,6 +150,7 @@
         "frontend/src/modules/account/api/__tests__/sweepCases.ts",
         "frontend/src/modules/account/api/__tests__/sweepCoverage.test.ts",
         "frontend/src/modules/account/components/LinkedAccounts.tsx",
+        "frontend/src/modules/account/components/__tests__/LinkedAccounts.test.tsx",
         "frontend/src/modules/account/components/LinkedAccountCard.tsx",
         "frontend/src/modules/account/components/LinkProviderButton.tsx",
         "frontend/src/modules/account/components/ProfileSyncStatus.tsx",

@@ -2,6 +2,7 @@ import * as bcrypt from 'bcrypt';
 import { TEST_NOW } from '../../../../test/utils/frozen-clock';
 import { counterCases } from './passkeys-contract-counter.harness-spec';
 import { managementCases } from './passkeys-contract-management.harness-spec';
+import { removalHintCases } from './passkeys-contract-removal-hint.harness-spec';
 import { removalRaceCases } from './passkeys-contract-removal-race.harness-spec';
 import { registrationRuleCases } from './passkeys-contract-registration-rules.harness-spec';
 import { registrationCases } from './passkeys-contract-registration.harness-spec';
@@ -81,6 +82,7 @@ export function describePasskeysContract(
     signInRuleCases(current, seeded);
     counterCases(current, seeded);
     managementCases(current, seeded);
+    removalHintCases(current);
     removalRaceCases(current);
     unlinkRaceCases(current); // feature:oauth-core
     seamCases(current, seeded);

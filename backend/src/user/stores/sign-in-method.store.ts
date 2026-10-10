@@ -25,4 +25,10 @@ export abstract class SignInMethodStore {
     unitOfWork: UnitOfWork,
     userId: string,
   ): Promise<HeldSignInMethods | null>;
+
+  /**
+   * Reads the account's ways in and holds nothing. What it answers can be out
+   * of date by the time it is used, so it is for advice, never for a removal.
+   */
+  abstract readForAccount(userId: string): Promise<HeldSignInMethods | null>;
 }

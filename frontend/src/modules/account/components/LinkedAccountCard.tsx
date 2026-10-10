@@ -1,7 +1,7 @@
 'use client';
 
 import { Description, Heading } from '@/components/design-system';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from '@/lib/toast';
 import { reportUnlessHandled } from '@/lib/requestFailure';
@@ -21,12 +21,14 @@ import {
 } from '@/components/ui/alert-dialog';
 import { OAuthProviderIcon } from '@/modules/oauth';
 import { useUnlinkProviderMutation, useSetPrimaryProviderMutation } from '../api';
+import { UNLINK_HINT, type UnlinkHint } from '../types';
 
 interface LinkedAccountCardProps {
   providerId: string;
   displayName: string;
   isPrimary: boolean;
-  canUnlink: boolean;
+  /** What the server says an unlink would be told. Without one, the server decides. */
+  unlinkHint?: UnlinkHint;
   onChange?: () => void;
 }
 
@@ -38,11 +40,14 @@ export function LinkedAccountCard({
   providerId,
   displayName,
   isPrimary,
-  canUnlink,
+  unlinkHint,
   onChange,
 }: LinkedAccountCardProps) {
   const t = useTranslations('settings.accounts');
   const [showUnlinkDialog, setShowUnlinkDialog] = useState(false);
+  const unlinkBlockedId = useId();
+  const offersUnlink = unlinkHint !== UNLINK_HINT.NOT_REMOVABLE;
+  const isUnlinkBlocked = unlinkHint === UNLINK_HINT.LAST_SIGN_IN_METHOD;
 
   const [unlinkProvider, { isLoading: isUnlinking }] = useUnlinkProviderMutation();
   const [setPrimaryProvider, { isLoading: isSettingPrimary }] = useSetPrimaryProviderMutation();
@@ -54,7 +59,16 @@ export function LinkedAccountCard({
       onChange?.();
       setShowUnlinkDialog(false);
     } catch (error) {
+      // The hint was read before the refusal: read it again so the card says why.
+      setShowUnlinkDialog(false);
+      onChange?.();
       reportUnlessHandled(error);
+    }
+  };
+
+  const openUnlinkDialog = () => {
+    if (!isUnlinkBlocked) {
+      setShowUnlinkDialog(true);
     }
   };
 
@@ -124,12 +138,15 @@ export function LinkedAccountCard({
                 </Button>
               )}
 
-              {canUnlink && (
+              {offersUnlink && (
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={() => setShowUnlinkDialog(true)}
+                  onClick={openUnlinkDialog}
                   disabled={isUnlinking || isSettingPrimary}
+                  // Focusable while blocked, so the reason is read out with it.
+                  aria-disabled={isUnlinkBlocked || undefined}
+                  aria-describedby={isUnlinkBlocked ? unlinkBlockedId : undefined}
                   className="w-full whitespace-nowrap lg:w-auto"
                   data-testid={`unlink-${providerId}`}
                 >
@@ -148,6 +165,16 @@ export function LinkedAccountCard({
               )}
             </div>
           </div>
+
+          {isUnlinkBlocked && (
+            <Description
+              id={unlinkBlockedId}
+              className="mt-3"
+              data-testid={`unlink-blocked-${providerId}`}
+            >
+              {t('unlinkBlockedLastSignInMethod')}
+            </Description>
+          )}
         </CardContent>
       </Card>
 

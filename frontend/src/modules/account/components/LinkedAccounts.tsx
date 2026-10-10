@@ -2,7 +2,6 @@
 
 import { Heading } from '@/components/design-system';
 import { useTranslations } from 'next-intl';
-import { AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -34,7 +33,7 @@ export function LinkedAccounts() {
     (provider) => !linkedProviders.includes(provider.id),
   );
 
-  const canUnlink = linkedProviders.length > 1;
+  const unlinkHints = linkedProvidersData?.unlinkHints;
 
   if (isLoadingLinked || isLoadingEnabled) {
     return (
@@ -70,19 +69,12 @@ export function LinkedAccounts() {
                   providerId={providerId}
                   displayName={getProviderDisplayName(providerId, enabledProviders)}
                   isPrimary={providerId === primaryProvider}
-                  canUnlink={canUnlink}
+                  unlinkHint={unlinkHints?.[providerId]}
                   onChange={refetch}
                 />
               ))}
             </div>
           </div>
-        )}
-
-        {!canUnlink && linkedProviders.length > 0 && (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{t('cannotUnlinkWarning')}</AlertDescription>
-          </Alert>
         )}
 
         {availableProviders.length > 0 && (

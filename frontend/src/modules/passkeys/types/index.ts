@@ -16,6 +16,11 @@ export interface PasskeySummary {
 /** Payload of GET /auth/passkeys. */
 export interface PasskeyListResponse {
   passkeys: PasskeySummary[];
+  /**
+   * False when the server would refuse to remove a listed passkey because it
+   * is the last way in. Absent from a server that predates the hint.
+   */
+  canRemove?: boolean;
 }
 
 /** Body of POST /auth/passkeys/register/verify. */

@@ -1,6 +1,17 @@
 import type { OAuthProvider } from '@/modules/oauth'; // feature:oauth-core
 
 // feature:oauth-core:start
+/** What the server says an unlink of one listed sign-in method would be told. */
+export const UNLINK_HINT = {
+  ALLOWED: 'allowed',
+  /** The server would refuse: nothing else signs the account in. */
+  LAST_SIGN_IN_METHOD: 'last_sign_in_method',
+  /** Email sign-in is not a link, so it has no unlink. */
+  NOT_REMOVABLE: 'not_removable',
+} as const;
+
+export type UnlinkHint = (typeof UNLINK_HINT)[keyof typeof UNLINK_HINT];
+
 /**
  * Response type for linked providers endpoint.
  * Providers are 'email' plus the linked OAuth provider ids.
@@ -8,6 +19,8 @@ import type { OAuthProvider } from '@/modules/oauth'; // feature:oauth-core
 export interface LinkedProvidersResponse {
   providers: string[];
   primaryProvider?: string;
+  /** Per entry of `providers`. Absent from a server that predates the hint. */
+  unlinkHints?: Record<string, UnlinkHint>;
 }
 // feature:oauth-core:end
 

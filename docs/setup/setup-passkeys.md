@@ -148,6 +148,14 @@ DELETE /api/auth/passkeys/:id
 
 Delete is refused with `409 PASSKEY_LAST_SIGN_IN_METHOD` when it is the account's only passkey **and** the account has no password to sign in with, no linked OAuth provider, and magic links are off. Any one of those, and the passkey goes.
 
+The list answer carries the same decision ahead of time, so a page can say why before anyone tries:
+
+```json
+{ "passkeys": [{ "id": "…", "name": "Laptop" }], "canRemove": false }
+```
+
+`canRemove` is `false` when a delete would be refused with `PASSKEY_LAST_SIGN_IN_METHOD` right now. It comes from the rule the delete asks, and it is advice: the delete still decides, so a page handles the `409` as well. The field is optional. A client that does not know it can ignore it.
+
 ---
 
 ## Passkeys and the second factor

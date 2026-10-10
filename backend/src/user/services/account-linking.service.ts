@@ -9,11 +9,13 @@ import {
   UnitOfWorkRunner,
 } from '../../common/persistence/unit-of-work';
 import { OAuthProfile } from '../../auth/oauth/oauth-provider.interface';
+import { UNLINK_HINT, UnlinkHint } from '../dto/account-linking.dto';
 import { LinkedAccountStore } from '../stores/linked-account.store';
 import { StoredAccount } from '../stores/stored-account';
 import {
   SignInMethodRule,
   WAY_IN_OUTCOME,
+  WayInOutcome,
   WaysLeft,
 } from './sign-in-method.rule';
 
@@ -30,6 +32,48 @@ function waysLeftWithout(provider: string): WaysLeft {
     return (email ? 1 : 0) + others.length;
   };
 }
+
+const NOT_LINKED = 'not_linked';
+
+/**
+ * The one answer to "may this provider be unlinked", for the unlink and for
+ * the hint a page reads. Email is never a link, a provider has to be linked,
+ * and the last way in stays.
+ */
+function unlinkAnswer(
+  provider: string,
+  linkedProviders: string[],
+  wayIn: WayInOutcome,
+): UnlinkHint | typeof NOT_LINKED {
+  if (provider === EMAIL_PROVIDER) {
+    return UNLINK_HINT.NOT_REMOVABLE;
+  }
+  if (!linkedProviders.includes(provider)) {
+    return NOT_LINKED;
+  }
+  return wayIn === WAY_IN_OUTCOME.ANOTHER_LEFT
+    ? UNLINK_HINT.ALLOWED
+    : UNLINK_HINT.LAST_SIGN_IN_METHOD;
+}
+
+/** How an unlink refuses each answer but the allowed one. */
+const UNLINK_REFUSAL: Record<
+  Exclude<ReturnType<typeof unlinkAnswer>, typeof UNLINK_HINT.ALLOWED>,
+  { code: ErrorCode; message: (provider: string) => string }
+> = {
+  [UNLINK_HINT.NOT_REMOVABLE]: {
+    code: ErrorCode.VALIDATION_ERROR,
+    message: () => 'Email sign-in cannot be unlinked',
+  },
+  [NOT_LINKED]: {
+    code: ErrorCode.PROVIDER_NOT_LINKED,
+    message: (provider) => `${provider} is not linked to your account`,
+  },
+  [UNLINK_HINT.LAST_SIGN_IN_METHOD]: {
+    code: ErrorCode.CANNOT_UNLINK_LAST_PROVIDER,
+    message: () => 'You must keep at least one sign-in method',
+  },
+};
 
 /**
  * Links and unlinks OAuth accounts on a user.
@@ -136,28 +180,12 @@ export class AccountLinkingService {
     );
     const user = this.active(await this.links.readAccount(unitOfWork, userId));
 
-    if (provider === EMAIL_PROVIDER) {
+    const answer = unlinkAnswer(provider, user.linkedProviders, wayIn);
+    if (answer !== UNLINK_HINT.ALLOWED) {
+      const refusal = UNLINK_REFUSAL[answer];
       throw new AppException(
-        ErrorCode.VALIDATION_ERROR,
-        'Email sign-in cannot be unlinked',
-        HttpStatus.BAD_REQUEST,
-        { provider },
-      );
-    }
-
-    if (!user.linkedProviders.includes(provider)) {
-      throw new AppException(
-        ErrorCode.PROVIDER_NOT_LINKED,
-        `${provider} is not linked to your account`,
-        HttpStatus.BAD_REQUEST,
-        { provider },
-      );
-    }
-
-    if (wayIn === WAY_IN_OUTCOME.LAST) {
-      throw new AppException(
-        ErrorCode.CANNOT_UNLINK_LAST_PROVIDER,
-        'You must keep at least one sign-in method',
+        refusal.code,
+        refusal.message(provider),
         HttpStatus.BAD_REQUEST,
         { provider },
       );
@@ -188,11 +216,32 @@ export class AccountLinkingService {
       return false;
     }
 
-    return (
-      provider !== EMAIL_PROVIDER &&
-      user.linkedProviders.includes(provider) &&
-      user.linkedProviders.length > 1
-    );
+    const hints = await this.unlinkHints(userId, user.linkedProviders);
+    return hints[provider] === UNLINK_HINT.ALLOWED;
+  }
+
+  /**
+   * What an unlink of each of the account's sign-in methods would be told
+   * now, from the rule the unlink asks. Nothing is held, so a page may offer
+   * an unlink that is refused a moment later.
+   */
+  async unlinkHints(
+    userId: string,
+    linkedProviders: string[],
+  ): Promise<Record<string, UnlinkHint>> {
+    const advise = await this.signInMethods.adviseOnRemoval(userId);
+    const hints: Record<string, UnlinkHint> = {};
+    for (const provider of linkedProviders) {
+      const answer = unlinkAnswer(
+        provider,
+        linkedProviders,
+        advise(waysLeftWithout(provider)),
+      );
+      if (answer !== NOT_LINKED) {
+        hints[provider] = answer;
+      }
+    }
+    return hints;
   }
 
   async isPrimaryProvider(userId: string, provider: string): Promise<boolean> {
