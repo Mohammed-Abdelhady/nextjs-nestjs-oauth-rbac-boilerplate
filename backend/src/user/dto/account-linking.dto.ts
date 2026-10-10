@@ -35,6 +35,16 @@ export const PRIMARY_HINT = {
 
 export type PrimaryHint = (typeof PRIMARY_HINT)[keyof typeof PRIMARY_HINT];
 
+/** Whether the account's email sign-in is a way in now. */
+export const EMAIL_SIGN_IN = {
+  USABLE: 'usable',
+  /** Password sign-in and magic links are both off on this deployment. */
+  SWITCHED_OFF: 'switched_off',
+} as const;
+
+export type EmailSignInHint =
+  (typeof EMAIL_SIGN_IN)[keyof typeof EMAIL_SIGN_IN];
+
 /**
  * Response DTO for linked providers.
  */
@@ -77,4 +87,16 @@ export class LinkedProvidersResponseDto {
     additionalProperties: { type: 'string', enum: Object.values(PRIMARY_HINT) },
   })
   primaryHints?: Record<string, PrimaryHint>;
+
+  @ApiProperty({
+    description:
+      'Present when `providers` lists `email`: `usable` while the deployment ' +
+      'signs an address in by password or by magic link, `switched_off` ' +
+      'when both are off. The entry stays listed either way, because the ' +
+      'account was created for that address.',
+    enum: Object.values(EMAIL_SIGN_IN),
+    example: 'usable',
+    required: false,
+  })
+  emailSignIn?: EmailSignInHint;
 }

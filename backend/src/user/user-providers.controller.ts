@@ -54,7 +54,7 @@ export class UserProvidersController {
     description:
       'Returns the sign-in methods on the authenticated user account, and for ' +
       'each one whether an unlink, and choosing it as primary, would be ' +
-      'accepted now.',
+      'accepted now. Says whether email sign-in can be used at present.',
   })
   async getLinkedProviders(
     @CurrentUser('id') userId: string,
@@ -65,10 +65,8 @@ export class UserProvidersController {
     const primaryProvider =
       await this.userProfileService.getPrimaryProvider(userId);
 
-    const unlinkHints = await this.accountLinkingService.unlinkHints(
-      userId,
-      providers,
-    );
+    const { unlinkHints, emailSignIn } =
+      await this.accountLinkingService.signInMethodHints(userId, providers);
 
     const primaryHints = this.accountLinkingService.primaryHints(providers);
 
@@ -77,6 +75,7 @@ export class UserProvidersController {
       primaryProvider,
       unlinkHints,
       primaryHints,
+      emailSignIn,
     });
   }
 

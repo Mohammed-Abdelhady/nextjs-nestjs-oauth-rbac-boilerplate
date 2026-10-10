@@ -10,6 +10,7 @@ import {
 } from '../../common/persistence/unit-of-work';
 import { OAuthProfile } from '../../auth/oauth/oauth-provider.interface';
 import {
+  EmailSignInHint,
   PRIMARY_HINT,
   PrimaryHint,
   UNLINK_HINT,
@@ -18,93 +19,30 @@ import {
 import { LinkedAccountStore } from '../stores/linked-account.store';
 import { StoredAccount } from '../stores/stored-account';
 import {
+  emailSignInAnswer,
+  emailWayIn,
+  NOT_LINKED,
+  PRIMARY_REFUSAL,
+  primaryAnswer,
+  UNLINK_REFUSAL,
+  unlinkAnswer,
+  waysLeftWithout,
+} from './account-linking.answers';
+import {
   SignInMethodRule,
-  WAY_IN_OUTCOME,
   WayInOutcome,
   WaysLeft,
 } from './sign-in-method.rule';
 
-/**
- * What an unlink accepts as left: every other linked provider, and email
- * sign-in on an account created for it while the deployment can sign that
- * address in or recover it, by password reset or by magic link.
- */
-function waysLeftWithout(provider: string): WaysLeft {
-  return (held, switches) => {
-    const email = held.emailSignIn && (switches.password || switches.magicLink);
-    const others = held.linkedProviders.filter((linked) => linked !== provider);
+/** What the rule answers each removal asked of one read of the account. */
+type RemovalAdvice = (waysLeft: WaysLeft) => WayInOutcome;
 
-    return (email ? 1 : 0) + others.length;
-  };
+/** What a page is told beside the list of an account's sign-in methods. */
+export interface SignInMethodHints {
+  unlinkHints: Record<string, UnlinkHint>;
+  /** Absent on an account that was not created to sign in by email. */
+  emailSignIn?: EmailSignInHint;
 }
-
-const NOT_LINKED = 'not_linked';
-
-/**
- * The one answer to "may this provider be unlinked", for the unlink and for
- * the hint a page reads. Email is never a link, a provider has to be linked,
- * and the last way in stays.
- */
-function unlinkAnswer(
-  provider: string,
-  linkedProviders: string[],
-  wayIn: WayInOutcome,
-): UnlinkHint | typeof NOT_LINKED {
-  if (provider === EMAIL_PROVIDER) {
-    return UNLINK_HINT.NOT_REMOVABLE;
-  }
-  if (!linkedProviders.includes(provider)) {
-    return NOT_LINKED;
-  }
-  return wayIn === WAY_IN_OUTCOME.ANOTHER_LEFT
-    ? UNLINK_HINT.ALLOWED
-    : UNLINK_HINT.LAST_SIGN_IN_METHOD;
-}
-
-/** How an unlink refuses each answer but the allowed one. */
-const UNLINK_REFUSAL: Record<
-  Exclude<ReturnType<typeof unlinkAnswer>, typeof UNLINK_HINT.ALLOWED>,
-  { code: ErrorCode; message: (provider: string) => string }
-> = {
-  [UNLINK_HINT.NOT_REMOVABLE]: {
-    code: ErrorCode.VALIDATION_ERROR,
-    message: () => 'Email sign-in cannot be unlinked',
-  },
-  [NOT_LINKED]: {
-    code: ErrorCode.PROVIDER_NOT_LINKED,
-    message: (provider) => `${provider} is not linked to your account`,
-  },
-  [UNLINK_HINT.LAST_SIGN_IN_METHOD]: {
-    code: ErrorCode.CANNOT_UNLINK_LAST_PROVIDER,
-    message: () => 'You must keep at least one sign-in method',
-  },
-};
-
-/**
- * The one answer to "may this provider be the primary", for the choice and
- * for the hint a page reads. Only a linked provider has a profile to follow.
- */
-function primaryAnswer(
-  provider: string,
-  linkedProviders: string[],
-): PrimaryHint | typeof NOT_LINKED {
-  if (provider === EMAIL_PROVIDER) {
-    return PRIMARY_HINT.NO_PROFILE_TO_SYNC;
-  }
-  return linkedProviders.includes(provider) ? PRIMARY_HINT.ALLOWED : NOT_LINKED;
-}
-
-/** How choosing a primary refuses each answer but the allowed one. */
-const PRIMARY_REFUSAL: Record<
-  Exclude<ReturnType<typeof primaryAnswer>, typeof PRIMARY_HINT.ALLOWED>,
-  { code: ErrorCode; message: (provider: string) => string }
-> = {
-  [PRIMARY_HINT.NO_PROFILE_TO_SYNC]: {
-    code: ErrorCode.VALIDATION_ERROR,
-    message: () => 'Email sign-in has no profile to sync',
-  },
-  [NOT_LINKED]: UNLINK_REFUSAL[NOT_LINKED],
-};
 
 /**
  * Links and unlinks OAuth accounts on a user.
@@ -261,6 +199,29 @@ export class AccountLinkingService {
     linkedProviders: string[],
   ): Promise<Record<string, UnlinkHint>> {
     const advise = await this.signInMethods.adviseOnRemoval(userId);
+    return this.unlinkHintsFrom(advise, linkedProviders);
+  }
+
+  /**
+   * The unlink hints, and whether email sign-in is a way into the account
+   * now, all from one read of the account and the rule's own switches.
+   */
+  async signInMethodHints(
+    userId: string,
+    linkedProviders: string[],
+  ): Promise<SignInMethodHints> {
+    const advise = await this.signInMethods.adviseOnRemoval(userId);
+    const unlinkHints = this.unlinkHintsFrom(advise, linkedProviders);
+    if (!linkedProviders.includes(EMAIL_PROVIDER)) {
+      return { unlinkHints };
+    }
+    return { unlinkHints, emailSignIn: emailSignInAnswer(advise(emailWayIn)) };
+  }
+
+  private unlinkHintsFrom(
+    advise: RemovalAdvice,
+    linkedProviders: string[],
+  ): Record<string, UnlinkHint> {
     const hints: Record<string, UnlinkHint> = {};
     for (const provider of linkedProviders) {
       const answer = unlinkAnswer(
