@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { singleStatement } from '../../../../auth/persistence/mongo/mongo-unique-conflict';
+import { singleStatement } from '../../../../common/persistence/mongo/mongo-unique-conflict';
 import { CREDENTIAL_PURPOSE } from '../../../constants/credential-purpose';
 import { toObjectId } from '../../../persistence/mongo/mongo-issuance-mappers';
 import {
   NativeCredential,
   NativeCredentialDocument,
-} from '../../../schemas/native-credential.schema';
-import { linearizable } from '../../../utils/authority/linearizable-query';
+} from '../../../persistence/mongo/schemas/native-credential.schema';
+import { linearizable } from '../../../../common/persistence/mongo/linearizable-query';
 import {
   FIRST_USE,
   FirstUse,

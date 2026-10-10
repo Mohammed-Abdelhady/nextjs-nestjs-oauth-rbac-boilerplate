@@ -17,7 +17,7 @@ import {
   createPasskeyConfig,
   MockPasskey,
   RP_ID,
-} from '../passkeys.harness-spec';
+} from '../persistence/mongo/passkeys.harness-spec';
 
 /** The signature check itself is the library's; everything around it is here. */
 

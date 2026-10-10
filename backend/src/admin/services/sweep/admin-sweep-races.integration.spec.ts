@@ -5,7 +5,7 @@ import {
   LEAD_SLUG,
   FRESH_SLUG,
   useAdminRoundFour,
-} from '../admin-round-four.harness-spec';
+} from '../../persistence/mongo/services/admin-round-four.harness-spec';
 
 const DESTINATION_CHANGES = ['rename', 'delete', 'rename back'] as const;
 

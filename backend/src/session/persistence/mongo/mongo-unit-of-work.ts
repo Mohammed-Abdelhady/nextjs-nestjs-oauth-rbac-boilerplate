@@ -8,7 +8,7 @@ import {
   UnitOfWork,
   UnitOfWorkRunner,
 } from '../../../common/persistence/unit-of-work';
-import { withMajorityTransaction } from '../../utils/transactions/mongo-transaction';
+import { withMajorityTransaction } from '../../../common/persistence/mongo/mongo-transaction';
 import { mapMongoError } from './mongo-persistence-errors';
 
 class MongoUnitOfWork extends UnitOfWork {

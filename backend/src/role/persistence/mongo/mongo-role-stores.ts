@@ -1,9 +1,9 @@
 import { Connection, Model } from 'mongoose';
 import { RerunPause } from '../../../common/persistence/unit-of-work';
 import { MongoUnitOfWorkRunner } from '../../../session/persistence/mongo/mongo-unit-of-work';
-import { SecurityEventService } from '../../../session/services/security-event.service';
-import { UserDocument } from '../../../user/schemas/user.schema';
-import { RoleDocument } from '../../schemas/role.schema';
+import { SecurityEventService } from '../../../session/persistence/mongo/security-event.service';
+import { UserDocument } from '../../../user/persistence/mongo/schemas/user.schema';
+import { RoleDocument } from './schemas/role.schema';
 import { RoleSweepStores } from '../../sweeps/role-holder-sweep';
 import { MongoRoleCatalogStore } from './mongo-role-catalog.store';
 import { MongoRoleChangeStore } from './mongo-role-change.store';

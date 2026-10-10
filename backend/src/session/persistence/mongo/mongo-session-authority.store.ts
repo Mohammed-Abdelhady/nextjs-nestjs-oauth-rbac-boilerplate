@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { singleStatement } from '../../../auth/persistence/mongo/mongo-unique-conflict';
-import { User, UserDocument } from '../../../user/schemas/user.schema';
+import { singleStatement } from '../../../common/persistence/mongo/mongo-unique-conflict';
 import {
+  User,
+  UserDocument,
+} from '../../../user/persistence/mongo/schemas/user.schema';
+import {
+  AccountIdentity,
   AuthorityAccount,
   AuthorityGrant,
   IDLE_EXTENSION,
@@ -17,16 +21,18 @@ import {
   LeanSession,
   Session,
   SessionDocument,
-} from '../../schemas/session.schema';
+} from './schemas/session.schema';
 import {
   UserApplicationGrant,
   UserApplicationGrantDocument,
-} from '../../schemas/user-application-grant.schema';
+} from './schemas/user-application-grant.schema';
 import { currentSessionCandidateFilter } from './mongo-session-candidate-filter';
-import { linearizable } from '../../utils/authority/linearizable-query';
+import { linearizable } from '../../../common/persistence/mongo/linearizable-query';
 import { toIssuanceGrant, toObjectId } from './mongo-issuance-mappers';
 import {
+  authorityDocumentOf,
   castingId,
+  toAccountIdentity,
   toAuthorityAccount,
   toStoredSession,
 } from './mongo-session-records';
@@ -76,6 +82,20 @@ export class MongoSessionAuthorityStore extends SessionAuthorityStore {
       linearizable(this.userModel.findById(id)).exec(),
     );
     return user ? toAuthorityAccount(user) : null;
+  }
+
+  async describeAccount(
+    account: AuthorityAccount,
+  ): Promise<AccountIdentity | null> {
+    const held = authorityDocumentOf(account);
+    if (held) {
+      return toAccountIdentity(held);
+    }
+    const id = toObjectId(account.id);
+    const user = await singleStatement(() =>
+      this.userModel.findById(id).exec(),
+    );
+    return user ? toAccountIdentity(user) : null;
   }
 
   async readCommittedGrant(

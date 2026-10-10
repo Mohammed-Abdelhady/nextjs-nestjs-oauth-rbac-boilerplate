@@ -3,11 +3,11 @@ import mongoose, { STATES, type Model } from 'mongoose';
 import {
   Application,
   ApplicationDocument,
-} from '../../../src/session/schemas/application.schema';
+} from '../../../src/session/persistence/mongo/schemas/application.schema';
 import {
   AuthorizationTransaction,
   AuthorizationTransactionDocument,
-} from '../../../src/session/schemas/authorization-transaction.schema';
+} from '../../../src/session/persistence/mongo/schemas/authorization-transaction.schema';
 import {
   NATIVE_CLIENT_ID,
   NATIVE_REDIRECT,

@@ -8,8 +8,8 @@ import { mongoSessionOf } from '../../../../session/persistence/mongo/mongo-unit
 import {
   insertOrConflict,
   singleStatement,
-} from '../../../persistence/mongo/mongo-unique-conflict';
-import { Passkey, PasskeyDocument } from '../../schemas/passkey.schema';
+} from '../../../../common/persistence/mongo/mongo-unique-conflict';
+import { Passkey, PasskeyDocument } from './schemas/passkey.schema';
 import {
   COUNTER_OUTCOME,
   CounterOutcome,

@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 import {
   insertOrConflict,
   singleStatement,
-} from '../../../auth/persistence/mongo/mongo-unique-conflict';
+} from '../../../common/persistence/mongo/mongo-unique-conflict';
 import {
   BROWSER_PROOF_CLAIM,
   BROWSER_PROOF_CONSTRAINT,
@@ -16,7 +16,7 @@ import {
 import {
   BrowserProof,
   BrowserProofDocument,
-} from '../../schemas/browser-proof.schema';
+} from './schemas/browser-proof.schema';
 
 const PROOF_CONSTRAINTS = {
   browser_proof_id_unique: BROWSER_PROOF_CONSTRAINT.PROOF_ID,

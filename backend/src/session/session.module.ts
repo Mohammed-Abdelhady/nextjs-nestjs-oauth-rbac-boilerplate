@@ -1,158 +1,75 @@
 import { Module, OnModuleInit, type INestApplication } from '@nestjs/common';
-import { InjectConnection, MongooseModule } from '@nestjs/mongoose';
-import { Connection } from 'mongoose';
 import { CommonModule } from '../common/common.module';
+import { StorageStartup } from '../common/persistence/storage-startup';
 import { UnitOfWorkRunner } from '../common/persistence/unit-of-work';
-import { User, UserSchema } from '../user/schemas/user.schema';
-import { Application, ApplicationSchema } from './schemas/application.schema';
-import {
-  AuthorizationTransaction,
-  AuthorizationTransactionSchema,
-} from './schemas/authorization-transaction.schema';
-import {
-  NativeCredential,
-  NativeCredentialSchema,
-} from './schemas/native-credential.schema';
-import {
-  SecurityEvent,
-  SecurityEventSchema,
-} from './schemas/security-event.schema';
-import {
-  BrowserProof,
-  BrowserProofSchema,
-} from './schemas/browser-proof.schema';
-import {
-  NativeDpopProofId,
-  NativeDpopProofIdSchema,
-} from './schemas/native-dpop-proof-id.schema';
-import { Session, SessionSchema } from './schemas/session.schema';
-import {
-  StepUpChallenge,
-  StepUpChallengeSchema,
-} from './schemas/step-up-challenge.schema';
-import {
-  UserApplicationGrant,
-  UserApplicationGrantSchema,
-} from './schemas/user-application-grant.schema';
 import { ApplicationAccess } from './applications/application-access';
 import { ApplicationAccessStore } from './applications/application-access.store';
 import { ApplicationRegistry } from './applications/application-registry';
 import { ApplicationRegistryStore } from './applications/application-registry.store';
 import { AuthorityApplications } from './authority/authority-applications';
+import { AuthenticatedSessions } from './authority/authenticated-session';
 import { SessionAuthorityStore } from './authority/session-authority.store';
 import { SessionValidator } from './authority/session-validator';
 import { SecurityEventRecorder } from './events/security-event-recorder';
 import { SecurityEventStore } from './events/security-event.store';
 import { BrowserIssuanceStore } from './issuance/browser-issuance.store';
 import { IssuanceApplications } from './issuance/issuance-applications';
-import { MongoApplicationAccessStore } from './persistence/mongo/mongo-application-access.store';
-import { MongoApplicationRegistryStore } from './persistence/mongo/mongo-application-registry.store';
-import { MongoAuthorityApplications } from './persistence/mongo/mongo-authority-applications';
-import { MongoBrowserIssuanceStore } from './persistence/mongo/mongo-browser-issuance.store';
-import { MongoBrowserProofStore } from './persistence/mongo/mongo-browser-proof.store';
-import { MongoIssuanceApplications } from './persistence/mongo/mongo-issuance-applications';
-import { MongoSecurityEventStore } from './persistence/mongo/mongo-security-event.store';
-import { MongoSessionAuthorityStore } from './persistence/mongo/mongo-session-authority.store';
-import { MongoSessionRevocationStore } from './persistence/mongo/mongo-session-revocation.store';
-import { MongoUnitOfWorkRunner } from './persistence/mongo/mongo-unit-of-work';
 import { BrowserProofStore } from './proofs/browser-proof.store';
 import { SessionRevocationStore } from './revocation/session-revocation.store';
 import { SessionRevoker } from './revocation/session-revoker';
 import { BrowserProofService } from './services/browser-proof.service';
-import { ApplicationAccessService } from './services/application-access.service';
-import { ApplicationRegistryService } from './services/application-registry.service';
 import { NativeSessionRevocationService } from './services/native-session-revocation.service';
-import { SecurityEventService } from './services/security-event.service';
-import { SessionAuthorityService } from './services/session-authority.service';
 import { SessionIssuanceService } from './services/session-issuance.service';
-import { SessionRevocationService } from './services/session-revocation.service';
 import { NativeAccessService } from './native/access/native-access.service';
 import { NativeAccessValidator } from './native/access/native-access-validator';
 import { NativeAccessStore } from './native/credentials/native-access.store';
 import { NativeCredentialStore } from './native/credentials/native-credential.store';
 import { NativeSecurityEvents } from './native/credentials/native-security-events';
-import { MongoNativeAccessStore } from './native/persistence/mongo/mongo-native-access.store';
-import { MongoNativeCredentialStore } from './native/persistence/mongo/mongo-native-credential.store';
-import { MongoNativeSecurityEvents } from './native/persistence/mongo/mongo-native-security-events';
+import {
+  SESSION_PERSISTENCE_EXPORTS,
+  SESSION_PERSISTENCE_IMPORTS,
+  SESSION_PERSISTENCE_PROVIDERS,
+} from './persistence/session-persistence';
 
 @Module({
-  imports: [
-    CommonModule,
-    MongooseModule.forFeature([
-      { name: Session.name, schema: SessionSchema },
-      { name: BrowserProof.name, schema: BrowserProofSchema },
-      { name: NativeDpopProofId.name, schema: NativeDpopProofIdSchema },
-      { name: Application.name, schema: ApplicationSchema },
-      { name: UserApplicationGrant.name, schema: UserApplicationGrantSchema },
-      { name: NativeCredential.name, schema: NativeCredentialSchema },
-      {
-        name: AuthorizationTransaction.name,
-        schema: AuthorizationTransactionSchema,
-      },
-      { name: StepUpChallenge.name, schema: StepUpChallengeSchema },
-      { name: SecurityEvent.name, schema: SecurityEventSchema },
-      { name: User.name, schema: UserSchema },
-    ]),
-  ],
+  imports: [CommonModule, ...SESSION_PERSISTENCE_IMPORTS],
   providers: [
-    {
-      provide: ApplicationRegistryStore,
-      useClass: MongoApplicationRegistryStore,
-    },
+    ...SESSION_PERSISTENCE_PROVIDERS,
     ApplicationRegistry,
-    { provide: ApplicationAccessStore, useClass: MongoApplicationAccessStore },
     ApplicationAccess,
-    ApplicationAccessService,
-    ApplicationRegistryService,
-    { provide: BrowserProofStore, useClass: MongoBrowserProofStore },
     BrowserProofService,
     NativeSessionRevocationService,
-    { provide: SecurityEventStore, useClass: MongoSecurityEventStore },
     SecurityEventRecorder,
-    SecurityEventService,
-    { provide: UnitOfWorkRunner, useClass: MongoUnitOfWorkRunner },
-    { provide: BrowserIssuanceStore, useClass: MongoBrowserIssuanceStore },
-    { provide: IssuanceApplications, useClass: MongoIssuanceApplications },
     SessionIssuanceService,
-    { provide: SessionAuthorityStore, useClass: MongoSessionAuthorityStore },
-    { provide: AuthorityApplications, useClass: MongoAuthorityApplications },
     SessionValidator,
-    SessionAuthorityService,
-    { provide: SessionRevocationStore, useClass: MongoSessionRevocationStore },
+    AuthenticatedSessions,
     SessionRevoker,
-    SessionRevocationService,
-    { provide: NativeCredentialStore, useClass: MongoNativeCredentialStore },
-    { provide: NativeAccessStore, useClass: MongoNativeAccessStore },
-    { provide: NativeSecurityEvents, useClass: MongoNativeSecurityEvents },
     NativeAccessValidator,
     NativeAccessService,
   ],
   exports: [
-    MongooseModule,
+    ...SESSION_PERSISTENCE_EXPORTS,
     CommonModule,
     ApplicationRegistryStore,
     ApplicationRegistry,
     ApplicationAccessStore,
     ApplicationAccess,
-    ApplicationAccessService,
-    ApplicationRegistryService,
     BrowserProofStore,
     BrowserProofService,
     NativeSessionRevocationService,
     SecurityEventStore,
     SecurityEventRecorder,
-    SecurityEventService,
     UnitOfWorkRunner,
+    StorageStartup,
     BrowserIssuanceStore,
     IssuanceApplications,
     SessionIssuanceService,
     SessionAuthorityStore,
     AuthorityApplications,
     SessionValidator,
-    SessionAuthorityService,
+    AuthenticatedSessions,
     SessionRevocationStore,
     SessionRevoker,
-    SessionRevocationService,
     NativeCredentialStore,
     NativeAccessStore,
     NativeSecurityEvents,
@@ -162,25 +79,13 @@ import { MongoNativeSecurityEvents } from './native/persistence/mongo/mongo-nati
 })
 export class SessionModule implements OnModuleInit {
   constructor(
-    private readonly applications: ApplicationRegistryService,
-    @InjectConnection() private readonly connection: Connection,
+    private readonly applications: ApplicationRegistry,
+    private readonly storage: StorageStartup,
   ) {}
 
+  /** The store is made ready first: nothing below may read or write before. */
   async onModuleInit(): Promise<void> {
-    await Promise.all(
-      [
-        Session.name,
-        BrowserProof.name,
-        NativeDpopProofId.name,
-        Application.name,
-        UserApplicationGrant.name,
-        NativeCredential.name,
-        AuthorizationTransaction.name,
-        StepUpChallenge.name,
-        SecurityEvent.name,
-        User.name,
-      ].map((name) => this.connection.model(name).createIndexes()),
-    );
+    await this.storage.prepare();
     if (process.env.NODE_ENV !== 'production') {
       await this.applications.seedFirstPartyApplications();
     }
@@ -191,5 +96,5 @@ export class SessionModule implements OnModuleInit {
 export async function reconcileStartupApplications(
   app: INestApplication,
 ): Promise<void> {
-  await app.get(ApplicationRegistryService).reconcileNativeApplications();
+  await app.get(ApplicationRegistry).reconcileNativeApplications();
 }

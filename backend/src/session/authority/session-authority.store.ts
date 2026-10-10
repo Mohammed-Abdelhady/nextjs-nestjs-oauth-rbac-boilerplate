@@ -24,10 +24,26 @@ export interface StoredSession extends SessionAuthorityFields {
   deviceName?: string | null;
   lastUsedAt?: Date | null;
   proofKeyThumbprint?: string | null;
+  /** The secret a browser sends back with its requests. Not a credential. */
+  csrfToken?: string | null;
+  authenticationMethods: string[];
+  createdAt: Date;
 }
 
 export type AuthorityAccount = IssuanceAccount;
 export type AuthorityGrant = IssuanceGrant;
+
+/** Who a validated session speaks for, as a request is told. */
+export interface AccountIdentity {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  /** Permissions held directly, apart from the role's. */
+  permissions: string[];
+  isVerified: boolean;
+  isDeleted: boolean;
+}
 
 export interface SessionCandidateQuery {
   userId: string;
@@ -70,6 +86,15 @@ export abstract class SessionAuthorityStore {
   abstract readCommittedAccount(
     userId: string,
   ): Promise<AuthorityAccount | null>;
+
+  /**
+   * Who the account of a committed read is. The adapter answers from that same
+   * read when it still holds it, so a validation costs no second read, and
+   * reads the account itself for a record it did not hand out.
+   */
+  abstract describeAccount(
+    account: AuthorityAccount,
+  ): Promise<AccountIdentity | null>;
 
   /** Committed authority read of the account's grant for one application. */
   abstract readCommittedGrant(

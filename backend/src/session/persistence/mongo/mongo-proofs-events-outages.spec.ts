@@ -7,9 +7,9 @@ import {
   proofsEventsStatements,
 } from '../../../../test/utils/session/proofs-events-contract/proofs-events-outage-cases';
 import { createModelMock } from '../../../common/testing/test-doubles.harness-spec';
-import { BrowserProofDocument } from '../../schemas/browser-proof.schema';
-import { SecurityEventDocument } from '../../schemas/security-event.schema';
-import { SecurityEventService } from '../../services/security-event.service';
+import { BrowserProofDocument } from './schemas/browser-proof.schema';
+import { SecurityEventDocument } from './schemas/security-event.schema';
+import { SecurityEventService } from './security-event.service';
 import { MongoBrowserProofStore } from './mongo-browser-proof.store';
 import { MongoSecurityEventStore } from './mongo-security-event.store';
 

@@ -4,7 +4,7 @@ import { ErrorCode } from '../../../src/common/enums/error-code.enum';
 import {
   NATIVE_CLIENT_ID,
   NATIVE_REDIRECT,
-} from '../../../src/session/native/harness/native-oauth.harness-spec';
+} from '../../../src/session/native/persistence/mongo/harness/native-oauth.harness-spec';
 import { SEED_USER } from '../../constants/seed-users';
 import { bootE2eApp, loginAs, type E2eApp } from '../../utils/e2e-app';
 import { createNativeApplication } from '../../utils/native/native-authorize.fixtures';

@@ -4,7 +4,10 @@ import { MagicLinkController } from './magic-link.controller';
 import { MagicLinkService } from './magic-link.service';
 import { FeatureEnabledGuard } from '../guards/feature-enabled.guard';
 import { AuthFeaturesService } from '../services/features/auth-features.service';
-import { MOCK_REQUEST, MOCK_RESPONSE } from './magic-link.harness-spec';
+import {
+  MOCK_REQUEST,
+  MOCK_RESPONSE,
+} from './persistence/mongo/magic-link.harness-spec';
 import { createResponseMock } from '../../common/testing/test-doubles.harness-spec';
 
 describe('MagicLinkController', () => {

@@ -5,6 +5,13 @@ import { Pool } from 'pg';
 const MIGRATIONS_DIRECTORY = join(__dirname, 'migrations');
 const MIGRATION_FILE = /^\d{4}_[a-z0-9_]+\.sql$/;
 
+/** The adapter's migrations, in the order they are applied. */
+export function listPrototypeMigrations(): string[] {
+  return readdirSync(MIGRATIONS_DIRECTORY)
+    .filter((file) => MIGRATION_FILE.test(file))
+    .sort();
+}
+
 /**
  * Applies the adapter's plain SQL files in name order, each in its own
  * transaction, and records the ones applied. The files are part of the adapter
@@ -24,9 +31,7 @@ export async function migratePrototypeDatabase(pool: Pool): Promise<string[]> {
       'SELECT name FROM schema_migrations',
     );
     const done = new Set(known.rows.map(({ name }) => name));
-    const files = readdirSync(MIGRATIONS_DIRECTORY)
-      .filter((file) => MIGRATION_FILE.test(file))
-      .sort();
+    const files = listPrototypeMigrations();
     for (const file of files) {
       if (done.has(file)) continue;
       const statements = readFileSync(join(MIGRATIONS_DIRECTORY, file), 'utf8');

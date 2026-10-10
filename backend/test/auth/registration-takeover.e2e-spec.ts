@@ -2,7 +2,7 @@ import type { Response } from 'supertest';
 import { getModelToken } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 import { CSRF_HEADER } from '../../src/session/constants/browser-proof';
-import { PendingRegistration } from '../../src/auth/schemas/pending-registration.schema';
+import { PendingRegistration } from '../../src/auth/persistence/mongo/schemas/pending-registration.schema';
 import {
   bootE2eApp,
   browserAgent,

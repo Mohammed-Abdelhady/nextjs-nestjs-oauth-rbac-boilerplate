@@ -3,7 +3,10 @@ import { Model } from 'mongoose';
 import { ErrorCode } from '../../src/common/enums/error-code.enum';
 import { MailService } from '../../src/mail/mail.service';
 import { UserRole } from '../../src/user/enums/user-role.enum';
-import { User, UserDocument } from '../../src/user/schemas/user.schema';
+import {
+  User,
+  UserDocument,
+} from '../../src/user/persistence/mongo/schemas/user.schema';
 import { SEED_ADMIN } from '../constants/seed-users';
 import { bootE2eApp, loginAs, E2eApp, TestAgent } from '../utils/e2e-app';
 import { inWindow } from '../utils/pending-race';

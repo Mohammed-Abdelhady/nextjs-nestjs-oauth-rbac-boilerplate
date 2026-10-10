@@ -11,8 +11,11 @@ import {
   NATIVE_META,
   NATIVE_REDIRECT,
   nativeAuthorizeQuery,
-} from '../../src/session/native/harness/native-oauth.harness-spec';
-import { User, UserDocument } from '../../src/user/schemas/user.schema';
+} from '../../src/session/native/persistence/mongo/harness/native-oauth.harness-spec';
+import {
+  User,
+  UserDocument,
+} from '../../src/user/persistence/mongo/schemas/user.schema';
 import { SEED_ADMIN, SEED_USER } from '../constants/seed-users';
 import {
   bootE2eApp,

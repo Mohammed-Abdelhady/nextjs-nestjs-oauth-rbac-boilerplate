@@ -8,7 +8,7 @@ import { MongoUnitOfWorkRunner } from '../../../../src/session/persistence/mongo
 import {
   SecurityEvent,
   SecurityEventDocument,
-} from '../../../../src/session/schemas/security-event.schema';
+} from '../../../../src/session/persistence/mongo/schemas/security-event.schema';
 import { SessionIssuanceService } from '../../../../src/session/services/session-issuance.service';
 import { FrozenClock, TEST_NOW } from '../../frozen-clock';
 import { startMemoryReplSet } from '../../memory-replset';

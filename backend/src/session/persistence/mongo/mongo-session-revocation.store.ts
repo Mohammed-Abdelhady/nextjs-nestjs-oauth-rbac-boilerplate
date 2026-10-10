@@ -3,7 +3,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model } from 'mongoose';
 import { MalformedIdError } from '../../../common/persistence/persistence-errors';
 import { UnitOfWork } from '../../../common/persistence/unit-of-work';
-import { User, UserDocument } from '../../../user/schemas/user.schema';
+import {
+  User,
+  UserDocument,
+} from '../../../user/persistence/mongo/schemas/user.schema';
 import { RecordSecurityEventInput } from '../../events/security-event-recorder';
 import {
   ACCOUNT_VERSION_ADVANCE,
@@ -18,8 +21,8 @@ import {
   SURVIVOR_PROMOTION,
   SurvivorPromotion,
 } from '../../revocation/session-revocation.store';
-import { Session, SessionDocument } from '../../schemas/session.schema';
-import { SecurityEventService } from '../../services/security-event.service';
+import { Session, SessionDocument } from './schemas/session.schema';
+import { SecurityEventService } from './security-event.service';
 import { toObjectId } from './mongo-issuance-mappers';
 import {
   castingId,

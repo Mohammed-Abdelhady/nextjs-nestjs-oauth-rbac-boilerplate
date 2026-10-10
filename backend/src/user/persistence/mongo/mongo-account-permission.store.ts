@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { castingId } from '../../../session/persistence/mongo/mongo-session-records';
-import { User, UserDocument } from '../../schemas/user.schema';
+import { User, UserDocument } from './schemas/user.schema';
 import {
   AccountGrants,
   AccountPermissionStore,

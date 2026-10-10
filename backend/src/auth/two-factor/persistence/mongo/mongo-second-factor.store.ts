@@ -2,8 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { MalformedIdError } from '../../../../common/persistence/persistence-errors';
-import { User, UserDocument } from '../../../../user/schemas/user.schema';
-import { singleStatement } from '../../../persistence/mongo/mongo-unique-conflict';
+import {
+  User,
+  UserDocument,
+} from '../../../../user/persistence/mongo/schemas/user.schema';
+import { singleStatement } from '../../../../common/persistence/mongo/mongo-unique-conflict';
 import {
   SecondFactorAccount,
   StoredTotpSecret,

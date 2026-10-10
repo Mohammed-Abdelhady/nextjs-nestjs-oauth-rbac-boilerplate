@@ -11,20 +11,13 @@ import { NativeBoundProofService } from '../proof/native-bound-proof.service';
 import { NativeRefreshRotationService } from '../refresh/native-refresh-rotation.service';
 import { NativeBoundRetryService } from '../retry/native-bound-retry.service';
 import { NativeRevokeService } from '../revoke/native-revoke.service';
-import { NativeRotationStore } from '../credentials/native-rotation.store';
-import { MongoNativeRotationStore } from '../persistence/mongo/mongo-native-rotation.store';
-import { NativeAuthorizationStore } from '../authorize/native-authorization.store';
-import { MongoNativeAuthorizationStore } from '../persistence/mongo/mongo-native-authorization.store';
+import { NATIVE_OAUTH_PERSISTENCE_PROVIDERS } from '../persistence/native-oauth-persistence';
 
 @Module({
   imports: [SessionModule],
   controllers: [NativeOAuthController],
   providers: [
-    {
-      provide: NativeAuthorizationStore,
-      useClass: MongoNativeAuthorizationStore,
-    },
-    { provide: NativeRotationStore, useClass: MongoNativeRotationStore },
+    ...NATIVE_OAUTH_PERSISTENCE_PROVIDERS,
     NativeAuthorizeService,
     NativeAuthorizeBrowserService,
     NativeCredentialIssuer,

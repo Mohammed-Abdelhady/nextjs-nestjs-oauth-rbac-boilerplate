@@ -1,19 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Types } from 'mongoose';
+import { IdFormat } from '../../common/persistence/id-format';
+import { MongoIdFormat } from '../../common/persistence/mongo/mongo-id-format';
 import { UserSessionsService } from './user-sessions.service';
-import { SessionService } from '../../auth/services/sessions/session.service';
+import { Sessions } from '../../auth/services/sessions/sessions';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 
 describe('UserSessionsService', () => {
   let service: UserSessionsService;
 
-  const mockUserId = new Types.ObjectId().toString();
-  const mockSessionId = new Types.ObjectId().toString();
-  const otherSessionId = new Types.ObjectId().toString();
+  const mockUserId = '507f1f77bcf86cd799439011';
+  const mockSessionId = '507f1f77bcf86cd799439012';
+  const otherSessionId = '507f1f77bcf86cd799439013';
 
   const mockSession = {
-    _id: new Types.ObjectId(mockSessionId),
-    user: new Types.ObjectId(mockUserId),
+    id: mockSessionId,
+    userId: mockUserId,
     userAgent: 'Mozilla/5.0',
     ip: '127.0.0.1',
     deviceName: 'Chrome',
@@ -33,7 +34,8 @@ describe('UserSessionsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserSessionsService,
-        { provide: SessionService, useValue: mockSessionService },
+        { provide: Sessions, useValue: mockSessionService },
+        { provide: IdFormat, useClass: MongoIdFormat },
       ],
     }).compile();
 

@@ -6,12 +6,12 @@ import {
   partialMock,
 } from '../../../../common/testing/test-doubles.harness-spec';
 import { raisedBy } from '../../../../../test/utils/auth/store-outage-cases';
-import { UserDocument } from '../../../../user/schemas/user.schema';
+import { UserDocument } from '../../../../user/persistence/mongo/schemas/user.schema';
 import {
   MAGIC_LINK_OUTAGES,
   magicLinkStatements,
 } from '../../contract/magic-link-outage-cases.harness-spec';
-import { PendingMagicLinkDocument } from '../../schemas/pending-magic-link.schema';
+import { PendingMagicLinkDocument } from './schemas/pending-magic-link.schema';
 import { MongoMagicLinkAccounts } from './mongo-magic-link-accounts';
 import { MongoMagicLinkStore } from './mongo-magic-link.store';
 

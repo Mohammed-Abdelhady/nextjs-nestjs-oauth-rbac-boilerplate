@@ -189,6 +189,7 @@ export interface SessionsTable {
     string | null | undefined,
     string | null
   >;
+  created_at: ColumnType<Date, Date | undefined, never>;
 }
 
 export interface SecurityEventsTable {

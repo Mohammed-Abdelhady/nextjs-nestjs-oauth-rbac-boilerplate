@@ -18,13 +18,12 @@ import {
   MalformedIdError,
   UniqueConflictError,
 } from '../persistence/persistence-errors';
+import { describeDriverError, errorToken } from '../utils/describe-error.util';
 import {
   isCastError,
-  isMongoDuplicateKeyError,
+  isDuplicateKeyError,
   isDuplicateEmailError,
-  describeDriverError,
-  errorToken,
-} from '../utils/mongo-error.util';
+} from '../utils/driver-error-shape.util';
 
 /** What a driver CastError may carry: the field, never the offending value. */
 interface CastErrorFacts {
@@ -211,7 +210,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         exception.message || 'Invalid input',
       );
       this.logger.warn(`CastError: ${describeCastError(exception)}${tag}`);
-    } else if (isMongoDuplicateKeyError(exception)) {
+    } else if (isDuplicateKeyError(exception)) {
       statusCode = HttpStatus.CONFLICT;
       const isEmail = isDuplicateEmailError(exception);
       const code = isEmail

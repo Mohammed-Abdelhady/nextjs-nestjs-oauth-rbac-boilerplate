@@ -3,7 +3,7 @@ import type { Model } from 'mongoose';
 import type { Response } from 'supertest';
 import * as bcrypt from 'bcrypt';
 import { REQUEST_ID_HEADER } from '../../src/common/constants/request-id';
-import { PendingRegistration } from '../../src/auth/schemas/pending-registration.schema';
+import { PendingRegistration } from '../../src/auth/persistence/mongo/schemas/pending-registration.schema';
 import { PENDING_PURPOSE } from '../../src/auth/constants/registration';
 import { bootE2eApp, browserAgent, type E2eApp } from '../utils/e2e-app';
 import { TEST_NOW } from '../utils/frozen-clock';

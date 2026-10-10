@@ -6,7 +6,7 @@ import {
   EDITOR_SLUG,
   LEAD_SLUG,
   useAdminRoundFour,
-} from '../admin-round-four.harness-spec';
+} from '../../persistence/mongo/services/admin-round-four.harness-spec';
 
 const HOLDER_COUNT = 300;
 const OPERATIONS = ['rename', 'delete'] as const;

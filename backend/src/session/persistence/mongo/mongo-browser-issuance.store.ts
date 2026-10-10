@@ -3,7 +3,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { MalformedIdError } from '../../../common/persistence/persistence-errors';
 import { UnitOfWork } from '../../../common/persistence/unit-of-work';
-import { User, UserDocument } from '../../../user/schemas/user.schema';
+import {
+  User,
+  UserDocument,
+} from '../../../user/persistence/mongo/schemas/user.schema';
 import {
   ACCOUNT_ISSUANCE_MARK,
   AccountIssuanceMark,
@@ -21,13 +24,13 @@ import {
   LeanSession,
   Session,
   SessionDocument,
-} from '../../schemas/session.schema';
+} from './schemas/session.schema';
 import {
   UserApplicationGrant,
   UserApplicationGrantDocument,
-} from '../../schemas/user-application-grant.schema';
-import { ApplicationRegistryService } from '../../services/application-registry.service';
-import { SecurityEventService } from '../../services/security-event.service';
+} from './schemas/user-application-grant.schema';
+import { ApplicationRegistryService } from './application-registry.service';
+import { SecurityEventService } from './security-event.service';
 import { currentSessionCandidateFilter } from './mongo-session-candidate-filter';
 import {
   toIssuanceAccount,

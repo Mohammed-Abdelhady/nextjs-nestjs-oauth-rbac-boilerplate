@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { singleStatement } from '../../../auth/persistence/mongo/mongo-unique-conflict';
+import { singleStatement } from '../../../common/persistence/mongo/mongo-unique-conflict';
 import { MalformedIdError } from '../../../common/persistence/persistence-errors';
 import { UnitOfWork } from '../../../common/persistence/unit-of-work';
 import {
@@ -12,15 +12,12 @@ import {
   NewBlockedGrant,
 } from '../../applications/application-access.store';
 import { RecordSecurityEventInput } from '../../events/security-event-recorder';
-import {
-  Application,
-  ApplicationDocument,
-} from '../../schemas/application.schema';
+import { Application, ApplicationDocument } from './schemas/application.schema';
 import {
   UserApplicationGrant,
   UserApplicationGrantDocument,
-} from '../../schemas/user-application-grant.schema';
-import { SecurityEventService } from '../../services/security-event.service';
+} from './schemas/user-application-grant.schema';
+import { SecurityEventService } from './security-event.service';
 import { toObjectId } from './mongo-issuance-mappers';
 import { isStorableId } from './mongo-session-records';
 import { mongoSessionOf } from './mongo-unit-of-work';

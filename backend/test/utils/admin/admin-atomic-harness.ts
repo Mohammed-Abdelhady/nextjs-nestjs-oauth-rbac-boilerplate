@@ -8,14 +8,17 @@ import { AdminEmailChangeService } from '../../../src/admin/services/users/admin
 import { RoleHierarchyService } from '../../../src/role/services/role-hierarchy.service';
 import { RoleService } from '../../../src/role/role.service';
 import { RoleEditService } from '../../../src/role/services/edit/role-edit.service';
-import { Role, RoleSchema } from '../../../src/role/schemas/role.schema';
-import { User } from '../../../src/user/schemas/user.schema';
+import {
+  Role,
+  RoleSchema,
+} from '../../../src/role/persistence/mongo/schemas/role.schema';
+import { User } from '../../../src/user/persistence/mongo/schemas/user.schema';
 import { SessionRevoker } from '../../../src/session/revocation/session-revoker';
-import { SecurityEventService } from '../../../src/session/services/security-event.service';
+import { SecurityEventService } from '../../../src/session/persistence/mongo/security-event.service';
 import {
   SecurityEvent,
   SecurityEventDocument,
-} from '../../../src/session/schemas/security-event.schema';
+} from '../../../src/session/persistence/mongo/schemas/security-event.schema';
 import { partialMock } from '../../../src/common/testing/test-doubles.harness-spec';
 import { UnitOfWorkRunner } from '../../../src/common/persistence/unit-of-work';
 import { MongoRoleCatalogStore } from '../../../src/role/persistence/mongo/mongo-role-catalog.store';

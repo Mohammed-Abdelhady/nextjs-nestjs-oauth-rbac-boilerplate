@@ -51,6 +51,14 @@ export interface GrantPatch {
   sessionVersion?: number;
 }
 
+export interface AccountIdentitySeed {
+  email: string;
+  name: string;
+  role: string;
+  permissions: string[];
+  verified: boolean;
+}
+
 export interface RecordedEvent {
   action: string;
   actorId: string | null;
@@ -86,6 +94,11 @@ export interface AuthorityContractHarness {
   ): Promise<void>;
   removeGrant(userId: string, clientId: string): Promise<void>;
   markAccountDeleted(userId: string): Promise<void>;
+  /** Stores who an account is, committed, around the adapters. */
+  setAccountIdentity(
+    userId: string,
+    identity: AccountIdentitySeed,
+  ): Promise<void>;
   /** Events the cases caused, oldest first. The planted seed row is left out. */
   events(): Promise<RecordedEvent[]>;
   /** A well-formed id that names no session. */

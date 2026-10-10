@@ -4,6 +4,7 @@ import {
   ActivationSignIn,
 } from '../../../../src/auth/pending-codes/activation-accounts';
 import { MailCounterStore } from '../../../../src/auth/pending-codes/mail-counter.store';
+import { PasswordSignInStore } from '../../../../src/auth/stores/password-sign-in.store';
 import { PendingRegistrationStore } from '../../../../src/auth/pending-codes/pending-registration.store';
 import { IdFormat } from '../../../../src/common/persistence/id-format';
 import {
@@ -12,6 +13,7 @@ import {
 } from '../../../../src/common/persistence/unit-of-work';
 import { RoleCatalogStore } from '../../../../src/role/stores/role-catalog.store';
 import { RoleChangeStore } from '../../../../src/role/stores/role-change.store';
+import { RolePermissions } from '../../../../src/role/stores/role-permissions';
 import { RoleSweepStore } from '../../../../src/role/stores/role-sweep.store';
 import { AccountPermissionStore } from '../../../../src/user/stores/account-permission.store';
 import { AccountProfileStore } from '../../../../src/user/stores/account-profile.store';
@@ -87,6 +89,8 @@ export interface AccountsContractHarness {
   readonly roleSweeps: RoleSweepStore;
   readonly registrations: PendingRegistrationStore;
   readonly mailCounters: MailCounterStore;
+  readonly passwords: PasswordSignInStore;
+  readonly rolePermissions: RolePermissions;
   /** What this database takes as an id, as a route asks it. */
   readonly ids: IdFormat;
   /** The adapter's runner, pausing before a rerun the way the case says. */

@@ -12,8 +12,11 @@ import {
 import {
   MailCounter,
   MailCounterDocument,
-} from '../../schemas/mail-counter.schema';
-import { insertOrConflict, singleStatement } from './mongo-unique-conflict';
+} from './schemas/mail-counter.schema';
+import {
+  insertOrConflict,
+  singleStatement,
+} from '../../../common/persistence/mongo/mongo-unique-conflict';
 
 const MAIL_COUNTER_INDEX_CONSTRAINTS = {
   email_1_purpose_1: MAIL_COUNTER_CONSTRAINT.ADDRESS_PURPOSE,

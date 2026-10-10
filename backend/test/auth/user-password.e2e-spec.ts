@@ -15,8 +15,11 @@ import {
   NATIVE_META,
   NATIVE_REDIRECT,
   nativeAuthorizeQuery,
-} from '../../src/session/native/harness/native-oauth.harness-spec';
-import { User, UserDocument } from '../../src/user/schemas/user.schema';
+} from '../../src/session/native/persistence/mongo/harness/native-oauth.harness-spec';
+import {
+  User,
+  UserDocument,
+} from '../../src/user/persistence/mongo/schemas/user.schema';
 import { SEED_USER } from '../constants/seed-users';
 import { bootE2eApp, loginAs, type E2eApp } from '../utils/e2e-app';
 import { createNativeApplication } from '../utils/native/native-authorize.fixtures';

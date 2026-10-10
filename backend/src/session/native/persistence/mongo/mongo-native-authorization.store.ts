@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model } from 'mongoose';
-import { singleStatement } from '../../../../auth/persistence/mongo/mongo-unique-conflict';
+import { singleStatement } from '../../../../common/persistence/mongo/mongo-unique-conflict';
 import { UnitOfWork } from '../../../../common/persistence/unit-of-work';
 import { toObjectId } from '../../../persistence/mongo/mongo-issuance-mappers';
 import { mongoSessionOf } from '../../../persistence/mongo/mongo-unit-of-work';
 import {
   AuthorizationTransaction,
   AuthorizationTransactionDocument,
-} from '../../../schemas/authorization-transaction.schema';
+} from '../../../persistence/mongo/schemas/authorization-transaction.schema';
 import {
   AUTHORIZATION_APPROVAL,
   AUTHORIZATION_DENIAL,

@@ -10,12 +10,15 @@ import { mongoSessionOf } from '../../../persistence/mongo/mongo-unit-of-work';
 import {
   NativeCredential,
   NativeCredentialDocument,
-} from '../../../schemas/native-credential.schema';
+} from '../../../persistence/mongo/schemas/native-credential.schema';
 import {
   NativeDpopProofId,
   NativeDpopProofIdDocument,
-} from '../../../schemas/native-dpop-proof-id.schema';
-import { Session, SessionDocument } from '../../../schemas/session.schema';
+} from '../../../persistence/mongo/schemas/native-dpop-proof-id.schema';
+import {
+  Session,
+  SessionDocument,
+} from '../../../persistence/mongo/schemas/session.schema';
 import {
   EndedFamilyOwner,
   FamilyRevocation,

@@ -7,6 +7,8 @@ import {
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
   SessionAuthorityHarness,
 } from '../../../test/utils/session-authority-harness';
+import { Sessions } from '../../auth/services/sessions/sessions';
+import { MongoIdFormat } from '../../common/persistence/mongo/mongo-id-format';
 import { UserSessionsService } from './user-sessions.service';
 
 // Cases: read-time parts, unchanged stored phrase, own sessions only, native defaults.
@@ -50,7 +52,10 @@ describe('session listing device parts', () => {
       { user: user._id },
       { $set: { deviceName: 'Legacy phrase' } },
     );
-    const listing = new UserSessionsService(harness.sessionService);
+    const listing = new UserSessionsService(
+      harness.app.get(Sessions),
+      new MongoIdFormat(),
+    );
     const answer = await listing.getSessions(user._id.toString(), null);
     expect(
       answer.data?.sessions.map(({ deviceName, deviceParts }) => ({

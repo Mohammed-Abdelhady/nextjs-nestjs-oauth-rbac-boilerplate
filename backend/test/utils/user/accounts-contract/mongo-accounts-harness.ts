@@ -6,7 +6,7 @@ import {
   Passkey,
   PasskeyDocument,
   PasskeySchema,
-} from '../../../../src/auth/passkeys/schemas/passkey.schema';
+} from '../../../../src/auth/passkeys/persistence/mongo/schemas/passkey.schema';
 // feature:passkeys:end
 import {
   MongoActivationAccounts,
@@ -14,6 +14,7 @@ import {
 } from '../../../../src/auth/persistence/mongo/mongo-activation-accounts';
 import { MongoIdFormat } from '../../../../src/common/persistence/mongo/mongo-id-format';
 import { MongoMailCounterStore } from '../../../../src/auth/persistence/mongo/mongo-mail-counter.store';
+import { MongoPasswordSignInStore } from '../../../../src/auth/persistence/mongo/mongo-password-sign-in.store';
 import { MongoPendingRegistrationStore } from '../../../../src/auth/persistence/mongo/mongo-pending-registration.store';
 import {
   ActivatedAccount,
@@ -24,25 +25,26 @@ import {
   MailCounter,
   MailCounterDocument,
   MailCounterSchema,
-} from '../../../../src/auth/schemas/mail-counter.schema';
+} from '../../../../src/auth/persistence/mongo/schemas/mail-counter.schema';
 import {
   PendingRegistration,
   PendingRegistrationDocument,
   PendingRegistrationSchema,
-} from '../../../../src/auth/schemas/pending-registration.schema';
+} from '../../../../src/auth/persistence/mongo/schemas/pending-registration.schema';
+import { MongoRolePermissions } from '../../../../src/role/persistence/mongo/mongo-role-permissions';
 import { mongoRoleStores } from '../../../../src/role/persistence/mongo/mongo-role-stores';
 import {
   Role,
   RoleDocument,
   RoleSchema,
-} from '../../../../src/role/schemas/role.schema';
+} from '../../../../src/role/persistence/mongo/schemas/role.schema';
 import { SessionRevoker } from '../../../../src/session/revocation/session-revoker';
 import { MongoUnitOfWorkRunner } from '../../../../src/session/persistence/mongo/mongo-unit-of-work';
 import {
   SecurityEvent,
   SecurityEventDocument,
-} from '../../../../src/session/schemas/security-event.schema';
-import { SecurityEventService } from '../../../../src/session/services/security-event.service';
+} from '../../../../src/session/persistence/mongo/schemas/security-event.schema';
+import { SecurityEventService } from '../../../../src/session/persistence/mongo/security-event.service';
 import { hashToken } from '../../../../src/session/utils/hashing/token-hash';
 import { MongoAccountPermissionStore } from '../../../../src/user/persistence/mongo/mongo-account-permission.store';
 import { MongoAccountProfileStore } from '../../../../src/user/persistence/mongo/mongo-account-profile.store';
@@ -137,6 +139,8 @@ export async function bootMongoAccountsHarness(): Promise<MongoAccountsHarness> 
     roleSweeps: roleStores.sweeps,
     registrations: new MongoPendingRegistrationStore(registrations),
     mailCounters: new MongoMailCounterStore(counters),
+    passwords: new MongoPasswordSignInStore(users),
+    rolePermissions: new MongoRolePermissions(roles),
     runner: (pause) => new MongoUnitOfWorkRunner(connection, pause),
 
     seedRole: async (role) => {

@@ -4,11 +4,11 @@ import { Model, Types } from 'mongoose';
 import {
   insertOrConflict,
   singleStatement,
-} from '../../../persistence/mongo/mongo-unique-conflict';
+} from '../../../../common/persistence/mongo/mongo-unique-conflict';
 import {
   PasskeyChallenge,
   PasskeyChallengeDocument,
-} from '../../schemas/passkey-challenge.schema';
+} from './schemas/passkey-challenge.schema';
 import {
   CHALLENGE_USE,
   ChallengeUse,

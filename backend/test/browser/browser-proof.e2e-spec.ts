@@ -6,7 +6,7 @@ import { SessionModule } from '../../src/session/session.module';
 import {
   Application,
   ApplicationDocument,
-} from '../../src/session/schemas/application.schema';
+} from '../../src/session/persistence/mongo/schemas/application.schema';
 import {
   BROWSER_PROOF_COOKIE,
   BROWSER_PROOF_TTL_MS,

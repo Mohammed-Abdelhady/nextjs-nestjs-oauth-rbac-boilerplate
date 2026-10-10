@@ -15,13 +15,13 @@ import {
 import {
   Application,
   ApplicationDocument,
-} from '../../../src/session/schemas/application.schema';
-import { AuthorizationTransactionDocument } from '../../../src/session/schemas/authorization-transaction.schema';
+} from '../../../src/session/persistence/mongo/schemas/application.schema';
+import { AuthorizationTransactionDocument } from '../../../src/session/persistence/mongo/schemas/authorization-transaction.schema';
 import {
   NATIVE_CLIENT_ID,
   NATIVE_REDIRECT,
   nativeAuthorizeQuery,
-} from '../../../src/session/native/harness/native-oauth.harness-spec';
+} from '../../../src/session/native/persistence/mongo/harness/native-oauth.harness-spec';
 import type { E2eApp } from '../e2e-app';
 
 export { NATIVE_CLIENT_ID, NATIVE_REDIRECT };

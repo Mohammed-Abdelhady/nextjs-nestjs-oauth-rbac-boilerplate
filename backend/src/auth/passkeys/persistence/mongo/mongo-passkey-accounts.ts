@@ -4,10 +4,13 @@ import { Model, Types } from 'mongoose';
 import { Response } from 'express';
 import { MalformedIdError } from '../../../../common/persistence/persistence-errors';
 import { mapMongoError } from '../../../../session/persistence/mongo/mongo-persistence-errors';
-import { User, UserDocument } from '../../../../user/schemas/user.schema';
+import {
+  User,
+  UserDocument,
+} from '../../../../user/persistence/mongo/schemas/user.schema';
 import { AuthenticatedUserSummary } from '../../../interfaces/authenticated-user.interface';
-import { singleStatement } from '../../../persistence/mongo/mongo-unique-conflict';
-import { SignInService } from '../../../services/sessions/sign-in.service';
+import { singleStatement } from '../../../../common/persistence/mongo/mongo-unique-conflict';
+import { SignInService } from '../../../persistence/mongo/sign-in.service';
 import {
   PasskeyAccount,
   PasskeyAccounts,

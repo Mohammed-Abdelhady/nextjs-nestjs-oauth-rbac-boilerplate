@@ -5,7 +5,7 @@ import {
   CREDENTIAL_ID,
   ORIGIN,
   RP_ID,
-} from '../passkeys.harness-spec';
+} from '../persistence/mongo/passkeys.harness-spec';
 
 /**
  * The one spec that runs the real library rather than a mock of it.

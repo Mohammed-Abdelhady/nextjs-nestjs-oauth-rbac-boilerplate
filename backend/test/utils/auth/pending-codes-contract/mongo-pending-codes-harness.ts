@@ -8,15 +8,15 @@ import { MONGO_PENDING_CODE_STORES } from '../../../../src/auth/persistence/mong
 import {
   MailCounter,
   MailCounterSchema,
-} from '../../../../src/auth/schemas/mail-counter.schema';
+} from '../../../../src/auth/persistence/mongo/schemas/mail-counter.schema';
 import {
   PendingPasswordReset,
   PendingPasswordResetSchema,
-} from '../../../../src/auth/schemas/pending-password-reset.schema';
+} from '../../../../src/auth/persistence/mongo/schemas/pending-password-reset.schema';
 import {
   PendingRegistration,
   PendingRegistrationSchema,
-} from '../../../../src/auth/schemas/pending-registration.schema';
+} from '../../../../src/auth/persistence/mongo/schemas/pending-registration.schema';
 import { MongoUnitOfWorkRunner } from '../../../../src/session/persistence/mongo/mongo-unit-of-work';
 import { FrozenClock, TEST_NOW } from '../../frozen-clock';
 import { startMemoryReplSet } from '../../memory-replset';

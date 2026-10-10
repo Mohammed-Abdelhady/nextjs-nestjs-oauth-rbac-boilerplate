@@ -4,8 +4,11 @@ import { Model } from 'mongoose';
 import {
   AuthorizationTransaction,
   AuthorizationTransactionDocument,
-} from '../../../src/session/schemas/authorization-transaction.schema';
-import { User, UserDocument } from '../../../src/user/schemas/user.schema';
+} from '../../../src/session/persistence/mongo/schemas/authorization-transaction.schema';
+import {
+  User,
+  UserDocument,
+} from '../../../src/user/persistence/mongo/schemas/user.schema';
 import {
   SEED_MANAGER,
   SEED_USER,

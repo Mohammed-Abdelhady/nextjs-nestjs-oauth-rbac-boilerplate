@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
 import { toObjectId } from '../../../session/persistence/mongo/mongo-issuance-mappers';
-import { PendingRoleSweep } from '../../schemas/role.schema';
+import { PendingRoleSweep } from './schemas/role.schema';
 import {
   PendingSweep,
   StoredRole,

@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { singleStatement } from '../../../auth/persistence/mongo/mongo-unique-conflict';
+import { singleStatement } from '../../../common/persistence/mongo/mongo-unique-conflict';
 import {
   AuthorityApplication,
   AuthorityApplications,
 } from '../../authority/authority-applications';
-import { ApplicationRegistryService } from '../../services/application-registry.service';
+import { ApplicationRegistryService } from './application-registry.service';
 import { toIssuanceApplication } from './mongo-issuance-mappers';
 
 /** Asks the registry, which makes each of these a linearizable read. */

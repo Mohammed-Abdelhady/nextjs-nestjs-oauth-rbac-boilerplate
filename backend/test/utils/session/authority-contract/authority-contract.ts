@@ -5,6 +5,7 @@ import {
 } from '../issuance-contract/issuance-contract-support';
 import { AuthorityContractHarness } from './authority-contract-harness';
 import { authorityExtensionCases } from './authority-extension-cases';
+import { authorityIdentityCases } from './authority-identity-cases';
 import { authorityReadCases } from './authority-read-cases';
 import { authorityValidationCases } from './authority-validation-cases';
 import { accountRaceCases } from './revocation-account-race-cases';
@@ -57,5 +58,6 @@ export function describeSessionAuthorityContract(
     sessionRaceCases(current);
     accountRaceCases(current);
     revocationRouteIdCases(current);
+    authorityIdentityCases(current);
   });
 }

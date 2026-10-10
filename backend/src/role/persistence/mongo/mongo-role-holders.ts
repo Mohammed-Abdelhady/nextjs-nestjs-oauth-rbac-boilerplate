@@ -1,8 +1,8 @@
 import { Model } from 'mongoose';
 import { UnitOfWork } from '../../../common/persistence/unit-of-work';
 import { mongoSessionOf } from '../../../session/persistence/mongo/mongo-unit-of-work';
-import { SecurityEventService } from '../../../session/services/security-event.service';
-import { UserDocument } from '../../../user/schemas/user.schema';
+import { SecurityEventService } from '../../../session/persistence/mongo/security-event.service';
+import { UserDocument } from '../../../user/persistence/mongo/schemas/user.schema';
 import {
   HolderMove,
   HolderRevocation,

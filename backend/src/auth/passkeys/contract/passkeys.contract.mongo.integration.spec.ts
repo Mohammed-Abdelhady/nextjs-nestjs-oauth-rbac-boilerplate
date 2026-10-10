@@ -3,7 +3,7 @@ import {
   SESSION_AUTHORITY_RESET_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
 } from '../../../../test/utils/session-authority-harness';
-import { bootMongoPasskeysHarness } from './mongo-passkeys.harness-spec';
+import { bootMongoPasskeysHarness } from '../persistence/mongo/contract/mongo-passkeys.harness-spec';
 import { describePasskeysContract } from './passkeys-contract-suite.harness-spec';
 
 describePasskeysContract('MongoDB', bootMongoPasskeysHarness, {

@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Request } from 'express';
 import { NATIVE_ACCESS_TOKEN_TYPE } from '../../constants/session-policy';
-import { LeanSession } from '../../schemas/session.schema';
-import { leanValidatedSession } from '../../services/session-authority.service';
+import {
+  AuthenticatedSession,
+  AuthenticatedSessions,
+} from '../../authority/authenticated-session';
 import { NativeAccessValidator } from './native-access-validator';
 
 const BEARER_MAX_LENGTH = 256;
@@ -28,15 +30,15 @@ export function readBearerToken(request: Request): string | null {
   return token;
 }
 
-/**
- * The MongoDB face of access token validation, for the guard that still reads
- * a session document. It goes away when the guard reads the validated session.
- */
+/** Validates a mobile access token and names the account it speaks for. */
 @Injectable()
 export class NativeAccessService {
-  constructor(private readonly validator: NativeAccessValidator) {}
+  constructor(
+    private readonly validator: NativeAccessValidator,
+    private readonly authenticated: AuthenticatedSessions,
+  ) {}
 
-  async validate(rawToken: string): Promise<LeanSession | null> {
-    return leanValidatedSession(await this.validator.validate(rawToken));
+  async validate(rawToken: string): Promise<AuthenticatedSession | null> {
+    return this.authenticated.of(await this.validator.validate(rawToken));
   }
 }

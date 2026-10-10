@@ -8,7 +8,7 @@ import {
   GOOGLE_PROFILE,
   USER_ID,
   type MockUser,
-} from './account-linking.harness-spec';
+} from '../persistence/mongo/services/account-linking.harness-spec';
 
 describe('AccountLinkingService link and unlink', () => {
   let service: AccountLinkingService;

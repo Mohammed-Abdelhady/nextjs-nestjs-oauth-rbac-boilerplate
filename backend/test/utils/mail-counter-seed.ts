@@ -1,5 +1,5 @@
 import type { Model } from 'mongoose';
-import type { MailCounter } from '../../src/auth/schemas/mail-counter.schema';
+import type { MailCounter } from '../../src/auth/persistence/mongo/schemas/mail-counter.schema';
 import {
   ACTIVATION_CODE_EXPIRES_IN_DEFAULT,
   MailCounterPurpose,

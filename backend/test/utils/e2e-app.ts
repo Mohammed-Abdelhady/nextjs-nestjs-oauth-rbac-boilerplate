@@ -26,7 +26,7 @@ import {
   SEED_SUPPORT,
   SEED_USER,
 } from '../constants/seed-users';
-import type { UserDocument } from '../../src/user/schemas/user.schema';
+import type { UserDocument } from '../../src/user/persistence/mongo/schemas/user.schema';
 import type { OAuthProviderStrategy } from '../../src/auth/oauth/oauth-provider.interface'; // feature:oauth-core
 import { OAUTH_STRATEGIES } from '../../src/auth/oauth/oauth.constants'; // feature:oauth-core
 import type { MailOptions } from '../../src/mail/interfaces/mail-options.interface';
@@ -165,11 +165,12 @@ export async function bootE2eApp(
 
   try {
     Object.assign(process.env, environment);
-    const { AppModule, MONGOOSE_CONNECTION_OPTIONS } =
-      await withTemporaryWorkingDirectory(
-        fixtureDirectory,
-        () => import('../../src/app.module'),
-      );
+    const { AppModule } = await withTemporaryWorkingDirectory(
+      fixtureDirectory,
+      () => import('../../src/app.module'),
+    );
+    const { MONGOOSE_CONNECTION_OPTIONS } =
+      await import('../../src/common/persistence/mongo/mongo-connection');
     const { MailService } = await import('../../src/mail/mail.service');
     const { RoleSeedService } =
       await import('../../src/database/seeds/role.seed');
@@ -235,7 +236,7 @@ export async function bootE2eApp(
     const roleSeed =
       nestApp.get<InstanceType<typeof RoleSeedService>>(RoleSeedService);
     const { ApplicationRegistryService: RegistryService } =
-      await import('../../src/session/services/application-registry.service');
+      await import('../../src/session/persistence/mongo/application-registry.service');
     const applications = nestApp.get(RegistryService);
     const credentials = [SEED_ADMIN, SEED_MANAGER, SEED_SUPPORT, SEED_USER];
     const fixtures = await Promise.all(

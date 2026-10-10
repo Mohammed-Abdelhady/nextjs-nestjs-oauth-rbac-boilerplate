@@ -1,35 +1,15 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { RegistrationService } from './services/registration/registration.service';
 import { AuthController } from './auth.controller';
-import {
-  PendingRegistration,
-  PendingRegistrationSchema,
-} from './schemas/pending-registration.schema';
-import {
-  PendingPasswordReset,
-  PendingPasswordResetSchema,
-} from './schemas/pending-password-reset.schema';
-import { MailCounter, MailCounterSchema } from './schemas/mail-counter.schema';
-// feature:totp:start
-import {
-  TwoFactorChallenge,
-  TwoFactorChallengeSchema,
-} from './two-factor/schemas/two-factor-challenge.schema';
-// feature:totp:end
-import { User, UserSchema } from '../user/schemas/user.schema';
-import { Session, SessionSchema } from '../session/schemas/session.schema';
-import { Role, RoleSchema } from '../role/schemas/role.schema';
-import { SessionService } from './services/sessions/session.service';
+import { Sessions } from './services/sessions/sessions';
 import { SessionCookieService } from './services/sessions/session-cookie.service';
-import { SignInService } from './services/sessions/sign-in.service';
+import { SignInCompletion } from './services/sessions/sign-in-completion';
 import { TotpSecretCryptoService } from './two-factor/services/totp-secret-crypto.service'; // feature:totp
 import { TwoFactorChallengeService } from './two-factor/services/two-factor-challenge.service'; // feature:totp
 import { TwoFactorVerificationService } from './two-factor/services/two-factor-verification.service'; // feature:totp
-import { MONGO_SECOND_FACTOR_STORES } from './two-factor/persistence/mongo/mongo-second-factor-stores'; // feature:totp
 import { SecondFactorStore } from './two-factor/stores/second-factor.store'; // feature:totp
 import { VerificationCodeService } from './services/codes/verification-code.service';
 import { MailCounterService } from './services/mail/mail-counter.service';
@@ -43,22 +23,17 @@ import { MailModule } from '../mail/mail.module';
 import { UserModule } from '../user/user.module';
 import { SessionModule } from '../session/session.module';
 import { BrowserProofGuard } from './guards/browser-proof.guard';
-import { MONGO_PENDING_CODE_STORES } from './persistence/mongo/mongo-pending-code-stores';
-import { MONGO_ACTIVATION_STORES } from './persistence/mongo/mongo-activation-accounts';
 import { AuthGuard } from './guards/auth.guard';
+import {
+  AUTH_PERSISTENCE_EXPORTS,
+  AUTH_PERSISTENCE_IMPORTS,
+  AUTH_PERSISTENCE_PROVIDERS,
+} from './persistence/auth-persistence';
 
 @Module({
   imports: [
     ConfigModule,
-    MongooseModule.forFeature([
-      { name: PendingRegistration.name, schema: PendingRegistrationSchema },
-      { name: PendingPasswordReset.name, schema: PendingPasswordResetSchema },
-      { name: MailCounter.name, schema: MailCounterSchema },
-      { name: TwoFactorChallenge.name, schema: TwoFactorChallengeSchema }, // feature:totp
-      { name: User.name, schema: UserSchema },
-      { name: Session.name, schema: SessionSchema },
-      { name: Role.name, schema: RoleSchema },
-    ]),
+    ...AUTH_PERSISTENCE_IMPORTS,
     CommonModule,
     MailModule,
     forwardRef(() => UserModule),
@@ -68,7 +43,7 @@ import { AuthGuard } from './guards/auth.guard';
   providers: [
     AuthService,
     RegistrationService,
-    SessionService,
+    Sessions,
     SessionCookieService,
     VerificationCodeService,
     MailCounterService,
@@ -76,21 +51,19 @@ import { AuthGuard } from './guards/auth.guard';
     PasswordResetCodeService,
     AuthMailService,
     AuthFeaturesService,
-    ...MONGO_PENDING_CODE_STORES,
-    ...MONGO_ACTIVATION_STORES,
+    ...AUTH_PERSISTENCE_PROVIDERS,
     // feature:totp:start
     // The second factor hooks into every sign-in path, so the pieces those
     // paths need are declared here rather than in TwoFactorModule.
     TotpSecretCryptoService,
     TwoFactorChallengeService,
     TwoFactorVerificationService,
-    ...MONGO_SECOND_FACTOR_STORES,
     // feature:totp:end
-    SignInService,
+    SignInCompletion,
     FeatureEnabledGuard,
     AuthGuard,
-    // Registered here, not in AppModule: AuthGuard injects the Role model,
-    // which only resolves inside this module's context.
+    // Registered here, not in AppModule: AuthGuard reads sessions and
+    // accounts, which only resolve inside this module's context.
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
@@ -101,8 +74,9 @@ import { AuthGuard } from './guards/auth.guard';
     },
   ],
   exports: [
+    ...AUTH_PERSISTENCE_EXPORTS,
     AuthService,
-    SessionService,
+    Sessions,
     SessionCookieService,
     VerificationCodeService,
     AuthMailService,
@@ -113,7 +87,7 @@ import { AuthGuard } from './guards/auth.guard';
     TwoFactorVerificationService,
     SecondFactorStore,
     // feature:totp:end
-    SignInService,
+    SignInCompletion,
     FeatureEnabledGuard,
     AuthGuard,
   ],

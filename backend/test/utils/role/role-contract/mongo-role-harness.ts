@@ -5,13 +5,13 @@ import {
   Role,
   RoleDocument,
   RoleSchema,
-} from '../../../../src/role/schemas/role.schema';
+} from '../../../../src/role/persistence/mongo/schemas/role.schema';
 import { MongoUnitOfWorkRunner } from '../../../../src/session/persistence/mongo/mongo-unit-of-work';
 import {
   SecurityEvent,
   SecurityEventDocument,
-} from '../../../../src/session/schemas/security-event.schema';
-import { SecurityEventService } from '../../../../src/session/services/security-event.service';
+} from '../../../../src/session/persistence/mongo/schemas/security-event.schema';
+import { SecurityEventService } from '../../../../src/session/persistence/mongo/security-event.service';
 import { FrozenClock, TEST_NOW } from '../../frozen-clock';
 import { startMemoryReplSet } from '../../memory-replset';
 import { bootSessionAuthority } from '../../session-authority-harness';

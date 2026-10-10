@@ -1,6 +1,5 @@
-import { Logger, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
@@ -39,39 +38,7 @@ import { DatabaseModule } from './database/database.module';
 import { RoleModule } from './role/role.module';
 import configuration from './config/configuration';
 import { validateEnvironment } from './config/env.validation';
-import { Connection } from 'mongoose';
-
-export const MONGOOSE_CONNECTION_OPTIONS = {
-  w: 'majority' as const,
-  retryWrites: true,
-  readPreference: 'primary' as const,
-};
-
-export function buildMongooseOptions(configService: ConfigService): {
-  uri: string | undefined;
-  w: 'majority';
-  retryWrites: boolean;
-  readPreference: 'primary';
-  connectionFactory: (connection: Connection) => Connection;
-} {
-  return {
-    uri: configService.get<string>('MONGO_URI'),
-    ...MONGOOSE_CONNECTION_OPTIONS,
-    connectionFactory: (connection: Connection) => {
-      const logger = new Logger('Mongoose');
-      connection.on('connected', () => {
-        logger.log('Connected to MongoDB');
-      });
-      connection.on('error', (err: Error) => {
-        logger.error(`MongoDB connection error: ${err.message}`, err.stack);
-      });
-      connection.on('disconnected', () => {
-        logger.warn('Disconnected from MongoDB');
-      });
-      return connection;
-    },
-  };
-}
+import { STORAGE_CONNECTION_IMPORTS } from './common/persistence/common-persistence';
 
 @Module({
   imports: [
@@ -85,11 +52,7 @@ export function buildMongooseOptions(configService: ConfigService): {
       },
       validate: validateEnvironment,
     }),
-    MongooseModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: buildMongooseOptions,
-      inject: [ConfigService],
-    }),
+    ...STORAGE_CONNECTION_IMPORTS,
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => [

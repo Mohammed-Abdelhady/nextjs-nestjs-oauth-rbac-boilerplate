@@ -14,7 +14,7 @@ import {
   isCastError,
   isDatabaseUnavailableError,
   isMongoDuplicateKeyError,
-} from '../../../common/utils/mongo-error.util';
+} from '../../../common/persistence/mongo/mongo-error.util';
 import { ROLE_CONSTRAINT } from '../../../role/stores/role-records';
 import { ISSUANCE_CONSTRAINT } from '../../issuance/browser-issuance.store';
 

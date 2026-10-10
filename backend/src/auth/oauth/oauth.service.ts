@@ -1,19 +1,18 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 import { Request, Response } from 'express';
 import {
-  SignInService,
+  SignInCompletion,
   SignInOutcome,
-} from '../services/sessions/sign-in.service';
-import { SessionService } from '../services/sessions/session.service';
+} from '../services/sessions/sign-in-completion';
+import { Sessions } from '../services/sessions/sessions';
 import { SessionCookieService } from '../services/sessions/session-cookie.service';
-import { User, UserDocument } from '../../user/schemas/user.schema';
+import { StoredAccount } from '../../user/stores/stored-account';
 import { ProfileSyncService } from '../../user/services/profile-sync.service';
 import { AccountLinkingService } from '../../user/services/account-linking.service';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
-import { isMongoDuplicateKeyError } from '../../common/utils/mongo-error.util';
+import { UniqueConflictError } from '../../common/persistence/persistence-errors';
+import { storeFailureCause } from '../../common/persistence/store-failure';
 import { readBearerToken } from '../../session/native/access/native-access.service';
 import { hasBothCredentials } from '../../session/utils/request/request-credential';
 import {
@@ -21,6 +20,7 @@ import {
   OAuthProfile,
   OAuthProviderStrategy,
 } from './oauth-provider.interface';
+import { ProviderSignInStore } from './stores/provider-sign-in.store';
 
 export interface OAuthLoginParams {
   strategy: OAuthProviderStrategy;
@@ -49,11 +49,11 @@ export class OAuthService {
   private readonly logger = new Logger(OAuthService.name);
 
   constructor(
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-    private readonly signInService: SignInService,
+    private readonly accounts: ProviderSignInStore,
+    private readonly signInService: SignInCompletion,
     private readonly profileSyncService: ProfileSyncService,
     private readonly accountLinkingService: AccountLinkingService,
-    private readonly sessionService: SessionService,
+    private readonly sessionService: Sessions,
     private readonly sessionCookieService: SessionCookieService,
   ) {}
 
@@ -66,7 +66,7 @@ export class OAuthService {
     const profile = await this.loadVerifiedProfile(params);
     const user = await this.findOrCreateUser(strategy.id, profile);
     await this.profileSyncService.syncProfileFromProvider(
-      user._id.toString(),
+      user.id,
       strategy.id,
       profile,
     );
@@ -136,7 +136,7 @@ export class OAuthService {
     }
 
     const session = await this.sessionService.validateSession(token);
-    const user = session?.user as UserDocument | undefined;
+    const user = session?.user;
     if (!session || !user || user.isDeleted) {
       throw new AppException(
         ErrorCode.SESSION_INVALID,
@@ -145,7 +145,7 @@ export class OAuthService {
       );
     }
 
-    return user._id.toString();
+    return user.id;
   }
 
   private async loadVerifiedProfile(
@@ -172,80 +172,56 @@ export class OAuthService {
   async findOrCreateUser(
     provider: string,
     profile: OAuthProfile,
-  ): Promise<UserDocument> {
-    const linked = await this.userModel.findOne({
-      linkedAccounts: {
-        $elemMatch: { provider, providerId: profile.providerId },
-      },
-    });
+  ): Promise<StoredAccount> {
+    const identity = { provider, providerId: profile.providerId };
+    const linked = await this.accounts.findByIdentity(identity);
 
     if (linked) {
       this.assertActive(linked, provider);
       return linked;
     }
 
-    const byEmail = await this.userModel.findOne({
-      email: { $eq: profile.email },
-    });
+    const byEmail = await this.accounts.findByAddress(profile.email);
     if (byEmail) {
       this.assertActive(byEmail, provider);
-      return this.linkToExistingUser(byEmail, provider, profile);
+      return this.linkToExistingUser(byEmail, identity);
     }
 
-    return this.createUser(provider, profile);
+    return this.createUser(identity, profile);
   }
 
   private async linkToExistingUser(
-    user: UserDocument,
-    provider: string,
-    profile: OAuthProfile,
-  ): Promise<UserDocument> {
-    user.linkedAccounts.push({
-      provider,
-      providerId: profile.providerId,
-      linkedAt: new Date(),
-    });
-    user.isVerified = true;
-    if (!user.primaryProvider) {
-      user.primaryProvider = provider;
-    }
-
+    user: StoredAccount,
+    identity: { provider: string; providerId: string },
+  ): Promise<StoredAccount> {
     try {
-      await user.save();
+      const linked = await this.accounts.linkFirstSignIn(user, identity);
+      this.logger.log(
+        `Linked ${identity.provider} account to an existing user`,
+      );
+      return linked;
     } catch (error) {
-      throw this.toLinkConflict(error, provider);
+      throw this.toLinkConflict(error, identity.provider);
     }
-
-    this.logger.log(`Linked ${provider} account to an existing user`);
-    return user;
   }
 
   private async createUser(
-    provider: string,
+    identity: { provider: string; providerId: string },
     profile: OAuthProfile,
-  ): Promise<UserDocument> {
+  ): Promise<StoredAccount> {
     try {
-      const user = await this.userModel.create({
+      const user = await this.accounts.createFromProvider({
+        ...identity,
         email: profile.email,
         name: profile.name,
         avatarUrl: profile.avatarUrl,
-        isVerified: true,
-        authProvider: provider,
-        primaryProvider: provider,
-        linkedAccounts: [
-          {
-            provider,
-            providerId: profile.providerId,
-            linkedAt: new Date(),
-          },
-        ],
         role: DEFAULT_ROLE,
       });
 
-      this.logger.log(`Created a new user through ${provider}`);
+      this.logger.log(`Created a new user through ${identity.provider}`);
       return user;
     } catch (error) {
-      throw this.toLinkConflict(error, provider);
+      throw this.toLinkConflict(error, identity.provider);
     }
   }
 
@@ -265,7 +241,7 @@ export class OAuthService {
     );
   }
 
-  private assertActive(user: UserDocument, provider: string): void {
+  private assertActive(user: StoredAccount, provider: string): void {
     if (!user.isDeleted) {
       return;
     }
@@ -282,8 +258,8 @@ export class OAuthService {
   }
 
   private toLinkConflict(error: unknown, provider: string): unknown {
-    if (!isMongoDuplicateKeyError(error)) {
-      return error;
+    if (!(error instanceof UniqueConflictError)) {
+      return storeFailureCause(error);
     }
 
     return new AppException(

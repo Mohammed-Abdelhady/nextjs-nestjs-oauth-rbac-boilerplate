@@ -8,7 +8,7 @@ import { PENDING_AUTH_LIFETIME_MS } from '../../../src/session/constants/session
 import {
   Application,
   ApplicationDocument,
-} from '../../../src/session/schemas/application.schema';
+} from '../../../src/session/persistence/mongo/schemas/application.schema';
 import { SEED_USER } from '../../constants/seed-users';
 import {
   beginNativeAuthorization,

@@ -53,3 +53,17 @@ A code exchange that had started but had not yet read the application sees diffe
 When two requests change the same account, token family or authorization code at once, both databases let one through and make the other run again.
 
 MongoDB refuses the second request at its first write. PostgreSQL refuses it earlier, at its first read, with a row lock that does not wait. The answers the two callers get are the same.
+
+### What the health check can tell
+
+The health route asks the adapter what it last saw of the store. It does not wait on the database, so it answers at once on both.
+
+The MongoDB driver keeps its own view of the connection. The adapter takes a connected driver as ready, and it cannot tell a member that refuses writes from one that takes them. The connection is opened for the primary with majority writes, so in practice there is no other member to be connected to.
+
+The PostgreSQL adapter has to ask, and it remembers the answer. It tells three things apart: the server answers and takes writes, the server answers but is a standby or a session that may only read, and the server does not answer. The last two both show as unhealthy. Until the adapter has asked once, it reports the store as unreachable. Something has to call its `observe` on a schedule once the adapter is wired into the application.
+
+### What is checked when the server starts
+
+On MongoDB the server builds the indexes its schemas declare and then starts. Migrations are applied by an operator with `migrate-mongo`. The server has never read the record of applied migrations, so it starts on a database that is behind and does not say so.
+
+On PostgreSQL the indexes and unique rules are part of the migrations. The server compares the migrations it carries with the ones recorded in the database and refuses to start when they differ. The message names the migrations to apply, or the ones the database holds that this build does not carry. The server never applies a migration itself.

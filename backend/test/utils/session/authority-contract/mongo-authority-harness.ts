@@ -93,6 +93,20 @@ export async function bootMongoAuthority(
         { $set: { isDeleted: true } },
       );
     },
+    setAccountIdentity: async (userId, identity) => {
+      await users.updateOne(
+        { _id: new Types.ObjectId(userId) },
+        {
+          $set: {
+            email: identity.email,
+            name: identity.name,
+            role: identity.role,
+            permissions: identity.permissions,
+            isVerified: identity.verified,
+          },
+        },
+      );
+    },
     events: async () => {
       const stored = await events
         .find({ action: { $ne: REFUSED_EVENT_SEED_ACTION } })

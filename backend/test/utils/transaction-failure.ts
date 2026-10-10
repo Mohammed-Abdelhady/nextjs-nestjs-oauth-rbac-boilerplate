@@ -1,8 +1,8 @@
 import { MongoNetworkError } from 'mongodb';
 import { Connection, Model } from 'mongoose';
-import { SecurityEventDocument } from '../../src/session/schemas/security-event.schema';
-import { UNKNOWN_COMMIT_RESULT_LABEL } from '../../src/session/utils/transactions/mongo-transaction';
-import { UserDocument } from '../../src/user/schemas/user.schema';
+import { SecurityEventDocument } from '../../src/session/persistence/mongo/schemas/security-event.schema';
+import { UNKNOWN_COMMIT_RESULT_LABEL } from '../../src/common/persistence/mongo/mongo-transaction';
+import { UserDocument } from '../../src/user/persistence/mongo/schemas/user.schema';
 import { RaceGate } from './race-gate';
 import {
   issueOnlyTheRefusedEventId,

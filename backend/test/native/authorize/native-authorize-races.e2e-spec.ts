@@ -5,7 +5,7 @@ import { ErrorCode } from '../../../src/common/enums/error-code.enum';
 import {
   AuthorizationTransaction,
   AuthorizationTransactionDocument,
-} from '../../../src/session/schemas/authorization-transaction.schema';
+} from '../../../src/session/persistence/mongo/schemas/authorization-transaction.schema';
 import { SEED_USER } from '../../constants/seed-users';
 import {
   beginNativeAuthorization,

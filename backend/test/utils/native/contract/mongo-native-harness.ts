@@ -13,15 +13,15 @@ import { SessionRevocationStore } from '../../../../src/session/revocation/sessi
 import {
   AuthorizationTransaction,
   AuthorizationTransactionDocument,
-} from '../../../../src/session/schemas/authorization-transaction.schema';
+} from '../../../../src/session/persistence/mongo/schemas/authorization-transaction.schema';
 import {
   NativeCredential,
   NativeCredentialDocument,
-} from '../../../../src/session/schemas/native-credential.schema';
+} from '../../../../src/session/persistence/mongo/schemas/native-credential.schema';
 import {
   NativeDpopProofId,
   NativeDpopProofIdDocument,
-} from '../../../../src/session/schemas/native-dpop-proof-id.schema';
+} from '../../../../src/session/persistence/mongo/schemas/native-dpop-proof-id.schema';
 import { CONTRACT_ENVIRONMENT } from '../../session/issuance-contract/issuance-contract-harness';
 import { rerunAtOnce } from '../../session/issuance-contract/issuance-contract-support';
 import { bootMongoIssuance } from '../../session/issuance-contract/mongo-issuance-harness';

@@ -2,7 +2,7 @@ import { bootE2eApp } from '../e2e-app';
 import { startLocalOAuth } from '../oauth/local-oauth';
 import { getModelToken } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
-import type { PendingMagicLinkDocument } from '../../../src/auth/magic-link/schemas/pending-magic-link.schema';
+import type { PendingMagicLinkDocument } from '../../../src/auth/magic-link/persistence/mongo/schemas/pending-magic-link.schema';
 
 async function main(): Promise<void> {
   const oauth = await startLocalOAuth();
