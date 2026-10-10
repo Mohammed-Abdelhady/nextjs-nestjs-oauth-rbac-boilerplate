@@ -1,3 +1,5 @@
+// First, before any module file: it loads the environment those files read.
+import { APP_CONFIGURATION } from './config/app-configuration';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -36,22 +38,11 @@ import { CommonModule } from './common/common.module';
 import { MailModule } from './mail/mail.module';
 import { DatabaseModule } from './database/database.module';
 import { RoleModule } from './role/role.module';
-import configuration from './config/configuration';
-import { validateEnvironment } from './config/env.validation';
 import { STORAGE_CONNECTION_IMPORTS } from './common/persistence/common-persistence';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: '.env',
-      load: [configuration],
-      validationOptions: {
-        allowUnknown: true,
-        abortOnError: true,
-      },
-      validate: validateEnvironment,
-    }),
+    APP_CONFIGURATION,
     ...STORAGE_CONNECTION_IMPORTS,
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
