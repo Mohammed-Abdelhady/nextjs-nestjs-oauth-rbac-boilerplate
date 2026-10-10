@@ -80,6 +80,7 @@ export function ChangePasswordCard() {
               name="currentPassword"
               label={t('currentPassword')}
               placeholder={tCommon('passwordPlaceholder')}
+              autoComplete="current-password"
               disabled={isLoading}
               data-testid="current-password-input"
             />
@@ -88,6 +89,7 @@ export function ChangePasswordCard() {
               name="newPassword"
               label={t('newPassword')}
               placeholder={tCommon('passwordPlaceholder')}
+              autoComplete="new-password"
               disabled={isLoading}
               data-testid="new-password-input"
             />
@@ -98,6 +100,7 @@ export function ChangePasswordCard() {
               name="confirmPassword"
               label={t('confirmPassword')}
               placeholder={tCommon('passwordPlaceholder')}
+              autoComplete="new-password"
               disabled={isLoading}
               data-testid="confirm-password-input"
             />
