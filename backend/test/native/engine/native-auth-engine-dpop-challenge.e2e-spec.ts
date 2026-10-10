@@ -1,11 +1,5 @@
 import { ConfigService } from '@nestjs/config';
-import { getModelToken } from '@nestjs/mongoose';
 import { API_PATHS, OAUTH_ERROR, createApiClient } from '@app/sdk';
-import type { Model } from 'mongoose';
-import {
-  AuthorizationTransaction,
-  AuthorizationTransactionDocument,
-} from '../../../src/session/persistence/mongo/schemas/authorization-transaction.schema';
 import { hashToken } from '../../../src/session/utils/hashing/token-hash';
 import { bootE2eApp, type E2eApp } from '../../utils/e2e-app';
 import { TEST_NOW } from '../../utils/frozen-clock';
@@ -13,7 +7,7 @@ import { createNativeApplication } from '../../utils/native/native-authorize.fix
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
-} from '../../utils/session-authority-harness';
+} from '../../utils/hook-timeouts';
 import {
   isRefreshBody,
   openEngineWithDeviceKey,
@@ -80,12 +74,9 @@ describe('native auth engine nonce challenge (e2e)', () => {
   }
 
   async function codeConsumed(code: string): Promise<boolean | undefined> {
-    const transactions = e2e.app.get<Model<AuthorizationTransactionDocument>>(
-      getModelToken(AuthorizationTransaction.name),
+    const found = await e2e.state.native.authorizationRequestForCode(
+      hashToken(code),
     );
-    const found = await transactions
-      .findOne({ codeHash: hashToken(code) })
-      .exec();
     return found?.consumed;
   }
 
