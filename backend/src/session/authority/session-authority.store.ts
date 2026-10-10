@@ -71,6 +71,14 @@ export interface IdleExtension {
  * Ids are opaque strings. A string this database could not have issued is
  * refused with `MalformedIdError`.
  */
+/** `describeAccount` was given a record no committed read of the store handed out. */
+export class AccountNotHandedOutError extends Error {
+  constructor() {
+    super('This account was not handed out by a committed read of the store');
+    this.name = 'AccountNotHandedOutError';
+  }
+}
+
 export abstract class SessionAuthorityStore {
   /** Committed authority read of the session a browser credential names. */
   abstract readCommittedSessionByTokenHash(
@@ -89,8 +97,10 @@ export abstract class SessionAuthorityStore {
 
   /**
    * Who the account of a committed read is. The adapter answers from that same
-   * read when it still holds it, so a validation costs no second read, and
-   * reads the account itself for a record it did not hand out.
+   * read, so a validation costs no second read. A record this store did not
+   * hand out from a committed read, a copy of one included, is refused with
+   * `AccountNotHandedOutError`: an identity for a request is never taken from
+   * a read that was not a committed one.
    */
   abstract describeAccount(
     account: AuthorityAccount,

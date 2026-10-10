@@ -1,10 +1,18 @@
 import { DynamicModule, Provider } from '@nestjs/common';
+import { forStorage } from '../../../common/persistence/storage-choice';
 import {
   MONGO_SEED_MODELS,
   MONGO_SEED_PROVIDERS,
 } from './mongo/mongo-seed-persistence';
+import { POSTGRES_SEED_PROVIDERS } from './postgres/postgres-seed-persistence'; // feature:postgres
 
 /** What SeedModule runs on. The one place it names a database. */
-export const SEED_PERSISTENCE_IMPORTS: DynamicModule[] = [MONGO_SEED_MODELS];
+export const SEED_PERSISTENCE_IMPORTS: DynamicModule[] = forStorage({
+  mongodb: () => [MONGO_SEED_MODELS],
+  postgres: () => [], // feature:postgres
+});
 
-export const SEED_PERSISTENCE_PROVIDERS: Provider[] = MONGO_SEED_PROVIDERS;
+export const SEED_PERSISTENCE_PROVIDERS: Provider[] = forStorage({
+  mongodb: () => MONGO_SEED_PROVIDERS,
+  postgres: () => POSTGRES_SEED_PROVIDERS, // feature:postgres
+});

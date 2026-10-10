@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { StorageStartupHarness } from '../utils/startup/storage-startup-contract';
-import { listPrototypeMigrations } from './adapter/postgres-migrations';
-import { PostgresStorageStartup } from './adapter/postgres-storage-startup';
+import { listPostgresMigrations } from '../../src/common/persistence/postgres/postgres-migrations';
+import { PostgresStorageStartup } from '../../src/common/persistence/postgres/postgres-storage-startup';
 import { openPrototypeConnection } from './postgres-connection';
 import { startPostgresTestServer } from './server/postgres-test-server';
 
@@ -43,7 +43,7 @@ export async function prepareOnEmptyDatabase(
 export async function bootPostgresStartupHarness(): Promise<StorageStartupHarness> {
   const connection = await openPrototypeConnection();
   const { database, pool } = connection;
-  const carried = listPrototypeMigrations();
+  const carried = listPostgresMigrations();
 
   return {
     startup: new PostgresStorageStartup(pool),

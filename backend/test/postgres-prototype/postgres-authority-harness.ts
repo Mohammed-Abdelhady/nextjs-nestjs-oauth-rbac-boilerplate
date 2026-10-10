@@ -13,13 +13,13 @@ import {
   CONTRACT_ENVIRONMENT,
 } from '../utils/session/issuance-contract/issuance-contract-harness';
 import { ApplicationRegistry } from '../../src/session/applications/application-registry';
-import { PostgresApplicationRegistryStore } from './adapter/postgres-application-registry.store';
-import { PostgresAuthorityApplications } from './adapter/postgres-authority-applications';
-import { PostgresIdFormat } from './adapter/postgres-id-format';
-import { PostgresSecurityEventStore } from './adapter/postgres-security-event.store';
-import { PostgresSessionAuthorityStore } from './adapter/postgres-session-authority.store';
-import { PostgresSessionRevocationStore } from './adapter/postgres-session-revocation.store';
-import { PostgresUnitOfWorkRunner } from './adapter/postgres-unit-of-work';
+import { PostgresApplicationRegistryStore } from '../../src/session/persistence/postgres/postgres-application-registry.store';
+import { PostgresAuthorityApplications } from '../../src/session/persistence/postgres/postgres-authority-applications';
+import { PostgresIdFormat } from '../../src/common/persistence/postgres/postgres-id-format';
+import { PostgresSecurityEventStore } from '../../src/session/persistence/postgres/postgres-security-event.store';
+import { PostgresSessionAuthorityStore } from '../../src/session/persistence/postgres/postgres-session-authority.store';
+import { PostgresSessionRevocationStore } from '../../src/session/persistence/postgres/postgres-session-revocation.store';
+import { PostgresUnitOfWorkRunner } from '../../src/common/persistence/postgres/postgres-unit-of-work';
 import {
   bootPostgresIssuanceHarness,
   PostgresIssuanceHarness,

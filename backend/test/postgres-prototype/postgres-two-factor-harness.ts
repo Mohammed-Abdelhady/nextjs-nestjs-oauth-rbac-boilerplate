@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { TwoFactorContractHarness } from '../../src/auth/two-factor/contract/two-factor-contract.harness-spec';
 import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
-import { PostgresAccountProfileStore } from './adapter/postgres-account-profile.store';
-import { PostgresSecondFactorChallengeStore } from './adapter/postgres-second-factor-challenge.store';
-import { PostgresSecondFactorStore } from './adapter/postgres-second-factor.store';
+import { PostgresAccountProfileStore } from '../../src/user/persistence/postgres/postgres-account-profile.store';
+import { PostgresSecondFactorChallengeStore } from '../../src/auth/two-factor/persistence/postgres/postgres-second-factor-challenge.store';
+import { PostgresSecondFactorStore } from '../../src/auth/two-factor/persistence/postgres/postgres-second-factor.store';
 import { openPrototypeConnection } from './postgres-connection';
 
 const AN_OBJECT_ID = '65f000000000000000000001';

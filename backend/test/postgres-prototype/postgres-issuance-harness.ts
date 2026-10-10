@@ -17,14 +17,14 @@ import {
   CONTRACT_ENVIRONMENT,
   IssuanceContractHarness,
 } from '../utils/session/issuance-contract/issuance-contract-harness';
-import { commitCheckedPool } from './adapter/postgres-commit-tag';
-import { PostgresBrowserIssuanceStore } from './adapter/postgres-browser-issuance.store';
-import { PrototypeDatabase } from './adapter/postgres-database';
+import { commitCheckedPool } from '../../src/common/persistence/postgres/postgres-commit-tag';
+import { PostgresBrowserIssuanceStore } from '../../src/session/persistence/postgres/postgres-browser-issuance.store';
+import { PostgresTables } from '../../src/common/persistence/postgres/postgres-database';
 import { ApplicationRegistry } from '../../src/session/applications/application-registry';
-import { PostgresApplicationRegistryStore } from './adapter/postgres-application-registry.store';
-import { PostgresIssuanceApplications } from './adapter/postgres-issuance-applications';
-import { PostgresSecurityEventStore } from './adapter/postgres-security-event.store';
-import { PostgresUnitOfWorkRunner } from './adapter/postgres-unit-of-work';
+import { PostgresApplicationRegistryStore } from '../../src/session/persistence/postgres/postgres-application-registry.store';
+import { PostgresIssuanceApplications } from '../../src/session/persistence/postgres/postgres-issuance-applications';
+import { PostgresSecurityEventStore } from '../../src/session/persistence/postgres/postgres-security-event.store';
+import { PostgresUnitOfWorkRunner } from '../../src/common/persistence/postgres/postgres-unit-of-work';
 import { openPrototypeConnectionOn } from './postgres-connection';
 import { CommitFaultDialect } from './postgres-commit-faults';
 import { PostgresTestServer } from './server/postgres-test-server';
@@ -37,7 +37,7 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface PostgresIssuanceHarness extends IssuanceContractHarness {
-  readonly database: Kysely<PrototypeDatabase>;
+  readonly database: Kysely<PostgresTables>;
   readonly pool: Pool;
   readonly server: PostgresTestServer;
   readonly appliedMigrations: string[];

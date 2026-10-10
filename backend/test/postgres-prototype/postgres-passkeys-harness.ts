@@ -4,16 +4,16 @@ import {
   PasskeysContractHarness,
 } from '../../src/auth/passkeys/contract/passkeys-contract.harness-spec';
 import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
-import { PostgresAccountProfileStore } from './adapter/postgres-account-profile.store';
-import { PostgresIdFormat } from './adapter/postgres-id-format';
-import { PostgresLinkedAccountStore } from './adapter/postgres-linked-account.store';
-import { PostgresSignInMethodStore } from './adapter/postgres-sign-in-method.store';
-import { PostgresPasskeyChallengeStore } from './adapter/postgres-passkey-challenge.store';
+import { PostgresAccountProfileStore } from '../../src/user/persistence/postgres/postgres-account-profile.store';
+import { PostgresIdFormat } from '../../src/common/persistence/postgres/postgres-id-format';
+import { PostgresLinkedAccountStore } from '../../src/user/persistence/postgres/postgres-linked-account.store';
+import { PostgresSignInMethodStore } from '../../src/user/persistence/postgres/postgres-sign-in-method.store';
+import { PostgresPasskeyChallengeStore } from '../../src/auth/passkeys/persistence/postgres/postgres-passkey-challenge.store';
 import {
   PostgresPasskeyAccounts,
   PostgresPasskeyStore,
-} from './adapter/postgres-passkey.store';
-import { PostgresUnitOfWorkRunner } from './adapter/postgres-unit-of-work';
+} from '../../src/auth/passkeys/persistence/postgres/postgres-passkey.store';
+import { PostgresUnitOfWorkRunner } from '../../src/common/persistence/postgres/postgres-unit-of-work';
 import { openPrototypeConnection } from './postgres-connection';
 
 const AN_OBJECT_ID = '65f000000000000000000001';

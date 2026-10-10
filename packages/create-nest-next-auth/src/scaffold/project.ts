@@ -48,6 +48,7 @@ export async function scaffoldProject(
       plan.options,
       plan.rules,
       resolveOwnership(manifest, plan),
+      [plan.database],
     );
     if (plan.mobile !== undefined) await applyMobileIdentity(target, plan.targets, plan.mobile);
   } catch (error) {

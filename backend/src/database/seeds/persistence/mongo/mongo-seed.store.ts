@@ -13,6 +13,7 @@ import {
   UserDocument,
 } from '../../../../user/persistence/mongo/schemas/user.schema';
 import {
+  assertResetAllowed,
   NewSeedAccount,
   ROLE_SEED,
   RoleSeedOutcome,
@@ -108,6 +109,7 @@ export class MongoSeedStore extends SeedStore {
   }
 
   async clearApplicationData(): Promise<void> {
+    assertResetAllowed();
     const changelog = changelogCollectionName();
     const skipped = new Set<string>([
       changelog,

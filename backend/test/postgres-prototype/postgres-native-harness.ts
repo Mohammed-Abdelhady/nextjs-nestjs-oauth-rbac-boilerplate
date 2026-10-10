@@ -19,17 +19,17 @@ import {
 } from '../utils/native/contract/native-contract-support';
 import { CONTRACT_ENVIRONMENT } from '../utils/session/issuance-contract/issuance-contract-harness';
 import { rerunAtOnce } from '../utils/session/issuance-contract/issuance-contract-support';
-import { PostgresApplicationAccessStore } from './adapter/postgres-application-access.store';
-import { PostgresApplicationRegistryStore } from './adapter/postgres-application-registry.store';
-import { PostgresAuthorityApplications } from './adapter/postgres-authority-applications';
-import { PostgresNativeAccessStore } from './adapter/postgres-native-access.store';
-import { PostgresNativeAuthorizationStore } from './adapter/postgres-native-authorization.store';
-import { PostgresNativeCredentialStore } from './adapter/postgres-native-credential.store';
-import { PostgresNativeRotationStore } from './adapter/postgres-native-rotation.store';
-import { PostgresNativeSecurityEvents } from './adapter/postgres-native-security-events';
-import { PostgresSecurityEventStore } from './adapter/postgres-security-event.store';
-import { PostgresSessionAuthorityStore } from './adapter/postgres-session-authority.store';
-import { PostgresSessionRevocationStore } from './adapter/postgres-session-revocation.store';
+import { PostgresApplicationAccessStore } from '../../src/session/persistence/postgres/postgres-application-access.store';
+import { PostgresApplicationRegistryStore } from '../../src/session/persistence/postgres/postgres-application-registry.store';
+import { PostgresAuthorityApplications } from '../../src/session/persistence/postgres/postgres-authority-applications';
+import { PostgresNativeAccessStore } from '../../src/session/native/persistence/postgres/postgres-native-access.store';
+import { PostgresNativeAuthorizationStore } from '../../src/session/native/persistence/postgres/postgres-native-authorization.store';
+import { PostgresNativeCredentialStore } from '../../src/session/native/persistence/postgres/postgres-native-credential.store';
+import { PostgresNativeRotationStore } from '../../src/session/native/persistence/postgres/postgres-native-rotation.store';
+import { PostgresNativeSecurityEvents } from '../../src/session/native/persistence/postgres/postgres-native-security-events';
+import { PostgresSecurityEventStore } from '../../src/session/persistence/postgres/postgres-security-event.store';
+import { PostgresSessionAuthorityStore } from '../../src/session/persistence/postgres/postgres-session-authority.store';
+import { PostgresSessionRevocationStore } from '../../src/session/persistence/postgres/postgres-session-revocation.store';
 import { bootPostgresIssuanceHarness } from './postgres-issuance-harness';
 
 const AN_OBJECT_ID = '65f000000000000000000001';

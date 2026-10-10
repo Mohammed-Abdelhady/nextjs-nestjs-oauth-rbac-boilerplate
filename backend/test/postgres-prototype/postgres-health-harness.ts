@@ -1,6 +1,6 @@
 import { Pool } from 'pg';
 import { StoreHealthHarness } from '../utils/health/store-health-contract';
-import { PostgresStoreHealth } from './adapter/postgres-store-health';
+import { PostgresStoreHealth } from '../../src/health/persistence/postgres/postgres-store-health';
 import { closedPort } from './closed-port';
 import { startPostgresTestServer } from './server/postgres-test-server';
 

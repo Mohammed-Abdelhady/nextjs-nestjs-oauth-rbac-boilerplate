@@ -53,19 +53,56 @@ export const MALFORMED_ID_ANSWER = refusal(
   'Invalid identifier format',
 );
 
-/** Well-formed on MongoDB and naming nothing. */
-export const ABSENT_ID = '507f1f77bcf86cd799439011';
+/** The ids of one database: one that names nothing, and the ones it refuses. */
+interface RouteIds {
+  absent: string;
+  malformed: ReadonlyArray<readonly [string, string]>;
+}
 
-/** Path segments as they are sent, each malformed on MongoDB. */
-export const MALFORMED_IDS: ReadonlyArray<readonly [string, string]> = [
-  ['a word', 'not-an-id'],
-  ['one character short', '507f1f77bcf86cd79943901'],
-  ['one character long', '507f1f77bcf86cd7994390111'],
-  ['the right length with a letter past f', '507f1f77bcf86cd79943901z'],
-  ["the other database's id", '018f4d2e-7b1a-7c3d-9e2f-0a1b2c3d4e5f'],
-  ['a query operator', '%7B%22%24ne%22%3Anull%7D'],
-  ['three hundred characters', 'a'.repeat(300)],
-];
+const MONGODB_IDS: RouteIds = {
+  absent: '507f1f77bcf86cd799439011',
+  malformed: [
+    ['a word', 'not-an-id'],
+    ['one character short', '507f1f77bcf86cd79943901'],
+    ['one character long', '507f1f77bcf86cd7994390111'],
+    ['the right length with a letter past f', '507f1f77bcf86cd79943901z'],
+    ["the other database's id", '018f4d2e-7b1a-7c3d-9e2f-0a1b2c3d4e5f'],
+    ['a query operator', '%7B%22%24ne%22%3Anull%7D'],
+    ['three hundred characters', 'a'.repeat(300)],
+  ],
+};
+
+// feature:postgres:start
+const POSTGRES_IDS: RouteIds = {
+  absent: '018f4d2e-7b1a-7c3d-9e2f-0a1b2c3d4e5f',
+  malformed: [
+    ['a word', 'not-an-id'],
+    ['one character short', '018f4d2e-7b1a-7c3d-9e2f-0a1b2c3d4e5'],
+    ['one character long', '018f4d2e-7b1a-7c3d-9e2f-0a1b2c3d4e5f1'],
+    [
+      'the right length with a letter past f',
+      '018f4d2e-7b1a-7c3d-9e2f-0a1b2c3d4e5z',
+    ],
+    ["the other database's id", '507f1f77bcf86cd799439011'],
+    ['a query operator', '%7B%22%24ne%22%3Anull%7D'],
+    ['three hundred characters', 'a'.repeat(300)],
+  ],
+};
+// feature:postgres:end
+
+function routeIds(): RouteIds {
+  // feature:postgres:start
+  if (process.env.DATABASE_TYPE === 'postgres') return POSTGRES_IDS;
+  // feature:postgres:end
+  return MONGODB_IDS;
+}
+
+/** Well-formed on the database this run is on, and naming nothing. */
+export const ABSENT_ID = routeIds().absent;
+
+/** Path segments as they are sent, each malformed on this run's database. */
+export const MALFORMED_IDS: ReadonlyArray<readonly [string, string]> =
+  routeIds().malformed;
 
 /** How a route's id check refuses, as a service-level case sees it. */
 export const ROUTE_ID_REFUSAL = { code: 'INVALID_INPUT', status: 400 };

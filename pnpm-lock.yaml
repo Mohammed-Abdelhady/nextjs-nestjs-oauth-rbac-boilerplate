@@ -240,6 +240,9 @@ importers:
       jose:
         specifier: ^6.2.12
         version: 6.2.12
+      kysely:
+        specifier: 0.28.17
+        version: 0.28.17
       mongodb:
         specifier: 6.20.0
         version: 6.20.0
@@ -252,6 +255,9 @@ importers:
       otplib:
         specifier: ^13.5.0
         version: 13.5.0
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -322,18 +328,12 @@ importers:
       jest:
         specifier: ^30.5.2
         version: 30.5.2(@types/node@22.20.2)(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.16.2(@swc/helpers@0.5.23))(@types/node@22.20.2)(typescript@5.9.3))
-      kysely:
-        specifier: 0.28.17
-        version: 0.28.17
       migrate-mongo:
         specifier: ^14.0.7
         version: 14.0.7(mongodb@6.20.0)
       mongodb-memory-server:
         specifier: ^11.3.0
         version: 11.3.0(supports-color@8.1.1)
-      pg:
-        specifier: 8.23.1
-        version: 8.23.1
       prettier:
         specifier: ^3.9.9
         version: 3.9.9

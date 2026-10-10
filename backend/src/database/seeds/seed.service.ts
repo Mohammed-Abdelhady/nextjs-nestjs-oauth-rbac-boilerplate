@@ -6,7 +6,7 @@ import { getSeedUsers, printSeedCredentials } from './user.seed';
 import { RoleSeedService } from './role.seed';
 import { ApplicationRegistry } from '../../session/applications/application-registry';
 import { describeDriverError } from '../../common/utils/describe-error.util';
-import { SeedStore } from './seed.store';
+import { assertResetAllowed, SeedStore } from './seed.store';
 
 @Injectable()
 export class SeedService {
@@ -98,12 +98,7 @@ export class SeedService {
   async resetDatabase(): Promise<void> {
     this.logger.warn('Resetting database...');
 
-    const nodeEnv = process.env.NODE_ENV;
-    if (nodeEnv !== 'development' && nodeEnv !== 'test') {
-      throw new Error(
-        'Database reset is only allowed when NODE_ENV is "development" or "test".',
-      );
-    }
+    assertResetAllowed();
 
     await this.store.clearApplicationData();
 

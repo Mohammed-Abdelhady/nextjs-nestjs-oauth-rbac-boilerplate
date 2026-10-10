@@ -1,5 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { Kysely } from 'kysely';
+import {
+  ActivatedAccount,
+  ActivationSignIn,
+  ActivationSignInOutcome,
+} from '../../src/auth/pending-codes/activation-accounts';
 import { SessionRevoker } from '../../src/session/revocation/session-revoker';
 import { RevokerAccountSessions } from '../../src/user/stores/revoker-account-sessions';
 import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
@@ -10,33 +15,55 @@ import {
   REFUSED_EVENT_SEED_OUTCOME,
 } from '../utils/refused-event';
 import { AccountsContractHarness } from '../utils/user/accounts-contract/accounts-contract-harness';
-import { PostgresAccountPermissionStore } from './adapter/postgres-account-permission.store';
-import { PostgresAccountProfileStore } from './adapter/postgres-account-profile.store';
+import { PostgresAccountPermissionStore } from '../../src/user/persistence/postgres/postgres-account-permission.store';
+import { PostgresAccountProfileStore } from '../../src/user/persistence/postgres/postgres-account-profile.store';
 import {
+  activatedSignInAccountOf,
   PostgresActivationAccounts,
-  PostgresActivationSignIn,
-} from './adapter/postgres-activation-accounts';
-import { PostgresIdFormat } from './adapter/postgres-id-format';
-import { PostgresAdminAccountStore } from './adapter/postgres-admin-account.store';
-import { PrototypeDatabase } from './adapter/postgres-database';
-import { PostgresMailCounterStore } from './adapter/postgres-mail-counter.store';
-import { PostgresPasswordSignInStore } from './adapter/postgres-password-sign-in.store';
-import { PostgresPendingRegistrationStore } from './adapter/postgres-pending-registration.store';
-import { PostgresRoleCatalogStore } from './adapter/postgres-role-catalog.store';
-import { PostgresRolePermissions } from './adapter/postgres-role-permissions';
-import { PostgresRoleChangeStore } from './adapter/postgres-role-change.store';
-import { PostgresRoleSweepStore } from './adapter/postgres-role-sweep.store';
-import { PostgresSecurityEventStore } from './adapter/postgres-security-event.store';
-import { PostgresSessionRevocationStore } from './adapter/postgres-session-revocation.store';
-import { PostgresUnitOfWorkRunner } from './adapter/postgres-unit-of-work';
+} from '../../src/auth/persistence/postgres/postgres-activation-accounts';
+import { PostgresIdFormat } from '../../src/common/persistence/postgres/postgres-id-format';
+import { PostgresAdminAccountStore } from '../../src/admin/persistence/postgres/postgres-admin-account.store';
+import { PostgresTables } from '../../src/common/persistence/postgres/postgres-database';
+import { PostgresMailCounterStore } from '../../src/auth/persistence/postgres/postgres-mail-counter.store';
+import { PostgresPasswordSignInStore } from '../../src/auth/persistence/postgres/postgres-password-sign-in.store';
+import { PostgresPendingRegistrationStore } from '../../src/auth/persistence/postgres/postgres-pending-registration.store';
+import { PostgresRoleCatalogStore } from '../../src/role/persistence/postgres/postgres-role-catalog.store';
+import { PostgresRolePermissions } from '../../src/role/persistence/postgres/postgres-role-permissions';
+import { PostgresRoleChangeStore } from '../../src/role/persistence/postgres/postgres-role-change.store';
+import { PostgresRoleSweepStore } from '../../src/role/persistence/postgres/postgres-role-sweep.store';
+import { PostgresSecurityEventStore } from '../../src/session/persistence/postgres/postgres-security-event.store';
+import { PostgresSessionRevocationStore } from '../../src/session/persistence/postgres/postgres-session-revocation.store';
+import { PostgresUnitOfWorkRunner } from '../../src/common/persistence/postgres/postgres-unit-of-work';
 import { openPrototypeConnection } from './postgres-connection';
+
+/**
+ * Answers with the account the activation stored and issues nothing, the way
+ * the stand-in on the other database does, so both run the same cases.
+ */
+class SummarySignIn extends ActivationSignIn {
+  complete(account: ActivatedAccount): Promise<ActivationSignInOutcome> {
+    const stored = activatedSignInAccountOf(account);
+    return Promise.resolve({
+      requiresTwoFactor: false,
+      user: {
+        id: stored.id,
+        email: stored.email,
+        name: stored.name,
+        role: stored.role,
+        authProvider: stored.authProvider,
+        isVerified: stored.isVerified,
+        permissions: [],
+      },
+    });
+  }
+}
 
 const AN_OBJECT_ID = '65f000000000000000000001';
 const TWO_HOURS_MS = 7_200_000;
 const TEN_MINUTES_MS = 600_000;
 
 export interface PostgresAccountsHarness extends AccountsContractHarness {
-  readonly database: Kysely<PrototypeDatabase>;
+  readonly database: Kysely<PostgresTables>;
 }
 
 export async function bootPostgresAccountsHarness(): Promise<PostgresAccountsHarness> {
@@ -59,7 +86,7 @@ export async function bootPostgresAccountsHarness(): Promise<PostgresAccountsHar
     ),
     admin: new PostgresAdminAccountStore(database, clock),
     activation: new PostgresActivationAccounts(database, clock),
-    signIn: new PostgresActivationSignIn(),
+    signIn: new SummarySignIn(),
     roleCatalog: new PostgresRoleCatalogStore(database),
     roleChanges: new PostgresRoleChangeStore(clock, events),
     roleSweeps: new PostgresRoleSweepStore(database, clock),

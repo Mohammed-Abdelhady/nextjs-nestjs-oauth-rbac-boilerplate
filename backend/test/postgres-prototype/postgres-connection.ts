@@ -1,11 +1,11 @@
 import { Kysely, PostgresDialect, PostgresPool, sql } from 'kysely';
 import { Client, Pool, PoolClient } from 'pg';
-import { commitCheckedPool } from './adapter/postgres-commit-tag';
+import { commitCheckedPool } from '../../src/common/persistence/postgres/postgres-commit-tag';
 import {
-  openPrototypeDatabase,
-  PrototypeDatabase,
-} from './adapter/postgres-database';
-import { migratePrototypeDatabase } from './adapter/postgres-migrations';
+  openPostgresDatabase,
+  PostgresTables,
+} from '../../src/common/persistence/postgres/postgres-database';
+import { applyPostgresMigrations } from '../../src/common/persistence/postgres/postgres-migrations';
 import {
   PostgresTestServer,
   startPostgresTestServer,
@@ -30,7 +30,7 @@ const SESSION_END_WAIT_MS = 30_000;
  * so a harness cannot leave behind a table that refers to one it emptied. A
  * table added to the map and not named here does not compile.
  */
-const EVERY_TABLE: Record<keyof PrototypeDatabase, true> = {
+const EVERY_TABLE: Record<keyof PostgresTables, true> = {
   security_events: true,
   native_dpop_proof_ids: true,
   native_credentials: true,
@@ -67,13 +67,20 @@ const EMPTY_EVERY_TABLE = sql`WITH ${sql.join(
   ),
 )} DELETE FROM ${sql.table(FIRST_TABLE)}`;
 
+/** Empties every table of the adapter in one statement. */
+export async function emptyEveryTable(
+  database: Kysely<PostgresTables>,
+): Promise<void> {
+  await EMPTY_EVERY_TABLE.execute(database);
+}
+
 export interface PrototypeConnection<
   Dialect extends PostgresDialect = PostgresDialect,
 > {
   readonly server: PostgresTestServer;
   readonly dialect: Dialect;
   readonly pool: Pool;
-  readonly database: Kysely<PrototypeDatabase>;
+  readonly database: Kysely<PostgresTables>;
   readonly appliedMigrations: string[];
   /**
    * Rolls back whatever an earlier case left open, so its locks cannot hold
@@ -151,9 +158,9 @@ export async function openPrototypeConnectionOn<
 
   try {
     await admin.connect();
-    const appliedMigrations = await migratePrototypeDatabase(pool);
+    const appliedMigrations = await applyPostgresMigrations(pool);
     const dialect = makeDialect(pool);
-    const database = openPrototypeDatabase(pool, dialect);
+    const database = openPostgresDatabase(pool, dialect);
     const rollBackOpenWork = (): Promise<void> => endSessions(WITH_OPEN_WORK);
     return {
       server,

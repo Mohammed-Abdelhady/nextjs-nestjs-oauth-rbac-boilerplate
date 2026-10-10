@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "$comment": "Feature map read by packages/create-nest-next-auth. Entries with \"status\": \"planned\" are not offered by the CLI. Entries with \"kind\": \"hidden\" come in through another feature's \"requires\" instead of being picked directly. Files and env vars listed here are deleted from a generated project when the feature is not selected. A path may sit under a directory another feature claims, as the provider strategies do under oauth-core; what a path may not do is belong to a feature that is still needed once this one is gone. Lines shared code needs only for one feature carry a `// feature:<id>` marker instead; see the CLI README. A target or shared module owns its files and workspaces: they are deleted when it is not part of the plan, and a planned target is never part of one. The Expo app has been built and run on an iOS simulator against the real server; Android has not been built or run. The bare React Native app only bundles, so it stays planned. A target id or shared id is also a marker name: feature:native-core marks lines that any mobile app needs.",
+  "$comment": "Feature map read by packages/create-nest-next-auth. Entries with \"status\": \"planned\" are not offered by the CLI. Entries with \"kind\": \"hidden\" come in through another feature's \"requires\" instead of being picked directly. Files and env vars listed here are deleted from a generated project when the feature is not selected. A path may sit under a directory another feature claims, as the provider strategies do under oauth-core; what a path may not do is belong to a feature that is still needed once this one is gone. Lines shared code needs only for one feature carry a `// feature:<id>` marker instead; see the CLI README. A target or shared module owns its files and workspaces: they are deleted when it is not part of the plan, and a planned target is never part of one. The Expo app has been built and run on an iOS simulator against the real server; Android has not been built or run. The bare React Native app only bundles, so it stays planned. A target id or shared id is also a marker name: feature:native-core marks lines that any mobile app needs. A database id is one too: feature:postgres marks lines only the PostgreSQL adapter needs, and they are removed while that database is planned.",
   "targets": {
     "web": {
       "label": "Web app (Next.js)",
@@ -490,17 +490,15 @@
       "backend/test/utils/browser/browser-server.ts",
       "backend/test/utils/oauth/local-oauth.ts",
       "backend/test/postgres-prototype/**",
+      "backend/src/**/persistence/postgres/**",
+      "backend/test/jest-e2e-postgres.json",
+      "backend/src/common/persistence/storage-wiring.spec.ts",
       "backend/src/session/issuance/browser-issuance.contract.postgres.integration.spec.ts",
-      "backend/src/session/persistence/postgres/postgres-prototype.integration.spec.ts",
-      "backend/src/session/persistence/postgres/postgres-prototype-errors.spec.ts",
       "backend/src/session/issuance/postgres-harness-teardown.integration.spec.ts",
       "backend/src/auth/pending-codes/pending-codes.contract.postgres.integration.spec.ts",
       "backend/src/auth/magic-link/contract/magic-link.contract.postgres.integration.spec.ts",
-      "backend/src/auth/persistence/postgres/pending-code-outages.postgres.spec.ts",
-      "backend/src/auth/magic-link/persistence/postgres/magic-link-outages.postgres.spec.ts",
       "backend/src/role/stores/role-stores.contract.postgres.integration.spec.ts",
       "backend/src/session/events/proofs-events.contract.postgres.integration.spec.ts",
-      "backend/src/session/persistence/postgres/proofs-events-outages.postgres.spec.ts",
       "backend/src/session/authority/session-authority.contract.postgres.integration.spec.ts",
       "backend/src/session/authority/postgres-lost-answer.spec.ts",
       "backend/src/session/applications/applications.contract.postgres.integration.spec.ts",

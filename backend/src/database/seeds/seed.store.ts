@@ -23,6 +23,23 @@ export interface NewSeedAccount {
   passwordHash: string;
 }
 
+const RESET_ENVIRONMENTS: readonly string[] = ['development', 'test'];
+
+/**
+ * Refuses to empty a database outside development and test. The service asks
+ * first, and every adapter asks again right before the statement that removes
+ * the rows, so no caller of the store can skip the question.
+ */
+export function assertResetAllowed(
+  nodeEnv: string | undefined = process.env.NODE_ENV,
+): void {
+  if (nodeEnv === undefined || !RESET_ENVIRONMENTS.includes(nodeEnv)) {
+    throw new Error(
+      'Database reset is only allowed when NODE_ENV is "development" or "test".',
+    );
+  }
+}
+
 /**
  * What seeding and resetting a development database needs stored. Each method
  * is one statement that commits by itself: a seed that stops half way is run
@@ -49,7 +66,8 @@ export abstract class SeedStore {
 
   /**
    * Removes everything the application stores and keeps the record of which
-   * migrations were applied.
+   * migrations were applied. Refuses outside development and test, with
+   * `assertResetAllowed`, before it removes anything.
    */
   abstract clearApplicationData(): Promise<void>;
 }

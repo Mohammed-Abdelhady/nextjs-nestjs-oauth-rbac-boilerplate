@@ -18,6 +18,7 @@ import {
   MalformedIdError,
   UniqueConflictError,
 } from '../persistence/persistence-errors';
+import { sharedErrorOfSqlFailure } from '../persistence/sql-failure';
 import { describeDriverError, errorToken } from '../utils/describe-error.util';
 import {
   isCastError,
@@ -129,7 +130,9 @@ function stackFrames(error: unknown): string | undefined {
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
-  catch(exception: unknown, host: ArgumentsHost): void {
+  catch(raised: unknown, host: ArgumentsHost): void {
+    // A SQL failure left as raised is answered as the shared error it is.
+    const exception = sharedErrorOfSqlFailure(raised) ?? raised;
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const requestId = ctx.getRequest<RequestWithId>().requestId;

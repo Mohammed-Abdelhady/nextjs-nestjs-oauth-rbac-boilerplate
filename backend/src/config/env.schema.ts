@@ -11,9 +11,12 @@ import {
   Matches,
   Max,
   Min,
+  ValidateIf,
 } from 'class-validator';
 import { OAuthEnvironmentConfig } from './env.oauth.schema';
 import { NativeEnvironmentVariables } from './env.native.schema';
+import { runsOn } from './env.storage.schema';
+import { STORAGE_KIND } from '../common/persistence/storage-choice';
 import {
   transformBoolean,
   transformOptionalString,
@@ -35,6 +38,9 @@ export interface EnvironmentConfig extends OAuthEnvironmentConfig {
   NODE_ENV: 'development' | 'production' | 'test';
   PORT: number;
   MONGO_URI: string;
+  DATABASE_TYPE?: 'mongodb' | 'postgres';
+  POSTGRES_URL?: string;
+  POSTGRES_POOL_MAX?: number;
   CLIENT_URL: string;
   API_URL?: string;
   THROTTLE_TTL: number;
@@ -95,6 +101,7 @@ export class EnvironmentVariables extends NativeEnvironmentVariables {
   @IsOptional()
   PORT: number = 3000;
 
+  @ValidateIf(runsOn(STORAGE_KIND.MONGODB))
   @IsString()
   @IsNotEmpty()
   @Matches(/^mongodb(\+srv)?:\/\/.+$/, {

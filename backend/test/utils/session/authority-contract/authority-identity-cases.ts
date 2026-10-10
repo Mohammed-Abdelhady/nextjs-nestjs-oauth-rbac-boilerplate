@@ -1,5 +1,5 @@
-import { MalformedIdError } from '../../../../src/common/persistence/persistence-errors';
 import { AuthenticatedSessions } from '../../../../src/session/authority/authenticated-session';
+import { AccountNotHandedOutError } from '../../../../src/session/authority/session-authority.store';
 import {
   rejectionOf,
   rerunAtOnce,
@@ -47,7 +47,7 @@ export function authorityIdentityCases(harness: AuthorityHarnessSource): void {
   );
 
   it(
-    'answers from the read it was handed, and reads an account it did not hand out',
+    'answers from the read it was handed, and refuses a record it did not hand out',
     async () => {
       const userId = await harness().issuance.seedAccount();
       await harness().setAccountIdentity(userId, ADA);
@@ -57,22 +57,26 @@ export function authorityIdentityCases(harness: AuthorityHarnessSource): void {
       await harness().setAccountIdentity(userId, { ...ADA, name: 'Renamed' });
 
       const held = await store.describeAccount(account);
-      const fresh = await store.describeAccount({
-        id: userId,
-        isDeleted: false,
-        sessionVersion: 0,
-      });
+      const rebuilt = await rejectionOf(
+        store.describeAccount({
+          id: userId,
+          isDeleted: false,
+          sessionVersion: 0,
+        }),
+      );
+      const copied = await rejectionOf(store.describeAccount({ ...account }));
 
-      expect({ held: held?.name, fresh: fresh?.name }).toEqual({
-        held: 'Ada Lovelace',
-        fresh: 'Renamed',
-      });
+      expect({
+        held: held?.name,
+        rebuilt: rebuilt instanceof AccountNotHandedOutError,
+        copied: copied instanceof AccountNotHandedOutError,
+      }).toEqual({ held: 'Ada Lovelace', rebuilt: true, copied: true });
     },
     budget,
   );
 
   it(
-    'names a deactivated account as deactivated and no account as nobody',
+    'names a deactivated account as deactivated and refuses to name a stranger',
     async () => {
       const userId = await harness().issuance.seedAccount();
       await harness().markAccountDeleted(userId);
@@ -83,18 +87,21 @@ export function authorityIdentityCases(harness: AuthorityHarnessSource): void {
 
       expect({
         deleted: (await store.describeAccount(account))?.isDeleted,
-        absent: await store.describeAccount({
-          ...stranger,
-          id: harness().issuance.absentAccountId(),
-        }),
+        absent:
+          (await rejectionOf(
+            store.describeAccount({
+              ...stranger,
+              id: harness().issuance.absentAccountId(),
+            }),
+          )) instanceof AccountNotHandedOutError,
         foreign:
           (await rejectionOf(
             store.describeAccount({
               ...stranger,
               id: harness().issuance.foreignAccountId(),
             }),
-          )) instanceof MalformedIdError,
-      }).toEqual({ deleted: true, absent: null, foreign: true });
+          )) instanceof AccountNotHandedOutError,
+      }).toEqual({ deleted: true, absent: true, foreign: true });
     },
     budget,
   );

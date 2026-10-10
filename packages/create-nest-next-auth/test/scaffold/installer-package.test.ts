@@ -120,6 +120,45 @@ it('keeps a production dependency of the same name: only development tooling is 
   });
 });
 
+it('removes the backend commands that run the PostgreSQL adapter and keeps every other one', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'cna-package-'));
+  roots.push(root);
+  await mkdir(join(root, 'frontend'));
+  await mkdir(join(root, 'backend'));
+  await writeFile(join(root, 'package.json'), '{"name":"template"}');
+  await writeFile(join(root, 'frontend/package.json'), '{"name":"frontend"}');
+  await writeFile(
+    join(root, 'backend/package.json'),
+    JSON.stringify({
+      name: 'backend',
+      scripts: {
+        'test:e2e': 'node ./test/run-jest.mjs --config ./test/jest-e2e.json --runInBand',
+        'test:e2e:postgres':
+          'node ./test/run-jest.mjs --config ./test/jest-e2e-postgres.json --runInBand',
+        'migration:up': 'migrate-mongo up',
+        'migration:postgres:up':
+          'ts-node src/common/persistence/postgres/postgres-migrate.cli.ts up',
+        'migration:postgres:status':
+          'ts-node src/common/persistence/postgres/postgres-migrate.cli.ts status',
+        seed: 'ts-node src/database/seeds/index.ts',
+      },
+      dependencies: { kysely: '0.28.17', pg: '8.23.1' },
+    }),
+  );
+
+  await setProjectName(root, 'my-app');
+
+  expect(JSON.parse(await readFile(join(root, 'backend/package.json'), 'utf8'))).toEqual({
+    name: 'backend',
+    scripts: {
+      'test:e2e': 'node ./test/run-jest.mjs --config ./test/jest-e2e.json --runInBand',
+      'migration:up': 'migrate-mongo up',
+      seed: 'ts-node src/database/seeds/index.ts',
+    },
+    dependencies: { kysely: '0.28.17', pg: '8.23.1' },
+  });
+});
+
 it('removes the mobile engine from the backend, whose only users stay in this repository', async () => {
   const root = await mkdtemp(join(tmpdir(), 'cna-package-'));
   roots.push(root);

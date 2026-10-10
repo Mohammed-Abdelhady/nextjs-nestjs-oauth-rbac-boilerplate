@@ -311,5 +311,31 @@ export function describeSeedContract(
       },
       budget,
     );
+    it(
+      'refuses in the store itself to empty a database outside development and test, and removes nothing',
+      async () => {
+        await servicesOn(current()).seeds.seedAll();
+        process.env.NODE_ENV = 'production';
+
+        const refusal = await current()
+          .seeds.clearApplicationData()
+          .then(
+            () => 'emptied',
+            (error: Error) => error.message,
+          );
+
+        expect({
+          refusal,
+          roles: (await current().storedRoles()).length,
+          accounts: (await current().storedAccounts()).length,
+        }).toEqual({
+          refusal:
+            'Database reset is only allowed when NODE_ENV is "development" or "test".',
+          roles: 4,
+          accounts: 4,
+        });
+      },
+      budget,
+    );
   });
 }

@@ -3,9 +3,9 @@ import {
   ApplicationsContractHarness,
   StoredApplication,
 } from '../utils/session/applications-contract/applications-contract-harness';
-import { PostgresApplicationAccessStore } from './adapter/postgres-application-access.store';
-import { PostgresApplicationRegistryStore } from './adapter/postgres-application-registry.store';
-import { PostgresSecurityEventStore } from './adapter/postgres-security-event.store';
+import { PostgresApplicationAccessStore } from '../../src/session/persistence/postgres/postgres-application-access.store';
+import { PostgresApplicationRegistryStore } from '../../src/session/persistence/postgres/postgres-application-registry.store';
+import { PostgresSecurityEventStore } from '../../src/session/persistence/postgres/postgres-security-event.store';
 import { bootPostgresAuthority } from './postgres-authority-harness';
 
 const AN_OBJECT_ID = '65f000000000000000000001';

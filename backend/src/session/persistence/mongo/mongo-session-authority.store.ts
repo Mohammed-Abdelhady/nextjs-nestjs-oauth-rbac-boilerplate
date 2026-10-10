@@ -8,6 +8,7 @@ import {
 } from '../../../user/persistence/mongo/schemas/user.schema';
 import {
   AccountIdentity,
+  AccountNotHandedOutError,
   AuthorityAccount,
   AuthorityGrant,
   IDLE_EXTENSION,
@@ -84,18 +85,12 @@ export class MongoSessionAuthorityStore extends SessionAuthorityStore {
     return user ? toAuthorityAccount(user) : null;
   }
 
-  async describeAccount(
-    account: AuthorityAccount,
-  ): Promise<AccountIdentity | null> {
+  describeAccount(account: AuthorityAccount): Promise<AccountIdentity | null> {
     const held = authorityDocumentOf(account);
-    if (held) {
-      return toAccountIdentity(held);
+    if (!held) {
+      return Promise.reject(new AccountNotHandedOutError());
     }
-    const id = toObjectId(account.id);
-    const user = await singleStatement(() =>
-      this.userModel.findById(id).exec(),
-    );
-    return user ? toAccountIdentity(user) : null;
+    return Promise.resolve(toAccountIdentity(held));
   }
 
   async readCommittedGrant(

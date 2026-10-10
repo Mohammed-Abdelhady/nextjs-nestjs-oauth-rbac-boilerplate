@@ -1,4 +1,4 @@
-import { PostgresSecondFactorStore } from '../../../../test/postgres-prototype/adapter/postgres-second-factor.store';
+import { PostgresSecondFactorStore } from '../persistence/postgres/postgres-second-factor.store';
 import { bootPostgresAccountsHarness } from '../../../../test/postgres-prototype/postgres-accounts-harness';
 import {
   POSTGRES_BOOT_TIMEOUT_MS,

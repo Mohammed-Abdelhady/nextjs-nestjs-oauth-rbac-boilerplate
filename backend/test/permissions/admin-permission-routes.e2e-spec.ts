@@ -1,5 +1,6 @@
 import type { ApiBody } from '../types/e2e-responses';
 import { replacePermissions } from '../utils/permissions';
+import { ABSENT_ID } from '../utils/route-id-answers';
 import type { Response } from 'supertest';
 import {
   bootE2eApp,
@@ -63,7 +64,7 @@ describe('Admin permission routes (e2e)', () => {
 
     it('should return 404 for non-existent user', async () => {
       await adminAgent
-        .get('/api/admin/users/507f1f77bcf86cd799439011/permissions')
+        .get(`/api/admin/users/${ABSENT_ID}/permissions`)
         .expect(404);
     });
   });

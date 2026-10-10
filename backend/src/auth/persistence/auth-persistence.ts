@@ -1,14 +1,25 @@
 import { DynamicModule, Provider, Type } from '@nestjs/common';
+import { forStorage } from '../../common/persistence/storage-choice';
 import {
   MONGO_AUTH_BRIDGES,
   MONGO_AUTH_MODELS,
   MONGO_AUTH_PROVIDERS,
 } from './mongo/mongo-auth-persistence';
+import { POSTGRES_AUTH_PROVIDERS } from './postgres/postgres-auth-persistence'; // feature:postgres
 
 /** What AuthModule runs on. The one place it names a database. */
-export const AUTH_PERSISTENCE_IMPORTS: DynamicModule[] = [MONGO_AUTH_MODELS];
+export const AUTH_PERSISTENCE_IMPORTS: DynamicModule[] = forStorage({
+  mongodb: () => [MONGO_AUTH_MODELS],
+  postgres: () => [], // feature:postgres
+});
 
-export const AUTH_PERSISTENCE_PROVIDERS: Provider[] = MONGO_AUTH_PROVIDERS;
+export const AUTH_PERSISTENCE_PROVIDERS: Provider[] = forStorage({
+  mongodb: () => MONGO_AUTH_PROVIDERS,
+  postgres: () => POSTGRES_AUTH_PROVIDERS, // feature:postgres
+});
 
 /** What the adapter hands on to modules that import AuthModule. */
-export const AUTH_PERSISTENCE_EXPORTS: Type[] = MONGO_AUTH_BRIDGES;
+export const AUTH_PERSISTENCE_EXPORTS: Type[] = forStorage({
+  mongodb: () => MONGO_AUTH_BRIDGES,
+  postgres: () => [], // feature:postgres
+});

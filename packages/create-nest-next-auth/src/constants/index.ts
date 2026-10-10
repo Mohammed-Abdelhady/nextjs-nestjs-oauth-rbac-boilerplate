@@ -104,6 +104,17 @@ export const POSTGRES_PROTOTYPE_PACKAGES = [
 ] as const;
 
 /**
+ * Backend commands that run PostgreSQL adapter files. Those files are in the
+ * manifest's alwaysRemoveFiles while PostgreSQL is not offered, so the commands
+ * would point at nothing.
+ */
+export const POSTGRES_ADAPTER_SCRIPT_NAMES = [
+  'test:e2e:postgres',
+  'migration:postgres:up',
+  'migration:postgres:status',
+] as const;
+
+/**
  * The mobile engine, which the backend needs only for the suites that drive it
  * against the real server. Those suites are in alwaysRemoveFiles too.
  */

@@ -1,12 +1,12 @@
 import { Kysely } from 'kysely';
 import { Pool } from 'pg';
 import {
-  openPrototypeDatabase,
-  PrototypeDatabase,
-} from '../../../../test/postgres-prototype/adapter/postgres-database';
-import { PostgresMailCounterStore } from '../../../../test/postgres-prototype/adapter/postgres-mail-counter.store';
-import { PostgresPasswordResetCodeStore } from '../../../../test/postgres-prototype/adapter/postgres-password-reset-code.store';
-import { PostgresPendingRegistrationStore } from '../../../../test/postgres-prototype/adapter/postgres-pending-registration.store';
+  openPostgresDatabase,
+  PostgresTables,
+} from '../../../common/persistence/postgres/postgres-database';
+import { PostgresMailCounterStore } from './postgres-mail-counter.store';
+import { PostgresPasswordResetCodeStore } from './postgres-password-reset-code.store';
+import { PostgresPendingRegistrationStore } from './postgres-pending-registration.store';
 import {
   PENDING_CODE_OUTAGES,
   pendingCodeStatements,
@@ -27,12 +27,12 @@ jest.mock('@nestjs/mongoose', () => {
 const A_UUID = '018f3c5e-7b1a-7c3e-9d2f-0a1b2c3d4e5f';
 
 describe('PostgreSQL statements that commit by themselves', () => {
-  let database: Kysely<PrototypeDatabase>;
+  let database: Kysely<PostgresTables>;
 
   beforeAll(async () => {
     const pool = new Pool({ host: '127.0.0.1', port: await closedPort() });
     pool.on('error', () => undefined);
-    database = openPrototypeDatabase(pool);
+    database = openPostgresDatabase(pool);
   });
 
   afterAll(async () => {

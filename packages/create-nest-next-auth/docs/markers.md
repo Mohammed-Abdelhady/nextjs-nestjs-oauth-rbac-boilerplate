@@ -30,6 +30,9 @@ Rules:
 - Blocks nest. The `:end` has to name the block it closes.
 - A client id or a shared id is a marker name too: `// feature:native-expo` marks
   a line only the Expo app needs, `// feature:native-core` one any mobile app needs.
+- A database id is a marker name as well: `// feature:postgres` marks a line only
+  the PostgreSQL adapter needs. A database that is not offered yet is never
+  chosen, so its lines are always removed.
 - Every id has to exist in the manifest, and a marker that names something else
   fails the run with the file and line. That is on purpose: a typo would
   otherwise delete the line from every project.

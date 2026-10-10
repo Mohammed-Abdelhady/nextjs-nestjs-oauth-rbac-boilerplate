@@ -2,18 +2,18 @@ import { randomUUID } from 'node:crypto';
 import { Kysely } from 'kysely';
 import { PendingCodesContractHarness } from '../utils/auth/pending-codes-contract/pending-codes-contract-harness';
 import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
-import { PrototypeDatabase } from './adapter/postgres-database';
-import { PostgresMailCounterStore } from './adapter/postgres-mail-counter.store';
-import { PostgresPasswordResetCodeStore } from './adapter/postgres-password-reset-code.store';
-import { PostgresPendingRegistrationStore } from './adapter/postgres-pending-registration.store';
-import { PostgresUnitOfWorkRunner } from './adapter/postgres-unit-of-work';
+import { PostgresTables } from '../../src/common/persistence/postgres/postgres-database';
+import { PostgresMailCounterStore } from '../../src/auth/persistence/postgres/postgres-mail-counter.store';
+import { PostgresPasswordResetCodeStore } from '../../src/auth/persistence/postgres/postgres-password-reset-code.store';
+import { PostgresPendingRegistrationStore } from '../../src/auth/persistence/postgres/postgres-pending-registration.store';
+import { PostgresUnitOfWorkRunner } from '../../src/common/persistence/postgres/postgres-unit-of-work';
 import { openPrototypeConnection } from './postgres-connection';
 import { PostgresTestServer } from './server/postgres-test-server';
 
 const AN_OBJECT_ID = '65f000000000000000000001';
 
 export interface PostgresPendingCodesHarness extends PendingCodesContractHarness {
-  readonly database: Kysely<PrototypeDatabase>;
+  readonly database: Kysely<PostgresTables>;
   readonly server: PostgresTestServer;
 }
 
@@ -161,7 +161,7 @@ export async function bootPostgresPendingCodesHarness(): Promise<PostgresPending
 }
 
 async function countRows(
-  database: Kysely<PrototypeDatabase>,
+  database: Kysely<PostgresTables>,
   table: 'mail_counters' | 'pending_registrations' | 'pending_password_resets',
 ): Promise<number> {
   const row = await database

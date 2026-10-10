@@ -1,7 +1,7 @@
 import {
   PostgresPasskeyAccounts,
   PostgresPasskeyStore,
-} from '../../../../test/postgres-prototype/adapter/postgres-passkey.store';
+} from '../persistence/postgres/postgres-passkey.store';
 import { bootPostgresAccountsHarness } from '../../../../test/postgres-prototype/postgres-accounts-harness';
 import {
   POSTGRES_BOOT_TIMEOUT_MS,

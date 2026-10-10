@@ -1,5 +1,4 @@
 import { randomBytes } from 'crypto';
-import { getModelToken } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import request from 'supertest';
 import { AuthEpochService } from '../../../src/common/services/auth-epoch.service';
@@ -12,10 +11,6 @@ import {
   NATIVE_ABSOLUTE_LIFETIME_MS,
   NATIVE_IDLE_LIFETIME_MS,
 } from '../../../src/session/constants/session-policy';
-import {
-  Application,
-  ApplicationDocument,
-} from '../../../src/session/persistence/mongo/schemas/application.schema';
 import { AuthorizationTransactionDocument } from '../../../src/session/persistence/mongo/schemas/authorization-transaction.schema';
 import {
   NATIVE_CLIENT_ID,
@@ -33,10 +28,7 @@ export interface StartedNativeAuthorization {
 }
 
 export async function createNativeApplication(e2e: E2eApp): Promise<void> {
-  const applications = e2e.app.get<Model<ApplicationDocument>>(
-    getModelToken(Application.name),
-  );
-  await applications.create({
+  await e2e.state.createApplication({
     clientId: NATIVE_CLIENT_ID,
     displayName: 'Native test client',
     platform: APPLICATION_PLATFORM.NATIVE,
