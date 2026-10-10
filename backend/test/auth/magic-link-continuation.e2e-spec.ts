@@ -4,7 +4,7 @@ import { bootE2eApp, browserAgent, type E2eApp } from '../utils/e2e-app';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
-} from '../utils/session-authority-harness';
+} from '../utils/hook-timeouts';
 import { TEST_NOW } from '../utils/frozen-clock';
 
 describe('magic-link native continuation (e2e)', () => {

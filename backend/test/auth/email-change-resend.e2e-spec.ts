@@ -1,11 +1,4 @@
-import { getModelToken } from '@nestjs/mongoose';
-import type { Model } from 'mongoose';
 import type { Response } from 'supertest';
-import {
-  User,
-  UserDocument,
-} from '../../src/user/persistence/mongo/schemas/user.schema';
-import { PendingRegistration } from '../../src/auth/persistence/mongo/schemas/pending-registration.schema';
 import { PENDING_PURPOSE } from '../../src/auth/constants/registration';
 import {
   bootE2eApp,
@@ -24,22 +17,16 @@ import { TEST_NOW } from '../utils/frozen-clock';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
-} from '../utils/session-authority-harness';
+} from '../utils/hook-timeouts';
 
 const MAX_ATTEMPTS = 5;
 
 describe('Admin email change confirmation (e2e)', () => {
   let e2e: E2eApp;
-  let users: Model<UserDocument>;
-  let pendingRegistrations: Model<PendingRegistration>;
   let adminAgent: TestAgent;
 
   beforeAll(async () => {
     e2e = await bootE2eApp();
-    users = e2e.app.get<Model<UserDocument>>(getModelToken(User.name));
-    pendingRegistrations = e2e.app.get<Model<PendingRegistration>>(
-      getModelToken('PendingRegistration'),
-    );
   }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   beforeEach(async () => {
@@ -54,7 +41,7 @@ describe('Admin email change confirmation (e2e)', () => {
   }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   async function createTarget(email = 'orig@example.test') {
-    return users.create({
+    return e2e.state.accounts.createAccount({
       email,
       name: 'Target User',
       role: 'user',
@@ -86,14 +73,13 @@ describe('Admin email change confirmation (e2e)', () => {
     await move(id, 'y@example.test');
     await move(id, 'x@example.test');
 
-    const stored = await users.findById(target._id);
+    const stored = await e2e.state.accounts.accountWithId(target._id);
     expect(stored?.email).toBe('x@example.test');
     expect(stored?.addressGeneration).toBe(3);
     expect(stored?.isVerified).toBe(false);
 
-    const record = await pendingRegistrations.findOne({
-      email: 'x@example.test',
-    });
+    const record =
+      await e2e.state.auth.pendingRegistrationFor('x@example.test');
     expect(record?.addressGeneration).toBe(3);
     expect(record?.purpose).toBe(PENDING_PURPOSE.EMAIL_CHANGE);
 
@@ -101,7 +87,7 @@ describe('Admin email change confirmation (e2e)', () => {
     const response = await confirm('x@example.test', code);
     expect(response.status).toBe(200);
 
-    const confirmed = await users.findById(target._id);
+    const confirmed = await e2e.state.accounts.accountWithId(target._id);
     expect(confirmed?.isVerified).toBe(true);
   });
 
@@ -114,9 +100,8 @@ describe('Admin email change confirmation (e2e)', () => {
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
       await confirm('moved@example.test', '000000');
     }
-    const locked = await pendingRegistrations.findOne({
-      email: 'moved@example.test',
-    });
+    const locked =
+      await e2e.state.auth.pendingRegistrationFor('moved@example.test');
     expect(locked?.attempts).toBe(MAX_ATTEMPTS);
 
     const before = (await e2e.captureMail()).length;
@@ -127,16 +112,17 @@ describe('Admin email change confirmation (e2e)', () => {
     await e2e.captureMail();
     expect((await e2e.captureMail()).length - before).toBe(1);
 
-    const refreshed = await pendingRegistrations.findOne({
-      email: 'moved@example.test',
-    });
+    const refreshed =
+      await e2e.state.auth.pendingRegistrationFor('moved@example.test');
     expect(refreshed?.attempts).toBe(0);
 
     const freshCode = await latestCode();
     expect(freshCode).not.toBe(code);
     const response = await confirm('moved@example.test', freshCode);
     expect(response.status).toBe(200);
-    expect((await users.findById(target._id))?.isVerified).toBe(true);
+    expect(
+      (await e2e.state.accounts.accountWithId(target._id))?.isVerified,
+    ).toBe(true);
   });
 
   it('names the change and links to the confirmation page in the mail', async () => {

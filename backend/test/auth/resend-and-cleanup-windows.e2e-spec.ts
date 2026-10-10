@@ -1,18 +1,16 @@
-import { getModelToken } from '@nestjs/mongoose';
-import type { Model } from 'mongoose';
 import type { Response } from 'supertest';
 import * as bcrypt from 'bcrypt';
 import { HashService } from '../../src/common/services/hash.service';
-import { PendingRegistration } from '../../src/auth/persistence/mongo/schemas/pending-registration.schema';
 import { PENDING_PURPOSE } from '../../src/auth/constants/registration';
 import { bootE2eApp, browserAgent, type E2eApp } from '../utils/e2e-app';
+import type { E2ePendingRegistrationFields } from '../utils/e2e-state-auth';
 import { TEST_NOW } from '../utils/frozen-clock';
 import { holdStoreCall, inWindow } from '../utils/pending-race';
 import { PendingRegistrationStore } from '../../src/auth/pending-codes/pending-registration.store';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
-} from '../utils/session-authority-harness';
+} from '../utils/hook-timeouts';
 
 const CODE = '123456';
 const PASSWORD = 'Password123!';
@@ -30,15 +28,11 @@ const ACTIVATION_BODY = {
 
 describe('Resend and expired cleanup windows (e2e)', () => {
   let e2e: E2eApp;
-  let pendingRegistrations: Model<PendingRegistration>;
   let hashService: HashService;
   let registrationStore: PendingRegistrationStore;
 
   beforeAll(async () => {
     e2e = await bootE2eApp();
-    pendingRegistrations = e2e.app.get<Model<PendingRegistration>>(
-      getModelToken('PendingRegistration'),
-    );
     hashService = e2e.app.get(HashService);
     registrationStore = e2e.app.get(PendingRegistrationStore);
   }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
@@ -64,7 +58,7 @@ describe('Resend and expired cleanup windows (e2e)', () => {
     return agent.post(path).send(body);
   }
 
-  function pendingFields(overrides: Record<string, unknown> = {}) {
+  function pendingFields(overrides: E2ePendingRegistrationFields = {}) {
     return {
       purpose: PENDING_PURPOSE.SIGNUP,
       hashedCode: 'old-code',
@@ -76,10 +70,10 @@ describe('Resend and expired cleanup windows (e2e)', () => {
 
   async function seedPendingRegistration(
     email: string,
-    overrides: Record<string, unknown> = {},
+    overrides: E2ePendingRegistrationFields = {},
   ): Promise<string> {
     const hashedCode = await bcrypt.hash(CODE, 4);
-    await pendingRegistrations.create({
+    await e2e.state.auth.storePendingRegistration({
       email,
       ...pendingFields({ hashedCode, ...overrides }),
     });
@@ -87,9 +81,7 @@ describe('Resend and expired cleanup windows (e2e)', () => {
   }
 
   async function storedRegistration(email: string) {
-    const record = await pendingRegistrations
-      .findOne({ email })
-      .select('+hashedCode');
+    const record = await e2e.state.auth.pendingRegistrationFor(email);
     if (!record) throw new Error(`expected a stored record for ${email}`);
     return record;
   }
@@ -110,13 +102,13 @@ describe('Resend and expired cleanup windows (e2e)', () => {
         return () => spy.mockRestore();
       },
       () => post('/api/auth/resend-activation', { email }),
-      () => pendingRegistrations.deleteOne({ email }),
+      () => e2e.state.auth.removePendingRegistration(email),
     );
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ success: true, data: { email } });
     expect(await e2e.captureMail()).toHaveLength(0);
-    expect(await pendingRegistrations.countDocuments({ email })).toBe(0);
+    expect(await e2e.state.auth.countPendingRegistrations(email)).toBe(0);
   });
 
   it('mails the refreshed code when a register replaces the record during a resend', async () => {
@@ -136,13 +128,11 @@ describe('Resend and expired cleanup windows (e2e)', () => {
       },
       () => post('/api/auth/resend-activation', { email }),
       async () =>
-        pendingRegistrations.updateOne(
-          { email },
-          {
-            $set: pendingFields({
-              hashedCode: await bcrypt.hash('654321', 4),
-            }),
-          },
+        e2e.state.auth.replacePendingRegistrationCode(
+          email,
+          pendingFields({
+            hashedCode: await bcrypt.hash('654321', 4),
+          }),
         ),
     );
 
@@ -169,19 +159,17 @@ describe('Resend and expired cleanup windows (e2e)', () => {
           name: NAME,
         }),
       async () =>
-        pendingRegistrations.updateOne(
-          { email },
-          {
-            $set: pendingFields({
-              hashedCode: await bcrypt.hash('654321', 4),
-            }),
-          },
+        e2e.state.auth.replacePendingRegistrationCode(
+          email,
+          pendingFields({
+            hashedCode: await bcrypt.hash('654321', 4),
+          }),
         ),
     );
 
     expect(response.status).toBe(400);
     expect(response.body).toMatchObject(ACTIVATION_BODY);
-    expect(await pendingRegistrations.countDocuments({ email })).toBe(1);
+    expect(await e2e.state.auth.countPendingRegistrations(email)).toBe(1);
     const record = await storedRegistration(email);
     expect(record.purpose).toBe(PENDING_PURPOSE.SIGNUP);
     expect(await bcrypt.compare('654321', record.hashedCode)).toBe(true);
