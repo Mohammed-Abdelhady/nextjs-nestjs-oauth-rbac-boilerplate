@@ -1,11 +1,11 @@
-import { MongoStorageStartup } from '../../src/common/persistence/mongo/mongo-storage-startup';
+import { StorageStartup } from '../../src/common/persistence/storage-startup';
 import { RoleSweepBootstrapService } from '../../src/role/services/bootstrap/role-sweep-bootstrap.service';
 import { ApplicationRegistry } from '../../src/session/applications/application-registry';
 import { bootE2eApp, type E2eApp } from '../utils/e2e-app';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
-} from '../utils/session-authority-harness';
+} from '../utils/hook-timeouts';
 
 type AsyncStep = (...args: never[]) => Promise<unknown>;
 
@@ -56,12 +56,6 @@ describe('the order the application starts in', () => {
   beforeAll(async () => {
     recordStep(
       order,
-      MongoStorageStartup.prototype,
-      'prepare',
-      'prepare storage',
-    );
-    recordStep(
-      order,
       ApplicationRegistry.prototype,
       'seedFirstPartyApplications',
       'seed the first applications',
@@ -101,7 +95,16 @@ describe('the order the application starts in', () => {
       ),
     );
 
-    e2e = await bootE2eApp();
+    // The start-up the application was given for its database, before it runs.
+    e2e = await bootE2eApp(0, {
+      beforeStart: (app) =>
+        recordStep(
+          order,
+          app.get(StorageStartup, { strict: false }),
+          'prepare',
+          'prepare storage',
+        ),
+    });
     // The harness resets its data after the boot and repeats some steps then.
     atBoot = order.slice(0, BOOT_STEPS);
   }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);

@@ -1,19 +1,13 @@
-import { getModelToken } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 import { ErrorCode } from '../../src/common/enums/error-code.enum';
 import { MailService } from '../../src/mail/mail.service';
 import { UserRole } from '../../src/user/enums/user-role.enum';
-import {
-  User,
-  UserDocument,
-} from '../../src/user/persistence/mongo/schemas/user.schema';
 import { SEED_ADMIN } from '../constants/seed-users';
 import { bootE2eApp, loginAs, E2eApp, TestAgent } from '../utils/e2e-app';
 import { inWindow } from '../utils/pending-race';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
-} from '../utils/session-authority-harness';
+} from '../utils/hook-timeouts';
 
 const ORIGINAL_EMAIL = 'fresh-original@example.test';
 const NEW_EMAIL = 'fresh-next@example.test';
@@ -25,28 +19,26 @@ interface ErrorBody {
 
 describe('admin email writes authorize fresh state after mail preparation', () => {
   let e2e: E2eApp;
-  let users: Model<UserDocument>;
   let admin: TestAgent;
-  let actor: UserDocument;
-  let target: UserDocument;
+  let actorId: string;
+  let targetId: string;
 
   beforeAll(async () => {
     e2e = await bootE2eApp();
-    users = e2e.app.get<Model<UserDocument>>(getModelToken(User.name));
   }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
   beforeEach(async () => {
     await e2e.reset();
     admin = await loginAs(e2e.httpServer, SEED_ADMIN);
-    const found = await users.findOne({ email: SEED_ADMIN.email });
+    const found = await e2e.state.accounts.accountIdFor(SEED_ADMIN.email);
     if (!found) throw new Error('Missing admin fixture');
-    actor = found;
-    target = await users.create({
+    actorId = found;
+    ({ _id: targetId } = await e2e.state.accounts.createAccount({
       email: ORIGINAL_EMAIL,
       name: 'Target',
       role: UserRole.USER,
       addressGeneration: 0,
       isVerified: true,
-    });
+    }));
   });
   afterEach(() => jest.restoreAllMocks());
   afterAll(async () => {
@@ -54,14 +46,14 @@ describe('admin email writes authorize fresh state after mail preparation', () =
   }, SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS);
 
   function move() {
-    return admin.patch(`/api/admin/users/${target._id.toString()}`).send({
+    return admin.patch(`/api/admin/users/${targetId}`).send({
       email: NEW_EMAIL,
       name: NEW_NAME,
     });
   }
 
   async function stored() {
-    const user = await users.findById(target._id);
+    const user = await e2e.state.accounts.accountWithId(targetId);
     return {
       email: user?.email,
       name: user?.name,
@@ -100,14 +92,16 @@ describe('admin email writes authorize fresh state after mail preparation', () =
 
   it.each([
     {
-      change: { role: UserRole.MANAGER },
+      change: () =>
+        e2e.state.records.changeAccountRole(actorId, UserRole.MANAGER),
       code: ErrorCode.EMAIL_CHANGE_NOT_ALLOWED,
     },
-    { change: { isDeleted: true }, code: ErrorCode.SESSION_INVALID },
+    {
+      change: () => e2e.state.records.markAccountDeleted(actorId),
+      code: ErrorCode.SESSION_INVALID,
+    },
   ])('refuses a stale actor after $code', async ({ change, code }) => {
-    const response = await duringMail(() =>
-      users.updateOne({ _id: actor._id }, { $set: change }),
-    );
+    const response = await duringMail(change);
     expect(response.status).toBe(
       code === ErrorCode.SESSION_INVALID ? 401 : 403,
     );
@@ -122,7 +116,7 @@ describe('admin email writes authorize fresh state after mail preparation', () =
 
   it('refuses an email edit after the target becomes a peer', async () => {
     const response = await duringMail(() =>
-      users.updateOne({ _id: target._id }, { $set: { role: UserRole.ADMIN } }),
+      e2e.state.records.changeAccountRole(targetId, UserRole.ADMIN),
     );
     expect(response.status).toBe(403);
     expect((response.body as ErrorBody).error.code).toBe(
@@ -138,10 +132,7 @@ describe('admin email writes authorize fresh state after mail preparation', () =
 
   it('does not overwrite an email generation committed during preparation', async () => {
     const response = await duringMail(() =>
-      users.updateOne(
-        { _id: target._id },
-        { $set: { addressGeneration: 2, isVerified: false } },
-      ),
+      e2e.state.records.moveAddressGeneration(targetId, 2, false),
     );
     expect(response.status).toBe(409);
     expect((response.body as ErrorBody).error.code).toBe(ErrorCode.CONFLICT);

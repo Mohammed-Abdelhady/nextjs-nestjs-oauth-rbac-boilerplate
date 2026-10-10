@@ -8,7 +8,7 @@ import { bootE2eApp, type E2eApp } from '../utils/e2e-app';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
-} from '../utils/session-authority-harness';
+} from '../utils/hook-timeouts';
 
 /**
  * The application holds each module once. A module registered a second time
