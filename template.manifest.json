@@ -135,6 +135,7 @@
         "backend/src/user/persistence/mongo/mongo-linked-account.store.ts",
         "backend/src/user/persistence/mongo/mongo-linked-account-stores.ts",
         "backend/src/user/services/account-linking.service.ts",
+        "backend/src/user/services/account-linking.answers.ts",
         "backend/src/user/services/account-linking.service.spec.ts",
         "backend/src/user/services/account-linking.queries.spec.ts",
         "backend/src/user/persistence/mongo/services/account-linking.harness-spec.ts",
