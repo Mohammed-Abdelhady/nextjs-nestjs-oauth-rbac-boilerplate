@@ -2,20 +2,27 @@ import type { INestApplication } from '@nestjs/common';
 import type { TestingModuleBuilder } from '@nestjs/testing';
 import type { Pool } from 'pg';
 import { randomUUID } from 'node:crypto';
+import { commitCheckedPool } from '../../../src/common/persistence/postgres/postgres-commit-tag';
 import {
   openPostgresPool,
   POSTGRES_DATABASE,
   POSTGRES_POOL,
-  PostgresDatabase,
+  type PostgresDatabase,
 } from '../../../src/common/persistence/postgres/postgres-connection';
+import { openPostgresDatabase } from '../../../src/common/persistence/postgres/postgres-database';
 import { POSTGRES_HEALTH_POOL } from '../../../src/health/persistence/postgres/postgres-health-persistence';
 import { ApplicationRegistry } from '../../../src/session/applications/application-registry';
-import type {
-  AttachedE2eStorage,
-  E2eAccountFixture,
-  E2eStorage,
-} from '../../utils/e2e-storage';
+import type { AttachedE2eStorage, E2eStorage } from '../../utils/e2e-storage';
+import { postgresAuthState } from '../e2e-postgres-state-auth';
+import { postgresRecordsState } from '../e2e-postgres-state-records';
+import {
+  postgresAccountsState,
+  postgresApplicationsState,
+  postgresSessionsState,
+} from '../e2e-postgres-state-shared';
+import { CommitFaultDialect } from '../postgres-commit-faults';
 import { emptyEveryTable } from '../postgres-connection';
+import { postgresNativeState } from '../e2e-postgres-state-native';
 import {
   connectionUrl,
   E2E_TEMPLATE_DATABASE,
@@ -23,8 +30,6 @@ import {
   quotedName,
   sharedPostgresServer,
 } from './postgres-e2e-server';
-
-const EMAIL_PROVIDER = 'email';
 
 /**
  * A database of its own on the run's shared server, copied from the migrated
@@ -41,6 +46,8 @@ export async function startPostgresE2eStorage(): Promise<E2eStorage> {
 
   let pool: Pool | undefined;
   let healthPool: Pool | undefined;
+  let database: PostgresDatabase | undefined;
+  let commitFaults: CommitFaultDialect | undefined;
 
   return {
     environment: {
@@ -53,72 +60,37 @@ export async function startPostgresE2eStorage(): Promise<E2eStorage> {
       // reach the database of the first through settings read at first load.
       pool = openPostgresPool({ ...server, database: name });
       builder.overrideProvider(POSTGRES_POOL).useValue(pool);
+      // The same database the server builds on that pool, with the one seam
+      // a case needs to lose the answer to a commit.
+      commitFaults = new CommitFaultDialect({ pool: commitCheckedPool(pool) });
+      database = openPostgresDatabase(pool, commitFaults);
+      builder.overrideProvider(POSTGRES_DATABASE).useValue(database);
       healthPool = openPostgresPool({ ...server, database: name, max: 1 });
       builder.overrideProvider(POSTGRES_HEALTH_POOL).useValue(healthPool);
       return Promise.resolve();
     },
     attach: (app: INestApplication): Promise<AttachedE2eStorage> => {
-      const database = app.get<PostgresDatabase>(POSTGRES_DATABASE, {
-        strict: false,
-      });
+      if (!database || !commitFaults) {
+        throw new Error('The fixture was attached before it was prepared');
+      }
+      const stored = database;
       const applications = app.get(ApplicationRegistry, { strict: false });
-      const seedAccounts = async (
-        accounts: E2eAccountFixture[],
-      ): Promise<void> => {
-        await database
-          .insertInto('users')
-          .values(
-            accounts.map((account) => ({
-              email: account.email,
-              name: account.name,
-              role: account.role,
-              permissions: account.permissions,
-              password_hash: account.password,
-              is_verified: account.isVerified,
-              auth_provider: EMAIL_PROVIDER,
-              primary_provider: EMAIL_PROVIDER,
-            })),
-          )
-          .execute();
-      };
+      const accounts = postgresAccountsState(stored);
       return Promise.resolve({
         state: {
-          seedAccounts,
-          createApplication: async (application) => {
-            await database
-              .insertInto('applications')
-              .values({
-                client_id: application.clientId,
-                display_name: application.displayName,
-                platform: application.platform,
-                environment: application.environment,
-                client_type: application.clientType,
-                enabled: application.enabled,
-                redirect_uris: application.redirectUris,
-                allowed_origins: application.allowedOrigins,
-                audiences: application.audiences,
-                allowed_scopes: application.allowedScopes,
-                absolute_lifetime_ms: application.policy.absoluteLifetimeMs,
-                idle_lifetime_ms: application.policy.idleLifetimeMs,
-                session_version: application.sessionVersion,
-              })
-              .execute();
-          },
-          sessionIdWithPurpose: async (purpose) => {
-            const row = await database
-              .selectFrom('sessions')
-              .select('id')
-              .where('credential_purpose', '=', purpose)
-              .executeTakeFirst();
-            return row ? row.id : null;
-          },
+          accounts,
+          sessions: postgresSessionsState(stored),
+          applications: postgresApplicationsState(stored),
+          auth: postgresAuthState(app, stored, commitFaults),
+          native: postgresNativeState(app, stored),
+          records: postgresRecordsState(stored),
         },
-        empty: () => emptyEveryTable(database),
+        empty: () => emptyEveryTable(stored),
         seedApplications: async () => {
           await applications.seedFirstPartyApplications();
           await applications.ensureClientOriginAllowed();
         },
-        seedAccounts,
+        seedAccounts: (seeded) => accounts.seedAccounts(seeded),
       });
     },
     stop: async () => {

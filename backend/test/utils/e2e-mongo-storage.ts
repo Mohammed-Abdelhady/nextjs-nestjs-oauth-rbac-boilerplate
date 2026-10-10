@@ -1,21 +1,20 @@
 import type { INestApplication } from '@nestjs/common';
-import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
+import { getConnectionToken } from '@nestjs/mongoose';
 import type { TestingModuleBuilder } from '@nestjs/testing';
-import mongoose, { Connection, Model } from 'mongoose';
-import {
-  Application,
-  ApplicationDocument,
-} from '../../src/session/persistence/mongo/schemas/application.schema';
-import {
-  Session,
-  SessionDocument,
-} from '../../src/session/persistence/mongo/schemas/session.schema';
-import type { UserDocument } from '../../src/user/persistence/mongo/schemas/user.schema';
+import mongoose, { Connection, STATES } from 'mongoose';
+import { mongoAuthState } from './e2e-mongo-state-auth';
 import type {
   AttachedE2eStorage,
-  E2eAccountFixture,
   E2eStorage,
+  FixtureConnectionWatch,
 } from './e2e-storage';
+import { mongoRecordsState } from './e2e-mongo-state-records';
+import {
+  mongoAccountsState,
+  mongoApplicationsState,
+  mongoSessionsState,
+} from './e2e-mongo-state-shared';
+import { mongoNativeState } from './e2e-mongo-state-native';
 import { startMemoryReplSet } from './memory-replset';
 
 const DATABASE_NAME = 'auth_e2e';
@@ -41,33 +40,18 @@ export async function startMongoE2eStorage(): Promise<E2eStorage> {
     },
     attach: async (app: INestApplication): Promise<AttachedE2eStorage> => {
       const connection = app.get<Connection>(getConnectionToken());
-      const users = app.get<Model<UserDocument>>(getModelToken('User'));
       const { ApplicationRegistryService: RegistryService } =
         await import('../../src/session/persistence/mongo/application-registry.service');
       const applications = app.get(RegistryService);
-      const applicationModel = app.get<Model<ApplicationDocument>>(
-        getModelToken(Application.name),
-      );
-      const sessions = app.get<Model<SessionDocument>>(
-        getModelToken(Session.name),
-      );
-      const seedAccounts = async (
-        accounts: E2eAccountFixture[],
-      ): Promise<void> => {
-        await users.create(accounts);
-      };
+      const accounts = mongoAccountsState(app);
       return {
         state: {
-          createApplication: async (application) => {
-            await applicationModel.create(application);
-          },
-          seedAccounts,
-          sessionIdWithPurpose: async (purpose) => {
-            const session = await sessions
-              .findOne({ credentialPurpose: purpose })
-              .exec();
-            return session ? session._id.toString() : null;
-          },
+          accounts,
+          sessions: mongoSessionsState(app),
+          applications: mongoApplicationsState(app),
+          auth: mongoAuthState(app),
+          native: mongoNativeState(app),
+          records: mongoRecordsState(app),
         },
         empty: async () => {
           for (const collection of Object.values(connection.collections))
@@ -77,7 +61,7 @@ export async function startMongoE2eStorage(): Promise<E2eStorage> {
           await applications.seedFirstPartyApplications();
           await applications.ensureClientOriginAllowed();
         },
-        seedAccounts,
+        seedAccounts: (seeded) => accounts.seedAccounts(seeded),
       };
     },
     stop: async (): Promise<void> => {
@@ -103,4 +87,25 @@ export async function startMongoE2eStorage(): Promise<E2eStorage> {
       if (failed) throw failure;
     },
   };
+}
+
+export function watchMongoFixtureConnections(): Promise<FixtureConnectionWatch> {
+  const existingConnections = new Set(mongoose.connections);
+  const probe = mongoose.createConnection();
+  return Promise.resolve({
+    probePreserved: () => Promise.resolve(mongoose.connections.includes(probe)),
+    retryingConnections: () =>
+      Promise.resolve(
+        mongoose.connections.filter(
+          (connection) =>
+            !existingConnections.has(connection) &&
+            connection !== probe &&
+            (connection.readyState === STATES.connected ||
+              connection.readyState === STATES.connecting),
+        ).length,
+      ),
+    close: async () => {
+      await probe.destroy(true).catch(() => undefined);
+    },
+  });
 }

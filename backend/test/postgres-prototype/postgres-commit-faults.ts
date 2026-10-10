@@ -14,6 +14,8 @@ export interface CommitFault {
    * database cannot be reached at all.
    */
   times?: number;
+  /** Awaited after the commit ran or was abandoned, before its answer is lost. */
+  beforeSilence?: () => Promise<void>;
 }
 
 const STATUS_QUESTION = 'pg_xact_status';
@@ -68,6 +70,7 @@ export class CommitFaultDialect extends PostgresDialect {
       } else {
         await driver.rollbackTransaction(connection);
       }
+      await fault.beforeSilence?.();
       throw connectionLost();
     };
     driver.acquireConnection = async () => this.watch(await acquire());

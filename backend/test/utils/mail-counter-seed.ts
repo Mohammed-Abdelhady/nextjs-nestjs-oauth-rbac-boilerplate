@@ -17,6 +17,21 @@ export interface MailCounterSeed {
   codeExpiresIn?: number;
 }
 
+/** The counter as the service stores one for this seed. */
+export function mailCounterRecord(seed: MailCounterSeed) {
+  const windowStartedAt = seed.windowStartedAt ?? TEST_NOW;
+  const windowMs = mailedCodeWindowMs(
+    seed.codeExpiresIn ?? ACTIVATION_CODE_EXPIRES_IN_DEFAULT,
+  );
+  return {
+    email: seed.email,
+    purpose: seed.purpose,
+    mailedCodes: seed.mailedCodes,
+    windowStartedAt,
+    expiresAt: new Date(windowStartedAt.getTime() + windowMs),
+  };
+}
+
 /**
  * Seeds a counter the way the service writes one: the expiry is the window
  * start plus the window derived from the code lifetime.
@@ -25,15 +40,5 @@ export async function seedMailCounter(
   counters: Model<MailCounter>,
   seed: MailCounterSeed,
 ): Promise<void> {
-  const windowStartedAt = seed.windowStartedAt ?? TEST_NOW;
-  const windowMs = mailedCodeWindowMs(
-    seed.codeExpiresIn ?? ACTIVATION_CODE_EXPIRES_IN_DEFAULT,
-  );
-  await counters.create({
-    email: seed.email,
-    purpose: seed.purpose,
-    mailedCodes: seed.mailedCodes,
-    windowStartedAt,
-    expiresAt: new Date(windowStartedAt.getTime() + windowMs),
-  });
+  await counters.create(mailCounterRecord(seed));
 }

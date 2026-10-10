@@ -63,6 +63,8 @@ export interface BootE2eAppOptions {
   nativeCustomSchemeAllowed?: boolean;
   throttleLimit?: number;
   throttleTtl?: number;
+  /** Called with the application once it is built and before it starts. */
+  beforeStart?: (app: INestApplication) => void;
 }
 
 /** Owns its database and starts configuration outside the developer's env directory. */
@@ -97,7 +99,7 @@ export async function bootE2eApp(
       options.nativeCustomSchemeAllowed ?? false,
     ),
     MAGIC_LINK_ENABLED: 'false',
-    OAUTH_CALLBACK_BASE_URL: 'http://127.0.0.1:5107/api/auth/oauth',
+    OAUTH_CALLBACK_BASE_URL: 'http://127.0.0.1:5107/api/auth/oauth', // feature:oauth-core
     SMTP_HOST: '127.0.0.1',
     SMTP_PORT: '1',
     EMAIL_FROM: 'fixture@example.test',
@@ -198,6 +200,7 @@ export async function bootE2eApp(
       logger: ['error', 'warn'],
     });
     app = nestApp;
+    options.beforeStart?.(nestApp);
     useContainer(nestApp.select(AppModule), { fallbackOnErrors: true });
     nestApp.setGlobalPrefix('api', { exclude: ['health'] });
     nestApp.use(

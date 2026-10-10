@@ -23,7 +23,9 @@ export async function resetContractApp(e2e: E2eApp): Promise<void> {
 /** The session a native bearer itself runs on. */
 export async function contractNativeSessionId(e2e: E2eApp): Promise<string> {
   return required(
-    await e2e.state.sessionIdWithPurpose(CREDENTIAL_PURPOSE.NATIVE_ACCESS),
+    await e2e.state.sessions.sessionIdWithPurpose(
+      CREDENTIAL_PURPOSE.NATIVE_ACCESS,
+    ),
     'native session',
   );
 }

@@ -1,5 +1,4 @@
 import { randomBytes } from 'crypto';
-import { Model } from 'mongoose';
 import request from 'supertest';
 import { AuthEpochService } from '../../../src/common/services/auth-epoch.service';
 import {
@@ -11,13 +10,13 @@ import {
   NATIVE_ABSOLUTE_LIFETIME_MS,
   NATIVE_IDLE_LIFETIME_MS,
 } from '../../../src/session/constants/session-policy';
-import { AuthorizationTransactionDocument } from '../../../src/session/persistence/mongo/schemas/authorization-transaction.schema';
 import {
   NATIVE_CLIENT_ID,
   NATIVE_REDIRECT,
   nativeAuthorizeQuery,
-} from '../../../src/session/native/persistence/mongo/harness/native-oauth.harness-spec';
+} from '../../../src/session/native/harness/native-oauth-requests.harness-spec';
 import type { E2eApp } from '../e2e-app';
+import type { AuthorizationReadGate } from '../e2e-state-native';
 
 export { NATIVE_CLIENT_ID, NATIVE_REDIRECT };
 
@@ -28,7 +27,7 @@ export interface StartedNativeAuthorization {
 }
 
 export async function createNativeApplication(e2e: E2eApp): Promise<void> {
-  await e2e.state.createApplication({
+  await e2e.state.applications.createApplication({
     clientId: NATIVE_CLIENT_ID,
     displayName: 'Native test client',
     platform: APPLICATION_PLATFORM.NATIVE,
@@ -71,39 +70,7 @@ export async function beginNativeAuthorization(
 }
 
 export function pauseNextNativeAuthorizationRead(
-  transactions: Model<AuthorizationTransactionDocument>,
-) {
-  let announceReached = () => {};
-  let releaseRead = () => {};
-  let shouldPause = true;
-  const reached = new Promise<void>((resolve) => {
-    announceReached = resolve;
-  });
-  const blocked = new Promise<void>((resolve) => {
-    releaseRead = resolve;
-  });
-  const originalFindOne = transactions.findOne.bind(transactions);
-  const spy = jest
-    .spyOn(transactions, 'findOne')
-    .mockImplementation((...args) => {
-      const query = originalFindOne(...args);
-      if (!shouldPause) {
-        return query;
-      }
-      shouldPause = false;
-      const originalExec = query.exec.bind(query);
-      jest.spyOn(query, 'exec').mockImplementation(async (...execArgs) => {
-        const transaction = await originalExec(...execArgs);
-        announceReached();
-        await blocked;
-        return transaction;
-      });
-      return query;
-    });
-
-  return {
-    reached,
-    release: releaseRead,
-    restore: () => spy.mockRestore(),
-  };
+  e2e: E2eApp,
+): AuthorizationReadGate {
+  return e2e.state.native.pauseNextAuthorizationRead();
 }
