@@ -7,7 +7,7 @@ import { createRequire } from 'node:module';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
-} from '../utils/session-authority-harness';
+} from '../utils/hook-timeouts';
 
 const nodeRequire = createRequire(__filename);
 const registrationBinding = nodeRequire(
