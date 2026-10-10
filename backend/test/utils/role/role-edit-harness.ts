@@ -62,9 +62,14 @@ export async function bootRoleEdit(mongoUri: string): Promise<RoleEditHarness> {
     ],
   }).compile();
 
+  // An index build still running holds the collection, and an edit that asks
+  // for it then is refused and spends one of its attempts.
+  const roleModel = module.get<Model<Role>>(getModelToken(Role.name));
+  await roleModel.init();
+
   return Object.assign(harness, {
     service: module.get(RoleService),
-    roleModel: module.get<Model<Role>>(getModelToken(Role.name)),
+    roleModel,
     events: harness.app.get<Model<SecurityEventDocument>>(
       getModelToken(SecurityEvent.name),
     ),
