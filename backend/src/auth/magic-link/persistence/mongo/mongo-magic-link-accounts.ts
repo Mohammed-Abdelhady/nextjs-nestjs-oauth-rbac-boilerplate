@@ -3,12 +3,15 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Response } from 'express';
 import { Model } from 'mongoose';
 import { AuthProvider } from '../../../../user/enums/auth-provider.enum';
-import { User, UserDocument } from '../../../../user/schemas/user.schema';
+import {
+  User,
+  UserDocument,
+} from '../../../../user/persistence/mongo/schemas/user.schema';
 import {
   insertOrConflict,
   singleStatement,
-} from '../../../persistence/mongo/mongo-unique-conflict';
-import { SignInService } from '../../../services/sessions/sign-in.service';
+} from '../../../../common/persistence/mongo/mongo-unique-conflict';
+import { SignInService } from '../../../persistence/mongo/sign-in.service';
 import {
   MAGIC_LINK_ACCOUNT_CONSTRAINT,
   MagicLinkAccount,

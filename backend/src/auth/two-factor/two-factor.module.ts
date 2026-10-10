@@ -11,7 +11,7 @@ import {
   SECOND_FACTOR_VERIFIERS,
   SecondFactorVerifier,
 } from './services/second-factor-verifiers';
-import { MONGO_SECOND_FACTOR_SIGN_IN } from './persistence/mongo/mongo-second-factor-stores';
+import { TWO_FACTOR_PERSISTENCE_PROVIDERS } from './persistence/two-factor-persistence';
 import { CommonModule } from '../../common/common.module';
 
 /**
@@ -37,7 +37,7 @@ import { CommonModule } from '../../common/common.module';
     TwoFactorService,
     TwoFactorLoginService,
     TwoFactorReauthService,
-    MONGO_SECOND_FACTOR_SIGN_IN,
+    ...TWO_FACTOR_PERSISTENCE_PROVIDERS,
     {
       provide: SECOND_FACTOR_VERIFIERS,
       useFactory: (

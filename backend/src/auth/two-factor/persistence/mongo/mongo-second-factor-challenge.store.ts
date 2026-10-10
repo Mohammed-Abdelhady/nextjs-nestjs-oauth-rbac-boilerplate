@@ -5,11 +5,11 @@ import { MalformedIdError } from '../../../../common/persistence/persistence-err
 import {
   insertOrConflict,
   singleStatement,
-} from '../../../persistence/mongo/mongo-unique-conflict';
+} from '../../../../common/persistence/mongo/mongo-unique-conflict';
 import {
   TwoFactorChallenge,
   TwoFactorChallengeDocument,
-} from '../../schemas/two-factor-challenge.schema';
+} from './schemas/two-factor-challenge.schema';
 import {
   ChallengeClaimLimits,
   NewSecondFactorChallenge,

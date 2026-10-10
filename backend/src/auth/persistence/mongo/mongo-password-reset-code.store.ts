@@ -19,8 +19,11 @@ import {
 import {
   PendingPasswordReset,
   PendingPasswordResetDocument,
-} from '../../schemas/pending-password-reset.schema';
-import { insertOrConflict, singleStatement } from './mongo-unique-conflict';
+} from './schemas/pending-password-reset.schema';
+import {
+  insertOrConflict,
+  singleStatement,
+} from '../../../common/persistence/mongo/mongo-unique-conflict';
 
 const PASSWORD_RESET_INDEX_CONSTRAINTS = {
   email_1: PASSWORD_RESET_CONSTRAINT.ADDRESS,

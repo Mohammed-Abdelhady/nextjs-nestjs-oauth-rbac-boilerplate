@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthenticatedUserSummary } from '../../../interfaces/authenticated-user.interface';
-import { SignInService } from '../../../services/sessions/sign-in.service';
+import { SignInService } from '../../../persistence/mongo/sign-in.service';
 import { SecondFactorAccount } from '../../stores/second-factor-account';
 import { SecondFactorSignIn } from '../../stores/second-factor-sign-in';
 import { secondFactorDocumentOf } from './mongo-second-factor.store';

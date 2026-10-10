@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
-import { MONGO_PASSKEY_STORES } from './persistence/mongo/mongo-passkey-stores';
+import {
+  PASSKEYS_PERSISTENCE_IMPORTS,
+  PASSKEYS_PERSISTENCE_PROVIDERS,
+} from './persistence/passkeys-persistence';
 import { AuthModule } from '../auth.module';
 import { SessionModule } from '../../session/session.module';
 import { PasskeysController } from './passkeys.controller';
@@ -14,12 +16,6 @@ import { PasskeyManagementService } from './services/passkey-management.service'
 import { PasskeyRegistrationService } from './services/passkey-registration.service';
 import { PasskeySecondFactorVerifier } from './services/passkey-second-factor.verifier';
 import { WebAuthnAdapter } from './services/webauthn.adapter';
-import { Passkey, PasskeySchema } from './schemas/passkey.schema';
-import {
-  PasskeyChallenge,
-  PasskeyChallengeSchema,
-} from './schemas/passkey-challenge.schema';
-import { User, UserSchema } from '../../user/schemas/user.schema';
 import { UserModule } from '../../user/user.module';
 
 /**
@@ -34,11 +30,7 @@ import { UserModule } from '../../user/user.module';
 @Module({
   imports: [
     ConfigModule,
-    MongooseModule.forFeature([
-      { name: Passkey.name, schema: PasskeySchema },
-      { name: PasskeyChallenge.name, schema: PasskeyChallengeSchema },
-      { name: User.name, schema: UserSchema },
-    ]),
+    ...PASSKEYS_PERSISTENCE_IMPORTS,
     AuthModule,
     // The unit of work a passkey removal runs in.
     SessionModule,
@@ -55,7 +47,7 @@ import { UserModule } from '../../user/user.module';
     PasskeyLoginService,
     PasskeyManagementService,
     PasskeySecondFactorVerifier,
-    ...MONGO_PASSKEY_STORES,
+    ...PASSKEYS_PERSISTENCE_PROVIDERS,
   ],
   exports: [
     PasskeyAssertionService,

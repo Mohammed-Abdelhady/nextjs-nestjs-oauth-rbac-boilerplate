@@ -4,10 +4,13 @@ import { Response } from 'express';
 import { Model, Types } from 'mongoose';
 import { UniqueConflictError } from '../../../common/persistence/persistence-errors';
 import { UnitOfWork } from '../../../common/persistence/unit-of-work';
-import { isMongoDuplicateKeyError } from '../../../common/utils/mongo-error.util';
+import { isMongoDuplicateKeyError } from '../../../common/persistence/mongo/mongo-error.util';
 import { mongoSessionOf } from '../../../session/persistence/mongo/mongo-unit-of-work';
 import { AuthProvider } from '../../../user/enums/auth-provider.enum';
-import { User, UserDocument } from '../../../user/schemas/user.schema';
+import {
+  User,
+  UserDocument,
+} from '../../../user/persistence/mongo/schemas/user.schema';
 import {
   ActivatedAccount,
   ACTIVATION_CONSTRAINT,
@@ -19,7 +22,7 @@ import {
   MovedAccount,
   NewActivatedAccount,
 } from '../../pending-codes/activation-accounts';
-import { SignInService } from '../../services/sessions/sign-in.service';
+import { SignInService } from './sign-in.service';
 
 class MongoActivatedAccount extends ActivatedAccount {
   constructor(

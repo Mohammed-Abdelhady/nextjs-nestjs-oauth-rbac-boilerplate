@@ -22,13 +22,16 @@ import {
 import {
   PendingRegistration,
   PendingRegistrationDocument,
-} from '../../schemas/pending-registration.schema';
+} from './schemas/pending-registration.schema';
 import {
   buildGenerationPipeline,
   buildRefreshFilter,
   buildReplaceFilter,
 } from './mongo-pending-refresh';
-import { insertOrConflict, singleStatement } from './mongo-unique-conflict';
+import {
+  insertOrConflict,
+  singleStatement,
+} from '../../../common/persistence/mongo/mongo-unique-conflict';
 
 const PENDING_REGISTRATION_INDEX_CONSTRAINTS = {
   email_1_purpose_1: PENDING_REGISTRATION_CONSTRAINT.ADDRESS_PURPOSE,

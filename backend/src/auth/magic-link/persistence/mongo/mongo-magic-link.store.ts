@@ -4,11 +4,11 @@ import { Model } from 'mongoose';
 import {
   insertOrConflict,
   singleStatement,
-} from '../../../persistence/mongo/mongo-unique-conflict';
+} from '../../../../common/persistence/mongo/mongo-unique-conflict';
 import {
   PendingMagicLink,
   PendingMagicLinkDocument,
-} from '../../schemas/pending-magic-link.schema';
+} from './schemas/pending-magic-link.schema';
 import {
   ClaimedMagicLink,
   MAGIC_LINK_CONSTRAINT,
