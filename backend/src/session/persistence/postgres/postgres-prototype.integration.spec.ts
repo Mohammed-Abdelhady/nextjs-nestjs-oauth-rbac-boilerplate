@@ -1,12 +1,12 @@
 import { Pool } from 'pg';
 import { sql } from 'kysely';
 import { PersistenceUnavailableError } from '../../../common/persistence/persistence-errors';
-import { openPrototypeDatabase } from '../../../../test/postgres-prototype/adapter/postgres-database';
-import { migratePrototypeDatabase } from '../../../../test/postgres-prototype/adapter/postgres-migrations';
+import { openPostgresDatabase } from '../../../common/persistence/postgres/postgres-database';
+import { applyPostgresMigrations } from '../../../common/persistence/postgres/postgres-migrations';
 import {
   PostgresUnitOfWorkRunner,
   postgresTransactionOf,
-} from '../../../../test/postgres-prototype/adapter/postgres-unit-of-work';
+} from '../../../common/persistence/postgres/postgres-unit-of-work';
 import {
   bootPostgresIssuanceHarness,
   PostgresIssuanceHarness,
@@ -115,7 +115,7 @@ describe('PostgreSQL prototype adapter', () => {
   });
 
   it('applies each migration once and records it', async () => {
-    const again = await migratePrototypeDatabase(harness.pool);
+    const again = await applyPostgresMigrations(harness.pool);
     const recorded = await harness.pool.query<{ name: string }>(
       'SELECT name FROM schema_migrations ORDER BY name',
     );
@@ -137,6 +137,7 @@ describe('PostgreSQL prototype adapter', () => {
         '0009_passkeys.sql',
         '0010_native_sign_in.sql',
         '0011_session_listing.sql',
+        '0012_retention_indexes.sql',
       ],
       again: [],
       recorded: [
@@ -151,6 +152,7 @@ describe('PostgreSQL prototype adapter', () => {
         '0009_passkeys.sql',
         '0010_native_sign_in.sql',
         '0011_session_listing.sql',
+        '0012_retention_indexes.sql',
       ],
     });
   });
@@ -214,7 +216,7 @@ describe('PostgreSQL prototype adapter', () => {
       ...harness.server.connection,
       port: 1,
     });
-    const unreachable = openPrototypeDatabase(closedPort);
+    const unreachable = openPostgresDatabase(closedPort);
     let workRuns = 0;
 
     try {

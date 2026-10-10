@@ -1,4 +1,4 @@
-import { lostAnswerOutcome } from '../../../test/postgres-prototype/adapter/postgres-unit-of-work';
+import { lostAnswerOutcome } from '../../common/persistence/postgres/postgres-unit-of-work';
 
 describe('what a lost commit answer becomes on PostgreSQL', () => {
   it.each([

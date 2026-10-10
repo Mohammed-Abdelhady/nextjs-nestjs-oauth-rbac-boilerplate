@@ -1,11 +1,11 @@
 import { Kysely } from 'kysely';
 import { Pool } from 'pg';
-import { PostgresBrowserProofStore } from '../../../../test/postgres-prototype/adapter/postgres-browser-proof.store';
+import { PostgresBrowserProofStore } from './postgres-browser-proof.store';
 import {
-  openPrototypeDatabase,
-  PrototypeDatabase,
-} from '../../../../test/postgres-prototype/adapter/postgres-database';
-import { PostgresSecurityEventStore } from '../../../../test/postgres-prototype/adapter/postgres-security-event.store';
+  openPostgresDatabase,
+  PostgresTables,
+} from '../../../common/persistence/postgres/postgres-database';
+import { PostgresSecurityEventStore } from './postgres-security-event.store';
 import { closedPort } from '../../../../test/postgres-prototype/closed-port';
 import { raisedBy } from '../../../../test/utils/auth/store-outage-cases';
 import {
@@ -24,12 +24,12 @@ jest.mock('@nestjs/mongoose', () => {
 });
 
 describe('PostgreSQL proof and event statements that commit by themselves', () => {
-  let database: Kysely<PrototypeDatabase>;
+  let database: Kysely<PostgresTables>;
 
   beforeAll(async () => {
     const pool = new Pool({ host: '127.0.0.1', port: await closedPort() });
     pool.on('error', () => undefined);
-    database = openPrototypeDatabase(pool);
+    database = openPostgresDatabase(pool);
   });
 
   afterAll(async () => {

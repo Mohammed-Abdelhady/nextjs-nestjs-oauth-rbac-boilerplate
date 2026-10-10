@@ -10,7 +10,7 @@ import {
   UniqueConflictError,
   UnknownTransactionOutcomeError,
 } from '../../../common/persistence/persistence-errors';
-import { mapPostgresError } from '../../../../test/postgres-prototype/adapter/postgres-persistence-errors';
+import { mapPostgresError } from '../../../common/persistence/postgres/postgres-persistence-errors';
 
 function serverError(code: string, constraint?: string): DatabaseError {
   const error = new DatabaseError('server refused', 14, 'error');
@@ -61,8 +61,13 @@ describe('mapPostgresError', () => {
   it.each([
     [
       'a failed id cast to a malformed id',
-      () => serverError('22P02'),
+      () => Object.assign(serverError('22P02'), { routine: 'string_to_uuid' }),
       MalformedIdError,
+    ],
+    [
+      'text the server could not read as a number, left as raised',
+      () => Object.assign(serverError('22P02'), { routine: 'boolin' }),
+      DatabaseError,
     ],
     [
       'a lock that is not available to a retryable abort',
