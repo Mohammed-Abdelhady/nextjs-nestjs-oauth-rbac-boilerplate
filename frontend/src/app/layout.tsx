@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { getLocale, getTranslations } from 'next-intl/server';
-import { ReduxProvider, ThemeProvider } from '@/components/providers';
+import { AppProviders } from '@/components/providers';
 import { routing } from '@/i18n/routing';
 import { getTextDirection } from '@/i18n/direction';
 import { APP_NAME } from '@/constants/app';
@@ -45,9 +45,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} dir={getTextDirection(locale)} suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ReduxProvider loadingLabel={t('loading')}>
-          <ThemeProvider>{children}</ThemeProvider>
-        </ReduxProvider>
+        <AppProviders loadingLabel={t('loading')}>{children}</AppProviders>
       </body>
     </html>
   );

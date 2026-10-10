@@ -26,6 +26,15 @@ export const UNLINK_HINT = {
 
 export type UnlinkHint = (typeof UNLINK_HINT)[keyof typeof UNLINK_HINT];
 
+/** What choosing one listed sign-in method as primary would be told now. */
+export const PRIMARY_HINT = {
+  ALLOWED: 'allowed',
+  /** Email sign-in has no provider profile, so it is never the primary. */
+  NO_PROFILE_TO_SYNC: 'no_profile_to_sync',
+} as const;
+
+export type PrimaryHint = (typeof PRIMARY_HINT)[keyof typeof PRIMARY_HINT];
+
 /**
  * Response DTO for linked providers.
  */
@@ -56,4 +65,16 @@ export class LinkedProvidersResponseDto {
     additionalProperties: { type: 'string', enum: Object.values(UNLINK_HINT) },
   })
   unlinkHints?: Record<string, UnlinkHint>;
+
+  @ApiProperty({
+    description:
+      'For each entry of `providers`, what choosing it as primary would be ' +
+      'told now: `allowed` or `no_profile_to_sync` (email sign-in, refused ' +
+      'with VALIDATION_ERROR). Advice for a page: the request still decides.',
+    example: { email: 'no_profile_to_sync', google: 'allowed' },
+    required: false,
+    type: Object,
+    additionalProperties: { type: 'string', enum: Object.values(PRIMARY_HINT) },
+  })
+  primaryHints?: Record<string, PrimaryHint>;
 }

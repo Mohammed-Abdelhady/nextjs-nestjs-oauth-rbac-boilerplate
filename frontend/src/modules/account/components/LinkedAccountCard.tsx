@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { OAuthProviderIcon } from '@/modules/oauth';
 import { useUnlinkProviderMutation, useSetPrimaryProviderMutation } from '../api';
-import { UNLINK_HINT, type UnlinkHint } from '../types';
+import { PRIMARY_HINT, UNLINK_HINT, type PrimaryHint, type UnlinkHint } from '../types';
 
 interface LinkedAccountCardProps {
   providerId: string;
@@ -29,6 +29,8 @@ interface LinkedAccountCardProps {
   isPrimary: boolean;
   /** What the server says an unlink would be told. Without one, the server decides. */
   unlinkHint?: UnlinkHint;
+  /** What the server says choosing this one as primary would be told. Without one, the server decides. */
+  primaryHint?: PrimaryHint;
   onChange?: () => void;
 }
 
@@ -41,11 +43,13 @@ export function LinkedAccountCard({
   displayName,
   isPrimary,
   unlinkHint,
+  primaryHint,
   onChange,
 }: LinkedAccountCardProps) {
   const t = useTranslations('settings.accounts');
   const [showUnlinkDialog, setShowUnlinkDialog] = useState(false);
   const unlinkBlockedId = useId();
+  const offersPrimary = !isPrimary && primaryHint !== PRIMARY_HINT.NO_PROFILE_TO_SYNC;
   const offersUnlink = unlinkHint !== UNLINK_HINT.NOT_REMOVABLE;
   const isUnlinkBlocked = unlinkHint === UNLINK_HINT.LAST_SIGN_IN_METHOD;
 
@@ -114,56 +118,58 @@ export function LinkedAccountCard({
               </div>
             </div>
 
-            <div className="flex w-full flex-col gap-2 lg:w-auto lg:flex-row lg:shrink-0">
-              {!isPrimary && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSetPrimary}
-                  disabled={isSettingPrimary || isUnlinking}
-                  className="w-full whitespace-nowrap lg:w-auto"
-                  data-testid={`set-primary-${providerId}`}
-                >
-                  {isSettingPrimary ? (
-                    <Loader2
-                      className="h-4 w-4 shrink-0 motion-safe:animate-spin"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <>
-                      <LinkIcon className="h-4 w-4 shrink-0" />
-                      <span>{t('setPrimary')}</span>
-                    </>
-                  )}
-                </Button>
-              )}
+            {(offersPrimary || offersUnlink) && (
+              <div className="flex w-full flex-col gap-2 lg:w-auto lg:flex-row lg:shrink-0">
+                {offersPrimary && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSetPrimary}
+                    disabled={isSettingPrimary || isUnlinking}
+                    className="w-full whitespace-nowrap lg:w-auto"
+                    data-testid={`set-primary-${providerId}`}
+                  >
+                    {isSettingPrimary ? (
+                      <Loader2
+                        className="h-4 w-4 shrink-0 motion-safe:animate-spin"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <>
+                        <LinkIcon className="h-4 w-4 shrink-0" />
+                        <span>{t('setPrimary')}</span>
+                      </>
+                    )}
+                  </Button>
+                )}
 
-              {offersUnlink && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={openUnlinkDialog}
-                  disabled={isUnlinking || isSettingPrimary}
-                  // Focusable while blocked, so the reason is read out with it.
-                  aria-disabled={isUnlinkBlocked || undefined}
-                  aria-describedby={isUnlinkBlocked ? unlinkBlockedId : undefined}
-                  className="w-full whitespace-nowrap lg:w-auto"
-                  data-testid={`unlink-${providerId}`}
-                >
-                  {isUnlinking ? (
-                    <Loader2
-                      className="h-4 w-4 shrink-0 motion-safe:animate-spin"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <>
-                      <Unlink className="h-4 w-4 shrink-0" />
-                      <span>{t('unlink')}</span>
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
+                {offersUnlink && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={openUnlinkDialog}
+                    disabled={isUnlinking || isSettingPrimary}
+                    // Focusable while blocked, so the reason is read out with it.
+                    aria-disabled={isUnlinkBlocked || undefined}
+                    aria-describedby={isUnlinkBlocked ? unlinkBlockedId : undefined}
+                    className="w-full whitespace-nowrap lg:w-auto"
+                    data-testid={`unlink-${providerId}`}
+                  >
+                    {isUnlinking ? (
+                      <Loader2
+                        className="h-4 w-4 shrink-0 motion-safe:animate-spin"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <>
+                        <Unlink className="h-4 w-4 shrink-0" />
+                        <span>{t('unlink')}</span>
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
           {isUnlinkBlocked && (

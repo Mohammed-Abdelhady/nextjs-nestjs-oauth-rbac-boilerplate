@@ -103,4 +103,46 @@ describe('provider link start with both credentials (e2e)', () => {
       data: { providers: ['email'], unlinkHints: { email: 'not_removable' } },
     });
   });
+
+  it('lists which sign-in methods can be primary and answers each choice the same way', async () => {
+    const browser = await loginAs(e2e.httpServer, SEED_USER);
+    const users = e2e.app.get<Model<UserDocument>>(getModelToken(User.name));
+    await users.updateOne(
+      { email: SEED_USER.email },
+      {
+        $set: {
+          linkedAccounts: [
+            { provider: 'google', providerId: 'google-1', linkedAt: TEST_NOW },
+          ],
+        },
+      },
+    );
+
+    const listed = await browser.get('/api/user/linked-providers').expect(200);
+
+    expect(listed.body).toMatchObject({
+      data: {
+        providers: ['email', 'google'],
+        primaryHints: { email: 'no_profile_to_sync', google: 'allowed' },
+      },
+    });
+    const refused = await browser
+      .post('/api/user/set-primary-provider')
+      .send({ provider: 'email' })
+      .expect(400);
+    expect(refused.body).toMatchObject({
+      error: { code: ErrorCode.VALIDATION_ERROR },
+    });
+    await browser
+      .post('/api/user/set-primary-provider')
+      .send({ provider: 'google' })
+      .expect(200);
+    const after = await browser.get('/api/user/linked-providers').expect(200);
+    expect(after.body).toMatchObject({
+      data: {
+        primaryProvider: 'google',
+        primaryHints: { email: 'no_profile_to_sync', google: 'allowed' },
+      },
+    });
+  });
 });

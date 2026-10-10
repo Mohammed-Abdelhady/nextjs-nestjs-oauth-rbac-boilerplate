@@ -9,7 +9,12 @@ import {
   UnitOfWorkRunner,
 } from '../../common/persistence/unit-of-work';
 import { OAuthProfile } from '../../auth/oauth/oauth-provider.interface';
-import { UNLINK_HINT, UnlinkHint } from '../dto/account-linking.dto';
+import {
+  PRIMARY_HINT,
+  PrimaryHint,
+  UNLINK_HINT,
+  UnlinkHint,
+} from '../dto/account-linking.dto';
 import { LinkedAccountStore } from '../stores/linked-account.store';
 import { StoredAccount } from '../stores/stored-account';
 import {
@@ -73,6 +78,32 @@ const UNLINK_REFUSAL: Record<
     code: ErrorCode.CANNOT_UNLINK_LAST_PROVIDER,
     message: () => 'You must keep at least one sign-in method',
   },
+};
+
+/**
+ * The one answer to "may this provider be the primary", for the choice and
+ * for the hint a page reads. Only a linked provider has a profile to follow.
+ */
+function primaryAnswer(
+  provider: string,
+  linkedProviders: string[],
+): PrimaryHint | typeof NOT_LINKED {
+  if (provider === EMAIL_PROVIDER) {
+    return PRIMARY_HINT.NO_PROFILE_TO_SYNC;
+  }
+  return linkedProviders.includes(provider) ? PRIMARY_HINT.ALLOWED : NOT_LINKED;
+}
+
+/** How choosing a primary refuses each answer but the allowed one. */
+const PRIMARY_REFUSAL: Record<
+  Exclude<ReturnType<typeof primaryAnswer>, typeof PRIMARY_HINT.ALLOWED>,
+  { code: ErrorCode; message: (provider: string) => string }
+> = {
+  [PRIMARY_HINT.NO_PROFILE_TO_SYNC]: {
+    code: ErrorCode.VALIDATION_ERROR,
+    message: () => 'Email sign-in has no profile to sync',
+  },
+  [NOT_LINKED]: UNLINK_REFUSAL[NOT_LINKED],
 };
 
 /**
@@ -255,6 +286,21 @@ export class AccountLinkingService {
   }
 
   /**
+   * What choosing each of the account's sign-in methods as primary would be
+   * told now, from the answer the choice itself asks.
+   */
+  primaryHints(linkedProviders: string[]): Record<string, PrimaryHint> {
+    const hints: Record<string, PrimaryHint> = {};
+    for (const provider of linkedProviders) {
+      const answer = primaryAnswer(provider, linkedProviders);
+      if (answer !== NOT_LINKED) {
+        hints[provider] = answer;
+      }
+    }
+    return hints;
+  }
+
+  /**
    * Chooses which provider profile sync follows.
    *
    * @throws AppException when the provider is not linked or is email sign-in
@@ -265,19 +311,12 @@ export class AccountLinkingService {
   ): Promise<StoredAccount> {
     const user = await this.requireUser(userId);
 
-    if (provider === EMAIL_PROVIDER) {
+    const answer = primaryAnswer(provider, user.linkedProviders);
+    if (answer !== PRIMARY_HINT.ALLOWED) {
+      const refusal = PRIMARY_REFUSAL[answer];
       throw new AppException(
-        ErrorCode.VALIDATION_ERROR,
-        'Email sign-in has no profile to sync',
-        HttpStatus.BAD_REQUEST,
-        { provider },
-      );
-    }
-
-    if (!user.linkedProviders.includes(provider)) {
-      throw new AppException(
-        ErrorCode.PROVIDER_NOT_LINKED,
-        `${provider} is not linked to your account`,
+        refusal.code,
+        refusal.message(provider),
         HttpStatus.BAD_REQUEST,
         { provider },
       );
