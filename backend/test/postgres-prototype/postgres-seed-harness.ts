@@ -3,9 +3,9 @@ import { AuthEpochService } from '../../src/common/services/auth-epoch.service';
 import { ApplicationRegistry } from '../../src/session/applications/application-registry';
 import { SeedContractHarness } from '../utils/database/seed-contract-harness';
 import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
-import { PostgresApplicationRegistryStore } from './adapter/postgres-application-registry.store';
-import { PostgresSeedStore } from './adapter/postgres-seed.store';
-import { PostgresUnitOfWorkRunner } from './adapter/postgres-unit-of-work';
+import { PostgresApplicationRegistryStore } from '../../src/session/persistence/postgres/postgres-application-registry.store';
+import { PostgresSeedStore } from '../../src/database/seeds/persistence/postgres/postgres-seed.store';
+import { PostgresUnitOfWorkRunner } from '../../src/common/persistence/postgres/postgres-unit-of-work';
 import { openPrototypeConnection } from './postgres-connection';
 
 export async function bootPostgresSeedHarness(): Promise<SeedContractHarness> {

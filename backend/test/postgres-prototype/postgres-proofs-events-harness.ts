@@ -3,9 +3,9 @@ import { SecurityEventRecorder } from '../../src/session/events/security-event-r
 import { BrowserProofService } from '../../src/session/services/browser-proof.service';
 import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
 import { ProofsEventsContractHarness } from '../utils/session/proofs-events-contract/proofs-events-contract-harness';
-import { PostgresBrowserProofStore } from './adapter/postgres-browser-proof.store';
-import { PostgresSecurityEventStore } from './adapter/postgres-security-event.store';
-import { PostgresUnitOfWorkRunner } from './adapter/postgres-unit-of-work';
+import { PostgresBrowserProofStore } from '../../src/session/persistence/postgres/postgres-browser-proof.store';
+import { PostgresSecurityEventStore } from '../../src/session/persistence/postgres/postgres-security-event.store';
+import { PostgresUnitOfWorkRunner } from '../../src/common/persistence/postgres/postgres-unit-of-work';
 import { openPrototypeConnection } from './postgres-connection';
 
 const AN_OBJECT_ID = '65f000000000000000000001';

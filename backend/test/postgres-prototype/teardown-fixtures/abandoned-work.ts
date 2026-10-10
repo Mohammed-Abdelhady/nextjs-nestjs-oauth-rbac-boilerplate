@@ -1,6 +1,6 @@
 import { Driver, PostgresDialect, sql } from 'kysely';
 import { Client } from 'pg';
-import { postgresTransactionOf } from '../adapter/postgres-unit-of-work';
+import { postgresTransactionOf } from '../../../src/common/persistence/postgres/postgres-unit-of-work';
 import { PrototypeConnection } from '../postgres-connection';
 import { PostgresIssuanceHarness } from '../postgres-issuance-harness';
 import { rerunAtOnce } from '../../utils/session/issuance-contract/issuance-contract-support';

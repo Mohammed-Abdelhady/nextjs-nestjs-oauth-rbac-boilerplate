@@ -7,11 +7,11 @@ import {
   REFUSED_EVENT_SEED_OUTCOME,
 } from '../utils/refused-event';
 import { RoleContractHarness } from '../utils/role/role-contract/role-contract-harness';
-import { PostgresRoleCatalogStore } from './adapter/postgres-role-catalog.store';
-import { PostgresRoleChangeStore } from './adapter/postgres-role-change.store';
-import { PostgresRoleSweepStore } from './adapter/postgres-role-sweep.store';
-import { PostgresSecurityEventStore } from './adapter/postgres-security-event.store';
-import { PostgresUnitOfWorkRunner } from './adapter/postgres-unit-of-work';
+import { PostgresRoleCatalogStore } from '../../src/role/persistence/postgres/postgres-role-catalog.store';
+import { PostgresRoleChangeStore } from '../../src/role/persistence/postgres/postgres-role-change.store';
+import { PostgresRoleSweepStore } from '../../src/role/persistence/postgres/postgres-role-sweep.store';
+import { PostgresSecurityEventStore } from '../../src/session/persistence/postgres/postgres-security-event.store';
+import { PostgresUnitOfWorkRunner } from '../../src/common/persistence/postgres/postgres-unit-of-work';
 import { openPrototypeConnection } from './postgres-connection';
 
 const AN_OBJECT_ID = '65f000000000000000000001';

@@ -3,7 +3,7 @@ import { FrozenClock, TEST_NOW } from '../utils/frozen-clock';
 import {
   PostgresMagicLinkAccounts,
   PostgresMagicLinkStore,
-} from './adapter/postgres-magic-link.store';
+} from '../../src/auth/magic-link/persistence/postgres/postgres-magic-link.store';
 import { openPrototypeConnection } from './postgres-connection';
 
 export async function bootPostgresMagicLinkHarness(): Promise<MagicLinkContractHarness> {
