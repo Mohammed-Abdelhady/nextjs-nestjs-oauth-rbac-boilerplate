@@ -51,6 +51,9 @@ export function makeStore() {
       auth: authReducer,
     },
     middleware: (defaults) => defaults().concat(baseApi.middleware),
+    // The default notifier asks the window for a frame, and RTK Query still
+    // dispatches after unmount, so a frame could outlive jsdom's window.
+    enhancers: (defaults) => defaults({ autoBatch: { type: 'tick' } }),
   });
 }
 
