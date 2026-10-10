@@ -153,6 +153,7 @@ it.each([
       'mobile/cli',
       'mobile/adapters',
       'mobile/auth',
+      'mobile/device-key',
       'mobile/metro',
       'mobile/ui',
       'shared/core',

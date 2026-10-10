@@ -583,6 +583,9 @@ importers:
 
   mobile/cli:
     dependencies:
+      '@app/device-key':
+        specifier: workspace:*
+        version: link:../device-key
       '@app/native-adapters':
         specifier: workspace:*
         version: link:../adapters

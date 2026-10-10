@@ -14,6 +14,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@app/device-key": "workspace:*",
     "@app/native-adapters": "workspace:*",
     "@app/native-auth": "workspace:*",
     "@app/native-ui": "workspace:*",
