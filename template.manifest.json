@@ -237,6 +237,8 @@
       "default": false,
       "files": [
         "backend/src/auth/magic-link/**",
+        "backend/test/auth/magic-link-continuation.e2e-spec.ts",
+        "backend/test/auth/magic-link-expiry.e2e-spec.ts",
         "frontend/src/modules/auth/methods/magic-link/**",
         "frontend/src/app/[locale]/(auth)/auth/magic-link/**"
       ],
