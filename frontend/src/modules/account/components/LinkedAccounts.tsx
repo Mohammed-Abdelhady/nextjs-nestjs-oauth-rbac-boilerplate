@@ -34,6 +34,7 @@ export function LinkedAccounts() {
   );
 
   const unlinkHints = linkedProvidersData?.unlinkHints;
+  const primaryHints = linkedProvidersData?.primaryHints;
 
   if (isLoadingLinked || isLoadingEnabled) {
     return (
@@ -70,6 +71,7 @@ export function LinkedAccounts() {
                   displayName={getProviderDisplayName(providerId, enabledProviders)}
                   isPrimary={providerId === primaryProvider}
                   unlinkHint={unlinkHints?.[providerId]}
+                  primaryHint={primaryHints?.[providerId]}
                   onChange={refetch}
                 />
               ))}

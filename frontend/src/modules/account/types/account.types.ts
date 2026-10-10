@@ -12,6 +12,15 @@ export const UNLINK_HINT = {
 
 export type UnlinkHint = (typeof UNLINK_HINT)[keyof typeof UNLINK_HINT];
 
+/** What the server says choosing one listed sign-in method as primary would be told. */
+export const PRIMARY_HINT = {
+  ALLOWED: 'allowed',
+  /** Email sign-in has no provider profile, so it is never the primary. */
+  NO_PROFILE_TO_SYNC: 'no_profile_to_sync',
+} as const;
+
+export type PrimaryHint = (typeof PRIMARY_HINT)[keyof typeof PRIMARY_HINT];
+
 /**
  * Response type for linked providers endpoint.
  * Providers are 'email' plus the linked OAuth provider ids.
@@ -21,6 +30,8 @@ export interface LinkedProvidersResponse {
   primaryProvider?: string;
   /** Per entry of `providers`. Absent from a server that predates the hint. */
   unlinkHints?: Record<string, UnlinkHint>;
+  /** Per entry of `providers`. Absent from a server that predates the hint. */
+  primaryHints?: Record<string, PrimaryHint>;
 }
 // feature:oauth-core:end
 
