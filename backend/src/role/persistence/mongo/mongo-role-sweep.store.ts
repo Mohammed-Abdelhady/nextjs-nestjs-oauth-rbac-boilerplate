@@ -5,9 +5,12 @@ import { UnitOfWork } from '../../../common/persistence/unit-of-work';
 import { toObjectId } from '../../../session/persistence/mongo/mongo-issuance-mappers';
 import { mongoSessionOf } from '../../../session/persistence/mongo/mongo-unit-of-work';
 import { LINEARIZABLE_QUERY_MAX_TIME_MS } from '../../../session/constants/session-policy';
-import { SecurityEventService } from '../../../session/services/security-event.service';
-import { User, UserDocument } from '../../../user/schemas/user.schema';
-import { Role, RoleDocument } from '../../schemas/role.schema';
+import { SecurityEventService } from '../../../session/persistence/mongo/security-event.service';
+import {
+  User,
+  UserDocument,
+} from '../../../user/persistence/mongo/schemas/user.schema';
+import { Role, RoleDocument } from './schemas/role.schema';
 import {
   PendingSweep,
   RoleDeletionRecord,

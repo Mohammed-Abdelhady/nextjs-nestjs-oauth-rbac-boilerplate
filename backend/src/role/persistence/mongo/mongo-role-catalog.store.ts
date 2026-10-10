@@ -4,8 +4,11 @@ import { FilterQuery, Model } from 'mongoose';
 import { UnitOfWork } from '../../../common/persistence/unit-of-work';
 import { escapeRegex } from '../../../common/utils/escape-regex';
 import { mongoSessionOf } from '../../../session/persistence/mongo/mongo-unit-of-work';
-import { User, UserDocument } from '../../../user/schemas/user.schema';
-import { Role, RoleDocument } from '../../schemas/role.schema';
+import {
+  User,
+  UserDocument,
+} from '../../../user/persistence/mongo/schemas/user.schema';
+import { Role, RoleDocument } from './schemas/role.schema';
 import { RoleCatalogStore } from '../../stores/role-catalog.store';
 import {
   RoleListPage,
