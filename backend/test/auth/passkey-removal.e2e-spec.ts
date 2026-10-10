@@ -3,8 +3,11 @@ import { Model } from 'mongoose';
 import {
   Passkey,
   PasskeyDocument,
-} from '../../src/auth/passkeys/schemas/passkey.schema';
-import { User, UserDocument } from '../../src/user/schemas/user.schema';
+} from '../../src/auth/passkeys/persistence/mongo/schemas/passkey.schema';
+import {
+  User,
+  UserDocument,
+} from '../../src/user/persistence/mongo/schemas/user.schema';
 import { SEED_USER } from '../constants/seed-users';
 import { bootE2eApp, loginAs, type E2eApp } from '../utils/e2e-app';
 import { TEST_NOW } from '../utils/frozen-clock';

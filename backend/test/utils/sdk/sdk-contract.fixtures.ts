@@ -5,7 +5,7 @@ import { CREDENTIAL_PURPOSE } from '../../../src/session/constants/credential-pu
 import {
   Session,
   SessionDocument,
-} from '../../../src/session/schemas/session.schema';
+} from '../../../src/session/persistence/mongo/schemas/session.schema';
 import { bootE2eApp, type E2eApp } from '../e2e-app';
 import { TEST_NOW } from '../frozen-clock';
 import { createNativeApplication } from '../native/native-authorize.fixtures';

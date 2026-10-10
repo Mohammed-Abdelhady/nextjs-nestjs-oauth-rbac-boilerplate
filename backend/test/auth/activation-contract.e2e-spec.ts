@@ -6,9 +6,15 @@ import type { Response } from 'supertest';
 import * as bcrypt from 'bcrypt';
 import { ErrorCode } from '../../src/common/enums/error-code.enum';
 import { partialMock } from '../../src/common/testing/test-doubles.harness-spec';
-import { Role, RoleDocument } from '../../src/role/schemas/role.schema';
-import { User, UserDocument } from '../../src/user/schemas/user.schema';
-import { PendingRegistration } from '../../src/auth/schemas/pending-registration.schema';
+import {
+  Role,
+  RoleDocument,
+} from '../../src/role/persistence/mongo/schemas/role.schema';
+import {
+  User,
+  UserDocument,
+} from '../../src/user/persistence/mongo/schemas/user.schema';
+import { PendingRegistration } from '../../src/auth/persistence/mongo/schemas/pending-registration.schema';
 import { PENDING_PURPOSE } from '../../src/auth/constants/registration';
 import { bootE2eApp, browserAgent, type E2eApp } from '../utils/e2e-app';
 import { TEST_NOW } from '../utils/frozen-clock';

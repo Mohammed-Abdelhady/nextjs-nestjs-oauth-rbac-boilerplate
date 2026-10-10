@@ -137,6 +137,19 @@ export async function bootPostgresAuthority(): Promise<PostgresAuthorityBoot> {
         .where('id', '=', userId)
         .execute();
     },
+    setAccountIdentity: async (userId, identity) => {
+      await database
+        .updateTable('users')
+        .set({
+          email: identity.email,
+          name: identity.name,
+          role: identity.role,
+          permissions: identity.permissions,
+          is_verified: identity.verified,
+        })
+        .where('id', '=', userId)
+        .execute();
+    },
     events: async () => {
       const rows = await database
         .selectFrom('security_events')

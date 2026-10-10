@@ -3,13 +3,16 @@ import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 import { Connection, Model } from 'mongoose';
 import { RoleService } from '../../../src/role/role.service';
 import { RoleEditService } from '../../../src/role/services/edit/role-edit.service';
-import { Role, RoleSchema } from '../../../src/role/schemas/role.schema';
-import { User } from '../../../src/user/schemas/user.schema';
-import { SecurityEventService } from '../../../src/session/services/security-event.service';
+import {
+  Role,
+  RoleSchema,
+} from '../../../src/role/persistence/mongo/schemas/role.schema';
+import { User } from '../../../src/user/persistence/mongo/schemas/user.schema';
+import { SecurityEventService } from '../../../src/session/persistence/mongo/security-event.service';
 import {
   SecurityEvent,
   SecurityEventDocument,
-} from '../../../src/session/schemas/security-event.schema';
+} from '../../../src/session/persistence/mongo/schemas/security-event.schema';
 import { UnitOfWorkRunner } from '../../../src/common/persistence/unit-of-work';
 import { MongoRoleCatalogStore } from '../../../src/role/persistence/mongo/mongo-role-catalog.store';
 import { MongoRoleChangeStore } from '../../../src/role/persistence/mongo/mongo-role-change.store';

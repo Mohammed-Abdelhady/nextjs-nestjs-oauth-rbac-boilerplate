@@ -1,7 +1,7 @@
 import type { ApiBody } from '../types/e2e-responses';
 import { getModelToken } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
-import type { UserDocument } from '../../src/user/schemas/user.schema';
+import type { UserDocument } from '../../src/user/persistence/mongo/schemas/user.schema';
 import { replacePermissions } from '../utils/permissions';
 import type { Response } from 'supertest';
 import {

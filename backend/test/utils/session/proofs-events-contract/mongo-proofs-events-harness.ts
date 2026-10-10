@@ -7,11 +7,11 @@ import { BrowserProofStore } from '../../../../src/session/proofs/browser-proof.
 import {
   BrowserProof,
   BrowserProofDocument,
-} from '../../../../src/session/schemas/browser-proof.schema';
+} from '../../../../src/session/persistence/mongo/schemas/browser-proof.schema';
 import {
   SecurityEvent,
   SecurityEventDocument,
-} from '../../../../src/session/schemas/security-event.schema';
+} from '../../../../src/session/persistence/mongo/schemas/security-event.schema';
 import { BrowserProofService } from '../../../../src/session/services/browser-proof.service';
 import { FrozenClock, TEST_NOW } from '../../frozen-clock';
 import { startMemoryReplSet } from '../../memory-replset';

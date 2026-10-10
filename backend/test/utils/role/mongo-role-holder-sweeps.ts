@@ -5,13 +5,13 @@ import {
   UnitOfWorkRunner,
 } from '../../../src/common/persistence/unit-of-work';
 import { mongoUnitOfWork } from '../../../src/session/persistence/mongo/mongo-unit-of-work';
-import { withMajorityTransaction } from '../../../src/session/utils/transactions/mongo-transaction';
-import { SecurityEventService } from '../../../src/session/services/security-event.service';
-import { UserDocument } from '../../../src/user/schemas/user.schema';
+import { withMajorityTransaction } from '../../../src/common/persistence/mongo/mongo-transaction';
+import { SecurityEventService } from '../../../src/session/persistence/mongo/security-event.service';
+import { UserDocument } from '../../../src/user/persistence/mongo/schemas/user.schema';
 import { MongoRoleChangeStore } from '../../../src/role/persistence/mongo/mongo-role-change.store';
 import { MongoRoleHolders } from '../../../src/role/persistence/mongo/mongo-role-holders';
 import { MongoRoleSweepStore } from '../../../src/role/persistence/mongo/mongo-role-sweep.store';
-import { RoleDocument } from '../../../src/role/schemas/role.schema';
+import { RoleDocument } from '../../../src/role/persistence/mongo/schemas/role.schema';
 import {
   moveRoleHolders as moveHoldersInWork,
   sweepRoleHolders as sweepHolders,

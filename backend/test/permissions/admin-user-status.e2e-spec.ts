@@ -2,7 +2,10 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ErrorCode } from '../../src/common/enums/error-code.enum';
 import { UserRole } from '../../src/user/enums/user-role.enum';
-import { User, UserDocument } from '../../src/user/schemas/user.schema';
+import {
+  User,
+  UserDocument,
+} from '../../src/user/persistence/mongo/schemas/user.schema';
 import {
   SEED_ADMIN,
   SEED_MANAGER,

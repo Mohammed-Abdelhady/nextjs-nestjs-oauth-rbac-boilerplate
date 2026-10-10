@@ -20,8 +20,10 @@ import { PostgresIdFormat } from './adapter/postgres-id-format';
 import { PostgresAdminAccountStore } from './adapter/postgres-admin-account.store';
 import { PrototypeDatabase } from './adapter/postgres-database';
 import { PostgresMailCounterStore } from './adapter/postgres-mail-counter.store';
+import { PostgresPasswordSignInStore } from './adapter/postgres-password-sign-in.store';
 import { PostgresPendingRegistrationStore } from './adapter/postgres-pending-registration.store';
 import { PostgresRoleCatalogStore } from './adapter/postgres-role-catalog.store';
+import { PostgresRolePermissions } from './adapter/postgres-role-permissions';
 import { PostgresRoleChangeStore } from './adapter/postgres-role-change.store';
 import { PostgresRoleSweepStore } from './adapter/postgres-role-sweep.store';
 import { PostgresSecurityEventStore } from './adapter/postgres-security-event.store';
@@ -63,6 +65,8 @@ export async function bootPostgresAccountsHarness(): Promise<PostgresAccountsHar
     roleSweeps: new PostgresRoleSweepStore(database, clock),
     registrations: new PostgresPendingRegistrationStore(database),
     mailCounters: new PostgresMailCounterStore(database),
+    passwords: new PostgresPasswordSignInStore(database, clock),
+    rolePermissions: new PostgresRolePermissions(database),
     runner: (pause) => new PostgresUnitOfWorkRunner(database, pause),
 
     seedRole: async (role) => {

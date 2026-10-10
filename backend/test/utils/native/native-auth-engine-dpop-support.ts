@@ -11,11 +11,11 @@ import type { Model } from 'mongoose';
 import {
   NativeCredential,
   NativeCredentialDocument,
-} from '../../../src/session/schemas/native-credential.schema';
+} from '../../../src/session/persistence/mongo/schemas/native-credential.schema';
 import {
   Session,
   SessionDocument,
-} from '../../../src/session/schemas/session.schema';
+} from '../../../src/session/persistence/mongo/schemas/session.schema';
 import { hashToken } from '../../../src/session/utils/hashing/token-hash';
 import type { E2eApp } from '../e2e-app';
 import {

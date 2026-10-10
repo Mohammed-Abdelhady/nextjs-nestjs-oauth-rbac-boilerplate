@@ -5,8 +5,8 @@ import { Model } from 'mongoose';
 import { bootE2eApp, type E2eApp } from '../utils/e2e-app';
 import { SEED_USER } from '../constants/seed-users';
 import { CSRF_HEADER } from '../../src/session/constants/browser-proof';
-import { Role } from '../../src/role/schemas/role.schema';
-import { Session } from '../../src/session/schemas/session.schema';
+import { Role } from '../../src/role/persistence/mongo/schemas/role.schema';
+import { Session } from '../../src/session/persistence/mongo/schemas/session.schema';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,

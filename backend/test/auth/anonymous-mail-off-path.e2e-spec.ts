@@ -4,8 +4,11 @@ import type { Response } from 'supertest';
 import * as bcrypt from 'bcrypt';
 import { HashService } from '../../src/common/services/hash.service';
 import { MailService } from '../../src/mail/mail.service';
-import { User, UserDocument } from '../../src/user/schemas/user.schema';
-import { PendingRegistration } from '../../src/auth/schemas/pending-registration.schema';
+import {
+  User,
+  UserDocument,
+} from '../../src/user/persistence/mongo/schemas/user.schema';
+import { PendingRegistration } from '../../src/auth/persistence/mongo/schemas/pending-registration.schema';
 import { PENDING_PURPOSE } from '../../src/auth/constants/registration';
 import { bootE2eApp, browserAgent, type E2eApp } from '../utils/e2e-app';
 import { TEST_NOW } from '../utils/frozen-clock';

@@ -1,5 +1,6 @@
 import { Kysely } from 'kysely';
 import {
+  AccountIdentity,
   AuthorityAccount,
   AuthorityGrant,
   IDLE_EXTENSION,
@@ -32,6 +33,40 @@ interface GrantRow {
   session_version: number;
 }
 
+const IDENTITY_COLUMNS = [
+  'id',
+  'is_deleted',
+  'session_version',
+  'email',
+  'name',
+  'role',
+  'permissions',
+  'is_verified',
+] as const;
+
+interface IdentityRow {
+  id: string;
+  is_deleted: boolean;
+  session_version: number;
+  email: string | null;
+  name: string | null;
+  role: string;
+  permissions: string[];
+  is_verified: boolean;
+}
+
+function toAccountIdentity(row: IdentityRow): AccountIdentity {
+  return {
+    id: row.id,
+    email: row.email ?? '',
+    name: row.name ?? '',
+    role: row.role,
+    permissions: [...row.permissions],
+    isVerified: row.is_verified,
+    isDeleted: row.is_deleted,
+  };
+}
+
 /** One statement that commits by itself. None of these can meet a unique rule. */
 function alone<Result>(statement: () => Promise<Result>): Promise<Result> {
   return autocommit({}, statement);
@@ -58,6 +93,12 @@ function toAuthorityGrant(row: GrantRow): AuthorityGrant {
  * primary has already answered and would break the guarantee.
  */
 export class PostgresSessionAuthorityStore extends SessionAuthorityStore {
+  /** What each committed account read saw, for the request that asks next. */
+  private readonly identities = new WeakMap<
+    AuthorityAccount,
+    AccountIdentity
+  >();
+
   constructor(private readonly database: Kysely<PrototypeDatabase>) {
     super();
   }
@@ -75,22 +116,39 @@ export class PostgresSessionAuthorityStore extends SessionAuthorityStore {
   }
 
   async readCommittedAccount(userId: string): Promise<AuthorityAccount | null> {
-    const id = toUuid(userId);
-    const row = await alone(() =>
-      this.database
-        .selectFrom('users')
-        .select(['id', 'is_deleted', 'session_version'])
-        .where('id', '=', id)
-        .executeTakeFirst(),
-    );
+    const row = await this.readIdentityRow(userId);
     if (!row) {
       return null;
     }
-    return {
+    const account: AuthorityAccount = {
       id: row.id,
       isDeleted: row.is_deleted,
       sessionVersion: row.session_version,
     };
+    this.identities.set(account, toAccountIdentity(row));
+    return account;
+  }
+
+  async describeAccount(
+    account: AuthorityAccount,
+  ): Promise<AccountIdentity | null> {
+    const held = this.identities.get(account);
+    if (held) {
+      return held;
+    }
+    const row = await this.readIdentityRow(account.id);
+    return row ? toAccountIdentity(row) : null;
+  }
+
+  private readIdentityRow(userId: string): Promise<IdentityRow | undefined> {
+    const id = toUuid(userId);
+    return alone(() =>
+      this.database
+        .selectFrom('users')
+        .select(IDENTITY_COLUMNS)
+        .where('id', '=', id)
+        .executeTakeFirst(),
+    );
   }
 
   async readCommittedGrant(

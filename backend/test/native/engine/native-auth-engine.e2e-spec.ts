@@ -11,7 +11,7 @@ import type { Model } from 'mongoose';
 import {
   Application,
   ApplicationDocument,
-} from '../../../src/session/schemas/application.schema';
+} from '../../../src/session/persistence/mongo/schemas/application.schema';
 import { bootE2eApp, type E2eApp } from '../../utils/e2e-app';
 import { TEST_NOW } from '../../utils/frozen-clock';
 import {

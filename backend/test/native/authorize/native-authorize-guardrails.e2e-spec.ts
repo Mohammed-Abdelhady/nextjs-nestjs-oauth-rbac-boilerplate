@@ -6,11 +6,11 @@ import { ErrorCode } from '../../../src/common/enums/error-code.enum';
 import {
   AuthorizationTransaction,
   AuthorizationTransactionDocument,
-} from '../../../src/session/schemas/authorization-transaction.schema';
+} from '../../../src/session/persistence/mongo/schemas/authorization-transaction.schema';
 import {
   Application,
   ApplicationDocument,
-} from '../../../src/session/schemas/application.schema';
+} from '../../../src/session/persistence/mongo/schemas/application.schema';
 import { SEED_USER } from '../../constants/seed-users';
 import {
   beginNativeAuthorization,
@@ -23,7 +23,7 @@ import {
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
 } from '../../utils/session-authority-harness';
 import { TEST_NOW } from '../../utils/frozen-clock';
-import { nativeAuthorizeQuery } from '../../../src/session/native/harness/native-oauth.harness-spec';
+import { nativeAuthorizeQuery } from '../../../src/session/native/persistence/mongo/harness/native-oauth.harness-spec';
 import type { AuthorizeQuery } from '../../../src/session/native/oauth/native-oauth.types';
 
 interface ApiErrorBody {

@@ -16,15 +16,15 @@ import {
 import {
   Application,
   ApplicationDocument,
-} from '../../../src/session/schemas/application.schema';
+} from '../../../src/session/persistence/mongo/schemas/application.schema';
 import {
   AuthorizationTransaction,
   AuthorizationTransactionDocument,
-} from '../../../src/session/schemas/authorization-transaction.schema';
+} from '../../../src/session/persistence/mongo/schemas/authorization-transaction.schema';
 import {
   NATIVE_CLIENT_ID,
   nativeAuthorizeQuery,
-} from '../../../src/session/native/harness/native-oauth.harness-spec';
+} from '../../../src/session/native/persistence/mongo/harness/native-oauth.harness-spec';
 import { SEED_USER } from '../../constants/seed-users';
 import { bootE2eApp, loginAs, type E2eApp } from '../../utils/e2e-app';
 import {

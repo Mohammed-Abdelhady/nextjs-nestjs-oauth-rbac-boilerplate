@@ -5,7 +5,7 @@ import type { Model } from 'mongoose';
 import {
   AuthorizationTransaction,
   AuthorizationTransactionDocument,
-} from '../../../src/session/schemas/authorization-transaction.schema';
+} from '../../../src/session/persistence/mongo/schemas/authorization-transaction.schema';
 import { hashToken } from '../../../src/session/utils/hashing/token-hash';
 import { bootE2eApp, type E2eApp } from '../../utils/e2e-app';
 import { TEST_NOW } from '../../utils/frozen-clock';

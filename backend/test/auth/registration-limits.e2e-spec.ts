@@ -2,9 +2,12 @@ import { getModelToken } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 import type { Response } from 'supertest';
 import * as bcrypt from 'bcrypt';
-import { User, UserDocument } from '../../src/user/schemas/user.schema';
-import { PendingRegistration } from '../../src/auth/schemas/pending-registration.schema';
-import { MailCounter } from '../../src/auth/schemas/mail-counter.schema';
+import {
+  User,
+  UserDocument,
+} from '../../src/user/persistence/mongo/schemas/user.schema';
+import { PendingRegistration } from '../../src/auth/persistence/mongo/schemas/pending-registration.schema';
+import { MailCounter } from '../../src/auth/persistence/mongo/schemas/mail-counter.schema';
 import {
   MAIL_COUNTER_PURPOSE,
   PENDING_PURPOSE,

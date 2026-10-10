@@ -9,7 +9,7 @@ import { AuthMailService } from '../../../src/auth/services/mail/auth-mail.servi
 import { MailCounterService } from '../../../src/auth/services/mail/mail-counter.service';
 import { EmailChangeConfirmationService } from '../../../src/auth/services/registration/email-change-confirmation.service';
 import { RegistrationService } from '../../../src/auth/services/registration/registration.service';
-import { SignInService } from '../../../src/auth/services/sessions/sign-in.service';
+import { SignInService } from '../../../src/auth/persistence/mongo/sign-in.service';
 import {
   confirmEmailChange as confirmInWork,
   createActivatedAccount as createInWork,
@@ -19,7 +19,7 @@ import {
   MongoUnitOfWorkRunner,
   mongoUnitOfWork,
 } from '../../../src/session/persistence/mongo/mongo-unit-of-work';
-import { UserDocument } from '../../../src/user/schemas/user.schema';
+import { UserDocument } from '../../../src/user/persistence/mongo/schemas/user.schema';
 
 /** The registration service on the MongoDB adapters over the given model. */
 export function mongoRegistrationService(

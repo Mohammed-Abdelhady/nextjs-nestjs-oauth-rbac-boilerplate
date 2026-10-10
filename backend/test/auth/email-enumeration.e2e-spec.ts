@@ -8,13 +8,13 @@ import {
 } from '../../src/auth/constants/auth-messages';
 // feature:magic-link:start
 import { randomUUID } from 'node:crypto';
-import { MAGIC_LINK_MAX_PER_HOUR } from '../../src/auth/magic-link/magic-link.harness-spec';
+import { MAGIC_LINK_MAX_PER_HOUR } from '../../src/auth/magic-link/persistence/mongo/magic-link.harness-spec';
 import { MAGIC_LINK_SENT_MESSAGE } from '../../src/auth/magic-link/constants/magic-link.constants';
-import type { PendingMagicLinkDocument } from '../../src/auth/magic-link/schemas/pending-magic-link.schema';
+import type { PendingMagicLinkDocument } from '../../src/auth/magic-link/persistence/mongo/schemas/pending-magic-link.schema';
 // feature:magic-link:end
-import type { PendingRegistrationDocument } from '../../src/auth/schemas/pending-registration.schema';
+import type { PendingRegistrationDocument } from '../../src/auth/persistence/mongo/schemas/pending-registration.schema';
 import { REQUEST_ID_HEADER } from '../../src/common/constants/request-id';
-import type { UserDocument } from '../../src/user/schemas/user.schema';
+import type { UserDocument } from '../../src/user/persistence/mongo/schemas/user.schema';
 import { bootE2eApp, browserAgent, type E2eApp } from '../utils/e2e-app';
 import { TEST_NOW } from '../utils/frozen-clock';
 import {

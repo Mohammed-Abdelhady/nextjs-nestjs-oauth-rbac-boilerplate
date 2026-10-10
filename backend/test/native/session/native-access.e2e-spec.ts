@@ -16,15 +16,15 @@ import {
 import {
   Application,
   ApplicationDocument,
-} from '../../../src/session/schemas/application.schema';
+} from '../../../src/session/persistence/mongo/schemas/application.schema';
 import {
   AuthorizationTransaction,
   AuthorizationTransactionDocument,
-} from '../../../src/session/schemas/authorization-transaction.schema';
+} from '../../../src/session/persistence/mongo/schemas/authorization-transaction.schema';
 import {
   NativeCredential,
   NativeCredentialDocument,
-} from '../../../src/session/schemas/native-credential.schema';
+} from '../../../src/session/persistence/mongo/schemas/native-credential.schema';
 import { AuthEpochService } from '../../../src/common/services/auth-epoch.service';
 import { NativeAuthorizeService } from '../../../src/session/native/authorize/native-authorize.service';
 import { NativeTokenService } from '../../../src/session/native/token/native-token.service';
@@ -35,8 +35,11 @@ import {
   NATIVE_REDIRECT,
   approvalRedirectUri,
   nativeAuthorizeQuery,
-} from '../../../src/session/native/harness/native-oauth.harness-spec';
-import { User, UserDocument } from '../../../src/user/schemas/user.schema';
+} from '../../../src/session/native/persistence/mongo/harness/native-oauth.harness-spec';
+import {
+  User,
+  UserDocument,
+} from '../../../src/user/persistence/mongo/schemas/user.schema';
 import { SEED_ADMIN, SEED_USER } from '../../constants/seed-users';
 import { bootE2eApp, loginAs, type E2eApp } from '../../utils/e2e-app';
 import {

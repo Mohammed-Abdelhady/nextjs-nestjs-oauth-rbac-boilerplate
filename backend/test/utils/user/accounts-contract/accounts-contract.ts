@@ -6,6 +6,7 @@ import { accountFreshnessCases } from './accounts-contract-fresh';
 import { accountGrantCases } from './accounts-contract-grants';
 import { AccountsContractHarness } from './accounts-contract-harness';
 import { accountLeavingCases } from './accounts-contract-leaving';
+import { accountPasswordCases } from './accounts-contract-password';
 import { accountProfileCases } from './accounts-contract-profile';
 import { accountRaceCases } from './accounts-contract-races';
 import { accountRouteIdCases } from './accounts-contract-route-ids';
@@ -67,5 +68,6 @@ export function describeAccountStoresContract(
     accountSeamCases(current, seeded);
     accountAbortCases(current, seeded);
     accountRouteIdCases(current, seeded);
+    accountPasswordCases(current, seeded);
   });
 }
