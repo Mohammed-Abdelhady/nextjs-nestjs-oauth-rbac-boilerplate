@@ -16,11 +16,17 @@ vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), info: vi.f
 
 const LINKED_PATH = '/api/user/linked-providers';
 const UNLINK_GOOGLE = 'DELETE /api/user/unlink-provider/google';
+const SET_PRIMARY = 'POST /api/user/set-primary-provider';
 
 type Hints = Record<string, string> | undefined;
 
 /** A server holding one email account with Google linked, answering as scripted. */
-function server(script: { hints: Hints[]; unlink?: () => Response }) {
+function server(script: {
+  hints: Hints[];
+  unlink?: () => Response;
+  primaryHints?: Hints;
+  primaryProvider?: string;
+}) {
   let reads = 0;
   return stubNetwork((request, path) => {
     if (request.method === 'DELETE') {
@@ -29,7 +35,13 @@ function server(script: { hints: Hints[]; unlink?: () => Response }) {
     if (path === LINKED_PATH) {
       const unlinkHints = script.hints[Math.min(reads, script.hints.length - 1)];
       reads += 1;
-      return success({ providers: ['email', 'google'], unlinkHints });
+      const { primaryHints, primaryProvider } = script;
+      return success({
+        providers: ['email', 'google'],
+        unlinkHints,
+        primaryHints,
+        primaryProvider,
+      });
     }
     return success({ providers: [{ id: 'google', displayName: 'Google' }] });
   });
@@ -127,5 +139,47 @@ describe.each([
       UNLINK_GOOGLE,
       `GET ${LINKED_PATH}`,
     ]);
+  });
+
+  it('offers the primary choice the server allows and none for email sign-in', async () => {
+    const requests = server({
+      hints: [undefined],
+      primaryHints: { email: 'no_profile_to_sync', google: 'allowed' },
+    });
+
+    const { message, google } = await renderAccounts(locale);
+
+    const button = within(google).getByRole('button', {
+      name: message('settings.accounts.setPrimary'),
+    });
+    expect(button).toBe(screen.getByTestId('set-primary-google'));
+    expect(screen.queryByTestId('set-primary-email')).toBeNull();
+
+    fireEvent.click(button);
+    await waitFor(() => expect(requests).toContain(SET_PRIMARY));
+  });
+
+  it('lets the server decide on the primary when it sends no hint', async () => {
+    // A server that knows the unlink hints only: email has no unlink there.
+    server({ hints: [{ email: 'not_removable', google: 'allowed' }] });
+
+    await renderAccounts(locale);
+
+    expect(screen.getByTestId('set-primary-email')).toBeTruthy();
+    expect(screen.getByTestId('set-primary-google')).toBeTruthy();
+  });
+
+  it('offers no primary choice on the one that is primary already', async () => {
+    const requests = server({
+      hints: [undefined],
+      primaryHints: { email: 'no_profile_to_sync', google: 'allowed' },
+      primaryProvider: 'google',
+    });
+
+    await renderAccounts(locale);
+
+    expect(screen.queryByTestId('set-primary-google')).toBeNull();
+    expect(screen.queryByTestId('set-primary-email')).toBeNull();
+    expect(requests).not.toContain(SET_PRIMARY);
   });
 });
