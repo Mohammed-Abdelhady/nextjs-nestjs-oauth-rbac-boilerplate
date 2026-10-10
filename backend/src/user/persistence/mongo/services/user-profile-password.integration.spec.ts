@@ -71,6 +71,10 @@ describe('password change keeps the calling session (plan S1)', () => {
         { provide: getConnectionToken(), useValue: harness.connection },
       ],
     }).compile();
+    await module.get<Model<Role>>(getModelToken(Role.name)).init();
+    // feature:passkeys:start
+    await module.get<Model<Passkey>>(getModelToken(Passkey.name)).init();
+    // feature:passkeys:end
     service = module.get(UserProfileService);
   }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 

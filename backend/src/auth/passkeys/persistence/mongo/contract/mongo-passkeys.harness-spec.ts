@@ -51,7 +51,12 @@ export async function bootMongoPasskeysHarness(): Promise<PasskeysContractHarnes
     PasskeyChallenge.name,
     PasskeyChallengeSchema,
   );
-  await Promise.all([users.init(), passkeys.init(), challenges.init()]);
+  await Promise.all([
+    users.init(),
+    roles.init(),
+    passkeys.init(),
+    challenges.init(),
+  ]);
   // Built the way the application builds them: each adapter over its model.
   const module = await Test.createTestingModule({
     providers: [

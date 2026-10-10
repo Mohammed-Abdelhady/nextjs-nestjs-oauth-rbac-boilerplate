@@ -72,6 +72,7 @@ describe('code-step comparison count', () => {
       PendingPasswordReset.name,
       PendingPasswordResetSchema,
     );
+    await Promise.all([registrations.init(), resets.init()]);
     const config = {
       get: (key: string, fallback?: number) =>
         key === 'bcrypt.rounds' ? ROUNDS : fallback,

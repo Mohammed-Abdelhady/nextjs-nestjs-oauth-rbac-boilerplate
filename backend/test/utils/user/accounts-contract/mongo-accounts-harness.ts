@@ -109,6 +109,7 @@ export async function bootMongoAccountsHarness(): Promise<MongoAccountsHarness> 
   const counters = connection.model<MailCounterDocument>(MailCounter.name);
   const passkeys = connection.model<PasskeyDocument>(Passkey.name); // feature:passkeys
   await Promise.all([roles.init(), registrations.init(), counters.init()]);
+  await passkeys.init(); // feature:passkeys
   const events = app.get<Model<SecurityEventDocument>>(
     getModelToken(SecurityEvent.name),
   );
