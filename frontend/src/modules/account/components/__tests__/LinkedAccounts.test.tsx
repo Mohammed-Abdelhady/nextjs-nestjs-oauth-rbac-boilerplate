@@ -1,0 +1,131 @@
+// @vitest-environment jsdom
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import type { AppLocale } from '@/i18n/load-messages';
+import {
+  descriptions,
+  refusalWith,
+  registerFormTestLifecycle,
+  renderForm,
+  stubNetwork,
+  success,
+} from '@/tests/serverRejectionHarness';
+import { LinkedAccounts } from '../LinkedAccounts';
+
+vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() } }));
+
+const LINKED_PATH = '/api/user/linked-providers';
+const UNLINK_GOOGLE = 'DELETE /api/user/unlink-provider/google';
+
+type Hints = Record<string, string> | undefined;
+
+/** A server holding one email account with Google linked, answering as scripted. */
+function server(script: { hints: Hints[]; unlink?: () => Response }) {
+  let reads = 0;
+  return stubNetwork((request, path) => {
+    if (request.method === 'DELETE') {
+      return script.unlink?.() ?? success({});
+    }
+    if (path === LINKED_PATH) {
+      const unlinkHints = script.hints[Math.min(reads, script.hints.length - 1)];
+      reads += 1;
+      return success({ providers: ['email', 'google'], unlinkHints });
+    }
+    return success({ providers: [{ id: 'google', displayName: 'Google' }] });
+  });
+}
+
+async function renderAccounts(locale: AppLocale) {
+  const view = await renderForm(locale, <LinkedAccounts />);
+  const google = await screen.findByTestId('linked-account-google');
+  return { ...view, google, unlink: () => within(google).queryByTestId('unlink-google') };
+}
+
+registerFormTestLifecycle();
+
+describe.each([
+  'en',
+  'ar', // feature:locale-ar
+] as const)('LinkedAccounts in %s', (locale) => {
+  it('offers the unlink the server allows and none for email sign-in', async () => {
+    const requests = server({ hints: [{ email: 'not_removable', google: 'allowed' }] });
+
+    const { message, unlink } = await renderAccounts(locale);
+
+    const button = within(screen.getByTestId('linked-account-google')).getByRole('button', {
+      name: message('settings.accounts.unlink'),
+    });
+    expect(button).toBe(unlink());
+    expect(button.getAttribute('aria-disabled')).toBeNull();
+    expect(descriptions(button)).toEqual([]);
+    expect(screen.queryByTestId('unlink-email')).toBeNull();
+    expect(screen.queryByTestId('unlink-blocked-google')).toBeNull();
+
+    fireEvent.click(button);
+    fireEvent.click(await screen.findByTestId('unlink-confirm-google'));
+    await waitFor(() => expect(requests).toContain(UNLINK_GOOGLE));
+  });
+
+  it('keeps a refused unlink in reach and says why, without sending it', async () => {
+    const requests = server({
+      hints: [{ email: 'not_removable', google: 'last_sign_in_method' }],
+    });
+
+    const { message, unlink } = await renderAccounts(locale);
+
+    const button = unlink();
+    if (!button) throw new Error('the unlink control is missing');
+    // Not the native attribute: a disabled button leaves the tab order.
+    expect(button.hasAttribute('disabled')).toBe(false);
+    expect(button.getAttribute('aria-disabled')).toBe('true');
+    expect(descriptions(button)).toEqual([
+      message('settings.accounts.unlinkBlockedLastSignInMethod'),
+    ]);
+
+    fireEvent.click(button);
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    expect(requests.filter((request) => request.startsWith('DELETE'))).toEqual([]);
+  });
+
+  it('lets the server decide when it sends no hint', async () => {
+    server({ hints: [undefined] });
+
+    const { unlink } = await renderAccounts(locale);
+
+    expect(unlink()?.getAttribute('aria-disabled')).toBeNull();
+    expect(screen.queryByTestId('unlink-blocked-google')).toBeNull();
+  });
+
+  it('shows the refusal and the reason when the server refuses an unlink it had allowed', async () => {
+    const requests = server({
+      hints: [
+        { email: 'not_removable', google: 'allowed' },
+        { email: 'not_removable', google: 'last_sign_in_method' },
+      ],
+      unlink: () => refusalWith(400, 'CANNOT_UNLINK_LAST_PROVIDER'),
+    });
+
+    const { message, unlink, errorToasts, successToasts } = await renderAccounts(locale);
+    fireEvent.click(unlink() ?? document.body);
+    fireEvent.click(await screen.findByTestId('unlink-confirm-google'));
+
+    await waitFor(() => {
+      expect(errorToasts()).toEqual([message('errors.codes.CANNOT_UNLINK_LAST_PROVIDER')]);
+    });
+    await waitFor(() => {
+      expect(unlink()?.getAttribute('aria-disabled')).toBe('true');
+    });
+    expect(successToasts()).toEqual([]);
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    expect(screen.getByTestId('linked-account-email')).toBeTruthy();
+    expect(screen.getByTestId('linked-account-google')).toBeTruthy();
+    expect(descriptions(unlink() ?? document.body)).toEqual([
+      message('settings.accounts.unlinkBlockedLastSignInMethod'),
+    ]);
+    expect(requests.filter((request) => !request.includes('oauth'))).toEqual([
+      `GET ${LINKED_PATH}`,
+      UNLINK_GOOGLE,
+      `GET ${LINKED_PATH}`,
+    ]);
+  });
+});
