@@ -1,36 +1,13 @@
 import { Injectable, Provider } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
-import { Application } from '../../../session/persistence/mongo/schemas/application.schema';
-import { AuthorizationTransaction } from '../../../session/persistence/mongo/schemas/authorization-transaction.schema';
-import { BrowserProof } from '../../../session/persistence/mongo/schemas/browser-proof.schema';
-import { NativeCredential } from '../../../session/persistence/mongo/schemas/native-credential.schema';
-import { NativeDpopProofId } from '../../../session/persistence/mongo/schemas/native-dpop-proof-id.schema';
-import { SecurityEvent } from '../../../session/persistence/mongo/schemas/security-event.schema';
-import { Session } from '../../../session/persistence/mongo/schemas/session.schema';
-import { StepUpChallenge } from '../../../session/persistence/mongo/schemas/step-up-challenge.schema';
-import { UserApplicationGrant } from '../../../session/persistence/mongo/schemas/user-application-grant.schema';
-import { User } from '../../../user/persistence/mongo/schemas/user.schema';
 import { StorageStartup } from '../storage-startup';
 
-/** The collections whose unique rules session authority rests on. */
-const SESSION_AUTHORITY_MODELS = [
-  Session.name,
-  BrowserProof.name,
-  NativeDpopProofId.name,
-  Application.name,
-  UserApplicationGrant.name,
-  NativeCredential.name,
-  AuthorizationTransaction.name,
-  StepUpChallenge.name,
-  SecurityEvent.name,
-  User.name,
-];
-
 /**
- * The schemas declare the indexes, and this adapter builds the ones session
- * authority rests on before the application serves. Building an index that is
- * already there changes nothing.
+ * The schemas declare the indexes, and this adapter builds them before the
+ * application serves. It asks the connection for its models, so a model a
+ * module registers is covered without being named here. Building an index
+ * that is already there changes nothing.
  *
  * Migrations are applied by an operator with `migrate-mongo`. The server has
  * never read their record at start and does not here: it neither applies a
@@ -44,10 +21,15 @@ export class MongoStorageStartup extends StorageStartup {
 
   async prepare(): Promise<void> {
     await Promise.all(
-      SESSION_AUTHORITY_MODELS.map((name) =>
-        this.connection.model(name).createIndexes(),
-      ),
+      this.connection.modelNames().map((name) => this.buildIndexes(name)),
     );
+  }
+
+  /** Waits out the build Mongoose started itself, then puts back what is lost. */
+  private async buildIndexes(name: string): Promise<void> {
+    const model = this.connection.model(name);
+    await model.init();
+    await model.createIndexes();
   }
 }
 
