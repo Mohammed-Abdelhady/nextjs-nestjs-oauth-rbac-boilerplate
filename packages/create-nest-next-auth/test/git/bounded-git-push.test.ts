@@ -19,6 +19,8 @@ import { git, isolatedGit } from '../support/answers-helpers.js';
 import { boundedGitPush } from '../support/bounded-git-push.js';
 
 const FIXTURE_TIMEOUT_MS = 1000;
+// Both codes mean the hook's reader has already gone, so there is nothing left to release.
+const HOOK_READER_GONE_CODES = ['ENXIO', 'EPIPE'];
 const roots: string[] = [];
 afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
@@ -91,7 +93,12 @@ function releaseHook(root: string): void {
     fd = openSync(join(root, '.git/blocked'), constants.O_WRONLY | constants.O_NONBLOCK);
     writeSync(fd, 'release\n');
   } catch (error) {
-    if (!(error instanceof Error) || !('code' in error) || error.code !== 'ENXIO') throw error;
+    if (
+      !(error instanceof Error) ||
+      !('code' in error) ||
+      !HOOK_READER_GONE_CODES.includes(String(error.code))
+    )
+      throw error;
   } finally {
     if (fd !== undefined) closeSync(fd);
   }
