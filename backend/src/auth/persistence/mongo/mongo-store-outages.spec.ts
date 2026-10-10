@@ -19,13 +19,16 @@ import {
 } from '../../../common/testing/test-doubles.harness-spec';
 import { mongoUnitOfWork } from '../../../session/persistence/mongo/mongo-unit-of-work';
 import { PENDING_PURPOSE } from '../../constants/registration';
-import { MailCounterDocument } from '../../schemas/mail-counter.schema';
-import { PendingPasswordResetDocument } from '../../schemas/pending-password-reset.schema';
-import { PendingRegistrationDocument } from '../../schemas/pending-registration.schema';
+import { MailCounterDocument } from './schemas/mail-counter.schema';
+import { PendingPasswordResetDocument } from './schemas/pending-password-reset.schema';
+import { PendingRegistrationDocument } from './schemas/pending-registration.schema';
 import { MongoMailCounterStore } from './mongo-mail-counter.store';
 import { MongoPasswordResetCodeStore } from './mongo-password-reset-code.store';
 import { MongoPendingRegistrationStore } from './mongo-pending-registration.store';
-import { insertOrConflict, singleStatement } from './mongo-unique-conflict';
+import {
+  insertOrConflict,
+  singleStatement,
+} from '../../../common/persistence/mongo/mongo-unique-conflict';
 
 const AN_OBJECT_ID = '65f000000000000000000001';
 const OUTAGE = new MongoNetworkError('connection 3 to 10.0.0.9 closed');

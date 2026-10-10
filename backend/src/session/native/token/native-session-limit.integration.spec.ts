@@ -13,7 +13,7 @@ import { BrowserIssuanceStore } from '../../issuance/browser-issuance.store';
 import { SessionIssuanceService } from '../../services/session-issuance.service';
 import { addMs, capIdleByAbsolute } from '../../utils/session/session-deadline';
 import { hashToken, randomSecret } from '../../utils/hashing/token-hash';
-import { SessionDocument } from '../../schemas/session.schema';
+import { SessionDocument } from '../../persistence/mongo/schemas/session.schema';
 import request from 'supertest';
 import { OAUTH_ERROR } from '../oauth/native-oauth.types';
 import { runForcedIssuanceRace } from '../../../../test/utils/session/session-issuance-race';
@@ -27,7 +27,7 @@ import {
   resetNativeClient,
   startNativeOauth,
   stopNativeOauth,
-} from '../harness/native-oauth.harness-spec';
+} from '../persistence/mongo/harness/native-oauth.harness-spec';
 import {
   createTestUser,
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,

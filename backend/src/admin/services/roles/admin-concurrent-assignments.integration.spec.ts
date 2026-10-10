@@ -5,7 +5,7 @@ import { SESSION_AUTHORITY_BOOT_TIMEOUT_MS } from '../../../../test/utils/sessio
 import {
   EDITOR_SLUG,
   useAdminRoundFour,
-} from '../admin-round-four.harness-spec';
+} from '../../persistence/mongo/services/admin-round-four.harness-spec';
 
 const CONCURRENT_ASSIGNMENTS = 30;
 

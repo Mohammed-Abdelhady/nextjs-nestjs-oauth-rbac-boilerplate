@@ -1,4 +1,4 @@
-import { SecurityEventService } from '../../services/security-event.service';
+import { SecurityEventService } from '../../persistence/mongo/security-event.service';
 import { SECURITY_EVENT_ACTION } from '../../constants/security-event-action';
 import { NATIVE_DPOP_FAILURE_REASON } from '../../constants/session-policy';
 import { CREDENTIAL_PURPOSE } from '../../constants/credential-purpose';
@@ -18,7 +18,7 @@ import {
   resetNativeClient,
   startNativeOauth,
   stopNativeOauth,
-} from '../harness/native-oauth.harness-spec';
+} from '../persistence/mongo/harness/native-oauth.harness-spec';
 import {
   OAUTH_ERROR,
   OauthFailure,

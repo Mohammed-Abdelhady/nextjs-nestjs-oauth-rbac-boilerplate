@@ -13,7 +13,7 @@ import {
   resetNativeClient,
   startNativeOauth,
   stopNativeOauth,
-} from '../harness/native-oauth.harness-spec';
+} from '../persistence/mongo/harness/native-oauth.harness-spec';
 import { NativeRefreshRotationService } from './native-refresh-rotation.service';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,

@@ -6,7 +6,10 @@ import {
 import { bootMongoAccountsHarness } from '../../../../test/utils/user/accounts-contract/mongo-accounts-harness';
 import { MongoPasskeyAccounts } from '../persistence/mongo/mongo-passkey-accounts';
 import { MongoPasskeyStore } from '../persistence/mongo/mongo-passkey.store';
-import { Passkey, PasskeyDocument } from '../schemas/passkey.schema';
+import {
+  Passkey,
+  PasskeyDocument,
+} from '../persistence/mongo/schemas/passkey.schema';
 import { describePasskeysAfterDeletion } from './passkeys-account-deletion.harness-spec';
 
 describePasskeysAfterDeletion(

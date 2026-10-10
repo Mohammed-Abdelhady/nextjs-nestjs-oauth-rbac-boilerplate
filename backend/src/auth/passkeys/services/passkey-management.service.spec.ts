@@ -12,7 +12,7 @@ import {
   MockPasskey,
   PASSKEY_ID,
   USER_ID,
-} from '../passkeys.harness-spec';
+} from '../persistence/mongo/passkeys.harness-spec';
 
 /** A driver session whose transaction commits. */
 function transactionSession(): Record<string, jest.Mock> {

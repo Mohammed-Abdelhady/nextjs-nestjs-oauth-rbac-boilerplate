@@ -4,7 +4,7 @@ import {
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
 } from '../../../../test/utils/session-authority-harness';
 import { describeMagicLinkContract } from './magic-link-contract-suite.harness-spec';
-import { bootMongoMagicLinkHarness } from './mongo-magic-link.harness-spec';
+import { bootMongoMagicLinkHarness } from '../persistence/mongo/contract/mongo-magic-link.harness-spec';
 
 describeMagicLinkContract('MongoDB', bootMongoMagicLinkHarness, {
   bootMs: SESSION_AUTHORITY_BOOT_TIMEOUT_MS,

@@ -21,7 +21,7 @@ import {
   ORIGIN,
   RP_ID,
   USER_ID,
-} from '../passkeys.harness-spec';
+} from '../persistence/mongo/passkeys.harness-spec';
 
 /**
  * The library boundary is mocked. A registration that would satisfy the real

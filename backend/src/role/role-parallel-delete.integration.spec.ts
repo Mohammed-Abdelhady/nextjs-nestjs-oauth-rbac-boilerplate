@@ -1,6 +1,6 @@
 import { UserRole } from '../user/enums/user-role.enum';
 import { RaceGate } from '../../test/utils/race-gate';
-import { useAdminRoundFour } from '../admin/services/admin-round-four.harness-spec';
+import { useAdminRoundFour } from '../admin/persistence/mongo/services/admin-round-four.harness-spec';
 
 const PARALLEL_DELETES = 20;
 

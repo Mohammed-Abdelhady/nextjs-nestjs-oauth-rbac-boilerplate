@@ -5,7 +5,7 @@ import {
   createMockRequest,
   createMockResponse,
   USER_ID,
-} from '../passkeys.harness-spec';
+} from '../persistence/mongo/passkeys.harness-spec';
 
 describe('PasskeyChallengeService', () => {
   it('should hand out a signed cookie and read it back', async () => {

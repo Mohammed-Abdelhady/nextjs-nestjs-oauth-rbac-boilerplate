@@ -8,7 +8,7 @@ import {
   MOCK_RESPONSE,
   MOCK_USER,
   createMagicLinkHarness,
-} from './magic-link.harness-spec';
+} from './persistence/mongo/magic-link.harness-spec';
 
 const EMAIL = 'user@example.com';
 const TOKEN = 'a-token-from-the-mailed-link';
