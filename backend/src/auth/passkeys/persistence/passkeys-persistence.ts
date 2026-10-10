@@ -1,13 +1,18 @@
 import { DynamicModule, Provider } from '@nestjs/common';
+import { forStorage } from '../../../common/persistence/storage-choice';
 import {
   MONGO_PASSKEY_MODELS,
   MONGO_PASSKEY_PROVIDERS,
 } from './mongo/mongo-passkeys-persistence';
+import { POSTGRES_PASSKEY_PROVIDERS } from './postgres/postgres-passkeys-persistence'; // feature:postgres
 
 /** What PasskeysModule runs on. The one place it names a database. */
-export const PASSKEYS_PERSISTENCE_IMPORTS: DynamicModule[] = [
-  MONGO_PASSKEY_MODELS,
-];
+export const PASSKEYS_PERSISTENCE_IMPORTS: DynamicModule[] = forStorage({
+  mongodb: () => [MONGO_PASSKEY_MODELS],
+  postgres: () => [], // feature:postgres
+});
 
-export const PASSKEYS_PERSISTENCE_PROVIDERS: Provider[] =
-  MONGO_PASSKEY_PROVIDERS;
+export const PASSKEYS_PERSISTENCE_PROVIDERS: Provider[] = forStorage({
+  mongodb: () => MONGO_PASSKEY_PROVIDERS,
+  postgres: () => POSTGRES_PASSKEY_PROVIDERS, // feature:postgres
+});
