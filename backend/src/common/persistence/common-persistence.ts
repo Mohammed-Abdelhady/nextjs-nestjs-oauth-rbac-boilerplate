@@ -1,13 +1,28 @@
-import { DynamicModule, Provider } from '@nestjs/common';
+import { DynamicModule, Provider, Type } from '@nestjs/common';
 import { MONGO_COMMON_PROVIDERS } from './mongo/mongo-common-persistence';
 import { MONGO_CONNECTION } from './mongo/mongo-connection';
+// feature:postgres:start
+import {
+  POSTGRES_COMMON_PROVIDERS,
+  POSTGRES_CONNECTION,
+} from './postgres/postgres-common-persistence';
+// feature:postgres:end
+import { forStorage } from './storage-choice';
 
 /**
  * The database the application runs on. This file and its siblings named
- * `*-persistence.ts` are the only places outside an adapter folder that say
- * which one: each hands its module the adapter's modules and providers under
- * names that say nothing about a database.
+ * `*-persistence.ts` are the only places outside an adapter folder that name
+ * one: each hands its module the chosen adapter's modules and providers under
+ * names that say nothing about a database. The choice is the validated
+ * `DATABASE_TYPE` setting, read once when the file is loaded.
  */
-export const STORAGE_CONNECTION_IMPORTS: DynamicModule[] = [MONGO_CONNECTION];
+export const STORAGE_CONNECTION_IMPORTS: Array<DynamicModule | Type> =
+  forStorage<Array<DynamicModule | Type>>({
+    mongodb: () => [MONGO_CONNECTION],
+    postgres: () => [POSTGRES_CONNECTION], // feature:postgres
+  });
 
-export const COMMON_PERSISTENCE_PROVIDERS: Provider[] = MONGO_COMMON_PROVIDERS;
+export const COMMON_PERSISTENCE_PROVIDERS: Provider[] = forStorage({
+  mongodb: () => MONGO_COMMON_PROVIDERS,
+  postgres: () => POSTGRES_COMMON_PROVIDERS, // feature:postgres
+});
