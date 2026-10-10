@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UnitOfWork } from '../../../common/persistence/unit-of-work';
 import { IssuanceApplication } from '../../issuance/browser-issuance.store';
 import { IssuanceApplications } from '../../issuance/issuance-applications';
-import { ApplicationRegistryService } from '../../services/application-registry.service';
+import { ApplicationRegistryService } from './application-registry.service';
 import { toIssuanceApplication } from './mongo-issuance-mappers';
 import { mongoSessionOf } from './mongo-unit-of-work';
 

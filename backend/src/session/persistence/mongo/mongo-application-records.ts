@@ -1,4 +1,4 @@
-import { ApplicationDocument } from '../../schemas/application.schema';
+import { ApplicationDocument } from './schemas/application.schema';
 import {
   RegisteredApplication,
   RegisteredClient,

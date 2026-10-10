@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { singleStatement } from '../../../auth/persistence/mongo/mongo-unique-conflict';
+import { singleStatement } from '../../../common/persistence/mongo/mongo-unique-conflict';
 import { UnitOfWork } from '../../../common/persistence/unit-of-work';
-import { isMongoDuplicateKeyError } from '../../../common/utils/mongo-error.util';
+import { isMongoDuplicateKeyError } from '../../../common/persistence/mongo/mongo-error.util';
 import {
   ApplicationRegistryStore,
   FirstPartyKey,
@@ -17,11 +17,8 @@ import {
   APPLICATION_CLIENT_TYPE,
   APPLICATION_PLATFORM,
 } from '../../constants/client-ids';
-import {
-  Application,
-  ApplicationDocument,
-} from '../../schemas/application.schema';
-import { linearizable } from '../../utils/authority/linearizable-query';
+import { Application, ApplicationDocument } from './schemas/application.schema';
+import { linearizable } from '../../../common/persistence/mongo/linearizable-query';
 import {
   toRegisteredApplication,
   toRegisteredClient,

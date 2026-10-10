@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 import {
   insertOrConflict,
   singleStatement,
-} from '../../../auth/persistence/mongo/mongo-unique-conflict';
+} from '../../../common/persistence/mongo/mongo-unique-conflict';
 import { UnitOfWork } from '../../../common/persistence/unit-of-work';
 import {
   NewSecurityEvent,
@@ -15,7 +15,7 @@ import {
 import {
   SecurityEvent,
   SecurityEventDocument,
-} from '../../schemas/security-event.schema';
+} from './schemas/security-event.schema';
 import { mongoSessionOf } from './mongo-unit-of-work';
 
 const EVENT_CONSTRAINTS = {

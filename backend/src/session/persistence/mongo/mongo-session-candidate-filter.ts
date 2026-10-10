@@ -1,7 +1,7 @@
 import { FilterQuery, Types } from 'mongoose';
 import { CredentialPurpose } from '../../constants/credential-purpose';
 import { AUTH_SCHEMA_VERSION } from '../../constants/session-policy';
-import { Session } from '../../schemas/session.schema';
+import { Session } from './schemas/session.schema';
 
 /** Sessions stored as live at `now` for these versions. A prefilter, not the rule. */
 export function currentSessionCandidateFilter(

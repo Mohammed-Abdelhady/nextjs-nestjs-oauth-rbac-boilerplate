@@ -1,14 +1,18 @@
 import { Types } from 'mongoose';
 import { MalformedIdError } from '../../../common/persistence/persistence-errors';
-import { isCastError } from '../../../common/utils/mongo-error.util';
-import { LeanUser, UserDocument } from '../../../user/schemas/user.schema';
+import { isCastError } from '../../../common/persistence/mongo/mongo-error.util';
 import {
+  LeanUser,
+  UserDocument,
+} from '../../../user/persistence/mongo/schemas/user.schema';
+import {
+  AccountIdentity,
   AuthorityAccount,
   StoredSession,
 } from '../../authority/session-authority.store';
 import { SessionDeviceLabel } from '../../issuance/browser-issuance.store';
 import { RevocableSession } from '../../revocation/session-revocation.store';
-import { LeanSession, SessionDocument } from '../../schemas/session.schema';
+import { LeanSession, SessionDocument } from './schemas/session.schema';
 import { toIssuanceAccount } from './mongo-issuance-mappers';
 
 type SessionRecord = SessionDocument | LeanSession;
@@ -52,6 +56,9 @@ export function toStoredSession(record: SessionRecord): StoredSession {
     deviceName: record.deviceName ?? null,
     lastUsedAt: record.lastUsedAt ?? null,
     proofKeyThumbprint: record.proofKeyThumbprint ?? null,
+    csrfToken: record.csrfToken ?? null,
+    authenticationMethods: [...(record.authenticationMethods ?? [])],
+    createdAt: record.createdAt,
     isValid: record.isValid,
     revokedAt: record.revokedAt ?? null,
     credentialPurpose: record.credentialPurpose,
@@ -74,6 +81,25 @@ export function toAuthorityAccount(user: UserDocument): AuthorityAccount {
   const account = toIssuanceAccount(user);
   accountRecords.set(account, user);
   return account;
+}
+
+export function toAccountIdentity(user: UserDocument): AccountIdentity {
+  return {
+    id: user._id.toString(),
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    permissions: [...(user.permissions ?? [])],
+    isVerified: Boolean(user.isVerified),
+    isDeleted: Boolean(user.isDeleted),
+  };
+}
+
+/** The document a committed read handed out, if this adapter still holds it. */
+export function authorityDocumentOf(
+  account: AuthorityAccount,
+): UserDocument | undefined {
+  return accountRecords.get(account);
 }
 
 export function toRevocableSession(record: SessionDocument): RevocableSession {
