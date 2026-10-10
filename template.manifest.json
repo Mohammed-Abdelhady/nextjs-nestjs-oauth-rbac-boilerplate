@@ -20,7 +20,7 @@
     },
     "native-cli": {
       "label": "Mobile app, React Native CLI",
-      "description": "Bundles and passes its tests. It has never run on a simulator.",
+      "description": "Runs on an iOS simulator from a native project you generate. Android has not been built.",
       "default": false,
       "status": "planned",
       "files": ["mobile/cli/**"],
