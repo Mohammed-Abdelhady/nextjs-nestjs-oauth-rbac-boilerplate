@@ -52,7 +52,28 @@ export class SignInMethodRule {
     userId: string,
     waysLeft: WaysLeft,
   ): Promise<WayInOutcome> {
-    const held = await this.methods.holdForAccount(unitOfWork, userId);
+    return this.outcomeOf(
+      await this.methods.holdForAccount(unitOfWork, userId),
+      waysLeft,
+    );
+  }
+
+  /**
+   * What a removal would be told now, for any number of removals on one read.
+   * Nothing is held, so the answer is advice for whoever offers the removal:
+   * the removal itself still asks `holdForRemoval`.
+   */
+  async adviseOnRemoval(
+    userId: string,
+  ): Promise<(waysLeft: WaysLeft) => WayInOutcome> {
+    const stored = await this.methods.readForAccount(userId);
+    return (waysLeft) => this.outcomeOf(stored, waysLeft);
+  }
+
+  private outcomeOf(
+    held: HeldSignInMethods | null,
+    waysLeft: WaysLeft,
+  ): WayInOutcome {
     if (!held) {
       return WAY_IN_OUTCOME.NO_ACCOUNT;
     }

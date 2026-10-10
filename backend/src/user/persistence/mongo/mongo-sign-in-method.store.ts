@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { ClientSession, Model } from 'mongoose';
 // feature:passkeys:start
 import {
   Passkey,
@@ -49,6 +49,17 @@ export class MongoSignInMethodStore extends SignInMethodStore {
     if (fenced.matchedCount !== 1) {
       return null;
     }
+    return this.read(userId, session);
+  }
+
+  readForAccount(userId: string): Promise<HeldSignInMethods | null> {
+    return this.read(userId, null);
+  }
+
+  private async read(
+    userId: string,
+    session: ClientSession | null,
+  ): Promise<HeldSignInMethods | null> {
     const user = await this.userModel
       .findById(userId)
       .select('+password')

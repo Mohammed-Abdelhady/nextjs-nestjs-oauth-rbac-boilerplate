@@ -9,6 +9,7 @@ import {
 import {
   SignInMethodRule,
   WAY_IN_OUTCOME,
+  WayInOutcome,
   WaysLeft,
 } from '../../../user/services/sign-in-method.rule';
 import {
@@ -30,6 +31,11 @@ const waysLeftWithoutOnePasskey: WaysLeft = (held, switches) =>
   held.linkedProviders.length +
   (switches.magicLink ? 1 : 0);
 
+/** Only the last way in stays. The passkey of an account that is gone goes. */
+function refusesRemoval(wayIn: WayInOutcome): boolean {
+  return wayIn === WAY_IN_OUTCOME.LAST;
+}
+
 /**
  * The passkeys on an account, from the account settings. Every lookup is
  * scoped to the signed-in user, so an id belonging to someone else reads as
@@ -46,9 +52,16 @@ export class PasskeyManagementService {
   ) {}
 
   async list(userId: string): Promise<ApiResponse<PasskeyListResponseDto>> {
-    const passkeys = await this.passkeys.listForAccount(userId);
+    const [passkeys, advise] = await Promise.all([
+      this.passkeys.listForAccount(userId),
+      this.signInMethods.adviseOnRemoval(userId),
+    ]);
 
-    return ApiResponse.success({ passkeys: passkeys.map(toPasskeySummary) });
+    return ApiResponse.success({
+      passkeys: passkeys.map(toPasskeySummary),
+      // The answer `remove` would get from the same rule, with nothing held.
+      canRemove: !refusesRemoval(advise(waysLeftWithoutOnePasskey)),
+    });
   }
 
   /** @throws AppException PASSKEY_NOT_FOUND when the account has no such passkey */
@@ -117,7 +130,7 @@ export class PasskeyManagementService {
       waysLeftWithoutOnePasskey,
     );
 
-    if (wayIn !== WAY_IN_OUTCOME.LAST) {
+    if (!refusesRemoval(wayIn)) {
       return;
     }
 

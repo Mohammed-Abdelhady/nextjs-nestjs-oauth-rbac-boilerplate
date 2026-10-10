@@ -52,7 +52,8 @@ export class UserProvidersController {
   @ApiOperation({
     summary: 'Get linked providers',
     description:
-      'Returns a list of all OAuth providers linked to the authenticated user account.',
+      'Returns the sign-in methods on the authenticated user account, and for ' +
+      'each one whether an unlink would be accepted now.',
   })
   async getLinkedProviders(
     @CurrentUser('id') userId: string,
@@ -63,7 +64,12 @@ export class UserProvidersController {
     const primaryProvider =
       await this.userProfileService.getPrimaryProvider(userId);
 
-    return ApiResponse.success({ providers, primaryProvider });
+    const unlinkHints = await this.accountLinkingService.unlinkHints(
+      userId,
+      providers,
+    );
+
+    return ApiResponse.success({ providers, primaryProvider, unlinkHints });
   }
 
   /**
