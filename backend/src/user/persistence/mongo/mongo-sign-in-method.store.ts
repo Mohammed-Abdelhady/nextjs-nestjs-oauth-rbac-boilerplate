@@ -5,12 +5,12 @@ import { ClientSession, Model } from 'mongoose';
 import {
   Passkey,
   PasskeyDocument,
-} from '../../../auth/passkeys/schemas/passkey.schema';
+} from '../../../auth/passkeys/persistence/mongo/schemas/passkey.schema';
 // feature:passkeys:end
 import { EMAIL_PROVIDER } from '../../../common/constants/oauth-providers';
 import { UnitOfWork } from '../../../common/persistence/unit-of-work';
 import { mongoSessionOf } from '../../../session/persistence/mongo/mongo-unit-of-work';
-import { User, UserDocument } from '../../schemas/user.schema';
+import { User, UserDocument } from './schemas/user.schema';
 import {
   HeldSignInMethods,
   SignInMethodStore,

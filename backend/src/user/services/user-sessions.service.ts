@@ -2,13 +2,13 @@ import { DEVICE_KIND } from '../../common/constants/session';
 import { CREDENTIAL_PURPOSE } from '../../session/constants/credential-purpose';
 import { parseUserAgent } from '../../common/utils/parse-user-agent';
 import { Injectable, Logger, HttpStatus } from '@nestjs/common';
-import { Types } from 'mongoose';
-import { SessionService } from '../../auth/services/sessions/session.service';
+import { Sessions } from '../../auth/services/sessions/sessions';
 import { SessionDto, SessionListData } from '../dto/user-profile.dto';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { ApiResponse } from '../../common/dto/api-response.dto';
-import { assertValidObjectId } from '../utils/user-lookup.util';
+import { IdFormat } from '../../common/persistence/id-format';
+import { assertValidId } from '../utils/user-lookup.util';
 
 /**
  * Self-service session management: listing a user's own sessions and
@@ -18,7 +18,10 @@ import { assertValidObjectId } from '../utils/user-lookup.util';
 export class UserSessionsService {
   private readonly logger = new Logger(UserSessionsService.name);
 
-  constructor(private readonly sessionService: SessionService) {}
+  constructor(
+    private readonly sessionService: Sessions,
+    private readonly ids: IdFormat,
+  ) {}
 
   /**
    * Get all active sessions for current user.
@@ -27,17 +30,15 @@ export class UserSessionsService {
     userId: string,
     currentSessionId: string | null,
   ): Promise<ApiResponse<SessionListData>> {
-    assertValidObjectId(userId, 'Invalid user ID format');
+    assertValidId(this.ids, userId, 'Invalid user ID format');
 
-    const sessions = await this.sessionService.getUserSessions(
-      new Types.ObjectId(userId),
-    );
+    const sessions = await this.sessionService.getUserSessions(userId);
 
     const sessionDtos: SessionDto[] = sessions.map((session) => ({
-      id: session._id.toString(),
+      id: session.id,
       userAgent: session.userAgent,
       ip: session.ip,
-      deviceName: session.deviceName,
+      deviceName: session.deviceName ?? undefined,
       deviceParts: {
         ...parseUserAgent(session.userAgent).parts,
         ...(session.credentialPurpose === CREDENTIAL_PURPOSE.NATIVE_ACCESS
@@ -45,10 +46,8 @@ export class UserSessionsService {
           : {}),
       },
       createdAt: session.createdAt,
-      lastUsedAt: session.lastUsedAt,
-      isCurrent:
-        currentSessionId !== null &&
-        session._id.toString() === currentSessionId,
+      lastUsedAt: session.lastUsedAt ?? undefined,
+      isCurrent: currentSessionId !== null && session.id === currentSessionId,
       credentialPurpose: session.credentialPurpose,
     }));
 
@@ -69,8 +68,8 @@ export class UserSessionsService {
     sessionId: string,
     currentSessionId: string | null,
   ): Promise<ApiResponse<{ message: string }>> {
-    assertValidObjectId(userId, 'Invalid user ID format');
-    assertValidObjectId(sessionId, 'Invalid session ID format');
+    assertValidId(this.ids, userId, 'Invalid user ID format');
+    assertValidId(this.ids, sessionId, 'Invalid session ID format');
 
     // Check if trying to revoke current session
     if (currentSessionId !== null && currentSessionId === sessionId) {
@@ -83,7 +82,7 @@ export class UserSessionsService {
 
     const revoked = await this.sessionService.invalidateSessionById(
       sessionId,
-      new Types.ObjectId(userId),
+      userId,
     );
 
     if (!revoked) {
@@ -105,7 +104,7 @@ export class UserSessionsService {
     userId: string,
     currentSessionId: string | null,
   ): Promise<ApiResponse<{ revokedCount: number }>> {
-    assertValidObjectId(userId, 'Invalid user ID format');
+    assertValidId(this.ids, userId, 'Invalid user ID format');
 
     if (currentSessionId === null) {
       throw new AppException(
@@ -117,7 +116,7 @@ export class UserSessionsService {
 
     const revokedCount =
       await this.sessionService.invalidateAllSessionsExceptSession(
-        new Types.ObjectId(userId),
+        userId,
         currentSessionId,
       );
 

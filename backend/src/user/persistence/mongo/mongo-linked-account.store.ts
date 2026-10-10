@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UnitOfWork } from '../../../common/persistence/unit-of-work';
 import { mongoSessionOf } from '../../../session/persistence/mongo/mongo-unit-of-work';
-import { User, UserDocument } from '../../schemas/user.schema';
+import { User, UserDocument } from './schemas/user.schema';
 import {
   LinkedAccountStore,
   LinkedProviders,

@@ -1,6 +1,6 @@
-import { UserDocument } from '../../schemas/user.schema';
+import { UserDocument } from './schemas/user.schema';
 import { UniqueConflictError } from '../../../common/persistence/persistence-errors';
-import { isMongoDuplicateKeyError } from '../../../common/utils/mongo-error.util';
+import { isMongoDuplicateKeyError } from '../../../common/persistence/mongo/mongo-error.util';
 import { ACCOUNT_CONSTRAINT, StoredAccount } from '../../stores/stored-account';
 
 const EMAIL_INDEX = /index: email_1 /;

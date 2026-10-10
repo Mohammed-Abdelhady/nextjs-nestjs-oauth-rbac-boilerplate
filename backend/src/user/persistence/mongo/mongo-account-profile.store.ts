@@ -5,15 +5,18 @@ import { Model, Types } from 'mongoose';
 import {
   Passkey,
   PasskeyDocument,
-} from '../../../auth/passkeys/schemas/passkey.schema';
+} from '../../../auth/passkeys/persistence/mongo/schemas/passkey.schema';
 // feature:passkeys:end
 import { UnitOfWork } from '../../../common/persistence/unit-of-work';
-import { Role, RoleDocument } from '../../../role/schemas/role.schema';
+import {
+  Role,
+  RoleDocument,
+} from '../../../role/persistence/mongo/schemas/role.schema';
 import { toObjectId } from '../../../session/persistence/mongo/mongo-issuance-mappers';
 import { mongoSessionOf } from '../../../session/persistence/mongo/mongo-unit-of-work';
 import { USER_HIDDEN_FIELDS } from '../../constants/user.constants';
 import { UserRole } from '../../enums/user-role.enum';
-import { User, UserDocument } from '../../schemas/user.schema';
+import { User, UserDocument } from './schemas/user.schema';
 import {
   AccountPassword,
   AccountProfileStore,
