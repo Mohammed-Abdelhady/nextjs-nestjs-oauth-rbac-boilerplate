@@ -121,7 +121,8 @@ The list answers with the sign-in methods on the account and, for each one, what
   "providers": ["email", "google"],
   "primaryProvider": "google",
   "unlinkHints": { "email": "not_removable", "google": "allowed" },
-  "primaryHints": { "email": "no_profile_to_sync", "google": "allowed" }
+  "primaryHints": { "email": "no_profile_to_sync", "google": "allowed" },
+  "emailSignIn": "usable"
 }
 ```
 
@@ -143,6 +144,15 @@ Email sign-in counts as a remaining way in only while password sign-in or magic 
 | `no_profile_to_sync` | Email sign-in has no provider profile. Choosing it answers `400 VALIDATION_ERROR`. |
 
 Every linked provider can be primary, so only email sign-in is refused. A provider that is not linked answers `400 PROVIDER_NOT_LINKED` and is not listed. The field is optional and is advice in the same way.
+
+`providers` lists `email` on every account that was created for an address, whatever the deployment has switched on. `emailSignIn` says whether that address can sign in now:
+
+| Value          | Meaning                                                                           |
+| -------------- | --------------------------------------------------------------------------------- |
+| `usable`       | Password sign-in or magic links are enabled.                                      |
+| `switched_off` | Both are off. The address still identifies the account and nobody signs in by it. |
+
+It comes from the same reading the unlink rule counts email sign-in with. The field is absent when `providers` has no `email`, and a client that does not know it can ignore it.
 
 ## Adding a new OAuth provider
 
