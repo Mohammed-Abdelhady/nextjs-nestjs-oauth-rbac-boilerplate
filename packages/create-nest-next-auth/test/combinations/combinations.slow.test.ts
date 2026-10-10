@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
+import { databaseMarkerIds, defaultDatabaseIds } from '../../src/manifest/dimensions.js';
 import { loadManifest } from '../../src/manifest/load.js';
 import { defaultOwnership } from '../../src/manifest/ownership.js';
 import { availableFeatures, resolveSelection } from '../../src/manifest/select.js';
@@ -127,8 +128,14 @@ describe('generated projects', () => {
       ...Object.keys(manifest.features),
       ...Object.keys(manifest.options),
       ...ownership.knownIds,
+      ...databaseMarkerIds(manifest),
     ];
-    const kept = [...selected, ...Object.keys(manifest.options), ...ownership.keptIds];
+    const kept = [
+      ...selected,
+      ...Object.keys(manifest.options),
+      ...ownership.keptIds,
+      ...defaultDatabaseIds(manifest),
+    ];
     const differences = await compareWithRepository(project, kept, markerIds, [
       ...manifest.core.alwaysRemoveFiles,
       ...ownership.removedFiles,

@@ -33,6 +33,14 @@ export function defaultDatabaseIds(manifest: Manifest): string[] {
   return defaultIds(manifest.databases);
 }
 
+/**
+ * Every database id, planned ones included. Each is a marker name: a line
+ * marked for a database that was not chosen is removed with it.
+ */
+export function databaseMarkerIds(manifest: Manifest): string[] {
+  return Object.keys(manifest.databases);
+}
+
 export function availableOptionIds(manifest: Manifest): string[] {
   return availableIds(manifest.options);
 }

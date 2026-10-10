@@ -5,6 +5,7 @@ import {
   BROWSER_STACK_PACKAGES,
   ENGINE_SUITE_PACKAGES,
   PLAYWRIGHT_SCRIPT_NAMES,
+  POSTGRES_ADAPTER_SCRIPT_NAMES,
   POSTGRES_PROTOTYPE_PACKAGES,
 } from '../constants/index.js';
 import { isRecord } from '../manifest/read.js';
@@ -43,14 +44,33 @@ async function removeRepositoryOnlyPackages(root: string): Promise<void> {
   if (source === undefined) return;
 
   const backend: unknown = JSON.parse(source);
-  if (!isRecord(backend) || !isRecord(backend.devDependencies)) return;
+  if (!isRecord(backend)) return;
+  const removedTooling = removeRepositoryOnlyTooling(backend);
+  const removedScripts = removePostgresAdapterScripts(backend);
+  if (!removedTooling && !removedScripts) return;
+  await writeFile(backendPath, `${JSON.stringify(backend, null, 2)}\n`, 'utf8');
+}
+
+function removeRepositoryOnlyTooling(backend: Record<string, unknown>): boolean {
+  if (!isRecord(backend.devDependencies)) return false;
   const repositoryOnly = new Set<string>([
     ...POSTGRES_PROTOTYPE_PACKAGES,
     ...ENGINE_SUITE_PACKAGES,
   ]);
   const declared = Object.entries(backend.devDependencies);
   const kept = declared.filter(([name]) => !repositoryOnly.has(name));
-  if (kept.length === declared.length) return;
+  if (kept.length === declared.length) return false;
   backend.devDependencies = Object.fromEntries(kept);
-  await writeFile(backendPath, `${JSON.stringify(backend, null, 2)}\n`, 'utf8');
+  return true;
+}
+
+/** Commands whose files the scaffold does not carry. */
+function removePostgresAdapterScripts(backend: Record<string, unknown>): boolean {
+  if (!isRecord(backend.scripts)) return false;
+  const adapterOnly = new Set<string>(POSTGRES_ADAPTER_SCRIPT_NAMES);
+  const declared = Object.entries(backend.scripts);
+  const kept = declared.filter(([name]) => !adapterOnly.has(name));
+  if (kept.length === declared.length) return false;
+  backend.scripts = Object.fromEntries(kept);
+  return true;
 }

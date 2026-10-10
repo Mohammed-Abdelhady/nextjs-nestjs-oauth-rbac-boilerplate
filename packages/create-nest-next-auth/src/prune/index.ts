@@ -6,6 +6,7 @@ import {
   ROOT_PACKAGE_JSON,
   DEFAULT_RULES_POLICY,
 } from '../constants/index.js';
+import { databaseMarkerIds, defaultDatabaseIds } from '../manifest/dimensions.js';
 import { defaultOwnership, type Ownership } from '../manifest/ownership.js';
 import { pruneIgnoreFile } from './ignore-file.js';
 import { pruneLintStaged } from './lint-staged.js';
@@ -52,6 +53,7 @@ export async function prune(
   selectedOptions: string[],
   rules: RulesPolicy = DEFAULT_RULES_POLICY,
   ownership: Ownership = defaultOwnership(manifest),
+  databases: string[] = defaultDatabaseIds(manifest),
 ): Promise<PruneResult> {
   const selected = new Set(selectedFeatures);
   const removed = Object.keys(manifest.features).filter((id) => !selected.has(id));
@@ -82,14 +84,15 @@ export async function prune(
   deletedFiles.push(...(await pruneRules(root, rules)));
 
   // Runs for every selection, not only a partial one: the full project has to
-  // come out without marker comments too. Option, client and shared ids are
-  // valid marker names.
+  // come out without marker comments too. Option, client, shared and database
+  // ids are valid marker names.
   const markerIds = [
     ...Object.keys(manifest.features),
     ...Object.keys(manifest.options),
     ...ownership.knownIds,
+    ...databaseMarkerIds(manifest),
   ];
-  const keptIds = [...selectedFeatures, ...selectedOptions, ...ownership.keptIds];
+  const keptIds = [...selectedFeatures, ...selectedOptions, ...ownership.keptIds, ...databases];
   const markers = await removeFeatureLines(root, keptIds, markerIds);
   const docMarkers = await removeDocMarkers(root, keptIds, markerIds);
 
