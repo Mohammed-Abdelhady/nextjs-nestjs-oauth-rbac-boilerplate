@@ -42,6 +42,9 @@ describe('the PostgreSQL migration command', () => {
   }, POSTGRES_BOOT_TIMEOUT_MS);
 
   afterAll(async () => {
+    // A pool reports its connections as closed before their sockets are, so
+    // the server stopping below can still end one. That is not a failure.
+    for (const pool of pools) pool.on('error', () => undefined);
     await Promise.all(pools.map((pool) => pool.end()));
     await admin?.end();
     await server?.stop();
@@ -232,6 +235,65 @@ describe('the PostgreSQL migration command', () => {
       expect({ exit: up.exit, recorded: await recorded(pool) }).toEqual({
         exit: 1,
         recorded: ['9999_from_a_newer_build.sql'],
+      });
+    },
+    MIGRATE_CASE_TIMEOUT_MS,
+  );
+
+  it(
+    'leaves nothing of a migration that failed part way, and applies only what is missing afterwards',
+    async () => {
+      const pool = await emptyDatabase();
+      // 0005 adds the password column first and creates this table later.
+      await pool.query('CREATE TABLE user_linked_accounts (blocker integer)');
+
+      const failure = await run('up', pool).then(
+        () => 'applied',
+        (error: { code?: string }) => error.code,
+      );
+      const passwordColumn = await pool.query(
+        "SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'password_hash'",
+      );
+      const status = await run('status', pool);
+      const recordedAfterFailure = await recorded(pool);
+      const refused = await startUp(pool);
+      await pool.query('DROP TABLE user_linked_accounts');
+
+      expect({
+        failure,
+        passwordColumns: passwordColumn.rowCount,
+        status,
+        recordedAfterFailure,
+        refused,
+        again: await run('up', pool),
+        recorded: await recorded(pool),
+        after: await startUp(pool),
+      }).toEqual({
+        failure: '42P07',
+        passwordColumns: 0,
+        status: {
+          exit: 1,
+          said: [
+            'Applied: 4',
+            'Pending: 0005_accounts.sql, 0006_session_authority_revocation.sql, 0007_applications_grants.sql, 0008_two_factor.sql, 0009_passkeys.sql, 0010_native_sign_in.sql, 0011_session_listing.sql, 0012_retention_indexes.sql',
+            'Not carried by this build: none',
+          ],
+        },
+        recordedAfterFailure: [
+          '0001_browser_issuance.sql',
+          '0002_roles.sql',
+          '0003_pending_codes.sql',
+          '0004_browser_proofs_security_events.sql',
+        ],
+        refused: 'StorageNotReadyError',
+        again: {
+          exit: 0,
+          said: [
+            'Applied: 0005_accounts.sql, 0006_session_authority_revocation.sql, 0007_applications_grants.sql, 0008_two_factor.sql, 0009_passkeys.sql, 0010_native_sign_in.sql, 0011_session_listing.sql, 0012_retention_indexes.sql',
+          ],
+        },
+        recorded: EVERY_MIGRATION,
+        after: 'serves',
       });
     },
     MIGRATE_CASE_TIMEOUT_MS,
