@@ -165,7 +165,9 @@ The PostgreSQL adapter has to ask, and it remembers the answer. It tells three t
 
 ### What is checked when the server starts
 
-On MongoDB the server builds the indexes its schemas declare and then starts. Migrations are applied by an operator with `migrate-mongo`. The server has never read the record of applied migrations, so it starts on a database that is behind and does not say so.
+On MongoDB the server builds every index its schemas declare, for every collection it uses, and takes requests only when all of them are in place. An index that is already there is left alone, and one that was dropped is built again. If an index cannot be built, for example because stored documents break a unique rule, the server does not start. Migrations are applied by an operator with `migrate-mongo`. The server has never read the record of applied migrations, so it starts on a database that is behind and does not say so.
+
+A first start on an empty database builds every index and takes about a second. A later start only checks them, which takes a few milliseconds. A start after an upgrade that adds an index to a collection that already holds data waits for that index to be built, and the wait grows with the collection.
 
 On PostgreSQL the indexes and unique rules are part of the migrations. The server compares the migrations it carries with the ones recorded in the database and refuses to start when they differ. The message names the migrations to apply, or the ones the database holds that this build does not carry. The server never applies a migration itself.
 
