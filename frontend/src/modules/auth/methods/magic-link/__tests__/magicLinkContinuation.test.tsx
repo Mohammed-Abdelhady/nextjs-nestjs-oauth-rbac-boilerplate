@@ -46,12 +46,16 @@ afterEach(() => {
   cleanup();
   clearBrowserProof();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 function makeStore() {
   return configureStore({
     reducer: { [baseApi.reducerPath]: baseApi.reducer, auth: authReducer },
     middleware: (defaults) => defaults().concat(baseApi.middleware),
+    // The default notifier asks the window for a frame, and RTK Query still
+    // dispatches after unmount, so a frame could outlive jsdom's window.
+    enhancers: (defaults) => defaults({ autoBatch: { type: 'tick' } }),
   });
 }
 
@@ -142,5 +146,14 @@ describe('magic link continuation', () => {
     await waitFor(() => {
       expect(replaceMock).toHaveBeenCalledWith('/dashboard');
     });
+  });
+
+  it('asks the window for no frame when the form is unmounted after a request', async () => {
+    const frames = vi.spyOn(window, 'requestAnimationFrame');
+
+    await submitRequest(null);
+    cleanup();
+
+    expect(frames).not.toHaveBeenCalled();
   });
 });

@@ -1,7 +1,5 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
 import { CookieOptions, Request, Response } from 'express';
 import { createHash, hkdfSync } from 'crypto';
 import { AppException } from '../../../common/exceptions/app.exception';
@@ -18,9 +16,9 @@ import {
   PasskeyChallengePurpose,
 } from '../constants/passkeys.constants';
 import {
-  PasskeyChallenge,
-  PasskeyChallengeDocument,
-} from '../schemas/passkey-challenge.schema';
+  CHALLENGE_USE,
+  PasskeyChallengeStore,
+} from '../stores/passkey-challenge.store';
 
 export interface PasskeyChallengePayload {
   purpose: PasskeyChallengePurpose;
@@ -42,8 +40,7 @@ export class PasskeyChallengeService {
   private readonly logger = new Logger(PasskeyChallengeService.name);
 
   constructor(
-    @InjectModel(PasskeyChallenge.name)
-    private readonly challengeModel: Model<PasskeyChallengeDocument>,
+    private readonly challenges: PasskeyChallengeStore,
     private readonly configService: ConfigService,
   ) {}
 
@@ -62,13 +59,10 @@ export class PasskeyChallengeService {
       expiresAt,
     };
 
-    await this.challengeModel.create({
+    await this.challenges.open({
       challengeHash: hashChallenge(challenge),
       purpose,
-      user:
-        userId && Types.ObjectId.isValid(userId)
-          ? new Types.ObjectId(userId)
-          : undefined,
+      userId,
       expiresAt: new Date(expiresAt),
     });
 
@@ -119,13 +113,12 @@ export class PasskeyChallengeService {
     purpose: PasskeyChallengePurpose,
     challenge: string,
   ): Promise<void> {
-    const deleted = await this.challengeModel.findOneAndDelete({
-      challengeHash: hashChallenge(challenge),
-      purpose,
-      expiresAt: { $gt: new Date() },
-    });
+    const use = await this.challenges.consume(
+      { challengeHash: hashChallenge(challenge), purpose },
+      new Date(Date.now()),
+    );
 
-    if (!deleted) {
+    if (use !== CHALLENGE_USE.CONSUMED) {
       throw this.invalid('challenge already spent');
     }
   }

@@ -38,6 +38,7 @@ type PasswordSignInData = z.infer<ReturnType<typeof createPasswordSignInSchema>>
 /** Email and password sign-in. Hands a challenged account to /auth/2fa. */
 export function PasswordSignInForm({ redirect }: AuthMethodFormProps) {
   const t = useTranslations('auth.login');
+  const tCommon = useTranslations('common');
   const tCodes = useTranslations('errors.codes');
   const [login, { isLoading }] = useLoginMutation();
   const completeSignIn = useCompleteSignIn();
@@ -88,7 +89,7 @@ export function PasswordSignInForm({ redirect }: AuthMethodFormProps) {
           name="email"
           type="email"
           label={t('email')}
-          placeholder="name@example.com"
+          placeholder={tCommon('emailPlaceholder')}
           autoComplete="email"
           disabled={isLoading}
           autoFocus
@@ -98,7 +99,7 @@ export function PasswordSignInForm({ redirect }: AuthMethodFormProps) {
         <FormPassword
           name="password"
           label={t('password')}
-          placeholder="••••••••"
+          placeholder={tCommon('passwordPlaceholder')}
           autoComplete="current-password"
           disabled={isLoading}
           showToggle={false}

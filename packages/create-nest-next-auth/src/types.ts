@@ -1,4 +1,5 @@
 import type { ANSWERS_SCHEMA_VERSION, RULES_POLICIES } from './constants/index.js';
+import type { MobileIdentityRequest } from './types/mobile.js';
 
 /** `hidden` features are never offered; another feature pulls them in. */
 export type FeatureKind = 'credential' | 'oauth' | 'second-factor' | 'passwordless' | 'hidden';
@@ -28,6 +29,8 @@ export interface TargetRequires {
 
 export interface Target {
   label: string;
+  /** The hint next to the label: what has and has not been verified. */
+  description?: string;
   default: boolean;
   files: string[];
   workspaces: string[];
@@ -39,6 +42,8 @@ export interface Target {
 }
 
 export interface SharedModule {
+  /** Named in the summary when a client pulls the module in. */
+  label?: string;
   files: string[];
   workspaces: string[];
 }
@@ -105,6 +110,8 @@ export interface CliOptions {
   config?: string;
   dryRun: boolean;
   locales?: string[];
+  /** Mobile app identity fields given by flag. */
+  mobile?: MobileIdentityRequest;
   /** Explicit option ids mapped to on/off, from `--no-docker` and friends. */
   optionOverrides: Partial<Record<string, boolean>>;
   install: boolean;

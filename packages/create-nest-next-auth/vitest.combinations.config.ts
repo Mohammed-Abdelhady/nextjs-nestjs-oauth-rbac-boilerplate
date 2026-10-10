@@ -7,7 +7,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     include: ['test/**/*.slow.test.ts'],
-    globalSetup: ['./test/combination-setup.ts'],
+    globalSetup: ['./test/combinations/combination-setup.ts'],
     environment: 'node',
     testTimeout: 15 * 60 * 1000,
     hookTimeout: 15 * 60 * 1000,

@@ -22,6 +22,7 @@ import { createChangePasswordSchema } from './changePasswordSchema';
  */
 export function ChangePasswordCard() {
   const t = useTranslations('settings.password');
+  const tCommon = useTranslations('common');
   const tPassword = useTranslations('auth.passwordRules.errors');
   const { methods } = useAuthMethods();
   const [changePassword, { isLoading }] = useChangePasswordMutation();
@@ -78,7 +79,8 @@ export function ChangePasswordCard() {
             <FormPassword<ChangePasswordFormData>
               name="currentPassword"
               label={t('currentPassword')}
-              placeholder="********"
+              placeholder={tCommon('passwordPlaceholder')}
+              autoComplete="current-password"
               disabled={isLoading}
               data-testid="current-password-input"
             />
@@ -86,7 +88,8 @@ export function ChangePasswordCard() {
             <FormPassword<ChangePasswordFormData>
               name="newPassword"
               label={t('newPassword')}
-              placeholder="********"
+              placeholder={tCommon('passwordPlaceholder')}
+              autoComplete="new-password"
               disabled={isLoading}
               data-testid="new-password-input"
             />
@@ -96,7 +99,8 @@ export function ChangePasswordCard() {
             <FormPassword<ChangePasswordFormData>
               name="confirmPassword"
               label={t('confirmPassword')}
-              placeholder="********"
+              placeholder={tCommon('passwordPlaceholder')}
+              autoComplete="new-password"
               disabled={isLoading}
               data-testid="confirm-password-input"
             />

@@ -31,7 +31,6 @@ const MANIFEST_NAME = 'template.manifest.json';
 // hash, shipped next to template/ and recorded in generated projects.
 const TEMPLATE_IDENTITY_FILE = 'template.identity.json';
 const INSTRUCTION_FILES = new Set(['AGENTS.md', 'CLAUDE.md']);
-const UNSHIPPED_TEMPLATE_SCOPE = 'mobile';
 
 // Directory names dropped wherever they appear.
 const EXCLUDED_DIRS = new Set([
@@ -117,15 +116,6 @@ export function templateContent(relativePath, bytes) {
       return !INSTRUCTION_FILES.has(content);
     });
     return Buffer.from(kept.join(''));
-  }
-  if (relativePath === 'commitlint.config.cjs') {
-    const content = bytes.toString('utf8');
-    const scopeStart = content.indexOf("'scope-enum':");
-    if (scopeStart === -1) return bytes;
-    const beforeScopes = content.slice(0, scopeStart);
-    const scopeConfig = content.slice(scopeStart);
-    const scopeLine = new RegExp(`^[\\t ]*'${UNSHIPPED_TEMPLATE_SCOPE}',\\r?\\n`, 'm');
-    return Buffer.from(beforeScopes + scopeConfig.replace(scopeLine, ''));
   }
   if (relativePath === PACKAGE_MANAGER_CONFIG.PNPM_LOCKFILE) return removeInstallerImporter(bytes);
   if (relativePath === TEMPLATE_TEST_POLICY.POLICY_PATH) {

@@ -1,12 +1,6 @@
-import { getModelToken } from '@nestjs/mongoose';
-import type { Model } from 'mongoose';
 import request, { type Response as SupertestResponse } from 'supertest';
 import { ErrorCode } from '../../src/common/enums/error-code.enum';
 import { SessionModule } from '../../src/session/session.module';
-import {
-  Application,
-  ApplicationDocument,
-} from '../../src/session/schemas/application.schema';
 import {
   BROWSER_PROOF_COOKIE,
   BROWSER_PROOF_TTL_MS,
@@ -21,7 +15,7 @@ import {
 import { SEED_USER } from '../constants/seed-users';
 import { bootE2eApp, E2E_CLIENT_URL, type E2eApp } from '../utils/e2e-app';
 import { TEST_NOW } from '../utils/frozen-clock';
-import * as SESSION_AUTHORITY_TIMEOUTS from '../utils/session-authority-harness';
+import * as SESSION_AUTHORITY_TIMEOUTS from '../utils/hook-timeouts';
 
 interface ErrorBody {
   error: { code: string };
@@ -194,22 +188,16 @@ describe('browser proof (e2e)', () => {
   it('allows the configured origin in production without seeding applications', async () => {
     const production = await bootE2eApp(0, { nodeEnv: 'production' });
     try {
-      const applications = production.app.get<Model<ApplicationDocument>>(
-        getModelToken(Application.name),
-      );
+      const applications = production.state.applications;
       const sessionModule = production.app.get(SessionModule);
-      await applications
-        .deleteMany({ environment: PRODUCTION_ENVIRONMENT })
-        .exec();
+      await applications.removeApplicationsIn(PRODUCTION_ENVIRONMENT);
 
       await sessionModule.onModuleInit();
       expect(
-        await applications.countDocuments({
-          environment: PRODUCTION_ENVIRONMENT,
-        }),
+        await applications.applicationCountIn(PRODUCTION_ENVIRONMENT),
       ).toBe(0);
 
-      await applications.create({
+      await applications.registerBrowserApplication({
         clientId: WEB_CLIENT_ID,
         displayName: 'Web',
         platform: APPLICATION_PLATFORM.WEB,
@@ -217,7 +205,7 @@ describe('browser proof (e2e)', () => {
         clientType: APPLICATION_CLIENT_TYPE.PUBLIC,
         allowedOrigins: [],
       });
-      await applications.create({
+      await applications.registerBrowserApplication({
         clientId: ADMIN_CLIENT_ID,
         displayName: 'Admin',
         platform: APPLICATION_PLATFORM.ADMIN,
@@ -246,20 +234,14 @@ describe('browser proof (e2e)', () => {
       );
 
       await sessionModule.onModuleInit();
-      const web = await applications
-        .findOne({
-          clientId: WEB_CLIENT_ID,
-          environment: PRODUCTION_ENVIRONMENT,
-        })
-        .lean()
-        .exec();
-      const admin = await applications
-        .findOne({
-          clientId: ADMIN_CLIENT_ID,
-          environment: PRODUCTION_ENVIRONMENT,
-        })
-        .lean()
-        .exec();
+      const web = await applications.application(
+        WEB_CLIENT_ID,
+        PRODUCTION_ENVIRONMENT,
+      );
+      const admin = await applications.application(
+        ADMIN_CLIENT_ID,
+        PRODUCTION_ENVIRONMENT,
+      );
       expect(web?.allowedOrigins).toEqual(['http://127.0.0.1:3107']);
       expect(admin?.allowedOrigins).toEqual(['http://127.0.0.1:3107']);
     } finally {

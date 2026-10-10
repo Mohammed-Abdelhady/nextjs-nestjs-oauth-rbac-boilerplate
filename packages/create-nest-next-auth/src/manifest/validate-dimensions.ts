@@ -46,6 +46,9 @@ function readTarget(id: string, value: unknown, problems: string[]): Target {
   }
   return {
     label: readString(value.label, `targets.${id}.label`, problems),
+    ...(value.description === undefined
+      ? {}
+      : { description: readString(value.description, `targets.${id}.description`, problems) }),
     default: readBoolean(value.default, `targets.${id}.default`, problems),
     files: readPathArray(value.files ?? [], `targets.${id}.files`, problems),
     workspaces: readStringArray(value.workspaces ?? [], `targets.${id}.workspaces`, problems),
@@ -78,6 +81,9 @@ function readShared(id: string, value: unknown, problems: string[]): SharedModul
     return { files: [], workspaces: [] };
   }
   return {
+    ...(value.label === undefined
+      ? {}
+      : { label: readString(value.label, `shared.${id}.label`, problems) }),
     files: readPathArray(value.files ?? [], `shared.${id}.files`, problems),
     workspaces: readStringArray(value.workspaces ?? [], `shared.${id}.workspaces`, problems),
   };
@@ -217,7 +223,7 @@ export function legacyDimensions(): Dimensions {
         label: 'Web app (Next.js)',
         default: true,
         files: [],
-        workspaces: ['frontend'],
+        workspaces: [],
         envFiles: [],
         requires: { shared: [], targets: [] },
       },

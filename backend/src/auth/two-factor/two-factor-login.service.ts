@@ -1,13 +1,9 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
 import { Request, Response } from 'express';
-import { User, UserDocument } from '../../user/schemas/user.schema';
 import { ApiResponse } from '../../common/dto/api-response.dto';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import { LoginResponseDto } from '../dto/login-response.dto';
-import { SignInService } from '../services/sessions/sign-in.service';
 import { VerifyTwoFactorDto } from './dto/verify-two-factor.dto';
 import { TwoFactorChallengeService } from './services/two-factor-challenge.service';
 import { TwoFactorVerificationService } from './services/two-factor-verification.service';
@@ -15,6 +11,9 @@ import {
   SECOND_FACTOR_VERIFIERS,
   SecondFactorVerifier,
 } from './services/second-factor-verifiers';
+import { SecondFactorAccount } from './stores/second-factor-account';
+import { SecondFactorSignIn } from './stores/second-factor-sign-in';
+import { SecondFactorStore } from './stores/second-factor.store';
 
 /**
  * The second half of a sign-in that was held for a code. The first half left a
@@ -29,10 +28,10 @@ export class TwoFactorLoginService {
   private readonly logger = new Logger(TwoFactorLoginService.name);
 
   constructor(
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    private readonly accounts: SecondFactorStore,
     private readonly challengeService: TwoFactorChallengeService,
     private readonly verificationService: TwoFactorVerificationService,
-    private readonly signInService: SignInService,
+    private readonly signIn: SecondFactorSignIn,
     @Inject(SECOND_FACTOR_VERIFIERS)
     private readonly verifiers: SecondFactorVerifier[],
   ) {}
@@ -49,9 +48,9 @@ export class TwoFactorLoginService {
     response: Response,
   ): Promise<ApiResponse<LoginResponseDto>> {
     const challenge = await this.challengeService.claim(request);
-    const user = await this.userModel.findById(challenge.userId);
+    const user = await this.accounts.findChallengedAccount(challenge.userId);
 
-    if (!user || user.isDeleted || !user.twoFactor?.enabled) {
+    if (!user || user.isDeleted || !user.twoFactor.enabled) {
       await this.discard(challenge.challengeId, response);
       throw new AppException(
         ErrorCode.TWO_FACTOR_CHALLENGE_INVALID,
@@ -68,9 +67,9 @@ export class TwoFactorLoginService {
     }
 
     await this.discard(challenge.challengeId, response);
-    const summary = await this.signInService.issueSession(user, response);
+    const summary = await this.signIn.issueSession(user, response);
 
-    this.logger.log(`Second factor accepted: userId=${user._id.toString()}`);
+    this.logger.log(`Second factor accepted: userId=${user.id}`);
     return LoginResponseDto.success(summary);
   }
 
@@ -80,7 +79,7 @@ export class TwoFactorLoginService {
    */
   private async checkSecondFactor(
     dto: VerifyTwoFactorDto,
-    user: UserDocument,
+    user: SecondFactorAccount,
     request: Request,
     response: Response,
   ): Promise<void> {
@@ -97,7 +96,7 @@ export class TwoFactorLoginService {
   }
 
   private async discard(
-    challengeId: Types.ObjectId,
+    challengeId: string,
     response: Response,
   ): Promise<void> {
     await this.challengeService.consume(challengeId);

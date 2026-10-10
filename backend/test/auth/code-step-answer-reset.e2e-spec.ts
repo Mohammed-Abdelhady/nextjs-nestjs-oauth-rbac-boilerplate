@@ -1,23 +1,17 @@
-import { getModelToken } from '@nestjs/mongoose';
-import type { Model } from 'mongoose';
 import type { Response } from 'supertest';
 import * as bcrypt from 'bcrypt';
 import { REQUEST_ID_HEADER } from '../../src/common/constants/request-id';
-import { PendingPasswordReset } from '../../src/auth/schemas/pending-password-reset.schema';
-import type { UserDocument } from '../../src/user/schemas/user.schema';
 import { bootE2eApp, browserAgent, type E2eApp } from '../utils/e2e-app';
+import type { E2ePendingPasswordResetCode } from '../utils/e2e-state-auth';
 import { TEST_NOW } from '../utils/frozen-clock';
 import { RaceGate } from '../utils/race-gate';
 import { expectSameAnswer } from '../utils/stable-answer';
-import {
-  inWindow,
-  pauseCreateCall,
-  pauseQueryCall,
-} from '../utils/pending-race';
+import { holdStoreCall, inWindow } from '../utils/pending-race';
+import { PasswordResetCodeStore } from '../../src/auth/pending-codes/password-reset-code.store';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
-} from '../utils/session-authority-harness';
+} from '../utils/hook-timeouts';
 
 const PASSWORD = 'Password123!';
 const CODE = '123456';
@@ -36,15 +30,11 @@ const RESET_BODY = {
 
 describe('Password reset code step and pending reset windows (e2e)', () => {
   let e2e: E2eApp;
-  let users: Model<UserDocument>;
-  let pendingPasswordResets: Model<PendingPasswordReset>;
+  let resetStore: PasswordResetCodeStore;
 
   beforeAll(async () => {
     e2e = await bootE2eApp();
-    users = e2e.app.get<Model<UserDocument>>(getModelToken('User'));
-    pendingPasswordResets = e2e.app.get<Model<PendingPasswordReset>>(
-      getModelToken('PendingPasswordReset'),
-    );
+    resetStore = e2e.app.get(PasswordResetCodeStore);
   }, SESSION_AUTHORITY_BOOT_TIMEOUT_MS);
 
   beforeEach(async () => {
@@ -79,9 +69,9 @@ describe('Password reset code step and pending reset windows (e2e)', () => {
 
   async function seedPendingPasswordReset(
     email: string,
-    overrides: Record<string, unknown> = {},
+    overrides: Partial<E2ePendingPasswordResetCode> = {},
   ): Promise<void> {
-    await pendingPasswordResets.create({
+    await e2e.state.auth.storePendingPasswordReset({
       email,
       hashedCode: await bcrypt.hash(CODE, 4),
       attempts: 0,
@@ -91,15 +81,17 @@ describe('Password reset code step and pending reset windows (e2e)', () => {
   }
 
   async function storedReset(email: string) {
-    const record = await pendingPasswordResets
-      .findOne({ email })
-      .select('+hashedCode');
+    const record = await e2e.state.auth.pendingPasswordResetFor(email);
     if (!record) throw new Error(`expected a stored record for ${email}`);
     return record;
   }
 
   function createVerifiedAccount(email: string): Promise<unknown> {
-    return users.create({ email, name: 'Existing Account', isVerified: true });
+    return e2e.state.accounts.createAccount({
+      email,
+      name: 'Existing Account',
+      isVerified: true,
+    });
   }
 
   /** Start two forgot-password writes, release the first, then the second. */
@@ -109,17 +101,10 @@ describe('Password reset code step and pending reset windows (e2e)', () => {
   ): Promise<[Response, Response]> {
     const firstGate = new RaceGate();
     const secondGate = new RaceGate();
-    const originalCreate = pendingPasswordResets.create.bind(
-      pendingPasswordResets,
+    const restore = e2e.state.auth.holdPendingPasswordResetInserts(
+      firstGate,
+      secondGate,
     );
-    let call = 0;
-    const spy = jest
-      .spyOn(pendingPasswordResets, 'create')
-      .mockImplementation((...args) => {
-        const gate = call === 0 ? firstGate : secondGate;
-        call += 1;
-        return gate.hold().then(() => originalCreate(...args));
-      });
 
     try {
       const firstResponse = Promise.resolve(first());
@@ -132,7 +117,7 @@ describe('Password reset code step and pending reset windows (e2e)', () => {
       const secondResult = await secondResponse;
       return [firstResult, secondResult];
     } finally {
-      spy.mockRestore();
+      restore();
     }
   }
 
@@ -217,7 +202,7 @@ describe('Password reset code step and pending reset windows (e2e)', () => {
     expect(first.status).toBe(200);
     expect(second.status).toBe(200);
     expect(first.body).toEqual(second.body);
-    expect(await pendingPasswordResets.countDocuments({ email })).toBe(1);
+    expect(await e2e.state.auth.countPendingPasswordResets(email)).toBe(1);
 
     const record = await storedReset(email);
     // The loser updated the code last, so the last mail is the live code.
@@ -231,10 +216,10 @@ describe('Password reset code step and pending reset windows (e2e)', () => {
     await createVerifiedAccount(email);
 
     const response = await inWindow(
-      (gate) => pauseCreateCall(pendingPasswordResets, gate, 0),
+      (gate) => holdStoreCall(resetStore, 'insertRecord', gate, 0),
       () => post('/api/auth/forgot-password', { email }),
       async () =>
-        pendingPasswordResets.create({
+        e2e.state.auth.storePendingPasswordReset({
           email,
           hashedCode: await bcrypt.hash('654321', 4),
           attempts: 0,
@@ -243,7 +228,7 @@ describe('Password reset code step and pending reset windows (e2e)', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(await pendingPasswordResets.countDocuments({ email })).toBe(1);
+    expect(await e2e.state.auth.countPendingPasswordResets(email)).toBe(1);
     const record = await storedReset(email);
     expect(
       await bcrypt.compare(await e2e.mailedCode(), record.hashedCode),
@@ -259,25 +244,13 @@ describe('Password reset code step and pending reset windows (e2e)', () => {
     const firstGate = new RaceGate();
     const secondGate = new RaceGate();
     const retryGate = new RaceGate();
-    const originalCreate = pendingPasswordResets.create.bind(
-      pendingPasswordResets,
+    const restoreCreate = e2e.state.auth.holdPendingPasswordResetInserts(
+      firstGate,
+      secondGate,
     );
-    let createCall = 0;
-    const createSpy = jest
-      .spyOn(pendingPasswordResets, 'create')
-      .mockImplementation((...args) => {
-        const gate = createCall === 0 ? firstGate : secondGate;
-        createCall += 1;
-        return gate.hold().then(() => originalCreate(...args));
-      });
     // Both first updates ran before the creates; the loser's second pass
     // reaches update call 2 after its create lost the unique index.
-    const restoreQuery = pauseQueryCall(
-      pendingPasswordResets,
-      'updateOne',
-      retryGate,
-      2,
-    );
+    const restoreQuery = holdStoreCall(resetStore, 'rotateCode', retryGate, 2);
 
     let firstResult: Response;
     let secondResult: Response;
@@ -295,17 +268,17 @@ describe('Password reset code step and pending reset windows (e2e)', () => {
       firstResult = await first;
       secondGate.release();
       await retryGate.reached(1);
-      await pendingPasswordResets.deleteOne({ email });
+      await e2e.state.auth.removePendingPasswordReset(email);
       retryGate.release();
       secondResult = await second;
 
       expect([firstResult.status, secondResult.status]).toEqual([200, 200]);
     } finally {
-      createSpy.mockRestore();
+      restoreCreate();
       restoreQuery();
     }
 
-    expect(await pendingPasswordResets.countDocuments({ email })).toBe(1);
+    expect(await e2e.state.auth.countPendingPasswordResets(email)).toBe(1);
     const record = await storedReset(email);
     expect(
       await bcrypt.compare(await e2e.mailedCode(), record.hashedCode),
@@ -317,7 +290,7 @@ describe('Password reset code step and pending reset windows (e2e)', () => {
     await seedPendingPasswordReset(email, { expiresAt: EXPIRED_EXPIRY });
 
     const response = await inWindow(
-      (gate) => pauseQueryCall(pendingPasswordResets, 'deleteOne', gate, 0),
+      (gate) => holdStoreCall(resetStore, 'dropExpiredRecord', gate, 0),
       () =>
         post('/api/auth/reset-password', {
           email,
@@ -325,21 +298,16 @@ describe('Password reset code step and pending reset windows (e2e)', () => {
           newPassword: PASSWORD,
         }),
       async () =>
-        pendingPasswordResets.updateOne(
-          { email },
-          {
-            $set: {
-              hashedCode: await bcrypt.hash('654321', 4),
-              attempts: 0,
-              expiresAt: LIVE_EXPIRY,
-            },
-          },
-        ),
+        e2e.state.auth.replacePendingPasswordResetCode(email, {
+          hashedCode: await bcrypt.hash('654321', 4),
+          attempts: 0,
+          expiresAt: LIVE_EXPIRY,
+        }),
     );
 
     expect(response.status).toBe(400);
     expect(response.body).toMatchObject(RESET_BODY);
-    expect(await pendingPasswordResets.countDocuments({ email })).toBe(1);
+    expect(await e2e.state.auth.countPendingPasswordResets(email)).toBe(1);
     const record = await storedReset(email);
     expect(await bcrypt.compare('654321', record.hashedCode)).toBe(true);
   });

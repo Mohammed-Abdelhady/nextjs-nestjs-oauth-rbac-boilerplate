@@ -2,13 +2,28 @@ import { ConfigService } from '@nestjs/config';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { AuthFeaturesService } from '../../services/features/auth-features.service';
 import { PasskeyManagementService } from './passkey-management.service';
+import { MongoPasskeyStore } from '../persistence/mongo/mongo-passkey.store';
+import { MongoUnitOfWorkRunner } from '../../../session/persistence/mongo/mongo-unit-of-work';
+import { MongoSignInMethodStore } from '../../../user/persistence/mongo/mongo-sign-in-method.store';
+import { SignInMethodRule } from '../../../user/services/sign-in-method.rule';
 import { createModelMock } from '../../../common/testing/test-doubles.harness-spec';
 import {
   createMockPasskey,
   MockPasskey,
   PASSKEY_ID,
   USER_ID,
-} from '../passkeys.harness-spec';
+} from '../persistence/mongo/passkeys.harness-spec';
+
+/** A driver session whose transaction commits. */
+function transactionSession(): Record<string, jest.Mock> {
+  return {
+    startTransaction: jest.fn(),
+    commitTransaction: jest.fn().mockResolvedValue(undefined),
+    abortTransaction: jest.fn().mockResolvedValue(undefined),
+    endSession: jest.fn().mockResolvedValue(undefined),
+    inTransaction: jest.fn().mockReturnValue(true),
+  };
+}
 
 interface AccountState {
   /** Passkeys on the account, this one included. */
@@ -41,13 +56,26 @@ function createHarness(state: AccountState = {}): Harness {
       sort: jest.fn().mockResolvedValue([createMockPasskey()]),
     }),
     findOne: jest.fn().mockResolvedValue(passkey),
-    countDocuments: jest.fn().mockResolvedValue(state.passkeyCount ?? 1),
-    deleteOne: jest.fn().mockResolvedValue({ deletedCount: 1 }),
+    countDocuments: jest.fn().mockReturnValue({
+      session: jest.fn().mockReturnThis(),
+      exec: jest.fn().mockResolvedValue(state.passkeyCount ?? 1),
+    }),
+    updateMany: jest
+      .fn()
+      .mockResolvedValue({ matchedCount: state.passkeyCount ?? 1 }),
+    deleteOne: jest.fn().mockReturnValue({
+      session: jest.fn().mockResolvedValue({ deletedCount: 1 }),
+    }),
   };
 
   const userModel = {
+    updateOne: jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue({ matchedCount: 1 }),
+    }),
     findById: jest.fn().mockReturnValue({
-      select: jest.fn().mockResolvedValue({
+      select: jest.fn().mockReturnThis(),
+      session: jest.fn().mockReturnThis(),
+      exec: jest.fn().mockResolvedValue({
         _id: USER_ID,
         password: state.password,
         linkedAccounts: state.linkedAccounts ?? [],
@@ -70,13 +98,27 @@ function createHarness(state: AccountState = {}): Harness {
 
   return {
     service: new PasskeyManagementService(
-      createModelMock<
-        ConstructorParameters<typeof PasskeyManagementService>[0]
-      >(passkeyModel),
-      createModelMock<
-        ConstructorParameters<typeof PasskeyManagementService>[1]
-      >(userModel),
-      authFeaturesService,
+      new MongoPasskeyStore(
+        createModelMock<ConstructorParameters<typeof MongoPasskeyStore>[0]>(
+          passkeyModel,
+        ),
+      ),
+      new SignInMethodRule(
+        new MongoSignInMethodStore(
+          createModelMock<
+            ConstructorParameters<typeof MongoSignInMethodStore>[0]
+          >(userModel),
+          createModelMock<
+            ConstructorParameters<typeof MongoSignInMethodStore>[1]
+          >(passkeyModel),
+        ),
+        authFeaturesService,
+      ),
+      new MongoUnitOfWorkRunner(
+        createModelMock<ConstructorParameters<typeof MongoUnitOfWorkRunner>[0]>(
+          { startSession: jest.fn().mockResolvedValue(transactionSession()) },
+        ),
+      ),
     ),
     passkeyModel,
     passkey: passkey ?? createMockPasskey(),

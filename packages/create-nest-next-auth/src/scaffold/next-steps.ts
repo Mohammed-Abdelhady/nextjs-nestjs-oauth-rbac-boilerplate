@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { INSTALL_COMMAND } from '../constants/index.js';
+import { DOCKER_API_ORIGIN, MOBILE_API_ORIGIN_VAR } from '../constants/mobile.js';
 import { isRecord } from '../manifest/read.js';
 import type { Manifest } from '../types.js';
 
@@ -9,6 +10,8 @@ export interface NextStepsInput {
   installed: boolean;
   docker: boolean;
   scripts: WorkspaceStartScripts;
+  /** The command that runs the mobile app, when the project has one. */
+  mobile?: string;
 }
 
 export interface WorkspaceStartScripts {
@@ -41,13 +44,22 @@ export async function readWorkspaceStartScripts(root: string): Promise<Workspace
   };
 }
 
+/** The mobile app comes last: it needs the server and the web app running first. */
+function mobileSteps(command: string | undefined, docker: boolean): string[] {
+  if (command === undefined) return [];
+  return [
+    '# Mobile app on an iOS simulator. Turn on mobile sign-in on the server first, see "Mobile app" in README.md:',
+    docker ? `${MOBILE_API_ORIGIN_VAR}=${DOCKER_API_ORIGIN} ${command}` : command,
+  ];
+}
+
 /** The commands printed after a successful scaffold. */
 export function buildNextSteps(input: NextStepsInput): string[] {
   const steps = [`cd ${input.directoryLabel}`];
   if (!input.installed) steps.push(INSTALL_COMMAND);
   if (input.docker) {
     steps.push('cp .env.docker.example .env.docker', 'docker compose --env-file .env.docker up -d');
-    return steps;
+    return [...steps, ...mobileSteps(input.mobile, true)];
   }
   steps.push(
     'cp backend/.env.example backend/.env',
@@ -61,7 +73,7 @@ export function buildNextSteps(input: NextStepsInput): string[] {
     input.scripts.backend,
     input.scripts.frontend,
   );
-  return steps;
+  return [...steps, ...mobileSteps(input.mobile, false)];
 }
 
 /** Docs worth reading for the features that were kept. */

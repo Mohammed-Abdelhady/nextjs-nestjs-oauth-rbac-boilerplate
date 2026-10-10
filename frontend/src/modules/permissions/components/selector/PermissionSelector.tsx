@@ -3,6 +3,7 @@
 import { Heading } from '@/components/design-system';
 import { useState, useMemo, useCallback, memo } from 'react';
 import { useTranslations } from 'next-intl';
+import { Alert } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -132,7 +133,7 @@ export const PermissionSelector = memo(function PermissionSelector({
     <div className="space-y-4">
       {/* Wildcard Permission */}
       {showWildcard && (
-        <div className="rounded-lg border border-warning/30 bg-warning/10 p-4">
+        <Alert variant="warning" role="note">
           <div className="flex items-start gap-3">
             <Checkbox
               id="wildcard-permission"
@@ -142,16 +143,13 @@ export const PermissionSelector = memo(function PermissionSelector({
               data-testid="wildcard-permission-checkbox"
             />
             <div className="flex-1">
-              <Label
-                htmlFor="wildcard-permission"
-                className="font-semibold text-warning-foreground"
-              >
+              <Label htmlFor="wildcard-permission" className="font-semibold text-inherit">
                 {t('wildcardTitle')}
               </Label>
-              <p className="mt-1 text-sm text-warning-foreground">{t('wildcardDescription')}</p>
+              <p className="mt-1 text-sm text-inherit">{t('wildcardDescription')}</p>
             </div>
           </div>
-        </div>
+        </Alert>
       )}
 
       {/* Tabbed Permission Groups */}

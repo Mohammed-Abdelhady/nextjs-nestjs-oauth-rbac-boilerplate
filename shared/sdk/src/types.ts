@@ -1,4 +1,4 @@
-import type { OAuthTokenType, OAUTH_GRANT_TYPE } from './constants';
+import type { DEVICE_KIND, OAuthTokenType, OAUTH_GRANT_TYPE } from './constants';
 
 /** The account, as GET and PATCH /api/user/profile send it. Dates are ISO strings. */
 export interface User {
@@ -29,11 +29,20 @@ export interface UpdateProfileRequest {
   name?: string;
 }
 
+export interface DeviceParts {
+  kind: (typeof DEVICE_KIND)[keyof typeof DEVICE_KIND];
+  browserName?: string;
+  browserMajorVersion?: string;
+  platformName?: string;
+  platformVersion?: string;
+}
+
 export interface Session {
   id: string;
   userAgent: string;
   ip: string;
   deviceName?: string;
+  deviceParts?: DeviceParts;
   createdAt: string;
   lastUsedAt?: string;
   isCurrent: boolean;

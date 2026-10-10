@@ -105,8 +105,13 @@ Checker logic and other tests are scanned. Source files in directories named `no
 
 <!-- repository-only:start -->
 
-Generated Expo output under `mobile/expo/ios/`, `mobile/expo/android/`, and `.expo/` output directly under the repository root or a declared workspace is skipped. A project outside the declared workspaces receives no directory-name skip; for example, `mobile/expo/.expo/` is scanned when `mobile/expo` is not declared. Hand-written native source under `mobile/cli/` and `mobile/device-key/` is still scanned.
+A project outside the declared workspaces receives no directory-name skip; for example, `mobile/expo/.expo/` is scanned when `mobile/expo` is not declared. Hand-written native source under `mobile/cli/` is still scanned.
 <!-- repository-only:end -->
+
+<!-- feature:native-expo:start -->
+
+Generated Expo output under `mobile/expo/ios/` and `mobile/expo/android/` is skipped, and so is `.expo/` output directly under a declared workspace. Hand-written native source under `mobile/device-key/` is still scanned.
+<!-- feature:native-expo:end -->
 
 A hit fails the hook:
 
@@ -124,7 +129,17 @@ The token checker does not parse TypeScript types. Every workspace enforces the 
 The config suite expands the root package's declared workspaces and skips absent packages. It checks the inventoried TypeScript files through ESLint's own config and ignore APIs: the file is not ignored, the type rule is an error, and inline configuration is disabled. This covers inventoried files actually present, not hypothetical future paths or undeclared workspaces. The repository test uses filesystem inventory so its Git subprocesses never target this worktree; explicit project checks can use tracked Git inventory. Filesystem inventory excludes paths ignored by Git ignore files, including files that happen to be tracked. A present workspace with no lintable files fails the check. Without Git, an equivalent filesystem inventory respects the scan skip list and applicable ignore files. Paths are relative to the project root, including projects nested in another repository. The read-only Git inventory preserves global configuration, including ownership exceptions.
 <!-- repository-only:end -->
 
-Human-maintained files in the source and test directories selected by `CAPPED_PATH` in the policy must stay at 350 lines or fewer. The guardrail modules and hook entry are also capped.
+Human-maintained files selected by `CAPPED_PATH` must stay at 350 lines or fewer. Covered paths are `backend/src/**`, `backend/test/**`, `backend/scripts/**`, `backend/migrations/**`, `frontend/src/**`, `shared/*/src/**`, and `scripts/**`. JSON, snapshot and CSS files are exempt from the line limit.
+
+<!-- repository-only:start -->
+
+The repository also caps `frontend/e2e/**`, `packages/*/src/**`, `packages/*/test/**`, and `packages/*/scripts/**`.
+<!-- repository-only:end -->
+
+<!-- feature:native-core:start -->
+
+The mobile workspaces are capped too: `mobile/*/src/**`, `mobile/*/app/**`, `mobile/*/test/**`, and `mobile/*/conformance/**`.
+<!-- feature:native-core:end -->
 
 <!-- repository-only:start -->
 
@@ -215,6 +230,8 @@ Do not add `Co-authored-by: Cursor`, `Made-with: Cursor`, `cursoragent@cursor.co
 Backend unit tests use Jest (`pnpm --filter backend test`). Frontend unit tests use Vitest (`pnpm --filter frontend test`). Backend end-to-end tests use `pnpm --filter backend run test:e2e`. CI runs them outside the local hooks, using mongodb-memory-server in replica set mode without an external database.
 
 <!-- repository-only:start -->
+
+The same backend end-to-end suite runs on PostgreSQL with `pnpm --filter backend run test:e2e:postgres`, on an embedded server it starts and removes itself. CI runs it as a quality gate right after the MongoDB run, and a red suite on either database fails the build.
 
 Frontend end-to-end tests use Playwright (`pnpm --filter frontend run test:e2e`). They run manually, outside commit and push, and are omitted from generated projects.
 <!-- repository-only:end -->

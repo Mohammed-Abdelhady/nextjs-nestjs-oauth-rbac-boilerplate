@@ -8,15 +8,28 @@ import { AdminEmailChangeService } from '../../../src/admin/services/users/admin
 import { RoleHierarchyService } from '../../../src/role/services/role-hierarchy.service';
 import { RoleService } from '../../../src/role/role.service';
 import { RoleEditService } from '../../../src/role/services/edit/role-edit.service';
-import { Role, RoleSchema } from '../../../src/role/schemas/role.schema';
-import { User } from '../../../src/user/schemas/user.schema';
-import { SessionService } from '../../../src/auth/services/sessions/session.service';
-import { SecurityEventService } from '../../../src/session/services/security-event.service';
+import {
+  Role,
+  RoleSchema,
+} from '../../../src/role/persistence/mongo/schemas/role.schema';
+import { User } from '../../../src/user/persistence/mongo/schemas/user.schema';
+import { SessionRevoker } from '../../../src/session/revocation/session-revoker';
+import { SecurityEventService } from '../../../src/session/persistence/mongo/security-event.service';
 import {
   SecurityEvent,
   SecurityEventDocument,
-} from '../../../src/session/schemas/security-event.schema';
+} from '../../../src/session/persistence/mongo/schemas/security-event.schema';
 import { partialMock } from '../../../src/common/testing/test-doubles.harness-spec';
+import { UnitOfWorkRunner } from '../../../src/common/persistence/unit-of-work';
+import { MongoRoleCatalogStore } from '../../../src/role/persistence/mongo/mongo-role-catalog.store';
+import { MongoRoleChangeStore } from '../../../src/role/persistence/mongo/mongo-role-change.store';
+import { MongoRoleSweepStore } from '../../../src/role/persistence/mongo/mongo-role-sweep.store';
+import { RoleCatalogStore } from '../../../src/role/stores/role-catalog.store';
+import { RoleChangeStore } from '../../../src/role/stores/role-change.store';
+import { RoleSweepStore } from '../../../src/role/stores/role-sweep.store';
+import { MongoUnitOfWorkRunner } from '../../../src/session/persistence/mongo/mongo-unit-of-work';
+import { MONGO_ADMIN_ACCOUNT_STORE } from '../../../src/admin/persistence/mongo/mongo-admin-stores';
+import { MONGO_ACCOUNT_SESSIONS } from '../../../src/user/persistence/mongo/mongo-account-stores';
 import { FrozenClock, TEST_NOW } from '../frozen-clock';
 import {
   bootSessionAuthority,
@@ -47,6 +60,12 @@ export async function bootAdminAtomic(
       RoleHierarchyService,
       RoleService,
       RoleEditService,
+      { provide: RoleCatalogStore, useClass: MongoRoleCatalogStore },
+      { provide: RoleChangeStore, useClass: MongoRoleChangeStore },
+      { provide: RoleSweepStore, useClass: MongoRoleSweepStore },
+      { provide: UnitOfWorkRunner, useClass: MongoUnitOfWorkRunner },
+      MONGO_ADMIN_ACCOUNT_STORE,
+      MONGO_ACCOUNT_SESSIONS,
       { provide: getModelToken(User.name), useValue: harness.users },
       {
         provide: getModelToken(Role.name),
@@ -55,7 +74,7 @@ export async function bootAdminAtomic(
           connection.model(Role.name, RoleSchema),
       },
       { provide: getConnectionToken(), useValue: harness.connection },
-      { provide: SessionService, useValue: harness.sessionService },
+      { provide: SessionRevoker, useValue: harness.app.get(SessionRevoker) },
       {
         provide: SecurityEventService,
         useValue: harness.app.get(SecurityEventService),

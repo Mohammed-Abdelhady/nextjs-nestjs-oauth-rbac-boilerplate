@@ -67,3 +67,7 @@ Thumbs.db
 mobile/expo/ios/
 mobile/expo/android/
 mobile/expo/.expo/
+
+# Native projects generated for the bare shell (mobile/cli/NATIVE_PROJECTS.md)
+mobile/cli/ios/
+mobile/cli/android/

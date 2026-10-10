@@ -1,4 +1,5 @@
-import { parseUserAgent } from '@/lib/parseUserAgent';
+import { DEVICE_KIND, type Session } from '@app/sdk';
+import { parseUserAgent, getDeviceLabel } from '@/lib/parseUserAgent';
 import type { DeviceType } from '../components/DeviceIcon';
 import { SESSION_KIND_BY_PURPOSE, UNKNOWN_OS_LABELS, type SessionKind } from '../constants';
 
@@ -25,4 +26,26 @@ export function describeNativeDevice(userAgent: string): NativeDevice {
     deviceType: device === 'Tablet' ? 'Tablet' : 'Mobile',
     os: UNKNOWN_OS_LABELS.includes(os) ? null : os,
   };
+}
+
+/** Catalogue arguments stay language-neutral; templates isolate their LTR runs. */
+export function sessionDeviceText(
+  session: Pick<Session, 'deviceParts' | 'deviceName'> & Partial<Pick<Session, 'userAgent'>>,
+  t: (
+    key: 'unknownDevice' | 'kind.nativeApp' | 'browserOnSystem' | 'mobileAppOnSystem',
+    values?: Record<string, string>,
+  ) => string,
+): string {
+  const parts = session.deviceParts;
+  if (!parts)
+    return (
+      session.deviceName ||
+      (session.userAgent ? getDeviceLabel(session.userAgent) : t('unknownDevice'))
+    );
+  const system = [parts.platformName, parts.platformVersion].filter(Boolean).join(' ');
+  const browser = [parts.browserName, parts.browserMajorVersion].filter(Boolean).join(' ');
+  if (parts.kind === DEVICE_KIND.MOBILE_APP)
+    return system ? t('mobileAppOnSystem', { system }) : t('kind.nativeApp');
+  if (browser && system) return t('browserOnSystem', { browser, system });
+  return browser || system ? `\u2066${browser || system}\u2069` : t('unknownDevice');
 }

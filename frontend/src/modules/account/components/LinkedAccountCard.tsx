@@ -1,11 +1,11 @@
 'use client';
 
 import { Description, Heading } from '@/components/design-system';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from '@/lib/toast';
 import { reportUnlessHandled } from '@/lib/requestFailure';
-import { Loader2, CheckCircle2, Link as LinkIcon, Unlink } from 'lucide-react';
+import { Loader2, CheckCircle2, Link as LinkIcon, Mail, Unlink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,12 +21,26 @@ import {
 } from '@/components/ui/alert-dialog';
 import { OAuthProviderIcon } from '@/modules/oauth';
 import { useUnlinkProviderMutation, useSetPrimaryProviderMutation } from '../api';
+import {
+  EMAIL_PROVIDER,
+  EMAIL_SIGN_IN,
+  PRIMARY_HINT,
+  UNLINK_HINT,
+  type EmailSignInHint,
+  type PrimaryHint,
+  type UnlinkHint,
+} from '../types';
 
 interface LinkedAccountCardProps {
   providerId: string;
   displayName: string;
   isPrimary: boolean;
-  canUnlink: boolean;
+  /** What the server says an unlink would be told. Without one, the server decides. */
+  unlinkHint?: UnlinkHint;
+  /** What the server says choosing this one as primary would be told. Without one, the server decides. */
+  primaryHint?: PrimaryHint;
+  /** On the email row: whether the address can sign in now. Without one, it is shown as connected. */
+  emailSignIn?: EmailSignInHint;
   onChange?: () => void;
 }
 
@@ -38,11 +52,21 @@ export function LinkedAccountCard({
   providerId,
   displayName,
   isPrimary,
-  canUnlink,
+  unlinkHint,
+  primaryHint,
+  emailSignIn,
   onChange,
 }: LinkedAccountCardProps) {
   const t = useTranslations('settings.accounts');
   const [showUnlinkDialog, setShowUnlinkDialog] = useState(false);
+  const unlinkBlockedId = useId();
+  const offersPrimary = !isPrimary && primaryHint !== PRIMARY_HINT.NO_PROFILE_TO_SYNC;
+  const offersUnlink = unlinkHint !== UNLINK_HINT.NOT_REMOVABLE;
+  const isUnlinkBlocked = unlinkHint === UNLINK_HINT.LAST_SIGN_IN_METHOD;
+  const connectionKey = isPrimary ? 'primaryDescription' : 'linkedDescription';
+  // The address stays on the account, but it is not shown as a way to sign in.
+  const descriptionKey =
+    emailSignIn === EMAIL_SIGN_IN.SWITCHED_OFF ? 'emailSignInSwitchedOff' : connectionKey;
 
   const [unlinkProvider, { isLoading: isUnlinking }] = useUnlinkProviderMutation();
   const [setPrimaryProvider, { isLoading: isSettingPrimary }] = useSetPrimaryProviderMutation();
@@ -54,7 +78,16 @@ export function LinkedAccountCard({
       onChange?.();
       setShowUnlinkDialog(false);
     } catch (error) {
+      // The hint was read before the refusal: read it again so the card says why.
+      setShowUnlinkDialog(false);
+      onChange?.();
       reportUnlessHandled(error);
+    }
+  };
+
+  const openUnlinkDialog = () => {
+    if (!isUnlinkBlocked) {
+      setShowUnlinkDialog(true);
     }
   };
 
@@ -75,11 +108,15 @@ export function LinkedAccountCard({
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between flex-wrap">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-                <OAuthProviderIcon
-                  providerId={providerId}
-                  displayName={displayName}
-                  className="h-5 w-5"
-                />
+                {providerId === EMAIL_PROVIDER ? (
+                  <Mail className="h-5 w-5" aria-hidden="true" />
+                ) : (
+                  <OAuthProviderIcon
+                    providerId={providerId}
+                    displayName={displayName}
+                    className="h-5 w-5"
+                  />
+                )}
               </div>
 
               <div className="min-w-0 flex-1">
@@ -94,60 +131,75 @@ export function LinkedAccountCard({
                     </Badge>
                   )}
                 </div>
-                <Description>
-                  {isPrimary ? t('primaryDescription') : t('linkedDescription')}
+                <Description data-testid={`linked-account-status-${providerId}`}>
+                  {t(descriptionKey)}
                 </Description>
               </div>
             </div>
 
-            <div className="flex w-full flex-col gap-2 lg:w-auto lg:flex-row lg:shrink-0">
-              {!isPrimary && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSetPrimary}
-                  disabled={isSettingPrimary || isUnlinking}
-                  className="w-full whitespace-nowrap lg:w-auto"
-                  data-testid={`set-primary-${providerId}`}
-                >
-                  {isSettingPrimary ? (
-                    <Loader2
-                      className="h-4 w-4 shrink-0 motion-safe:animate-spin"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <>
-                      <LinkIcon className="h-4 w-4 shrink-0" />
-                      <span>{t('setPrimary')}</span>
-                    </>
-                  )}
-                </Button>
-              )}
+            {(offersPrimary || offersUnlink) && (
+              <div className="flex w-full flex-col gap-2 lg:w-auto lg:flex-row lg:shrink-0">
+                {offersPrimary && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSetPrimary}
+                    disabled={isSettingPrimary || isUnlinking}
+                    className="w-full whitespace-nowrap lg:w-auto"
+                    data-testid={`set-primary-${providerId}`}
+                  >
+                    {isSettingPrimary ? (
+                      <Loader2
+                        className="h-4 w-4 shrink-0 motion-safe:animate-spin"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <>
+                        <LinkIcon className="h-4 w-4 shrink-0" />
+                        <span>{t('setPrimary')}</span>
+                      </>
+                    )}
+                  </Button>
+                )}
 
-              {canUnlink && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setShowUnlinkDialog(true)}
-                  disabled={isUnlinking || isSettingPrimary}
-                  className="w-full whitespace-nowrap lg:w-auto"
-                  data-testid={`unlink-${providerId}`}
-                >
-                  {isUnlinking ? (
-                    <Loader2
-                      className="h-4 w-4 shrink-0 motion-safe:animate-spin"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <>
-                      <Unlink className="h-4 w-4 shrink-0" />
-                      <span>{t('unlink')}</span>
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
+                {offersUnlink && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={openUnlinkDialog}
+                    disabled={isUnlinking || isSettingPrimary}
+                    // Focusable while blocked, so the reason is read out with it.
+                    aria-disabled={isUnlinkBlocked || undefined}
+                    aria-describedby={isUnlinkBlocked ? unlinkBlockedId : undefined}
+                    className="w-full whitespace-nowrap lg:w-auto"
+                    data-testid={`unlink-${providerId}`}
+                  >
+                    {isUnlinking ? (
+                      <Loader2
+                        className="h-4 w-4 shrink-0 motion-safe:animate-spin"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <>
+                        <Unlink className="h-4 w-4 shrink-0" />
+                        <span>{t('unlink')}</span>
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
+
+          {isUnlinkBlocked && (
+            <Description
+              id={unlinkBlockedId}
+              className="mt-3"
+              data-testid={`unlink-blocked-${providerId}`}
+            >
+              {t('unlinkBlockedLastSignInMethod')}
+            </Description>
+          )}
         </CardContent>
       </Card>
 

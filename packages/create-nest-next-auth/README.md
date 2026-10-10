@@ -26,7 +26,7 @@ must not exist, or must be empty. With `--yes` and no directory the CLI uses
 | ------------------ | ---------------------------------------------------------------------------------- |
 | `-y, --yes`        | Take the defaults and skip the prompts                                             |
 | `--features a,b,c` | Use these feature ids and skip the feature prompt                                  |
-| `--targets a,b,c`  | Client ids; only `web` is available today                                          |
+| `--targets a,b,c`  | Client ids: `web`, `native-expo`. See [Mobile app](docs/config.md#mobile-app)      |
 | `--database <id>`  | Database id; only `mongodb` is available today                                     |
 | `--preset <id>`    | Apply a preset: `minimal`, `standard`, `everything`                                |
 | `--config <file>`  | JSON file with the same selection keys                                             |
@@ -105,8 +105,8 @@ the next step and exits 1.
 1. Copies the bundled `template/` into the target directory and restores the
    file names npm strips from a tarball (`.gitignore`, `pnpm-lock.yaml`).
 2. Sets the `name` in the root `package.json`.
-3. Deletes the `files` and `docs` of every method and option you did not pick,
-   plus `core.alwaysRemoveFiles`.
+3. Deletes the `files` and `docs` of every method, option and client you did
+   not pick, plus `core.alwaysRemoveFiles`. Names the mobile app when chosen.
 4. Deletes the lines and blocks shared files marked for those methods and
    options, then takes the marker comments off the lines that stay.
 5. Removes the env lines those methods own from `backend/.env.example`,
@@ -156,17 +156,18 @@ with `web`, `mongodb` and no options.
 {
   "version": 2,
   "targets": {
-    "web": { "label": "Web app (Next.js)", "default": true, "files": ["frontend/**"] },
+    "web": { "label": "Web app (Next.js)", "default": true, "files": [] },
     "native-expo": {
-      "label": "Mobile app, Expo",
+      "label": "Mobile app, Expo (iOS simulator only, Android not verified)",
       "default": false,
-      "status": "planned",
+      "files": ["mobile/expo/**"],
+      "workspaces": ["mobile/expo"],
       "requires": { "shared": ["native-core"], "targets": [] },
       "needsSignInSite": true
     }
   },
   "shared": {
-    "native-core": { "files": ["mobile/core/**"], "workspaces": ["mobile/core"] }
+    "native-core": { "files": ["mobile/auth/**"], "workspaces": ["mobile/auth"] }
   },
   "databases": {
     "mongodb": { "label": "MongoDB", "default": true, "files": [], "envVars": ["MONGO_URI"] },
@@ -242,6 +243,13 @@ with `web`, `mongodb` and no options.
 | `catalogueKeys` | For an option: catalogue paths and dotted keys removed when it is off                                                        |
 | `status`        | `planned` hides the entry from the prompt and from `--features`; omit it for a working method                                |
 
+A target or shared module owns its `files`, `envFiles` and `workspaces`. They are
+removed when it is not part of the plan, and its id is a marker name like a
+feature id. `native-expo` keeps `mobile/expo` and the `native-core` packages and
+removes `mobile/cli`. Without it, all of `mobile/` goes. The Expo app has run on
+an iOS simulator. Android is not verified. `native-cli` stays planned: it only
+bundles. Every workspace an owner lists has to sit under its `files`.
+
 `targets`, `databases` and `options` share `label`, `default` and `status`. A
 target also has `files`, `workspaces`, `envFiles`, `requires` (with `shared` and
 `targets` lists) and `needsSignInSite`. A database has `files`, `envVars` and
@@ -255,8 +263,8 @@ Globs support `?`, `*` and `**`. A path may not start with `/` or contain `..`.
 
 `status: "planned"` marks an id the manifest knows but the CLI does not offer
 yet. A planned id is never prompted and is an error if a flag or the config file
-names it. Planned targets, databases and options do not list files; the change
-that makes one available adds its files at the same time. A planned database or
+names it. A planned target may list files: it is never chosen, so they are always
+removed. Planned databases and options do not list files yet. A planned database or
 option still has a fixed state, its `default`. Asking for that same state is
 accepted, and asking for the opposite is an error. All three options ship today:
 `docker`, `production` and `locale-ar` each list the files they own, and turning

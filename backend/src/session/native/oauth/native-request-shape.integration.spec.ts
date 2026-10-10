@@ -17,7 +17,7 @@ import {
   resetNativeClient,
   startNativeOauth,
   stopNativeOauth,
-} from '../harness/native-oauth.harness-spec';
+} from '../persistence/mongo/harness/native-oauth.harness-spec';
 
 const INVALID_REQUEST = { error: 'invalid_request' };
 

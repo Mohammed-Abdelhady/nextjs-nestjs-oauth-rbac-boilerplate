@@ -200,7 +200,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
               <Input
                 id={fieldId('password')}
                 type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
+                placeholder={tCommon('passwordPlaceholder')}
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);

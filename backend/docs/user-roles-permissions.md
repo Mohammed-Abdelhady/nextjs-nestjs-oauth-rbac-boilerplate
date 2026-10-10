@@ -43,7 +43,7 @@ The system implements a **role-based access control (RBAC)** with additional **f
 
 ### Schema Location
 
-`src/user/schemas/user.schema.ts`
+`src/user/persistence/mongo/schemas/user.schema.ts`
 
 ### Fields
 

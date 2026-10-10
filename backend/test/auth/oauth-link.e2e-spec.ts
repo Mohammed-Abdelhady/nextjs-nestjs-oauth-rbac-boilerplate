@@ -5,7 +5,7 @@ import { bootE2eApp, loginAs, type E2eApp } from '../utils/e2e-app';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
-} from '../utils/session-authority-harness';
+} from '../utils/hook-timeouts';
 import { TEST_NOW } from '../utils/frozen-clock';
 
 const GOOGLE_STRATEGY: OAuthProviderStrategy = {
@@ -65,6 +65,85 @@ describe('provider link start with both credentials (e2e)', () => {
     expect(started.status).toBe(302);
     expect(String(started.headers.location)).toBe(
       'https://provider.example/authorize',
+    );
+  });
+
+  it('lists the sign-in methods with what an unlink of each would be told', async () => {
+    const browser = await loginAs(e2e.httpServer, SEED_USER);
+    await e2e.state.auth.linkProviderAccounts(SEED_USER.email, [
+      { provider: 'google', providerId: 'google-1', linkedAt: TEST_NOW },
+    ]);
+
+    const listed = await browser.get('/api/user/linked-providers').expect(200);
+
+    // Password sign-in is on, so the address still signs in without Google.
+    expect(listed.body).toMatchObject({
+      data: {
+        providers: ['email', 'google'],
+        unlinkHints: { email: 'not_removable', google: 'allowed' },
+      },
+    });
+    await browser.delete('/api/user/unlink-provider/google').expect(200);
+    const after = await browser.get('/api/user/linked-providers').expect(200);
+    expect(after.body).toMatchObject({
+      data: { providers: ['email'], unlinkHints: { email: 'not_removable' } },
+    });
+  });
+
+  it('lists which sign-in methods can be primary and answers each choice the same way', async () => {
+    const browser = await loginAs(e2e.httpServer, SEED_USER);
+    await e2e.state.auth.linkProviderAccounts(SEED_USER.email, [
+      { provider: 'google', providerId: 'google-1', linkedAt: TEST_NOW },
+    ]);
+
+    const listed = await browser.get('/api/user/linked-providers').expect(200);
+
+    expect(listed.body).toMatchObject({
+      data: {
+        providers: ['email', 'google'],
+        primaryHints: { email: 'no_profile_to_sync', google: 'allowed' },
+      },
+    });
+    const refused = await browser
+      .post('/api/user/set-primary-provider')
+      .send({ provider: 'email' })
+      .expect(400);
+    expect(refused.body).toMatchObject({
+      error: { code: ErrorCode.VALIDATION_ERROR },
+    });
+    await browser
+      .post('/api/user/set-primary-provider')
+      .send({ provider: 'google' })
+      .expect(200);
+    const after = await browser.get('/api/user/linked-providers').expect(200);
+    expect(after.body).toMatchObject({
+      data: {
+        primaryProvider: 'google',
+        primaryHints: { email: 'no_profile_to_sync', google: 'allowed' },
+      },
+    });
+  });
+
+  it('says whether email sign-in is usable, and nothing for an account a provider made', async () => {
+    const browser = await loginAs(e2e.httpServer, SEED_USER);
+
+    const byEmail = await browser.get('/api/user/linked-providers').expect(200);
+
+    // Password sign-in is on in this deployment.
+    expect(byEmail.body).toMatchObject({
+      data: { providers: ['email'], emailSignIn: 'usable' },
+    });
+
+    await e2e.state.auth.makeProviderCreated(SEED_USER.email, 'google', [
+      { provider: 'google', providerId: 'google-1', linkedAt: TEST_NOW },
+    ]);
+    const byProvider = await browser
+      .get('/api/user/linked-providers')
+      .expect(200);
+
+    expect(byProvider.body).toMatchObject({ data: { providers: ['google'] } });
+    expect(Object.keys(byProvider.body.data as object)).not.toContain(
+      'emailSignIn',
     );
   });
 });

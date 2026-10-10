@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useCallback, type ChangeEvent } from 'react';
 import type { FieldPath, FieldValues } from 'react-hook-form';
 import { FormInput } from '@/components/forms';
@@ -27,6 +28,7 @@ export function CodeField<TFieldValues extends FieldValues>({
   autoFocus,
   testId,
 }: CodeFieldProps<TFieldValues>) {
+  const tCommon = useTranslations('common');
   const onChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     event.target.value = filterDigits(event.target.value, TOTP_CODE_LENGTH);
   }, []);
@@ -38,7 +40,7 @@ export function CodeField<TFieldValues extends FieldValues>({
       type="text"
       inputMode="numeric"
       autoComplete="one-time-code"
-      placeholder="123456"
+      placeholder={tCommon('codePlaceholder')}
       maxLength={TOTP_CODE_LENGTH}
       disabled={disabled}
       autoFocus={autoFocus}

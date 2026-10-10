@@ -38,8 +38,8 @@ export function signedInAs(id: string): AuthSnapshot {
       permissions: [],
       authProvider: 'email',
       isVerified: true,
-      twoFactorEnabled: false,
-      passkeyCount: 0,
+      twoFactorEnabled: false, // feature:totp
+      passkeyCount: 0, // feature:passkeys
       linkedProviders: [],
     },
   };

@@ -1,11 +1,4 @@
 import { ConfigService } from '@nestjs/config';
-import { getModelToken } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import {
-  AuthorizationTransaction,
-  AuthorizationTransactionDocument,
-} from '../../../src/session/schemas/authorization-transaction.schema';
-import { User, UserDocument } from '../../../src/user/schemas/user.schema';
 import {
   SEED_MANAGER,
   SEED_USER,
@@ -19,7 +12,7 @@ import { bootE2eApp, loginAs, type E2eApp } from '../../utils/e2e-app';
 import {
   SESSION_AUTHORITY_BOOT_TIMEOUT_MS,
   SESSION_AUTHORITY_TEARDOWN_TIMEOUT_MS,
-} from '../../utils/session-authority-harness';
+} from '../../utils/hook-timeouts';
 import { TEST_NOW } from '../../utils/frozen-clock';
 
 const ACTIONS = ['approve', 'deny'] as const;
@@ -57,20 +50,15 @@ describe('native authorize account check (e2e)', () => {
   });
 
   async function userId(user: SeedUser): Promise<string> {
-    const users = e2e.app.get<Model<UserDocument>>(getModelToken(User.name));
-    const found = await users.findOne({ email: user.email }).orFail().exec();
-    return found._id.toString();
+    const found = await e2e.state.accounts.accountIdFor(user.email);
+    if (found === null) throw new Error('seed user is missing');
+    return found;
   }
 
   async function transactionState(transactionId: string) {
-    const transactions = e2e.app.get<Model<AuthorizationTransactionDocument>>(
-      getModelToken(AuthorizationTransaction.name),
-    );
-    const transaction = await transactions
-      .findOne({ transactionId })
-      .orFail()
-      .lean()
-      .exec();
+    const transaction =
+      await e2e.state.native.authorizationRequest(transactionId);
+    if (transaction === null) throw new Error('the request is missing');
     return {
       consumed: transaction.consumed,
       hasCode: transaction.codeHash !== undefined,

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { UserDocument } from '../../../user/schemas/user.schema';
+import { SecondFactorAccount } from '../stores/second-factor-account';
 import { VerifyTwoFactorDto } from '../dto/verify-two-factor.dto';
 
 /** Multi-provider injection token holding every registered verifier. */
@@ -23,7 +23,7 @@ export interface SecondFactorVerifier {
    */
   verify(
     dto: VerifyTwoFactorDto,
-    user: UserDocument,
+    user: SecondFactorAccount,
     request: Request,
     response: Response,
   ): Promise<void>;

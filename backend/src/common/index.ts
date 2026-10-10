@@ -37,6 +37,6 @@ export { escapeRegex } from './utils/escape-regex';
 export { toBoolean } from './utils/transform';
 export {
   isCastError,
-  isMongoDuplicateKeyError,
+  isDuplicateKeyError as isMongoDuplicateKeyError,
   isDuplicateEmailError,
-} from './utils/mongo-error.util';
+} from './utils/driver-error-shape.util';

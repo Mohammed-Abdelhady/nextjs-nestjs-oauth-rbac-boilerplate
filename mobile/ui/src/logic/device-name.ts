@@ -1,3 +1,4 @@
+import { DEVICE_KIND, type Session } from '@app/sdk';
 import type { DeviceName } from '../types';
 
 type Family = readonly [pattern: RegExp, name: string];
@@ -33,14 +34,20 @@ function familyOf(userAgent: string, families: readonly Family[]): string | unde
   return families.find(([pattern]) => pattern.test(userAgent))?.[1];
 }
 
-/**
- * What a row calls its device. A name the server stored wins. The app's own
- * user agent is not a browser, so a native session is named by its system alone.
- */
+/** Structured parts use catalogues; legacy sessions retain their stored phrase. */
 export function deviceNameOf(
-  session: { deviceName?: string; userAgent: string },
+  session: Pick<Session, 'deviceName' | 'userAgent' | 'deviceParts'>,
   isNativeApp: boolean,
 ): DeviceName {
+  const parts = session.deviceParts;
+  if (parts) {
+    const system = [parts.platformName, parts.platformVersion].filter(Boolean).join(' ');
+    const browser = [parts.browserName, parts.browserMajorVersion].filter(Boolean).join(' ');
+    if (parts.kind === DEVICE_KIND.MOBILE_APP) return { kind: 'mobileApp', system };
+    if (browser && system) return { kind: 'browser', browser, system };
+    if (browser || system) return { kind: 'named', name: `\u2066${browser || system}\u2069` };
+    return { kind: 'unknown' };
+  }
   const stored = session.deviceName?.trim();
   if (stored) return { kind: 'named', name: stored };
   const system = familyOf(session.userAgent, isNativeApp ? APP_SYSTEMS : SYSTEMS);

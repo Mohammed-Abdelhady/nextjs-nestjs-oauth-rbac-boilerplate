@@ -24,6 +24,7 @@ interface ReauthFormData {
  */
 export function ReauthStep({ hasPassword, isBusy, onContinue }: ReauthStepProps) {
   const t = useTranslations('settings.twoFactor.setup.reauth');
+  const tCommon = useTranslations('common');
   const form = useForm<ReauthFormData>({ defaultValues: { password: '' } });
 
   const onSubmit = useCallback(
@@ -61,7 +62,7 @@ export function ReauthStep({ hasPassword, isBusy, onContinue }: ReauthStepProps)
         <FormPassword<ReauthFormData>
           name="password"
           label={t('password')}
-          placeholder="********"
+          placeholder={tCommon('passwordPlaceholder')}
           autoComplete="current-password"
           disabled={isBusy}
           data-testid="two-factor-reauth-password"

@@ -67,6 +67,7 @@ function requireInteractive(options: CliOptions, needs: PromptNeeds): void {
     needs.database ||
     needs.features ||
     needs.options ||
+    needs.mobile ||
     needs.rules;
   if (!needsPrompt || options.yes || process.stdin.isTTY === true) return;
   throw new CliError('No terminal to prompt in. Pass --yes or the matching flags.');
@@ -94,17 +95,21 @@ export async function main(
 
     // Flags and the config file are authoritative. Report their errors before
     // any prompt, so an invalid run never asks a question first.
-    const requested = resolvePlan(manifest, request);
-    if (requested.errors.length > 0) {
-      for (const line of describePlanErrors(manifest, requested.errors)) log.error(line);
+    const terminal = process.stdin.isTTY === true;
+    const needs: PromptNeeds = {
+      directory: !options.dryRun && options.directory === undefined,
+      ...planPromptNeeds(manifest, request, terminal),
+    };
+    // A mobile flag may be waiting for the clients question, so it is judged after the answer.
+    const asksClients = needs.targets && !options.yes && terminal;
+    const requested = resolvePlan(manifest, request).errors.filter(
+      (error) => !(asksClients && error.reason === 'identity-unused'),
+    );
+    if (requested.length > 0) {
+      for (const line of describePlanErrors(manifest, requested)) log.error(line);
       outro('Nothing was written.');
       return USAGE_EXIT_CODE;
     }
-
-    const needs: PromptNeeds = {
-      directory: !options.dryRun && options.directory === undefined,
-      ...planPromptNeeds(manifest, request, process.stdin.isTTY === true),
-    };
     requireInteractive(options, needs);
 
     const target = options.dryRun
@@ -112,6 +117,8 @@ export async function main(
         ? ''
         : await validateTarget(options.directory)
       : await resolveTarget(options);
+    // The mobile app's defaults are built from the name the project was given.
+    if (target !== '') request.projectName = basename(target);
 
     if (!options.yes) {
       const answers = await askPlan(manifest, request, needs);

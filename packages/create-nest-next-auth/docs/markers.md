@@ -28,12 +28,29 @@ Rules:
 - Several ids on one marker, `// feature:totp,passkeys`, mean **any of them**:
   the line stays if at least one is selected. For **all of them**, nest blocks.
 - Blocks nest. The `:end` has to name the block it closes.
+- A client id or a shared id is a marker name too: `// feature:native-expo` marks
+  a line only the Expo app needs, `// feature:native-core` one any mobile app needs.
+- A database id is a marker name as well: `// feature:postgres` marks a line only
+  the PostgreSQL adapter needs. A database that is not offered yet is never
+  chosen, so its lines are always removed.
 - Every id has to exist in the manifest, and a marker that names something else
   fails the run with the file and line. That is on purpose: a typo would
   otherwise delete the line from every project.
 - Markers are read in `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs` and `.cjs` files.
   JSON is left alone; markdown uses `<!-- feature:id:start -->` and
-  `<!-- feature:id:end -->` blocks with the same rules.
+  `<!-- feature:id:end -->` blocks with the same rules, and `<!-- feature:id -->`
+  at the end of a line.
+- A markdown table row carries its marker as one extra last cell that holds
+  nothing else. Prettier keeps that shape, and GitHub does not render a cell the
+  header has no column for. The cell goes with the marker, so the row that stays
+  has the header's columns. A header or separator row cannot be marked. To make
+  a whole table optional, put block markers around it.
+
+```md
+| Method     | Setup guide                       |
+| ---------- | --------------------------------- |
+| Magic link | [Magic link](setup-magic-link.md) | <!-- feature:magic-link --> |
+```
 
 Mark the smallest thing that compiles on its own. An import that only one method
 uses, the provider line in a module, the JSX element, the assertion in a spec.
@@ -48,7 +65,7 @@ the way `TWO_FACTOR_CLIENT_PATH` sits in `common/constants/client-paths.ts`.
 2. Add the entry, listing every file that belongs to that method alone and every
    env var it reads.
 3. Mark the lines shared files needed for it.
-4. Add the combination to `test/combinations.slow.test.ts` and run
+4. Add the combination to `test/combinations/combinations.slow.test.ts` and run
    `pnpm --filter create-nest-next-auth run test:combinations`. It scaffolds a
    project per combination and typechecks both workspaces, and it checks that a
    project with everything selected matches the repository with the markers

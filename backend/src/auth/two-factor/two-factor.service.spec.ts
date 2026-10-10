@@ -18,7 +18,7 @@ import {
   createCrypto,
   RECOVERY_CODE,
   TOTP_SECRET,
-} from './two-factor.harness-spec';
+} from './persistence/mongo/two-factor.harness-spec';
 import { ErrorCode } from '../../common/enums/error-code.enum';
 import {
   RECOVERY_CODE_COUNT,

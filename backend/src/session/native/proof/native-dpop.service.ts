@@ -1,9 +1,9 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Model } from 'mongoose';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
+import { UniqueConflictError } from '../../../common/persistence/persistence-errors';
+import { UnitOfWork } from '../../../common/persistence/unit-of-work';
 import {
   NATIVE_DPOP_FAILURE_REASON,
   NATIVE_DPOP_PROOF_ID_TTL_MS,
@@ -12,9 +12,9 @@ import {
   NATIVE_DPOP_TOKEN_PATH,
 } from '../../constants/session-policy';
 import {
-  NativeDpopProofId,
-  NativeDpopProofIdDocument,
-} from '../../schemas/native-dpop-proof-id.schema';
+  NATIVE_CONSTRAINT,
+  NativeCredentialStore,
+} from '../credentials/native-credential.store';
 import { hashToken } from '../../utils/hashing/token-hash';
 import {
   NativeDpopProofResult,
@@ -35,8 +35,7 @@ export type NativeDpopVerification = NativeDpopExchangeVerification;
 @Injectable()
 export class NativeDpopService {
   constructor(
-    @InjectModel(NativeDpopProofId.name)
-    private readonly proofIds: Model<NativeDpopProofIdDocument>,
+    private readonly credentials: NativeCredentialStore,
     private readonly config: ConfigService,
   ) {}
 
@@ -138,18 +137,14 @@ export class NativeDpopService {
   }
 
   async reserveProofId(
-    session: ClientSession,
+    unitOfWork: UnitOfWork,
     jti: string,
     now: Date,
   ): Promise<void> {
-    await this.proofIds.create(
-      [
-        {
-          proofIdHash: hashToken(jti),
-          expiresAt: new Date(now.getTime() + NATIVE_DPOP_PROOF_ID_TTL_MS),
-        },
-      ],
-      { session },
+    await this.credentials.reserveProofId(
+      unitOfWork,
+      hashToken(jti),
+      new Date(now.getTime() + NATIVE_DPOP_PROOF_ID_TTL_MS),
     );
   }
 }
@@ -196,6 +191,14 @@ export function resolveNativeDpopAddress(
   } catch {
     return undefined;
   }
+}
+
+/** True for a unit of work that ended because its proof id was already stored. */
+export function isNativeProofIdReplay(error: unknown): boolean {
+  return (
+    error instanceof UniqueConflictError &&
+    error.constraint === NATIVE_CONSTRAINT.PROOF_ID
+  );
 }
 
 export function isNativeDpopProofIdConflict(error: unknown): boolean {

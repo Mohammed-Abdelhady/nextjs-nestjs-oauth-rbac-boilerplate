@@ -2,7 +2,6 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
-import { UserDocument } from '../../../user/schemas/user.schema';
 import { AuthFeature } from '../../enums/auth-feature.enum';
 import { AuthFeaturesService } from '../../services/features/auth-features.service';
 import { PasskeyCredentialDto } from '../dto/passkey-credential.dto';
@@ -15,6 +14,11 @@ import { PasskeyAssertionService } from './passkey-assertion.service';
  */
 export interface PasskeySecondFactorPayload {
   passkeyResponse?: PasskeyCredentialDto;
+}
+
+/** The account a challenge was opened for, as far as this verifier reads it. */
+export interface ChallengedAccount {
+  readonly id: string;
 }
 
 /**
@@ -47,7 +51,7 @@ export class PasskeySecondFactorVerifier {
    */
   async verify(
     dto: PasskeySecondFactorPayload,
-    user: UserDocument,
+    user: ChallengedAccount,
     request: Request,
     response: Response,
   ): Promise<void> {
@@ -63,7 +67,7 @@ export class PasskeySecondFactorVerifier {
       response,
     );
 
-    if (passkey.user.toString() !== user._id.toString()) {
+    if (passkey.userId !== user.id) {
       throw this.refused();
     }
   }

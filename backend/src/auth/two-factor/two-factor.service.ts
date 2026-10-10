@@ -1,11 +1,8 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User, UserDocument } from '../../user/schemas/user.schema';
 import {
+  assertAccountId,
   assertActiveUser,
-  assertValidObjectId,
-} from '../../user/utils/user-lookup.util';
+} from '../../user/utils/account-lookup.util';
 import { ApiResponse } from '../../common/dto/api-response.dto';
 import { AppException } from '../../common/exceptions/app.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
@@ -25,6 +22,8 @@ import {
   generateRecoveryCodes,
   hashRecoveryCode,
 } from './utils/recovery-code.util';
+import { SecondFactorAccount } from './stores/second-factor-account';
+import { SecondFactorStore } from './stores/second-factor.store';
 
 /**
  * Managing the second factor on an account that is already signed in: turning
@@ -35,7 +34,7 @@ export class TwoFactorService {
   private readonly logger = new Logger(TwoFactorService.name);
 
   constructor(
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    private readonly accounts: SecondFactorStore,
     private readonly cryptoService: TotpSecretCryptoService,
     private readonly verificationService: TwoFactorVerificationService,
     private readonly reauthService: TwoFactorReauthService,
@@ -58,16 +57,12 @@ export class TwoFactorService {
     await this.reauthService.assertReauthenticated(user, dto.password, session);
 
     const secret = generateTotpSecret();
-    user.twoFactor = {
-      enabled: false,
-      secret: this.cryptoService.encrypt(secret),
-      confirmedAt: null,
-      recoveryCodes: [],
-      lastUsedStep: null,
-    };
-    await user.save();
+    await this.accounts.savePendingSecret(
+      user,
+      this.cryptoService.encrypt(secret),
+    );
 
-    this.logger.log(`Two-factor setup started: userId=${user._id.toString()}`);
+    this.logger.log(`Two-factor setup started: userId=${user.id}`);
     return TwoFactorSetupResponseDto.success(
       buildOtpauthUrl(user.email, secret),
       secret,
@@ -87,7 +82,7 @@ export class TwoFactorService {
     const user = await this.loadUser(userId);
     this.assertNotEnabled(user);
 
-    if (!user.twoFactor?.secret) {
+    if (!user.twoFactor.secret) {
       throw new AppException(
         ErrorCode.TWO_FACTOR_SETUP_REQUIRED,
         'Start setup before confirming a code',
@@ -97,12 +92,13 @@ export class TwoFactorService {
 
     await this.verificationService.verifyTotpCode(user, dto.code);
 
-    const codes = this.replaceRecoveryCodes(user);
-    user.twoFactor.enabled = true;
-    user.twoFactor.confirmedAt = new Date();
-    await user.save();
+    const codes = generateRecoveryCodes();
+    await this.accounts.saveConfirmation(user, {
+      recoveryCodeHashes: codes.map(hashRecoveryCode),
+      confirmedAt: new Date(Date.now()),
+    });
 
-    this.logger.log(`Two-factor enabled: userId=${user._id.toString()}`);
+    this.logger.log(`Two-factor enabled: userId=${user.id}`);
     return RecoveryCodesResponseDto.success(
       codes,
       'Store these codes somewhere safe. They are not shown again.',
@@ -122,16 +118,9 @@ export class TwoFactorService {
     await this.reauthService.assertPasswordIfSet(user, dto.password);
     await this.verificationService.verifySecondFactor(user, dto);
 
-    user.twoFactor = {
-      enabled: false,
-      secret: null,
-      confirmedAt: null,
-      recoveryCodes: [],
-      lastUsedStep: null,
-    };
-    await user.save();
+    await this.accounts.clear(user);
 
-    this.logger.log(`Two-factor disabled: userId=${user._id.toString()}`);
+    this.logger.log(`Two-factor disabled: userId=${user.id}`);
     return ApiResponse.success({
       message: 'Two-factor authentication is off',
     });
@@ -149,43 +138,35 @@ export class TwoFactorService {
     this.assertEnabled(user);
     await this.verificationService.verifyTotpCode(user, dto.code);
 
-    const codes = this.replaceRecoveryCodes(user);
-    await user.save();
+    const codes = generateRecoveryCodes();
+    await this.accounts.replaceRecoveryCodes(user, codes.map(hashRecoveryCode));
 
-    this.logger.log(`Recovery codes replaced: userId=${user._id.toString()}`);
+    this.logger.log(`Recovery codes replaced: userId=${user.id}`);
     return RecoveryCodesResponseDto.success(
       codes,
       'The codes from before no longer work.',
     );
   }
 
-  private replaceRecoveryCodes(user: UserDocument): string[] {
-    const codes = generateRecoveryCodes();
-    user.twoFactor.recoveryCodes = codes.map((code) => ({
-      hash: hashRecoveryCode(code),
-      usedAt: null,
-    }));
-    user.markModified('twoFactor.recoveryCodes');
-    return codes;
-  }
-
   private async loadUser(
     userId: string,
     withPassword = false,
-  ): Promise<UserDocument> {
-    assertValidObjectId(userId, 'Invalid user ID format');
+  ): Promise<SecondFactorAccount> {
+    assertAccountId(
+      this.accounts.isAccountId(userId),
+      'Invalid user ID format',
+    );
 
-    const query = this.userModel.findById(userId);
-    const user = await (
-      withPassword ? query.select('+password') : query
-    ).exec();
+    const user = await (withPassword
+      ? this.accounts.findAccountWithPassword(userId)
+      : this.accounts.findAccount(userId));
 
     assertActiveUser(user);
     return user;
   }
 
-  private assertNotEnabled(user: UserDocument): void {
-    if (!user.twoFactor?.enabled) {
+  private assertNotEnabled(user: SecondFactorAccount): void {
+    if (!user.twoFactor.enabled) {
       return;
     }
 
@@ -196,8 +177,8 @@ export class TwoFactorService {
     );
   }
 
-  private assertEnabled(user: UserDocument): void {
-    if (user.twoFactor?.enabled) {
+  private assertEnabled(user: SecondFactorAccount): void {
+    if (user.twoFactor.enabled) {
       return;
     }
 

@@ -1,14 +1,14 @@
-import { UserDocument } from '../../user/schemas/user.schema';
+import { StoredAccount } from '../../user/stores/stored-account';
 import { AdminUserDto } from '../dto/admin-user-response.dto';
 
 /**
- * Map a user document to the shape returned by the admin endpoints.
+ * Map a stored account to the shape returned by the admin endpoints.
  *
- * @param user - Hydrated user document
+ * @param user - The account as a store read it
  */
-export function mapToAdminUserDto(user: UserDocument): AdminUserDto {
+export function mapToAdminUserDto(user: StoredAccount): AdminUserDto {
   return {
-    id: user._id.toString(),
+    id: user.id,
     email: user.email,
     name: user.name,
     role: user.role,

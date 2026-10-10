@@ -17,6 +17,10 @@ const ROLE_TEXT = new Map<string, MessageKey>([
 
 export function deviceText(t: Translate, device: DeviceName): string {
   if (device.kind === 'named') return device.name;
+  if (device.kind === 'mobileApp')
+    return device.system
+      ? t('sessions.mobileAppOnSystem', { system: device.system })
+      : t('sessions.kind.nativeApp');
   if (device.kind === 'unknown') return t('sessions.unknownDevice');
   return t('sessions.browserOnSystem', { browser: device.browser, system: device.system });
 }

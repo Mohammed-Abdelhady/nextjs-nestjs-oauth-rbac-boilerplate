@@ -164,6 +164,33 @@ describe('NativeAuthorizePanel account on screen', () => {
     },
   );
 
+  it.each(ACTIONS)(
+    'returns focus to the card heading after a refused %s',
+    async (_action, control) => {
+      let refused = false;
+      installFetch(
+        (request) => {
+          if (request.method === 'POST') {
+            refused = true;
+            return errorResponse(MISMATCH, 409);
+          }
+          return transactionResponse();
+        },
+        { profile: () => userResponse(refused ? OTHER_USER : TEST_USER) },
+      );
+      await renderReady();
+      const pressed = screen.getByTestId(control);
+      pressed.focus();
+
+      fireEvent.click(pressed);
+
+      await screen.findByTestId(NOTICE);
+      await waitFor(() =>
+        expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 })),
+      );
+    },
+  );
+
   it('approves for the new account once the person confirms it', async () => {
     const bodies: unknown[] = [];
     installFetch(

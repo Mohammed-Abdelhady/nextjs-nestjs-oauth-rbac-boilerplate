@@ -17,6 +17,7 @@ export const TEST_ID = {
   REFRESH: 'auth-refresh',
   LOAD_PROFILE: 'auth-load-profile',
   SIGN_OUT: 'auth-sign-out',
+  CLOSE: 'auth-close',
 } as const;
 
 const SPACING = 16;
@@ -29,9 +30,10 @@ const styles = StyleSheet.create({
 interface DebugScreenProps {
   auth: StartedShellAuth;
   locale: Locale;
+  onClose: () => void;
 }
 
-export function DebugScreen({ auth, locale }: DebugScreenProps) {
+export function DebugScreen({ auth, locale, onClose }: DebugScreenProps) {
   const {
     snapshot,
     lastOutcome,
@@ -106,6 +108,12 @@ export function DebugScreen({ auth, locale }: DebugScreenProps) {
         title={text('signOut')}
         accessibilityLabel={text('signOutLabel')}
         onPress={signOut}
+      />
+      <Button
+        testID={TEST_ID.CLOSE}
+        title={text('close')}
+        accessibilityLabel={text('closeLabel')}
+        onPress={onClose}
       />
     </ScrollView>
   );

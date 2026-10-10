@@ -1,6 +1,15 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { BROWSER_STACK_PACKAGES, PLAYWRIGHT_SCRIPT_NAMES } from '../constants/index.js';
+import {
+  BACKEND_PACKAGE_JSON,
+  BROWSER_STACK_PACKAGES,
+  ENGINE_SUITE_PACKAGES,
+  PLAYWRIGHT_SCRIPT_NAMES,
+  POSTGRES_ADAPTER_SCRIPT_NAMES,
+  POSTGRES_PROTOTYPE_PACKAGES,
+} from '../constants/index.js';
+import { isRecord } from '../manifest/read.js';
+import { readFileIfExists } from '../utils/fs.js';
 import { toPackageName } from '../utils/project-name.js';
 
 /** Names the generated project and removes commands for the maintainer browser harness. */
@@ -24,5 +33,44 @@ export async function setProjectName(root: string, projectName: string): Promise
     if (frontend.devDependencies) delete frontend.devDependencies[dependency];
   }
   await writeFile(frontendPath, `${JSON.stringify(frontend, null, 2)}\n`, 'utf8');
+  await removeRepositoryOnlyPackages(root);
   return packageName;
+}
+
+/** Drops what only repository suites use from the backend: their files never ship. */
+async function removeRepositoryOnlyPackages(root: string): Promise<void> {
+  const backendPath = join(root, BACKEND_PACKAGE_JSON);
+  const source = await readFileIfExists(backendPath);
+  if (source === undefined) return;
+
+  const backend: unknown = JSON.parse(source);
+  if (!isRecord(backend)) return;
+  const removedTooling = removeRepositoryOnlyTooling(backend);
+  const removedScripts = removePostgresAdapterScripts(backend);
+  if (!removedTooling && !removedScripts) return;
+  await writeFile(backendPath, `${JSON.stringify(backend, null, 2)}\n`, 'utf8');
+}
+
+function removeRepositoryOnlyTooling(backend: Record<string, unknown>): boolean {
+  if (!isRecord(backend.devDependencies)) return false;
+  const repositoryOnly = new Set<string>([
+    ...POSTGRES_PROTOTYPE_PACKAGES,
+    ...ENGINE_SUITE_PACKAGES,
+  ]);
+  const declared = Object.entries(backend.devDependencies);
+  const kept = declared.filter(([name]) => !repositoryOnly.has(name));
+  if (kept.length === declared.length) return false;
+  backend.devDependencies = Object.fromEntries(kept);
+  return true;
+}
+
+/** Commands whose files the scaffold does not carry. */
+function removePostgresAdapterScripts(backend: Record<string, unknown>): boolean {
+  if (!isRecord(backend.scripts)) return false;
+  const adapterOnly = new Set<string>(POSTGRES_ADAPTER_SCRIPT_NAMES);
+  const declared = Object.entries(backend.scripts);
+  const kept = declared.filter(([name]) => !adapterOnly.has(name));
+  if (kept.length === declared.length) return false;
+  backend.scripts = Object.fromEntries(kept);
+  return true;
 }

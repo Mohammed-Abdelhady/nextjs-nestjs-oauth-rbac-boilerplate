@@ -37,7 +37,7 @@ export function PasskeysCard() {
   const tAuth = useTranslations('auth.passkeys');
   const { methods, isLoading: isLoadingMethods } = useAuthMethods();
   const isOn = methods?.passkeys === true;
-  const { data: passkeys, isLoading: isLoadingList } = useGetPasskeysQuery(undefined, {
+  const { data: listed, isLoading: isLoadingList } = useGetPasskeysQuery(undefined, {
     skip: !isOn,
   });
   const support = usePasskeySupport();
@@ -67,6 +67,7 @@ export function PasskeysCard() {
     return null;
   }
 
+  const passkeys = listed?.passkeys;
   const count = passkeys?.length ?? 0;
 
   return (
@@ -84,6 +85,7 @@ export function PasskeysCard() {
       <CardContent className="space-y-3">
         <PasskeyList
           passkeys={passkeys}
+          canRemove={listed?.canRemove !== false}
           isLoading={isLoadingList}
           onRename={onRename}
           onDelete={removing.open}

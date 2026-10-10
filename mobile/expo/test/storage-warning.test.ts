@@ -29,7 +29,11 @@ async function signedIn() {
   const browser = new FakeWebBrowser();
   browser.respond = (url) => ({ type: 'success', url: server.authorize(url) });
   const time = new FakeTime();
-  const configuration = resolveConfig({ apiOrigin: undefined, development: true });
+  const configuration = resolveConfig({
+    apiOrigin: undefined,
+    development: true,
+    scheme: 'com.example.mobile',
+  });
   const ports = createNativePorts(
     {
       secureStore: store,

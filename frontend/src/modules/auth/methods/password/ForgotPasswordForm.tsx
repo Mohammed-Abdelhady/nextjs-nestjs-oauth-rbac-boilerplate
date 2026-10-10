@@ -39,6 +39,7 @@ type ForgotPasswordFormData = z.infer<ReturnType<typeof createForgotPasswordSche
  */
 export function ForgotPasswordForm() {
   const t = useTranslations('auth.forgotPassword');
+  const tCommon = useTranslations('common');
   const tToast = useTranslations('toast');
   const router = useRouter();
   const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
@@ -134,7 +135,7 @@ export function ForgotPasswordForm() {
               data-testid="forgot-password-email-input"
               type="email"
               label={t('email')}
-              placeholder="name@example.com"
+              placeholder={tCommon('emailPlaceholder')}
               autoComplete="email"
               disabled={isLoading}
               autoFocus

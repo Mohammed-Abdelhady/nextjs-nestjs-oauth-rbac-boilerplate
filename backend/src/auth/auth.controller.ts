@@ -218,7 +218,7 @@ export class AuthController {
       request.user
     ) {
       const result = await this.authService.logoutNative(
-        session._id.toString(),
+        session.id,
         request.user.id,
       );
       return response.status(HttpStatus.OK).json(result);

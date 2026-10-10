@@ -13,9 +13,9 @@ import { MagicLinkService } from './magic-link.service';
 import { AuthModule } from '../auth.module';
 import { AuthMailService } from '../services/mail/auth-mail.service';
 import { AuthFeaturesService } from '../services/features/auth-features.service';
-import { SessionService } from '../services/sessions/session.service';
+import { SessionService } from '../persistence/mongo/session.service';
 import { SessionCookieService } from '../services/sessions/session-cookie.service';
-import { SignInService } from '../services/sessions/sign-in.service';
+import { SignInService } from '../persistence/mongo/sign-in.service';
 import { FeatureEnabledGuard } from '../guards/feature-enabled.guard';
 
 /**

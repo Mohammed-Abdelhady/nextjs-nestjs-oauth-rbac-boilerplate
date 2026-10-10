@@ -89,6 +89,45 @@ export const BROWSER_STACK_PACKAGES = [
   '@axe-core/playwright',
 ] as const;
 
+/** Backend manifest the scaffold strips repository-only tooling from. */
+export const BACKEND_PACKAGE_JSON = 'backend/package.json';
+
+/**
+ * Tooling for the PostgreSQL prototype. Its files are in the manifest's
+ * alwaysRemoveFiles, so a generated project must not install it either.
+ */
+export const POSTGRES_PROTOTYPE_PACKAGES = [
+  'embedded-postgres',
+  'kysely',
+  'pg',
+  '@types/pg',
+] as const;
+
+/**
+ * Backend commands that run PostgreSQL adapter files. Those files are in the
+ * manifest's alwaysRemoveFiles while PostgreSQL is not offered, so the commands
+ * would point at nothing.
+ */
+export const POSTGRES_ADAPTER_SCRIPT_NAMES = [
+  'test:e2e:postgres',
+  'migration:postgres:up',
+  'migration:postgres:status',
+] as const;
+
+/**
+ * The mobile engine, which the backend needs only for the suites that drive it
+ * against the real server. Those suites are in alwaysRemoveFiles too.
+ */
+export const ENGINE_SUITE_PACKAGES = ['@app/native-auth'] as const;
+
+/** Build approvals that exist only for the prototype's bundled test server. */
+export const POSTGRES_PROTOTYPE_BUILD_APPROVALS = [
+  '@embedded-postgres/darwin-arm64',
+  '@embedded-postgres/darwin-x64',
+  '@embedded-postgres/linux-arm64',
+  '@embedded-postgres/linux-x64',
+] as const;
+
 export const PACKAGE_DEPENDENCY_GROUPS = [
   'dependencies',
   'devDependencies',

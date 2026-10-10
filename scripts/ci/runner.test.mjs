@@ -84,6 +84,7 @@ test('the repository gate list has separate quality, install and installer selec
       'Complete config regressions',
       'Build',
       'Backend end-to-end',
+      'Backend end-to-end on PostgreSQL',
       'Installer combinations',
     ],
   );
@@ -99,6 +100,7 @@ test('the repository gate list has separate quality, install and installer selec
       ['pnpm', ['run', 'test:config:all']],
       ['pnpm', ['run', 'build']],
       ['pnpm', ['--filter', 'backend', 'run', 'test:e2e']],
+      ['pnpm', ['--filter', 'backend', 'run', 'test:e2e:postgres']],
       ['pnpm', ['--filter', 'create-nest-next-auth', 'run', 'test:combinations']],
     ],
   );
@@ -110,7 +112,7 @@ test('the repository gate list has separate quality, install and installer selec
     selectGates(config, '--install').map((g) => [g.command, g.args]),
     [['pnpm', ['install', '--frozen-lockfile']]],
   );
-  assert.equal(selectGates(config, '--quality').length, 9);
+  assert.equal(selectGates(config, '--quality').length, 10);
   assert.throws(() => selectGates(config, '--unknown'), /Unknown CI mode/);
 });
 

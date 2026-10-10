@@ -1,6 +1,8 @@
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { PASSKEY_CHALLENGE_COOKIE } from '../constants/passkeys.constants';
 import { PasskeyRegistrationService } from './passkey-registration.service';
+import { MongoPasskeyAccounts } from '../persistence/mongo/mongo-passkey-accounts';
+import { MongoPasskeyStore } from '../persistence/mongo/mongo-passkey.store';
 import { PasskeyChallengeService } from './passkey-challenge.service';
 import { WebAuthnAdapter } from './webauthn.adapter';
 import {
@@ -19,7 +21,7 @@ import {
   ORIGIN,
   RP_ID,
   USER_ID,
-} from '../passkeys.harness-spec';
+} from '../persistence/mongo/passkeys.harness-spec';
 
 /**
  * The library boundary is mocked. A registration that would satisfy the real
@@ -86,12 +88,16 @@ function createHarness(options: { alreadyRegistered?: boolean } = {}): Harness {
 
   return {
     service: new PasskeyRegistrationService(
-      createModelMock<
-        ConstructorParameters<typeof PasskeyRegistrationService>[0]
-      >(passkeyModel),
-      createModelMock<
-        ConstructorParameters<typeof PasskeyRegistrationService>[1]
-      >(userModel),
+      new MongoPasskeyStore(
+        createModelMock<ConstructorParameters<typeof MongoPasskeyStore>[0]>(
+          passkeyModel,
+        ),
+      ),
+      new MongoPasskeyAccounts(
+        createModelMock<ConstructorParameters<typeof MongoPasskeyAccounts>[0]>(
+          userModel,
+        ),
+      ),
       partialMock<WebAuthnAdapter>(adapter),
       createPasskeyConfig(),
       challenges,
