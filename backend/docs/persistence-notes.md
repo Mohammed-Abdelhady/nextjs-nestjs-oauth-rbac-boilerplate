@@ -95,6 +95,8 @@ pnpm --filter backend run test:e2e:postgres
 
 The PostgreSQL run starts one embedded server with a data folder of its own, gives each booted application a database copied from a migrated template, and removes all of it when the run ends.
 
+A suite named `*.mongo.e2e-spec.ts` runs on MongoDB only. The PostgreSQL configuration leaves those files out by that name and by nothing else. [What is tested on MongoDB only](#what-is-tested-on-mongodb-only) lists them and says why.
+
 ## Differences between the databases
 
 This part lists the places where the two databases are known to answer differently, so an operator who moves from one to the other knows what to expect. Each difference is a different order of the same requests, a different answer to a request that could not be completed, or a different form of the same value. None of them lets a session exist that should not.
@@ -103,7 +105,7 @@ This part lists the places where the two databases are known to answer different
 
 An id on MongoDB is 24 hexadecimal digits. An id on PostgreSQL is a UUID version 7, 36 characters with hyphens. Each database refuses the other's form in a route with 400 and `Invalid identifier format`. Nothing in the server reads a time or an order out of an id.
 
-A client that checks the form of an id has to accept the form of the database it talks to. Two cases of the SDK contract suite pin the MongoDB form and fail on PostgreSQL for this reason alone.
+A client that checks the form of an id has to accept the form of the database it talks to. The two cases of the SDK contract suite that check an id's form take the expected form from the database the run is on.
 
 ### The message for an id the database itself refuses
 
@@ -174,3 +176,13 @@ On PostgreSQL the indexes and unique rules are part of the migrations. The serve
 ### How expired rows leave
 
 MongoDB removes an expired row within about a minute of its expiry. PostgreSQL removes it at the next run of the retention job, up to five minutes later, and later still when a table holds more expired rows than one run takes. The row is refused from the moment it expires on both.
+
+### What is tested on MongoDB only
+
+Six suites of the API run are named `*.mongo.e2e-spec.ts` and are not run on PostgreSQL.
+
+The three suites under `test/migrations` drive `migrate-mongo` against a MongoDB server and assert MongoDB indexes and documents. They hold twelve cases. Five of them have a PostgreSQL counterpart in `postgres-migrate.postgres.integration.spec.ts`: applying to an empty database, applying twice, and a migration that fails part way and leaves nothing behind. The other seven have none. Five test rolling a migration back, and the PostgreSQL command has no roll-back. Two test a migration that rewrites stored data, and no PostgreSQL migration does that yet. When one does, it needs a test of its own.
+
+`activation-contract-legacy` and `registration-limits-legacy` under `test/auth` hold three cases about pending registrations stored before a record carried a purpose: one is never honoured as a code, one is dropped when its address signs up again, and one is left alone. Only a MongoDB install can hold such a record. On PostgreSQL the `purpose` column of `pending_registrations` is required and the table was created with it, so the state these cases start from cannot exist there.
+
+`app.startup-indexes` under `test/app` holds two cases: when MongoDB start-up has prepared the store, every index a registered Mongoose model declares is built, and the models of every module were registered by then. On PostgreSQL the indexes and unique rules are created by the migrations and the server builds none, so the guarantee there is that the server does not serve on a database whose migrations differ from the ones it carries. That is tested by the start-up contract, `storage-startup.contract.postgres.integration.spec.ts`: a database at this build is prepared with its unique rules in force, a database that is behind is refused with the names of what to apply, a database that is ahead is refused, and a database nothing was applied to is refused with every migration in order. `postgres-migrate.postgres.integration.spec.ts` adds the case of a server that refused to start and serves once the pending migrations are applied.
