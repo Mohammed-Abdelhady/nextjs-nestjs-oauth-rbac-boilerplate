@@ -39,8 +39,8 @@ export const DEFAULT_SELECTION_MUST_EXIST = [
 export const DEFAULT_SELECTION_MUST_NOT_EXIST = [
   // magic-link, totp and passkeys are off by default.
   'backend/src/auth/magic-link/magic-link.controller.ts',
-  'backend/src/user/schemas/two-factor.schema.ts',
-  'backend/src/auth/passkeys/schemas/passkey.schema.ts',
+  'backend/src/user/persistence/mongo/schemas/two-factor.schema.ts',
+  'backend/src/auth/passkeys/persistence/mongo/schemas/passkey.schema.ts',
   // every provider that is off by default.
   'backend/src/auth/oauth/strategies/microsoft-oauth.strategy.ts',
   'backend/src/auth/oauth/strategies/apple-oauth.strategy.ts',
