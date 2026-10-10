@@ -53,7 +53,8 @@ export class UserProvidersController {
     summary: 'Get linked providers',
     description:
       'Returns the sign-in methods on the authenticated user account, and for ' +
-      'each one whether an unlink would be accepted now.',
+      'each one whether an unlink, and choosing it as primary, would be ' +
+      'accepted now.',
   })
   async getLinkedProviders(
     @CurrentUser('id') userId: string,
@@ -69,7 +70,14 @@ export class UserProvidersController {
       providers,
     );
 
-    return ApiResponse.success({ providers, primaryProvider, unlinkHints });
+    const primaryHints = this.accountLinkingService.primaryHints(providers);
+
+    return ApiResponse.success({
+      providers,
+      primaryProvider,
+      unlinkHints,
+      primaryHints,
+    });
   }
 
   /**
